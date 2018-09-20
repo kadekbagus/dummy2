@@ -6,6 +6,8 @@ use Queue;
 use Config;
 use Exception;
 use Event;
+use Mall;
+use Activity;
 use Orbit\Helper\Util\JobBurier;
 
 use PaymentTransaction;
@@ -37,13 +39,14 @@ class CheckTransactionStatusQueue
 
             DB::connection()->beginTransaction();
 
-            $payment = PaymentTransaction::with(['details.coupon', 'issued_coupons', 'midtrans'])
-                                           ->findOrFail($data['transactionId']);
+            $payment = PaymentTransaction::onWriteConnection()->with(['details.coupon', 'midtrans', 'issued_coupons', 'user'])->find($data['transactionId']);
+            $mallId = isset($data['mall_id']) ? $data['mall_id'] : null;
+            $mall = Mall::where('merchant_id', $mallId)->first();
 
-            if (empty($payment)) {
-                // If no transaction found, so we should not do/schedule any check.
-                throw new Exception('Transaction ' . $data['transactionId'] . ' not found!');
-            }
+            $activity = Activity::mobileci()
+                            ->setActivityType('transaction')
+                            ->setUser($payment->user)
+                            ->setActivityName('transaction_status');
 
             // If payment completed or expired then do nothing.
             // (It maybe completed by notification callback/ping from Midtrans)
@@ -60,6 +63,27 @@ class CheckTransactionStatusQueue
                 $payment->cleanUp();
 
                 DB::connection()->commit();
+
+                if ($payment->failed() || $payment->denied()) {
+                    Log::info('Transaction is Failed');
+                    $activity->setActivityNameLong('Transaction is Failed')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setObject($payment)
+                            ->setNotes('Transaction is failed from Midtrans/Customer.')
+                            ->setLocation($mall)
+                            ->responseFailed()
+                            ->save();
+                }
+                else if ($payment->expired()) {
+                    Log::info('Transaction is Expired');
+                    $activity->setActivityNameLong('Transaction is Expired')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setObject($payment)
+                            ->setNotes('Transaction is expired from Midtrans.')
+                            ->setLocation($mall)
+                            ->responseFailed()
+                            ->save();
+                }
 
                 $job->delete();
 
@@ -105,8 +129,27 @@ class CheckTransactionStatusQueue
 
                 DB::connection()->commit();
 
+                if ($payment->failed() || $payment->denied()) {
+                    $activity->setActivityNameLong('Transaction is Failed')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setObject($payment)
+                            ->setNotes('Transaction is failed from Midtrans/Customer.')
+                            ->setLocation($mall)
+                            ->responseFailed()
+                            ->save();
+                }
+                else if ($payment->expired()) {
+                    $activity->setActivityNameLong('Transaction is Expired')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setObject($payment)
+                            ->setNotes('Transaction is expired from Midtrans.')
+                            ->setLocation($mall)
+                            ->responseFailed()
+                            ->save();
+                }
+
                 // Fire event to get the coupon if necessary.
-                Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment]);
+                Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment, $mall]);
 
                 Log::info('Midtrans::CheckTransactionStatusQueue: Checking stopped.');
             }
@@ -160,7 +203,7 @@ class CheckTransactionStatusQueue
         Queue::later(
             $delay,
             'Orbit\\Queue\\Payment\\Midtrans\\CheckTransactionStatusQueue',
-            ['transactionId' => $data['transactionId'], 'check' => $data['check']]
+            $data
         );
 
         Log::info('Midtrans::CheckTransactionStatusQueue: Check #' . ($data['check'] + 1) . ' is scheduled to run after ' . $delay . ' seconds.');

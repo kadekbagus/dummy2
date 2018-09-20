@@ -11,7 +11,7 @@ use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDea
  *
  * @param PaymentTransaction $payment - Instance of PaymentTransaction model
  */
-Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTransaction $payment)
+Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTransaction $payment, $mall = null)
 {
     $paymentId = $payment->payment_transaction_id;
 
@@ -53,6 +53,11 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
     else if ($payment->completed()) {
         Log::info("PaidCoupon: PaymentID: {$paymentId} verified!");
 
+        $queueData = ['paymentId' => $payment->payment_transaction_id, 'retries' => 0];
+        if (! empty($mall)) {
+            $queueData['mall_id'] = $mall->merchant_id;
+        }
+
         // If we should delay the issuance...
         // TODO: maybe add new status to indicate that the coupon is in the process of issuing?
         if ($payment->forSepulsa() || $payment->paidWith(['bank_transfer', 'echannel'])) {
@@ -68,7 +73,7 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
 
             Queue::connection('sync')->later(
                 $delay, $queue,
-                ['paymentId' => $paymentId, 'retries' => 0]
+                $queueData
             );
         }
         else {
@@ -77,7 +82,7 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
 
             Queue::connection('sync')->push(
                 'Orbit\\Queue\\Coupon\\HotDeals\\GetCouponQueue',
-                ['paymentId' => $paymentId]
+                $queueData
             );
         }
     }

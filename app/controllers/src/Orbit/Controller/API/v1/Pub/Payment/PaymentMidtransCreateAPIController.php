@@ -24,6 +24,7 @@ use IssuedCoupon;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Controller\API\v1\Pub\Payment\PaymentHelper;
 use Mall;
+use Activity;
 use Carbon\Carbon as Carbon;
 
 class PaymentMidtransCreateAPIController extends PubControllerAPI
@@ -62,6 +63,7 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
             $object_type = OrbitInput::post('object_type');
             $object_name = OrbitInput::post('object_name');
             $user_name = (!empty($last_name) ? $first_name.' '.$last_name : $first_name);
+            $mallId = OrbitInput::post('mall_id', null);
 
             $validator = Validator::make(
                 array(
@@ -102,10 +104,11 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
             $this->beginTransaction();
 
             // Get coupon detail from DB.
-            $coupon = Coupon::select('price_selling')->find($object_id);
+            $coupon = Coupon::select('price_selling', 'promotion_id', 'promotion_type')->find($object_id);
 
             // Get mall timezone
             $mallTimeZone = 'Asia/Jakarta';
+            $mall = null;
             if ($mall_id !== 'gtm') {
                 $mall = Mall::where('merchant_id', $mall_id)->first();
                 if (!empty($mall)) {
@@ -168,6 +171,19 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
             // Commit the changes
             $this->commit();
 
+            // TODO: Log activity
+            $activity = Activity::mobileci()
+                    ->setActivityType('transaction')
+                    ->setUser($user)
+                    ->setActivityName('transaction_status')
+                    ->setActivityNameLong('Transaction is Starting')
+                    ->setModuleName('Midtrans Transaction')
+                    ->setObject($payment_new)
+                    ->setNotes($coupon->promotion_type)
+                    ->setLocation($mall)
+                    ->responseOK()
+                    ->save();
+
             $payment_new->quantity = $quantity;
 
             $this->response->data = $payment_new;
@@ -219,5 +235,4 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
 
         return $this->render($httpCode);
     }
-
 }

@@ -19,6 +19,7 @@ use User;
 use Carbon\Carbon as Carbon;
 use Orbit\Controller\API\v1\Pub\Payment\PaymentHelper;
 use Event;
+use Activity;
 
 use Orbit\Helper\Midtrans\API\TransactionStatus;
 use Orbit\Helper\Midtrans\API\TransactionCancel;
@@ -26,6 +27,7 @@ use Orbit\Helper\Midtrans\API\TransactionCancel;
 use Orbit\Notifications\Payment\SuspiciousPaymentNotification;
 use Orbit\Notifications\Payment\DeniedPaymentNotification;
 use Orbit\Notifications\Payment\PendingPaymentNotification;
+use Mall;
 
 /**
  * Controller for update payment with midtrans
@@ -37,14 +39,7 @@ use Orbit\Notifications\Payment\PendingPaymentNotification;
  */
 class PaymentMidtransUpdateAPIController extends PubControllerAPI
 {
-    /**
-     * POST - Update Payment data.
-     *
-     * @param string $payment_transaction_id the payment transaction id that will be updated.
-     * @param string $status the new status to be set for the payment.
-     *
-     * @return \Response
-     */
+
     public function postPaymentMidtransUpdate()
     {
         $httpCode = 200;
@@ -54,6 +49,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
             $payment_transaction_id = OrbitInput::post('payment_transaction_id');
             $status = OrbitInput::post('status');
+            $mallId = OrbitInput::post('mall_id', null);
 
             $paymentHelper = PaymentHelper::create();
             $paymentHelper->registerCustomValidation();
@@ -84,7 +80,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             $paymentDenied = false;
             $shouldUpdate = false;
 
-            $payment_update = PaymentTransaction::with(['details.coupon', 'midtrans', 'issued_coupons'])->findOrFail($payment_transaction_id);
+            $payment_update = PaymentTransaction::with(['details.coupon', 'midtrans', 'issued_coupons', 'user'])->findOrFail($payment_transaction_id);
 
             $oldStatus = $payment_update->status;
 
@@ -109,8 +105,8 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
             // If old status was marked as final and doesnt match with the new one, then
             // ask Midtrans for the correct one.
+            $tmpNewStatus = $status;
             if (in_array($oldStatus, $finalStatus) && $tmpOldStatus !== $status) {
-                $tmpNewStatus = $status;
                 Log::info("PaidCoupon: Payment {$payment_transaction_id} was marked as FINAL, but there is new request to change status to " . $tmpNewStatus);
                 Log::info("PaidCoupon: Getting correct status from Midtrans for payment {$payment_transaction_id}...");
 
@@ -136,6 +132,13 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
             // If old status is not final, then we should update...
             if ($shouldUpdate) {
+                $activity = Activity::mobileci()
+                                        ->setActivityType('transaction')
+                                        ->setUser($user)
+                                        ->setActivityName('transaction_status');
+
+                $mall = Mall::where('merchant_id', $mallId)->first();
+
                 // Supicious payment will be treated as pending payment.
                 if ($status === PaymentTransaction::STATUS_SUSPICIOUS) {
                     // Flag to send suspicious payment notification.
@@ -198,18 +201,47 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 // Try not doing any expensive operation above.
                 $this->commit();
 
-                // Try to cancel the payment if the status was failed
-                // if (in_array($payment_update->status, [PaymentTransaction::STATUS_FAILED, PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED]) && isset($failed)) {
-                //     $transactionCancel = TransactionCancel::create()->cancel($payment_transaction_id);
-                //     if ($transactionCancel->isSuccess()) {
-                //         Log::info("PaidCoupon: Transaction canceled!");
-                //     }
-                //     else {
-                //         Log::info("PaidCoupon: Transaction can not be canceled!");
-                //     }
-                // }
+                // Log activity...
+                // Should be done before issuing coupon for the sake of activity ordering,
+                // or at the end before returning the response??
+                if ($payment_update->failed() || $payment_update->denied()) {
+                    $activity->setActivityNameLong('Transaction is Failed')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setObject($payment_update)
+                            ->setNotes('Transaction is failed from Midtrans/Customer.')
+                            ->setLocation($mall)
+                            ->responseFailed()
+                            ->save();
+                }
+                else if ($payment_update->expired()) {
+                    $activity->setActivityNameLong('Transaction is Expired')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setObject($payment_update)
+                            ->setNotes('Transaction is expired from Midtrans.')
+                            ->setLocation($mall)
+                            ->responseFailed()
+                            ->save();
+                }
+                else if ($payment_update->status === PaymentTransaction::STATUS_SUCCESS_NO_COUPON) {
+                    $activity->setActivityNameLong('Transaction is Success - Getting Coupon')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setNotes($payment_update->details->first()->coupon->promotion_type)
+                            ->setObject($payment_update)
+                            ->setLocation($mall)
+                            ->responseOK()
+                            ->save();
+                }
+                else if ($payment_update->status === PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED) {
+                    $activity->setActivityNameLong('Transaction is Success - Failed Getting Coupon')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setObject($payment_update)
+                            ->setNotes('Failed to get coupon. Can not get reserved coupons for this transaction.')
+                            ->setLocation($mall)
+                            ->responseFailed()
+                            ->save();
+                }
 
-                Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment_update]);
+                Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment_update, $mall]);
 
                 $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
 
@@ -217,10 +249,15 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 // The job will be run forever until the transaction status is success, failed, expired or reached the maximum number of allowed check.
                 if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_PENDING) {
                     $delay = Config::get('orbit.partners_api.midtrans.transaction_status_timeout', 60);
+                    $queueData = ['transactionId' => $payment_transaction_id, 'check' => 0];
+                    if (! empty($mall)) {
+                        $queueData['mall_id'] = $mall->merchant_id;
+                    }
+
                     Queue::later(
                         $delay,
                         'Orbit\\Queue\\Payment\\Midtrans\\CheckTransactionStatusQueue',
-                        ['transactionId' => $payment_transaction_id, 'check' => 0]
+                        $queueData
                     );
 
                     Log::info('PaidCoupon: First time TransactionStatus check for Payment: ' . $payment_transaction_id . ' is scheduled to run after ' . $delay . ' seconds.');
@@ -230,6 +267,14 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                     $paymentUser = new User;
                     $paymentUser->email = $payment_update->user_email;
                     $paymentUser->notify(new PendingPaymentNotification($payment_update), 30);
+
+                    $activity->setActivityNameLong('Transaction is Pending')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setObject($payment_update)
+                            ->setNotes($payment_update->details->first()->coupon->promotion_type)
+                            ->setLocation($mall)
+                            ->responseOK()
+                            ->save();
                 }
 
                 // If previous status was success and now is denied, then send notification to admin.
