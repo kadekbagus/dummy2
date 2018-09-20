@@ -88,7 +88,8 @@ class SepulsaRedeemCallbackController extends ControllerAPI
                             ->setObject($issuedCoupon->coupon)
                             ->setNotes(Coupon::TYPE_SEPULSA)
                             ->setModuleName('Coupon')
-                            ->responseOK();
+                            ->responseOK()
+                            ->save();
             } else {
                 $this->responseCode = 400;
                 Log::error('>> SEPULSA REDEEM FAILED: Issued coupon is not found');
