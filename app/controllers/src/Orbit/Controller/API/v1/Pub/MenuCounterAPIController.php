@@ -167,6 +167,7 @@ class MenuCounterAPIController extends PubControllerAPI
             $partnerFilterMustNot = [];
             $partnerFilterMust = [];
             $countryData = null;
+            $genderFilter = [];
 
             // filter by country
             OrbitInput::get('country', function ($countryFilter) use (&$campaignJsonQuery, &$mallJsonQuery, &$campaignCountryCityFilterArr, &$countryData, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr, &$campaignCountryFilter, &$storeCountryFilter) {
@@ -442,12 +443,31 @@ class MenuCounterAPIController extends PubControllerAPI
                 }
             }
 
+            OrbitInput::get('gender', function($gender) use (&$genderFilter) {
+                $gender = strtolower($gender);
+                switch ($gender){
+                    case 'male':
+                         $genderFilter = ['match' => ['is_all_gender' => 'F']];
+                         break;
+                    case 'female':
+                         $genderFilter = ['match' => ['is_all_gender' => 'M']];
+                         break;
+                    default:
+                        // do nothing
+                }
+            });
+
 
             /* old query
             if (! empty($campaignCountryCityFilterArr)) {
                 $campaignJsonQuery['query']['bool']['should'][] = $campaignCountryCityFilterArr;
                 $couponJsonQuery['query']['bool']['should'][] = $campaignCountryCityFilterArr;
             }*/
+
+            // filter by gender
+            if (! empty($genderFilter)) {
+                $couponJsonQuery['query']['bool']['must_not'][] = $genderFilter;
+            }
 
             if (! empty($campaignCountryFilter)) {
                 $campaignJsonQuery['query']['bool']['must'][] = $campaignCountryFilter;

@@ -1027,7 +1027,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                                             'translations.language',
                                             'translations.media',
                                             'ages.ageRange',
-                                            'genders',
                                             'keywords',
                                             'product_tags',
                                             'campaign_status',
@@ -1115,6 +1114,14 @@ class CouponSepulsaAPIController extends ControllerAPI
                 $updatedcoupon->coupon_validity_in_date = $coupon_validity_in_date;
             });
 
+            OrbitInput::post('gender', function($gender) use ($updatedcoupon) {
+                if ($gender === 'A') {
+                    $gender = 'Y';
+                }
+
+                $updatedcoupon->is_all_gender = $gender;
+            });
+
             $updatedcoupon->is_unique_redeem = 'N';
 
             $updatedcoupon->modified_by = $this->api->user->user_id;
@@ -1158,14 +1165,6 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             OrbitInput::post('voucher_benefit', function($voucher_benefit) use ($updatedCouponSepulsa) {
                 $updatedCouponSepulsa->voucher_benefit = $voucher_benefit;
-            });
-
-            OrbitInput::post('gender', function($gender) use ($updatedCouponSepulsa) {
-                if ($gender === 'A') {
-                    $gender = 'Y';
-                }
-
-                $updatedCouponSepulsa->is_all_gender = $gender;
             });
 
             $updatedCouponSepulsa->setUpdatedAt($updatedCouponSepulsa->freshTimestamp());
@@ -2016,13 +2015,9 @@ class CouponSepulsaAPIController extends ControllerAPI
                     } elseif ($relation === 'campaignLocations.mall') {
                         $coupons->with('campaignLocations.mall');
                     } elseif ($relation === 'keywords') {
-                        $coupons->with(['keywords' => function($query) {
-                            $query->groupBy('keyword');
-                        }]);
+                        $coupons->with('keywords');
                     } elseif ($relation === 'product_tags') {
-                        $coupons->with(['product_tags' => function($query) {
-                            $query->groupBy('product_tag');
-                        }]);
+                        $coupons->with('product_tags');
                     } elseif ($relation === 'campaignObjectPartners') {
                         $coupons->with('campaignObjectPartners');
                     }
