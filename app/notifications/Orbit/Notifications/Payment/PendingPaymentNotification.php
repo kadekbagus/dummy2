@@ -70,6 +70,7 @@ class PendingPaymentNotification extends CustomerNotification implements EmailNo
             'customerPhone'     => $this->getCustomerPhone(),
             'transaction'       => $this->getTransactionData(),
             'cs'                => $this->getContactData(),
+            'paymentExpiration' => $this->getPaymentExpirationDate(),
         ];
     }
 
