@@ -6587,6 +6587,14 @@ return array(
                 'object_type' => 'Coupon',
                 'parameter_name' => 'object_id'
             ),
+            '182' => array(
+                'name' => 'view_transaction_page_payment_successful_coupon_failed',
+                'name_long' => 'View Transaction Page Payment Success - Failed Getting Coupon',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 
