@@ -165,68 +165,34 @@
 
         <tbody>
           <tr>
-            <td class="text-left invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;"><strong>{{{ trans('email-pending-payment.header.order_number', ['transactionId' => $transaction['id']]) }}}</strong></td>
-            <td class="text-right invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;text-align:right;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $transaction['date'] }}}</td>
-          </tr>
-          <tr>
             <td colspan="2" class="invoice-body" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:80px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-pending-payment.body.greeting', ['customerName' => $customerName, 'itemName' => $transaction['items'][0]['name']]) }}
+                {{ trans('email-pending-payment.body.greeting', ['customerName' => $customerName]) }}
               </p>
               <br>
-              <table class="no-border customer" width="100%" style="line-height:1.7em;font-size:14px;color:#222;width:100%;border:0;margin-top:30px;border-spacing:0 !important;border-collapse:collapse !important;table-layout:fixed !important;margin:0 auto !important;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
-                <thead>
-                  <tr>
-                    <th class="text-left first" width="25%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-left:15px;padding-left:0;">{{{ trans('email-pending-payment.table_customer_info.header.customer') }}}</th>
-                    <th class="text-left" width="25%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-left:15px;">{{{ trans('email-pending-payment.table_customer_info.header.email') }}}</th>
-                    <th class="text-left" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-left:15px;">{{{ trans('email-pending-payment.table_customer_info.header.phone') }}}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td class="first" style="font-family:'Roboto', 'Arial', sans-serif;padding:15px;padding-left:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;word-wrap: break-word;">{{{ $customerName }}}</td>
-                    <td style="font-family:'Roboto', 'Arial', sans-serif;padding:15px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;word-wrap: break-word;">{{{ $customerEmail }}}</td>
-                    <td style="font-family:'Roboto', 'Arial', sans-serif;padding:15px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;word-wrap: break-word;">{{{ $customerPhone }}}</td>
-                  </tr>
-                </tbody>
-              </table>
-              <br>
-              <table class="no-border transaction" width="100%" style="line-height:1.7em;font-size:14px;color:#222;width:100%;border:0;margin-top:30px;border-spacing:0 !important;border-collapse:collapse !important;table-layout:fixed !important;margin:0 auto !important;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
-                <thead class="bordered">
-                  <tr>
-                    <th class="text-left first" width="30%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding:8px;border-top:1px solid #999;border-bottom:1px solid #999;padding-left:0;">{{{ trans('email-pending-payment.table_transaction.header.item') }}}</th>
-                    <th class="text-left" width="20%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding:8px;border-top:1px solid #999;border-bottom:1px solid #999;">{{{ trans('email-pending-payment.table_transaction.header.quantity') }}}</th>
-                    <th class="text-left" width="25%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding:8px;border-top:1px solid #999;border-bottom:1px solid #999;">{{{ trans('email-pending-payment.table_transaction.header.price') }}}</th>
-                    <th class="text-left" width="25%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding:8px;border-top:1px solid #999;border-bottom:1px solid #999;">{{{ trans('email-pending-payment.table_transaction.header.subtotal') }}}</th>
-                  </tr>
-                </thead>
-                <tbody class="transaction-items">
-                    @foreach($transaction['items'] as $item)
-                      <tr class="transaction-item">
-                        <td class="first" style="font-family:'Roboto', 'Arial', sans-serif;border-bottom:1px solid #999;vertical-align:top;padding:15px 8px;border-bottom:0;padding-left:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;word-wrap: break-word;">{{{ $item['name'] }}}</td>
-                        <td style="font-family:'Roboto', 'Arial', sans-serif;border-bottom:1px solid #999;vertical-align:top;padding:15px 8px;border-bottom:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $item['quantity'] }}}</td>
-                        <td style="font-family:'Roboto', 'Arial', sans-serif;border-bottom:1px solid #999;vertical-align:top;padding:15px 8px;border-bottom:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $item['price'] }}}</td>
-                        <td style="font-family:'Roboto', 'Arial', sans-serif;border-bottom:1px solid #999;vertical-align:top;padding:15px 8px;border-bottom:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $item['total'] }}}</td>
-                      </tr>
-                    @endforeach
-                </tbody>
-                <tfoot class="transaction-footer">
-                  <tr>
-                    <td colspan="2" style="font-family:'Roboto', 'Arial', sans-serif;padding:15px 8px;border-top:1px solid #999;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;"></td>
-                    <td style="font-family:'Roboto', 'Arial', sans-serif;padding:15px 8px;border-top:1px solid #999;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;"><strong>{{{ trans('email-pending-payment.table_transaction.footer.total') }}}</strong></td>
-                    <td style="font-family:'Roboto', 'Arial', sans-serif;padding:15px 8px;border-top:1px solid #999;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $transaction['total'] }}}</td>
-                  </tr>
-                </tfoot>
-              </table>
-              <br>
-
-              @include('emails.pending-payment.payment-info', $paymentInfo)
-
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
+                <strong>{{{ trans('email-pending-payment.body.transaction_labels.transaction_id') }}}</strong> {{ $transaction['id'] }}
+                <br>
+                <strong>{{{ trans('email-pending-payment.body.transaction_labels.transaction_date') }}}</strong> {{ $transaction['date'] }}
+                <br>
+                <strong>{{{ trans('email-pending-payment.body.transaction_labels.coupon_name') }}}</strong> {{ $transaction['items'][0]['name'] }}
+                <br>
+                <strong>{{{ trans('email-pending-payment.body.transaction_labels.customer_name') }}}</strong> {{ $customerName }}
+                <br>
+                <strong>{{{ trans('email-pending-payment.body.transaction_labels.email') }}}</strong> {{ $customerEmail }}
+                <br>
+                <strong>{{{ trans('email-pending-payment.body.transaction_labels.total_amount') }}}</strong> {{ $transaction['total'] }}
+                <br>
+              </p>
+              <br>
+
+              @include('emails.pending-payment.payment-info', compact('paymentInfo', 'paymentExpiration'))
+
+              {{-- <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 {{ trans('email-pending-payment.body.help', ['csPhone' => $cs['phone'], 'csEmail' => $cs['email']]) }}
                 <br>
                 {{{ trans('email-pending-payment.body.thank_you') }}}
-              </p>
+              </p> --}}
             </td>
           </tr>
         </tbody>
