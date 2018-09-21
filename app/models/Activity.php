@@ -457,7 +457,10 @@ class Activity extends Eloquent
 
                 case 'PaymentTransaction':
                     if ($object->payment_method === 'midtrans') {
-                        $this->object_display_name = $object->object_name;
+                        $this->object_display_name = $object->details->count() > 0 ?
+                                                        $object->details->first()->object_name :
+                                                        'Can not get payment detail record.';
+
                     }
                     else {
                         $paymentProvider = PaymentProvider::where('payment_provider_id', '=', $object->payment_provider_id)->first();
