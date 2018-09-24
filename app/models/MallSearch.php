@@ -18,10 +18,10 @@ class MallSearch extends Search
         $this->setIndex($this->esConfig['indices_prefix'] . $this->esConfig['indices']['malldata']['index']);
         $this->setType($this->esConfig['indices']['malldata']['type']);
     }
-    
+
     /**
      * Basic requirements of malls that will be listed.
-     * 
+     *
      * @return [type] [description]
      */
     public function filterBase()
@@ -37,7 +37,7 @@ class MallSearch extends Search
 
     /**
      * Filter by user's geo-location...
-     * 
+     *
      * @param  string $location [description]
      * @return [type]           [description]
      */
@@ -65,29 +65,29 @@ class MallSearch extends Search
 
     /**
      * Implement filter by keyword...
-     * 
+     *
      * @param  string $keyword [description]
      * @return [type]          [description]
      */
     public function filterByKeyword($keyword = '')
     {
-        $priorityName = isset($this->esConfig['priority']['mall']['name']) ? 
+        $priorityName = isset($this->esConfig['priority']['mall']['name']) ?
             $this->esConfig['priority']['mall']['name'] : '^6';
 
-        $priorityObjectType = isset($this->esConfig['priority']['mall']['object_type']) ? 
+        $priorityObjectType = isset($this->esConfig['priority']['mall']['object_type']) ?
             $this->esConfig['priority']['mall']['object_type'] : '^5';
 
-        $priorityDescription = isset($this->esConfig['priority']['mall']['description']) ? 
+        $priorityDescription = isset($this->esConfig['priority']['mall']['description']) ?
             $this->esConfig['priority']['mall']['description'] : '^3';
 
-        $priorityAddressLine = isset($this->esConfig['priority']['mall']['address_line']) ? 
+        $priorityAddressLine = isset($this->esConfig['priority']['mall']['address_line']) ?
             $this->esConfig['priority']['mall']['address_line'] : '';
 
         $this->must([
             'query_string' => [
                 'query' => '*' . $keyword . '*',
                 'fields' => [
-                    'name' . $priorityName, 
+                    'name' . $priorityName,
                     'object_type' . $priorityObjectType,
                     'description' . $priorityDescription,
                     'address_line' . $priorityAddressLine,
@@ -118,7 +118,7 @@ class MallSearch extends Search
 
     /**
      * Filter by Country and Cities...
-     * 
+     *
      * @param  array  $area [description]
      * @return [type]       [description]
      */
@@ -145,7 +145,7 @@ class MallSearch extends Search
 
     /**
      * Filter by Partner...
-     * 
+     *
      * @param  string $partnerId [description]
      * @return [type]            [description]
      */
@@ -174,8 +174,8 @@ class MallSearch extends Search
         $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
         $params['advertSorting'] = [
             '_script' => [
-                'script' => $sortPageScript, 
-                'type' => 'string', 
+                'script' => $sortPageScript,
+                'type' => 'string',
                 'order' => 'desc'
             ]
         ];
@@ -241,8 +241,8 @@ class MallSearch extends Search
             foreach($sortPageScripts as $sortPageScript) {
                 $advertOrdering = [
                     '_script' => [
-                        'script' => $sortPageScript, 
-                        'type' => 'string', 
+                        'script' => $sortPageScript,
+                        'type' => 'string',
                         'order' => 'desc'
                     ]
                 ];
@@ -258,7 +258,7 @@ class MallSearch extends Search
 
     /**
      * Exclude the partner competitors from the result.
-     * 
+     *
      * @param  array  $competitors [description]
      * @return [type]              [description]
      */
@@ -273,7 +273,7 @@ class MallSearch extends Search
 
     /**
      * Sort by name..
-     * 
+     *
      * @return [type] [description]
      */
     public function sortByName()
@@ -283,7 +283,7 @@ class MallSearch extends Search
 
     /**
      * Sort store by rating.
-     * 
+     *
      * @param  string $sortingScript [description]
      * @return [type]                [description]
      */
@@ -300,7 +300,7 @@ class MallSearch extends Search
 
     /**
      * Sort store by favorite.
-     * 
+     *
      * @param  string $sortingScript [description]
      * @return [type]                [description]
      */
@@ -381,7 +381,7 @@ class MallSearch extends Search
 
     /**
      * Sort by relevance..
-     * 
+     *
      * @return [type] [description]
      */
     public function sortByRelevance()
@@ -394,9 +394,48 @@ class MallSearch extends Search
         $this->sort(['updated_at' => ['order' => 'desc']]);
     }
 
+    public function sortByNearest($ul = null)
+    {
+        // Get user location ($ul), latitude and longitude.
+        // If latitude and longitude doesn't exist in query string, the code will be read cookie to get lat and lon
+        if ($ul == null) {
+            $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
+
+            $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
+            if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
+                $longitude = $userLocationCookieArray[0];
+                $latitude = $userLocationCookieArray[1];
+            }
+        } else {
+            $loc = explode('|', $ul);
+            $longitude = $loc[0];
+            $latitude = $loc[1];
+        }
+
+        if (isset($longitude) && isset($latitude))  {
+            $this->sort(
+                            [
+                              '_geo_distance' => [
+                                'position' => [
+                                  'lon' => $longitude,
+                                  'lat' => $latitude
+                                ],
+                                'order' => 'asc',
+                                'unit' => 'km',
+                                'distance_type' => 'plane'
+                              ]
+                            ]
+                    );
+        }
+
+        $this->sortByUpdatedAt();
+
+    }
+
+
     /**
      * Bypass Malls ordering...
-     * 
+     *
      * @param  array  $params [description]
      * @return [type]         [description]
      */
@@ -425,8 +464,9 @@ class MallSearch extends Search
 
         if (! empty($mallFeaturedIds)) {
 
+            // No need this, because we already have ordering in MallListNewAPIController.php
             // Make sure to sort by score first...
-            $this->sortByRelevance();
+            // $this->sortByRelevance();
 
             $esFeaturedBoost = Config::get('orbit.featured.es_boost', 10);
 
@@ -456,7 +496,7 @@ class MallSearch extends Search
 
     /**
      * Init default search params.
-     * 
+     *
      * @return [type] [description]
      */
     public function setDefaultSearchParam()
@@ -484,33 +524,33 @@ class MallSearch extends Search
                 'should' => [
                     [
                         'bool' => [
-                            'must' => [ 
+                            'must' => [
                                 [
                                     'query' => [
                                         'match' => [
                                             'advert_status' => 'active'
                                         ]
                                     ]
-                                ], 
+                                ],
                                 [
                                     'range' => [
                                         'advert_start_date' => [
                                             'lte' => $options['dateTimeEs']
                                         ]
                                     ]
-                                ], 
+                                ],
                                 [
                                     'range' => [
                                         'advert_end_date' => [
                                             'gte' => $options['dateTimeEs']
                                         ]
                                     ]
-                                ], 
+                                ],
                                 [
                                     'match' => [
                                         'advert_location_ids' => $options['locationId']
                                     ]
-                                ], 
+                                ],
                                 [
                                     'terms' => [
                                         'advert_type' => $options['advertType']
