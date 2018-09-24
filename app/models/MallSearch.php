@@ -394,6 +394,11 @@ class MallSearch extends Search
         $this->sort(['updated_at' => ['order' => 'desc']]);
     }
 
+    /**
+     * Sort by Nearest..
+     *
+     * @return [type] [description]
+     */
     public function sortByNearest($ul = null)
     {
         // Get user location ($ul), latitude and longitude.
@@ -428,7 +433,7 @@ class MallSearch extends Search
                     );
         }
 
-        $this->sortByUpdatedAt();
+        $this->sortByName();
 
     }
 
