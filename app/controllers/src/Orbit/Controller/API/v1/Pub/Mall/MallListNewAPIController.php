@@ -107,7 +107,6 @@ class MallListNewAPIController extends PubControllerAPI
             $ul = OrbitInput::get('ul', null);
             $language = OrbitInput::get('language', 'id');
             $radius = Config::get('orbit.geo_location.distance', 10);
-            $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
             $viewType = OrbitInput::get('view_type', 'grid');
             $list_type = OrbitInput::get('list_type', 'preferred');
             $withAdvert = (bool) OrbitInput::get('with_advert', true);
@@ -255,6 +254,9 @@ class MallListNewAPIController extends PubControllerAPI
                     break;
                 case 'updated_at':
                     $this->searcher->sortByUpdatedAt();
+                    break;
+                case 'location':
+                    $this->searcher->sortByNearest($ul);
                     break;
                 case 'rating':
                     $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
