@@ -489,7 +489,7 @@ class CouponAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
             } else {
-                $maximumRedeem = 0;
+                $maximumRedeem = count($arrayCouponCode);
             }
 
             // 3rd party coupon validation
@@ -2162,7 +2162,7 @@ class CouponAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('retailer_ids', function($retailer_ids) use ($promotion_id, $paymentProviders, $payByWallet) {
+            OrbitInput::post('link_to_tenant_ids', function($retailer_ids) use ($promotion_id, $paymentProviders, $payByWallet) {
                 // validating retailer_ids.
                 foreach ($retailer_ids as $retailer_id_json) {
                     $data = @json_decode($retailer_id_json);
@@ -3389,13 +3389,9 @@ class CouponAPIController extends ControllerAPI
                     } elseif ($relation === 'ages') {
                         $coupons->with('ages');
                     } elseif ($relation === 'keywords') {
-                        $coupons->with(['keywords' => function($query) {
-                            $query->groupBy('keyword');
-                        }]);
+                        $coupons->with('keywords');
                     } elseif ($relation === 'product_tags') {
-                        $coupons->with(['product_tags' => function($query) {
-                            $query->groupBy('product_tag');
-                        }]);
+                        $coupons->with('product_tags');
                     } elseif ($relation === 'campaignObjectPartners') {
                         $coupons->with('campaignObjectPartners');
                     }
@@ -3584,16 +3580,9 @@ class CouponAPIController extends ControllerAPI
             // Try to check access control list, does this user allowed to
             // perform this action
             $user = $this->api->user;
+
             Event::fire('orbit.coupon.redeemcoupon.before.authz', array($this, $user));
 
-/*
-            if (! ACL::create($user)->isAllowed('delete_coupon')) {
-                Event::fire('orbit.coupon.redeemcoupon.authz.notallowed', array($this, $user));
-                $deleteCouponLang = Lang::get('validation.orbit.actionlist.delete_coupon');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $deleteCouponLang));
-                ACL::throwAccessForbidden($message);
-            }
-*/
             // @Todo: Use ACL authentication instead
             $role = $user->role;
             $validRoles = $this->couponModifiyRolesWithConsumer;
@@ -3626,8 +3615,8 @@ class CouponAPIController extends ControllerAPI
                     'current_mall' => $mall_id,
                 ),
                 array(
-                    'store_id'                      => 'required',
-                    'current_mall'                  => 'required|orbit.empty.merchant',
+                    'store_id' => 'required',
+                    'current_mall' => 'required|orbit.empty.merchant',
                 )
             );
             $validator2 = Validator::make(
@@ -3635,7 +3624,7 @@ class CouponAPIController extends ControllerAPI
                     'issued_coupon_id' => $issuedCouponId,
                 ),
                 array(
-                    'issued_coupon_id'              => 'required',
+                    'issued_coupon_id' => 'required',
                 )
             );
             Event::fire('orbit.coupon.redeemcoupon.before.validation', array($this, $validator));
@@ -3713,7 +3702,7 @@ class CouponAPIController extends ControllerAPI
                 }
 
                 $tenant = Tenant::active()
-                    ->where('parent_id', $mall_id)
+                    ->where('merchant_id', $storeId)
                     ->where('masterbox_number', $verificationNumber)
                     ->first();
 
@@ -3834,7 +3823,7 @@ class CouponAPIController extends ControllerAPI
 
             // Only send payment request to orbit-payment API if the coupon is NOT hot_deals and sepulsa
             $transactionId = '';
-            if (in_array($coupon->promotion_type, [Coupon::TYPE_SEPULSA, Coupon::TYPE_HOT_DEALS])) {
+            if (in_array($coupon->promotion_type, [Coupon::TYPE_HOT_DEALS])) {
                 // IssuedCoupon record should have transaction_id set...
                 $transactionId = $issuedCoupon->transaction_id;
 
@@ -3872,6 +3861,7 @@ class CouponAPIController extends ControllerAPI
                                         ->first();
 
             if ($paymentProvider === '0') {
+                $issuedcoupon->transaction_id = $transactionId;
                 $issuedcoupon->redeemed_date = date('Y-m-d H:i:s');
                 $issuedcoupon->redeem_retailer_id = $redeem_retailer_id;
                 $issuedcoupon->redeem_user_id = $redeem_user_id;
@@ -3897,9 +3887,14 @@ class CouponAPIController extends ControllerAPI
             $this->response->message = 'Coupon has been successfully redeemed.';
             $this->response->data = $data;
 
-            if ($paymentProvider === '0') {
+            if ($paymentProvider === '0' || $coupon->promotion_type === Coupon::TYPE_HOT_DEALS) {
                 // Successfull Creation
                 $activityNotes = sprintf('Coupon Redeemed: %s', $issuedcoupon->coupon->promotion_name);
+
+                if ($coupon->promotion_type === Coupon::TYPE_HOT_DEALS) {
+                    $activityNotes = Coupon::TYPE_HOT_DEALS;
+                }
+
                 $activity->setUser($user)
                         ->setActivityName('redeem_coupon')
                         ->setActivityNameLong('Coupon Redemption (Successful)')

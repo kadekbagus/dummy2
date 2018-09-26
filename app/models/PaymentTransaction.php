@@ -28,6 +28,8 @@ class PaymentTransaction extends Eloquent
     const STATUS_SUCCESS            = 'success';
     const STATUS_DENIED             = 'denied';
     const STATUS_SUSPICIOUS         = 'suspicious';
+    const STATUS_CANCELED           = 'canceled';
+    const STATUS_ABORTED            = 'abort';
 
     /**
      * It means we are in the process of getting coupon/voucher from Sepulsa.
@@ -154,6 +156,26 @@ class PaymentTransaction extends Eloquent
     }
 
     /**
+     * Determine if the payment is canceled/aborted or not.
+     *
+     * @return [type] [description]
+     */
+    public function canceled()
+    {
+        return $this->status === self::STATUS_CANCELED || $this->aborted();
+    }
+
+    /**
+     * Determine if the payment was aborted or not.
+     *
+     * @return [type] [description]
+     */
+    public function aborted()
+    {
+        return $this->status === self::STATUS_ABORTED;
+    }
+
+    /**
      * Determine if the payment is denied or not.
      *
      * @return [type] [description]
@@ -260,10 +282,10 @@ class PaymentTransaction extends Eloquent
 
         $issuedCoupons = $this->issued_coupons;
 
-        if (empty($issuedCoupons)) {
+        if ($issuedCoupons->count() === 0) {
             $issuedCoupons = IssuedCoupon::where('transaction_id', $this->payment_transaction_id)->get();
 
-            if (empty($issuedCoupons)) {
+            if ($issuedCoupons->count() === 0) {
                 Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Related issuedCoupon not found. Nothing to do.');
                 return;
             }
@@ -272,6 +294,7 @@ class PaymentTransaction extends Eloquent
         $couponId = $issuedCoupons->first()->promotion_id;
 
         // If it is Sepulsa, then remove the IssuedCoupon record.
+        // If it is Hot Deals, then reset the IssuedCoupon state.
         if ($this->forSepulsa()) {
             foreach($issuedCoupons as $issuedCoupon) {
                 // TODO: Check if the coupon is already issued. If so, then what should we do?
@@ -279,22 +302,20 @@ class PaymentTransaction extends Eloquent
                     Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Removing reserved sepulsa voucher.');
 
                     // Manual query for each IssuedCoupon
-                    IssuedCoupon::where('issued_coupon_id', $issuedCoupon->issued_coupon_id)->delete();
+                    IssuedCoupon::where('issued_coupon_id', $issuedCoupon->issued_coupon_id)->delete(TRUE);
                 }
                 else {
                     Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Voucher is already issued. Do NOTHING at the moment.');
                 }
             }
         }
-        // If it is Hot Deals, then reset the IssuedCoupon state.
         else if ($this->forHotDeals()) {
             Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Reverting reserved hot deals coupon status.');
 
             foreach($issuedCoupons as $issuedCoupon) {
                 $issuedCoupon->makeAvailable();
+                Log::info('Payment: hot deals coupon reverted. IssuedCoupon ID: ' . $issuedCoupon->issued_coupon_id);
             }
-
-            Log::info('Payment: hot deals coupon reverted. IssuedCoupon ID: ' . $issuedCoupon->issued_coupon_id);
         }
 
         // Update the availability...

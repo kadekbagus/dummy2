@@ -485,34 +485,32 @@ class CouponSepulsaAPIController extends ControllerAPI
             foreach ($keywords as $keyword) {
                 $keyword_id = null;
 
-                foreach ($mallid as $mall) {
-                    $existKeyword = Keyword::excludeDeleted()
-                    ->where('keyword', '=', $keyword)
-                    ->where('merchant_id', '=', $mall)
-                    ->first();
+                $existKeyword = Keyword::excludeDeleted()
+                ->where('keyword', '=', $keyword)
+                ->where('merchant_id', '=', 0)
+                ->first();
 
-                    if (empty($existKeyword)) {
-                        $newKeyword = new Keyword();
-                        $newKeyword->merchant_id = $mall;
-                        $newKeyword->keyword = $keyword;
-                        $newKeyword->status = 'active';
-                        $newKeyword->created_by = $this->api->user->user_id;
-                        $newKeyword->modified_by = $this->api->user->user_id;
-                        $newKeyword->save();
+                if (empty($existKeyword)) {
+                    $newKeyword = new Keyword();
+                    $newKeyword->merchant_id = 0;
+                    $newKeyword->keyword = $keyword;
+                    $newKeyword->status = 'active';
+                    $newKeyword->created_by = $this->api->user->user_id;
+                    $newKeyword->modified_by = $this->api->user->user_id;
+                    $newKeyword->save();
 
-                        $keyword_id = $newKeyword->keyword_id;
-                        $couponKeywords[] = $newKeyword;
-                    } else {
-                        $keyword_id = $existKeyword->keyword_id;
-                        $couponKeywords[] = $existKeyword;
-                    }
-
-                    $newKeywordObject = new KeywordObject();
-                    $newKeywordObject->keyword_id = $keyword_id;
-                    $newKeywordObject->object_id = $newcoupon->promotion_id;
-                    $newKeywordObject->object_type = 'coupon';
-                    $newKeywordObject->save();
+                    $keyword_id = $newKeyword->keyword_id;
+                    $couponKeywords[] = $newKeyword;
+                } else {
+                    $keyword_id = $existKeyword->keyword_id;
+                    $couponKeywords[] = $existKeyword;
                 }
+
+                $newKeywordObject = new KeywordObject();
+                $newKeywordObject->keyword_id = $keyword_id;
+                $newKeywordObject->object_id = $newcoupon->promotion_id;
+                $newKeywordObject->object_type = 'coupon';
+                $newKeywordObject->save();
             }
             $newcoupon->keywords = $couponKeywords;
 
@@ -521,34 +519,32 @@ class CouponSepulsaAPIController extends ControllerAPI
             foreach ($productTags as $productTag) {
                 $product_tag_id = null;
 
-                foreach ($mallid as $mall) {
-                    $existProductTag = ProductTag::excludeDeleted()
-                        ->where('product_tag', '=', $productTag)
-                        ->where('merchant_id', '=', $mall)
-                        ->first();
+                $existProductTag = ProductTag::excludeDeleted()
+                    ->where('product_tag', '=', $productTag)
+                    ->where('merchant_id', '=', 0)
+                    ->first();
 
-                    if (empty($existProductTag)) {
-                        $newProductTag = new ProductTag();
-                        $newProductTag->merchant_id = $mall;
-                        $newProductTag->product_tag = $productTag;
-                        $newProductTag->status = 'active';
-                        $newProductTag->created_by = $this->api->user->user_id;
-                        $newProductTag->modified_by = $this->api->user->user_id;
-                        $newProductTag->save();
+                if (empty($existProductTag)) {
+                    $newProductTag = new ProductTag();
+                    $newProductTag->merchant_id = 0;
+                    $newProductTag->product_tag = $productTag;
+                    $newProductTag->status = 'active';
+                    $newProductTag->created_by = $this->api->user->user_id;
+                    $newProductTag->modified_by = $this->api->user->user_id;
+                    $newProductTag->save();
 
-                        $product_tag_id = $newProductTag->product_tag_id;
-                        $couponProductTags[] = $newProductTag;
-                    } else {
-                        $product_tag_id = $existProductTag->product_tag_id;
-                        $couponProductTags[] = $existProductTag;
-                    }
-
-                    $newProductTagObject = new ProductTagObject();
-                    $newProductTagObject->product_tag_id = $product_tag_id;
-                    $newProductTagObject->object_id = $newcoupon->promotion_id;
-                    $newProductTagObject->object_type = 'coupon';
-                    $newProductTagObject->save();
+                    $product_tag_id = $newProductTag->product_tag_id;
+                    $couponProductTags[] = $newProductTag;
+                } else {
+                    $product_tag_id = $existProductTag->product_tag_id;
+                    $couponProductTags[] = $existProductTag;
                 }
+
+                $newProductTagObject = new ProductTagObject();
+                $newProductTagObject->product_tag_id = $product_tag_id;
+                $newProductTagObject->object_id = $newcoupon->promotion_id;
+                $newProductTagObject->object_type = 'coupon';
+                $newProductTagObject->save();
             }
             $newcoupon->product_tags = $couponProductTags;
 
@@ -890,6 +886,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $retailer_ids = (array) $retailer_ids;
             $linkToTenantIds = OrbitInput::post('link_to_tenant_ids');
             $linkToTenantIds = (array) $linkToTenantIds;
+
             $partner_ids = OrbitInput::post('partner_ids');
             $partner_ids = (array) $partner_ids;
             $is_exclusive = OrbitInput::post('is_exclusive', 'N');
@@ -1030,7 +1027,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                                             'translations.language',
                                             'translations.media',
                                             'ages.ageRange',
-                                            'genders',
                                             'keywords',
                                             'product_tags',
                                             'campaign_status',
@@ -1118,6 +1114,14 @@ class CouponSepulsaAPIController extends ControllerAPI
                 $updatedcoupon->coupon_validity_in_date = $coupon_validity_in_date;
             });
 
+            OrbitInput::post('gender', function($gender) use ($updatedcoupon) {
+                if ($gender === 'A') {
+                    $gender = 'Y';
+                }
+
+                $updatedcoupon->is_all_gender = $gender;
+            });
+
             $updatedcoupon->is_unique_redeem = 'N';
 
             $updatedcoupon->modified_by = $this->api->user->user_id;
@@ -1161,14 +1165,6 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             OrbitInput::post('voucher_benefit', function($voucher_benefit) use ($updatedCouponSepulsa) {
                 $updatedCouponSepulsa->voucher_benefit = $voucher_benefit;
-            });
-
-            OrbitInput::post('gender', function($gender) use ($updatedCouponSepulsa) {
-                if ($gender === 'A') {
-                    $gender = 'Y';
-                }
-
-                $updatedCouponSepulsa->is_all_gender = $gender;
             });
 
             $updatedCouponSepulsa->setUpdatedAt($updatedCouponSepulsa->freshTimestamp());
@@ -1228,7 +1224,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('retailer_ids', function($retailer_ids) use ($promotion_id, $payByWallet) {
+            OrbitInput::post('link_to_tenant_ids', function($retailer_ids) use ($promotion_id, $payByWallet) {
                 // validating retailer_ids.
                 foreach ($retailer_ids as $retailer_id_json) {
                     $data = @json_decode($retailer_id_json);
@@ -1349,41 +1345,39 @@ class CouponSepulsaAPIController extends ControllerAPI
                                                     ->where('object_type', '=', 'coupon');
             $deleted_keyword_object->delete();
 
-            OrbitInput::post('keywords', function($keywords) use ($updatedcoupon, $merchant_id, $user, $promotion_id, $mallid) {
+            OrbitInput::post('keywords', function($keywords) use ($updatedcoupon, $user, $promotion_id) {
                 // Insert new data
                 $couponKeywords = array();
                 foreach ($keywords as $keyword) {
                     $keyword_id = null;
 
-                    foreach ($mallid as $mall) {
-                        $existKeyword = Keyword::excludeDeleted()
-                            ->where('keyword', '=', $keyword)
-                            ->where('merchant_id', '=', $mall)
-                            ->first();
+                    $existKeyword = Keyword::excludeDeleted()
+                        ->where('keyword', '=', $keyword)
+                        ->where('merchant_id', '=', 0)
+                        ->first();
 
-                        if (empty($existKeyword)) {
-                            $newKeyword = new Keyword();
-                            $newKeyword->merchant_id = $mall;
-                            $newKeyword->keyword = $keyword;
-                            $newKeyword->status = 'active';
-                            $newKeyword->created_by = $user->user_id;
-                            $newKeyword->modified_by = $user->user_id;
-                            $newKeyword->save();
+                    if (empty($existKeyword)) {
+                        $newKeyword = new Keyword();
+                        $newKeyword->merchant_id = 0;
+                        $newKeyword->keyword = $keyword;
+                        $newKeyword->status = 'active';
+                        $newKeyword->created_by = $user->user_id;
+                        $newKeyword->modified_by = $user->user_id;
+                        $newKeyword->save();
 
-                            $keyword_id = $newKeyword->keyword_id;
-                            $couponKeywords[] = $newKeyword;
-                        } else {
-                            $keyword_id = $existKeyword->keyword_id;
-                            $couponKeywords[] = $existKeyword;
-                        }
-
-
-                        $newKeywordObject = new KeywordObject();
-                        $newKeywordObject->keyword_id = $keyword_id;
-                        $newKeywordObject->object_id = $promotion_id;
-                        $newKeywordObject->object_type = 'coupon';
-                        $newKeywordObject->save();
+                        $keyword_id = $newKeyword->keyword_id;
+                        $couponKeywords[] = $newKeyword;
+                    } else {
+                        $keyword_id = $existKeyword->keyword_id;
+                        $couponKeywords[] = $existKeyword;
                     }
+
+
+                    $newKeywordObject = new KeywordObject();
+                    $newKeywordObject->keyword_id = $keyword_id;
+                    $newKeywordObject->object_id = $promotion_id;
+                    $newKeywordObject->object_type = 'coupon';
+                    $newKeywordObject->save();
                 }
                 $updatedcoupon->keywords = $couponKeywords;
             });
@@ -1393,41 +1387,38 @@ class CouponSepulsaAPIController extends ControllerAPI
                                                     ->where('object_type', '=', 'coupon');
             $deleted_product_tags_object->delete();
 
-            OrbitInput::post('product_tags', function($productTags) use ($updatedcoupon, $merchant_id, $user, $promotion_id, $mallid) {
+            OrbitInput::post('product_tags', function($productTags) use ($updatedcoupon, $user, $promotion_id) {
                 // Insert new data
                 $couponProductTags = array();
                 foreach ($productTags as $productTag) {
                     $product_tag_id = null;
 
-                    foreach ($mallid as $mall) {
-                        $existProductTag = ProductTag::excludeDeleted()
-                            ->where('product_tag', '=', $productTag)
-                            ->where('merchant_id', '=', $mall)
-                            ->first();
+                    $existProductTag = ProductTag::excludeDeleted()
+                        ->where('product_tag', '=', $productTag)
+                        ->where('merchant_id', '=', 0)
+                        ->first();
 
-                        if (empty($existProductTag)) {
-                            $newProductTag = new ProductTag();
-                            $newProductTag->merchant_id = $mall;
-                            $newProductTag->product_tag = $productTag;
-                            $newProductTag->status = 'active';
-                            $newProductTag->created_by = $user->user_id;
-                            $newProductTag->modified_by = $user->user_id;
-                            $newProductTag->save();
+                    if (empty($existProductTag)) {
+                        $newProductTag = new ProductTag();
+                        $newProductTag->merchant_id = 0;
+                        $newProductTag->product_tag = $productTag;
+                        $newProductTag->status = 'active';
+                        $newProductTag->created_by = $user->user_id;
+                        $newProductTag->modified_by = $user->user_id;
+                        $newProductTag->save();
 
-                            $product_tag_id = $newProductTag->product_tag_id;
-                            $couponProductTags[] = $newProductTag;
-                        } else {
-                            $product_tag_id = $existProductTag->product_tag_id;
-                            $couponProductTags[] = $existProductTag;
-                        }
-
-                        $newProductTagObject = new ProductTagObject();
-                        $newProductTagObject->product_tag_id = $product_tag_id;
-                        $newProductTagObject->object_id = $promotion_id;
-                        $newProductTagObject->object_type = 'coupon';
-                        $newProductTagObject->save();
+                        $product_tag_id = $newProductTag->product_tag_id;
+                        $couponProductTags[] = $newProductTag;
+                    } else {
+                        $product_tag_id = $existProductTag->product_tag_id;
+                        $couponProductTags[] = $existProductTag;
                     }
 
+                    $newProductTagObject = new ProductTagObject();
+                    $newProductTagObject->product_tag_id = $product_tag_id;
+                    $newProductTagObject->object_id = $promotion_id;
+                    $newProductTagObject->object_type = 'coupon';
+                    $newProductTagObject->save();
                 }
                 $updatedcoupon->product_tags = $couponProductTags;
             });
@@ -2024,13 +2015,9 @@ class CouponSepulsaAPIController extends ControllerAPI
                     } elseif ($relation === 'campaignLocations.mall') {
                         $coupons->with('campaignLocations.mall');
                     } elseif ($relation === 'keywords') {
-                        $coupons->with(['keywords' => function($query) {
-                            $query->groupBy('keyword');
-                        }]);
+                        $coupons->with('keywords');
                     } elseif ($relation === 'product_tags') {
-                        $coupons->with(['product_tags' => function($query) {
-                            $query->groupBy('product_tag');
-                        }]);
+                        $coupons->with('product_tags');
                     } elseif ($relation === 'campaignObjectPartners') {
                         $coupons->with('campaignObjectPartners');
                     }

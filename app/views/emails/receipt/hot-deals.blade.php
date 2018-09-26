@@ -21,7 +21,7 @@
         p {
             margin: 0;
         }
-        
+
         body {
             text-align: left;
         }
@@ -162,7 +162,7 @@
             </th>
           </tr>
         </thead>
-        
+
         <tbody>
           <tr>
             <td class="text-left invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;"><strong>{{{ trans('email-receipt.header.order_number', ['transactionId' => $transaction['id']]) }}}</strong></td>
@@ -184,9 +184,9 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td class="first" style="font-family:'Roboto', 'Arial', sans-serif;padding:15px;padding-left:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $customerName }}}</td>
-                    <td style="font-family:'Roboto', 'Arial', sans-serif;padding:15px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $customerEmail }}}</td>
-                    <td style="font-family:'Roboto', 'Arial', sans-serif;padding:15px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $customerPhone }}}</td>
+                    <td class="first" style="font-family:'Roboto', 'Arial', sans-serif;padding:15px;padding-left:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;word-wrap: break-word;">{{{ $customerName }}}</td>
+                    <td style="font-family:'Roboto', 'Arial', sans-serif;padding:15px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;word-wrap: break-word;">{{{ $customerEmail }}}</td>
+                    <td style="font-family:'Roboto', 'Arial', sans-serif;padding:15px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;word-wrap: break-word;">{{{ $customerPhone }}}</td>
                   </tr>
                 </tbody>
               </table>
@@ -203,7 +203,7 @@
                 <tbody class="transaction-items">
                     @foreach($transaction['items'] as $item)
                       <tr class="transaction-item">
-                        <td class="first" style="font-family:'Roboto', 'Arial', sans-serif;border-bottom:1px solid #999;vertical-align:top;padding:15px 8px;border-bottom:0;padding-left:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $item['name'] }}}</td>
+                        <td class="first" style="font-family:'Roboto', 'Arial', sans-serif;border-bottom:1px solid #999;vertical-align:top;padding:15px 8px;border-bottom:0;padding-left:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;word-wrap: break-word;">{{{ $item['name'] }}}</td>
                         <td style="font-family:'Roboto', 'Arial', sans-serif;border-bottom:1px solid #999;vertical-align:top;padding:15px 8px;border-bottom:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $item['quantity'] }}}</td>
                         <td style="font-family:'Roboto', 'Arial', sans-serif;border-bottom:1px solid #999;vertical-align:top;padding:15px 8px;border-bottom:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $item['price'] }}}</td>
                         <td style="font-family:'Roboto', 'Arial', sans-serif;border-bottom:1px solid #999;vertical-align:top;padding:15px 8px;border-bottom:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $item['total'] }}}</td>
