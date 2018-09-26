@@ -21,12 +21,6 @@ class CouponNotAvailableNotification extends AdminNotification
 {
     use HasPayment;
 
-    /**
-     * Required if we use HasPayment trait.
-     * @var null
-     */
-    protected $payment = null;
-
     protected $reason = null;
 
     /**
@@ -49,7 +43,7 @@ class CouponNotAvailableNotification extends AdminNotification
 
     /**
      * Get the email templates.
-     * 
+     *
      * @return [type] [description]
      */
     public function getEmailTemplates()
@@ -61,7 +55,7 @@ class CouponNotAvailableNotification extends AdminNotification
 
     /**
      * Get the email data.
-     * 
+     *
      * @return [type] [description]
      */
     public function getEmailData()
@@ -78,7 +72,7 @@ class CouponNotAvailableNotification extends AdminNotification
     /**
      * Notify via email.
      * This method act as custom Queue handler.
-     * 
+     *
      * @param  [type] $notifiable [description]
      * @return [type]             [description]
      */
