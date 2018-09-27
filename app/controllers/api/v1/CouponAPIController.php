@@ -3661,8 +3661,7 @@ class CouponAPIController extends ControllerAPI
                                         ->first();
 
             if (empty($issuedCoupon)) {
-                $errorMessage = sprintf('Issued coupon ID %s is not found.', htmlentities($issuedCouponId));
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                OrbitShopAPI::throwInvalidArgument('Issued coupon ID is not found');
             }
 
             $coupon = Coupon::where('promotion_id', $issuedCoupon->promotion_id)->first();
