@@ -3666,6 +3666,11 @@ class CouponAPIController extends ControllerAPI
                                         ->where('status', 'issued')
                                         ->first();
 
+            if (empty($issuedCoupon)) {
+                $errorMessage = sprintf('Issued coupon ID %s is not found.', htmlentities($issuedCouponId));
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             $coupon = Coupon::where('promotion_id', $issuedCoupon->promotion_id)->first();
 
             $baseStore = BaseStore::select('base_stores.base_store_id', 'base_stores.merchant_id', 'base_stores.phone', 'base_stores.base_merchant_id', 'base_merchants.name as store_name', 'merchants.country_id', 'timezones.timezone_name', 'merchants.name as mall_name')
