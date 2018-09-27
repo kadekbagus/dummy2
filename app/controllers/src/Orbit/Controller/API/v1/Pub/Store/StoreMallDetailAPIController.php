@@ -214,7 +214,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
             // get number of mall without filter
             $numberOfMall = 0;
             $_numberOfMall = clone $mall;
-            $_numberOfMall->groupBy(DB::raw("mall_id"))->get();
+            $_numberOfMall->groupBy(DB::raw("merchant_id"))->get();
 
             if (! empty($location)) {
                 if (! in_array('0', $location)) {
@@ -243,7 +243,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
             $mall->orderBy(DB::raw('mall.city'), 'asc');
             $mall->orderBy('merchants.name', 'asc');
 
-            $mall = $mall->groupBy(DB::raw("mall_id"));
+            $mall = $mall->groupBy(DB::raw("merchant_id"));
 
             $_mall = clone $mall;
             $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
