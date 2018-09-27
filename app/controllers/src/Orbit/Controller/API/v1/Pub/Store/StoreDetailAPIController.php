@@ -123,6 +123,26 @@ class StoreDetailAPIController extends PubControllerAPI
                                             )
                                         END as description
                                     "),
+                                DB::Raw("CASE WHEN (
+                                                select cpt.custom_title
+                                                from {$prefix}merchant_translations cpt
+                                                where cpt.merchant_id = {$prefix}merchants.merchant_id
+                                                    and cpt.merchant_language_id = {$this->quote($valid_language->language_id)}
+                                            ) = ''
+                                            THEN (
+                                                select cpt.custom_title
+                                                from {$prefix}merchant_translations cpt
+                                                where cpt.merchant_id = {$prefix}merchants.merchant_id
+                                                    and cpt.merchant_language_id = {$prefix}languages.language_id
+                                            )
+                                            ELSE (
+                                                select cpt.custom_title
+                                                from {$prefix}merchant_translations cpt
+                                                where cpt.merchant_id = {$prefix}merchants.merchant_id
+                                                    and cpt.merchant_language_id = {$this->quote($valid_language->language_id)}
+                                            )
+                                        END as custom_page_title
+                                    "),
                                 'merchants.url'
                             )
                 ->with(['categories' => function ($q) use ($valid_language, $prefix) {
