@@ -281,6 +281,8 @@ class MenuCounterAPIController extends PubControllerAPI
 
             // filter by keywords
             OrbitInput::get('keywords', function($keywords) use (&$keywordFilter, &$keywordFilterShould, &$keywordMallFilter, &$keywordMallFilterShould) {
+                $forbiddenCharacter = array('>', '<', '(', ')', '{', '}', '[', ']', '^', '"', '~', '/');
+                $keywords = str_replace($forbiddenCharacter, '', $keywords);
 
                 $esPriority = Config::get('orbit.elasticsearch.priority');
 
