@@ -319,6 +319,9 @@ class CouponListNewAPIController extends PubControllerAPI
                 case 'relevance':
                     $this->searcher->sortByRelevance();
                     break;
+                case 'location':
+                    $this->searcher->sortByNearest($ul);
+                    break;
                 case 'rating':
                     $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
                     break;
