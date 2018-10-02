@@ -186,7 +186,7 @@
               </p>
               <br>
 
-              @include('emails.pending-payment.payment-info', compact('paymentInfo', 'paymentExpiration'))
+              @include('emails.pending-payment.payment-info', compact('paymentInfo', 'paymentExpiration', 'myWalletUrl'))
 
               {{-- <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 {{ trans('email-pending-payment.body.help', ['csPhone' => $cs['phone'], 'csEmail' => $cs['email']]) }}

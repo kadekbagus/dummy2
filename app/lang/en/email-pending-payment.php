@@ -36,5 +36,6 @@ return [
         'payment-info-line-2' => 'You can follow payment instruction below to complete the transaction.',
 
         'btn_payment_instruction' => 'Payment Instruction',
+        'btn_my_wallet' => 'Go to My Wallet',
     ],
 ];
