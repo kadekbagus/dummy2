@@ -21,7 +21,7 @@ return [
             'total_amount' => 'Total Amount: ',
         ],
 
-        'payment-info-line-1' => 'Please perform a payment transfer to the following bank account. Maximum payment at ',
+        'payment-info-line-1' => 'Please perform the payment transfer to the following bank account before <span style="color:#f43d3c;">:paymentExpiration</span> to complete your transaction.',
 
         'payment-info' => [
             'biller_code' => 'Company Code: ',
@@ -33,7 +33,7 @@ return [
             'bank_name' => 'Bank Name: ',
         ],
 
-        'payment-info-line-2' => 'You can follow instruction below to complete the transaction.',
+        'payment-info-line-2' => 'You can follow payment instruction below to complete the transaction.',
 
         'btn_payment_instruction' => 'Payment Instruction',
     ],
