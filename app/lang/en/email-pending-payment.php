@@ -17,6 +17,7 @@ return [
             'transaction_date' => 'Transaction Date: ',
             'coupon_name' => 'Coupon Name: ',
             'coupon_price' => 'Coupon Price: ',
+            'coupon_quantity' => 'Quantity: ',
             'customer_name' => 'Customer Name: ',
             'email' => 'Email: ',
             'phone' => 'Phone: ',
