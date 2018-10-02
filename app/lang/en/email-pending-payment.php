@@ -16,12 +16,15 @@ return [
             'transaction_id' => 'Transaction ID: ',
             'transaction_date' => 'Transaction Date: ',
             'coupon_name' => 'Coupon Name: ',
+            'coupon_price' => 'Coupon Price: ',
+            'coupon_quantity' => 'Quantity: ',
             'customer_name' => 'Customer Name: ',
             'email' => 'Email: ',
+            'phone' => 'Phone: ',
             'total_amount' => 'Total Amount: ',
         ],
 
-        'payment-info-line-1' => 'Please perform the payment transfer to the following bank account before <span style="color:#f43d3c;"><strong>:paymentExpiration</strong></span> to complete your transaction.',
+        'payment-info-line-1' => 'Please perform the payment transfer to the following bank account before <br><span style="color:#f43d3c;"><strong>:paymentExpiration</strong></span> to complete your transaction.',
 
         'payment-info' => [
             'biller_code' => 'Company Code: ',
