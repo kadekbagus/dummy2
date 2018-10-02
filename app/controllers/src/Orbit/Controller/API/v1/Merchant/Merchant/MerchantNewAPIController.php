@@ -185,6 +185,7 @@ class MerchantNewAPIController extends ControllerAPI
 
                         if ($key === $idLanguageEnglish->language_id) {
                             $newBaseMerchant->description = $val->description;
+                            $newBaseMerchant->custom_title = $val->custom_title;
                         }
                     }
                 }
