@@ -1,6 +1,8 @@
               @if (! empty($paymentInfo) && isset($paymentInfo['bank_detail']))
                 <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                  {{{ trans('email-pending-payment.body.payment-info-line-1') }}} <span style="color:#f43d3c;">{{{ $paymentExpiration }}}</span>
+                  {{{ trans('email-pending-payment.body.payment-info-line-1') }}}
+                  <br>
+                  <span style="color:#f43d3c;">{{{ $paymentExpiration }}}</span>
                 </p>
                 <br>
                 <table class="no-border customer" style="line-height:1.7em;font-size:14px;color:#222;width:100%;border:0;margin-top:30px;border-spacing:0 !important;border-collapse:collapse !important;table-layout:fixed !important;margin:0 auto !important;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
