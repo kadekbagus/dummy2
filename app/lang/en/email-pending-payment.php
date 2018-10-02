@@ -21,7 +21,7 @@ return [
             'total_amount' => 'Total Amount: ',
         ],
 
-        'payment-info-line-1' => 'Please perform the payment transfer to the following bank account before <span style="color:#f43d3c;">:paymentExpiration</span> to complete your transaction.',
+        'payment-info-line-1' => 'Please perform the payment transfer to the following bank account before <span style="color:#f43d3c;"><strong>:paymentExpiration</strong></span> to complete your transaction.',
 
         'payment-info' => [
             'biller_code' => 'Company Code: ',

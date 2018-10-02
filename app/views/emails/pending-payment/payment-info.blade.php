@@ -37,8 +37,8 @@
                   <br>
                   <p class="text-center" style="font-family:'Roboto', 'Arial', sans-serif;margin:0;text-align:center;">
                     <a href="{{{ $paymentInfo['pdf_url'] }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;font-size:16px;display:inline-block;padding:10px 20px;text-decoration:none;">{{{ trans('email-pending-payment.body.btn_payment_instruction') }}}</a>
-                    &nbsp;
-                    <a href="{{{ $myWalletUrl }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#fff;color:#f43d3c;font-weight:bold;font-size:16px;display:inline-block;padding:10px 20px;text-decoration:none;">{{{ trans('email-pending-payment.body.btn_my_wallet') }}}</a>
+                    &nbsp;&nbsp;
+                    <a href="{{{ $myWalletUrl }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;border-width:1px;border-style:solid;border-color:#f43d3c;background-color:#fff;color:#f43d3c;font-weight:bold;font-size:16px;display:inline-block;padding:10px 20px;text-decoration:none;">{{{ trans('email-pending-payment.body.btn_my_wallet') }}}</a>
                   </p>
                 @endif
 
