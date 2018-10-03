@@ -95,10 +95,8 @@ class CouponBuyAPIController extends PubControllerAPI
                                             ->first();
 
                 if (! empty($usedCoupon)) {
-                    if ($userIssuedCoupon->coupon->is_unique_redeem === 'Y') {
-                        $errorMessage = 'Requested quantity not available. You only able to purchase 1 unique coupon.';
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
+                    $errorMessage = 'Requested quantity not available. You only able to purchase 1 unique coupon.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
             }
 
