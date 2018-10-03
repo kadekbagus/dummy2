@@ -122,7 +122,7 @@ class CouponCityAPIController extends PubControllerAPI
 
             $_couponLocations = clone($couponLocations);
 
-            $take = PaginationNumber::parseTakeFromGet('promotions');
+            $take = PaginationNumber::parseTakeFromGet('city_location');
             $couponLocations->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();
