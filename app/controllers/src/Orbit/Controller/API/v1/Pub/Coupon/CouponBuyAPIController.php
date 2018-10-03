@@ -91,7 +91,7 @@ class CouponBuyAPIController extends PubControllerAPI
             if ($coupon->is_unique_redeem === 'Y') {
                 $usedCoupon = IssuedCoupon::where('user_id', $user->user_id)
                                             ->where('promotion_id', $coupon_id)
-                                            ->whereIn('status', [IssuedCoupon::STATUS_RESERVED, IssuedCoupon::STATUS_ISSUED, IssuedCoupon::STATUS_REDEMEED])
+                                            ->whereIn('status', [IssuedCoupon::STATUS_RESERVED, IssuedCoupon::STATUS_ISSUED, IssuedCoupon::STATUS_REDEEMED])
                                             ->first();
 
                 if (! empty($usedCoupon)) {
