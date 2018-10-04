@@ -1,18 +1,15 @@
-<?php namespace Orbit\Notifications\Payment;
+<?php namespace Orbit\Notifications\Feedback;
 
 use Config;
 use Exception;
 use Log;
 use Mail;
 use Orbit\Helper\Notifications\AdminNotification;
-use Orbit\Helper\Util\JobBurier;
-use Queue;
 
 /**
  * Notify Customer Service (CS) for feedback related to Mall.
  *
  * @author Budi <budi@dominopos.com>
- *
  */
 class MallFeedbackNotification extends AdminNotification
 {
