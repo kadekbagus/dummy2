@@ -173,14 +173,14 @@
           <tr>
             <td colspan="2" class="invoice-body" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:80px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                <strong>{{{ trans('email-feedback-mall.body.feedback_labels.user') }}}</strong> {{ $feedback['id'] }}
+                <strong>{{{ trans('email-feedback-mall.body.feedback_labels.user') }}}</strong> {{ $feedback['user'] }}
                 <br>
                 <strong>{{{ trans('email-feedback-mall.body.feedback_labels.email') }}}</strong> {{ $feedback['email'] }}
                 <br>
                 <strong>{{{ trans('email-feedback-mall.body.feedback_labels.mall') }}}</strong> {{ $feedback['mall'] }}
                 <br>
-                @if (isset($feedback['store']))
-                    <strong>{{{ trans('email-feedback-mall.body.feedback_labels.report') }}}</strong> {{ str_replace('{store}', $feedback['store'], $feedback['report']) }}
+                @if (! empty($feedback['store']))
+                    <strong>{{{ trans('email-feedback-mall.body.feedback_labels.report') }}}</strong> {{ str_replace('{store}', "<strong style=\"color:#f43d3c\">{$feedback['store']}</strong>", $feedback['report']) }}
                 @else
                     <strong>{{{ trans('email-feedback-mall.body.feedback_labels.report') }}}</strong> {{ $feedback['report'] }}
                 @endif

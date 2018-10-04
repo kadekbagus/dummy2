@@ -5,13 +5,14 @@ return [
 
     'header' => [
         'email-type'    => 'Notice',
-        'title'         => 'User Report for Mall'
+        'title'         => 'User Report for Store'
     ],
 
     'body' => [
         'feedback_labels' => [
             'user' => 'User: ',
             'email' => 'Email: ',
+            'store' => 'Store: ',
             'mall' => 'Mall: ',
             'report' => 'Report: ',
         ],
