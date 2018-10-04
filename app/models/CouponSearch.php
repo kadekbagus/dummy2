@@ -18,10 +18,10 @@ class CouponSearch extends Search
         $this->setIndex($this->esConfig['indices_prefix'] . $this->esConfig['indices']['coupons']['index']);
         $this->setType($this->esConfig['indices']['coupons']['type']);
     }
-    
+
     /**
      * Make sure the promotion is active.
-     * 
+     *
      * @return [type] [description]
      */
     public function isActive($params = [])
@@ -33,7 +33,7 @@ class CouponSearch extends Search
 
     /**
      * Filter by Mall...
-     * 
+     *
      * @param  string $mallId [description]
      * @return [type]         [description]
      */
@@ -53,7 +53,7 @@ class CouponSearch extends Search
 
     /**
      * Filter by selected stores Categories..
-     * 
+     *
      * @return [type] [description]
      */
     public function filterByCategories($categories = [])
@@ -73,36 +73,36 @@ class CouponSearch extends Search
 
     /**
      * Filter by user's geo-location...
-     * 
+     *
      * @param  string $location [description]
      * @return [type]           [description]
      */
     public function filterByLocation($location = [])
     {
-        
+
     }
 
     /**
      * Implement filter by keyword...
-     * 
+     *
      * @param  string $keyword [description]
      * @return [type]          [description]
      */
     public function filterByKeyword($keyword = '')
     {
-        $priorityName = isset($this->esConfig['priority']['coupons']['name']) ? 
+        $priorityName = isset($this->esConfig['priority']['coupons']['name']) ?
             $this->esConfig['priority']['coupons']['name'] : '^6';
 
-        $priorityObjectType = isset($this->esConfig['priority']['coupons']['object_type']) ? 
+        $priorityObjectType = isset($this->esConfig['priority']['coupons']['object_type']) ?
             $this->esConfig['priority']['coupons']['object_type'] : '^5';
 
-        $priorityDescription = isset($this->esConfig['priority']['coupons']['description']) ? 
+        $priorityDescription = isset($this->esConfig['priority']['coupons']['description']) ?
             $this->esConfig['priority']['coupons']['description'] : '^4';
 
-        $priorityKeywords = isset($this->esConfig['priority']['coupons']['keywords']) ? 
+        $priorityKeywords = isset($this->esConfig['priority']['coupons']['keywords']) ?
             $this->esConfig['priority']['coupons']['keywords'] : '^3';
 
-        $priorityProductTags = isset($this->esConfig['priority']['coupons']['product_tags']) ? 
+        $priorityProductTags = isset($this->esConfig['priority']['coupons']['product_tags']) ?
             $this->esConfig['priority']['coupons']['product_tags'] : '^3';
 
         $this->must([
@@ -112,9 +112,9 @@ class CouponSearch extends Search
                         'query_string' => [
                             'query' => '*' . $keyword . '*',
                             'fields' => [
-                                'name' . $priorityName, 
+                                'name' . $priorityName,
                                 'object_type' . $priorityObjectType,
-                                'description' . $priorityDescription, 
+                                'description' . $priorityDescription,
                                 'keywords' . $priorityKeywords,
                                 'product_tags' . $priorityProductTags,
                             ]
@@ -166,7 +166,7 @@ class CouponSearch extends Search
 
     /**
      * Filte by Country and Cities...
-     * 
+     *
      * @param  array  $area [description]
      * @return [type]       [description]
      */
@@ -216,33 +216,33 @@ class CouponSearch extends Search
                 'should' => [
                     [
                         'bool' => [
-                            'must' => [ 
+                            'must' => [
                                 [
                                     'query' => [
                                         'match' => [
                                             'advert_status' => 'active'
                                         ]
                                     ]
-                                ], 
+                                ],
                                 [
                                     'range' => [
                                         'advert_start_date' => [
                                             'lte' => $options['dateTimeEs']
                                         ]
                                     ]
-                                ], 
+                                ],
                                 [
                                     'range' => [
                                         'advert_end_date' => [
                                             'gte' => $options['dateTimeEs']
                                         ]
                                     ]
-                                ], 
+                                ],
                                 [
                                     'match' => [
                                         'advert_location_ids' => $options['locationId']
                                     ]
-                                ], 
+                                ],
                                 [
                                     'terms' => [
                                         'advert_type' => $options['advertType']
@@ -269,7 +269,7 @@ class CouponSearch extends Search
 
     /**
      * Filter normal coupons and the advertised ones.
-     * 
+     *
      * @param  array  $options [description]
      * @return [type]          [description]
      */
@@ -324,7 +324,7 @@ class CouponSearch extends Search
 
     /**
      * Filter by Partner...
-     * 
+     *
      * @param  string $partnerId [description]
      * @return [type]            [description]
      */
@@ -364,7 +364,7 @@ class CouponSearch extends Search
 
     /**
      * Filter by CC..?
-     * 
+     *
      * @return [type] [description]
      */
     public function filterByMyCC($params = [])
@@ -424,7 +424,7 @@ class CouponSearch extends Search
 
     /**
      * Filter by Sponsors...
-     * 
+     *
      * @param  array  $sponsorProviderIds [description]
      * @return [type]                     [description]
      */
@@ -446,7 +446,7 @@ class CouponSearch extends Search
 
     /**
      * Exclude some stores from the result.
-     * 
+     *
      * @param  array  $excludedId [description]
      * @return [type]             [description]
      */
@@ -461,17 +461,17 @@ class CouponSearch extends Search
 
     /**
      * Sort by name..
-     * 
+     *
      * @return [type] [description]
      */
     public function sortByName($language = 'id', $sortMode = '')
     {
         $sortScript =  "if(doc['name_" . $language . "'].value != null) { return doc['name_" . $language . "'].value } else { doc['name_default'].value }";
-        
+
         $this->sort([
             '_script' => [
-                'script' => $sortScript, 
-                'type' => 'string', 
+                'script' => $sortScript,
+                'type' => 'string',
                 'order' => $sortMode
             ]
         ]);
@@ -479,7 +479,7 @@ class CouponSearch extends Search
 
     /**
      * Sort store by rating.
-     * 
+     *
      * @param  string $sortingScript [description]
      * @return [type]                [description]
      */
@@ -496,7 +496,7 @@ class CouponSearch extends Search
 
     /**
      * Sort store by created date.
-     * 
+     *
      * @param  string $sortingScript [description]
      * @return [type]                [description]
      */
@@ -511,7 +511,7 @@ class CouponSearch extends Search
 
     /**
      * Sort store by updated date.
-     * 
+     *
      * @param  string $sortingScript [description]
      * @return [type]                [description]
      */
@@ -570,7 +570,7 @@ class CouponSearch extends Search
 
     /**
      * Sort by relevance..
-     * 
+     *
      * @return [type] [description]
      */
     public function sortByRelevance()
@@ -580,7 +580,7 @@ class CouponSearch extends Search
 
     /**
      * Init default search params.
-     * 
+     *
      * @return [type] [description]
      */
     public function setDefaultSearchParam()
@@ -600,4 +600,24 @@ class CouponSearch extends Search
             ]
         ];
     }
+
+    /**
+     * filter by gender
+     *
+     * @return void
+     */
+    public function filterByGender($gender = '')
+    {
+        switch ($gender){
+            case 'male':
+                 $this->mustNot(['match' => ['is_all_gender' => 'F']]);
+                 break;
+            case 'female':
+                 $this->mustNot(['match' => ['is_all_gender' => 'M']]);
+                 break;
+            default:
+                // do nothing
+        }
+    }
+
 }

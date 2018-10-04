@@ -20,9 +20,11 @@ use PaymentTransaction;
 use PaymentTransactionDetail;
 use PaymentTransactionDetailNormalPaypro;
 use PaymentMidtrans;
+use IssuedCoupon;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Controller\API\v1\Pub\Payment\PaymentHelper;
 use Mall;
+use Activity;
 use Carbon\Carbon as Carbon;
 
 class PaymentMidtransCreateAPIController extends PubControllerAPI
@@ -61,6 +63,7 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
             $object_type = OrbitInput::post('object_type');
             $object_name = OrbitInput::post('object_name');
             $user_name = (!empty($last_name) ? $first_name.' '.$last_name : $first_name);
+            $mallId = OrbitInput::post('mall_id', null);
 
             $validator = Validator::make(
                 array(
@@ -79,7 +82,7 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                     'last_name'  => 'required',
                     'email'      => 'required',
                     'phone'      => 'required',
-                    'quantity'   => 'required|orbit.allowed.quantity',
+                    'quantity'   => 'required|orbit.allowed.quantity:without_requested',
                     'amount'     => 'required',
                     'post_data'  => 'required',
                     'mall_id'    => 'required',
@@ -101,10 +104,11 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
             $this->beginTransaction();
 
             // Get coupon detail from DB.
-            $coupon = Coupon::select('price_selling')->find($object_id);
+            $coupon = Coupon::select('price_selling', 'promotion_id', 'promotion_type')->find($object_id);
 
             // Get mall timezone
             $mallTimeZone = 'Asia/Jakarta';
+            $mall = null;
             if ($mall_id !== 'gtm') {
                 $mall = Mall::where('merchant_id', $mall_id)->first();
                 if (!empty($mall)) {
@@ -156,8 +160,29 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
             $paymentMidtransDetail = new PaymentMidtrans;
             $payment_new->midtrans()->save($paymentMidtransDetail);
 
+            // Link this payment to reserved coupons according to requested quantity.
+            IssuedCoupon::where('user_id', $user_id)
+                ->where('promotion_id', $object_id)
+                ->where('transaction_id', NULL)
+                ->where('status', IssuedCoupon::STATUS_RESERVED)
+                ->skip(0)->take($quantity)
+                ->update(['transaction_id' => $payment_new->payment_transaction_id]);
+
             // Commit the changes
             $this->commit();
+
+            // TODO: Log activity
+            $activity = Activity::mobileci()
+                    ->setActivityType('transaction')
+                    ->setUser($user)
+                    ->setActivityName('transaction_status')
+                    ->setActivityNameLong('Transaction is Starting')
+                    ->setModuleName('Midtrans Transaction')
+                    ->setObject($payment_new)
+                    ->setNotes($coupon->promotion_type)
+                    ->setLocation($mall)
+                    ->responseOK()
+                    ->save();
 
             $payment_new->quantity = $quantity;
 
@@ -210,5 +235,4 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
 
         return $this->render($httpCode);
     }
-
 }

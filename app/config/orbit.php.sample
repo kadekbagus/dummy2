@@ -139,6 +139,11 @@ return array(
                  'type'  => 'basic'
             ],
 
+            'advert_malls' => [
+                'index' => 'advert_malls',
+                'type' => 'basic'
+            ],
+
             'news_mall_level_suggestions' => [
                  'index' => 'news_mall_level_suggestions',
                  'type'  => 'basic'
@@ -6587,6 +6592,32 @@ return array(
                 'object_type' => 'Coupon',
                 'parameter_name' => 'object_id'
             ),
+            '182' => array(
+                'name' => 'view_transaction_page_payment_successful_coupon_failed',
+                'name_long' => 'View Transaction Page Payment Success - Failed Getting Coupon',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
+            // payment transaction canceled
+            '183' => array(
+                'name' => 'view_transaction_page_payment_canceled',
+                'name_long' => 'View Transaction Page Payment Canceled',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
+            // click cancel payment from transaction detail page
+            '184' => array(
+                'name' => 'click_cancel_payment',
+                'name_long' => 'Click Cancel Payment',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 
@@ -7427,15 +7458,21 @@ return array(
 
             // How many seconds we should wait before re-checking the transaction status?
             'transaction_status_timeout' => 60,
+
+            // The expiration limit since the payment created (in minutes). Default to 1 day or 1440 minutes.
+            // This value should be equals with the one we set on Midtrans Admin Portal/Dashboard.
+            'expired_in' => 1440,
         ],
     ],
 
     // Config related to transaction.
     'transaction' => [
+
         // Email addresses that will be notified if system can not issue coupon.
         'notify_emails' => [
             'developer@dominopos.com',
         ],
+
         // Delay before issuing coupon for ATM/Bank Transfer/Echannel (in seconds)
         'delay_before_issuing_coupon' => 60,
         // Maximum quantity per item that allowed to be purchased. Applied to all coupons.
