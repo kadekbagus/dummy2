@@ -201,6 +201,8 @@ class NewsListNewAPIController extends PubControllerAPI
 
             // Filter by given keyword...
             $keyword = OrbitInput::get('keyword');
+            $forbiddenCharacter = array('>', '<', '(', ')', '{', '}', '[', ']', '^', '"', '~', '/');
+            $keyword = str_replace($forbiddenCharacter, '', $keyword);
             if (! empty($keyword)) {
                 $cacheKey['keyword'] = $keyword;
                 $this->searcher->filterByKeyword($keyword);
@@ -304,6 +306,9 @@ class NewsListNewAPIController extends PubControllerAPI
             switch ($sortBy) {
                 case 'relevance':
                     $this->searcher->sortByRelevance();
+                    break;
+                case 'location':
+                    $this->searcher->sortByNearest($ul);
                     break;
                 case 'rating':
                     $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
