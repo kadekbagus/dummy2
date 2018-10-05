@@ -48,7 +48,7 @@ class StoreFeedbackNotification extends AdminNotification
             Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                $subject = 'User Report for Store';
+                $subject = trans('email-feedback-mall.subject');
 
                 $mail->subject($subject);
                 $mail->from($emailConfig['email'], $emailConfig['name']);
