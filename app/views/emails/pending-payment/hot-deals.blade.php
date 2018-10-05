@@ -175,18 +175,25 @@
                 <br>
                 <strong>{{{ trans('email-pending-payment.body.transaction_labels.transaction_date') }}}</strong> {{ $transaction['date'] }}
                 <br>
-                <strong>{{{ trans('email-pending-payment.body.transaction_labels.coupon_name') }}}</strong> {{ $transaction['items'][0]['name'] }}
-                <br>
                 <strong>{{{ trans('email-pending-payment.body.transaction_labels.customer_name') }}}</strong> {{ $customerName }}
                 <br>
                 <strong>{{{ trans('email-pending-payment.body.transaction_labels.email') }}}</strong> {{ $customerEmail }}
+                <br>
+                <strong>{{{ trans('email-pending-payment.body.transaction_labels.phone') }}}</strong> {{ $customerPhone }}
+                <br>
+                <br>
+                <strong>{{{ trans('email-pending-payment.body.transaction_labels.coupon_name') }}}</strong> {{ $transaction['items'][0]['name'] }}
+                <br>
+                <strong>{{{ trans('email-pending-payment.body.transaction_labels.coupon_price') }}}</strong> {{ $transaction['items'][0]['price'] }}
+                <br>
+                <strong>{{{ trans('email-pending-payment.body.transaction_labels.coupon_quantity') }}}</strong> {{ $transaction['items'][0]['quantity'] }}
                 <br>
                 <strong>{{{ trans('email-pending-payment.body.transaction_labels.total_amount') }}}</strong> {{ $transaction['total'] }}
                 <br>
               </p>
               <br>
 
-              @include('emails.pending-payment.payment-info', compact('paymentInfo', 'paymentExpiration'))
+              @include('emails.pending-payment.payment-info', compact('paymentInfo', 'paymentExpiration', 'myWalletUrl'))
 
               {{-- <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 {{ trans('email-pending-payment.body.help', ['csPhone' => $cs['phone'], 'csEmail' => $cs['email']]) }}
