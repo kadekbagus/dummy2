@@ -61,7 +61,7 @@ class FeedbackNewAPIController extends PubControllerAPI
             }
 
             $feedback['user'] = $user->user_firstname . ' ' . $user->user_lastname;
-            $feedback['email'] = $user->email;
+            $feedback['email'] = $user->user_email;
             $feedback['date'] = Carbon::now()->format('d F Y');
 
             $cs = new User;
