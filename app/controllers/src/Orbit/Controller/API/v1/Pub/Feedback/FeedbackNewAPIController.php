@@ -7,13 +7,10 @@ use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Config;
-use stdClass;
 use Validator;
-use Lang;
 use \Exception;
 use Activity;
 use User;
-use Orbit\Helper\Security\Encrypter;
 use \Orbit\Helper\Exception\OrbitCustomException;
 use Carbon\Carbon as Carbon;
 
@@ -25,10 +22,10 @@ class FeedbackNewAPIController extends PubControllerAPI
     /**
      * POST - New feedback report for Mall/Store.
      *
-     * @param string store
-     * @param string mall
-     * @param string report
-     * @param string is_mall
+     * @param string store the store name that being reported.
+     * @param string mall the mall name that being reported.
+     * @param string report the report message.
+     * @param string is_mall an indicator if the report is for mall or not.
      *
      * @return Illuminate\Support\Facades\Response
      *
