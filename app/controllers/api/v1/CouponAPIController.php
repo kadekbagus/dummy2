@@ -3660,6 +3660,10 @@ class CouponAPIController extends ControllerAPI
                                         ->where('status', 'issued')
                                         ->first();
 
+            if (empty($issuedCoupon)) {
+                OrbitShopAPI::throwInvalidArgument('Issued coupon ID is not found');
+            }
+
             $coupon = Coupon::where('promotion_id', $issuedCoupon->promotion_id)->first();
 
             $baseStore = BaseStore::select('base_stores.base_store_id', 'base_stores.merchant_id', 'base_stores.phone', 'base_stores.base_merchant_id', 'base_merchants.name as store_name', 'merchants.country_id', 'timezones.timezone_name', 'merchants.name as mall_name')
@@ -3823,7 +3827,7 @@ class CouponAPIController extends ControllerAPI
 
             // Only send payment request to orbit-payment API if the coupon is NOT hot_deals and sepulsa
             $transactionId = '';
-            if (in_array($coupon->promotion_type, [Coupon::TYPE_SEPULSA, Coupon::TYPE_HOT_DEALS])) {
+            if (in_array($coupon->promotion_type, [Coupon::TYPE_HOT_DEALS])) {
                 // IssuedCoupon record should have transaction_id set...
                 $transactionId = $issuedCoupon->transaction_id;
 
@@ -3887,9 +3891,14 @@ class CouponAPIController extends ControllerAPI
             $this->response->message = 'Coupon has been successfully redeemed.';
             $this->response->data = $data;
 
-            if ($paymentProvider === '0') {
+            if ($paymentProvider === '0' || $coupon->promotion_type === Coupon::TYPE_HOT_DEALS) {
                 // Successfull Creation
                 $activityNotes = sprintf('Coupon Redeemed: %s', $issuedcoupon->coupon->promotion_name);
+
+                if ($coupon->promotion_type === Coupon::TYPE_HOT_DEALS) {
+                    $activityNotes = Coupon::TYPE_HOT_DEALS;
+                }
+
                 $activity->setUser($user)
                         ->setActivityName('redeem_coupon')
                         ->setActivityNameLong('Coupon Redemption (Successful)')

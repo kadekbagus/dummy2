@@ -18,10 +18,10 @@ class StoreSearch extends Search
         $this->setIndex($this->esConfig['indices_prefix'] . $this->esConfig['indices']['stores']['index']);
         $this->setType($this->esConfig['indices']['stores']['type']);
     }
-    
+
     /**
      * Make sure Stores has at least 1 tenant.
-     * 
+     *
      * @return [type] [description]
      */
     public function hasAtLeastOneTenant()
@@ -37,7 +37,7 @@ class StoreSearch extends Search
 
     /**
      * Filter by Mall...
-     * 
+     *
      * @param  string $mallId [description]
      * @return [type]         [description]
      */
@@ -58,7 +58,7 @@ class StoreSearch extends Search
 
     /**
      * Filter by selected stores Categories..
-     * 
+     *
      * @return [type] [description]
      */
     public function filterByCategories($categories = [])
@@ -78,7 +78,7 @@ class StoreSearch extends Search
 
     /**
      * Filter by user's geo-location...
-     * 
+     *
      * @param  string $location [description]
      * @return [type]           [description]
      */
@@ -106,22 +106,22 @@ class StoreSearch extends Search
 
     /**
      * Implement filter by keyword...
-     * 
+     *
      * @param  string $keyword [description]
      * @return [type]          [description]
      */
     public function filterByKeyword($keyword = '')
     {
-        $priorityName = isset($this->esConfig['priority']['store']['name']) ? 
+        $priorityName = isset($this->esConfig['priority']['store']['name']) ?
             $this->esConfig['priority']['store']['name'] : '^6';
 
-        $priorityDescription = isset($this->esConfig['priority']['store']['description']) ? 
+        $priorityDescription = isset($this->esConfig['priority']['store']['description']) ?
             $this->esConfig['priority']['store']['description'] : '^5';
 
-        $priorityKeywords = isset($this->esConfig['priority']['store']['keywords']) ? 
+        $priorityKeywords = isset($this->esConfig['priority']['store']['keywords']) ?
             $this->esConfig['priority']['store']['keywords'] : '^4';
 
-        $priorityProductTags = isset($this->esConfig['priority']['store']['product_tags']) ? 
+        $priorityProductTags = isset($this->esConfig['priority']['store']['product_tags']) ?
             $this->esConfig['priority']['store']['product_tags'] : '^4';
 
         $this->must([
@@ -131,8 +131,8 @@ class StoreSearch extends Search
                         'query_string' => [
                             'query' => '*' . $keyword . '*',
                             'fields' => [
-                                'name' . $priorityName, 
-                                'description' . $priorityDescription, 
+                                'name' . $priorityName,
+                                'description' . $priorityDescription,
                                 'keywords' . $priorityKeywords,
                                 'product_tags' . $priorityProductTags,
                             ]
@@ -184,7 +184,7 @@ class StoreSearch extends Search
 
     /**
      * Filte by Country and Cities...
-     * 
+     *
      * @param  array  $area [description]
      * @return [type]       [description]
      */
@@ -232,7 +232,7 @@ class StoreSearch extends Search
 
     /**
      * Add filter to advert_stores index.
-     * 
+     *
      * @param  array  $options [description]
      * @return [type]          [description]
      */
@@ -243,33 +243,33 @@ class StoreSearch extends Search
                 'should' => [
                     [
                         'bool' => [
-                            'must' => [ 
+                            'must' => [
                                 [
                                     'query' => [
                                         'match' => [
                                             'advert_status' => 'active'
                                         ]
                                     ]
-                                ], 
+                                ],
                                 [
                                     'range' => [
                                         'advert_start_date' => [
                                             'lte' => $options['dateTimeEs']
                                         ]
                                     ]
-                                ], 
+                                ],
                                 [
                                     'range' => [
                                         'advert_end_date' => [
                                             'gte' => $options['dateTimeEs']
                                         ]
                                     ]
-                                ], 
+                                ],
                                 [
                                     'match' => [
                                         'advert_location_ids' => $options['locationId']
                                     ]
-                                ], 
+                                ],
                                 [
                                     'terms' => [
                                         'advert_type' => $options['advertType']
@@ -296,7 +296,7 @@ class StoreSearch extends Search
 
     /**
      * Filter by Partner...
-     * 
+     *
      * @param  string $partnerId [description]
      * @return [type]            [description]
      */
@@ -314,7 +314,7 @@ class StoreSearch extends Search
 
             if (in_array($partnerId, $exception)) {
                 $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
-                
+
                 $this->mustNot([
                     'terms' => [
                         'partner_ids' => $partnerIds
@@ -333,7 +333,7 @@ class StoreSearch extends Search
 
     /**
      * Filter store with advert...
-     * 
+     *
      * @param  array  $options [description]
      * @return [type]          [description]
      */
@@ -392,7 +392,7 @@ class StoreSearch extends Search
 
     /**
      * Exclude some stores from the result.
-     * 
+     *
      * @param  array  $excludedId [description]
      * @return [type]             [description]
      */
@@ -407,7 +407,7 @@ class StoreSearch extends Search
 
     /**
      * Sort by name..
-     * 
+     *
      * @return [type] [description]
      */
     public function sortByName()
@@ -417,7 +417,7 @@ class StoreSearch extends Search
 
     /**
      * Sort store by rating.
-     * 
+     *
      * @param  string $sortingScript [description]
      * @return [type]                [description]
      */
@@ -434,7 +434,7 @@ class StoreSearch extends Search
 
     /**
      * Sort store by favorite.
-     * 
+     *
      * @param  string $sortingScript [description]
      * @return [type]                [description]
      */
@@ -462,17 +462,17 @@ class StoreSearch extends Search
 
         if (! empty($params['mallId'])) {
             // count total review and average rating for store inside mall
-            $scriptFieldRating = $scriptFieldRating . 
-                " if (doc.containsKey('mall_rating.rating_" . $params['mallId'] . "')) { 
-                    if (! doc['mall_rating.rating_" . $params['mallId'] . "'].empty) { 
-                        counter = counter + doc['mall_rating.review_" . $params['mallId'] . "'].value; 
+            $scriptFieldRating = $scriptFieldRating .
+                " if (doc.containsKey('mall_rating.rating_" . $params['mallId'] . "')) {
+                    if (! doc['mall_rating.rating_" . $params['mallId'] . "'].empty) {
+                        counter = counter + doc['mall_rating.review_" . $params['mallId'] . "'].value;
                         rating = rating + (doc['mall_rating.rating_" . $params['mallId'] . "'].value * doc['mall_rating.review_" . $params['mallId'] . "'].value);
                     }
                 };";
 
-            $scriptFieldReview = $scriptFieldReview . 
-                " if (doc.containsKey('mall_rating.review_" . $params['mallId'] . "')) { 
-                    if (! doc['mall_rating.review_" . $params['mallId'] . "'].empty) { 
+            $scriptFieldReview = $scriptFieldReview .
+                " if (doc.containsKey('mall_rating.review_" . $params['mallId'] . "')) {
+                    if (! doc['mall_rating.review_" . $params['mallId'] . "'].empty) {
                         review = review + doc['mall_rating.review_" . $params['mallId'] . "'].value;
                     }
                 }; ";
@@ -481,17 +481,17 @@ class StoreSearch extends Search
             // count total review and average rating based on city filter
             $countryId = $params['countryData']->country_id;
             foreach ((array) $params['cityFilters'] as $cityFilter) {
-                $scriptFieldRating = $scriptFieldRating . 
-                    " if (doc.containsKey('location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { 
-                        if (! doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { 
-                            counter = counter + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value; 
+                $scriptFieldRating = $scriptFieldRating .
+                    " if (doc.containsKey('location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) {
+                        if (! doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) {
+                            counter = counter + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value;
                             rating = rating + (doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value * doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value);
                         }
                     }; ";
 
-                $scriptFieldReview = $scriptFieldReview . 
-                    " if (doc.containsKey('location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { 
-                        if (! doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { 
+                $scriptFieldReview = $scriptFieldReview .
+                    " if (doc.containsKey('location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) {
+                        if (! doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) {
                             review = review + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value;
                         }
                     }; ";
@@ -500,17 +500,17 @@ class StoreSearch extends Search
         } else if (! empty($params['countryFilter'])) {
             // count total review and average rating based on country filter
             $countryId = $params['countryData']->country_id;
-            $scriptFieldRating = $scriptFieldRating . 
-                " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { 
-                    if (! doc['location_rating.rating_" . $countryId . "'].empty) { 
-                        counter = counter + doc['location_rating.review_" . $countryId . "'].value; 
+            $scriptFieldRating = $scriptFieldRating .
+                " if (doc.containsKey('location_rating.rating_" . $countryId . "')) {
+                    if (! doc['location_rating.rating_" . $countryId . "'].empty) {
+                        counter = counter + doc['location_rating.review_" . $countryId . "'].value;
                         rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);
                     }
                 }; ";
 
-            $scriptFieldReview = $scriptFieldReview . 
-                " if (doc.containsKey('location_rating.review_" . $countryId . "')) { 
-                    if (! doc['location_rating.review_" . $countryId . "'].empty) { 
+            $scriptFieldReview = $scriptFieldReview .
+                " if (doc.containsKey('location_rating.review_" . $countryId . "')) {
+                    if (! doc['location_rating.review_" . $countryId . "'].empty) {
                         review = review + doc['location_rating.review_" . $countryId . "'].value;
                     }
                 }; ";
@@ -522,17 +522,17 @@ class StoreSearch extends Search
 
             foreach ($countries as $country) {
                 $countryId = $country->country_id;
-                $scriptFieldRating = $scriptFieldRating . 
-                    " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { 
-                        if (! doc['location_rating.rating_" . $countryId . "'].empty) { 
-                            counter = counter + doc['location_rating.review_" . $countryId . "'].value; 
+                $scriptFieldRating = $scriptFieldRating .
+                    " if (doc.containsKey('location_rating.rating_" . $countryId . "')) {
+                        if (! doc['location_rating.rating_" . $countryId . "'].empty) {
+                            counter = counter + doc['location_rating.review_" . $countryId . "'].value;
                             rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);
                         }
                     }; ";
 
-                $scriptFieldReview = $scriptFieldReview . " 
-                    if (doc.containsKey('location_rating.review_" . $countryId . "')) { 
-                        if (! doc['location_rating.review_" . $countryId . "'].empty) { 
+                $scriptFieldReview = $scriptFieldReview . "
+                    if (doc.containsKey('location_rating.review_" . $countryId . "')) {
+                        if (! doc['location_rating.review_" . $countryId . "'].empty) {
                             review = review + doc['location_rating.review_" . $countryId . "'].value;
                         }
                     }; ";
@@ -553,11 +553,11 @@ class StoreSearch extends Search
             if (! empty($objectFollow)) {
                 if ($params['sortBy'] === 'followed') {
                     foreach ($objectFollow as $followId) {
-                        $scriptFieldFollow = $scriptFieldFollow . 
-                            " if (doc.containsKey('base_merchant_id')) { 
-                                if (! doc['base_merchant_id'].empty) { 
-                                    if (doc['base_merchant_id'].value.toLowerCase() == '" . strtolower($followId) . "') { 
-                                        follow = 1; 
+                        $scriptFieldFollow = $scriptFieldFollow .
+                            " if (doc.containsKey('base_merchant_id')) {
+                                if (! doc['base_merchant_id'].empty) {
+                                    if (doc['base_merchant_id'].value.toLowerCase() == '" . strtolower($followId) . "') {
+                                        follow = 1;
                                     }
                                 }
                             };";
@@ -583,12 +583,55 @@ class StoreSearch extends Search
 
     /**
      * Sort by relevance..
-     * 
+     *
      * @return [type] [description]
      */
     public function sortByRelevance()
     {
         $this->sort(['_score' => ['order' => 'desc']]);
+    }
+
+    /**
+     * Sort by Nearest..
+     *
+     * @return [type] [description]
+     */
+    public function sortByNearest($ul = null)
+    {
+        // Get user location ($ul), latitude and longitude.
+        // If latitude and longitude doesn't exist in query string, the code will be read cookie to get lat and lon
+        if ($ul == null) {
+            $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
+
+            $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
+            if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
+                $longitude = $userLocationCookieArray[0];
+                $latitude = $userLocationCookieArray[1];
+            }
+        } else {
+            $loc = explode('|', $ul);
+            $longitude = $loc[0];
+            $latitude = $loc[1];
+        }
+
+        if (isset($longitude) && isset($latitude))  {
+            $this->sort(
+                        [
+                          '_geo_distance'=> [
+                            'nested_path'=> 'tenant_detail',
+                            'tenant_detail.position'=> [
+                              'lon' => $longitude,
+                              'lat' => $latitude
+                            ],
+                            'order'=> 'asc',
+                            'unit'=> 'km',
+                            'distance_type'=> 'plane'
+                          ]
+                        ]
+                    );
+        }
+
+        $this->sortByName();
     }
 
     // check user follow
@@ -616,7 +659,7 @@ class StoreSearch extends Search
 
     /**
      * Init default search params.
-     * 
+     *
      * @return [type] [description]
      */
     public function setDefaultSearchParam()

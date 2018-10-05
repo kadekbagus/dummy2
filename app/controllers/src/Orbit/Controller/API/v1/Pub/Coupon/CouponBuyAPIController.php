@@ -85,6 +85,21 @@ class CouponBuyAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            // If we found reserved coupon for this user and it is a unique coupon, then
+            // we should mark it as not available to be purchased again.
+            $coupon = Coupon::findOrFail($coupon_id);
+            if ($coupon->is_unique_redeem === 'Y') {
+                $usedCoupon = IssuedCoupon::where('user_id', $user->user_id)
+                                            ->where('promotion_id', $coupon_id)
+                                            ->whereIn('status', [IssuedCoupon::STATUS_RESERVED, IssuedCoupon::STATUS_ISSUED, IssuedCoupon::STATUS_REDEEMED])
+                                            ->first();
+
+                if (! empty($usedCoupon)) {
+                    $errorMessage = 'Requested quantity not available. You only able to purchase 1 unique coupon.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            }
+
             // Check the user already have coupon or not
             $userIssuedCoupon = IssuedCoupon::where('user_id', $user->user_id)
                                             ->where('promotion_id', $coupon_id)
@@ -103,8 +118,6 @@ class CouponBuyAPIController extends PubControllerAPI
                 $response = $userIssuedCoupon;
 
             } elseif ($with_reserved === 'Y') {
-
-                $coupon = Coupon::findOrFail($coupon_id);
 
                 $this->beginTransaction();
 
