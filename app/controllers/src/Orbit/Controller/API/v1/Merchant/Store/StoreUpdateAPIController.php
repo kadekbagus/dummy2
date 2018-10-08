@@ -126,7 +126,7 @@ class StoreUpdateAPIController extends ControllerAPI
                 'mall_id'             => 'required|orbit.empty.mall|orbit.mall.country:' . $baseMerchantId,
                 'floor_id'            => 'orbit.empty.floor:' . $mallId,
                 'status'              => 'in:active,inactive',
-                'verification_number' => 'alpha_num|orbit.unique.verification_number:' . $mallId . ',' . $baseStoreId,
+                'verification_number' => 'alpha_num',
             ];
 
             $validation_error_message = [
