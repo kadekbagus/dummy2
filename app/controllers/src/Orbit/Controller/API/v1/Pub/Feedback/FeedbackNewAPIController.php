@@ -65,7 +65,7 @@ class FeedbackNewAPIController extends PubControllerAPI
             $feedback['date'] = Carbon::now()->format('d F Y');
 
             $cs = new User;
-            $cs->email = Config::get('orbit.contact_information.customer_service.email', 'cs@gotomalls.com');
+            $cs->email = Config::get('orbit.feedback.cs_email', 'cs@gotomalls.com');
 
             if ($feedback['is_mall'] === 'Y') {
                 $cs->notify(new MallFeedbackNotification($feedback));
