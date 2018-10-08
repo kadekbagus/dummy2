@@ -7484,7 +7484,7 @@ return array(
         // Maximum quantity per item that allowed to be purchased. Applied to all coupons.
         'max_quantity_per_purchase' => 1,
         // the url to cancel a purchase.
-        'cancel_purchase_url' => 'https://gotomalls.com/my/purchases/%s/cancel',
+        'cancel_purchase_url' => 'https://gotomalls.com/my/purchases/detail?orderId=%s&cancel=y',
     ],
 
     // Coupon reserved limit time for sepulsa and hot deals, set in minutes
