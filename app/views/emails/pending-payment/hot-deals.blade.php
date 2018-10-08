@@ -195,11 +195,16 @@
 
               @include('emails.pending-payment.payment-info', compact('paymentInfo', 'paymentExpiration', 'myWalletUrl'))
 
-              {{-- <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-pending-payment.body.help', ['csPhone' => $cs['phone'], 'csEmail' => $cs['email']]) }}
+              <p class="text-center" style="font-family:'Roboto', 'Arial', sans-serif;margin:0;text-align:center;">
+                <a href="{{{ $cancelUrl }}}" class="btn-cancel" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;border-width:1px;border-style:solid;background-color:#fff;color:#444;font-weight:bold;font-size:16px;display:inline-block;padding:10px 20px;text-decoration:none;">
+                    {{{ trans('email-pending-payment.body.btn_cancel_purchase') }}}
+                </a>
+              </p>
+
+              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{{ trans('email-pending-payment.body.thank_you') }}}
-              </p> --}}
+                {{ trans('email-pending-payment.body.payment-info-line-3') }}
+              </p>
             </td>
           </tr>
         </tbody>
