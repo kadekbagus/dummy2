@@ -232,6 +232,8 @@ class StoreListNewAPIController extends PubControllerAPI
 
             // Filter by keyword
             $keyword = OrbitInput::get('keyword');
+            $forbiddenCharacter = array('>', '<', '(', ')', '{', '}', '[', ']', '^', '"', '~', '/');
+            $keyword = str_replace($forbiddenCharacter, '', $keyword);
             if (! empty($keyword)) {
                 $this->searcher->filterByKeyword($keyword);
             }
