@@ -141,7 +141,7 @@ class GetCouponQueue
                             $issuedCoupon->issued_coupon_code       = $voucherData->code;
                             $issuedCoupon->url                      = $voucherData->redeem_url;
                             $issuedCoupon->issued_date              = Carbon::now();
-                            $issuedCoupon->expired_date             = $coupon->coupon_validity_in_date;
+                            $issuedCoupon->expired_date             = $takenVoucherData->expired_date;
                             $issuedCoupon->status                   = IssuedCoupon::STATUS_ISSUED;
 
                             $issuedCoupon->save();
