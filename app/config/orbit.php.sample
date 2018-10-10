@@ -829,6 +829,12 @@ return array(
             'per_page'      => 50,
             'max_record'    => 100,
         ),
+
+        // campaign location and store location
+        'city_location' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
     ),
 
     'reset_password' => array(
@@ -6582,6 +6588,14 @@ return array(
             '181' => array(
                 'name' => 'view_transaction_page_payment_expired',
                 'name_long' => 'View Transaction Page Payment Expired',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
+            '182' => array(
+                'name' => 'view_transaction_page_payment_successful_coupon_failed',
+                'name_long' => 'View Transaction Page Payment Success - Failed Getting Coupon',
                 'module_name' => 'Coupon',
                 'type' => 'view',
                 'object_type' => 'Coupon',

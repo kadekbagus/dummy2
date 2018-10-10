@@ -66,7 +66,7 @@ class CheckReservedCoupon
                     }
 
                     // Update available coupon and es data
-                    if ($cancelReservedCoupon) {
+                    if ($isCancelReservedCoupon) {
 
                         Log::info('Queue CheckReservedCoupon Runnning : Coupon unpay canceled, coupon_id = ' . $couponId . ', user id = ' . $userId . ' at ' . date('Y-m-d H:i:s'));
 
