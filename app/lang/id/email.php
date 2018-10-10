@@ -48,7 +48,7 @@ return array(
         'message_part3'     => 'Kami sangat menyarankan bagi Anda untuk melengkapi nomor telepon dengan mengikuti langkah berikut:',
         'list_1'            => 'Buka GoToMalls.com',
         'list_2'            => 'Klik tombol menu yang ada di sudut kanan atas',
-        'list_3'            => 'Klik Sign In dan silakan login menggunakan Facebook, akun Google atau alamat email',
+        'list_3'            => 'Klik Masuk dan silakan login menggunakan Facebook, akun Google atau alamat email',
         'list_4'            => "Klik tombol \"Akun Saya\" yang ada di bawah foto profil",
         'list_5'            => 'Anda dapat memperbarui foto profil dan nomor telepon disini',
         'message_part4'     => 'Selamat bersenang-senang dengan Gotomalls!',
