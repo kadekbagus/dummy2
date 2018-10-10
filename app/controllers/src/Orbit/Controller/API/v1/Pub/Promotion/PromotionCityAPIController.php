@@ -113,7 +113,7 @@ class PromotionCityAPIController extends PubControllerAPI
 
             $_promotionLocation = clone($promotionLocation);
 
-            $take = PaginationNumber::parseTakeFromGet('news');
+            $take = PaginationNumber::parseTakeFromGet('city_location');
             $promotionLocation->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();
