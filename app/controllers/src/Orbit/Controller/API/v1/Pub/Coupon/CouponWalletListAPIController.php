@@ -196,7 +196,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                                             END
                                         )
                                     END AS campaign_status,
-                                    CASE WHEN {$prefix}issued_coupons.coupon_validity_in_date < (
+                                    CASE WHEN {$prefix}issued_coupons.expired_date < (
                                             SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
                                             FROM {$prefix}promotion_retailer opt
                                                 LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
