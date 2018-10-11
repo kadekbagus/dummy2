@@ -114,6 +114,9 @@ class UserAPIController extends PubControllerAPI
             // Update session fullname and email
             $sessionData = $session->read(NULL);
             $sessionData['fullname'] = $updateUser->user_firstname. ' ' . $updateUser->user_lastname;
+            //update gender, phone also
+            $sessionData['gender'] = $updateUserDetail->gender;
+            $sessionData['phone'] = $updateUserDetail->phone;
             $session->update($sessionData);
 
             // Even for upload user picture profile
