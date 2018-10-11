@@ -1752,6 +1752,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                     'coupon_sepulsa.price_from_sepulsa',
                     'coupon_sepulsa.price_value',
                     'coupon_sepulsa.coupon_image_url as image_path',
+                    'coupon_sepulsa.coupon_image_url as coupon_image_url',
                     'coupon_sepulsa.how_to_buy_and_redeem',
                     'coupon_sepulsa.terms_and_conditions',
                     'coupon_sepulsa.token',
