@@ -180,7 +180,15 @@ class CouponDetailAPIController extends PubControllerAPI
                                                                                             LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                                                                             LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
                                                                                         WHERE opr.promotion_id = {$prefix}promotions.promotion_id)
-                                    THEN 'true' ELSE 'false' END as is_exceeding_validity_date
+                                    THEN 'true' ELSE 'false' END as is_exceeding_validity_date,
+                                    CASE WHEN (SELECT count(opr.retailer_id)
+                                                FROM {$prefix}promotion_retailer opr
+                                                    LEFT JOIN {$prefix}merchants om ON om.merchant_id = opr.retailer_id
+                                                    LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                    LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                                WHERE opr.promotion_id = {$prefix}promotions.promotion_id
+                                                AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
+                                    THEN 'true' ELSE 'false' END AS is_started
                             "),
                             // query for getting timezone for countdown on the frontend
                             DB::raw("
