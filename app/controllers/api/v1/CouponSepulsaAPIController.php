@@ -1727,16 +1727,6 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             $table_prefix = DB::getTablePrefix();
 
-            // optimize orb_media query greatly when coupon_id is present
-            $mediaJoin = "";
-            $mediaOptimize = " AND (object_name = 'coupon_translation') ";
-            $mediaObjectIds = (array) OrbitInput::get('promotion_id', []);
-            if (! empty ($mediaObjectIds)) {
-                $mediaObjectIds = "'" . implode("', '", $mediaObjectIds) . "'";
-                $mediaJoin = " LEFT JOIN {$table_prefix}coupon_translations mont ON mont.coupon_translation_id = {$table_prefix}media.object_id ";
-                $mediaOptimize = " AND object_name = 'coupon_translation' AND mont.promotion_id IN ({$mediaObjectIds}) ";
-            }
-
             $filterName = OrbitInput::get('promotion_name_like', '');
 
             // Builder object
@@ -1744,7 +1734,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $coupons = Coupon::allowedForPMPUser($user, 'coupon')
                 ->with('couponRule')
                 ->select(
-                    DB::raw("{$table_prefix}promotions.*, {$table_prefix}promotions.promotion_id as campaign_id, 'coupon' as campaign_type, {$table_prefix}coupon_translations.promotion_name AS display_name, media.path as image_path,
+                    DB::raw("{$table_prefix}promotions.*, {$table_prefix}promotions.promotion_id as campaign_id, 'coupon' as campaign_type, {$table_prefix}coupon_translations.promotion_name AS display_name,
                     CASE WHEN {$table_prefix}campaign_status.campaign_status_name = 'expired' THEN {$table_prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$table_prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                                                                 FROM {$table_prefix}merchants om
                                                                                 LEFT JOIN {$table_prefix}timezones ot on ot.timezone_id = om.timezone_id
@@ -1756,25 +1746,13 @@ class CouponSepulsaAPIController extends ControllerAPI
                                                                                 LEFT JOIN {$table_prefix}timezones ot on ot.timezone_id = om.timezone_id
                                                                                 WHERE om.merchant_id = {$table_prefix}promotions.merchant_id)
                     THEN 5 ELSE {$table_prefix}campaign_status.order END) END AS campaign_status_order,
-
-                    {$table_prefix}campaign_status.order,
-                    CASE rule_type
-                        WHEN 'cart_discount_by_percentage' THEN 'percentage'
-                        WHEN 'product_discount_by_percentage' THEN 'percentage'
-                        WHEN 'cart_discount_by_value' THEN 'value'
-                        WHEN 'product_discount_by_value' THEN 'value'
-                        ELSE NULL
-                    END AS 'display_discount_type',
-                    CASE rule_type
-                        WHEN 'cart_discount_by_percentage' THEN discount_value * 100
-                        WHEN 'product_discount_by_percentage' THEN discount_value * 100
-                        ELSE discount_value
-                    END AS 'display_discount_value'
+                    {$table_prefix}campaign_status.order
                     "),
                     'coupon_sepulsa.external_id',
                     'coupon_sepulsa.price_from_sepulsa',
                     'coupon_sepulsa.price_value',
-                    'coupon_sepulsa.coupon_image_url',
+                    'coupon_sepulsa.coupon_image_url as image_path',
+                    'coupon_sepulsa.coupon_image_url as coupon_image_url',
                     'coupon_sepulsa.how_to_buy_and_redeem',
                     'coupon_sepulsa.terms_and_conditions',
                     'coupon_sepulsa.token',
@@ -1804,13 +1782,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                         FROM {$table_prefix}issued_coupons ic
                         WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id
                             ) as coupon_codes"),
-                    DB::raw("CASE
-                                WHEN is_3rd_party_promotion = 'Y' AND is_3rd_party_field_complete = 'N' THEN 'not_available'
-                                WHEN is_3rd_party_promotion = 'Y' AND {$table_prefix}pre_exports.object_id IS NOT NULL AND {$table_prefix}pre_exports.object_type = 'coupon' THEN 'in_progress'
-                                WHEN is_3rd_party_promotion = 'Y' AND {$table_prefix}pre_exports.object_id IS NULL THEN 'available'
-                                WHEN is_3rd_party_promotion = 'N' THEN 'not_available'
-                            END AS export_status
-                        "),
                     DB::raw("IF({$table_prefix}promotions.is_all_gender = 'Y', 'A', {$table_prefix}promotions.is_all_gender) as gender")
                 )
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
@@ -1818,17 +1789,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                 ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
                 ->join('coupon_sepulsa', 'coupon_sepulsa.promotion_id', '=', 'promotions.promotion_id')
-                // Join for get export status
-                ->leftJoin('pre_exports', function ($join) {
-                         $join->on('promotions.promotion_id', '=', 'pre_exports.object_id')
-                              ->where('pre_exports.object_type', '=', 'coupon');
-                  })
-                ->leftJoin(DB::raw("(
-                        SELECT {$table_prefix}media.* FROM {$table_prefix}media
-                        {$mediaJoin}
-                        WHERE media_name_long = 'coupon_translation_image_resized_default'
-                        {$mediaOptimize} ) as media
-                    "), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
+
                 ->joinPromotionRules()
                 ->groupBy('promotions.promotion_id')
                 ->where('promotion_type', 'sepulsa');
@@ -2168,6 +2129,7 @@ class CouponSepulsaAPIController extends ControllerAPI
 
         return $output;
     }
+
 
 
     /**
