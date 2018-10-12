@@ -10,7 +10,7 @@ return [
     'body' => [
         'greeting' => 'Dear, :customerName
                         <br>
-                        We would like to inform you that you already canceled the transaction. Below is the detail of your transaction: ',
+                        We confirm that your transaction has been canceled.  Below are the transaction details:',
 
         'transaction_labels' => [
             'transaction_id' => 'Transaction ID: ',
@@ -22,6 +22,8 @@ return [
             'email' => 'Email: ',
             'phone' => 'Phone: ',
             'total_amount' => 'Total Amount: ',
+            'status' => 'Status: ',
+            'status_canceled' => 'Canceled',
         ],
 
         'payment-info-line-1' => 'Thank you.',
