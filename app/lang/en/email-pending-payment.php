@@ -41,6 +41,6 @@ return [
 
         'btn_payment_instruction' => 'Payment Instructions',
         'btn_my_wallet' => 'Go to My Wallet',
-        'btn_cancel_purchase' => 'Cancel Purchase',
+        'btn_cancel_purchase' => 'Cancel Transaction',
     ],
 ];
