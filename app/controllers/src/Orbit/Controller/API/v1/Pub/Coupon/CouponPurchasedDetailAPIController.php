@@ -89,6 +89,8 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
                                     {$prefix}payment_transactions.user_name,
                                     {$prefix}payment_transactions.user_email,
                                     {$prefix}payment_transactions.amount,
+                                    {$prefix}promotions.price_selling,
+                                    FORMAT({$prefix}payment_transactions.amount / {$prefix}promotions.price_selling, 0) as qty,
                                     {$prefix}payment_transactions.status,
                                     {$prefix}payment_midtrans.payment_midtrans_info,
                                     {$prefix}promotions.promotion_id  as coupon_id,

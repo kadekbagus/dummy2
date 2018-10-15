@@ -193,13 +193,12 @@
               </p>
               <br>
 
-              @include('emails.pending-payment.payment-info', compact('paymentInfo', 'paymentExpiration', 'myWalletUrl'))
+              @include('emails.pending-payment.payment-info', compact('paymentInfo', 'paymentExpiration', 'myWalletUrl', 'cancelUrl'))
 
-              {{-- <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-pending-payment.body.help', ['csPhone' => $cs['phone'], 'csEmail' => $cs['email']]) }}
+              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{{ trans('email-pending-payment.body.thank_you') }}}
-              </p> --}}
+                {{ trans('email-pending-payment.body.payment-info-line-3') }}
+              </p>
             </td>
           </tr>
         </tbody>

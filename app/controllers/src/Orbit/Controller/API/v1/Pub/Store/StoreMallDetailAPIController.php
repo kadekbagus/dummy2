@@ -22,6 +22,7 @@ use Language;
 use Activity;
 use Lang;
 use Orbit\Helper\MongoDB\Client as MongoClient;
+use Country;
 
 class StoreMallDetailAPIController extends PubControllerAPI
 {
@@ -76,7 +77,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
             $cities = (array) OrbitInput::get('cities', []);
             $noActivity = OrbitInput::get('no_activity', null);
             $mongoConfig = Config::get('database.mongodb');
-
+            $country = OrbitInput::get('country', null);
             $ul = OrbitInput::get('ul', null);
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $skip = PaginationNumber::parseSkipFromGet();
@@ -150,9 +151,15 @@ class StoreMallDetailAPIController extends PubControllerAPI
                         ->first();
 
             $countryId = '';
+            $getCountry = Country::where('name', '=', $country)->first();
+            if ($getCountry) {
+                $countryId = $getCountry->country_id;
+            }
             if (! empty($store)) {
                 $storename = $store->name;
-                $countryId = $store->country_id;
+                if ($countryId === '') {
+                    $countryId = $store->country_id;
+                }
             }
 
             $mall = Tenant::select(
@@ -200,10 +207,14 @@ class StoreMallDetailAPIController extends PubControllerAPI
                               ->where(DB::raw("mall.country_id"), '=', $countryId)
                               ->where(DB::raw("mall.status"), 'active');
 
+            if (!empty ($cities)) {
+                $mall->whereIn(DB::raw('mall.city'), $cities);
+            }
+
             // get number of mall without filter
             $numberOfMall = 0;
             $_numberOfMall = clone $mall;
-            $_numberOfMall->groupBy(DB::raw("mall_id"))->get();
+            $_numberOfMall->groupBy(DB::raw("merchant_id"))->get();
 
             if (! empty($location)) {
                 if (! in_array('0', $location)) {
@@ -232,7 +243,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
             $mall->orderBy(DB::raw('mall.city'), 'asc');
             $mall->orderBy('merchants.name', 'asc');
 
-            $mall = $mall->groupBy(DB::raw("mall_id"));
+            $mall = $mall->groupBy(DB::raw("merchant_id"));
 
             $_mall = clone $mall;
             $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
