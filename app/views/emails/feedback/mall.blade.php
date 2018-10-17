@@ -167,6 +167,7 @@
             <td class="invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
                 {{{ $feedback['date'] }}}
                 <br>
+                <br>
                 <span style="font-size:24px;font-weight:bold;">{{{ trans('email-feedback-mall.header.title') }}}</span>
             </td>
           </tr>
