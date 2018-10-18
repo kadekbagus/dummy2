@@ -100,7 +100,8 @@ class GetCouponQueue
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
                 $payment->save();
 
-                $payment->details->first()->coupon->updateAvailability();
+                $coupon = $payment->details->first()->coupon;
+                $coupon->updateAvailability();
 
                 // Commit the changes ASAP.
                 DB::connection()->commit();
@@ -114,6 +115,7 @@ class GetCouponQueue
                 $activity->setActivityNameLong('Transaction is Successful')
                         ->setModuleName('Midtrans Transaction')
                         ->setObject($payment)
+                        ->setCoupon($coupon)
                         ->setNotes(Coupon::TYPE_HOT_DEALS)
                         ->setLocation($mall)
                         ->responseOK()
@@ -125,7 +127,7 @@ class GetCouponQueue
                         ->setActivityName('coupon_added_to_wallet')
                         ->setActivityNameLong('Coupon Added to Wallet')
                         ->setModuleName('Coupon')
-                        ->setObject($payment->details->first()->coupon)
+                        ->setObject($coupon)
                         ->setNotes(Coupon::TYPE_HOT_DEALS)
                         ->setLocation($mall)
                         ->responseOK()

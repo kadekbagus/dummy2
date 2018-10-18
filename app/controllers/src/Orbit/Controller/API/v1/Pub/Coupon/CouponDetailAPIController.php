@@ -45,6 +45,7 @@ class CouponDetailAPIController extends PubControllerAPI
             $country = OrbitInput::get('country', null);
             $cities = OrbitInput::get('cities', null);
             $couponId = OrbitInput::get('coupon_id', null);
+            $isForRedeem = OrbitInput::get('for_redeem', 'N');
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
@@ -143,7 +144,7 @@ class CouponDetailAPIController extends PubControllerAPI
                                     END AS original_media_path
                                 "),
                             'promotions.end_date',
-                            'promotions.coupon_validity_in_date',
+                            DB::raw("{$prefix}issued_coupons.expired_date as coupon_validity_in_date"),
                             'promotions.is_exclusive',
                             'promotions.available',
                             'promotions.is_unique_redeem',
@@ -176,7 +177,7 @@ class CouponDetailAPIController extends PubControllerAPI
                                                                                             LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
                                                                                         WHERE opr.promotion_id = {$prefix}promotions.promotion_id)
                                     THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status,
-                                    CASE WHEN {$prefix}promotions.coupon_validity_in_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                    CASE WHEN {$prefix}issued_coupons.expired_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
                                                                                         FROM {$prefix}promotion_retailer opr
                                                                                             LEFT JOIN {$prefix}merchants om ON om.merchant_id = opr.retailer_id
                                                                                             LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
@@ -267,7 +268,8 @@ class CouponDetailAPIController extends PubControllerAPI
                                 $pt->groupBy('product_tag');
                             }])
                         ->where('promotions.promotion_id', $couponId)
-                        ->where('promotions.is_visible', 'Y');
+                        ->where('promotions.is_visible', 'Y')
+                        ->orderBy('issued_coupons.expired_date', 'desc');
 
             OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
                 $coupon->havingRaw("mall_id = {$this->quote($mallId)}");
@@ -276,7 +278,24 @@ class CouponDetailAPIController extends PubControllerAPI
                         ->first();
             });
 
-            $coupon = $coupon->first();
+            // If it is for redeem, then get the nearest expired date from now.
+            // But because of the nature of the query, we need to filter all the issued
+            // coupons that not exceeding validity date then get the nearest one.
+            // @todo find better solution and move it to a separate controller/api.
+            if ($isForRedeem === 'Y') {
+                $coupons = $coupon->get();
+                $nearestExpired = null;
+                foreach($coupons as $coupon) {
+                    if ($coupon->is_exceeding_validity_date === 'true') {
+                        break;
+                    }
+                    $nearestExpired = $coupon;
+                }
+                $coupon = $nearestExpired;
+            }
+            else {
+                $coupon = $coupon->first();
+            }
 
             $message = 'Request Ok';
             if (! is_object($coupon)) {

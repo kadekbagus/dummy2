@@ -539,13 +539,9 @@ class Activity extends Eloquent
             $primaryKey = $object->getKeyName();
             $this->coupon_id = $object->$primaryKey;
             $this->coupon_name = $object->promotion_name;
-
-            $this->metadata_object = $object->toJSON();
         } else {
             $this->coupon_id = null;
             $this->coupon_name = null;
-
-            $this->metadata_object = null;
         }
 
         return $this;
