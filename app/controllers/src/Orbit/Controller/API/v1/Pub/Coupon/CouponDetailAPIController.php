@@ -227,6 +227,7 @@ class CouponDetailAPIController extends PubControllerAPI
                                 $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                                 $q->on('issued_coupons.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
                                 $q->on('issued_coupons.status', '=', DB::Raw("'issued'"));
+                                $q->on('issued_coupons.expired_date', '>=', DB::Raw("CONVERT_TZ(NOW(), '+00:00', 'Asia/jakarta')"));
                             })
                         ->leftJoin('issued_coupons as reserved_issued_coupons', function ($q) use ($user) {
                                 $q->on(DB::raw('reserved_issued_coupons.promotion_id'), '=', 'promotions.promotion_id');
