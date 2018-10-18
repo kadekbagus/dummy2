@@ -52,6 +52,7 @@ class PaymentMidtransVerifyAPIController extends PubControllerAPI
             $payment = PaymentTransaction::select('payment_transaction_id', 'external_payment_transaction_id', 'amount', 'status')
 
                                             // payment_transaction_id is value of payment_transaction_id or external_payment_transaction_id
+                                            ->where('user_id', $user->user_id)
                                             ->where(function($query) use($payment_transaction_id) {
                                             $query->where('payment_transactions.payment_transaction_id', '=', $payment_transaction_id)
                                                   ->orWhere('payment_transactions.external_payment_transaction_id', '=', $payment_transaction_id);

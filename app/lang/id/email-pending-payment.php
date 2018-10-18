@@ -10,7 +10,7 @@ return [
     'body' => [
         'greeting' => 'Dear, :customerName
                         <br>
-                        Thank you for purchasing Coupon in Gotomalls.com. Below is the instruction to complete your payment.',
+                        Thank you for purchasing Coupon in Gotomalls.com. Below are the instructions to complete your payment.',
 
         'transaction_labels' => [
             'transaction_id' => 'Transaction ID: ',
@@ -36,9 +36,11 @@ return [
             'bank_name' => 'Bank Name: ',
         ],
 
-        'payment-info-line-2' => 'You can follow payment instruction below to complete the transaction.',
+        'payment-info-line-2' => 'You can follow payment instructions below to complete the transaction.',
+        'payment-info-line-3' => 'If you canceled the purchase, then ignore this email.',
 
-        'btn_payment_instruction' => 'Payment Instruction',
+        'btn_payment_instruction' => 'Payment Instructions',
         'btn_my_wallet' => 'Go to My Wallet',
+        'btn_cancel_purchase' => 'Cancel Transaction',
     ],
 ];
