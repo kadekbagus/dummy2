@@ -278,6 +278,24 @@ class CouponWalletListAPIController extends PubControllerAPI
                             ->where('issued_coupons.user_id', $user->user_id)
                             ->whereIn("campaign_status.campaign_status_name", array('ongoing', 'expired'));
 
+
+            OrbitInput::get('type', function($type) use ($coupon) {
+
+                switch ($type) {
+                    case 'redeemable':
+                        $coupon->havingRaw("(campaign_status = 'ongoing' AND campaign_status != 'expired')")
+                               ->havingRaw("issued_coupon_status = 'redeemable'");
+                        break;
+                    case 'redeemed':
+                        $coupon->havingRaw("issued_coupon_status = 'redeemed'");
+                        break;
+                    case 'expired':
+                        $coupon->havingRaw("(campaign_status = 'expired')");
+                        break;
+                    default:
+                }
+            });
+
             //remove code related to Mall because Coupon list in My wallet
             //does not affected by GTM/mall page also remove code related to
             //filter because we do not have filtering in my wallet
