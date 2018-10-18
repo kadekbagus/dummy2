@@ -56,6 +56,7 @@ class CouponSaveRedeemLocationAPIController extends PubControllerAPI
             }
 
             $couponId = OrbitInput::post('coupon_id');
+            $issuedCouponId = OrbitInput::post('issued_coupon_id');
             $storeId = OrbitInput::post('store_id');
             $mallId = OrbitInput::post('current_mall');
             $paymentId = OrbitInput::post('transaction_id');
@@ -105,9 +106,7 @@ class CouponSaveRedeemLocationAPIController extends PubControllerAPI
             }
 
             $payment = PaymentTransaction::with(['details.normal_paypro_detail'])->findOrFail($paymentId);
-            $issuedCoupon = IssuedCoupon::where('transaction_id', $paymentId)
-                                            ->where('status', IssuedCoupon::STATUS_ISSUED)
-                                            ->latest()->first();
+            $issuedCoupon = IssuedCoupon::where('issued_coupon_id', $issuedCouponId)->first();
 
             if (empty($issuedCoupon)) {
                 $errorMessage = 'Can not find issued coupon related to this coupon.';
