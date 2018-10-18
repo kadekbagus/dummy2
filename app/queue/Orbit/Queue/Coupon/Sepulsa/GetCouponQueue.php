@@ -57,6 +57,7 @@ class GetCouponQueue
         $this->activity = Activity::mobileci()
                             ->setActivityType('transaction')
                             ->setActivityName('transaction_status');
+        $coupon = null;
 
         try {
 
@@ -164,6 +165,7 @@ class GetCouponQueue
                     $this->activity->setActivityNameLong('Transaction is Successful')
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment)
+                            ->setCoupon($coupon)
                             ->setNotes(Coupon::TYPE_SEPULSA)
                             ->setLocation($this->mall)
                             ->responseOK()
