@@ -227,6 +227,7 @@ class CouponDetailAPIController extends PubControllerAPI
                                 $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                                 $q->on('issued_coupons.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
                                 $q->on('issued_coupons.status', '=', DB::Raw("'issued'"));
+                                $q->on('issued_coupons.expired_date', '>=', DB::Raw("CONVERT_TZ(NOW(), '+00:00', 'Asia/jakarta')"));
                             })
                         ->leftJoin('issued_coupons as reserved_issued_coupons', function ($q) use ($user) {
                                 $q->on(DB::raw('reserved_issued_coupons.promotion_id'), '=', 'promotions.promotion_id');
@@ -269,7 +270,7 @@ class CouponDetailAPIController extends PubControllerAPI
                             }])
                         ->where('promotions.promotion_id', $couponId)
                         ->where('promotions.is_visible', 'Y')
-                        ->orderBy('issued_coupons.expired_date', 'desc');
+                        ->orderBy('issued_coupons.expired_date', 'asc');
 
             OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
                 $coupon->havingRaw("mall_id = {$this->quote($mallId)}");
