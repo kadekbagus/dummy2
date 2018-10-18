@@ -269,7 +269,7 @@ class CouponDetailAPIController extends PubControllerAPI
                             }])
                         ->where('promotions.promotion_id', $couponId)
                         ->where('promotions.is_visible', 'Y')
-                        ->orderBy('issued_coupons.expired_date', 'desc');
+                        ->orderBy('issued_coupons.expired_date', 'asc');
 
             OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
                 $coupon->havingRaw("mall_id = {$this->quote($mallId)}");
