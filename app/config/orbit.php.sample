@@ -834,6 +834,12 @@ return array(
             'per_page'      => 50,
             'max_record'    => 100,
         ),
+
+        // campaign location and store location
+        'city_location' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
     ),
 
     'reset_password' => array(
@@ -7477,6 +7483,8 @@ return array(
         'delay_before_issuing_coupon' => 60,
         // Maximum quantity per item that allowed to be purchased. Applied to all coupons.
         'max_quantity_per_purchase' => 1,
+        // the url to cancel a purchase.
+        'cancel_purchase_url' => 'https://gotomalls.com/my/purchases/detail?orderId=%s&cancel=y',
     ],
 
     // Coupon reserved limit time for sepulsa and hot deals, set in minutes

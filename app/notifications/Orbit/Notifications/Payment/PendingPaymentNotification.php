@@ -71,6 +71,8 @@ class PendingPaymentNotification extends CustomerNotification implements EmailNo
             'transaction'       => $this->getTransactionData(),
             'cs'                => $this->getContactData(),
             'paymentExpiration' => $this->getPaymentExpirationDate(),
+            'myWalletUrl'       => Config::get('orbit.coupon.direct_redemption_url'),
+            'cancelUrl'         => $this->getCancelUrl(),
         ];
     }
 
