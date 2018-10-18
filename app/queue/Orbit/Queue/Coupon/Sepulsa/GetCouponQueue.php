@@ -57,7 +57,6 @@ class GetCouponQueue
         $this->activity = Activity::mobileci()
                             ->setActivityType('transaction')
                             ->setActivityName('transaction_status');
-        $coupon = null;
 
         try {
 
