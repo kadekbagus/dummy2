@@ -95,6 +95,16 @@ trait HasPaymentTrait
     public function getPaymentExpirationDate()
     {
         $expiredIn = Config::get('orbit.partners_api.midtrans.expired_in', 1440);
-        return $this->payment->created_at->addMinutes($expiredIn)->format('d F Y H:i');
+        return $this->payment->created_at->addMinutes($expiredIn)->format('d F Y, h:i A');
+    }
+
+    /**
+     * Generate cancel url.
+     *
+     * @return [type] [description]
+     */
+    public function getCancelUrl()
+    {
+        return sprintf(Config::get('orbit.transaction.cancel_purchase_url'), $this->payment->payment_transaction_id);
     }
 }

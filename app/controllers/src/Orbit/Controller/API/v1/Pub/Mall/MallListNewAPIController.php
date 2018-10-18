@@ -164,6 +164,8 @@ class MallListNewAPIController extends PubControllerAPI
             $this->searcher->filterByCountryAndCities($area);
 
             $keyword = OrbitInput::get('keyword', null);
+            $forbiddenCharacter = array('>', '<', '(', ')', '{', '}', '[', ']', '^', '"', '~', '/');
+            $keyword = str_replace($forbiddenCharacter, '', $keyword);
             if (! empty($keyword)) {
                 $cacheKey['keyword'] = $keyword;
                 $this->searcher->filterByKeyword($keyword);
