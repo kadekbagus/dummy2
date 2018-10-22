@@ -29,7 +29,7 @@ class TransactionCancel
     public function __construct($config=[])
     {
         $this->config = ! empty($config) ? $config : Config::get('orbit.partners_api.midtrans');
-        
+
         Veritrans_Config::$serverKey = $this->config['server_key'];
         Veritrans_Config::$isProduction = $this->config['is_production'];
     }
@@ -41,7 +41,7 @@ class TransactionCancel
 
     /**
      * Cancel transaction.
-     * 
+     *
      * @param  [type] $transactionId [description]
      * @return [type]                [description]
      */
@@ -53,7 +53,9 @@ class TransactionCancel
                 throw new Exception('TransactionId is empty.', 404);
             }
 
-            $response = Veritrans_Transaction::cancel($transactionId);
+            $response = new \stdClass;
+            $response->status_code = Veritrans_Transaction::cancel($transactionId);
+            $response->status_message = "Transaction Canceled.";
 
         } catch (Exception $e) {
             Log::info('Midtrans::getStatus(): Exception, File: ' . $e->getFile() . ':' . $e->getLine() . ' >> ' . $e->getMessage());
