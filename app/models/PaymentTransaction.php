@@ -29,6 +29,7 @@ class PaymentTransaction extends Eloquent
     const STATUS_DENIED             = 'denied';
     const STATUS_SUSPICIOUS         = 'suspicious';
     const STATUS_CANCELED           = 'canceled';
+    const STATUS_ABORTED            = 'abort';
 
     /**
      * It means we are in the process of getting coupon/voucher from Sepulsa.
@@ -155,13 +156,23 @@ class PaymentTransaction extends Eloquent
     }
 
     /**
-     * Determine if the payment is failed or not.
+     * Determine if the payment is canceled/aborted or not.
      *
      * @return [type] [description]
      */
     public function canceled()
     {
-        return $this->status === self::STATUS_CANCELED;
+        return $this->status === self::STATUS_CANCELED || $this->aborted();
+    }
+
+    /**
+     * Determine if the payment was aborted or not.
+     *
+     * @return [type] [description]
+     */
+    public function aborted()
+    {
+        return $this->status === self::STATUS_ABORTED;
     }
 
     /**

@@ -18,10 +18,10 @@ class NewsSearch extends Search
         $this->setIndex($this->esConfig['indices_prefix'] . $this->esConfig['indices']['news']['index']);
         $this->setType($this->esConfig['indices']['news']['type']);
     }
-    
+
     /**
      * Make sure the promotion is active.
-     * 
+     *
      * @return [type] [description]
      */
     public function isActive($params = [])
@@ -33,7 +33,7 @@ class NewsSearch extends Search
 
     /**
      * Filter by Mall...
-     * 
+     *
      * @param  string $mallId [description]
      * @return [type]         [description]
      */
@@ -54,7 +54,7 @@ class NewsSearch extends Search
 
     /**
      * Filter by selected stores Categories..
-     * 
+     *
      * @return [type] [description]
      */
     public function filterByCategories($categories = [])
@@ -74,25 +74,25 @@ class NewsSearch extends Search
 
     /**
      * Implement filter by keyword...
-     * 
+     *
      * @param  string $keyword [description]
      * @return [type]          [description]
      */
     public function filterByKeyword($keyword = '')
     {
-        $priorityName = isset($this->esConfig['priority']['news']['name']) ? 
+        $priorityName = isset($this->esConfig['priority']['news']['name']) ?
             $this->esConfig['priority']['news']['name'] : '^6';
 
-        $priorityObjectType = isset($this->esConfig['priority']['news']['object_type']) ? 
+        $priorityObjectType = isset($this->esConfig['priority']['news']['object_type']) ?
             $this->esConfig['priority']['news']['object_type'] : '^5';
 
-        $priorityDescription = isset($this->esConfig['priority']['news']['description']) ? 
+        $priorityDescription = isset($this->esConfig['priority']['news']['description']) ?
             $this->esConfig['priority']['news']['description'] : '^4';
 
-        $priorityKeywords = isset($this->esConfig['priority']['news']['keywords']) ? 
+        $priorityKeywords = isset($this->esConfig['priority']['news']['keywords']) ?
             $this->esConfig['priority']['news']['keywords'] : '^4';
 
-        $priorityProductTags = isset($this->esConfig['priority']['news']['product_tags']) ? 
+        $priorityProductTags = isset($this->esConfig['priority']['news']['product_tags']) ?
             $this->esConfig['priority']['news']['product_tags'] : '^3';
 
         $this->must([
@@ -102,9 +102,9 @@ class NewsSearch extends Search
                         'query_string' => [
                             'query' => '*' . $keyword . '*',
                             'fields' => [
-                                'name' . $priorityName, 
+                                'name' . $priorityName,
                                 'object_type' . $priorityObjectType,
-                                'description' . $priorityDescription, 
+                                'description' . $priorityDescription,
                                 'keywords' . $priorityKeywords,
                                 'product_tags' . $priorityProductTags,
                             ]
@@ -156,7 +156,7 @@ class NewsSearch extends Search
 
     /**
      * Filte by Country and Cities...
-     * 
+     *
      * @param  array  $area [description]
      * @return [type]       [description]
      */
@@ -201,7 +201,7 @@ class NewsSearch extends Search
 
     /**
      * Filter by Partner...
-     * 
+     *
      * @param  string $partnerId [description]
      * @return [type]            [description]
      */
@@ -220,7 +220,7 @@ class NewsSearch extends Search
 
                 if (in_array($partnerId, $exception)) {
                     $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
-                    
+
                     $this->mustNot([
                         'terms' => [
                             'partner_ids' => $partnerIds
@@ -240,7 +240,7 @@ class NewsSearch extends Search
 
     /**
      * Filter by CC..?
-     * 
+     *
      * @return [type] [description]
      */
     public function filterByMyCC($params = [])
@@ -321,33 +321,33 @@ class NewsSearch extends Search
                 'should' => [
                     [
                         'bool' => [
-                            'must' => [ 
+                            'must' => [
                                 [
                                     'query' => [
                                         'match' => [
                                             'advert_status' => 'active'
                                         ]
                                     ]
-                                ], 
+                                ],
                                 [
                                     'range' => [
                                         'advert_start_date' => [
                                             'lte' => $options['dateTimeEs']
                                         ]
                                     ]
-                                ], 
+                                ],
                                 [
                                     'range' => [
                                         'advert_end_date' => [
                                             'gte' => $options['dateTimeEs']
                                         ]
                                     ]
-                                ], 
+                                ],
                                 [
                                     'match' => [
                                         'advert_location_ids' => $options['locationId']
                                     ]
-                                ], 
+                                ],
                                 [
                                     'terms' => [
                                         'advert_type' => $options['advertType']
@@ -422,7 +422,7 @@ class NewsSearch extends Search
 
     /**
      * Exclude some stores from the result.
-     * 
+     *
      * @param  array  $excludedId [description]
      * @return [type]             [description]
      */
@@ -437,17 +437,17 @@ class NewsSearch extends Search
 
     /**
      * Sort by name..
-     * 
+     *
      * @return [type] [description]
      */
     public function sortByName($language = 'id', $sortMode = 'asc')
     {
         $sortScript =  "if(doc['name_" . $language . "'].value != null) { return doc['name_" . $language . "'].value } else { doc['name_default'].value }";
-        
+
         $this->sort([
             '_script' => [
-                'script' => $sortScript, 
-                'type' => 'string', 
+                'script' => $sortScript,
+                'type' => 'string',
                 'order' => $sortMode
             ]
         ]);
@@ -455,7 +455,7 @@ class NewsSearch extends Search
 
     /**
      * Sort store by rating.
-     * 
+     *
      * @param  string $sortingScript [description]
      * @return [type]                [description]
      */
@@ -472,7 +472,7 @@ class NewsSearch extends Search
 
     /**
      * Sort store by created date.
-     * 
+     *
      * @param  string $sortingScript [description]
      * @return [type]                [description]
      */
@@ -487,7 +487,7 @@ class NewsSearch extends Search
 
     /**
      * Sort store by updated date.
-     * 
+     *
      * @param  string $sortingScript [description]
      * @return [type]                [description]
      */
@@ -546,7 +546,7 @@ class NewsSearch extends Search
 
     /**
      * Sort by relevance..
-     * 
+     *
      * @return [type] [description]
      */
     public function sortByRelevance()
@@ -555,8 +555,51 @@ class NewsSearch extends Search
     }
 
     /**
+     * Sort by Nearest..
+     *
+     * @return [type] [description]
+     */
+    public function sortByNearest($ul = null)
+    {
+        // Get user location ($ul), latitude and longitude.
+        // If latitude and longitude doesn't exist in query string, the code will be read cookie to get lat and lon
+        if ($ul == null) {
+            $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
+
+            $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
+            if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
+                $longitude = $userLocationCookieArray[0];
+                $latitude = $userLocationCookieArray[1];
+            }
+        } else {
+            $loc = explode('|', $ul);
+            $longitude = $loc[0];
+            $latitude = $loc[1];
+        }
+
+        if (isset($longitude) && isset($latitude))  {
+            $this->sort(
+                        [
+                          '_geo_distance'=> [
+                            'nested_path'=> 'link_to_tenant',
+                            'link_to_tenant.position'=> [
+                              'lon' => $longitude,
+                              'lat' => $latitude
+                            ],
+                            'order'=> 'asc',
+                            'unit'=> 'km',
+                            'distance_type'=> 'plane'
+                          ]
+                        ]
+                    );
+        }
+
+        $this->sortByName();
+    }
+
+    /**
      * Init default search params.
-     * 
+     *
      * @return [type] [description]
      */
     public function setDefaultSearchParam()

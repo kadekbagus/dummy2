@@ -232,6 +232,8 @@ class StoreListNewAPIController extends PubControllerAPI
 
             // Filter by keyword
             $keyword = OrbitInput::get('keyword');
+            $forbiddenCharacter = array('>', '<', '(', ')', '{', '}', '[', ']', '^', '"', '~', '/');
+            $keyword = str_replace($forbiddenCharacter, '', $keyword);
             if (! empty($keyword)) {
                 $this->searcher->filterByKeyword($keyword);
             }
@@ -292,6 +294,9 @@ class StoreListNewAPIController extends PubControllerAPI
             switch ($sortBy) {
                 case 'relevance':
                     $this->searcher->sortByRelevance();
+                    break;
+                case 'location':
+                    $this->searcher->sortByNearest($ul);
                     break;
                 case 'rating':
                     $this->searcher->sortByRating($scriptFields['scriptFieldRating']);

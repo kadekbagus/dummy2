@@ -177,7 +177,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                                         END as cdnPath,
                                     {$prefix}issued_coupons.issued_coupon_code,
                                     {$prefix}promotions.end_date,
-                                    {$prefix}promotions.coupon_validity_in_date,
+                                    {$prefix}issued_coupons.expired_date as coupon_validity_in_date,
                                     {$prefix}promotions.status,
                                     {$prefix}promotions.promotion_type,
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -196,7 +196,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                                             END
                                         )
                                     END AS campaign_status,
-                                    CASE WHEN {$prefix}promotions.coupon_validity_in_date < (
+                                    CASE WHEN {$prefix}issued_coupons.expired_date < (
                                             SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
                                             FROM {$prefix}promotion_retailer opt
                                                 LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
@@ -207,17 +207,6 @@ class CouponWalletListAPIController extends PubControllerAPI
                                         THEN 'true'
                                         ELSE 'false'
                                     END AS is_exceeding_validity_date,
-                                    CASE WHEN (
-                                        SELECT count(opt.promotion_retailer_id)
-                                        FROM {$prefix}promotion_retailer opt
-                                            LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
-                                            LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
-                                            LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                        WHERE opt.promotion_id = {$prefix}promotions.promotion_id
-                                        AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.coupon_validity_in_date) > 0
-                                    THEN 'true'
-                                    ELSE 'false'
-                                    END AS is_started,
                                     {$prefix}issued_coupons.issued_coupon_id,
                                     CASE WHEN {$prefix}issued_coupons.status = 'issued' THEN
                                         CASE WHEN {$prefix}promotions.is_payable_by_wallet = 'Y' THEN 'payable' ELSE 'redeemable' END
@@ -225,9 +214,6 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     {$prefix}merchants.name as store_name,
                                     CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN malls.name ELSE NULL END as mall_name,
                                     {$prefix}issued_coupons.redeemed_date,
-
-                                    (SELECT COUNT(ic.issued_coupon_id) FROM {$prefix}issued_coupons ic where ic.promotion_id = {$prefix}promotions.promotion_id and ic.status = 'redeemed') as total_redeemed,
-                                    (SELECT COUNT(ic.issued_coupon_id) FROM {$prefix}issued_coupons ic where ic.promotion_id = {$prefix}promotions.promotion_id and ic.status in ('issued','redeemed')) as total_issued,
 
                                     CASE WHEN {$prefix}promotions.maximum_redeem = '0' THEN {$prefix}promotions.maximum_issued_coupon ELSE {$prefix}promotions.maximum_redeem END maximum_redeem,
                                     {$prefix}promotions.maximum_issued_coupon,
@@ -299,9 +285,11 @@ class CouponWalletListAPIController extends PubControllerAPI
             // requirement need us to order coupon that is redeemable and payable
             // to display first, redeemed and expired will come after that
             //->orderByRaw(DB::Raw("FIELD({$prefix}issued_coupons.status, 'issued', 'redeemed', 'expired')"))
-            $coupon->orderByRaw(DB::Raw("CASE WHEN campaign_status = 'ongoing' THEN 0 ELSE 1 END ASC"))
-                    ->orderByRaw(DB::Raw("CASE WHEN {$prefix}issued_coupons.status = 'issued' THEN 0 ELSE 1 END ASC"))
-                    ->orderByRaw(DB::Raw("CASE WHEN total_redeemed = maximum_redeem THEN 0 ELSE 1 END DESC"))
+            $coupon->orderByRaw(DB::Raw("CASE WHEN {$prefix}issued_coupons.status = 'issued' THEN 0 ELSE 1 END ASC"))
+                    ->orderByRaw(DB::Raw("CASE WHEN campaign_status = 'ongoing' THEN 0 ELSE 1 END ASC"))
+                    // This part for ordering coupon with maximum reach condition
+                    // ->orderByRaw(DB::Raw("CASE WHEN total_redeemed = maximum_redeem THEN 0 ELSE 1 END DESC"))
+                    ->orderBy(DB::raw("is_exceeding_validity_date"), 'asc')
                     ->orderBy('issued_coupons.redeemed_date', 'desc')
                     ->orderBy('issued_coupons.issued_date', 'desc');
 
@@ -311,7 +299,7 @@ class CouponWalletListAPIController extends PubControllerAPI
             $coupon->skip($skip);
 
             $listcoupon = $coupon->get();
-            // $listcoupon = $this->getTotalIssuedAndRedeemed($listcoupon);
+            $listcoupon = $this->getTotalIssuedAndRedeemed($listcoupon);
 
             $count = $this->calculateCount($prefix, $user);
 

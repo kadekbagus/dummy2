@@ -8,6 +8,7 @@ use Queue;
 use Exception;
 use Coupon;
 use PromotionRetailer;
+use PaymentTransaction;
 
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
@@ -69,7 +70,9 @@ class PendingPaymentNotification extends CustomerNotification implements EmailNo
             'customerPhone'     => $this->getCustomerPhone(),
             'transaction'       => $this->getTransactionData(),
             'cs'                => $this->getContactData(),
-            'paymentInfo'       => $this->getPaymentInfo(),
+            'paymentExpiration' => $this->getPaymentExpirationDate(),
+            'myWalletUrl'       => Config::get('orbit.coupon.direct_redemption_url'),
+            'cancelUrl'         => $this->getCancelUrl(),
         ];
     }
 
@@ -83,6 +86,9 @@ class PendingPaymentNotification extends CustomerNotification implements EmailNo
     public function toEmail($job, $data)
     {
         try {
+            $payment = PaymentTransaction::with(['midtrans'])->findOrFail($data['transaction']['id']);
+            $data['paymentInfo'] = json_decode(unserialize($payment->midtrans->payment_midtrans_info), true);
+
             Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 

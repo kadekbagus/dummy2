@@ -456,9 +456,17 @@ class Activity extends Eloquent
                     break;
 
                 case 'PaymentTransaction':
-                    $paymentProvider = PaymentProvider::where('payment_provider_id', '=', $object->payment_provider_id)->first();
-                    if (is_object($paymentProvider)) {
-                        $this->object_display_name = $paymentProvider->payment_name;
+                    if ($object->payment_method === 'midtrans') {
+                        $this->object_display_name = $object->details->count() > 0 ?
+                                                        $object->details->first()->object_name :
+                                                        'Can not get payment detail record.';
+
+                    }
+                    else {
+                        $paymentProvider = PaymentProvider::where('payment_provider_id', '=', $object->payment_provider_id)->first();
+                        if (is_object($paymentProvider)) {
+                            $this->object_display_name = $paymentProvider->payment_name;
+                        }
                     }
                     break;
 
@@ -531,13 +539,9 @@ class Activity extends Eloquent
             $primaryKey = $object->getKeyName();
             $this->coupon_id = $object->$primaryKey;
             $this->coupon_name = $object->promotion_name;
-
-            $this->metadata_object = $object->toJSON();
         } else {
             $this->coupon_id = null;
             $this->coupon_name = null;
-
-            $this->metadata_object = null;
         }
 
         return $this;
