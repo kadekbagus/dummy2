@@ -105,7 +105,8 @@ class TransactionStatusResponse
      */
     public function notFound()
     {
-        return $this->data->status_code === MidtransResponse::STATUS_NOT_FOUND;
+        // Use loose/not strict comparison...
+        return $this->data->status_code == MidtransResponse::STATUS_NOT_FOUND;
     }
 
     /**

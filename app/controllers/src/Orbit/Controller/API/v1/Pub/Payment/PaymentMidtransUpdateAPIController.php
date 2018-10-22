@@ -124,21 +124,23 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 }
             }
             else if (! in_array($oldStatus, $finalStatus)) {
-                $shouldUpdate = true;
-            }
-            else if ($status === PaymentTransaction::STATUS_ABORTED) {
-                // If status is aborted, then check if the transaction is in pending (exists) or not in Midtrans.
-                // If doesn't exist, assume the payment is starting and we can abort it.
-                // Otherwise, assume it is pending and we should not update the status to aborted.
-                Log::info("PaidCoupon: Request to abort payment {$payment_transaction_id}...");
-                Log::info("PaidCoupon: Checking transaction {$payment_transaction_id} status in Midtrans...");
-                $transactionStatus = TransactionStatus::create()->getStatus($payment_transaction_id);
-                if ($transactionStatus->notFound()) {
-                    Log::info("PaidCoupon: Transaction {$payment_transaction_id} not found! Aborting payment...");
-                    $shouldUpdate = true;
+                if ($status === PaymentTransaction::STATUS_ABORTED) {
+                    // If status is aborted, then check if the transaction is in pending (exists) or not in Midtrans.
+                    // If doesn't exist, assume the payment is starting and we can abort it.
+                    // Otherwise, assume it is pending and we should not update the statusad.
+                    Log::info("PaidCoupon: Request to abort payment {$payment_transaction_id}...");
+                    Log::info("PaidCoupon: Checking transaction {$payment_transaction_id} status in Midtrans...");
+                    $transactionStatus = TransactionStatus::create()->getStatus($payment_transaction_id);
+                    if ($transactionStatus->notFound()) {
+                        Log::info("PaidCoupon: Transaction {$payment_transaction_id} not found! Aborting payment...");
+                        $shouldUpdate = true;
+                    }
+                    else {
+                        Log::info("PaidCoupon: Transaction {$payment_transaction_id} found! Payment can not be aborted/canceled. Midtrans trx status: {$transactionStatus->transaction_status}");
+                    }
                 }
                 else {
-                    Log::info("PaidCoupon: Transaction {$payment_transaction_id} found! Payment can not be aborted/canceled. Midtrans trx status: {$transactionStatus->transaction_status}");
+                    $shouldUpdate = true;
                 }
             }
             else {
