@@ -19,12 +19,13 @@ use Orbit\Helper\Security\Encrypter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Lang;
 use OrbitShop\API\v1\OrbitShopAPI;
+use TmpPromoCode;
 
 class CouponHelper
 {
     protected $valid_language = NULL;
-
     protected $session = NULL;
+    protected $user = NULL;
 
     public function __construct($session = NULL)
     {
@@ -245,11 +246,43 @@ class CouponHelper
             $this->valid_language = $language;
             return TRUE;
         });
+
+        // Check promo code already used or not
+        Validator::extend('orbit.exists.promo_code', function ($attribute, $value, $parameters) {
+
+            //check if promo code already used
+            $code_used = TmpPromoCode::where('promo_code', '=', $value)->first();
+
+            if ($code_used) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
+
+
+        // Check validate user, 1 user can only use 1 promo code
+        Validator::extend('orbit.validate.user_id', function ($attribute, $value, $parameters) {
+
+            //check if user already use discount code
+            $user_exist = TmpPromoCode::where('user_id', '=', $this->user->user_id)->first();
+
+            if ($user_exist) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
     }
 
     public function getValidLanguage()
     {
         return $this->valid_language;
+    }
+
+    public function setUser($user)
+    {
+        $this->user = $user;
     }
 
     /**
