@@ -41,7 +41,7 @@ class PaymentMidtransVerifyAPIController extends PubControllerAPI
             );
 
             // Begin database transaction
-            $this->beginTransaction();
+            // $this->beginTransaction();
 
             // Run the validation
             if ($validator->fails()) {
@@ -60,10 +60,10 @@ class PaymentMidtransVerifyAPIController extends PubControllerAPI
             }
 
             // payment_transaction_id is value of payment_transaction_id or external_payment_transaction_id
-            $payment->where(function($query) use($payment_transaction_id) {
-                        $query->where('payment_transactions.payment_transaction_id', '=', $payment_transaction_id)
-                              ->orWhere('payment_transactions.external_payment_transaction_id', '=', $payment_transaction_id);
-                    })->first();
+            $payment = $payment->where(function($query) use($payment_transaction_id) {
+                            $query->where('payment_transactions.payment_transaction_id', '=', $payment_transaction_id)
+                                  ->orWhere('payment_transactions.external_payment_transaction_id', '=', $payment_transaction_id);
+                        })->first();
 
             if (empty($payment)) {
                 $httpCode = 404;
