@@ -136,7 +136,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                         $shouldUpdate = true;
                     }
                     else {
-                        Log::info("PaidCoupon: Transaction {$payment_transaction_id} found! Payment can not be aborted/canceled. Midtrans trx status: {$transactionStatus->transaction_status}");
+                        Log::info("PaidCoupon: Transaction {$payment_transaction_id} found! Payment can not be aborted/canceled.");
                     }
                 }
                 else {
