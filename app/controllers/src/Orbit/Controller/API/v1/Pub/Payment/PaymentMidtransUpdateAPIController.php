@@ -201,6 +201,17 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 // Try not doing any expensive operation above.
                 $this->commit();
 
+                if ($payment_update->aborted()) {
+                    Log::info("PaidCoupon: Payment {$payment_transaction_id} was aborted... Canceling Midtrans transaction...");
+                    $cancelResponse = TransactionCancel::create()->cancel($payment_transaction_id);
+                    if ($cancelResponse->isSuccess()) {
+                        Log::info("PaidCoupon: Midtrans transaction {$payment_transaction_id} was canceled.");
+                    }
+                    else {
+                        Log::info("PaidCoupon: Unable to cancel Midtrans transaction {$payment_transaction_id}... {$cancelResponse->getMessage()}");
+                    }
+                }
+
                 // Log activity...
                 // Should be done before issuing coupon for the sake of activity ordering,
                 // or at the end before returning the response??
