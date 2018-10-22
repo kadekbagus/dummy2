@@ -99,6 +99,16 @@ class TransactionStatusResponse
     }
 
     /**
+     * Determine if the the transaction is exists or not.
+     *
+     * @return boolean [description]
+     */
+    public function notFound()
+    {
+        return $this->data->status_code === MidtransResponse::STATUS_NOT_FOUND;
+    }
+
+    /**
      * Decide if we should retry or not based on status_code from Midtrans.
      *
      * @param  integer $code [description]
