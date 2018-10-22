@@ -25,11 +25,6 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
         $payment->cleanUp();
 
         DB::connection()->commit();
-
-        // If canceled then send customer a notification.
-        if ($payment->status === PaymentTransaction::STATUS_CANCELED) {
-            $payment->user->notify(new CanceledPaymentNotification($payment));
-        }
     }
     else if ($payment->status === PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED) {
         // This might be occurred because there are 2 transactions with same coupon and user.

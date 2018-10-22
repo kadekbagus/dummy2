@@ -27,6 +27,7 @@ use Orbit\Helper\Midtrans\API\TransactionCancel;
 use Orbit\Notifications\Payment\SuspiciousPaymentNotification;
 use Orbit\Notifications\Payment\DeniedPaymentNotification;
 use Orbit\Notifications\Payment\PendingPaymentNotification;
+use Orbit\Notifications\Payment\CanceledPaymentNotification;
 use Mall;
 
 /**
@@ -206,6 +207,8 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                     $cancelResponse = TransactionCancel::create()->cancel($payment_transaction_id);
                     if ($cancelResponse->isSuccess()) {
                         Log::info("PaidCoupon: Midtrans transaction {$payment_transaction_id} was canceled.");
+                        Log::info("PaidCoupon: Sending notification for canceled purchase...");
+                        $payment_update->user->notify(new CanceledPaymentNotification($payment_update));
                     }
                     else {
                         Log::info("PaidCoupon: Unable to cancel Midtrans transaction {$payment_transaction_id}... {$cancelResponse->getMessage()}");
@@ -288,6 +291,12 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                         $paymentUser->email = $payment_update->user_email;
                         $paymentUser->notify(new PendingPaymentNotification($payment_update), 30);
                     }
+                }
+
+                // Send notification if the purchase was canceled.
+                // Only send if previous status was pending.
+                if ($oldStatus === PaymentTransaction::STATUS_PENDING && $status === PaymentTransaction::STATUS_CANCELED) {
+                    $payment_update->user->notify(new CanceledPaymentNotification($payment_update));
                 }
 
                 // If previous status was success and now is denied, then send notification to admin.
