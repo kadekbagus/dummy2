@@ -65,8 +65,17 @@ class CouponDiscountCodeAPIController extends PubControllerAPI
         $httpCode = 200;
 
         try {
-            $user = $this->getUser();
+            $this->checkAuth();
+            $user = $this->api->user;
             $user_id = $user->user_id;
+
+            // should always check the role
+            $role = $user->role->role_name;
+            if (strtolower($role) !== 'consumer') {
+                $message = 'You have to login to continue';
+                OrbitShopAPI::throwInvalidArgument($message);
+            }
+
             $couponHelper = CouponHelper::create();
             $couponHelper->setUser($user);
             $couponHelper->couponCustomValidator();
