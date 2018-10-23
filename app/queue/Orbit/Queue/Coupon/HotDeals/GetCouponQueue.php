@@ -12,11 +12,14 @@ use User;
 use PaymentTransaction;
 use IssuedCoupon;
 use Coupon;
+use Mall;
+use Activity;
 
 // Notifications
 use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
 use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification;
 use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
+
 
 /**
  * A job to get/issue Hot Deals Coupon after payment completed.
@@ -37,6 +40,12 @@ class GetCouponQueue
     public function fire($job, $data)
     {
         $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
+        $mallId = isset($data['mall_id']) ? $data['mall_id'] : null;
+        $mall = Mall::where('merchant_id', $mallId)->first();
+
+        $activity = Activity::mobileci()
+                            ->setActivityType('transaction')
+                            ->setActivityName('transaction_status');
 
         try {
             DB::connection()->beginTransaction();
@@ -45,7 +54,9 @@ class GetCouponQueue
 
             Log::info("PaidCoupon: Getting coupon PaymentID: {$paymentId}");
 
-            $payment = PaymentTransaction::with(['details.coupon', 'user', 'issued_coupons'])->findOrFail($paymentId);
+            $payment = PaymentTransaction::with(['details.coupon', 'user', 'midtrans', 'issued_coupons'])->findOrFail($paymentId);
+
+            $activity->setUser($payment->user);
 
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired()) {
@@ -89,7 +100,8 @@ class GetCouponQueue
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
                 $payment->save();
 
-                $payment->details->first()->coupon->updateAvailability();
+                $coupon = $payment->details->first()->coupon;
+                $coupon->updateAvailability();
 
                 // Commit the changes ASAP.
                 DB::connection()->commit();
@@ -98,6 +110,29 @@ class GetCouponQueue
 
                 // Notify Customer.
                 $payment->user->notify(new ReceiptNotification($payment));
+
+                // Log Activity
+                $activity->setActivityNameLong('Transaction is Successful')
+                        ->setModuleName('Midtrans Transaction')
+                        ->setObject($payment)
+                        ->setCoupon($coupon)
+                        ->setNotes(Coupon::TYPE_HOT_DEALS)
+                        ->setLocation($mall)
+                        ->responseOK()
+                        ->save();
+
+                Activity::mobileci()
+                        ->setUser($payment->user)
+                        ->setActivityType('click')
+                        ->setActivityName('coupon_added_to_wallet')
+                        ->setActivityNameLong('Coupon Added to Wallet')
+                        ->setModuleName('Coupon')
+                        ->setObject($coupon)
+                        ->setNotes(Coupon::TYPE_HOT_DEALS)
+                        ->setLocation($mall)
+                        ->responseOK()
+                        ->save();
+
             }
             else {
                 // Commit the changes ASAP.
@@ -124,6 +159,26 @@ class GetCouponQueue
 
                 // Notify customer that coupon is not available.
                 $payment->user->notify(new HotDealsCouponNotAvailableNotification($payment));
+
+                $activity->setActivityNameLong('Transaction is Success - Failed Getting Coupon')
+                         ->setModuleName('Midtrans Transaction')
+                         ->setObject($payment)
+                         ->setNotes($e->getMessage())
+                         ->setLocation($mall)
+                         ->responseFailed()
+                         ->save();
+
+                 Activity::mobileci()
+                         ->setUser($payment->user)
+                         ->setActivityType('click')
+                         ->setActivityName('coupon_added_to_wallet')
+                         ->setActivityNameLong('Coupon Added to Wallet Failed')
+                         ->setModuleName('Coupon')
+                         ->setObject($payment->details->first()->coupon)
+                         ->setNotes($e->getMessage())
+                         ->setLocation($mall)
+                         ->responseFailed()
+                         ->save();
             }
             else {
                 DB::connection()->rollBack();

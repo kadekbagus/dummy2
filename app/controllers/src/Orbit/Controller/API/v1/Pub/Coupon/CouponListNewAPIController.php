@@ -165,8 +165,7 @@ class CouponListNewAPIController extends PubControllerAPI
                 'no_total_record' => $no_total_records,
                 'take' => $take, 'skip' => $skip,
                 'country' => $countryFilter, 'cities' => $cityFilters,
-                'my_cc_filter' => $myCCFilter,
-                'gender' => $gender
+                'my_cc_filter' => $myCCFilter
             ];
 
             // Run the validation
@@ -207,6 +206,8 @@ class CouponListNewAPIController extends PubControllerAPI
 
             // Filter by given keyword...
             $keyword = OrbitInput::get('keyword', null);
+            $forbiddenCharacter = array('>', '<', '(', ')', '{', '}', '[', ']', '^', '"', '~', '/');
+            $keyword = str_replace($forbiddenCharacter, '', $keyword);
             if (! empty($keyword)) {
                 $cacheKey['keyword'] = $keyword;
                 $this->searcher->filterByKeyword($keyword);
@@ -272,6 +273,7 @@ class CouponListNewAPIController extends PubControllerAPI
                         }
                     }
                 }
+                $cacheKey['gender'] = $filterGender;
                 $this->searcher->filterByGender(strtolower($filterGender));
             }
 
@@ -329,6 +331,9 @@ class CouponListNewAPIController extends PubControllerAPI
             switch ($sortBy) {
                 case 'relevance':
                     $this->searcher->sortByRelevance();
+                    break;
+                case 'location':
+                    $this->searcher->sortByNearest($ul);
                     break;
                 case 'rating':
                     $this->searcher->sortByRating($scriptFields['scriptFieldRating']);

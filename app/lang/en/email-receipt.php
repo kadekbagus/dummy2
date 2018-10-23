@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 return [
     'subject' => 'Your Receipt from Gotomalls.com',
@@ -35,7 +35,7 @@ return [
             'subtotal'  => 'Subtotal',
         ],
         'footer' => [
-            'total'     => 'Total',
+            'total'     => 'Total Amount',
         ]
     ],
 
