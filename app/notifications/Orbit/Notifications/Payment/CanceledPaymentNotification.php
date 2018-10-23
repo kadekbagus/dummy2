@@ -6,14 +6,6 @@ use Config;
 use Log;
 use Queue;
 use Exception;
-use Coupon;
-use PromotionRetailer;
-use PaymentTransaction;
-
-use Orbit\Helper\MongoDB\Client as MongoClient;
-use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
-use Orbit\Helper\Util\CdnUrlGenerator;
-use Carbon\Carbon;
 
 use Orbit\Helper\Notifications\CustomerNotification;
 use Orbit\Helper\Notifications\Contracts\EmailNotificationInterface;
@@ -22,11 +14,11 @@ use Orbit\Notifications\Traits\HasPaymentTrait;
 use Orbit\Notifications\Traits\HasContactTrait;
 
 /**
- * Base Pending Payment Notification class.
+ * Email notification for Canceled Payment.
  *
  * @author Budi <budi@dominopos.com>
  */
-class PendingPaymentNotification extends CustomerNotification implements EmailNotificationInterface
+class CanceledPaymentNotification extends CustomerNotification implements EmailNotificationInterface
 {
     use HasPaymentTrait, HasContactTrait;
 
@@ -52,7 +44,7 @@ class PendingPaymentNotification extends CustomerNotification implements EmailNo
     public function getEmailTemplates()
     {
         return [
-            'html' => 'emails.pending-payment.hot-deals',
+            'html' => 'emails.canceled-payment',
         ];
     }
 
@@ -70,9 +62,6 @@ class PendingPaymentNotification extends CustomerNotification implements EmailNo
             'customerPhone'     => $this->getCustomerPhone(),
             'transaction'       => $this->getTransactionData(),
             'cs'                => $this->getContactData(),
-            'paymentExpiration' => $this->getPaymentExpirationDate(),
-            'myWalletUrl'       => Config::get('orbit.coupon.direct_redemption_url'),
-            'cancelUrl'         => $this->getCancelUrl(),
         ];
     }
 
@@ -86,25 +75,17 @@ class PendingPaymentNotification extends CustomerNotification implements EmailNo
     public function toEmail($job, $data)
     {
         try {
-            $payment = PaymentTransaction::with(['midtrans'])->findOrFail($data['transaction']['id']);
+            Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
+                $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-            // Only send email if pending.
-            if ($payment->pending()) {
-                $data['paymentInfo'] = json_decode(unserialize($payment->midtrans->payment_midtrans_info), true);
+                $subject = trans('email-canceled-payment.subject');
 
-                Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
-                    $emailConfig = Config::get('orbit.registration.mobile.sender');
-
-                    $subject = trans('email-pending-payment.subject');
-
-                    $mail->subject($subject);
-                    $mail->from($emailConfig['email'], $emailConfig['name']);
-                    $mail->to($data['recipientEmail']);
-                });
-            }
-
+                $mail->subject($subject);
+                $mail->from($emailConfig['email'], $emailConfig['name']);
+                $mail->to($data['recipientEmail']);
+            });
         } catch (Exception $e) {
-            Log::debug('Notification: PendingPayment email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
+            Log::debug('Notification: CanceledPayment email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
         }
 
         $job->delete();
