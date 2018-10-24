@@ -36,6 +36,8 @@ use \App;
 use \Exception;
 use \UserVerificationNumber;
 use Orbit\Helper\Payment\Payment as PaymentClient;
+use PaymentTransaction;
+use PaymentTransactionDetail;
 
 class CouponDiscountCodeAPIController extends PubControllerAPI
 {
@@ -63,22 +65,61 @@ class CouponDiscountCodeAPIController extends PubControllerAPI
         $httpCode = 200;
 
         try {
-            $user = $this->getUser();
+            $this->checkAuth();
+            $user = $this->api->user;
+            $user_id = $user->user_id;
+
+            // should always check the role
+            $role = $user->role->role_name;
+            if (strtolower($role) !== 'consumer') {
+                $message = 'You have to login to continue';
+                OrbitShopAPI::throwInvalidArgument($message);
+            }
 
             $couponHelper = CouponHelper::create();
+            $couponHelper->setUser($user);
             $couponHelper->couponCustomValidator();
 
-            $discountCode = OrbitInput::post('discount_code');
-            $couponId = OrbitInput::post('coupon_id');
+            $discount_code = OrbitInput::post('discount_code');
+            $first_name = OrbitInput::post('first_name');
+            $last_name = OrbitInput::post('last_name');
+            $email = OrbitInput::post('email');
+            $phone = OrbitInput::post('phone');
+            $quantity = OrbitInput::post('quantity', 1);
+            $mall_id = OrbitInput::post('mall_id', 'gtm');
+            $currency = OrbitInput::post('currency', 'IDR');
+            $country_id = OrbitInput::post('country_id');
+            $post_data = OrbitInput::post('post_data', '');
+            $object_id = OrbitInput::post('object_id');
+            $object_type = OrbitInput::post('object_type');
+            $object_name = OrbitInput::post('object_name');
+            $user_name = (!empty($last_name) ? $first_name.' '.$last_name : $first_name);
 
             $validator = Validator::make(
                 array(
-                    'discount_code'    => $discountCode,
-                    'coupon_id'        => $couponId,
+                    'object_id'        => $object_id,
+                    'first_name'       => $first_name,
+                    'last_name'        => $last_name,
+                    'email'            => $email,
+                    'phone'            => $phone,
+                    'quantity'         => $quantity,
+                    'discount_code'    => $discount_code,
+                    'user_id'          => $user_id,
                 ),
                 array(
-                    'discountCode'     => 'required',
-                    'coupon_id'        => 'required',
+                    'object_id'        => 'required',
+                    'first_name'       => 'required',
+                    'last_name'        => 'required',
+                    'email'            => 'required',
+                    'phone'            => 'required',
+                    'quantity'         => 'required|orbit.validate.quantity',
+                    'discount_code'    => 'required|orbit.exists.promo_code',
+                    'user_id'          => 'orbit.validate.user_id',
+                ),
+                array(
+                    'orbit.exists.promo_code' => 'discount code already used',
+                    'orbit.validate.user_id'  => 'user already use discount code',
+                    'orbit.validate.quantity' => 'maximum quantity is 1'
                 )
             );
 
@@ -90,6 +131,84 @@ class CouponDiscountCodeAPIController extends PubControllerAPI
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            $coupon = Coupon::select('price_selling', 'promotion_id', 'promotion_type')->find($object_id);
+
+            $mallTimeZone = 'Asia/Jakarta';
+            $mall = null;
+            if ($mall_id !== 'gtm') {
+                $mall = Mall::where('merchant_id', $mall_id)->first();
+                if (!empty($mall)) {
+                    $mallTimeZone = $mall->getTimezone($mall_id);
+                }
+            }
+
+            $paymentNew = new PaymentTransaction;
+            $paymentNew->user_email = $email;
+            $paymentNew->user_name = $user_name;
+            $paymentNew->user_id = $user_id;
+            $paymentNew->phone = $phone;
+            $paymentNew->country_id = $country_id;
+            $paymentNew->payment_method = 'discount code';
+            $paymentNew->amount = $quantity * $coupon->price_selling;
+            $paymentNew->currency = $currency;
+            $paymentNew->status = PaymentTransaction::STATUS_SUCCESS;
+            $paymentNew->timezone_name = $mallTimeZone;
+            $paymentNew->post_data = serialize($post_data);
+            $paymentNew->save();
+
+            $paymentDetail = new PaymentTransactionDetail;
+            $paymentDetail->payment_transaction_id = $paymentNew->payment_transaction_id;
+            $paymentDetail->currency = $currency;
+            $paymentDetail->price = $coupon->price_selling;
+            $paymentDetail->quantity = $quantity;
+
+            OrbitInput::post('object_id', function($object_id) use ($paymentDetail) {
+                $paymentDetail->object_id = $object_id;
+            });
+
+            OrbitInput::post('object_type', function($object_type) use ($paymentDetail) {
+                $paymentDetail->object_type = $object_type;
+            });
+
+            OrbitInput::post('object_name', function($object_name) use ($paymentDetail) {
+                $paymentDetail->object_name = $object_name;
+            });
+
+            $paymentDetail->save();
+
+            $issuedCoupon = new IssuedCoupon;
+            $issuedCoupon->promotion_id   = $coupon->promotion_id;
+            $issuedCoupon->transaction_id = $paymentNew->payment_transaction_id;
+            $issuedCoupon->user_id        = $user->user_id;
+            $issuedCoupon->user_email     = $user->user_email;
+            $issuedCoupon->issued_date    = date('Y-m-d H:i:s');
+            $issuedCoupon->status         = IssuedCoupon::STATUS_RESERVED;
+            $issuedCoupon->record_exists  = 'Y';
+            $issuedCoupon->save();
+
+            // Commit the changes
+            $this->commit();
+
+            $queueData = ['paymentId' => $paymentNew->payment_transaction_id,
+                            'retries' => 0,
+                       'discountCode' => $discount_code,
+                             'userId' => $user->user_id,
+                           'couponId' => $coupon->promotion_id,
+                     'issuedCouponId' => $issuedCoupon->issued_coupon_id];
+
+            $queue = 'Orbit\\Queue\\Coupon\\Sepulsa\\GetCouponQueue';
+            $delay = 0;
+
+            Queue::connection('sync')->later(
+                $delay, $queue,
+                $queueData
+            );
+
+            $this->response->data = $paymentNew;
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->message = 'Request OK';
 
         } catch (ACLForbiddenException $e) {
 
