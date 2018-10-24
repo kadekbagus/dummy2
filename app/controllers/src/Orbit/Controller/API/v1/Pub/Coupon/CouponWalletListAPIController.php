@@ -311,6 +311,8 @@ class CouponWalletListAPIController extends PubControllerAPI
                     ->orderBy('issued_coupons.redeemed_date', 'desc')
                     ->orderBy('issued_coupons.issued_date', 'desc');
 
+            $_coupon = clone $coupon;
+
             $take = PaginationNumber::parseTakeFromGet('coupon');
             $coupon->take($take);
             $skip = PaginationNumber::parseSkipFromGet();
@@ -319,7 +321,7 @@ class CouponWalletListAPIController extends PubControllerAPI
             $listcoupon = $coupon->get();
             $listcoupon = $this->getTotalIssuedAndRedeemed($listcoupon);
 
-            $count = $this->calculateCount($prefix, $user);
+            $count = RecordCounter::create($_coupon)->count();
 
             $cdnConfig = Config::get('orbit.cdn');
             $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
