@@ -296,6 +296,16 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                     }
                 }
 
+                if ($oldStatus === PaymentTransaction::STATUS_PENDING && $status === PaymentTransaction::STATUS_CANCELED) {
+                    $activity->setActivityNameLong('Transaction Canceled')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setObject($payment_update)
+                            ->setNotes($payment_update->details->first()->coupon->promotion_type)
+                            ->setLocation($mall)
+                            ->responseOK()
+                            ->save();
+                }
+
                 // If previous status was success and now is denied, then send notification to admin.
                 // Maybe it means the payment was reversed/canceled by customer after paying.
                 if ($paymentDenied) {
