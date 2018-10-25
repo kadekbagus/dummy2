@@ -162,18 +162,9 @@ class CouponDiscountCodeAPIController extends PubControllerAPI
             $paymentDetail->currency = $currency;
             $paymentDetail->price = $coupon->price_selling;
             $paymentDetail->quantity = $quantity;
-
-            OrbitInput::post('object_id', function($object_id) use ($paymentDetail) {
-                $paymentDetail->object_id = $object_id;
-            });
-
-            OrbitInput::post('object_type', function($object_type) use ($paymentDetail) {
-                $paymentDetail->object_type = $object_type;
-            });
-
-            OrbitInput::post('object_name', function($object_name) use ($paymentDetail) {
-                $paymentDetail->object_name = $object_name;
-            });
+            $paymentDetail->object_id = $coupon->promotion_id;
+            $paymentDetail->object_type = 'coupon';
+            $paymentDetail->object_name = $coupon->promotion_name;
 
             $paymentDetail->save();
 
