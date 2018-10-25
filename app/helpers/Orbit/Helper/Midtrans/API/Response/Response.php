@@ -14,4 +14,5 @@ class Response {
     const STATUS_PENDING    = '201';
     const STATUS_DENIED     = '202';
     const STATUS_EXPIRED    = '407';
+    const STATUS_NOT_FOUND  = '404';
 }
