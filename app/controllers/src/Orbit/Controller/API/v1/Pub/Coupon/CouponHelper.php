@@ -261,7 +261,7 @@ class CouponHelper
         });
 
 
-        // Check validate user, 1 user can only use 1 promo code
+        // Validate user, 1 user can only use 1 promo code
         Validator::extend('orbit.validate.user_id', function ($attribute, $value, $parameters) {
 
             //check if user already use discount code
@@ -272,6 +272,16 @@ class CouponHelper
             }
 
             return TRUE;
+        });
+
+        // Quantity must be 1
+        Validator::extend('orbit.validate.quantity', function ($attribute, $value, $parameters) {
+
+            if ($value == 1) {
+                return TRUE;
+            }
+
+            return FALSE;
         });
     }
 
