@@ -117,9 +117,9 @@ class CouponDiscountCodeAPIController extends PubControllerAPI
                     'user_id'          => 'orbit.validate.user_id',
                 ),
                 array(
-                    'orbit.exists.promo_code' => 'discount code already used',
-                    'orbit.validate.user_id'  => 'user already use discount code',
-                    'orbit.validate.quantity' => 'maximum quantity is 1'
+                    'orbit.exists.promo_code' => 'ERROR_DISCOUNT_CODE_USED',
+                    'orbit.validate.user_id'  => 'ERROR_USER_ALREADY_USE_CODE',
+                    'orbit.validate.quantity' => 'ERROR_MAXIMUM_QUANTITY'
                 )
             );
 
