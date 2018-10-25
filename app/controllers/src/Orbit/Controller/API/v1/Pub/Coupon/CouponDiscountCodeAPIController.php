@@ -104,7 +104,6 @@ class CouponDiscountCodeAPIController extends PubControllerAPI
                     'phone'            => $phone,
                     'quantity'         => $quantity,
                     'discount_code'    => $discount_code,
-                    'user_id'          => $user_id,
                 ),
                 array(
                     'object_id'        => 'required',
@@ -114,11 +113,9 @@ class CouponDiscountCodeAPIController extends PubControllerAPI
                     'phone'            => 'required',
                     'quantity'         => 'required|orbit.validate.quantity',
                     'discount_code'    => 'required|orbit.exists.promo_code',
-                    'user_id'          => 'orbit.validate.user_id',
                 ),
                 array(
                     'orbit.exists.promo_code' => 'discount code already used',
-                    'orbit.validate.user_id'  => 'user already use discount code',
                     'orbit.validate.quantity' => 'maximum quantity is 1'
                 )
             );
