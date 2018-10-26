@@ -38,6 +38,7 @@ use \UserVerificationNumber;
 use Orbit\Helper\Payment\Payment as PaymentClient;
 use PaymentTransaction;
 use PaymentTransactionDetail;
+use PaymentTransactionDetailNormalPaypro;
 
 class CouponDiscountCodeAPIController extends PubControllerAPI
 {
@@ -167,6 +168,10 @@ class CouponDiscountCodeAPIController extends PubControllerAPI
             $paymentDetail->object_name = $coupon->promotion_name;
 
             $paymentDetail->save();
+
+            // Insert normal/paypro details
+            $paymentDetailNormalPaypro = new PaymentTransactionDetailNormalPaypro;
+            $paymentDetail->normal_paypro_detail()->save($paymentDetailNormalPaypro);
 
             $issuedCoupon = new IssuedCoupon;
             $issuedCoupon->promotion_id   = $coupon->promotion_id;
