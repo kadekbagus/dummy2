@@ -133,7 +133,7 @@ class CouponDiscountCodeAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $coupon = Coupon::select('price_selling', 'promotion_id', 'promotion_type')->find($object_id);
+            $coupon = Coupon::select('price_selling', 'promotion_id', 'promotion_type', 'promotion_name')->find($object_id);
 
             $mallTimeZone = 'Asia/Jakarta';
             $mall = null;
@@ -166,7 +166,6 @@ class CouponDiscountCodeAPIController extends PubControllerAPI
             $paymentDetail->object_id = $coupon->promotion_id;
             $paymentDetail->object_type = 'coupon';
             $paymentDetail->object_name = $coupon->promotion_name;
-
             $paymentDetail->save();
 
             // Insert normal/paypro details
