@@ -81,7 +81,7 @@ class CouponDiscountCodeAPIController extends PubControllerAPI
             $couponHelper->setUser($user);
             $couponHelper->couponCustomValidator();
 
-            $discount_code = OrbitInput::post('discount_code');
+            $discount_code = strtolower(OrbitInput::post('discount_code'));
             $first_name = OrbitInput::post('first_name');
             $last_name = OrbitInput::post('last_name');
             $email = OrbitInput::post('email');
