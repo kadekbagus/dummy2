@@ -87,17 +87,22 @@ class PendingPaymentNotification extends CustomerNotification implements EmailNo
     {
         try {
             $payment = PaymentTransaction::with(['midtrans'])->findOrFail($data['transaction']['id']);
-            $data['paymentInfo'] = json_decode(unserialize($payment->midtrans->payment_midtrans_info), true);
 
-            Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
-                $emailConfig = Config::get('orbit.registration.mobile.sender');
+            // Only send email if pending.
+            if ($payment->pending()) {
+                $data['paymentInfo'] = json_decode(unserialize($payment->midtrans->payment_midtrans_info), true);
 
-                $subject = trans('email-pending-payment.subject');
+                Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
+                    $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                $mail->subject($subject);
-                $mail->from($emailConfig['email'], $emailConfig['name']);
-                $mail->to($data['recipientEmail']);
-            });
+                    $subject = trans('email-pending-payment.subject');
+
+                    $mail->subject($subject);
+                    $mail->from($emailConfig['email'], $emailConfig['name']);
+                    $mail->to($data['recipientEmail']);
+                });
+            }
+
         } catch (Exception $e) {
             Log::debug('Notification: PendingPayment email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
         }
