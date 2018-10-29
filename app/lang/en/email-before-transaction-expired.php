@@ -1,16 +1,16 @@
 <?php
 
 return [
-    'subject' => 'Finish Your Payment',
+    'subject' => 'Complete Your Payment',
 
     'header' => [
-        'invoice'       => 'Notice',
+        'invoice' => 'Notice',
     ],
 
     'body' => [
         'greeting' => 'Dear, :customerName
                         <br>
-                        Thank you for purchasing Coupon in Gotomalls.com. It looks like you still have unpaid transaction. Below are the instructions to complete your payment.',
+                        Thank you for purchasing Coupon in Gotomalls.com. Don\'t forget to complete your payment before it expired! Below are the instructions to complete your payment.',
 
         'transaction_labels' => [
             'transaction_id' => 'Transaction ID: ',

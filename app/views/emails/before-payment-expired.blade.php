@@ -193,7 +193,7 @@
               </p>
               <br>
 
-              @include('emails.pending-payment.payment-info', compact('paymentInfo', 'paymentExpiration', 'myWalletUrl', 'cancelUrl'))
+              @include('emails.pending-payment.payment-info', compact('paymentInfo', 'paymentExpiration', 'myPurchasesUrl', 'cancelUrl'))
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
