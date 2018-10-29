@@ -107,4 +107,24 @@ trait HasPaymentTrait
     {
         return sprintf(Config::get('orbit.transaction.cancel_purchase_url'), $this->payment->payment_transaction_id);
     }
+
+    /**
+     * Get the url for button My Wallet.
+     *
+     * @return [type] [description]
+     */
+    public function getMyWalletUrl()
+    {
+        return Config::get('orbit.coupon.direct_redemption_url');
+    }
+
+    /**
+     * Get the url for button My Purchases.
+     *
+     * @return [type] [description]
+     */
+    public function getMyPurchasesUrl()
+    {
+        return '';
+    }
 }
