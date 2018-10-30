@@ -32,7 +32,7 @@ class BeforeExpiredPaymentNotification extends CustomerNotification implements E
 {
     use HasPaymentTrait, HasContactTrait;
 
-    protected $shouldQueue = true;
+    protected $shouldQueue = false;
 
     function __construct($payment = null)
     {
@@ -73,8 +73,9 @@ class BeforeExpiredPaymentNotification extends CustomerNotification implements E
             'transaction'       => $this->getTransactionData(),
             'cs'                => $this->getContactData(),
             'paymentExpiration' => $this->getPaymentExpirationDate(),
-            'myPurchasesUrl'    => $this->getMyPurchasesUrl(),
+            'myWalletUrl'       => $this->getMyPurchasesUrl(),
             'cancelUrl'         => $this->getCancelUrl(),
+            'paymentInfo'       => $this->getPaymentInfo(),
         ];
     }
 
@@ -88,23 +89,20 @@ class BeforeExpiredPaymentNotification extends CustomerNotification implements E
     public function toEmail($job, $data)
     {
         try {
-            $payment = PaymentTransaction::with(['midtrans'])->findOrFail($data['transaction']['id']);
+            Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
+                $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-            if ($payment->pending()) {
-                $data['paymentInfo'] = json_decode(unserialize($payment->midtrans->payment_midtrans_info), true);
+                $subject = trans('email-before-transaction-expired.subject');
 
-                Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
-                    $emailConfig = Config::get('orbit.registration.mobile.sender');
-
-                    $subject = trans('email-before-transaction-expired.subject');
-
-                    $mail->subject($subject);
-                    $mail->from($emailConfig['email'], $emailConfig['name']);
-                    $mail->to($data['recipientEmail']);
-                });
-            }
+                $mail->subject($subject);
+                $mail->from($emailConfig['email'], $emailConfig['name']);
+                $mail->to($data['recipientEmail']);
+            });
         } catch (Exception $e) {
             Log::debug('Notification: BeforeExpiredPaymentNotification email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
+
+            // Rethrow exception to class caller.
+            throw new Exception("Error");
         }
 
         $job->delete();
