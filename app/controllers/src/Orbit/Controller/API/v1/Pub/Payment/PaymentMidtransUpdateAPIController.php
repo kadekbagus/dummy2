@@ -27,6 +27,7 @@ use Orbit\Helper\Midtrans\API\TransactionCancel;
 use Orbit\Notifications\Payment\SuspiciousPaymentNotification;
 use Orbit\Notifications\Payment\DeniedPaymentNotification;
 use Orbit\Notifications\Payment\PendingPaymentNotification;
+use Orbit\Notifications\Payment\CanceledPaymentNotification;
 use Mall;
 
 /**
@@ -124,7 +125,24 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 }
             }
             else if (! in_array($oldStatus, $finalStatus)) {
-                $shouldUpdate = true;
+                if ($status === PaymentTransaction::STATUS_ABORTED) {
+                    // If status is aborted, then check if the transaction is in pending (exists) or not in Midtrans.
+                    // If doesn't exist, assume the payment is starting and we can abort it.
+                    // Otherwise, assume it is pending and we should not update the statusad.
+                    Log::info("PaidCoupon: Request to abort payment {$payment_transaction_id}...");
+                    Log::info("PaidCoupon: Checking transaction {$payment_transaction_id} status in Midtrans...");
+                    $transactionStatus = TransactionStatus::create()->getStatus($payment_transaction_id);
+                    if ($transactionStatus->notFound()) {
+                        Log::info("PaidCoupon: Transaction {$payment_transaction_id} not found! Aborting payment...");
+                        $shouldUpdate = true;
+                    }
+                    else {
+                        Log::info("PaidCoupon: Transaction {$payment_transaction_id} found! Payment can not be aborted/canceled.");
+                    }
+                }
+                else {
+                    $shouldUpdate = true;
+                }
             }
             else {
                 Log::info("PaidCoupon: Payment {$payment_transaction_id} is good. Nothing to do.");
@@ -277,6 +295,20 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                         $paymentUser->email = $payment_update->user_email;
                         $paymentUser->notify(new PendingPaymentNotification($payment_update), 30);
                     }
+                }
+
+                // Send notification if the purchase was canceled.
+                // Only send if previous status was pending.
+                if ($oldStatus === PaymentTransaction::STATUS_PENDING && $status === PaymentTransaction::STATUS_CANCELED) {
+                    $activity->setActivityNameLong('Transaction Canceled')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setObject($payment_update)
+                            ->setNotes($payment_update->details->first()->coupon->promotion_type)
+                            ->setLocation($mall)
+                            ->responseOK()
+                            ->save();
+
+                    $payment_update->user->notify(new CanceledPaymentNotification($payment_update));
                 }
 
                 // If previous status was success and now is denied, then send notification to admin.
