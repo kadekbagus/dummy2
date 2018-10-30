@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'subject' => 'Complete Your Payment',
+    'subject' => 'Payment Reminder',
 
     'header' => [
         'invoice' => 'Notice',
@@ -10,7 +10,7 @@ return [
     'body' => [
         'greeting' => 'Dear, :customerName
                         <br>
-                        Thank you for purchasing Coupon in Gotomalls.com. Don\'t forget to complete your payment before it expired! Below are the instructions to complete your payment.',
+                        Your coupon(s) is still waiting. The payment limit will expire <span style="color:#f43d3c">today</span>!',
 
         'transaction_labels' => [
             'transaction_id' => 'Transaction ID: ',

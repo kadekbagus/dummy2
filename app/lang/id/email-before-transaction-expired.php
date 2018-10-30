@@ -10,7 +10,7 @@ return [
     'body' => [
         'greeting' => 'Dear, :customerName
                         <br>
-                        Terima kasih telah melakukan pemesanan di Gotomalls.com. Jangan lupa untuk menyelesaikan pembayaran! Ikuti petunjuk di bawah ini untuk menyelesaikan pembayaran Anda.',
+                        Kupon Anda sedang menunggu. Batas waktu pembayaran Anda adalah hari ini!',
 
         'transaction_labels' => [
             'transaction_id' => 'ID Transaksi: ',
