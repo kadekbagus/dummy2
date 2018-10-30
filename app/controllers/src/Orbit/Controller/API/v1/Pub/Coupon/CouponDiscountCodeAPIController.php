@@ -38,6 +38,7 @@ use \UserVerificationNumber;
 use Orbit\Helper\Payment\Payment as PaymentClient;
 use PaymentTransaction;
 use PaymentTransactionDetail;
+use PaymentTransactionDetailNormalPaypro;
 
 class CouponDiscountCodeAPIController extends PubControllerAPI
 {
@@ -80,7 +81,7 @@ class CouponDiscountCodeAPIController extends PubControllerAPI
             $couponHelper->setUser($user);
             $couponHelper->couponCustomValidator();
 
-            $discount_code = OrbitInput::post('discount_code');
+            $discount_code = strtolower(OrbitInput::post('discount_code'));
             $first_name = OrbitInput::post('first_name');
             $last_name = OrbitInput::post('last_name');
             $email = OrbitInput::post('email');
@@ -132,7 +133,7 @@ class CouponDiscountCodeAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $coupon = Coupon::select('price_selling', 'promotion_id', 'promotion_type')->find($object_id);
+            $coupon = Coupon::select('price_selling', 'promotion_id', 'promotion_type', 'promotion_name')->find($object_id);
 
             $mallTimeZone = 'Asia/Jakarta';
             $mall = null;
@@ -165,8 +166,11 @@ class CouponDiscountCodeAPIController extends PubControllerAPI
             $paymentDetail->object_id = $coupon->promotion_id;
             $paymentDetail->object_type = 'coupon';
             $paymentDetail->object_name = $coupon->promotion_name;
-
             $paymentDetail->save();
+
+            // Insert normal/paypro details
+            $paymentDetailNormalPaypro = new PaymentTransactionDetailNormalPaypro;
+            $paymentDetail->normal_paypro_detail()->save($paymentDetailNormalPaypro);
 
             $issuedCoupon = new IssuedCoupon;
             $issuedCoupon->promotion_id   = $coupon->promotion_id;
