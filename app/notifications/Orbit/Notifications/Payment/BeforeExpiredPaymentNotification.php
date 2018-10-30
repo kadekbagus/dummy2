@@ -101,7 +101,7 @@ class BeforeExpiredPaymentNotification extends CustomerNotification implements E
         } catch (Exception $e) {
             Log::debug('Notification: BeforeExpiredPaymentNotification email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
 
-            // Rethrow exception to class caller.
+            // Rethrow exception to the caller command/class.
             throw new Exception("Error");
         }
 
