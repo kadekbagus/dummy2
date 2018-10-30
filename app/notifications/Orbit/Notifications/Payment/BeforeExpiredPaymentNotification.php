@@ -22,15 +22,17 @@ use Orbit\Notifications\Traits\HasPaymentTrait;
 use Orbit\Notifications\Traits\HasContactTrait;
 
 /**
- * Base Pending Payment Notification class.
+ * Before Expired Payment Notification class.
+ * It is a reminder/alarm, that will be fired up at midnight to remind Customer
+ * to complete the payment before expired.
  *
  * @author Budi <budi@dominopos.com>
  */
-class PendingPaymentNotification extends CustomerNotification implements EmailNotificationInterface
+class BeforeExpiredPaymentNotification extends CustomerNotification implements EmailNotificationInterface
 {
     use HasPaymentTrait, HasContactTrait;
 
-    protected $shouldQueue = true;
+    protected $shouldQueue = false;
 
     function __construct($payment = null)
     {
@@ -52,7 +54,7 @@ class PendingPaymentNotification extends CustomerNotification implements EmailNo
     public function getEmailTemplates()
     {
         return [
-            'html' => 'emails.pending-payment.hot-deals',
+            'html' => 'emails.before-payment-expired',
         ];
     }
 
@@ -71,8 +73,9 @@ class PendingPaymentNotification extends CustomerNotification implements EmailNo
             'transaction'       => $this->getTransactionData(),
             'cs'                => $this->getContactData(),
             'paymentExpiration' => $this->getPaymentExpirationDate(),
-            'myWalletUrl'       => Config::get('orbit.coupon.direct_redemption_url'),
+            'myWalletUrl'       => $this->getMyPurchasesUrl(),
             'cancelUrl'         => $this->getCancelUrl(),
+            'paymentInfo'       => $this->getPaymentInfo(),
         ];
     }
 
@@ -86,25 +89,20 @@ class PendingPaymentNotification extends CustomerNotification implements EmailNo
     public function toEmail($job, $data)
     {
         try {
-            $payment = PaymentTransaction::with(['midtrans'])->findOrFail($data['transaction']['id']);
+            Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
+                $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-            // Only send email if pending.
-            if ($payment->pending()) {
-                $data['paymentInfo'] = json_decode(unserialize($payment->midtrans->payment_midtrans_info), true);
+                $subject = trans('email-before-transaction-expired.subject');
 
-                Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
-                    $emailConfig = Config::get('orbit.registration.mobile.sender');
-
-                    $subject = trans('email-pending-payment.subject');
-
-                    $mail->subject($subject);
-                    $mail->from($emailConfig['email'], $emailConfig['name']);
-                    $mail->to($data['recipientEmail']);
-                });
-            }
-
+                $mail->subject($subject);
+                $mail->from($emailConfig['email'], $emailConfig['name']);
+                $mail->to($data['recipientEmail']);
+            });
         } catch (Exception $e) {
-            Log::debug('Notification: PendingPayment email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
+            Log::debug('Notification: BeforeExpiredPaymentNotification email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
+
+            // Rethrow exception to the caller command/class.
+            throw new Exception("Error");
         }
 
         $job->delete();
