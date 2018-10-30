@@ -89,13 +89,15 @@ trait HasPaymentTrait
 
     /**
      * Get the approximate expiration date and time of the transaction.
+     * Always use Asia/Jakarta (GMT +7) because we can not determine exactly which
+     * timezone was used by Customer when making the purchase.
      *
      * @return [type] [description]
      */
     public function getPaymentExpirationDate()
     {
         $expiredIn = Config::get('orbit.partners_api.midtrans.expired_in', 1440);
-        return $this->payment->created_at->addMinutes($expiredIn)->format('d F Y, h:i A');
+        return $this->payment->created_at->timezone('Asia/Jakarta')->addMinutes($expiredIn)->format('d F Y, H:i') . ' WIB (GMT +7)';
     }
 
     /**
@@ -125,6 +127,6 @@ trait HasPaymentTrait
      */
     public function getMyPurchasesUrl()
     {
-        return '';
+        return Config::get('orbit.transaction.my_purchases_url', 'https://gotomalls.com/my/purchases');
     }
 }
