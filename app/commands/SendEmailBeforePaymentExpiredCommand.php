@@ -43,34 +43,28 @@ class SendEmailBeforePaymentExpiredCommand extends Command {
     public function fire()
     {
         $transactionIds = trim($this->option('transaction-id'));
+        $withinDays = $this->option('within-days');
 
         $selectedTransactions = [];
         if (! empty($transactionIds)) {
             $selectedTransactions = explode(',', $transactionIds);
-
-            // if (count($selectedTransactions) > 0) {
-                // $this->info("List of transaction ID that will be processed");
-                // foreach($selectedTransactions as $transactionId) {
-                    // $this->info("--  {$transactionId}");
-                // }
-
-                // $this->info("Getting SELECTED transactions...");
-            // }
-        }
-        else {
-            // $this->info("No transaction ID is supplied.");
-            // $this->info("Getting ALL pending transactions...");
         }
 
-        $this->processTransactions($selectedTransactions);
+        $this->processTransactions($selectedTransactions, $withinDays);
     }
 
-    public function processTransactions($transactionIds = [])
+    /**
+     * Process pending transactions.
+     *
+     * @param  array  $transactionIds [description]
+     * @return [type]                 [description]
+     */
+    public function processTransactions($transactionIds = [], $withinDays)
     {
         $payments = PaymentTransaction::with(['details', 'user', 'midtrans'])
                                         ->where('status', PaymentTransaction::STATUS_PENDING)
-                                        // Limit the date so it doesn't process old pending transactions...
-                                        ->where(DB::raw("DATE(created_at)"), '>=', Carbon::now()->subDays(1)->format('Y-m-d'))
+                                        // Limit the date so command will not process old pending transactions...
+                                        ->where(DB::raw("DATE(created_at)"), '>=', Carbon::now()->subDays($withinDays)->format('Y-m-d'))
                                         ->oldest();
 
         // Only send reminder to selected transaction if requested.
@@ -82,21 +76,19 @@ class SendEmailBeforePaymentExpiredCommand extends Command {
 
         // Send reminder...
         if ($payments->count() > 0) {
-            // $this->info("Processing {$payments->count()} transaction(s)...");
-
-            $index = 0;
+            $number = 0;
             foreach($payments as $payment) {
                 try {
-                    $index++;
+                    $number++;
                     $payment->user->notify(new BeforeExpiredPaymentNotification($payment));
-                    $this->info("#{$index} Sending reminder for Transaction: {$payment->payment_transaction_id}... OK");
+                    $this->info("#{$number} Sending reminder for Transaction: {$payment->payment_transaction_id}... OK");
                 } catch (Exception $e) {
-                    $this->error("#{$index} Sending reminder for Transaction: {$payment->payment_transaction_id}... FAIL");
+                    $this->error("#{$number} Sending reminder for Transaction: {$payment->payment_transaction_id}... FAIL");
                 }
             }
         }
         else {
-            $this->info("No pending transaction is found.");
+            $this->info("No pending transaction is found in the last {$withinDays} days.");
         }
     }
 
@@ -118,7 +110,8 @@ class SendEmailBeforePaymentExpiredCommand extends Command {
     protected function getOptions()
     {
         return array(
-            array('transaction-id', null, InputOption::VALUE_OPTIONAL, 'Transaction IDs that will be processed.', null),
+            array('transaction-id', null, InputOption::VALUE_OPTIONAL, 'Transaction IDs that will be processed, separated by comma. If no value provided, it will process all pending transactions.', ''),
+            array('within-days', null, InputOption::VALUE_OPTIONAL, 'Number of the last {x} days of transactions that will be processed. It is useful for bypassing old pending transactions.', 3),
         );
     }
 }
