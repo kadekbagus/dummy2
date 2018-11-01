@@ -126,7 +126,7 @@ class CouponWalletLocationAPIController extends PubControllerAPI
 
             if (! empty($keyword)) {
                 $mall->where(function($where) use ($keyword) {
-                    $where->where(DB::raw('oms.name'), 'like', "%{$keyword}%");
+                    $where->where(DB::raw('oms.name'), 'like', "%{$keyword}%")
                           ->orWhere('merchants.name', 'like', "%{$keyword}%");
                 });
             }
