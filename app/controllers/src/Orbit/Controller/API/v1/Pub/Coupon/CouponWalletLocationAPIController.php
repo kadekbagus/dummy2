@@ -50,7 +50,6 @@ class CouponWalletLocationAPIController extends PubControllerAPI
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $couponId = OrbitInput::get('coupon_id');
-            $keyword = OrbitInput::get('keyword');
             $language = OrbitInput::get('language', 'id');
 
             // set language
@@ -124,12 +123,12 @@ class CouponWalletLocationAPIController extends PubControllerAPI
                 ->groupBy('merchant_id')
                 ->havingRaw('tz <= coupon_validity_in_date AND tz >= begin_date');
 
-            if (! empty($keyword)) {
-                $mall->where(function($where) use ($keyword) {
-                    $where->where(DB::raw('oms.name'), 'like', "%{$keyword}%")
-                          ->orWhere('merchants.name', 'like', "%{$keyword}%");
+            OrbitInput::get('keyword', function($keyword) use ($mall) {
+                $mall->where(function($search) use ($keyword) {
+                    $search->where(DB::raw('oms.name'), 'like', "%{$keyword}%")
+                           ->orWhere('merchants.name', 'like', "%{$keyword}%");
                 });
-            }
+            });
 
             OrbitInput::get('filter_name', function ($filterName) use ($mall, $prefix) {
                 if (! empty($filterName)) {
