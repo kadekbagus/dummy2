@@ -283,14 +283,16 @@ class CouponWalletListAPIController extends PubControllerAPI
 
                 switch ($type) {
                     case 'redeemable':
-                        $coupon->havingRaw("(campaign_status = 'ongoing' AND campaign_status != 'expired')")
-                               ->havingRaw("issued_coupon_status = 'redeemable'");
+                        $coupon->havingRaw("issued_coupon_status = 'redeemable'")
+                               ->havingRaw("is_exceeding_validity_date = 'false'");
                         break;
                     case 'redeemed':
                         $coupon->havingRaw("issued_coupon_status = 'redeemed'");
                         break;
                     case 'expired':
-                        $coupon->havingRaw("(campaign_status = 'expired')");
+                        $coupon->havingRaw("(campaign_status = 'expired')")
+                               ->havingRaw("is_exceeding_validity_date = 'true'")
+                               ->havingRaw("issued_coupon_status != 'redeemed'");
                         break;
                     default:
                 }
