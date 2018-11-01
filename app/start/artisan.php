@@ -297,3 +297,6 @@ Artisan::add(new PaymentTransactionDataMigrationCommand);
 
 // Check Sepulsa vs GTM stat
 Artisan::add(new SepulsaRedemptionStatCommand);
+
+// Check Sepulsa Active Vouchers against our Active Campaign.
+Artisan::add(new SepulsaActiveVoucherReportCommand);
