@@ -7490,5 +7490,9 @@ return array(
     ],
 
     // Coupon reserved limit time for sepulsa and hot deals, set in minutes
-    'coupon_reserved_limit_time' => '10'
+    'coupon_reserved_limit_time' => '10',
+
+    'feedback' => [
+        'cs_email' => 'cs@gotomalls.com',
+    ],
 );
