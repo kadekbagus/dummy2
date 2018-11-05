@@ -2,6 +2,17 @@
 <html>
 <head>
     <title></title>
+    <style>
+        .ok {
+            background: green;
+            color: white;
+        }
+
+        .danger {
+            background: red;
+            color: white;
+        }
+    </style>
 </head>
 <body>
     <p>Hi!</p>
@@ -14,7 +25,8 @@
                 <th width="50">No</th>
                 <th>Campaign/Coupon Name</th>
                 <th>Token</th>
-                <th>Available in Sepulsa?</th>
+                <th>In DB?</th>
+                <th>In Sepulsa?</th>
             </tr>
         </thead>
         <tbody>
@@ -25,37 +37,27 @@
                 <td align="center">{{ ++$number }}</td>
                 <td>{{ $coupon->promotion_name }}</td>
                 <td>{{ $coupon->token }}</td>
-                <td align="center">{{ $coupon->is_available ? 'Yes' : 'No' }}</td>
+                <td align="center" class="{{ $coupon->in_db ? 'ok' : 'danger' }}">{{ $coupon->in_db ? 'Yes' : 'No' }}</td>
+                <td align="center" class="{{ $coupon->in_sepulsa ? 'ok' : 'danger' }}">{{ $coupon->is_available ? 'Yes' : 'No' }}</td>
             </tr>
             @endforeach
-        </tbody>
-    </table>
 
-    @if (count($newVouchers) > 0)
-        <br>
-        <h3>Below are the Sepulsa Vouchers that are not available in our database:</h3>
-        <table border="1" style="border-collapse: collapse;" cellpadding="8" cellspacing="8">
-            <thead>
-                <tr>
-                    <th align="center">No.</th>
-                    <th>Voucher Name</th>
-                    <th>Token</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                <?php $number = 0; ?>
+            @if (count($newVouchers) > 0)
                 @foreach($newVouchers as $token => $voucherName)
                 <tr>
                     <td align="center">{{ ++$number }}</td>
                     <td>{{ $voucherName }}</td>
                     <td>{{ $token }}</td>
+                    <td align="center" class="danger">No</td>
+                    <td align="center" class="ok">Yes</td>
                 </tr>
                 @endforeach
-            </tbody>
-        </table>
-    @endif
+            @endif
 
+        </tbody>
+    </table>
+    <br>
+    <br>
     <p>
         BR
         <br>
