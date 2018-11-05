@@ -2,17 +2,6 @@
 <html>
 <head>
     <title></title>
-    <style>
-        .ok {
-            background: green;
-            color: #fff;
-        }
-
-        .danger {
-            background: red;
-            color: #fff;
-        }
-    </style>
 </head>
 <body>
     <p>Hi!</p>
@@ -37,17 +26,39 @@
                 <td align="center">{{ ++$number }}</td>
                 <td>{{ $coupon->promotion_name }}</td>
                 <td>{{ $coupon->token }}</td>
-                <td align="center" class="{{ ! $coupon->in_db ? 'danger' : 'ok' }}">{{ $coupon->in_db ? 'Yes' : 'No' }}</td>
-                <td align="center" class="{{ ! $coupon->in_sepulsa ? 'danger' : 'ok' }}">{{ $coupon->in_sepulsa ? 'Yes' : 'No' }}</td>
+                <td align="center">{{ $coupon->is_available ? 'Yes' : 'No' }}</td>
             </tr>
             @endforeach
+
+    @if (count($newVouchers) > 0)
+        <br>
+        <h3>Below are the Sepulsa Vouchers that are not available in our database:</h3>
+        <table border="1" style="border-collapse: collapse;" cellpadding="8" cellspacing="8">
+            <thead>
+                <tr>
+                    <th align="center">No.</th>
+                    <th>Voucher Name</th>
+                    <th>Token</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <?php $number = 0; ?>
+                @foreach($newVouchers as $token => $voucherName)
+                <tr>
+                    <td align="center">{{ ++$number }}</td>
+                    <td>{{ $voucherName }}</td>
+                    <td>{{ $token }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
+
         </tbody>
     </table>
-
     <br>
     <br>
-    <br>
-
     <p>
         BR
         <br>
