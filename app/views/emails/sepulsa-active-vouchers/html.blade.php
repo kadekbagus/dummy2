@@ -5,12 +5,12 @@
     <style>
         .ok {
             background: green;
-            color: #fff;
+            color: white;
         }
 
         .danger {
             background: red;
-            color: #fff;
+            color: white;
         }
     </style>
 </head>
@@ -37,17 +37,27 @@
                 <td align="center">{{ ++$number }}</td>
                 <td>{{ $coupon->promotion_name }}</td>
                 <td>{{ $coupon->token }}</td>
-                <td align="center" class="{{ ! $coupon->in_db ? 'danger' : 'ok' }}">{{ $coupon->in_db ? 'Yes' : 'No' }}</td>
-                <td align="center" class="{{ ! $coupon->in_sepulsa ? 'danger' : 'ok' }}">{{ $coupon->in_sepulsa ? 'Yes' : 'No' }}</td>
+                <td align="center" class="{{ $coupon->in_db ? 'ok' : 'danger' }}">{{ $coupon->in_db ? 'Yes' : 'No' }}</td>
+                <td align="center" class="{{ $coupon->in_sepulsa ? 'ok' : 'danger' }}">{{ $coupon->is_available ? 'Yes' : 'No' }}</td>
             </tr>
             @endforeach
+
+            @if (count($newVouchers) > 0)
+                @foreach($newVouchers as $token => $voucherName)
+                <tr>
+                    <td align="center">{{ ++$number }}</td>
+                    <td>{{ $voucherName }}</td>
+                    <td>{{ $token }}</td>
+                    <td align="center" class="danger">No</td>
+                    <td align="center" class="ok">Yes</td>
+                </tr>
+                @endforeach
+            @endif
+
         </tbody>
     </table>
-
     <br>
     <br>
-    <br>
-
     <p>
         BR
         <br>
