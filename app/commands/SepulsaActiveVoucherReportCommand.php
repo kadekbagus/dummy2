@@ -50,30 +50,46 @@ class SepulsaActiveVoucherReportCommand extends Command {
                         ->where('end_date', '>=', Carbon::now())
                         ->get();
 
+        $couponList = [];
         if ($coupons->count() > 0) {
             $response = VoucherList::create($config)->getList('', 100, [], 1);
 
             $newVouchers = [];
             if (isset($response->result->data) && ! empty($response->result->data)) {
-                foreach ($response->result->data as $sepulsaVoucher) {
-                    $newVouchers[$sepulsaVoucher->token] = $sepulsaVoucher->title;
-                }
+                $sepulsaVouchers = $response->result->data;
 
                 $number = 0;
+                $couponList = [];
+                $availableInDB = [];
                 foreach($coupons as $coupon) {
-                    $coupon->is_available = false;
-                    foreach ($response->result->data as $sepulsaVoucher) {
-                        if ($coupon->token === $sepulsaVoucher->token) {
-                            unset($newVouchers[$coupon->token]);
-                            $coupon->is_available = true;
+                    $coupon->in_db = true;
+                    $coupon->in_sepulsa = false;
+                    foreach ($sepulsaVouchers as $voucher) {
+                        if ($coupon->token === $voucher->token) {
+                            $coupon->in_sepulsa = true;
+                            $availableInDB[$voucher->token] = $voucher->token;
                             break;
                         }
                     }
+
+                    $couponList[] = $coupon;
+                }
+
+                foreach($sepulsaVouchers as $voucher) {
+                    $voucher->promotion_name = $voucher->title;
+                    $voucher->in_db = false;
+                    $voucher->in_sepulsa = true;
+
+                    if (in_array($voucher->token, $availableInDB)) {
+                        $voucher->in_db = true;
+                    }
+
+                    $couponList[] = $voucher;
                 }
             }
         }
 
-        $this->sendMail($coupons, $newVouchers);
+        $this->sendMail($couponList);
     }
 
     /**
@@ -103,13 +119,13 @@ class SepulsaActiveVoucherReportCommand extends Command {
      *
      * @param boolean $dryRun
      */
-    protected function sendMail($coupons, $newVouchers = [])
+    protected function sendMail($coupons)
     {
         $template = [
             'html' => 'emails.sepulsa-active-vouchers.html'
         ];
 
-        Mail::send($template, compact('coupons', 'newVouchers'), function($mail) {
+        Mail::send($template, compact('coupons'), function($mail) {
             $from = 'no-reply@gotomalls.com';
             $emails = explode(',', $this->option('email-to'));
 
