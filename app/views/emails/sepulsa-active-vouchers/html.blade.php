@@ -38,7 +38,7 @@
                 <td>{{ $coupon->promotion_name }}</td>
                 <td>{{ $coupon->token }}</td>
                 <td align="center" class="{{ $coupon->in_db ? 'ok' : 'danger' }}">{{ $coupon->in_db ? 'Yes' : 'No' }}</td>
-                <td align="center" class="{{ $coupon->in_sepulsa ? 'ok' : 'danger' }}">{{ $coupon->is_available ? 'Yes' : 'No' }}</td>
+                <td align="center" class="{{ $coupon->in_sepulsa ? 'ok' : 'danger' }}">{{ $coupon->in_sepulsa ? 'Yes' : 'No' }}</td>
             </tr>
             @endforeach
 
