@@ -126,7 +126,7 @@ class SepulsaActiveVoucherReportCommand extends Command {
         ];
 
         Mail::send($template, compact('coupons'), function($mail) {
-            $from = 'mailer@dominopos.com';
+            $from = 'no-reply@gotomalls.com';
             $emails = explode(',', $this->option('email-to'));
 
             $mail->from($from, 'Gotomalls Robot');
