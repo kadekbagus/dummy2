@@ -432,3 +432,13 @@ Route::get('/api/v1/available-sepulsa-token/list', function()
 {
     return CouponSepulsaAPIController::create()->getAvailableSepulsaTokenList();
 });
+
+/**
+ * Coupon discount code quick and dirty.
+ */
+Route::post('/api/v1/pub/coupon-discount-code', function()
+{
+    return Orbit\Controller\API\v1\Pub\Coupon\CouponDiscountCodeAPIController::create()->postCouponDiscountCode();
+});
+
+Route::post('/app/v1/pub/coupon-discount-code', ['as' => 'pub-coupon-discount-code', 'uses' => 'IntermediatePubAuthController@Coupon\CouponDiscountCode_postCouponDiscountCode']);

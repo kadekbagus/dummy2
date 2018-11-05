@@ -148,15 +148,18 @@ class GetSepulsaVoucherListCommand extends Command {
      */
     protected function sendMail($data)
     {
-        $from = 'mailer@dominopos.com';
-        $emails = explode(',', $this->option('email-to'));
+        Mail::send('emails.sepulsa-voucher-list.html', [], function($message) use ($data)
+        {
+            $from = 'no-reply@gotomalls.com';
+            $emails = explode(',', $this->option('email-to'));
 
-        // Send email process to the queue
-        \Queue::push('Orbit\\Queue\\SepulsaVoucherListMail', [
-            'attachment' => $data,
-            'emails'     => $emails,
-            'from'       => $from,
-        ]);
+            $message->from($from, 'Gotomalls Robot');
+            $message->subject('Sepulsa Voucher List');
+            $message->to($emails);
+            $message->attach($data);
+        });
+
+        $this->info('Mail Sent.');
     }
 
 }
