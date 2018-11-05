@@ -298,5 +298,8 @@ Artisan::add(new PaymentTransactionDataMigrationCommand);
 // Check Sepulsa vs GTM stat
 Artisan::add(new SepulsaRedemptionStatCommand);
 
+// Send reminder via email before Payment/Transaction expired.
+Artisan::add(new SendEmailBeforePaymentExpiredCommand);
+
 // Check Sepulsa Active Vouchers against our Active Campaign.
 Artisan::add(new SepulsaActiveVoucherReportCommand);
