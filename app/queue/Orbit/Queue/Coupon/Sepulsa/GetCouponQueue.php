@@ -15,6 +15,7 @@ use IssuedCoupon;
 use Coupon;
 use Mall;
 use Activity;
+use TmpPromoCode;
 
 use Orbit\Helper\Sepulsa\API\TakeVoucher;
 use Orbit\Helper\Sepulsa\API\Responses\TakeVoucherResponse;
@@ -148,6 +149,18 @@ class GetCouponQueue
                         }
                     }
 
+                    if (isset($data['discountCode']) &&
+                        isset($data['issuedCouponId']) &&
+                        isset($data['couponId']) &&
+                        isset($data['userId'])) {
+                        $newPromoCode = new TmpPromoCode();
+                        $newPromoCode->promo_code = $data['discountCode'];
+                        $newPromoCode->coupon_id = $data['couponId'];
+                        $newPromoCode->user_id = $data['userId'];
+                        $newPromoCode->issued_coupon_id = $data['issuedCouponId'];
+                        $newPromoCode->save();
+                    }
+
                     // Update payment transaction data
                     $payment->status = PaymentTransaction::STATUS_SUCCESS;
                     $payment->save();
@@ -184,7 +197,6 @@ class GetCouponQueue
                 }
                 else {
                     Log::info("PaidCoupon: Failed to issue coupon from Sepulsa!");
-
                     // This means the TakeVoucher request failed, and we should retry (or not?)
                     $payment->notes = $payment->notes . $takenVouchers->getMessage() . "\n------\n";
 

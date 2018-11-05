@@ -165,8 +165,7 @@ class CouponListNewAPIController extends PubControllerAPI
                 'no_total_record' => $no_total_records,
                 'take' => $take, 'skip' => $skip,
                 'country' => $countryFilter, 'cities' => $cityFilters,
-                'my_cc_filter' => $myCCFilter,
-                'gender' => $gender
+                'my_cc_filter' => $myCCFilter
             ];
 
             // Run the validation
@@ -274,6 +273,7 @@ class CouponListNewAPIController extends PubControllerAPI
                         }
                     }
                 }
+                $cacheKey['gender'] = $filterGender;
                 $this->searcher->filterByGender(strtolower($filterGender));
             }
 
