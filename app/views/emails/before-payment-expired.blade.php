@@ -170,6 +170,12 @@
                 {{ trans('email-before-transaction-expired.body.greeting', ['customerName' => $customerName]) }}
               </p>
               <br>
+
+              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
+                {{ trans('email-pending-payment.body.payment-info-line-1', compact('paymentExpiration')) }}
+              </p>
+              <br>
+
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.transaction_id') }}}</strong> {{ $transaction['id'] }}
                 <br>
@@ -193,7 +199,7 @@
               </p>
               <br>
 
-              @include('emails.pending-payment.payment-info', compact('paymentInfo', 'paymentExpiration', 'myPurchasesUrl', 'cancelUrl'))
+              @include('emails.pending-payment.payment-info', compact('paymentInfo', 'paymentExpiration', 'myPurchasesUrl', 'cancelUrl', 'hideExpiration'))
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
