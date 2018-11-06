@@ -123,6 +123,13 @@ class CouponWalletLocationAPIController extends PubControllerAPI
                 ->groupBy('merchant_id')
                 ->havingRaw('tz <= coupon_validity_in_date AND tz >= begin_date');
 
+            OrbitInput::get('keyword', function($keyword) use ($mall) {
+                $mall->where(function($search) use ($keyword) {
+                    $search->where(DB::raw('oms.name'), 'like', "%{$keyword}%")
+                           ->orWhere('merchants.name', 'like', "%{$keyword}%");
+                });
+            });
+
             OrbitInput::get('filter_name', function ($filterName) use ($mall, $prefix) {
                 if (! empty($filterName)) {
                     if ($filterName === '#') {
