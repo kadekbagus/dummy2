@@ -10,7 +10,7 @@ return [
     'body' => [
         'greeting' => 'Dear, :customerName
                         <br>
-                        Your coupon(s) is still waiting. The payment limit will expire <span style="color:#f43d3c">today</span>!',
+                        Your coupon(s) is still waiting for you. The payment limit will expire <span style="color:#f43d3c">today</span>!',
 
         'transaction_labels' => [
             'transaction_id' => 'Transaction ID: ',
