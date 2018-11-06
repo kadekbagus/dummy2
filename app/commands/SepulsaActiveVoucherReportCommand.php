@@ -63,18 +63,10 @@ class SepulsaActiveVoucherReportCommand extends Command {
                 $coupon->in_db = true;
                 $coupon->in_sepulsa = false;
                 foreach ($response->result->data as $sepulsaVoucher) {
-                    $newVouchers[$sepulsaVoucher->token] = $sepulsaVoucher->title;
-                }
-
-                $number = 0;
-                foreach($coupons as $coupon) {
-                    $coupon->is_available = false;
-                    foreach ($response->result->data as $sepulsaVoucher) {
-                        if ($coupon->token === $sepulsaVoucher->token) {
-                            unset($newVouchers[$coupon->token]);
-                            $coupon->is_available = true;
-                            break;
-                        }
+                    if ($coupon->token === $sepulsaVoucher->token) {
+                        unset($newVouchers[$coupon->token]);
+                        $coupon->in_sepulsa = true;
+                        break;
                     }
                 }
             }
@@ -117,7 +109,7 @@ class SepulsaActiveVoucherReportCommand extends Command {
         ];
 
         Mail::send($template, compact('coupons', 'newVouchers'), function($mail) {
-            $from = 'mailer@dominopos.com';
+            $from = 'no-reply@gotomalls.com';
             $emails = explode(',', $this->option('email-to'));
 
             $mail->from($from, 'Gotomalls Robot');

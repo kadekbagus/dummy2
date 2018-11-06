@@ -373,7 +373,9 @@ class CouponLocationAPIController extends PubControllerAPI
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
                                         AND m.object_id = {$prefix}coupon_translations.coupon_translation_id)
                                     END AS original_media_path
-                                "))
+                                "),
+                                DB::raw("default_translation.promotion_name as default_name")
+                            )
                             ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                             ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
                             ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
@@ -410,6 +412,7 @@ class CouponLocationAPIController extends PubControllerAPI
             $data->total_records = $totalRec;
             if (is_object($couponName)) {
                 $data->coupon_name = $couponName->coupon_name;
+                $data->default_name = $couponName->default_name;
                 $data->original_media_path = $couponName->original_media_path;
             }
             $data->records = $listOfRec;
