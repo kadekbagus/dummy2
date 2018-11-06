@@ -6630,7 +6630,7 @@ return array(
                 'name_long' => 'Click Feedback Store',
                 'module_name' => 'Application',
                 'type' => 'click',
-                'object_type' => 'Store',
+                'object_type' => 'Tenant',
                 'parameter_name' => 'object_id'
             ),
             // user click feedback button on mall detail
