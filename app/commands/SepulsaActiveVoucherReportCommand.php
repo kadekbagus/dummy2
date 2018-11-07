@@ -50,24 +50,23 @@ class SepulsaActiveVoucherReportCommand extends Command {
                         ->where('end_date', '>=', Carbon::now())
                         ->get();
 
-        if ($coupons->count() > 0) {
-            $response = VoucherList::create($config)->getList('', 100, [], 1);
+        $response = VoucherList::create($config)->getList('', 100, [], 1);
 
-            $newVouchers = [];
-            if (isset($response->result->data) && ! empty($response->result->data)) {
+        $newVouchers = [];
+        if (isset($response->result->data) && ! empty($response->result->data)) {
+            foreach ($response->result->data as $sepulsaVoucher) {
+                $newVouchers[$sepulsaVoucher->token] = $sepulsaVoucher->title;
+            }
+
+            $number = 0;
+            foreach($coupons as $coupon) {
+                $coupon->in_db = true;
+                $coupon->in_sepulsa = false;
                 foreach ($response->result->data as $sepulsaVoucher) {
-                    $newVouchers[$sepulsaVoucher->token] = $sepulsaVoucher->title;
-                }
-
-                $number = 0;
-                foreach($coupons as $coupon) {
-                    $coupon->is_available = false;
-                    foreach ($response->result->data as $sepulsaVoucher) {
-                        if ($coupon->token === $sepulsaVoucher->token) {
-                            unset($newVouchers[$coupon->token]);
-                            $coupon->is_available = true;
-                            break;
-                        }
+                    if ($coupon->token === $sepulsaVoucher->token) {
+                        unset($newVouchers[$coupon->token]);
+                        $coupon->in_sepulsa = true;
+                        break;
                     }
                 }
             }
