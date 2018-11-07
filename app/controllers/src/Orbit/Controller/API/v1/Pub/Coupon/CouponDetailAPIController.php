@@ -144,6 +144,7 @@ class CouponDetailAPIController extends PubControllerAPI
                                     END AS original_media_path
                                 "),
                             'promotions.end_date',
+                            DB::raw("default_translation.promotion_name as default_name"),
                             DB::raw("{$prefix}issued_coupons.expired_date as coupon_validity_in_date"),
                             'promotions.is_exclusive',
                             'promotions.available',

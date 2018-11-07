@@ -140,7 +140,7 @@ class SepulsaRedemptionStatCommand extends Command
             'data' => $data->toArray()
         ];
         Mail::send('emails.sepulsa-stat.html', $data, function($message) {
-            $from = 'mailer@dominopos.com';
+            $from = 'no-reply@gotomalls.com';
             $emails = explode(',', $this->option('email-to'));
 
             $message->from($from, 'Gotomalls Robot');
