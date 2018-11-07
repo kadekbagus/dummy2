@@ -278,6 +278,25 @@ class CouponWalletListAPIController extends PubControllerAPI
                             ->where('issued_coupons.user_id', $user->user_id)
                             ->whereIn("campaign_status.campaign_status_name", array('ongoing', 'expired'));
 
+
+            OrbitInput::get('type', function($type) use ($coupon) {
+
+                switch ($type) {
+                    case 'redeemable':
+                        $coupon->havingRaw("issued_coupon_status = 'redeemable'")
+                               ->havingRaw("is_exceeding_validity_date = 'false'");
+                        break;
+                    case 'redeemed':
+                        $coupon->havingRaw("issued_coupon_status = 'redeemed'");
+                        break;
+                    case 'expired':
+                        $coupon->havingRaw("is_exceeding_validity_date = 'true'")
+                               ->havingRaw("issued_coupon_status != 'redeemed'");
+                        break;
+                    default:
+                }
+            });
+
             //remove code related to Mall because Coupon list in My wallet
             //does not affected by GTM/mall page also remove code related to
             //filter because we do not have filtering in my wallet
@@ -285,13 +304,13 @@ class CouponWalletListAPIController extends PubControllerAPI
             // requirement need us to order coupon that is redeemable and payable
             // to display first, redeemed and expired will come after that
             //->orderByRaw(DB::Raw("FIELD({$prefix}issued_coupons.status, 'issued', 'redeemed', 'expired')"))
-            $coupon->orderByRaw(DB::Raw("CASE WHEN {$prefix}issued_coupons.status = 'issued' THEN 0 ELSE 1 END ASC"))
-                    ->orderByRaw(DB::Raw("CASE WHEN campaign_status = 'ongoing' THEN 0 ELSE 1 END ASC"))
                     // This part for ordering coupon with maximum reach condition
                     // ->orderByRaw(DB::Raw("CASE WHEN total_redeemed = maximum_redeem THEN 0 ELSE 1 END DESC"))
-                    ->orderBy(DB::raw("is_exceeding_validity_date"), 'asc')
+            $coupon->orderBy(DB::raw("is_exceeding_validity_date"), 'asc')
                     ->orderBy('issued_coupons.redeemed_date', 'desc')
                     ->orderBy('issued_coupons.issued_date', 'desc');
+
+            $_coupon = clone $coupon;
 
             $take = PaginationNumber::parseTakeFromGet('coupon');
             $coupon->take($take);
@@ -301,7 +320,7 @@ class CouponWalletListAPIController extends PubControllerAPI
             $listcoupon = $coupon->get();
             $listcoupon = $this->getTotalIssuedAndRedeemed($listcoupon);
 
-            $count = $this->calculateCount($prefix, $user);
+            $count = RecordCounter::create($_coupon)->count();
 
             $cdnConfig = Config::get('orbit.cdn');
             $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
