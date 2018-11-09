@@ -45,7 +45,6 @@ class CouponDetailAPIController extends PubControllerAPI
             $country = OrbitInput::get('country', null);
             $cities = OrbitInput::get('cities', null);
             $couponId = OrbitInput::get('coupon_id', null);
-            $isForRedeem = OrbitInput::get('for_redeem', 'N');
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
@@ -280,24 +279,7 @@ class CouponDetailAPIController extends PubControllerAPI
                         ->first();
             });
 
-            // If it is for redeem, then get the nearest expired date from now.
-            // But because of the nature of the query, we need to filter all the issued
-            // coupons that not exceeding validity date then get the nearest one.
-            // @todo find better solution and move it to a separate controller/api.
-            if ($isForRedeem === 'Y') {
-                $coupons = $coupon->get();
-                $nearestExpired = null;
-                foreach($coupons as $coupon) {
-                    if ($coupon->is_exceeding_validity_date === 'true') {
-                        break;
-                    }
-                    $nearestExpired = $coupon;
-                }
-                $coupon = $nearestExpired;
-            }
-            else {
-                $coupon = $coupon->first();
-            }
+            $coupon = $coupon->first();
 
             $message = 'Request Ok';
             if (! is_object($coupon)) {
