@@ -389,17 +389,31 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
         {
             // get user_ids and tokens
             $userIds = array_values(array_unique($follower));
-            $tokenSearch = ['user_ids' => json_encode($userIds), 'notification_provider' => 'onesignal'];
-            $tokenData = $mongoClient->setQueryString($tokenSearch)
-                                     ->setEndPoint('user-notification-tokens')
-                                     ->request('GET');
 
-            if ($tokenData->data->total_records > 0) {
-                foreach ($tokenData->data->records as $key => $value) {
-                    $tokens[] = $value->notification_token;
+            // Split data
+            $totalUserIds = count($userIds);
+            if (count($totalUserIds) > 0) {
+                $chunkSize = 100;
+                $chunkedArray = array_chunk($userIds, $chunkSize);
+
+                foreach ($chunkedArray as $chunk) {
+
+                    $tokenSearch = ['user_ids' => json_encode($chunk), 'notification_provider' => 'onesignal'];
+                    $tokenData = $mongoClient->setQueryString($tokenSearch)
+                                             ->setEndPoint('user-notification-tokens')
+                                             ->request('GET');
+
+                    if ($tokenData->data->total_records > 0) {
+                        foreach ($tokenData->data->records as $key => $value) {
+                            $tokens[] = $value->notification_token;
+                        }
+                    }
+
+                    usleep(100000);
                 }
-                $tokens = array_values(array_unique($tokens));
             }
+
+            $tokens = array_values(array_unique($tokens));
 
             $_news = News::select('news.*',
                                   DB::raw('default_languages.name as default_language_name'),
