@@ -788,6 +788,7 @@ Event::listen('orbit.news.postupdatenews-storenotificationupdate.after.commit', 
                                     ->setEndPoint('user-id-follows')
                                     ->request('GET');
 
+
             $userIds = null;
             $notificationToken = array();
 
@@ -803,15 +804,27 @@ Event::listen('orbit.news.postupdatenews-storenotificationupdate.after.commit', 
                     $userIds = array_values(array_unique($userIds));
                 }
 
-                $queryStringUserNotifToken['user_ids'] = json_encode($userIds);
+                // Split data
+                $totalUserIds = count($userIds);
+                if (count($totalUserIds) > 0) {
+                    $chunkSize = 100;
+                    $chunkedArray = array_chunk($userIds, $chunkSize);
 
-                $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
-                                    ->setEndPoint('user-notification-tokens')
-                                    ->request('GET');
+                    foreach ($chunkedArray as $chunk) {
 
-                if ($notificationTokens->data->total_records > 0) {
-                    foreach ($notificationTokens->data->records as $key => $val) {
-                        $notificationToken[] = $val->notification_token;
+                        $queryStringUserNotifToken['user_ids'] = json_encode($chunk);
+
+                        $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
+                                            ->setEndPoint('user-notification-tokens')
+                                            ->request('GET');
+
+                        if ($notificationTokens->data->total_records > 0) {
+                            foreach ($notificationTokens->data->records as $key => $val) {
+                                $notificationToken[] = $val->notification_token;
+                            }
+                        }
+
+                        usleep(100000);
                     }
                 }
 
@@ -857,6 +870,8 @@ Event::listen('orbit.news.postupdatenews-storenotificationupdate.after.commit', 
                 $storeObjectNotif = $mongoClient->setFormParam($bodyStoreObjectNotifications)
                                                 ->setEndPoint('store-object-notifications')
                                                 ->request('POST');
+
+
             }
 
             // If there is no follower but there is user linked to credit-card/ewallet
