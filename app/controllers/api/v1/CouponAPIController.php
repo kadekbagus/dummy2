@@ -193,6 +193,8 @@ class CouponAPIController extends ControllerAPI
             $isVisible = OrbitInput::post('is_hidden', 'N') === 'Y' ? 'N' : 'Y';
             $thirdPartyName = OrbitInput::post('third_party_name', NULL);
             $maximumRedeem = OrbitInput::post('maximum_redeem', NULL);
+            $maxQuantityPerPurchase = OrbitInput::post('max_quantity_per_purchase', NULL);
+            $maxQuantityPerUser = OrbitInput::post('max_quantity_per_user', NULL);
 
             $payByWallet = OrbitInput::post('pay_by_wallet', 'N');
             $payByNormal = OrbitInput::post('pay_by_normal', 'N');
@@ -329,11 +331,15 @@ class CouponAPIController extends ControllerAPI
                     'price_old' => $price_old,
                     'merchant_commision' => $merchant_commision,
                     'price_selling' => $price_selling,
+                    'max_quantity_per_purchase' => $maxQuantityPerPurchase,
+                    'max_quantity_per_user' => $maxQuantityPerUser,
                 ];
                 $hotDealsValidation = [
                     'price_old' => 'required',
                     'merchant_commision' => 'required',
                     'price_selling' => 'required',
+                    'max_quantity_per_purchase' => 'required|numeric',
+                    'max_quantity_per_user' => 'required|numeric',
                 ];
                 $thirdValidator = Validator::make(
                     $hotDealsValue,
@@ -669,6 +675,8 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->price_old = $price_old;
             $newcoupon->merchant_commision = $merchant_commision;
             $newcoupon->price_selling = $price_selling;
+            $newcoupon->max_quantity_per_purchase = $maxQuantityPerPurchase;
+            $newcoupon->max_quantity_per_user = $maxQuantityPerUser;
 
             // save 3rd party coupon fields
             if ($is3rdPartyPromotion === 'Y') {
@@ -687,6 +695,11 @@ class CouponAPIController extends ControllerAPI
 
             if ($rule_type === 'unique_coupon_per_user') {
                 $newcoupon->is_unique_redeem = 'Y';
+
+                // Make sure to force max quantity for purchase and
+                // max quantity per user to 1 if coupon is unique.
+                $newcoupon->max_quantity_per_purchase = 1;
+                $newcoupon->max_quantity_per_user = 1;
             }
 
             Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
@@ -1334,6 +1347,8 @@ class CouponAPIController extends ControllerAPI
             $price_old = OrbitInput::post('price_old');
             $merchant_commision = OrbitInput::post('merchant_commision');
             $price_selling = OrbitInput::post('price_selling');
+            $maxQuantityPerPurchase = OrbitInput::post('max_quantity_per_purchase', NULL);
+            $maxQuantityPerUser = OrbitInput::post('max_quantity_per_user', NULL);
 
             $is_sponsored = OrbitInput::post('is_sponsored', 'N');
             $sponsor_ids = OrbitInput::post('sponsor_ids');
@@ -1642,11 +1657,15 @@ class CouponAPIController extends ControllerAPI
                     'price_old' => $price_old,
                     'merchant_commision' => $merchant_commision,
                     'price_selling' => $price_selling,
+                    'max_quantity_per_purchase' => $maxQuantityPerPurchase,
+                    'max_quantity_per_user' => $maxQuantityPerUser,
                 ];
                 $hotDealsValidation = [
                     'price_old' => 'required',
                     'merchant_commision' => 'required',
                     'price_selling' => 'required',
+                    'max_quantity_per_purchase' => 'required|numeric',
+                    'max_quantity_per_user' => 'required|numeric',
                 ];
                 $thirdValidator = Validator::make(
                     $hotDealsValue,
@@ -1720,6 +1739,8 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->price_old = $price_old;
                 $updatedcoupon->merchant_commision = $merchant_commision;
                 $updatedcoupon->price_selling = $price_selling;
+                $updatedcoupon->max_quantity_per_purchase = $maxQuantityPerPurchase;
+                $updatedcoupon->max_quantity_per_user = $maxQuantityPerUser;
             }
 
             OrbitInput::post('promotion_type', function($promotion_type) use ($updatedcoupon) {
@@ -3035,7 +3056,9 @@ class CouponAPIController extends ControllerAPI
                                 WHEN is_3rd_party_promotion = 'N' THEN 'not_available'
                             END AS export_status
                         "),
-                    DB::raw("IF({$table_prefix}promotions.is_all_gender = 'Y', 'A', {$table_prefix}promotions.is_all_gender) as gender")
+                    DB::raw("IF({$table_prefix}promotions.is_all_gender = 'Y', 'A', {$table_prefix}promotions.is_all_gender) as gender"),
+                    'max_quantity_per_purchase',
+                    'max_quantity_per_user',
                 )
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                 ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
