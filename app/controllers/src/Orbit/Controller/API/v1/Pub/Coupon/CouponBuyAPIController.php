@@ -60,7 +60,7 @@ class CouponBuyAPIController extends PubControllerAPI
             $quantity = OrbitInput::post('quantity');
             $limitTimeCfg = Config::get('orbit.coupon_reserved_limit_time', 10);
 
-            PaymentHelper::create()->registerCustomValidation();
+            $this->registerCustomValidation();
             CouponHelper::create()->couponCustomValidator();
 
             $validator = Validator::make(
@@ -214,5 +214,72 @@ class CouponBuyAPIController extends PubControllerAPI
         $output = $this->render($httpCode);
 
         return $output;
+    }
+
+    /**
+     * Register custom request validations.
+     *
+     * @return [type] [description]
+     */
+    private function registerCustomValidation()
+    {
+        $user = $this->getUser();
+
+        /**
+         * Normally, available coupon = max_issued_coupon - sum(reserved, issued, redeemed).
+         * But when creating payment from PaymentMidtransCreate we should not count the quantity that we already reserved.
+         */
+        Validator::extend('orbit.allowed.quantity', function ($attribute, $requestedQuantity, $parameters) use ($user) {
+
+            $couponId = OrbitInput::post('coupon_id');
+            if (empty($couponId)) {
+                $couponId = OrbitInput::post('object_id');
+            }
+
+            $coupon = Coupon::select('maximum_issued_coupon', 'max_quantity_per_purchase', 'max_quantity_per_user', 'is_unique_redeem')
+                              ->findOrFail($couponId);
+
+            // Globally issued coupon count regardless of the Customer.
+            $issuedCouponCount = IssuedCoupon::where('promotion_id', $couponId)
+                                    ->whereIn('status', [
+                                        IssuedCoupon::STATUS_ISSUED,
+                                        IssuedCoupon::STATUS_REDEEMED,
+                                        IssuedCoupon::STATUS_RESERVED
+                                    ])->count();
+
+            // Issued coupon count for current Customer.
+            $userCouponCount = IssuedCoupon::where('user_id', $user->user_id)
+                                            ->where('promotion_id', $couponId)
+                                            ->count();
+
+            // If max_quantity in DB is empty, then assume it is old data.
+            // We should fallback to value defined in config file.
+            $maxQuantityPerPurchase = empty($coupon->max_quantity_per_purchase) ?
+                                    Config::get('orbit.transaction.max_quantity_per_purchase', 1) :
+                                    $coupon->max_quantity_per_purchase;
+
+            $maxQuantityPerUser = empty($coupon->max_quantity_per_user) ?
+                                    Config::get('orbit.transaction.max_quantity_per_purchase', 1) :
+                                    $coupon->max_quantity_per_user;
+
+            // Available coupon globally.
+            $availableCoupon = $coupon->maximum_issued_coupon - $issuedCouponCount;
+
+            // Available coupon for current Customer
+            $availableCouponForUser = $maxQuantityPerUser - $userCouponCount;
+
+            // Customer should be able to buy if requested quantity is:
+            // - lower than available coupon (globally),
+            // - lower than remaining available for the Customer, and
+            // - lower than maximum quantity per purchase
+            // Otherwise, Customer should not be able to purchase.
+            if ($requestedQuantity <= $availableCoupon &&
+                $requestedQuantity <= $availableCouponForUser &&
+                $requestedQuantity <= $maxQuantityPerPurchase) {
+                return TRUE;
+            }
+
+            return FALSE;
+        });
     }
 }
