@@ -17,7 +17,6 @@ use Mall;
 use Lang;
 use \Exception;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
-use Orbit\Controller\API\v1\Pub\Payment\PaymentHelper;
 use Coupon;
 use IssuedCoupon;
 use \Queue;
