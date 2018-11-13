@@ -236,8 +236,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'terms_and_conditions'    => $terms_and_conditions,
                 'token'                   => $token,
                 'voucher_benefit'         => $voucher_benefit,
-                'max_quantity_per_purchase' => $maxQuantityPerPurchase,
-                'max_quantity_per_user'   => $maxQuantityPerUser,
             ];
             $validator_validation = [
                 'promotion_name'          => 'required|max:255',
@@ -264,8 +262,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'terms_and_conditions'    => 'required',
                 'token'                   => 'required',
                 'voucher_benefit'         => 'required',
-                'max_quantity_per_purchase' => 'required|numeric',
-                'max_quantity_per_user'   => 'required|numeric',
             ];
             $validator_message = [
                 'rule_value.required'     => 'The amount to obtain is required',
@@ -952,8 +948,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'is_visible'              => $is_visible,
                 'is_3rd_party_promotion'  => $is_3rd_party_promotion,
                 'campaign_status'         => $campaignStatus,
-                'max_quantity_per_purchase' => $maxQuantityPerPurchase,
-                'max_quantity_per_user'   => $maxQuantityPerUser,
             );
 
             // Validate promotion_name only if exists in POST.
@@ -978,8 +972,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                     'is_visible'              => 'in:Y,N',
                     'is_3rd_party_promotion'  => 'in:Y,N',
                     'campaign_status'         => 'orbit.check.issued_coupon',
-                    'max_quantity_per_purchase' => 'required|numeric',
-                    'max_quantity_per_user'   => 'required|numeric',
                 ),
                 array(
                     'rule_value.required'       => 'The amount to obtain is required',

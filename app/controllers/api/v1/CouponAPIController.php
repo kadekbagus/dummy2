@@ -331,15 +331,11 @@ class CouponAPIController extends ControllerAPI
                     'price_old' => $price_old,
                     'merchant_commision' => $merchant_commision,
                     'price_selling' => $price_selling,
-                    'max_quantity_per_purchase' => $maxQuantityPerPurchase,
-                    'max_quantity_per_user' => $maxQuantityPerUser,
                 ];
                 $hotDealsValidation = [
                     'price_old' => 'required',
                     'merchant_commision' => 'required',
                     'price_selling' => 'required',
-                    'max_quantity_per_purchase' => 'required|numeric',
-                    'max_quantity_per_user' => 'required|numeric',
                 ];
                 $thirdValidator = Validator::make(
                     $hotDealsValue,
@@ -1657,15 +1653,11 @@ class CouponAPIController extends ControllerAPI
                     'price_old' => $price_old,
                     'merchant_commision' => $merchant_commision,
                     'price_selling' => $price_selling,
-                    'max_quantity_per_purchase' => $maxQuantityPerPurchase,
-                    'max_quantity_per_user' => $maxQuantityPerUser,
                 ];
                 $hotDealsValidation = [
                     'price_old' => 'required',
                     'merchant_commision' => 'required',
                     'price_selling' => 'required',
-                    'max_quantity_per_purchase' => 'required|numeric',
-                    'max_quantity_per_user' => 'required|numeric',
                 ];
                 $thirdValidator = Validator::make(
                     $hotDealsValue,
