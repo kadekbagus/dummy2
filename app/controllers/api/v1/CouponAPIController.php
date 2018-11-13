@@ -246,6 +246,7 @@ class CouponAPIController extends ControllerAPI
                 'is_visible'              => $isVisible,
                 'is_3rd_party_promotion'  => $is3rdPartyPromotion,
                 'maximum_redeem'          => $maximumRedeem,
+                'max_quantity_per_purchase' => $maxQuantityPerPurchase,
             ];
             $validator_validation = [
                 'promotion_name'          => 'required|max:255',
@@ -267,7 +268,8 @@ class CouponAPIController extends ControllerAPI
                 'coupon_codes'            => 'required',
                 'is_visible'              => 'required|in:Y,N',
                 'is_3rd_party_promotion'  => 'required|in:Y,N',
-                'maximum_redeem'          => 'numeric'
+                'maximum_redeem'          => 'numeric',
+                'max_quantity_per_purchase' => 'required|numeric',
             ];
             $validator_message = [
                 'rule_value.required'     => 'The amount to obtain is required',
@@ -1343,8 +1345,6 @@ class CouponAPIController extends ControllerAPI
             $price_old = OrbitInput::post('price_old');
             $merchant_commision = OrbitInput::post('merchant_commision');
             $price_selling = OrbitInput::post('price_selling');
-            $maxQuantityPerPurchase = OrbitInput::post('max_quantity_per_purchase', NULL);
-            $maxQuantityPerUser = OrbitInput::post('max_quantity_per_user', NULL);
 
             $is_sponsored = OrbitInput::post('is_sponsored', 'N');
             $sponsor_ids = OrbitInput::post('sponsor_ids');
@@ -1731,8 +1731,6 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->price_old = $price_old;
                 $updatedcoupon->merchant_commision = $merchant_commision;
                 $updatedcoupon->price_selling = $price_selling;
-                $updatedcoupon->max_quantity_per_purchase = $maxQuantityPerPurchase;
-                $updatedcoupon->max_quantity_per_user = $maxQuantityPerUser;
             }
 
             OrbitInput::post('promotion_type', function($promotion_type) use ($updatedcoupon) {
