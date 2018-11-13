@@ -285,8 +285,7 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                                     Config::get('orbit.transaction.max_quantity_per_purchase', 1) :
                                     $coupon->max_quantity_per_purchase;
 
-            $maxQuantityPerUser = empty($coupon->max_quantity_per_user) ?
-                                    Config::get('orbit.transaction.max_quantity_per_purchase', 1) :
+            $maxQuantityPerUser = empty($coupon->max_quantity_per_user) ? 9999 :
                                     $coupon->max_quantity_per_user;
 
             // Available coupon globally.
