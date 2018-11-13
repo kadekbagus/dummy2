@@ -136,7 +136,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $maximum_issued_coupon = OrbitInput::post('maximum_issued_coupon');
             $coupon_validity_in_date = OrbitInput::post('coupon_validity_in_date');
             $coupon_notification = OrbitInput::post('coupon_notification');
-            $rule_type = OrbitInput::post('rule_type','unique_coupon_per_user');
+            $rule_type = OrbitInput::post('rule_type');
             $rule_value = OrbitInput::post('rule_value', 0);
             $rule_object_type = OrbitInput::post('rule_object_type');
             $rule_object_id1 = OrbitInput::post('rule_object_id1');
@@ -199,6 +199,8 @@ class CouponSepulsaAPIController extends ControllerAPI
             $terms_and_conditions = OrbitInput::post('terms_and_conditions');
             $voucher_benefit = OrbitInput::post('voucher_benefit');
             $token = OrbitInput::post('token');
+            $maxQuantityPerPurchase = OrbitInput::post('max_quantity_per_purchase', NULL);
+            $maxQuantityPerUser = OrbitInput::post('max_quantity_per_user', NULL);
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -345,8 +347,15 @@ class CouponSepulsaAPIController extends ControllerAPI
             $newcoupon->is_sponsored = $is_sponsored;
             $newcoupon->price_selling = $price_selling;
             $newcoupon->price_old = $price_value;
+            $newcoupon->max_quantity_per_purchase = $maxQuantityPerPurchase;
+            $newcoupon->max_quantity_per_user = $maxQuantityPerUser;
 
             $newcoupon->is_unique_redeem = 'N';
+            if ($rule_type === 'unique_coupon_per_user') {
+                $newcoupon->is_unique_redeem = 'Y';
+                $newcoupon->max_quantity_per_purchase = 1;
+                $newcoupon->max_quantity_per_user = 1;
+            }
 
             Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
 
@@ -867,7 +876,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $promotion_id = OrbitInput::post('promotion_id');
             $merchant_id = OrbitInput::post('current_mall');
             $campaignStatus = OrbitInput::post('campaign_status');
-            $rule_type = OrbitInput::post('rule_type', 'unique_coupon_per_user');
+            $rule_type = OrbitInput::post('rule_type');
             $rule_object_type = OrbitInput::post('rule_object_type');
             $discount_object_type = OrbitInput::post('discount_object_type');
             $begin_date = OrbitInput::post('begin_date');
@@ -916,6 +925,8 @@ class CouponSepulsaAPIController extends ControllerAPI
             $how_to_buy_and_redeem = OrbitInput::post('how_to_buy_and_redeem');
             $terms_and_conditions = OrbitInput::post('terms_and_conditions');
             // $token = OrbitInput::post('token');
+            $maxQuantityPerPurchase = OrbitInput::post('max_quantity_per_purchase', NULL);
+            $maxQuantityPerUser = OrbitInput::post('max_quantity_per_user', NULL);
 
             $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
             $status = 'inactive';
@@ -1122,7 +1133,11 @@ class CouponSepulsaAPIController extends ControllerAPI
                 $updatedcoupon->is_all_gender = $gender;
             });
 
-            $updatedcoupon->is_unique_redeem = 'N';
+            if ($rule_type === 'unique_coupon_per_user') {
+                $updatedcoupon->is_unique_redeem = 'Y';
+                $updatedcoupon->max_quantity_per_purchase = 1;
+                $updatedcoupon->max_quantity_per_user = 1;
+            }
 
             $updatedcoupon->modified_by = $this->api->user->user_id;
 
