@@ -279,6 +279,10 @@ class CouponDetailAPIController extends PubControllerAPI
                         ->first();
             });
 
+            OrbitInput::get('issued_coupon_id', function($issuedCouponId) use ($coupon) {
+                $coupon->where('issued_coupons.issued_coupon_id', $issuedCouponId);
+            });
+
             $coupon = $coupon->first();
 
             $message = 'Request Ok';
