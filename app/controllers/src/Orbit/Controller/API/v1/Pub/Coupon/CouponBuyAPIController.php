@@ -71,10 +71,11 @@ class CouponBuyAPIController extends PubControllerAPI
                 array(
                     'coupon_id' => 'required|orbit.exists.coupon',
                     'with_reserved' => 'required',
-                    'quantity' => 'required|orbit.allowed.quantity',
+                    'quantity' => 'required|orbit.allowed.quantity|orbit.allowed.per_user',
                 ),
                 array(
-                    'orbit.allowed.quantity' => 'Requested quantity not available.',
+                    'orbit.allowed.quantity' => 'REQUESTED_QUANTITY_NOT_AVAILABLE',
+                    'orbit.allowed.per_user' => 'MAXIMUM_PURCHASE_REACHED',
                 )
             );
 
@@ -246,38 +247,42 @@ class CouponBuyAPIController extends PubControllerAPI
                                         IssuedCoupon::STATUS_RESERVED
                                     ])->count();
 
-            // Issued coupon count for current Customer.
-            $userCouponCount = IssuedCoupon::where('user_id', $user->user_id)
-                                            ->where('promotion_id', $couponId)
-                                            ->count();
-
             // If max_quantity in DB is empty, then assume it is old data.
             // We should fallback to value defined in config file.
             $maxQuantityPerPurchase = empty($coupon->max_quantity_per_purchase) ?
                                     Config::get('orbit.transaction.max_quantity_per_purchase', 1) :
                                     $coupon->max_quantity_per_purchase;
 
-            $maxQuantityPerUser = empty($coupon->max_quantity_per_user) ? 9999 :
-                                    $coupon->max_quantity_per_user;
-
             // Available coupon globally.
             $availableCoupon = $coupon->maximum_issued_coupon - $issuedCouponCount;
+
+            // Customer should be able to buy if requested quantity is:
+            // - lower than available coupon (globally),
+            // - lower than maximum quantity per purchase
+            return $requestedQuantity <= $availableCoupon && $requestedQuantity <= $maxQuantityPerPurchase;
+        });
+
+        Validator::extend('orbit.allowed.per_user', function ($attribute, $requestedQuantity, $parameters) use ($user) {
+
+            $couponId = OrbitInput::post('coupon_id');
+            if (empty($couponId)) {
+                $couponId = OrbitInput::post('object_id');
+            }
+
+            $coupon = Coupon::select('max_quantity_per_user')->findOrFail($couponId);
+
+            // Issued coupon count for current Customer.
+            $userCouponCount = IssuedCoupon::where('user_id', $user->user_id)
+                                            ->where('promotion_id', $couponId)
+                                            ->count();
+
+            $maxQuantityPerUser = empty($coupon->max_quantity_per_user) ? 9999 :
+                                    $coupon->max_quantity_per_user;
 
             // Available coupon for current Customer
             $availableCouponForUser = $maxQuantityPerUser - $userCouponCount;
 
-            // Customer should be able to buy if requested quantity is:
-            // - lower than available coupon (globally),
-            // - lower than remaining available for the Customer, and
-            // - lower than maximum quantity per purchase
-            // Otherwise, Customer should not be able to purchase.
-            if ($requestedQuantity <= $availableCoupon &&
-                $requestedQuantity <= $availableCouponForUser &&
-                $requestedQuantity <= $maxQuantityPerPurchase) {
-                return TRUE;
-            }
-
-            return FALSE;
+            return $requestedQuantity <= $availableCouponForUser;
         });
     }
 }
