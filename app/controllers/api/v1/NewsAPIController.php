@@ -45,9 +45,8 @@ class NewsAPIController extends ControllerAPI
      * @param string     `link_object_type`      (optional) - Link object type. Valid value: tenant, tenant_category.
      * @param array      `retailer_ids`          (optional) - Retailer IDs
      * @param integer    `id_language_default`   (optional) - ID language default
-     * @param string     `is_all_gender`         (optional) - Is all gender. Valid value: Y, N.
+     * @param string     `is_all_gender`         (optional) - Is all gender. Valid value: F, M. Y(mean is all gender is Yes)
      * @param string     `is_all_age`            (optional) - Is all retailer age group. Valid value: Y, N.
-     * @param string     `gender_ids`            (optional) - for Male, Female. Unknown. Valid value: M, F, U.
      * @param string     `age_range_ids`         (optional) - Age Range IDs
      * @param string     `translations`          (optional) - For Translations
      *
@@ -108,6 +107,7 @@ class NewsAPIController extends ControllerAPI
             $is_exclusive = OrbitInput::post('is_exclusive', 'N');
             $is_sponsored = OrbitInput::post('is_sponsored', 'N');
             $sponsor_ids = OrbitInput::post('sponsor_ids');
+            $gender = OrbitInput::post('gender', 'A');
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -173,6 +173,11 @@ class NewsAPIController extends ControllerAPI
                 }
             }
 
+            // A means all gender
+            if ($gender === 'A') {
+                $gender = 'Y';
+            }
+
             Event::fire('orbit.news.postnewnews.after.validation', array($this, $validator));
 
             // Get data status like ongoing, stopped etc
@@ -189,7 +194,7 @@ class NewsAPIController extends ControllerAPI
             $newnews->end_date = $end_date;
             $newnews->link_object_type = $link_object_type;
             $newnews->is_all_age = 'Y';
-            $newnews->is_all_gender = 'Y';
+            $newnews->is_all_gender = $gender;
             $newnews->created_by = $this->api->user->user_id;
             $newnews->sticky_order = $sticky_order;
             $newnews->is_exclusive = $is_exclusive;
@@ -547,7 +552,6 @@ class NewsAPIController extends ControllerAPI
      * @param integer    `id_language_default`   (optional) - ID language default
      * @param string     `is_all_gender`         (optional) - Is all gender. Valid value: Y, N.
      * @param string     `is_all_age`            (optional) - Is all retailer age group. Valid value: Y, N.
-     * @param string     `gender_ids`            (optional) - for Male, Female. Unknown. Valid value: M, F, U.
      * @param string     `age_range_ids`         (optional) - Age Range IDs
      * @return Illuminate\Support\Facades\Response
      */
@@ -688,7 +692,7 @@ class NewsAPIController extends ControllerAPI
             // this is for send email to marketing, before and after list
             $beforeUpdatedNews = News::selectRaw("{$prefix}news.*,
                                                         DATE_FORMAT({$prefix}news.end_date, '%d/%m/%Y %H:%i') as end_date")
-                                    ->with('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords', 'product_tags', 'campaign_status')
+                                    ->with('translations.language', 'translations.media', 'ages.ageRange', 'keywords', 'product_tags', 'campaign_status')
                                     ->excludeDeleted()
                                     ->where('news_id', $news_id)
                                     ->first();
@@ -751,6 +755,14 @@ class NewsAPIController extends ControllerAPI
                     $link_object_type = NULL;
                 }
                 $updatednews->link_object_type = $link_object_type;
+            });
+
+            OrbitInput::post('gender', function($gender) use ($updatedcoupon, $promotion_id) {
+                if ($gender === 'A') {
+                    $gender = 'Y';
+                }
+
+                $updatedcoupon->is_all_gender = $gender;
             });
 
             OrbitInput::post('is_exclusive', function($is_exclusive) use ($updatednews) {
@@ -1535,7 +1547,8 @@ class NewsAPIController extends ControllerAPI
                             DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.order ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
                                     LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = om.timezone_id
                                     WHERE om.merchant_id = {$prefix}news.mall_id)
-                                THEN 5 ELSE {$prefix}campaign_status.order END) END  AS campaign_status_order")
+                                THEN 5 ELSE {$prefix}campaign_status.order END) END  AS campaign_status_order"),
+                            DB::raw("IF({$table_prefix}promotions.is_all_gender = 'Y', 'A', {$table_prefix}promotions.is_all_gender) as gender")
                         )
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
@@ -1720,8 +1733,6 @@ class NewsAPIController extends ControllerAPI
                         $news->with('translations');
                     } elseif ($relation === 'translations.media') {
                         $news->with('translations.media');
-                    } elseif ($relation === 'genders') {
-                        $news->with('genders');
                     } elseif ($relation === 'ages') {
                         $news->with('ages');
                     } elseif ($relation === 'keywords') {
@@ -2323,17 +2334,6 @@ class NewsAPIController extends ControllerAPI
         });
 
         Validator::extend('orbit.empty.is_all_age', function ($attribute, $value, $parameters) {
-            $valid = false;
-            $statuses = array('Y', 'N');
-
-            if (in_array($value, $statuses)) {
-                $valid = true;
-            }
-
-            return $valid;
-        });
-
-        Validator::extend('orbit.empty.is_all_gender', function ($attribute, $value, $parameters) {
             $valid = false;
             $statuses = array('Y', 'N');
 
