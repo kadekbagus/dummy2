@@ -757,7 +757,7 @@ class NewsAPIController extends ControllerAPI
                 $updatednews->link_object_type = $link_object_type;
             });
 
-            OrbitInput::post('gender', function($gender) use ($updatednews, $promotion_id) {
+            OrbitInput::post('gender', function($gender) use ($updatednews) {
                 if ($gender === 'A') {
                     $gender = 'Y';
                 }
