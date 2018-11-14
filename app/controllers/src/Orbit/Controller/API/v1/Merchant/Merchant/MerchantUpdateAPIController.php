@@ -82,6 +82,7 @@ class MerchantUpdateAPIController extends ControllerAPI
             $phone = OrbitInput::post('phone');
             $email = OrbitInput::post('email');
             $productTags = OrbitInput::post('product_tags', []);
+            $gender = OrbitInput::post('gender', 'A');
 
             // Payment_acquire
             $paymentAcquire = OrbitInput::post('payment_acquire', 'N'); // Y or N
@@ -158,6 +159,10 @@ class MerchantUpdateAPIController extends ControllerAPI
 
             OrbitInput::post('payment_acquire', function($paymentAcquire) use ($updatedBaseMerchant) {
                 $updatedBaseMerchant->is_payment_acquire = $paymentAcquire;
+            });
+
+            OrbitInput::post('gender', function($gender) use ($updatedBaseMerchant) {
+                $updatedBaseMerchant->gender = $gender;
             });
 
             // Translations
