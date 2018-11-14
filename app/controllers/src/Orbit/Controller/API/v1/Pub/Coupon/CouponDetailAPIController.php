@@ -51,6 +51,8 @@ class CouponDetailAPIController extends PubControllerAPI
             $mallId = OrbitInput::get('mall_id', null);
             $partnerToken = OrbitInput::get('token', null);
             $notificationId = OrbitInput::get('notification_id', null);
+            $forRedeem = OrbitInput::get('for_redeem', 'N');
+            $selectedIssuedCouponId = OrbitInput::get('issued_coupon_id', null);
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -223,10 +225,17 @@ class CouponDetailAPIController extends PubControllerAPI
                               ->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id');
                         })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-                        ->leftJoin('issued_coupons', function ($q) use ($user) {
+                        ->leftJoin('issued_coupons', function ($q) use ($user, $prefix, $forRedeem, $selectedIssuedCouponId) {
                                 $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                                 $q->on('issued_coupons.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
-                                $q->on('issued_coupons.status', '=', DB::Raw("'issued'"));
+
+                                if ($forRedeem === 'Y' && ! empty($selectedIssuedCouponId)) {
+                                    $q->on(DB::raw("({$prefix}issued_coupons.status = 'issued' OR {$prefix}issued_coupons.status"), '=', DB::Raw("'redeemed')"));
+                                }
+                                else {
+                                    $q->on('issued_coupons.status', '=', DB::raw("'issued'"));
+                                }
+
                                 $q->on('issued_coupons.expired_date', '>=', DB::Raw("CONVERT_TZ(NOW(), '+00:00', 'Asia/jakarta')"));
                             })
                         ->leftJoin('issued_coupons as reserved_issued_coupons', function ($q) use ($user) {
@@ -279,11 +288,9 @@ class CouponDetailAPIController extends PubControllerAPI
                         ->first();
             });
 
-            OrbitInput::get('issued_coupon_id', function($issuedCouponId) use ($coupon) {
-                if (! empty($issuedCouponId)) {
-                    $coupon->where('issued_coupons.issued_coupon_id', $issuedCouponId);
-                }
-            });
+            if ($forRedeem === 'Y' && ! empty($selectedIssuedCouponId)) {
+                $coupon->where('issued_coupons.issued_coupon_id', $selectedIssuedCouponId);
+            }
 
             $coupon = $coupon->first();
 
