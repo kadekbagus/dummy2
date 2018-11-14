@@ -470,6 +470,7 @@ class MenuCounterAPIController extends PubControllerAPI
             // filter by gender
             if (! empty($genderFilter)) {
                 $couponJsonQuery['query']['bool']['must_not'][] = $genderFilter;
+                $campaignJsonQuery['query']['bool']['must_not'][] = $genderFilter;
             }
 
             if (! empty($campaignCountryFilter)) {
