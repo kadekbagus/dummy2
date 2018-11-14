@@ -193,6 +193,8 @@ class CouponAPIController extends ControllerAPI
             $isVisible = OrbitInput::post('is_hidden', 'N') === 'Y' ? 'N' : 'Y';
             $thirdPartyName = OrbitInput::post('third_party_name', NULL);
             $maximumRedeem = OrbitInput::post('maximum_redeem', NULL);
+            $maxQuantityPerPurchase = OrbitInput::post('max_quantity_per_purchase', NULL);
+            $maxQuantityPerUser = OrbitInput::post('max_quantity_per_user', NULL);
 
             $payByWallet = OrbitInput::post('pay_by_wallet', 'N');
             $payByNormal = OrbitInput::post('pay_by_normal', 'N');
@@ -244,6 +246,7 @@ class CouponAPIController extends ControllerAPI
                 'is_visible'              => $isVisible,
                 'is_3rd_party_promotion'  => $is3rdPartyPromotion,
                 'maximum_redeem'          => $maximumRedeem,
+                'max_quantity_per_purchase' => $maxQuantityPerPurchase,
             ];
             $validator_validation = [
                 'promotion_name'          => 'required|max:255',
@@ -265,7 +268,8 @@ class CouponAPIController extends ControllerAPI
                 'coupon_codes'            => 'required',
                 'is_visible'              => 'required|in:Y,N',
                 'is_3rd_party_promotion'  => 'required|in:Y,N',
-                'maximum_redeem'          => 'numeric'
+                'maximum_redeem'          => 'numeric',
+                'max_quantity_per_purchase' => 'required|numeric',
             ];
             $validator_message = [
                 'rule_value.required'     => 'The amount to obtain is required',
@@ -669,6 +673,8 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->price_old = $price_old;
             $newcoupon->merchant_commision = $merchant_commision;
             $newcoupon->price_selling = $price_selling;
+            $newcoupon->max_quantity_per_purchase = $maxQuantityPerPurchase;
+            $newcoupon->max_quantity_per_user = $maxQuantityPerUser;
 
             // save 3rd party coupon fields
             if ($is3rdPartyPromotion === 'Y') {
@@ -687,6 +693,11 @@ class CouponAPIController extends ControllerAPI
 
             if ($rule_type === 'unique_coupon_per_user') {
                 $newcoupon->is_unique_redeem = 'Y';
+
+                // Make sure to force max quantity for purchase and
+                // max quantity per user to 1 if coupon is unique.
+                $newcoupon->max_quantity_per_purchase = 1;
+                $newcoupon->max_quantity_per_user = 1;
             }
 
             Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
@@ -3035,7 +3046,9 @@ class CouponAPIController extends ControllerAPI
                                 WHEN is_3rd_party_promotion = 'N' THEN 'not_available'
                             END AS export_status
                         "),
-                    DB::raw("IF({$table_prefix}promotions.is_all_gender = 'Y', 'A', {$table_prefix}promotions.is_all_gender) as gender")
+                    DB::raw("IF({$table_prefix}promotions.is_all_gender = 'Y', 'A', {$table_prefix}promotions.is_all_gender) as gender"),
+                    DB::raw("{$table_prefix}promotions.max_quantity_per_purchase as max_qty_per_purchase"),
+                    DB::raw("{$table_prefix}promotions.max_quantity_per_user as max_qty_per_user")
                 )
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                 ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
