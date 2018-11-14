@@ -757,12 +757,12 @@ class NewsAPIController extends ControllerAPI
                 $updatednews->link_object_type = $link_object_type;
             });
 
-            OrbitInput::post('gender', function($gender) use ($updatedcoupon, $promotion_id) {
+            OrbitInput::post('gender', function($gender) use ($updatednews, $promotion_id) {
                 if ($gender === 'A') {
                     $gender = 'Y';
                 }
 
-                $updatedcoupon->is_all_gender = $gender;
+                $updatednews->is_all_gender = $gender;
             });
 
             OrbitInput::post('is_exclusive', function($is_exclusive) use ($updatednews) {
