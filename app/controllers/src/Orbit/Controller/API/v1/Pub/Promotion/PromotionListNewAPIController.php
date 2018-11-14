@@ -37,7 +37,7 @@ use PartnerAffectedGroup;
 use PartnerCompetitor;
 use Country;
 use UserSponsor;
-
+use UserDetail;
 use PromotionSearch;
 use AdvertStoreSearch as AdvertSearch;
 
@@ -135,6 +135,7 @@ class PromotionListNewAPIController extends PubControllerAPI
             $viewType = OrbitInput::get('view_type', 'grid');
             $myCCFilter = OrbitInput::get('my_cc_filter', false);
             $withAdvert = (bool) OrbitInput::get('with_advert', true);
+            $gender = OrbitInput::get('gender', 'all');
 
              // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -249,6 +250,23 @@ class PromotionListNewAPIController extends PubControllerAPI
             OrbitInput::get('category_id', function($categoryIds) {
                 $this->searcher->filterByCategories($categoryIds);
             });
+
+            // Filter by gender
+            if (! empty($gender)) {
+                $filterGender = 'all';
+                if ($gender === 'mygender') {
+                    $userGender = UserDetail::select('gender')->where('user_id', '=', $user->user_id)->first();
+                    if ($userGender) {
+                        if (strtolower($userGender->gender) == 'm') {
+                            $filterGender = 'male';
+                        } else if (strtolower($userGender->gender) == 'f') {
+                            $filterGender = 'female';
+                        }
+                    }
+                }
+                $cacheKey['gender'] = $filterGender;
+                $this->searcher->filterByGender(strtolower($filterGender));
+            }
 
             // Filter by partner...
             OrbitInput::get('partner_id', function($partnerId) {
