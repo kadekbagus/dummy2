@@ -757,12 +757,12 @@ class NewsAPIController extends ControllerAPI
                 $updatednews->link_object_type = $link_object_type;
             });
 
-            OrbitInput::post('gender', function($gender) use ($updatedcoupon, $promotion_id) {
+            OrbitInput::post('gender', function($gender) use ($updatednews) {
                 if ($gender === 'A') {
                     $gender = 'Y';
                 }
 
-                $updatedcoupon->is_all_gender = $gender;
+                $updatednews->is_all_gender = $gender;
             });
 
             OrbitInput::post('is_exclusive', function($is_exclusive) use ($updatednews) {
@@ -1548,7 +1548,7 @@ class NewsAPIController extends ControllerAPI
                                     LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = om.timezone_id
                                     WHERE om.merchant_id = {$prefix}news.mall_id)
                                 THEN 5 ELSE {$prefix}campaign_status.order END) END  AS campaign_status_order"),
-                            DB::raw("IF({$table_prefix}promotions.is_all_gender = 'Y', 'A', {$table_prefix}promotions.is_all_gender) as gender")
+                            DB::raw("IF({$prefix}news.is_all_gender = 'Y', 'A', {$prefix}news.is_all_gender) as gender")
                         )
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')

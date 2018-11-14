@@ -352,6 +352,7 @@ class StoreSynchronization
                     $tenant->masterbox_number = $store->verification_number;
                     $tenant->mobile_default_language = $store->mobile_default_language;
                     $tenant->is_payment_acquire = $store->is_payment_acquire;
+                    $tenant->gender = $store->gender;
                     $tenant->save();
 
                     // handle inactive store
