@@ -136,7 +136,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $maximum_issued_coupon = OrbitInput::post('maximum_issued_coupon');
             $coupon_validity_in_date = OrbitInput::post('coupon_validity_in_date');
             $coupon_notification = OrbitInput::post('coupon_notification');
-            $rule_type = OrbitInput::post('rule_type','unique_coupon_per_user');
+            $rule_type = OrbitInput::post('rule_type');
             $rule_value = OrbitInput::post('rule_value', 0);
             $rule_object_type = OrbitInput::post('rule_object_type');
             $rule_object_id1 = OrbitInput::post('rule_object_id1');
@@ -199,6 +199,8 @@ class CouponSepulsaAPIController extends ControllerAPI
             $terms_and_conditions = OrbitInput::post('terms_and_conditions');
             $voucher_benefit = OrbitInput::post('voucher_benefit');
             $token = OrbitInput::post('token');
+            $maxQuantityPerPurchase = OrbitInput::post('max_quantity_per_purchase', NULL);
+            $maxQuantityPerUser = OrbitInput::post('max_quantity_per_user', NULL);
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -234,6 +236,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'terms_and_conditions'    => $terms_and_conditions,
                 'token'                   => $token,
                 'voucher_benefit'         => $voucher_benefit,
+                'max_quantity_per_purchase' => $maxQuantityPerPurchase,
             ];
             $validator_validation = [
                 'promotion_name'          => 'required|max:255',
@@ -260,6 +263,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'terms_and_conditions'    => 'required',
                 'token'                   => 'required',
                 'voucher_benefit'         => 'required',
+                'max_quantity_per_purchase' => 'required|numeric',
             ];
             $validator_message = [
                 'rule_value.required'     => 'The amount to obtain is required',
@@ -345,8 +349,15 @@ class CouponSepulsaAPIController extends ControllerAPI
             $newcoupon->is_sponsored = $is_sponsored;
             $newcoupon->price_selling = $price_selling;
             $newcoupon->price_old = $price_value;
+            $newcoupon->max_quantity_per_purchase = $maxQuantityPerPurchase;
+            $newcoupon->max_quantity_per_user = $maxQuantityPerUser;
 
             $newcoupon->is_unique_redeem = 'N';
+            if ($rule_type === 'unique_coupon_per_user') {
+                $newcoupon->is_unique_redeem = 'Y';
+                $newcoupon->max_quantity_per_purchase = 1;
+                $newcoupon->max_quantity_per_user = 1;
+            }
 
             Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
 
@@ -867,7 +878,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $promotion_id = OrbitInput::post('promotion_id');
             $merchant_id = OrbitInput::post('current_mall');
             $campaignStatus = OrbitInput::post('campaign_status');
-            $rule_type = OrbitInput::post('rule_type', 'unique_coupon_per_user');
+            $rule_type = OrbitInput::post('rule_type');
             $rule_object_type = OrbitInput::post('rule_object_type');
             $discount_object_type = OrbitInput::post('discount_object_type');
             $begin_date = OrbitInput::post('begin_date');
@@ -1122,7 +1133,9 @@ class CouponSepulsaAPIController extends ControllerAPI
                 $updatedcoupon->is_all_gender = $gender;
             });
 
-            $updatedcoupon->is_unique_redeem = 'N';
+            if ($rule_type === 'unique_coupon_per_user') {
+                $updatedcoupon->is_unique_redeem = 'Y';
+            }
 
             $updatedcoupon->modified_by = $this->api->user->user_id;
 
@@ -1783,7 +1796,9 @@ class CouponSepulsaAPIController extends ControllerAPI
                         FROM {$table_prefix}issued_coupons ic
                         WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id
                             ) as coupon_codes"),
-                    DB::raw("IF({$table_prefix}promotions.is_all_gender = 'Y', 'A', {$table_prefix}promotions.is_all_gender) as gender")
+                    DB::raw("IF({$table_prefix}promotions.is_all_gender = 'Y', 'A', {$table_prefix}promotions.is_all_gender) as gender"),
+                    DB::raw("{$table_prefix}promotions.max_quantity_per_purchase as max_qty_per_purchase"),
+                    DB::raw("{$table_prefix}promotions.max_quantity_per_user as max_qty_per_user")
                 )
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                 ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')

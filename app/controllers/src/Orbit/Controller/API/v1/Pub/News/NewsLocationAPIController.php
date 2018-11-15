@@ -368,7 +368,8 @@ class NewsLocationAPIController extends PubControllerAPI
                                     FROM orb_media m
                                     WHERE m.media_name_long = 'news_translation_image_orig'
                                     AND m.object_id = {$prefix}news_translations.news_translation_id)
-                                END AS original_media_path
+                                END AS original_media_path,
+                                default_translation.news_name as default_name
                             "))
                         ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
                         ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
@@ -407,6 +408,7 @@ class NewsLocationAPIController extends PubControllerAPI
             $data->total_records = $totalRec;
             if (is_object($newsName)) {
                 $data->news_name = $newsName->news_name;
+                $data->default_name = $newsName->default_name;
                 $data->original_media_path = $newsName->original_media_path;
             }
             $data->records = $listOfRec;
