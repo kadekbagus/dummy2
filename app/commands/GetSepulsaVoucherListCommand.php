@@ -151,7 +151,7 @@ class GetSepulsaVoucherListCommand extends Command {
     {
         Mail::send('emails.sepulsa-voucher-list.html', [], function($message) use ($data)
         {
-            $from = 'mailer@dominopos.com';
+            $from = 'no-reply@gotomalls.com';
             $emails = explode(',', $this->option('email-to'));
 
             $message->from($from, 'Gotomalls Robot');

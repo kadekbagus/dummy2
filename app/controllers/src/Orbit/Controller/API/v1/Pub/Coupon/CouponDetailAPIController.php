@@ -45,13 +45,14 @@ class CouponDetailAPIController extends PubControllerAPI
             $country = OrbitInput::get('country', null);
             $cities = OrbitInput::get('cities', null);
             $couponId = OrbitInput::get('coupon_id', null);
-            $isForRedeem = OrbitInput::get('for_redeem', 'N');
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
             $mallId = OrbitInput::get('mall_id', null);
             $partnerToken = OrbitInput::get('token', null);
             $notificationId = OrbitInput::get('notification_id', null);
+            $forRedeem = OrbitInput::get('for_redeem', 'N');
+            $selectedIssuedCouponId = OrbitInput::get('issued_coupon_id', null);
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -144,6 +145,7 @@ class CouponDetailAPIController extends PubControllerAPI
                                     END AS original_media_path
                                 "),
                             'promotions.end_date',
+                            DB::raw("default_translation.promotion_name as default_name"),
                             DB::raw("{$prefix}issued_coupons.expired_date as coupon_validity_in_date"),
                             'promotions.is_exclusive',
                             'promotions.available',
@@ -223,10 +225,17 @@ class CouponDetailAPIController extends PubControllerAPI
                               ->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id');
                         })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-                        ->leftJoin('issued_coupons', function ($q) use ($user) {
+                        ->leftJoin('issued_coupons', function ($q) use ($user, $prefix, $forRedeem, $selectedIssuedCouponId) {
                                 $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                                 $q->on('issued_coupons.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
-                                $q->on('issued_coupons.status', '=', DB::Raw("'issued'"));
+
+                                if ($forRedeem === 'Y' && ! empty($selectedIssuedCouponId)) {
+                                    $q->on(DB::raw("({$prefix}issued_coupons.status = 'issued' OR {$prefix}issued_coupons.status"), '=', DB::Raw("'redeemed')"));
+                                }
+                                else {
+                                    $q->on('issued_coupons.status', '=', DB::raw("'issued'"));
+                                }
+
                                 $q->on('issued_coupons.expired_date', '>=', DB::Raw("CONVERT_TZ(NOW(), '+00:00', 'Asia/jakarta')"));
                             })
                         ->leftJoin('issued_coupons as reserved_issued_coupons', function ($q) use ($user) {
@@ -279,24 +288,11 @@ class CouponDetailAPIController extends PubControllerAPI
                         ->first();
             });
 
-            // If it is for redeem, then get the nearest expired date from now.
-            // But because of the nature of the query, we need to filter all the issued
-            // coupons that not exceeding validity date then get the nearest one.
-            // @todo find better solution and move it to a separate controller/api.
-            if ($isForRedeem === 'Y') {
-                $coupons = $coupon->get();
-                $nearestExpired = null;
-                foreach($coupons as $coupon) {
-                    if ($coupon->is_exceeding_validity_date === 'true') {
-                        break;
-                    }
-                    $nearestExpired = $coupon;
-                }
-                $coupon = $nearestExpired;
+            if ($forRedeem === 'Y' && ! empty($selectedIssuedCouponId)) {
+                $coupon->where('issued_coupons.issued_coupon_id', $selectedIssuedCouponId);
             }
-            else {
-                $coupon = $coupon->first();
-            }
+
+            $coupon = $coupon->first();
 
             $message = 'Request Ok';
             if (! is_object($coupon)) {
