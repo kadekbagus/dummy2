@@ -155,6 +155,8 @@ class CouponDetailAPIController extends PubControllerAPI
                             'promotions.promotion_type as coupon_type',
                             'promotions.price_old',
                             'promotions.price_selling as price_new',
+                            'promotions.max_quantity_per_purchase',
+                            'promotions.max_quantity_per_user',
                             'coupon_sepulsa.how_to_buy_and_redeem',
                             'coupon_sepulsa.terms_and_conditions',
                             'issued_coupons.url as redeem_url',
@@ -302,6 +304,11 @@ class CouponDetailAPIController extends PubControllerAPI
             $mall = null;
             if (! empty($mallId)) {
                 $mall = Mall::excludeDeleted()->where('merchant_id', '=', $mallId)->first();
+            }
+
+            // Use default max quantity per purchase for old data (that doesn't have max_quantity_per_purchase set)
+            if (empty($coupon->max_quantity_per_purchase)) {
+                $coupon->max_quantity_per_purchase = Config::get('orbit.transaction.max_quantity_per_purchase', 5);
             }
 
             // Only campaign having status ongoing and is_started true can going to detail page
