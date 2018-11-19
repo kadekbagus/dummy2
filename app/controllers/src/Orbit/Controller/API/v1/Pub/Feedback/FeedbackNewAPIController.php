@@ -151,7 +151,7 @@ class FeedbackNewAPIController extends PubControllerAPI
             $availableIn = Config::get('orbit.feedback.limit', 10);
             $canDoFeedback = $lastRequest->addMinutes($availableIn)->lte($now) || $first;
             if ($canDoFeedback) {
-                Cache::put($cacheKey, $now->format('Y-m-d H:i:s'), 6);
+                Cache::put($cacheKey, $now->format('Y-m-d H:i:s'), $availableIn);
             }
 
             return $canDoFeedback;
