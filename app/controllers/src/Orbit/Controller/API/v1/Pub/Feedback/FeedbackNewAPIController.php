@@ -7,10 +7,12 @@ use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Config;
+use Cache;
 use Validator;
 use \Exception;
 use Activity;
 use User;
+use Mall;
 use \Orbit\Helper\Exception\OrbitCustomException;
 use Carbon\Carbon as Carbon;
 
@@ -43,17 +45,30 @@ class FeedbackNewAPIController extends PubControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
+            $this->registerCustomValidations();
+
             $feedback = [];
             $feedback['store'] = OrbitInput::post('store');
             $feedback['mall'] = OrbitInput::post('mall');
             $feedback['report'] = OrbitInput::post('report');
             $feedback['is_mall'] = OrbitInput::post('is_mall', 'Y');
+            $feedback['user'] = $user->user_id;
+            $feedback['mall_id'] = OrbitInput::post('mall_id');
 
-            $validator = Validator::make($feedback, [
-                'mall'      => 'required',
-                'report'    => 'required',
-                'is_mall'   => 'required',
-            ]);
+            $validator = Validator::make(
+                $feedback,
+                [
+                    'mall_id'   => 'required|orbit.exists.mall',
+                    'mall'      => 'required',
+                    'report'    => 'required',
+                    'is_mall'   => 'required',
+                    'user'      => "required|orbit.request.throttle:{$feedback['mall_id']}",
+                ],
+                [
+                    'orbit.exists.mall' => 'Invalid mall ID.',
+                    'orbit.request.throttle' => "WAIT_BEFORE_MAKING_NEW_FEEDBACK",
+                ]
+            );
 
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -99,5 +114,47 @@ class FeedbackNewAPIController extends PubControllerAPI
         }
 
         return $this->render();
+    }
+
+    /**
+     * Register custom validation.
+     */
+    private function registerCustomValidations()
+    {
+        // Check if mall is exists.
+        Validator::extend('orbit.exists.mall', function($attributes, $value, $parameters) {
+            $mall = Mall::excludeDeleted()->select('merchant_id')->where('merchant_id', $value)->first();
+
+            return ! empty($mall);
+        });
+
+        // TODO: Refactor to middleware (a feature ticket, not hotfix)
+        Validator::extend('orbit.request.throttle', function($attributes, $value, $parameters) {
+
+            // Assume mall is valid and not empty because it passed orbit.exists.mall
+            $mallId = $parameters[0];
+
+            // $value here is user_id
+            $cacheKeyPrefix = 'feedback_time_mall_'; // Can be set in config if needed.
+            $cacheKey = sprintf("{$cacheKeyPrefix}_%s_%s", $mallId, $value);
+            $now = Carbon::now();
+            $lastRequest = Cache::get($cacheKey, $now);
+
+            $first = true;
+            if (! $lastRequest instanceof Carbon) {
+                $lastRequest = Carbon::parse($lastRequest);
+                $first = false;
+            }
+
+            // If we can do feedback, then store current time
+            // as the last valid feedback.
+            $availableIn = Config::get('orbit.feedback.limit', 10);
+            $canDoFeedback = $lastRequest->addMinutes($availableIn)->lte($now) || $first;
+            if ($canDoFeedback) {
+                Cache::put($cacheKey, $now->format('Y-m-d H:i:s'), 6);
+            }
+
+            return $canDoFeedback;
+        });
     }
 }
