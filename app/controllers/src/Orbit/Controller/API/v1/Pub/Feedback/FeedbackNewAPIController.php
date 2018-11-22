@@ -134,7 +134,6 @@ class FeedbackNewAPIController extends PubControllerAPI
             // Assume mall is valid and not empty because it passed orbit.exists.mall
             $mallId = $parameters[0];
 
-            // $value here is user_id
             $cacheKeyPrefix = 'feedback_time_mall_'; // Can be set in config if needed.
             $cacheKey = sprintf("{$cacheKeyPrefix}_%s_%s", $mallId, $value);
             $now = Carbon::now();
@@ -151,7 +150,7 @@ class FeedbackNewAPIController extends PubControllerAPI
             $availableIn = Config::get('orbit.feedback.limit', 10);
             $canDoFeedback = $lastRequest->addMinutes($availableIn)->lte($now) || $first;
             if ($canDoFeedback) {
-                Cache::put($cacheKey, $now->format('Y-m-d H:i:s'), 6);
+                Cache::put($cacheKey, $now->format('Y-m-d H:i:s'), $availableIn);
             }
 
             return $canDoFeedback;
