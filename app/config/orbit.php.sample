@@ -7513,5 +7513,8 @@ return array(
 
     'feedback' => [
         'cs_email' => 'cs@gotomalls.com',
+
+        // Time limit before Customer can send new Feedback for the same mall. (in minutes)
+        'limit' => 10,
     ],
 );
