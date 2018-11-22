@@ -134,7 +134,6 @@ class FeedbackNewAPIController extends PubControllerAPI
             // Assume mall is valid and not empty because it passed orbit.exists.mall
             $mallId = $parameters[0];
 
-            // $value here is user_id
             $cacheKeyPrefix = 'feedback_time_mall_'; // Can be set in config if needed.
             $cacheKey = sprintf("{$cacheKeyPrefix}_%s_%s", $mallId, $value);
             $now = Carbon::now();
