@@ -171,7 +171,7 @@ abstract class Notification {
      * @param  [type] $payment [description]
      * @return [type]          [description]
      */
-    protected function getLocalTime($timezone = 'UTC')
+    protected function getLocalTimezoneName($timezone = 'UTC')
     {
         $timezone = strtolower($timezone);
         return isset($this->timezoneMapping[$timezone]) ?
