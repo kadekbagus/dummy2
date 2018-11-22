@@ -169,6 +169,7 @@ class MenuCounterAPIController extends PubControllerAPI
             $partnerFilterMust = [];
             $countryData = null;
             $genderFilter = [];
+            $genderFilterStore = [];
 
             // filter by country
             OrbitInput::get('country', function ($countryFilter) use (&$campaignJsonQuery, &$mallJsonQuery, &$campaignCountryCityFilterArr, &$countryData, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr, &$campaignCountryFilter, &$storeCountryFilter) {
@@ -446,15 +447,17 @@ class MenuCounterAPIController extends PubControllerAPI
                 }
             }
 
-            OrbitInput::get('gender', function($gender) use (&$genderFilter, $user) {
+            OrbitInput::get('gender', function($gender) use (&$genderFilter, &$genderFilterStore, $user) {
                 $gender = strtolower($gender);
                 if ($gender === 'mygender') {
                     $userGender = UserDetail::select('gender')->where('user_id', '=', $user->user_id)->first();
                     if ($userGender) {
                         if (strtolower($userGender->gender) == 'm') {
                             $genderFilter = ['match' => ['is_all_gender' => 'F']];
+                            $genderFilterStore = ['match' => ['gender' => 'F']];
                         } else if (strtolower($userGender->gender) == 'f') {
                             $genderFilter = ['match' => ['is_all_gender' => 'M']];
+                            $genderFilterStore = ['match' => ['gender' => 'M']];
                         }
                     }
                 }
@@ -470,7 +473,14 @@ class MenuCounterAPIController extends PubControllerAPI
             // filter by gender
             if (! empty($genderFilter)) {
                 $couponJsonQuery['query']['bool']['must_not'][] = $genderFilter;
+                $campaignJsonQuery['query']['bool']['must_not'][] = $genderFilter;
             }
+
+            if (! empty($genderFilterStore)) {
+                $storeJsonQuery['query']['bool']['must_not'][] = $genderFilterStore;
+                $merchantJsonQuery['query']['bool']['must_not'][] = $genderFilterStore;
+            }
+
 
             if (! empty($campaignCountryFilter)) {
                 $campaignJsonQuery['query']['bool']['must'][] = $campaignCountryFilter;

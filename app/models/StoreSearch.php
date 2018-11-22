@@ -691,4 +691,23 @@ class StoreSearch extends Search
             ]
         ];
     }
+
+    /**
+     * filter by gender
+     *
+     * @return void
+     */
+    public function filterByGender($gender = '')
+    {
+        switch ($gender){
+            case 'male':
+                 $this->mustNot(['match' => ['gender' => 'F']]);
+                 break;
+            case 'female':
+                 $this->mustNot(['match' => ['gender' => 'M']]);
+                 break;
+            default:
+                // do nothing
+        }
+    }
 }

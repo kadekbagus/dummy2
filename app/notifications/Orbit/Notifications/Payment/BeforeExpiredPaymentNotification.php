@@ -76,6 +76,8 @@ class BeforeExpiredPaymentNotification extends CustomerNotification implements E
             'myWalletUrl'       => $this->getMyPurchasesUrl(),
             'cancelUrl'         => $this->getCancelUrl(),
             'paymentInfo'       => $this->getPaymentInfo(),
+            'hideExpiration'    => true,
+            'transactionDateTime' => $this->payment->getTransactionDate('d F Y, H:i ') . $this->getLocalTimezoneName($this->payment->timezone_name),
         ];
     }
 

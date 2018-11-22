@@ -6624,6 +6624,25 @@ return array(
                 'object_type' => 'Coupon',
                 'parameter_name' => 'object_id'
             ),
+            // user click feedback button on store detail
+            '185' => array(
+                'name' => 'click_feedback',
+                'name_long' => 'Click Feedback Store',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Tenant',
+                'parameter_name' => 'object_id'
+            ),
+            // user click feedback button on mall detail
+            '186' => array(
+                'name' => 'click_feedback',
+                'name_long' => 'Click Feedback Mall',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Mall',
+                'parameter_name' => 'object_id'
+            ),
+
         ),
     ),
 
@@ -7494,5 +7513,8 @@ return array(
 
     'feedback' => [
         'cs_email' => 'cs@gotomalls.com',
+
+        // Time limit before Customer can send new Feedback for the same mall. (in minutes)
+        'limit' => 10,
     ],
 );
