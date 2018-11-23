@@ -82,6 +82,7 @@ class MerchantNewAPIController extends ControllerAPI
             $mobile_default_language = OrbitInput::post('mobile_default_language');
             $phone = OrbitInput::post('phone');
             $email = OrbitInput::post('email');
+            $gender = OrbitInput::post('gender', 'A');
             $productTags = OrbitInput::post('product_tags');
             $productTags = (array) $productTags;
 
@@ -166,6 +167,7 @@ class MerchantNewAPIController extends ControllerAPI
             $newBaseMerchant->phone = $phone;
             $newBaseMerchant->email = $email;
             $newBaseMerchant->is_payment_acquire = $paymentAcquire;
+            $newBaseMerchant->gender = $gender;
             $newBaseMerchant->status = 'active';
 
             if (! empty($translations) ) {

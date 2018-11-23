@@ -177,16 +177,18 @@ class StoreSynchronization
                         $tenant = new Tenant;
                     }
 
+                    $baseMerchant = BaseMerchant::where('base_merchant_id', $base_merchant_id)->first();
+
+                    if (! is_object($baseMerchant)) {
+                        $baseMerchant = new stdclass();
+                        $baseMerchant->name = 'store';
+                        $baseMerchant->gender = 'A';
+                    }
+
                     // mall notification for new store
                     $activeStore = Tenant::where('merchant_id', $base_store_id)->where('status', 'active')->first();
                     if (!is_object($activeStore))
                     {
-                        $baseMerchant = BaseMerchant::where('base_merchant_id', $base_merchant_id)->first();
-
-                        if (! is_object($baseMerchant)) {
-                            $baseMerchant = new stdclass();
-                            $baseMerchant->name = 'store';
-                        }
 
                         $mongoConfig = Config::get('database.mongodb');
                         $mongoClient = MongoClient::create($mongoConfig);
@@ -352,6 +354,7 @@ class StoreSynchronization
                     $tenant->masterbox_number = $store->verification_number;
                     $tenant->mobile_default_language = $store->mobile_default_language;
                     $tenant->is_payment_acquire = $store->is_payment_acquire;
+                    $tenant->gender = $baseMerchant->gender;
                     $tenant->save();
 
                     // handle inactive store
