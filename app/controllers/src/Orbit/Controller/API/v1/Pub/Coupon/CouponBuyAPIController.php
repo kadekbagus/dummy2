@@ -71,11 +71,10 @@ class CouponBuyAPIController extends PubControllerAPI
                 array(
                     'coupon_id' => 'required|orbit.exists.coupon',
                     'with_reserved' => 'required',
-                    'quantity' => 'required|orbit.allowed.quantity|orbit.allowed.per_user',
+                    'quantity' => 'required|orbit.allowed.quantity',
                 ),
                 array(
                     'orbit.allowed.quantity' => 'REQUESTED_QUANTITY_NOT_AVAILABLE',
-                    'orbit.allowed.per_user' => 'MAXIMUM_PURCHASE_REACHED',
                 )
             );
 
@@ -85,9 +84,31 @@ class CouponBuyAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $coupon = Coupon::findOrFail($coupon_id);
+
+            // Issued coupon count for current Customer.
+            $userCouponCount = IssuedCoupon::where('user_id', $user->user_id)
+                                            ->where('promotion_id', $coupon_id)
+                                            ->whereIn('status', [
+                                                IssuedCoupon::STATUS_ISSUED,
+                                                IssuedCoupon::STATUS_REDEEMED,
+                                                IssuedCoupon::STATUS_RESERVED
+                                            ])->count();
+
+            $maxQuantityPerUser = 9999;
+            $availableCouponForUser = 9999;
+            if (! empty($coupon->max_quantity_per_user)) {
+                $maxQuantityPerUser = $coupon->max_quantity_per_user;
+                $availableCouponForUser = $maxQuantityPerUser - $userCouponCount;
+            }
+
+            if ($quantity > $availableCouponForUser) {
+                $errorMessage = 'MAXIMUM_PURCHASE_REACHED|' . $availableCouponForUser;
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             // If we found reserved coupon for this user and it is a unique coupon, then
             // we should mark it as not available to be purchased again.
-            $coupon = Coupon::findOrFail($coupon_id);
             if ($coupon->is_unique_redeem === 'Y') {
                 $usedCoupon = IssuedCoupon::where('user_id', $user->user_id)
                                             ->where('promotion_id', $coupon_id)
@@ -236,7 +257,7 @@ class CouponBuyAPIController extends PubControllerAPI
                 $couponId = OrbitInput::post('object_id');
             }
 
-            $coupon = Coupon::select('maximum_issued_coupon', 'max_quantity_per_purchase', 'max_quantity_per_user', 'is_unique_redeem')
+            $coupon = Coupon::select('maximum_issued_coupon', 'max_quantity_per_purchase', 'is_unique_redeem')
                               ->findOrFail($couponId);
 
             // Globally issued coupon count regardless of the Customer.
@@ -260,29 +281,6 @@ class CouponBuyAPIController extends PubControllerAPI
             // - lower than available coupon (globally),
             // - lower than maximum quantity per purchase
             return $requestedQuantity <= $availableCoupon && $requestedQuantity <= $maxQuantityPerPurchase;
-        });
-
-        Validator::extend('orbit.allowed.per_user', function ($attribute, $requestedQuantity, $parameters) use ($user) {
-
-            $couponId = OrbitInput::post('coupon_id');
-            if (empty($couponId)) {
-                $couponId = OrbitInput::post('object_id');
-            }
-
-            $coupon = Coupon::select('max_quantity_per_user')->findOrFail($couponId);
-
-            // Issued coupon count for current Customer.
-            $userCouponCount = IssuedCoupon::where('user_id', $user->user_id)
-                                            ->where('promotion_id', $couponId)
-                                            ->count();
-
-            $maxQuantityPerUser = empty($coupon->max_quantity_per_user) ? 9999 :
-                                    $coupon->max_quantity_per_user;
-
-            // Available coupon for current Customer
-            $availableCouponForUser = $maxQuantityPerUser - $userCouponCount;
-
-            return $requestedQuantity <= $availableCouponForUser;
         });
     }
 }
