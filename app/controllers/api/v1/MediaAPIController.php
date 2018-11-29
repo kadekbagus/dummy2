@@ -5,6 +5,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Intervention\Image\ImageManagerStatic as Image;
 use Intervention\Image\File as ImageFile;
 use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
 
 /**
  * Controller for Media image related task, all roles should be able to access this
@@ -49,9 +50,9 @@ class MediaAPIController extends ControllerAPI
                 throw new Exception("Image media upload config is not set.", 1);
             }
 
-            $objectId = Input::post('object_id');
-            $mediaNameId = Input::post('media_name_id');
-            $images = Input::files('images');
+            $objectId = OrbitInput::post('object_id');
+            $mediaNameId = OrbitInput::post('media_name_id');
+            $images = Input::file(null);
 
             $mediaNames = implode(',', array_keys(Config::get('orbit.upload.media.image.media_names')));
 
@@ -82,13 +83,28 @@ class MediaAPIController extends ControllerAPI
 
             $filenameFormat = Config::get('orbit.upload.media.image.file_name_format');
             $filepathFormat = Config::get('orbit.upload.media.image.path_format');
+            $fileDir = sprintf($filepathFormat, $objectName, $objectId, $mediaNameId);
+
             // returned image data
             $compiledImages = [];
+
+
+            // create directory
+            if (! file_exists($fileDir)) {
+                // Try to create the directory
+                if (! @mkdir($fileDir, 0777, TRUE)) {
+                    throw new Exception('Error. No write access', 1);
+                }
+            } else {
+                // Only check the original upload path value
+                if (! is_writable($fileDir)) {
+                    throw new Exception('Error. No write access', 1);
+                }
+            }
 
             foreach ($images as $i => $image) {
                 $returnedImage = new \stdclass();
                 $returnedImage->index = $i;
-
                 $origFileName = $image->getClientOriginalName();
                 $fileExtension = strtolower(substr(strrchr($origFileName, '.'), 1));
 
@@ -112,7 +128,7 @@ class MediaAPIController extends ControllerAPI
                 }
 
                 // save original image
-                $_imagePath = sprintf($filepathFormat, $objectName, $objectId, $mediaNameId) . sprintf($filenameFormat, time(), $objectId, 'orig', $fileExtension);
+                $_imagePath = $fileDir . sprintf($filenameFormat, time(), $objectId, 'orig', $fileExtension);
                 $_image->save($_imagePath, Config::get('orbit.upload.media.image.qualities.orig'));
 
                 // build original image metas
@@ -140,7 +156,7 @@ class MediaAPIController extends ControllerAPI
                     $_imageDesktop->resize($desktopConfig['width'], null, $desktopConstraint);
                 }
                 // save image
-                $_imageDesktopPath = sprintf($filepathFormat, $objectName, $objectId, $mediaNameId) . sprintf($filenameFormat, time(), $objectId, 'd-thumb', $fileExtension);
+                $_imageDesktopPath = $fileDir . sprintf($filenameFormat, time(), $objectId, 'd-thumb', $fileExtension);
                 $_imageDesktop->save($_imageDesktopPath, Config::get('orbit.upload.media.image.qualities.high'));
                 // add to image metas
                 $imageMetas->files['desktop_thumb'] = $_imageDesktop;
@@ -158,14 +174,14 @@ class MediaAPIController extends ControllerAPI
                     $_imageMobile->resize($mobileConfig['width'], null, $mobileConstraint);
                 }
                 // save image
-                $_imageMobilePath = sprintf($filepathFormat, $objectName, $objectId, $mediaNameId) . sprintf($filenameFormat, time(), $objectId, 'm-thumb', $fileExtension);
+                $_imageMobilePath = $fileDir . sprintf($filenameFormat, time(), $objectId, 'm-thumb', $fileExtension);
                 $_imageMobile->save($_imageMobilePath, Config::get('orbit.upload.media.image.qualities.high'));
                 // add to image metas
                 $imageMetas->files['mobile_thumb'] = $_imageMobile;
 
                 // save image with medium quality
                 $_imageMediumQuality = clone $_image;
-                $_imageMediumQualityPath = sprintf($filepathFormat, $objectName, $objectId, $mediaNameId) . sprintf($filenameFormat, time(), $objectId, 'q-med', $fileExtension);
+                $_imageMediumQualityPath = $fileDir . sprintf($filenameFormat, time(), $objectId, 'q-med', $fileExtension);
                 $_imageMediumQuality->save($_imageMediumQualityPath, Config::get('orbit.upload.media.image.qualities.medium'));
                 // add to image metas
                 $imageMetas->files['medium_quality'] = $_imageMediumQuality;
@@ -239,7 +255,7 @@ class MediaAPIController extends ControllerAPI
                 throw new Exception("Image media upload config is not set.", 1);
             }
 
-            $mediaId = Input::post('media_id');
+            $mediaId = OrbitInput::post('media_id');
 
             $validator = Validator::make(
                 array(
@@ -368,9 +384,9 @@ class MediaAPIController extends ControllerAPI
                 throw new Exception("Image media upload config is not set.", 1);
             }
 
-            $objectId = Input::get('object_id');
-            $mediaNameId = Input::get('media_name_id');
-            $thumbOnly = Input::get('thumb_only');
+            $objectId = OrbitInput::get('object_id');
+            $mediaNameId = OrbitInput::get('media_name_id');
+            $thumbOnly = OrbitInput::get('thumb_only');
 
             $mediaNames = implode(',', array_keys(Config::get('orbit.upload.media.image.media_names')));
 
