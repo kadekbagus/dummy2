@@ -7,6 +7,7 @@
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Controller\API\v1\Merchant\Merchant\MerchantUploadLogoAPIController;
 use Orbit\Controller\API\v1\Merchant\Merchant\MerchantUploadLogoThirdPartyAPIController;
+use Orbit\Controller\API\v1\Merchant\Merchant\MerchantUploadBannerAPIController;
 
 
 /**
