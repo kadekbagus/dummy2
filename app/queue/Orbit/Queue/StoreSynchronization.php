@@ -847,6 +847,7 @@ class StoreSynchronization
                     break;
 
                 case 'banner':
+                    $filename = $store_id . '-' . $dt->file_name;
                     $nameid = "retailer_banner";
                     break;
 
