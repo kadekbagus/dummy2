@@ -714,7 +714,14 @@ class StoreSynchronization
                                 ->get();
                     $map_image = $this->updateMedia('map', $map, $base_store_id);
 
-                    $images = array_merge($logo_image, $pic_image, $map_image);
+                    // copy banner from base_store directory to retailer directory
+                    $banner = Media::where('object_name', 'base_merchant')
+                                    ->where('media_name_id', 'base_merchant_banner')
+                                    ->where('object_id', $base_merchant_id)
+                                    ->get();
+                    $banner_image = $this->updateMedia('banner', $banner, $base_store_id);
+
+                    $images = array_merge($logo_image, $pic_image, $map_image, $banner_image);
 
                     // get presync data
                     $presync = PreSync::where('sync_id', $sync_id)
@@ -837,6 +844,10 @@ class StoreSynchronization
 
                 case 'map':
                     $nameid = "retailer_map";
+                    break;
+
+                case 'banner':
+                    $nameid = "retailer_banner";
                     break;
 
                 default:
