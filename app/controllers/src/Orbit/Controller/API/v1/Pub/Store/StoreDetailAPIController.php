@@ -143,7 +143,19 @@ class StoreDetailAPIController extends PubControllerAPI
                                             )
                                         END as custom_page_title
                                     "),
-                                'merchants.url'
+                                'merchants.url',
+                                'merchants.facebook_url',
+                                'merchants.instagram_url',
+                                'merchants.twitter_url',
+                                'merchants.youtube_url',
+                                'merchants.line_url',
+                                'merchants.other_photo_section_title',
+                                'merchants.video_id_1',
+                                'merchants.video_id_2',
+                                'merchants.video_id_3',
+                                'merchants.video_id_4',
+                                'merchants.video_id_5',
+                                'merchants.video_id_6'
                             )
                 ->with(['categories' => function ($q) use ($valid_language, $prefix) {
                         $q->select(
@@ -195,6 +207,11 @@ class StoreDetailAPIController extends PubControllerAPI
                     }, 'product_tags' => function ($q) {
                         $q->addSelect('product_tag', 'object_id');
                         $q->groupBy('product_tag');
+                    }, 'mediaBanner' => function ($q) use ($image) {
+                        $q->select(
+                                DB::raw("{$image}"),
+                                'media.object_id'
+                            );
                     }
                     ])
                 ->join(DB::raw("(select merchant_id, country_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
@@ -285,6 +302,7 @@ class StoreDetailAPIController extends PubControllerAPI
                 }
             }
             $store->total_view = $totalPageViews;
+
 
             // Get status followed
             $role = $user->role->role_name;
