@@ -40,7 +40,7 @@ class MediaAPIController extends ControllerAPI
             $this->checkAuth();
             $user = $this->api->user;
             $role = $user->role;
-            if (! in_array( strtolower($role->role_name), $this->uploadRoles)) {
+            if (! in_array(strtolower($role->role_name), $this->uploadRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
@@ -78,6 +78,8 @@ class MediaAPIController extends ControllerAPI
             // Begin database transaction
             $this->beginTransaction();
 
+            $images = $images['images'];
+
             // get object name based on media_name_id
             $objectName = Config::get('orbit.upload.media.image.media_names.' . $mediaNameId);
 
@@ -102,9 +104,10 @@ class MediaAPIController extends ControllerAPI
                 }
             }
 
-            foreach ($images as $i => $image) {
+            $index = 0;
+            foreach ($images as $image) {
                 $returnedImage = new \stdclass();
-                $returnedImage->index = $i;
+                $returnedImage->index = $index;
                 $origFileName = $image->getClientOriginalName();
                 $fileExtension = strtolower(substr(strrchr($origFileName, '.'), 1));
 
@@ -157,7 +160,7 @@ class MediaAPIController extends ControllerAPI
                 }
                 // save image
                 $_imageDesktopPath = $fileDir . sprintf($filenameFormat, time(), $objectId, 'd-thumb', $fileExtension);
-                $_imageDesktop->save($_imageDesktopPath, Config::get('orbit.upload.media.image.qualities.high'));
+                $_imageDesktop->save($_imageDesktopPath, Config::get('orbit.upload.media.image.qualities.medium'));
                 // add to image metas
                 $imageMetas->files['desktop_thumb'] = $_imageDesktop;
 
@@ -175,7 +178,7 @@ class MediaAPIController extends ControllerAPI
                 }
                 // save image
                 $_imageMobilePath = $fileDir . sprintf($filenameFormat, time(), $objectId, 'm-thumb', $fileExtension);
-                $_imageMobile->save($_imageMobilePath, Config::get('orbit.upload.media.image.qualities.high'));
+                $_imageMobile->save($_imageMobilePath, Config::get('orbit.upload.media.image.qualities.medium'));
                 // add to image metas
                 $imageMetas->files['mobile_thumb'] = $_imageMobile;
 
@@ -190,6 +193,7 @@ class MediaAPIController extends ControllerAPI
                 $savedData = $this->saveMetadata($imageMetas);
                 $returnedImage->variants = $savedData;
                 $compiledImages[] = $returnedImage;
+                $index++;
             }
 
             // Commit the changes
@@ -470,7 +474,7 @@ class MediaAPIController extends ControllerAPI
             $media->object_name = $imageMetas->object_name;
             $media->media_name_id = $imageMetas->media_name_id;
             $media->media_name_long = sprintf('%s_%s', $imageMetas->media_name_id, $variant);
-            $media->file_name = $file->filename;
+            $media->file_name = $file->filename . '.' . $file->extension;
             $media->file_extension = $file->extension;
             $media->file_size = $file->filesize();
             $media->mime_type = $file->mime;
