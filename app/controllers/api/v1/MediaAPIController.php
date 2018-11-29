@@ -10,15 +10,21 @@ use OrbitShop\API\v1\ControllerAPI;
  * Controller for Media image related task, all roles should be able to access this
  * controller rather than to use UploadAPIController that duplicates same processes
  * we should create one uniformed controller to handle media everywhere
- *
- * This uploader receive multiple file input and will make 4 variant for each image
- * (original, desktop thumbnail, mobile thumbnail, and medium quality image)
  */
 class MediaAPIController extends ControllerAPI
 {
     /** Allowed roles */
     protected $uploadRoles = ['merchant database admin'];
 
+    /**
+     * * This uploader receive multiple file input and will make 4 variant for each image
+     * (original, desktop thumbnail, mobile thumbnail, and medium quality image)
+     *
+     * Input parameters:
+     * string object_id
+     * string media_name_id
+     * array images - image files
+     */
     public function upload()
     {
         $httpCode = 200;
@@ -34,20 +40,48 @@ class MediaAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            // @todo Validate input
+            // Check config for media image upload
+            if (empty(Config::get('orbit.upload.media'))) {
+                throw new Exception("Image media upload config is not set.", 1);
+            }
+
             $objectId = Input::post('object_id');
-            $temporaryId = Input::post('tmp_id');
             $mediaNameId = Input::post('media_name_id');
             $images = Input::files('images');
+
+            $mediaNames = implode(',', array_keys(Config::get('orbit.upload.media.image.media_names')));
+
+            $validator = Validator::make(
+                array(
+                    'object_id' => $objectId,
+                    'media_name_id' => $mediaNameId,
+                    'images' => $images,
+                ),
+                array(
+                    'object_id' => 'required',
+                    'media_name_id' => 'required|in:' . $mediaNames,
+                    'images' => 'required|array',
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                throw new Exception($errorMessage, 1);
+            }
+
+            // Begin database transaction
+            $this->beginTransaction();
+
             $objectName = Config::get('orbit.upload.media.image.media_names.' . $mediaNameId);
             $filenameFormat = Config::get('orbit.upload.media.image.file_name_format');
             $filepathFormat = Config::get('orbit.upload.media.image.path_format');
             // returned image data
             $compiledImages = [];
 
-            foreach ($images as $image) {
+            foreach ($images as $i => $image) {
                 $returnedImage = new \stdclass();
-                $returnedImage->tmp_id = $temporaryId;
+                $returnedImage->index = $i;
 
                 $origFileName = $image->getClientOriginalName();
                 $fileExtension = strtolower(substr(strrchr($origFileName, '.'), 1));
@@ -136,10 +170,151 @@ class MediaAPIController extends ControllerAPI
                 $compiledImages[] = $returnedImage;
             }
 
+            // Commit the changes
+            $this->commit();
+
             $this->response->data = $compiledImages;
 
         } catch (ACLForbiddenException $e) {
             $httpCode = 500;
+            $this->rollBack();
+            $this->response->code = $httpCode;
+            $this->response->status = 'error';
+            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->message = $e->getMessage();
+        } catch (InvalidArgsException $e) {
+            $httpCode = 500;
+            $this->rollBack();
+            $this->response->code = $httpCode;
+            $this->response->status = 'error';
+            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->message = $e->getMessage();
+        } catch (QueryException $e) {
+            $httpCode = 500;
+            $this->rollBack();
+            $this->response->code = $httpCode;
+            $this->response->status = 'error';
+            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->message = $e->getMessage();
+        } catch (\Exception $e) {
+            $httpCode = 500;
+            $this->response->code = $httpCode;
+            $this->response->status = 'error';
+            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->message = $e->getMessage();
+        }
+
+        return $this->render($httpCode);
+    }
+
+    /**
+     * Delete single image (and variants) and meta data by Original Media ID
+     */
+    public function delete()
+    {
+        $httpCode = 200;
+        $user = null;
+
+        try {
+            // Authenticate
+            $this->checkAuth();
+            $user = $this->api->user;
+            $role = $user->role;
+            if (! in_array( strtolower($role->role_name), $this->uploadRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            // Check config for media image upload
+            if (empty(Config::get('orbit.upload.media'))) {
+                throw new Exception("Image media upload config is not set.", 1);
+            }
+
+            $mediaId = Input::post('media_id');
+
+            $validator = Validator::make(
+                array(
+                    'media_id' => $mediaId
+                ),
+                array(
+                    'object_id' => 'required'
+                )
+            );
+
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                throw new Exception($errorMessage, 1);
+            }
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            // get 1 media variant id
+            $media = Media::where('media_id', $mediaId)->firstOrFail();
+
+            $objectId = $media->object_id;
+            $mediaNameId = $media->media_name_id;
+            $objectName = Config::get('orbit.upload.media.image.media_names.' . $mediaNameId);
+
+            // get all variant from the given media ID
+            $deletedMedias = Media::where('object_id', $objectId)
+                ->where('object_name', $objectName)
+                ->where('media_name_id', $mediaNameId)
+                ->get();
+
+            foreach ($deletedMedias as $deletedMedia) {
+                $oldPath = [];
+
+                //get old path before delete
+                $oldPath[$deletedMedia->media_id]['path'] = $deletedMedia->path;
+                $oldPath[$deletedMedia->media_id]['cdn_url'] = $deletedMedia->cdn_url;
+                $oldPath[$deletedMedia->media_id]['cdn_bucket_name'] = $deletedMedia->cdn_bucket_name;
+
+                // No need to check the return status, just delete and forget
+                @unlink($deletedMedia->realpath);
+
+                // delete file from S3
+                if ($usingCdn) {
+                    $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+                    $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
+                    Queue::push('Orbit\\Queue\\CdnUpload\\CdnUploadDeleteQueue', [
+                        'object_id'     => $objectId,
+                        'media_name_id' => $mediaNameId,
+                        'old_path'      => $oldPath,
+                        'es_type'       => null,
+                        'es_id'         => null,
+                        'bucket_name'   => $bucketName
+                    ], $queueName);
+                }
+
+                $deletedMedia->delete(true);
+            }
+
+            // Commit the changes
+            $this->commit();
+
+            $this->response->data = $objectId;
+
+        } catch (ACLForbiddenException $e) {
+            $httpCode = 500;
+            $this->rollBack();
+            $this->response->code = $httpCode;
+            $this->response->status = 'error';
+            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->message = $e->getMessage();
+        } catch (InvalidArgsException $e) {
+            $httpCode = 500;
+            $this->rollBack();
+            $this->response->code = $httpCode;
+            $this->response->status = 'error';
+            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->message = $e->getMessage();
+        } catch (QueryException $e) {
+            $httpCode = 500;
+            $this->rollBack();
             $this->response->code = $httpCode;
             $this->response->status = 'error';
             $this->response->data = [$e->getFile(), $e->getLine()];
@@ -157,7 +332,7 @@ class MediaAPIController extends ControllerAPI
 
     /**
      * Save image metadata in Media
-     *
+     * @return array
      */
     private function saveMetadata($imageMetas)
     {
@@ -176,7 +351,7 @@ class MediaAPIController extends ControllerAPI
             $media->file_size = $file->filesize();
             $media->mime_type = $file->mime;
             $media->path = $file->basePath();
-            $media->realpath = null;
+            $media->realpath = realpath($file->basePath());
             $media->metadata = 'order-' . $count;
             $media->modified_by = $imageMetas->modified_by;
             $media->save();
