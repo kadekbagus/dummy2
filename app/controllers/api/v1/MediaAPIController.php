@@ -10,6 +10,8 @@ use OrbitShop\API\v1\ControllerAPI;
  * Controller for Media image related task, all roles should be able to access this
  * controller rather than to use UploadAPIController that duplicates same processes
  * we should create one uniformed controller to handle media everywhere
+ *
+ * @author Ahmad <ahmad@dominopos.com>
  */
 class MediaAPIController extends ControllerAPI
 {
@@ -20,10 +22,12 @@ class MediaAPIController extends ControllerAPI
      * * This uploader receive multiple file input and will make 4 variant for each image
      * (original, desktop thumbnail, mobile thumbnail, and medium quality image)
      *
+     * Variant: 'orig', 'desktop_thumb', 'mobile_thumb', 'medium_quality'
+     *
      * Input parameters:
-     * string object_id
-     * string media_name_id
-     * array images - image files
+     * required string object_id
+     * required string media_name_id
+     * required array images - image files
      */
     public function upload()
     {
@@ -73,7 +77,9 @@ class MediaAPIController extends ControllerAPI
             // Begin database transaction
             $this->beginTransaction();
 
+            // get object name based on media_name_id
             $objectName = Config::get('orbit.upload.media.image.media_names.' . $mediaNameId);
+
             $filenameFormat = Config::get('orbit.upload.media.image.file_name_format');
             $filepathFormat = Config::get('orbit.upload.media.image.path_format');
             // returned image data
@@ -209,6 +215,9 @@ class MediaAPIController extends ControllerAPI
 
     /**
      * Delete single image (and variants) and meta data by Original Media ID
+     *
+     * Input parameters:
+     * required string media_id - one of the media image variant
      */
     public function delete()
     {
@@ -256,6 +265,7 @@ class MediaAPIController extends ControllerAPI
 
             $objectId = $media->object_id;
             $mediaNameId = $media->media_name_id;
+            // get object name based on media_name_id
             $objectName = Config::get('orbit.upload.media.image.media_names.' . $mediaNameId);
 
             // get all variant from the given media ID
@@ -297,6 +307,104 @@ class MediaAPIController extends ControllerAPI
             $this->commit();
 
             $this->response->data = $objectId;
+
+        } catch (ACLForbiddenException $e) {
+            $httpCode = 500;
+            $this->rollBack();
+            $this->response->code = $httpCode;
+            $this->response->status = 'error';
+            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->message = $e->getMessage();
+        } catch (InvalidArgsException $e) {
+            $httpCode = 500;
+            $this->rollBack();
+            $this->response->code = $httpCode;
+            $this->response->status = 'error';
+            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->message = $e->getMessage();
+        } catch (QueryException $e) {
+            $httpCode = 500;
+            $this->rollBack();
+            $this->response->code = $httpCode;
+            $this->response->status = 'error';
+            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->message = $e->getMessage();
+        } catch (\Exception $e) {
+            $httpCode = 500;
+            $this->response->code = $httpCode;
+            $this->response->status = 'error';
+            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->message = $e->getMessage();
+        }
+
+        return $this->render($httpCode);
+    }
+
+    /**
+     * List image Media by object ID
+     *
+     * Input parameters:
+     * required string object_id
+     * required string media_name_id
+     * optional string thumb_only ('y'/ else)
+     */
+    public function get()
+    {
+        $httpCode = 200;
+        $user = null;
+
+        try {
+            // Authenticate
+            $this->checkAuth();
+            $user = $this->api->user;
+            $role = $user->role;
+            if (! in_array( strtolower($role->role_name), $this->uploadRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            // Check config for media image upload
+            if (empty(Config::get('orbit.upload.media'))) {
+                throw new Exception("Image media upload config is not set.", 1);
+            }
+
+            $objectId = Input::get('object_id');
+            $mediaNameId = Input::get('media_name_id');
+            $thumbOnly = Input::get('thumb_only');
+
+            $mediaNames = implode(',', array_keys(Config::get('orbit.upload.media.image.media_names')));
+
+            $validator = Validator::make(
+                array(
+                    'object_id' => $objectId,
+                    'media_name_id' => $mediaNameId,
+                ),
+                array(
+                    'object_id' => 'required',
+                    'media_name_id' => 'required|in:' . $mediaNames,
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                throw new Exception($errorMessage, 1);
+            }
+
+            // get object name based on media_name_id
+            $objectName = Config::get('orbit.upload.media.image.media_names.' . $mediaNameId);
+
+            $medias = Media::where('object_id', $objectId)
+                ->where('object_name', $objectName)
+                ->where('media_name_id', $mediaNameId);
+
+            if ($thumbOnly === 'y') {
+                $medias = $medias->where('media_name_long', sprintf('%s_%s', $mediaNameId, 'desktop_thumb'));
+            }
+
+            $medias = $medias->get();
+
+            $this->response->data = $medias;
 
         } catch (ACLForbiddenException $e) {
             $httpCode = 500;
