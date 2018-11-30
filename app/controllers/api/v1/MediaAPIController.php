@@ -23,7 +23,7 @@ class MediaAPIController extends ControllerAPI
      * * This uploader receive multiple file input and will make 4 variant for each image
      * (original, desktop thumbnail, mobile thumbnail, and medium quality image)
      *
-     * Variant: 'orig', 'desktop_thumb', 'mobile_thumb', 'medium_quality'
+     * Variant: 'orig', 'desktop_thumb', 'mobile_thumb', 'desktop_medium', 'mobile_medium'
      *
      * Input parameters:
      * required string object_id
@@ -58,12 +58,10 @@ class MediaAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'object_id' => $objectId,
                     'media_name_id' => $mediaNameId,
                     'images' => $images,
                 ),
                 array(
-                    'object_id' => 'required',
                     'media_name_id' => 'required|in:' . $mediaNames,
                     'images' => 'required|array',
                 )
@@ -85,7 +83,11 @@ class MediaAPIController extends ControllerAPI
 
             $filenameFormat = Config::get('orbit.upload.media.image.file_name_format');
             $filepathFormat = Config::get('orbit.upload.media.image.path_format');
-            $fileDir = sprintf($filepathFormat, $objectName, $objectId, $mediaNameId);
+            if (! empty($objectId)) {
+                $fileDir = sprintf($filepathFormat, $objectName, $objectId, $mediaNameId);
+            } else {
+                $fileDir = sprintf($filepathFormat, $mediaNameId);
+            }
 
             // returned image data
             $compiledImages = [];
@@ -113,8 +115,13 @@ class MediaAPIController extends ControllerAPI
 
                 // Image information to be saved in Media
                 $imageMetas = new \stdclass();
-                $imageMetas->object_id = $objectId;
-                $imageMetas->object_name = $objectName;
+
+                $imageMetas->object_id = null;
+                $imageMetas->object_name = null;
+                if (! empty($objectId)) {
+                    $imageMetas->object_id = $objectId;
+                    $imageMetas->object_name = $objectName;
+                }
                 $imageMetas->media_name_id = $mediaNameId;
                 $imageMetas->modified_by = $user->user_id;
 
@@ -131,7 +138,7 @@ class MediaAPIController extends ControllerAPI
                 }
 
                 // save original image
-                $_imagePath = $fileDir . sprintf($filenameFormat, time(), $objectId, 'orig', $fileExtension);
+                $_imagePath = $fileDir . sprintf($filenameFormat, $objectId, 'orig', str_replace('.', '', microtime(true)), $fileExtension);
                 $_image->save($_imagePath, Config::get('orbit.upload.media.image.qualities.orig'));
 
                 // build original image metas
@@ -159,7 +166,7 @@ class MediaAPIController extends ControllerAPI
                     $_imageDesktop->resize($desktopConfig['width'], null, $desktopConstraint);
                 }
                 // save image
-                $_imageDesktopPath = $fileDir . sprintf($filenameFormat, time(), $objectId, 'd-thumb', $fileExtension);
+                $_imageDesktopPath = $fileDir . sprintf($filenameFormat, $objectId, 'd-thumb', str_replace('.', '', microtime(true)), $fileExtension);
                 $_imageDesktop->save($_imageDesktopPath, Config::get('orbit.upload.media.image.qualities.medium'));
                 // add to image metas
                 $imageMetas->files['desktop_thumb'] = $_imageDesktop;
@@ -177,17 +184,27 @@ class MediaAPIController extends ControllerAPI
                     $_imageMobile->resize($mobileConfig['width'], null, $mobileConstraint);
                 }
                 // save image
-                $_imageMobilePath = $fileDir . sprintf($filenameFormat, time(), $objectId, 'm-thumb', $fileExtension);
+                $_imageMobilePath = $fileDir . sprintf($filenameFormat, $objectId, 'm-thumb', str_replace('.', '', microtime(true)), $fileExtension);
                 $_imageMobile->save($_imageMobilePath, Config::get('orbit.upload.media.image.qualities.medium'));
                 // add to image metas
                 $imageMetas->files['mobile_thumb'] = $_imageMobile;
 
                 // save image with medium quality
                 $_imageMediumQuality = clone $_image;
-                $_imageMediumQualityPath = $fileDir . sprintf($filenameFormat, time(), $objectId, 'q-med', $fileExtension);
+                $_imageMediumQualityPath = $fileDir . sprintf($filenameFormat, $objectId, 'd-med', str_replace('.', '', microtime(true)), $fileExtension);
                 $_imageMediumQuality->save($_imageMediumQualityPath, Config::get('orbit.upload.media.image.qualities.medium'));
                 // add to image metas
-                $imageMetas->files['medium_quality'] = $_imageMediumQuality;
+                $imageMetas->files['desktop_medium'] = $_imageMediumQuality;
+
+                // save image with medium quality for mobile
+                $_imageMediumQualityMobile = clone $_image;
+                $_imageMediumQualityMobilePath = $fileDir . sprintf($filenameFormat, $objectId, 'm-med', str_replace('.', '', microtime(true)), $fileExtension);
+                $_imageMediumQualityMobile->resize(Config::get('orbit.upload.media.image.mobile_size.width'), null, function ($constraint) {
+                            $constraint->aspectRatio();
+                        })
+                    ->save($_imageMediumQualityMobilePath, Config::get('orbit.upload.media.image.qualities.medium'));
+                // add to image metas
+                $imageMetas->files['mobile_medium'] = $_imageMediumQualityMobile;
 
                 // save image in Media model
                 $savedData = $this->saveMetadata($imageMetas);
@@ -206,27 +223,27 @@ class MediaAPIController extends ControllerAPI
             $this->rollBack();
             $this->response->code = $httpCode;
             $this->response->status = 'error';
-            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
             $this->response->message = $e->getMessage();
         } catch (InvalidArgsException $e) {
             $httpCode = 500;
             $this->rollBack();
             $this->response->code = $httpCode;
             $this->response->status = 'error';
-            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
             $this->response->message = $e->getMessage();
         } catch (QueryException $e) {
             $httpCode = 500;
             $this->rollBack();
             $this->response->code = $httpCode;
             $this->response->status = 'error';
-            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
             $this->response->message = $e->getMessage();
         } catch (\Exception $e) {
             $httpCode = 500;
             $this->response->code = $httpCode;
             $this->response->status = 'error';
-            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
             $this->response->message = $e->getMessage();
         }
 
@@ -266,7 +283,7 @@ class MediaAPIController extends ControllerAPI
                     'media_id' => $mediaId
                 ),
                 array(
-                    'object_id' => 'required'
+                    'media_id' => 'required'
                 )
             );
 
@@ -333,27 +350,27 @@ class MediaAPIController extends ControllerAPI
             $this->rollBack();
             $this->response->code = $httpCode;
             $this->response->status = 'error';
-            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
             $this->response->message = $e->getMessage();
         } catch (InvalidArgsException $e) {
             $httpCode = 500;
             $this->rollBack();
             $this->response->code = $httpCode;
             $this->response->status = 'error';
-            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
             $this->response->message = $e->getMessage();
         } catch (QueryException $e) {
             $httpCode = 500;
             $this->rollBack();
             $this->response->code = $httpCode;
             $this->response->status = 'error';
-            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
             $this->response->message = $e->getMessage();
         } catch (\Exception $e) {
             $httpCode = 500;
             $this->response->code = $httpCode;
             $this->response->status = 'error';
-            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
             $this->response->message = $e->getMessage();
         }
 
@@ -367,6 +384,8 @@ class MediaAPIController extends ControllerAPI
      * required string object_id
      * required string media_name_id
      * optional string thumb_only ('y'/ else)
+     *
+     * @todo Find a way to group the result by image
      */
     public function get()
     {
@@ -390,18 +409,19 @@ class MediaAPIController extends ControllerAPI
 
             $objectId = OrbitInput::get('object_id');
             $mediaNameId = OrbitInput::get('media_name_id');
-            $thumbOnly = OrbitInput::get('thumb_only');
 
-            $mediaNames = implode(',', array_keys(Config::get('orbit.upload.media.image.media_names')));
+            // to select only specific variant, none then return all
+            $variant = OrbitInput::get('variant');
+
+            $take = OrbitInput::get('take', 500);
+            $skip = OrbitInput::get('skip', 0);
 
             $validator = Validator::make(
                 array(
-                    'object_id' => $objectId,
-                    'media_name_id' => $mediaNameId,
+                    'variant' => $variant,
                 ),
                 array(
-                    'object_id' => 'required',
-                    'media_name_id' => 'required|in:' . $mediaNames,
+                    'variant' => 'in:orig,desktop_thumb,mobile_thumb,medium',
                 )
             );
 
@@ -411,47 +431,64 @@ class MediaAPIController extends ControllerAPI
                 throw new Exception($errorMessage, 1);
             }
 
+            $mediaNames = implode(',', array_keys(Config::get('orbit.upload.media.image.media_names')));
+
             // get object name based on media_name_id
             $objectName = Config::get('orbit.upload.media.image.media_names.' . $mediaNameId);
 
-            $medias = Media::where('object_id', $objectId)
-                ->where('object_name', $objectName)
-                ->where('media_name_id', $mediaNameId);
+            $medias = new Media();
 
-            if ($thumbOnly === 'y') {
-                $medias = $medias->where('media_name_long', sprintf('%s_%s', $mediaNameId, 'desktop_thumb'));
+            if (! empty($objectId)) {
+                $medias = $medias->where('object_id', $objectId);
             }
 
-            $medias = $medias->get();
+            if (! empty($objectName)) {
+                $medias = $medias->where('object_name', $objectName);
+            }
 
-            $this->response->data = $medias;
+            if (! empty($mediaNameId)) {
+                $medias = $medias->where('media_name_id', $mediaNameId);
+            }
+
+            if (! empty($mediaNameId) && ! empty($variant)) {
+                $medias = $medias->where('media_name_long', sprintf('%s_%s', $mediaNameId, $variant));
+            }
+
+            $medias = $medias->take($take)
+                ->skip($skip)
+                ->get();
+
+            $this->response->data = new stdclass();
+            $this->response->data->records = $medias;
+            $this->response->data->total_records = $totalRecords;
+            $this->response->data->returned_records = $returnedRecords;
 
         } catch (ACLForbiddenException $e) {
             $httpCode = 500;
             $this->rollBack();
             $this->response->code = $httpCode;
             $this->response->status = 'error';
-            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
             $this->response->message = $e->getMessage();
         } catch (InvalidArgsException $e) {
             $httpCode = 500;
             $this->rollBack();
             $this->response->code = $httpCode;
             $this->response->status = 'error';
-            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
             $this->response->message = $e->getMessage();
         } catch (QueryException $e) {
             $httpCode = 500;
             $this->rollBack();
             $this->response->code = $httpCode;
             $this->response->status = 'error';
-            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
             $this->response->message = $e->getMessage();
         } catch (\Exception $e) {
             $httpCode = 500;
             $this->response->code = $httpCode;
             $this->response->status = 'error';
-            $this->response->data = [$e->getFile(), $e->getLine()];
+            $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
             $this->response->message = $e->getMessage();
         }
 
