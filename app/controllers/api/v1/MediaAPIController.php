@@ -322,6 +322,9 @@ class MediaAPIController extends ControllerAPI
                 // No need to check the return status, just delete and forget
                 @unlink($deletedMedia->realpath);
 
+                // queue for uploading image to amazon s3
+                $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
                 // delete file from S3
                 if ($usingCdn) {
                     $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
@@ -410,6 +413,8 @@ class MediaAPIController extends ControllerAPI
             $objectId = OrbitInput::get('object_id');
             $mediaNameId = OrbitInput::get('media_name_id');
 
+            $mediaNames = implode(',', array_keys(Config::get('orbit.upload.media.image.media_names')));
+
             // to select only specific variant, none then return all
             $variant = OrbitInput::get('variant');
 
@@ -418,10 +423,12 @@ class MediaAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
+                    'media_name_id' => $mediaNameId,
                     'variant' => $variant,
                 ),
                 array(
-                    'variant' => 'in:orig,desktop_thumb,mobile_thumb,medium',
+                    'media_name_id' => 'in:' . $mediaNames,
+                    'variant' => 'in:orig,desktop_thumb,mobile_thumb,desktop_medium,mobile_medium',
                 )
             );
 
@@ -430,8 +437,6 @@ class MediaAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
                 throw new Exception($errorMessage, 1);
             }
-
-            $mediaNames = implode(',', array_keys(Config::get('orbit.upload.media.image.media_names')));
 
             // get object name based on media_name_id
             $objectName = Config::get('orbit.upload.media.image.media_names.' . $mediaNameId);
@@ -460,8 +465,9 @@ class MediaAPIController extends ControllerAPI
 
             $this->response->data = new stdclass();
             $this->response->data->records = $medias;
-            $this->response->data->total_records = $totalRecords;
-            $this->response->data->returned_records = $returnedRecords;
+            // @todo: use more accurate counter
+            // $this->response->data->total_records = $totalRecords;
+            // $this->response->data->returned_records = $returnedRecords;
 
         } catch (ACLForbiddenException $e) {
             $httpCode = 500;
