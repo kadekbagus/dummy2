@@ -107,6 +107,17 @@ class MediaAPIController extends ControllerAPI
             }
 
             $index = 0;
+            $lastImage = Media::where('object_id', $objectId)
+                ->where('object_name', $objectName)
+                ->where('media_name_id', $mediaNameId)
+                ->order('media_name_id', 'desc')
+                ->first();
+
+            $lastImageOrder = 'img-0';
+            if (is_object($lastImage)) {
+                $lastImageOrder = (int) substr($lastImage->metadata, 4);
+            }
+
             foreach ($images as $image) {
                 $returnedImage = new \stdclass();
                 $returnedImage->index = $index;
@@ -124,6 +135,7 @@ class MediaAPIController extends ControllerAPI
                 }
                 $imageMetas->media_name_id = $mediaNameId;
                 $imageMetas->modified_by = $user->user_id;
+                $imageMetas->last_image_order = $lastImageOrder;
 
                 $_image = Image::make($image);
 
@@ -211,6 +223,7 @@ class MediaAPIController extends ControllerAPI
                 $returnedImage->variants = $savedData;
                 $compiledImages[] = $returnedImage;
                 $index++;
+                $lastImageOrder++;
             }
 
             // Commit the changes
@@ -302,6 +315,7 @@ class MediaAPIController extends ControllerAPI
 
             $objectId = $media->object_id;
             $mediaNameId = $media->media_name_id;
+            $metadata = $media->metadata;
             // get object name based on media_name_id
             $objectName = Config::get('orbit.upload.media.image.media_names.' . $mediaNameId);
 
@@ -309,6 +323,7 @@ class MediaAPIController extends ControllerAPI
             $deletedMedias = Media::where('object_id', $objectId)
                 ->where('object_name', $objectName)
                 ->where('media_name_id', $mediaNameId)
+                ->where('metadata', $metadata)
                 ->get();
 
             foreach ($deletedMedias as $deletedMedia) {
@@ -509,7 +524,6 @@ class MediaAPIController extends ControllerAPI
     {
         $result = array();
 
-        $count = 0;
         foreach ($imageMetas->files as $variant=>$file) {
             // Save each variant
             $media = new Media();
@@ -523,11 +537,10 @@ class MediaAPIController extends ControllerAPI
             $media->mime_type = $file->mime;
             $media->path = $file->basePath();
             $media->realpath = realpath($file->basePath());
-            $media->metadata = 'order-' . $count;
+            $media->metadata = sprintf('img-%s', $imageMetas->last_image_order);
             $media->modified_by = $imageMetas->modified_by;
             $media->save();
             $result[] = $media;
-            $count++;
 
             // queue for uploading image to amazon s3
             $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
