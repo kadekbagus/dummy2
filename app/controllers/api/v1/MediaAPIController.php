@@ -110,7 +110,7 @@ class MediaAPIController extends ControllerAPI
             $lastImage = Media::where('object_id', $objectId)
                 ->where('object_name', $objectName)
                 ->where('media_name_id', $mediaNameId)
-                ->order('media_name_id', 'desc')
+                ->orderBy('media_name_id', 'desc')
                 ->first();
 
             $lastImageOrder = 'img-0';
@@ -332,7 +332,7 @@ class MediaAPIController extends ControllerAPI
                 //get old path before delete
                 $oldPath[$deletedMedia->media_id]['path'] = $deletedMedia->path;
                 $oldPath[$deletedMedia->media_id]['cdn_url'] = $deletedMedia->cdn_url;
-                $oldPath[$deletedMedia->media_id]['cdn_bucket_name'] = $deletedMedia->cdn_bucket_name;
+                $ldPath[$deletedMedia->media_id]['cdn_bucket_name'] = $deletedMedia->cdn_bucket_name;
 
                 // No need to check the return status, just delete and forget
                 @unlink($deletedMedia->realpath);
