@@ -1557,7 +1557,7 @@ return array(
                 // mobile image resize
                 'mobile_size' => [
                     'width' => 414,
-                ]
+                ],
 
                 // image quality
                 'qualities' => [
