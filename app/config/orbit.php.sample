@@ -1511,7 +1511,7 @@ return array(
         // used by MediaAPIController.php
         'media' => array(
             'image' => array(
-                // File name format (img-[Timestamp]-[ObjectID]-[variation-suffix].[Extension])
+                // File name format (img-[ObjectID]-[variation-suffix]-[Microtime].[Extension])
                 'file_name_format' => 'img-%s-%s-%s.%s',
 
                 // Media name IDs mapping (media_name_id => object_name)
@@ -1553,6 +1553,11 @@ return array(
                         'height' => 180
                     ]
                 ],
+
+                // mobile image resize
+                'mobile_size' => [
+                    'width' => 414,
+                ]
 
                 // image quality
                 'qualities' => [
