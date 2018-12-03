@@ -231,14 +231,21 @@ class StoreDetailAPIController extends PubControllerAPI
                                     ->with(['baseStore' => function($q) {
                                         $q->with(['baseMerchant' => function($q2) {
                                             $q2->with('mediaPhotos');
+                                            $q2->with('mediaOtherPhotos');
                                         }]);
                                     }])
                                     ->where('merchant_id', '=', $merchantId)
                                     ->first();
             $photos = [];
+            $otherPhotos = [];
             if ($brandPhotos) {
-                if (isset($brandPhotos->baseStore) && isset($brandPhotos->baseStore->baseMerchant) && isset($brandPhotos->baseStore->baseMerchant->mediaPhotos)) {
-                    $photos = $brandPhotos->baseStore->baseMerchant->mediaPhotos;
+                if (isset($brandPhotos->baseStore) && isset($brandPhotos->baseStore->baseMerchant)) {
+                    if (isset($brandPhotos->baseStore->baseMerchant->mediaPhotos)) {
+                        $photos = $brandPhotos->baseStore->baseMerchant->mediaPhotos;
+                    }
+                    if (isset($brandPhotos->baseStore->baseMerchant->mediaOtherPhotos)) {
+                        $otherPhotos = $brandPhotos->baseStore->baseMerchant->mediaOtherPhotos;
+                    }
                 }
             }
 
@@ -358,6 +365,7 @@ class StoreDetailAPIController extends PubControllerAPI
             // ---- END OF RATING ----
 
             $store->media_photos = $photos;
+            $store->media_other_photos = $otherPhotos;
 
             if (is_object($mall)) {
                 $activityNotes = sprintf('Page viewed: View mall store detail page');
