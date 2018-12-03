@@ -67,6 +67,13 @@ class BaseMerchant extends Eloquent
         return $this->media()->where('media_name_id', 'base_merchant_banner');
     }
 
+    public function mediaPhotos()
+    {
+        return $this->hasMany('Media', 'object_id', 'base_merchant_id')
+                    ->where('media_name_id', 'base_merchant_photos')
+                    ->where('object_name', 'base_merchant');
+    }
+
     public function baseMerchantCategory()
     {
         return $this->hasMany('BaseMerchantCategory', 'base_merchant_id', 'base_merchant_id')

@@ -226,6 +226,22 @@ class StoreDetailAPIController extends PubControllerAPI
                             ->where('merchants.merchant_id', $merchantId)
                             ->first();
 
+            // get photos for brand detail page
+            $brandPhotos = Tenant::select('merchants.merchant_id')
+                                    ->with(['baseStore' => function($q) {
+                                        $q->with(['baseMerchant' => function($q2) {
+                                            $q2->with('mediaPhotos');
+                                        }]);
+                                    }])
+                                    ->where('merchant_id', '=', $merchantId)
+                                    ->first();
+            $photos = [];
+            if ($brandPhotos) {
+                if (isset($brandPhotos->baseStore) && isset($brandPhotos->baseStore->baseMerchant) && isset($brandPhotos->baseStore->baseMerchant->mediaPhotos)) {
+                    $photos = $brandPhotos->baseStore->baseMerchant->mediaPhotos;
+                }
+            }
+
             if (! is_object($storeInfo)) {
                 throw new OrbitCustomException('Unable to find store.', Tenant::NOT_FOUND_ERROR_CODE, NULL);
             }
@@ -340,6 +356,8 @@ class StoreDetailAPIController extends PubControllerAPI
             $store->rating_average = $reviewCounter->getAverage();
             $store->review_counter = $reviewCounter->getCounter();
             // ---- END OF RATING ----
+
+            $store->media_photos = $photos;
 
             if (is_object($mall)) {
                 $activityNotes = sprintf('Page viewed: View mall store detail page');
