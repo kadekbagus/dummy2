@@ -332,7 +332,7 @@ class MediaAPIController extends ControllerAPI
                 //get old path before delete
                 $oldPath[$deletedMedia->media_id]['path'] = $deletedMedia->path;
                 $oldPath[$deletedMedia->media_id]['cdn_url'] = $deletedMedia->cdn_url;
-                $ldPath[$deletedMedia->media_id]['cdn_bucket_name'] = $deletedMedia->cdn_bucket_name;
+                $oldPath[$deletedMedia->media_id]['cdn_bucket_name'] = $deletedMedia->cdn_bucket_name;
 
                 // No need to check the return status, just delete and forget
                 @unlink($deletedMedia->realpath);
