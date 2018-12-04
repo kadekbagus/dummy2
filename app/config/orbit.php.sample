@@ -926,6 +926,7 @@ return array(
             'mdm_portal' => 'X-OMS-MDM',
             'mt_portal' => 'X-OMS-MT',
             'rrp_portal' => 'X-OMS-RRP',
+            'am_portal' => 'X-OMS-AMP',
         ],
 
         /**
@@ -1064,6 +1065,33 @@ return array(
          * @Todo: use this config instead
          */
         'origin' => array(
+            'am_portal' => array(
+                'expire' => 3600,   // 1 hour
+                // From HTTP Headers
+                'header'  => array(
+                    'name'      => 'X-OMS-AMP'
+                ),
+                // From Query String
+                'query_string' => array(
+                    'name'      => 'X-OMS-AMP'
+                ),
+                // From Cookie
+                'cookie'    => array(
+                    'name'      => 'X-OMS-AMP',
+                    // Expire time, should be set equals or higher than
+                    // SessionConifg.expire
+                    'expire' => 62208000,   // two years
+                    // Path of the cookie
+                    'path'      => '/',
+                    // domain
+                    'domain'    => NULL,
+                    // secure transfer via HTTPS only
+                    'secure'    => FALSE,
+                    // Deny access from client side script
+                    'httponly'  => TRUE
+                ),
+            ),
+
             'mobile_ci' => array(
                 'expire' => 62208000,   // two years
 
@@ -1459,6 +1487,7 @@ return array(
                 'Set-X-OMS-CS',
                 'Set-X-OMS-MDM',
                 'Set-X-OMS-MT',
+                'Set-X-OMS-AMP',
             ],
 
             // No need protocol, just enter domain name
