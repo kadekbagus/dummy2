@@ -11,8 +11,7 @@ use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Util\PaginationNumber;
 
-use BaseMerchant;
-use Country;
+use Article;
 use Validator;
 use Lang;
 
@@ -51,7 +50,7 @@ class ArticleListAPIController extends ControllerAPI
             }
 
             $articleHelper = ArticleHelper::create();
-            $articleHelper->merchantCustomValidator();
+            // $articleHelper->merchantCustomValidator();
 
             $sort_by = OrbitInput::get('sortby');
 
@@ -75,57 +74,23 @@ class ArticleListAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $article = Article::select(
-                                        'base_articles.base_article_id',
-                                        'base_articles.country_id',
-                                        'countries.name as country_name',
-                                        'base_articles.name',
-                                        DB::raw("(CASE
-                                            WHEN COUNT({$prefix}pre_exports.object_id) > 0 THEN 'in_progress'
-                                            ELSE
-                                                CASE WHEN ({$prefix}media.path IS NULL or {$prefix}media.path = '') or
-                                                        ({$prefix}base_articles.phone IS NULL or {$prefix}base_articles.phone = '') or
-                                                        ({$prefix}base_articles.email IS NULL or {$prefix}base_articles.email = '') or
-                                                        ({$prefix}base_articles.mobile_default_language IS NULL or {$prefix}base_articles.mobile_default_language = '')
-                                                    THEN 'not_available'
-                                                ELSE 'available'
-                                                END
-                                            END) as export_status"),
-                                        DB::raw("(SELECT count(base_store_id) FROM {$prefix}base_stores WHERE base_article_id = {$prefix}base_articles.base_article_id) as location_count"),
-                                        'base_articles.status'
-                                    )
-                                    ->leftJoin('media', function ($q){
-                                        $q->on('media.object_id', '=', 'base_articles.base_article_id')
-                                          ->on('media.media_name_id', '=', DB::raw("'base_merchant_logo_grab'"));
-                                        $q->on('media.media_name_long', '=', DB::raw("'base_merchant_logo_grab_orig'"));
-                                    })
-                                    ->leftJoin('pre_exports', function ($q){
-                                        $q->on('pre_exports.object_id', '=', 'base_articles.base_article_id')
-                                          ->on('pre_exports.object_type', '=', DB::raw("'merchant'"));
-                                    })
-                                    ->leftJoin('countries', 'base_articles.country_id', '=', 'countries.country_id')
-                                    ->excludeDeleted('base_merchants');
+            $article = Article::where('status', '=', 'active');
 
-            OrbitInput::get('article_id', function($data) use ($article)
+            OrbitInput::get('article_id', function($article_id) use ($article)
             {
-                $article->whereIn('articles.article_id', $data);
+                $article->whereIn('article_id', $article_id);
             });
 
             // Filter merchant by name
-            OrbitInput::get('name', function($name) use ($article)
+            OrbitInput::get('title', function($title) use ($article)
             {
-                $article->whereIn('base_articles.name', $name);
+                $article->whereIn('title', $title);
             });
 
             // Filter merchant by matching name pattern
-            OrbitInput::get('name_like', function($name) use ($article)
+            OrbitInput::get('title_like', function($title) use ($article)
             {
-                $article->where('base_articles.name', 'like', "%$name%");
-            });
-
-            // Filter by country
-            OrbitInput::get('country', function($country) use ($article) {
-                $article->where('base_articles.country_id', $country);
+                $article->where('title', 'like', "%$title%");
             });
 
             // Add new relation based on request
@@ -139,7 +104,7 @@ class ArticleListAPIController extends ControllerAPI
                 }
             });
 
-            $article->groupBy('base_articles.base_article_id');
+            $article->groupBy('article_id');
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
@@ -152,7 +117,7 @@ class ArticleListAPIController extends ControllerAPI
             $article->skip($skip);
 
             // Default sort by
-            $sortBy = 'base_articles.name';
+            $sortBy = 'title';
             // Default sort mode
             $sortMode = 'asc';
 
@@ -160,9 +125,9 @@ class ArticleListAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'merchant_name' => 'base_articles.name',
+                    'merchant_name' => 'title',
                     'location_number' => 'location_count',
-                    'status' => 'base_articles.status'
+                    'status' => 'status'
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
