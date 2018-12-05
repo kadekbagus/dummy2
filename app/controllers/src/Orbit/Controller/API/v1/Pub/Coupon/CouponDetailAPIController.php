@@ -162,6 +162,7 @@ class CouponDetailAPIController extends PubControllerAPI
                             'coupon_sepulsa.terms_and_conditions',
                             'issued_coupons.url as redeem_url',
                             DB::raw('payment.payment_midtrans_info'),
+                            DB::raw("m.country as coupon_country"),
                             'promotions.promotion_type',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
 
@@ -315,7 +316,8 @@ class CouponDetailAPIController extends PubControllerAPI
             // Set currency and payment method information
             // so frontend can load proper payment gateway UI.
             // TODO: Set currency value for all paid coupon in DB (might need data migration)
-            if (! empty($coupon->currency) && $coupon->currency !== 'IDR') {
+            if (! empty($coupon->coupon_country) && $coupon->coupon_country !== 'Indonesia') {
+                $coupon->currency = 'SGD';
                 $coupon->payment_method = 'stripe';
             }
             else {
