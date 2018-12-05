@@ -74,7 +74,14 @@ class ArticleListAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $article = Article::where('status', '=', 'active');
+            $article = Article::where('status', '!=', 'deleted')
+                                // call the all link object
+                                ->with('objectNews')
+                                ->with('objectPromotion')
+                                ->with('objectCoupon')
+                                ->with('objectMall')
+                                ->with('objectStore')
+                                ;
 
             OrbitInput::get('article_id', function($article_id) use ($article)
             {
