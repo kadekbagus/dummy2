@@ -10,5 +10,5 @@ Route::get('/api/v1/article/{search}', function()
 })
 ->where('search', '(list|search)');
 
-Route::get('/app/v1/article/{search}', ['as' => 'merchant-api-merchant-list', 'uses' => 'IntermediateMerchantAuthController@Merchant\MerchantList_getSearchMerchant'])
+Route::get('/app/v1/article/{search}', ['as' => 'article-api-article-list', 'uses' => 'IntermediateArticleAuthController@ArticleList_getSearchArticle'])
     ->where('search', '(list|search)');
