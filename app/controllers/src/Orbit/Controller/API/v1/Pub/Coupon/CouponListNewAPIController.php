@@ -401,6 +401,8 @@ class CouponListNewAPIController extends PubControllerAPI
                 $pageView = 0;
                 $data['placement_type'] = null;
                 $data['placement_type_orig'] = null;
+                $data['coupon_country'] = 'Indonesia';
+                $data['currency'] = 'IDR';
                 $campaignId = '';
                 foreach ($record['_source'] as $key => $value) {
                     if ($key === "name") {
