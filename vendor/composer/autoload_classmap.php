@@ -858,6 +858,7 @@ return array(
     'DeleteGuestUser' => $baseDir . '/app/commands/DeleteGuestUser.php',
     'DeleteGuestViewItemUser' => $baseDir . '/app/commands/DeleteGuestViewItemUser.php',
     'DeleteInactiveCISessions' => $baseDir . '/app/commands/DeleteInactiveCISessions.php',
+    'DeleteTableArticleLinkToObject' => $baseDir . '/app/database/migrations/2018_12_05_073210_delete_table_article_link_to_object.php',
     'DeleteUser' => $baseDir . '/app/commands/DeleteUser.php',
     'DestroyMall' => $baseDir . '/app/commands/DestroyMall.php',
     'DominoPOS\\OrbitACL\\ACL' => $vendorDir . '/dominopos/orbit-acl/DominoPOS/OrbitACL/ACL.php',

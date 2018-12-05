@@ -1216,6 +1216,7 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'DeleteGuestUser' => __DIR__ . '/../..' . '/app/commands/DeleteGuestUser.php',
         'DeleteGuestViewItemUser' => __DIR__ . '/../..' . '/app/commands/DeleteGuestViewItemUser.php',
         'DeleteInactiveCISessions' => __DIR__ . '/../..' . '/app/commands/DeleteInactiveCISessions.php',
+        'DeleteTableArticleLinkToObject' => __DIR__ . '/../..' . '/app/database/migrations/2018_12_05_073210_delete_table_article_link_to_object.php',
         'DeleteUser' => __DIR__ . '/../..' . '/app/commands/DeleteUser.php',
         'DestroyMall' => __DIR__ . '/../..' . '/app/commands/DestroyMall.php',
         'DominoPOS\\OrbitACL\\ACL' => __DIR__ . '/..' . '/dominopos/orbit-acl/DominoPOS/OrbitACL/ACL.php',
