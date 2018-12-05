@@ -157,6 +157,7 @@ class CouponDetailAPIController extends PubControllerAPI
                             'promotions.price_selling as price_new',
                             'promotions.max_quantity_per_purchase',
                             'promotions.max_quantity_per_user',
+                            'promotions.currency',
                             'coupon_sepulsa.how_to_buy_and_redeem',
                             'coupon_sepulsa.terms_and_conditions',
                             'issued_coupons.url as redeem_url',
@@ -309,6 +310,17 @@ class CouponDetailAPIController extends PubControllerAPI
             $message = 'Request Ok';
             if (! is_object($coupon)) {
                 throw new OrbitCustomException('Coupon that you specify is not found', Coupon::NOT_FOUND_ERROR_CODE, NULL);
+            }
+
+            // Set currency and payment method information
+            // so frontend can load proper payment gateway UI.
+            // TODO: Set currency value for all paid coupon in DB (might need data migration)
+            if (! empty($coupon->currency) && $coupon->currency !== 'IDR') {
+                $coupon->payment_method = 'stripe';
+            }
+            else {
+                $coupon->currency = 'IDR';
+                $coupon->payment_method = 'midtrans';
             }
 
             // calculate remaining coupon for the user.
