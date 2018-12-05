@@ -533,6 +533,18 @@ class CouponListNewAPIController extends PubControllerAPI
                             }
                         }
                     }
+
+                    if ($key === 'link_to_tenant') {
+                        if (! empty($data[$key]) && isset($data[$key][0])) {
+                            $data['coupon_country'] = $data[$key][0]['country'];
+                            if ($data['coupon_country'] === 'Indonesia') {
+                                $data['currency'] = 'IDR';
+                            }
+                            else {
+                                $data['currency'] = 'SGD';
+                            }
+                        }
+                    }
                 }
 
                 $data['average_rating'] = (! empty($record['fields']['average_rating'][0])) ? number_format(round($record['fields']['average_rating'][0], 1), 1) : 0;
