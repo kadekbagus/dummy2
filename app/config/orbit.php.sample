@@ -945,6 +945,7 @@ return array(
             'mdm_portal' => '8',
             'mt_portal' => '9',
             'rrp_portal' => '10',
+            'am_portal' => '11',
         ],
 
         /**
