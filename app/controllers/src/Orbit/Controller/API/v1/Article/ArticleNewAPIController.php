@@ -10,29 +10,15 @@ use Illuminate\Database\QueryException;
 use Validator;
 
 use Lang;
-
-use BaseMerchant;
-use BaseMerchantCategory;
-use BaseMerchantKeyword;
-use ObjectSupportedLanguage;
-use BaseObjectPartner;
 use Config;
-use Language;
-use Keyword;
-use Event;
 use Category;
-use ObjectBank;
-use ObjectFinancialDetail;
-use MerchantStorePaymentProvider;
-use ProductTag;
-use ProductTagObject;
-use BaseMerchantProductTag;
+use Event;
 
 use Article;
 use ArticleLinkToObject;
 use ArticleVideo;
 
-use Orbit\Controller\API\v1\Merchant\Merchant\MerchantHelper;
+use Orbit\Controller\API\v1\Article\ArticleHelper;
 
 class ArticleNewAPIController extends ControllerAPI
 {
@@ -73,35 +59,12 @@ class ArticleNewAPIController extends ControllerAPI
             $articleHelper = ArticleHelper::create();
             $articleHelper->articleCustomValidator();
 
-/*
-    article_id
-    title
-    slug
-    meta_title
-    meta_description
-    body    mediumtext  no
-    status
-    created_by
-    modified_by
-    published_at
-    created_at
-    updated_at
-
-    Link to Malls [[malls]]
-    Link to Brands (Merchant) [[brands]]
-    Link to Events [[events]]
-    Link to Promotions [[promotions]]
-    Link to Coupons [[coupons]]
-    Article Body Images
-    Article Body Videos (YouTube)
-*/
-
             $title = OrbitInput::post('title');
             $slug = OrbitInput::post('slug');
             $metaTitle = OrbitInput::post('meta_title');
             $metaDescription = OrbitInput::post('meta_description');
             $body = OrbitInput::post('body');
-            $status = OrbitInput::post('status');
+            $status = OrbitInput::post('status', 'inactive');
             $countryId = OrbitInput::post('country_id');
             $publishedAt = OrbitInput::post('published_at');
 
@@ -109,7 +72,7 @@ class ArticleNewAPIController extends ControllerAPI
             $objectPromotions = OrbitInput::post('object_promotions', []);
             $objectCoupons = OrbitInput::post('object_coupons', []);
             $objectMalls = OrbitInput::post('object_malls', []);
-            $objectBrands = OrbitInput::post('object_brands', []);
+            $objectMerchants = OrbitInput::post('object_merchants', []);
             $categories = OrbitInput::post('categories', []);
             $videos = OrbitInput::post('videos', []);
 
@@ -123,15 +86,16 @@ class ArticleNewAPIController extends ControllerAPI
                     'meta_title'       => $metaTitle,
                     'meta_description' => $metaDescription,
                     'body'             => $body,
+                    'status'           => $status,
                     'country_id'       => $countryId,
                 ),
                 array(
-                    'title'            => 'required|orbit.exist.article_name:' . $title,
-                    'title'            => 'required',
-                    'slug'             => 'required',
+                    'title'            => 'required|orbit.exist.title:' . $title,
+                    'slug'             => 'required|orbit.exist.slug:' . $slug,
                     'meta_title'       => 'required',
                     'meta_description' => 'required',
                     'body'             => 'required',
+                    'status'           => 'required',
                     'country_id'       => 'required',
                 ),
                //  array(
@@ -171,7 +135,7 @@ class ArticleNewAPIController extends ControllerAPI
 
             Event::fire('orbit.article.postnewarticle.after.validation', array($this, $validator));
 
-            $newArticle = new BaseMerchant;
+            $newArticle = new Article;
             $newArticle->title = $title;
             $newArticle->slug = $slug;
             $newArticle->meta_title = $metaTitle;
@@ -181,131 +145,90 @@ class ArticleNewAPIController extends ControllerAPI
             $newArticle->country_id = $countryId;
             $newArticle->published_at = $publishedAt;
 
-
-            if (! empty($translations) ) {
-                $dataTranslations = @json_decode($translations);
-                if (json_last_error() != JSON_ERROR_NONE) {
-                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
-                }
-
-                if (! is_null($dataTranslations)) {
-                    // Get english tenant description for saving to default language
-                    foreach ($dataTranslations as $key => $val) {
-                        // Validation language id from translation
-                        $language = Language::where('language_id', '=', $key)->first();
-                        if (empty($language)) {
-                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
-                        }
-
-                        if ($key === $idLanguageEnglish->language_id) {
-                            $newArticle->description = $val->description;
-                            $newArticle->custom_title = $val->custom_title;
-                        }
-                    }
-                }
-            }
-
             Event::fire('orbit.article.postnewarticle.before.save', array($this, $newArticle));
-
-            // check mobile default language must in supported language
-            if (in_array($mobile_default_language, $languages)) {
-                $newArticle->mobile_default_language = $mobile_default_language;
-            } else {
-                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.mobile_default_lang'));
-            }
 
             $newArticle->save();
 
-            // save base merchant categories
-            $baseMerchantCategorys = array();
-            foreach ($categoryIds as $category_id) {
-                $BaseMerchantCategory = new BaseMerchantCategory();
-                $BaseMerchantCategory->article_id = $newArticle->article_id;
-                $BaseMerchantCategory->category_id = $category_id;
-                $BaseMerchantCategory->save();
-                $baseMerchantCategorys[] = $BaseMerchantCategory;
+
+            // save article object
+            $news = array();
+            foreach ($objectNews as $newsId) {
+                $saveObjectNews = new ArticleLinkToObject();
+                $saveObjectNews->article_id = $newArticle->article_id;
+                $saveObjectNews->object_id = $newsId;
+                $saveObjectNews->object_type = 'news';
+                $saveObjectNews->save();
+                $news[] = $saveObjectNews;
             }
-            $newArticle->categories = $baseMerchantCategorys;
+            $newArticle->object_news = $news;
 
-            // save Keyword
-            $tenantKeywords = array();
-            foreach ($keywords as $keyword) {
-                $keyword_id = null;
-
-                $existKeyword = Keyword::excludeDeleted()
-                    ->where('keyword', '=', $keyword)
-                    ->first();
-
-                if (empty($existKeyword)) {
-                    $newKeyword = new Keyword();
-                    $newKeyword->merchant_id = '0';
-                    $newKeyword->keyword = $keyword;
-                    $newKeyword->status = 'active';
-                    $newKeyword->created_by = $user->user_id;
-                    $newKeyword->modified_by = $user->user_id;
-                    $newKeyword->save();
-
-                    $keyword_id = $newKeyword->keyword_id;
-                    $tenantKeywords[] = $newKeyword;
-                } else {
-                    $keyword_id = $existKeyword->keyword_id;
-                    $tenantKeywords[] = $existKeyword;
-                }
-
-                $newKeywordObject = new BaseMerchantKeyword();
-                $newKeywordObject->article_id = $newArticle->article_id;
-                $newKeywordObject->keyword_id = $keyword_id;
-                $newKeywordObject->save();
-
+            $promotion = array();
+            foreach ($objectPromotions as $promotionId) {
+                $saveObjectPromotion = new ArticleLinkToObject();
+                $saveObjectPromotion->article_id = $newArticle->article_id;
+                $saveObjectPromotion->object_id = $promotionId;
+                $saveObjectPromotion->object_type = 'promotion';
+                $saveObjectPromotion->save();
+                $promotion[] = $saveObjectPromotion;
             }
-            $newArticle->keywords = $tenantKeywords;
+            $newArticle->object_promotion = $promotion;
 
-
-            // save product tag
-            $tenantProductTags = array();
-            foreach ($productTags as $productTag) {
-                $product_tag_id = null;
-
-                $existProductTag = ProductTag::excludeDeleted()
-                    ->where('product_tag', '=', $productTag)
-                    ->first();
-
-                if (empty($existProductTag)) {
-                    $newProductTag = new ProductTag();
-                    $newProductTag->merchant_id = '0';
-                    $newProductTag->product_tag = $productTag;
-                    $newProductTag->status = 'active';
-                    $newProductTag->created_by = $user->user_id;
-                    $newProductTag->modified_by = $user->user_id;
-                    $newProductTag->save();
-
-                    $product_tag_id = $newProductTag->product_tag_id;
-                    $tenantProductTags[] = $newProductTag;
-                } else {
-                    $product_tag_id = $existProductTag->product_tag_id;
-                    $tenantProductTags[] = $existProductTag;
-                }
-
-                $newKeywordObject = new BaseMerchantProductTag();
-                $newKeywordObject->article_id = $newArticle->article_id;
-                $newKeywordObject->product_tag_id = $product_tag_id;
-                $newKeywordObject->save();
-
+            $coupon = array();
+            foreach ($objectCoupons as $couponId) {
+                $saveObjectPromotion = new ArticleLinkToObject();
+                $saveObjectPromotion->article_id = $newArticle->article_id;
+                $saveObjectPromotion->object_id = $couponId;
+                $saveObjectPromotion->object_type = 'coupon';
+                $saveObjectPromotion->save();
+                $coupon[] = $saveObjectPromotion;
             }
-            $newArticle->product_tags = $tenantProductTags;
+            $newArticle->object_coupon = $coupon;
 
-            //save to base object partner
-            if (! empty($partnerIds)) {
-              foreach ($partnerIds as $partnerId) {
-                if ($partnerId != "") {
-                  $baseObjectPartner = new BaseObjectPartner();
-                  $baseObjectPartner->object_id = $newArticle->article_id;
-                  $baseObjectPartner->object_type = 'tenant';
-                  $baseObjectPartner->partner_id = $partnerId;
-                  $baseObjectPartner->save();
-                }
-              }
+            $mall = array();
+            foreach ($objectMalls as $mallId) {
+                $saveObjectMall = new ArticleLinkToObject();
+                $saveObjectMall->article_id = $newArticle->article_id;
+                $saveObjectMall->object_id = $mallId;
+                $saveObjectMall->object_type = 'mall';
+                $saveObjectMall->save();
+                $mall[] = $saveObjectMall;
             }
+            $newArticle->object_mall = $mall;
+
+            $merchant = array();
+            foreach ($objectMerchants as $merchantId) {
+                $saveObjectMerchant = new ArticleLinkToObject();
+                $saveObjectMerchant->article_id = $newArticle->article_id;
+                $saveObjectMerchant->object_id = $merchantId;
+                $saveObjectMerchant->object_type = 'merchant';
+                $saveObjectMerchant->save();
+                $merchant[] = $saveObjectMerchant;
+            }
+            $newArticle->object_news = $news;
+
+            $category = array();
+            foreach ($categories as $categoryId) {
+                $saveObjectCategories = new ArticleLinkToObject();
+                $saveObjectCategories->article_id = $newArticle->article_id;
+                $saveObjectCategories->object_id = $categoryId;
+                $saveObjectCategories->object_type = 'category';
+                $saveObjectCategories->save();
+                $category[] = $saveObjectCategories;
+            }
+            $newArticle->object_news = $category;
+
+            // save article video
+            $video = array();
+            foreach ($videos as $video) {
+                $saveVideo = new ArticleLinkToObject();
+                $saveVideo->article_id = $newArticle->article_id;
+                $saveVideo->video_id = $video->video_id;
+                $saveVideo->tag_name = $video->tag_name;
+                $saveVideo->save();
+                $video[] = $saveVideo;
+            }
+            $newArticle->videos = $video;
+
 
             Event::fire('orbit.article.postnewarticle.after.save', array($this, $newArticle));
 
