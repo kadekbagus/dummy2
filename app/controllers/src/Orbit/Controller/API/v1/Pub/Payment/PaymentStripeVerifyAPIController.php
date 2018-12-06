@@ -18,10 +18,10 @@ use Validator;
 use PaymentTransaction;
 use Carbon\Carbon as Carbon;
 
-class PaymentMidtransVerifyAPIController extends PubControllerAPI
+class PaymentStripeVerifyAPIController extends PubControllerAPI
 {
 
-    public function getPaymentMidtransVerify()
+    public function getPaymentStripeVerify()
     {
         $httpCode = 200;
         try {
@@ -40,9 +40,6 @@ class PaymentMidtransVerifyAPIController extends PubControllerAPI
                 )
             );
 
-            // Begin database transaction
-            // $this->beginTransaction();
-
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -50,7 +47,7 @@ class PaymentMidtransVerifyAPIController extends PubControllerAPI
             }
 
             // validate payment data
-            $payment = PaymentTransaction::select('payment_transaction_id', 'external_payment_transaction_id', 'amount', 'status', 'payment_method', 'currency', 'user_email');
+            $payment = PaymentTransaction::select('payment_transaction_id', 'external_payment_transaction_id', 'amount', 'status', 'currency', 'user_email', 'payment_method');
 
             // Don't check for related User unless front-end explicitly requesting it.
             // Useful for request like Midtrans' payment notification which doesn't have any
