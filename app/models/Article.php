@@ -11,7 +11,6 @@ class Article extends Eloquent
 
     protected $primaryKey = 'article_id';
 
-
     /*
         Link to Malls [[malls]]
         Link to Brands (Merchant) [[brands]]
@@ -33,6 +32,7 @@ class Article extends Eloquent
                                     ->where('news.object_type', '=', 'news');
                             });
     }
+
     public function objectPromotion()
     {
         return $this->hasMany('ArticleLinkToObject', 'article_id', 'article_id')
@@ -42,6 +42,7 @@ class Article extends Eloquent
                                     ->where('news.object_type', '=', 'promotion');
                             });
     }
+
     public function objectCoupon()
     {
         return $this->hasMany('ArticleLinkToObject', 'article_id', 'article_id')
@@ -50,6 +51,7 @@ class Article extends Eloquent
                                 $q->on('promotion_id', '=', 'object_id');
                             });
     }
+
     public function objectMall()
     {
         return $this->hasMany('ArticleLinkToObject', 'article_id', 'article_id')
@@ -58,6 +60,7 @@ class Article extends Eloquent
                                 $q->on('merchant_id', '=', 'object_id');
                             });
     }
+
     public function objectStore()
     {
         return $this->hasMany('ArticleLinkToObject', 'article_id', 'article_id')
@@ -67,6 +70,22 @@ class Article extends Eloquent
                             });
     }
 
+    public function mediaCover()
+    {
+        return $this->hasMany('Media', 'object_id', 'article_id')
+                    ->where('object_name', 'article_cover_image');
+    }
+
+    public function mediaContent()
+    {
+        return $this->hasMany('Media', 'object_id', 'article_id')
+                    ->where('object_name', 'article_content_image');
+    }
+
+    public function video()
+    {
+        return $this->hasMany('ArticleVideo', 'article_id', 'article_id');
+    }
 
 
 }

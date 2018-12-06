@@ -81,7 +81,9 @@ class ArticleListAPIController extends ControllerAPI
                                 ->with('objectCoupon')
                                 ->with('objectMall')
                                 ->with('objectStore')
-                                ;
+                                ->with('mediaCover')
+                                ->with('mediaContent')
+                                ->with('video');
 
             OrbitInput::get('article_id', function($article_id) use ($article)
             {
