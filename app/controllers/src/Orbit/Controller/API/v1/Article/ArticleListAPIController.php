@@ -80,7 +80,8 @@ class ArticleListAPIController extends ControllerAPI
                                 ->with('objectPromotion')
                                 ->with('objectCoupon')
                                 ->with('objectMall')
-                                ->with('objectStore')
+                                ->with('objectMerchant')
+                                ->with('category')
                                 ->with('mediaCover')
                                 ->with('mediaContent')
                                 ->with('video');

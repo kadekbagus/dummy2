@@ -163,6 +163,12 @@ return array(
                  'index' => 'store_mall_level_suggestions',
                  'type'  => 'basic'
             ],
+
+            'articles' => [
+                 'index' => 'articles',
+                 'type'  => 'basic'
+            ],
+
         ],
 
         // index list will be include in suggestion
