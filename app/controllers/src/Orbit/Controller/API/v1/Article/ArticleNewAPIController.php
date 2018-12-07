@@ -98,9 +98,10 @@ class ArticleNewAPIController extends ControllerAPI
                     'status'           => 'required',
                     'country_id'       => 'required',
                 ),
-               //  array(
-               //      'orbit.exist.article_name' => 'Article is already exist',
-               // )
+                array(
+                    'orbit.exist.title' => 'Title is already exist',
+                    'orbit.exist.slug'  => 'Slug is already exist',
+               )
             );
 
             // Run the validation
@@ -219,11 +220,12 @@ class ArticleNewAPIController extends ControllerAPI
 
             // save article video
             $video = array();
-            foreach ($videos as $video) {
-                $saveVideo = new ArticleLinkToObject();
+            foreach ($videos as $keyVid => $youtubeVideoId) {
+                $counter = $keyVid + 1;
+                $saveVideo = new ArticleVideo();
                 $saveVideo->article_id = $newArticle->article_id;
-                $saveVideo->video_id = $video->video_id;
-                $saveVideo->tag_name = $video->tag_name;
+                $saveVideo->video_id = $youtubeVideoId;
+                $saveVideo->tag_name = 'video_00' . $counter;
                 $saveVideo->save();
                 $video[] = $saveVideo;
             }

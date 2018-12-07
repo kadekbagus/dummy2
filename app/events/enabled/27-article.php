@@ -82,7 +82,7 @@ Event::listen('orbit.article.postupdatearticle.after.save', function($controller
         App::instance('orbit.upload.user', $controller->api->user);
 
         $response = UploadAPIController::create('raw')
-                                       ->setCalledFrom('news.update')
+                                       ->setCalledFrom('article.update')
                                        ->postUploadNewsImage();
 
         if ($response->code !== 0)
@@ -129,7 +129,7 @@ Event::listen('orbit.article.postupdatearticle.after.save', function($controller
 Event::listen('orbit.article.postnewarticle.after.commit', function($controller, $article)
 {
     // Notify the queueing system to update Elasticsearch document
-    Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsUpdateQueue', [
+    Queue::push('Orbit\\Queue\\Elasticsearch\\ESArticleUpdateQueue', [
         'article_id' => $article->article_id
     ]);
 });
@@ -146,7 +146,7 @@ Event::listen('orbit.article.postnewarticle.after.commit', function($controller,
 Event::listen('orbit.article.postupdatearticle.after.commit', function($controller, $article)
 {
     // Notify the queueing system to update Elasticsearch document
-    Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsUpdateQueue', [
+    Queue::push('Orbit\\Queue\\Elasticsearch\\ESArticleUpdateQueue', [
         'article_id' => $article->article_id
     ]);
 });
