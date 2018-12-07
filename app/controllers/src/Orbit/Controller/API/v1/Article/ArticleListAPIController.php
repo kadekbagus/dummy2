@@ -59,10 +59,10 @@ class ArticleListAPIController extends ControllerAPI
                     'sortby' => $sort_by,
                 ),
                 array(
-                    'sortby' => 'in:title,created_at',
+                    'sortby' => 'in:title,published_at,created_at,status',
                 ),
                 array(
-                    'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: title, created_at',
+                    'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: title,published_at,created_at,status',
                 )
             );
 
@@ -135,9 +135,10 @@ class ArticleListAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'merchant_name' => 'title',
-                    'location_number' => 'location_count',
-                    'status' => 'status'
+                    'title' => 'title',
+                    'published_at' => 'published_at',
+                    'created_at' => 'created_at',
+                    'status' => 'status',
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
