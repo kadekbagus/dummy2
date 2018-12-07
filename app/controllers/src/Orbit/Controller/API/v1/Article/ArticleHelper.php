@@ -51,6 +51,36 @@ class ArticleHelper
             return TRUE;
         });
 
+        // Check existing article title
+        Validator::extend('orbit.exist.title_not_me', function ($attribute, $value, $parameters) {
+            $articleId = $parameters[0];
+
+            $article = Article::where('title', '=', $value)
+                            ->where('article_id', $articleId)
+                            ->first();
+
+            if (! empty($article)) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
+
+        // Check existing article slug
+        Validator::extend('orbit.exist.slug_not_me', function ($attribute, $value, $parameters) {
+            $articleId = $parameters[0];
+
+            $article = Article::where('slug', '=', $value)
+                            ->where('article_id', $articleId)
+                            ->first();
+
+            if (! empty($article)) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
+
         // Check the validity of URL
         Validator::extend('orbit.formaterror.url.web', function ($attribute, $value, $parameters) {
             $url = 'http://' . $value;

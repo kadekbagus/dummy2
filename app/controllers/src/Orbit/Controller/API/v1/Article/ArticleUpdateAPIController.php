@@ -95,17 +95,18 @@ class ArticleUpdateAPIController extends ControllerAPI
                     'country_id'       => $countryId,
                 ),
                 array(
-                    'title'            => 'required',
-                    'slug'             => 'required',
+                    'title'            => 'required|orbit.exist.title_not_me:' . $articleId,
+                    'slug'             => 'requiredorbit.exist.slug_not_me:' . $articleId,
                     'meta_title'       => 'required',
                     'meta_description' => 'required',
                     'body'             => 'required',
                     'status'           => 'required',
                     'country_id'       => 'required',
                 ),
-               //  array(
-               //      'orbit.exist.article_name' => 'Article is already exist',
-               // )
+                array(
+                    'orbit.exist.title_not_me' => 'Title is already exist',
+                    'orbit.exist.slug_not_me' => 'Slug is already exist',
+               )
             );
 
             // Run the validation
@@ -146,49 +147,130 @@ class ArticleUpdateAPIController extends ControllerAPI
                 $updatedArticle->url = $country_id;
             });
 
-
             Event::fire('orbit.article.postupdatearticle.before.save', array($this, $updatedArticle));
-
 
             $updatedArticle->save();
 
+            // save article object
+            OrbitInput::post('object_news', function($objectNews) use ($updatedArticle, $articleId) {
+                $deletedOldData = ArticleLinkToObject::where('article_id', '=', $articleId)
+                                                     ->where('object_type', '=', 'news')
+                                                     ->delete();
 
-            OrbitInput::post('category_ids', function($categoryIds) use ($updatedArticle, $baseMerchantId) {
-                // Delete old data
-                $deleted_base_category = BaseMerchantCategory::where('base_merchant_id', '=', $baseMerchantId)->delete();
-
-                // save base merchant categories
-                $baseMerchantCategorys = array();
-                foreach ($categoryIds as $category_id) {
-                    $BaseMerchantCategory = new BaseMerchantCategory();
-                    $BaseMerchantCategory->base_merchant_id = $baseMerchantId;
-                    $BaseMerchantCategory->category_id = $category_id;
-                    $BaseMerchantCategory->save();
-                    $baseMerchantCategorys[] = $BaseMerchantCategory;
+                $news = array();
+                foreach ($objectNews as $newsId) {
+                    $saveObjectNews = new ArticleLinkToObject();
+                    $saveObjectNews->article_id = $articleId;
+                    $saveObjectNews->object_id = $newsId;
+                    $saveObjectNews->object_type = 'news';
+                    $saveObjectNews->save();
+                    $news[] = $saveObjectNews;
                 }
+                $updatedArticle->object_news = $news;
+            });
 
-                $updatedArticle->categories = $baseMerchantCategorys;
+            OrbitInput::post('object_promotions', function($objectPromotions) use ($updatedArticle, $articleId) {
+                $deletedOldData = ArticleLinkToObject::where('article_id', '=', $articleId)
+                                                     ->where('object_type', '=', 'promotion')
+                                                     ->delete();
+
+                $promotion = array();
+                foreach ($objectPromotions as $promotionId) {
+                    $saveObjectPromotion = new ArticleLinkToObject();
+                    $saveObjectPromotion->article_id = $articleId;
+                    $saveObjectPromotion->object_id = $promotionId;
+                    $saveObjectPromotion->object_type = 'promotion';
+                    $saveObjectPromotion->save();
+                    $promotion[] = $saveObjectPromotion;
+                }
+                $updatedArticle->object_promotion = $promotion;
+            });
+
+            OrbitInput::post('object_coupons', function($objectCoupons) use ($updatedArticle, $articleId) {
+                $deletedOldData = ArticleLinkToObject::where('article_id', '=', $articleId)
+                                                     ->where('object_type', '=', 'coupon')
+                                                     ->delete();
+
+                $coupon = array();
+                foreach ($objectCoupons as $couponId) {
+                    $saveObjectPromotion = new ArticleLinkToObject();
+                    $saveObjectPromotion->article_id = $articleId;
+                    $saveObjectPromotion->object_id = $couponId;
+                    $saveObjectPromotion->object_type = 'coupon';
+                    $saveObjectPromotion->save();
+                    $coupon[] = $saveObjectPromotion;
+                }
+                $updatedArticle->object_coupon = $coupon;
+            });
+
+            OrbitInput::post('object_malls', function($objectMalls) use ($updatedArticle, $articleId) {
+                $deletedOldData = ArticleLinkToObject::where('article_id', '=', $articleId)
+                                                     ->where('object_type', '=', 'mall')
+                                                     ->delete();
+
+                $mall = array();
+                foreach ($objectMalls as $mallId) {
+                    $saveObjectMall = new ArticleLinkToObject();
+                    $saveObjectMall->article_id = $articleId;
+                    $saveObjectMall->object_id = $mallId;
+                    $saveObjectMall->object_type = 'mall';
+                    $saveObjectMall->save();
+                    $mall[] = $saveObjectMall;
+                }
+                $updatedArticle->object_mall = $mall;
+            });
+
+            OrbitInput::post('object_merchants', function($objectMerchants) use ($updatedArticle, $articleId) {
+                $deletedOldData = ArticleLinkToObject::where('article_id', '=', $articleId)
+                                                     ->where('object_type', '=', 'merchant')
+                                                     ->delete();
+
+                $merchant = array();
+                foreach ($objectMerchants as $merchantId) {
+                    $saveObjectMerchant = new ArticleLinkToObject();
+                    $saveObjectMerchant->article_id = $articleId;
+                    $saveObjectMerchant->object_id = $merchantId;
+                    $saveObjectMerchant->object_type = 'merchant';
+                    $saveObjectMerchant->save();
+                    $merchant[] = $saveObjectMerchant;
+                }
+                $updatedArticle->object_merchant = $merchant;
+            });
+
+            OrbitInput::post('categories', function($categories) use ($updatedArticle, $articleId) {
+                $deletedOldData = ArticleLinkToObject::where('article_id', '=', $articleId)
+                                                     ->where('object_type', '=', 'category')
+                                                     ->delete();
+
+                $category = array();
+                foreach ($categories as $categoryId) {
+                    $saveObjectCategories = new ArticleLinkToObject();
+                    $saveObjectCategories->article_id = $articleId;
+                    $saveObjectCategories->object_id = $categoryId;
+                    $saveObjectCategories->object_type = 'category';
+                    $saveObjectCategories->save();
+                    $category[] = $saveObjectCategories;
+                }
+                $updatedArticle->category = $category;
             });
 
 
-            // update link to partner - base opject partner table
-            OrbitInput::post('partner_ids', function($partnerIds) use ($baseMerchantId) {
-                // Delete old data
-                $delete_partner = BaseObjectPartner::where('object_id', '=', $baseMerchantId)->where('object_type', 'tenant');
-                $delete_partner->delete(true);
+            // save video
+            OrbitInput::post('videos', function($videos) use ($updatedArticle, $articleId) {
+                $deletedOldData = ArticleVideo::where('article_id', '=', $articleId)->delete();
 
-                if (! empty($partnerIds)) {
-                  // Insert new data
-                  foreach ($partnerIds as $partnerId) {
-                    if ($partnerId != "") {
-                      $object_partner = new BaseObjectPartner();
-                      $object_partner->object_id = $baseMerchantId;
-                      $object_partner->object_type = 'tenant';
-                      $object_partner->partner_id = $partnerId;
-                      $object_partner->save();
-                    }
-                  }
+                $video = array();
+                foreach ($videos as $keyVid => $youtubeVideoId) {
+                    $counter = $keyVid + 1;
+                    $saveVideo = new ArticleVideo();
+                    $saveVideo->article_id = $articleId;
+                    $saveVideo->video_id = $youtubeVideoId;
+                    $saveVideo->tag_name = 'video_00' . $counter;
+                    $saveVideo->save();
+                    $video[] = $saveVideo;
                 }
+
+                $updatedArticle->videos = $video;
             });
 
 
@@ -252,48 +334,6 @@ class ArticleUpdateAPIController extends ControllerAPI
         }
 
         return $this->render($httpCode);
-    }
-
-    protected function registerCustomValidation()
-    {
-        // Check existing merchant name
-        Validator::extend('orbit.exist.merchant_name_not_me', function ($attribute, $value, $parameters) {
-            $baseMerchantId = $parameters[0];
-            $country = $parameters[1];
-
-            $merchant = BaseMerchant::where('name', '=', $value)
-                            ->where('country_id', $country)
-                            ->whereNotIn('base_merchant_id', array($baseMerchantId))
-                            ->first();
-
-            if (! empty($merchant)) {
-                return FALSE;
-            }
-
-            return TRUE;
-        });
-
-        // Check the validity of URL
-        Validator::extend('orbit.formaterror.url.web', function ($attribute, $value, $parameters) {
-            $url = 'http://' . $value;
-
-            $pattern = '@^((http:\/\/www\.)|(www\.)|(http:\/\/))[a-zA-Z0-9._-]+\.[a-zA-Z.]{2,5}$@';
-
-            if (! preg_match($pattern, $url)) {
-                return FALSE;
-            }
-            return TRUE;
-        });
-
-        // Check the validity of base merchant id
-        Validator::extend('orbit.exist.base_merchant_id', function ($attribute, $value, $parameters) {
-            $baseMerchant = BaseMerchant::where('base_merchant_id', $value)->first();
-
-            if (empty($baseMerchant)) {
-                return FALSE;
-            }
-            return TRUE;
-        });
     }
 
 }
