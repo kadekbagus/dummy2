@@ -113,7 +113,7 @@ class MediaAPIController extends ControllerAPI
                 ->orderBy('media_name_id', 'desc')
                 ->first();
 
-            $lastImageOrder = 'img-0';
+            $lastImageOrder = 0;
             if (is_object($lastImage)) {
                 $lastImageOrder = (int) substr($lastImage->metadata, 4);
             }
