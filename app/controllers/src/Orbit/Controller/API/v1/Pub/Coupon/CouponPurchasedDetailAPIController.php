@@ -169,14 +169,14 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
                 $coupon->currency = 'IDR';
             }
 
-            if ($coupon->currency === 'IDR') {
-                $coupon->price_selling = number_format($coupon->price_selling, 0, ',', '.');
-                $coupon->amount = number_format($coupon->amount, 0, ',', '.');
-            }
-            else {
-                $coupon->price_selling = number_format($coupon->price_selling, 2, '.', ',');
-                $coupon->amount = number_format($coupon->amount, 2, '.', ',');
-            }
+            // if ($coupon->currency === 'IDR') {
+            //     $coupon->price_selling = number_format($coupon->price_selling, 0, ',', '.');
+            //     $coupon->amount = number_format($coupon->amount, 0, ',', '.');
+            // }
+            // else {
+            //     $coupon->price_selling = number_format($coupon->price_selling, 2, '.', ',');
+            //     $coupon->amount = number_format($coupon->amount, 2, '.', ',');
+            // }
 
             // get Imahe from local when image cdn is null
             if ($coupon->cdnPath == null) {
