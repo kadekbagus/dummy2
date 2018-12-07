@@ -56,7 +56,7 @@ class ArticleHelper
             $articleId = $parameters[0];
 
             $article = Article::where('title', '=', $value)
-                            ->where('article_id', $articleId)
+                            ->where('article_id', '!=', $articleId)
                             ->first();
 
             if (! empty($article)) {
@@ -71,7 +71,7 @@ class ArticleHelper
             $articleId = $parameters[0];
 
             $article = Article::where('slug', '=', $value)
-                            ->where('article_id', $articleId)
+                            ->where('article_id', '!=', $articleId)
                             ->first();
 
             if (! empty($article)) {

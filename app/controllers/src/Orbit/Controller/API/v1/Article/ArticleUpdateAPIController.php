@@ -96,7 +96,7 @@ class ArticleUpdateAPIController extends ControllerAPI
                 ),
                 array(
                     'title'            => 'required|orbit.exist.title_not_me:' . $articleId,
-                    'slug'             => 'requiredorbit.exist.slug_not_me:' . $articleId,
+                    'slug'             => 'required|orbit.exist.slug_not_me:' . $articleId,
                     'meta_title'       => 'required',
                     'meta_description' => 'required',
                     'body'             => 'required',
@@ -120,34 +120,37 @@ class ArticleUpdateAPIController extends ControllerAPI
             $updatedArticle = Article::where('article_id', $articleId)->first();
 
             OrbitInput::post('title', function($title) use ($updatedArticle) {
-                $updatedArticle->url = $title;
+                $updatedArticle->title = $title;
             });
 
             OrbitInput::post('slug', function($slug) use ($updatedArticle) {
-                $updatedArticle->url = $slug;
+                $updatedArticle->slug = $slug;
             });
 
             OrbitInput::post('meta_title', function($metaTitle) use ($updatedArticle) {
-                $updatedArticle->url = $metaTitle;
+                $updatedArticle->meta_title = $metaTitle;
             });
 
             OrbitInput::post('meta_description', function($metaDescription) use ($updatedArticle) {
-                $updatedArticle->url = $metaDescription;
+                $updatedArticle->meta_description = $metaDescription;
             });
 
             OrbitInput::post('body', function($body) use ($updatedArticle) {
-                $updatedArticle->url = $body;
+                $updatedArticle->body = $body;
             });
 
             OrbitInput::post('status', function($status) use ($updatedArticle) {
-                $updatedArticle->url = $status;
+                $updatedArticle->status = $status;
             });
 
             OrbitInput::post('country_id', function($countryId) use ($updatedArticle) {
-                $updatedArticle->url = $country_id;
+                $updatedArticle->country_id = $countryId;
             });
 
             Event::fire('orbit.article.postupdatearticle.before.save', array($this, $updatedArticle));
+
+            $updatedArticle->modified_by = $this->api->user->user_id;
+            $updatedArticle->touch();
 
             $updatedArticle->save();
 
