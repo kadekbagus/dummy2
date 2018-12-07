@@ -226,6 +226,29 @@ class StoreDetailAPIController extends PubControllerAPI
                             ->where('merchants.merchant_id', $merchantId)
                             ->first();
 
+            // get photos for brand detail page
+            $brandPhotos = Tenant::select('merchants.merchant_id')
+                                    ->with(['baseStore' => function($q) {
+                                        $q->with(['baseMerchant' => function($q2) {
+                                            $q2->with('mediaPhotos');
+                                            $q2->with('mediaOtherPhotos');
+                                        }]);
+                                    }])
+                                    ->where('merchant_id', '=', $merchantId)
+                                    ->first();
+            $photos = [];
+            $otherPhotos = [];
+            if ($brandPhotos) {
+                if (isset($brandPhotos->baseStore) && isset($brandPhotos->baseStore->baseMerchant)) {
+                    if (isset($brandPhotos->baseStore->baseMerchant->mediaPhotos)) {
+                        $photos = $brandPhotos->baseStore->baseMerchant->mediaPhotos;
+                    }
+                    if (isset($brandPhotos->baseStore->baseMerchant->mediaOtherPhotos)) {
+                        $otherPhotos = $brandPhotos->baseStore->baseMerchant->mediaOtherPhotos;
+                    }
+                }
+            }
+
             if (! is_object($storeInfo)) {
                 throw new OrbitCustomException('Unable to find store.', Tenant::NOT_FOUND_ERROR_CODE, NULL);
             }
@@ -340,6 +363,9 @@ class StoreDetailAPIController extends PubControllerAPI
             $store->rating_average = $reviewCounter->getAverage();
             $store->review_counter = $reviewCounter->getCounter();
             // ---- END OF RATING ----
+
+            $store->media_photos = $photos;
+            $store->media_other_photos = $otherPhotos;
 
             if (is_object($mall)) {
                 $activityNotes = sprintf('Page viewed: View mall store detail page');

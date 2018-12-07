@@ -114,7 +114,8 @@ class MerchantUploadBannerAPIController extends ControllerAPI
             {
                 $merchant_id = $merchant->base_merchant_id;
                 $slug = Str::slug($merchant->name);
-                $file['new']->name = sprintf('%s-%s-%s', $merchant_id, $slug, time());
+                $type = 'BANNER';
+                $file['new']->name = sprintf('%s-%s-%s-%s', $merchant_id, $slug, $type, time());
             };
 
             $message = new UploaderMessage([]);
