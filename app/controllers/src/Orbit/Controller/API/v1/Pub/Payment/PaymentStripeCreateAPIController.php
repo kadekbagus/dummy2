@@ -104,7 +104,10 @@ class PaymentStripeCreateAPIController extends PubControllerAPI
             $this->beginTransaction();
 
             // Get coupon detail from DB.
-            $coupon = Coupon::select('price_selling', 'promotion_id', 'promotion_type', 'currency')->findOrFail($object_id);
+            $coupon = Coupon::select('price_selling', 'promotions.promotion_id', 'promotion_type', DB::raw("m.country as coupon_country"))
+                            ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', 'promotion_retailer.retailer_id')
+                            ->findOrFail($object_id);
 
             // Validate currency being sent against coupon's currency.
             // If not equal, then abort request.
@@ -112,8 +115,9 @@ class PaymentStripeCreateAPIController extends PubControllerAPI
             // so we need to assume it's IDR for now.
             // New data/after data migration, each paid coupon
             // should have currency set based on its location/country.
-            if (empty($coupon->currency)) {
-                $coupon->currency = 'IDR';
+            $coupon->currency = 'IDR';
+            if (! empty($coupon->coupon_country) && $coupon->coupon_country !== 'Indonesia') {
+                $coupon->currency = 'SGD';
             }
 
             if ($currency !== $coupon->currency) {
