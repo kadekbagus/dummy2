@@ -205,7 +205,7 @@ class ArticleNewAPIController extends ControllerAPI
                 $saveObjectMerchant->save();
                 $merchant[] = $saveObjectMerchant;
             }
-            $newArticle->object_news = $news;
+            $newArticle->object_merchant = $merchant;
 
             $category = array();
             foreach ($categories as $categoryId) {
@@ -216,7 +216,7 @@ class ArticleNewAPIController extends ControllerAPI
                 $saveObjectCategories->save();
                 $category[] = $saveObjectCategories;
             }
-            $newArticle->object_news = $category;
+            $newArticle->category = $category;
 
             // save article video
             $video = array();
