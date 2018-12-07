@@ -1556,8 +1556,8 @@ return array(
                     'merchant_other_photos' => 'merchant',
                     'base_merchant_photos' => 'base_merchant',
                     'base_merchant_other_photos' => 'base_merchant',
-                    'article_banner' => 'article',
-                    'article_body_images' => 'article',
+                    'article_cover_image' => 'article',
+                    'article_content_image' => 'article',
                 ],
 
                 // Allowed Mimetype
