@@ -264,7 +264,11 @@ class PaymentTransaction extends Eloquent
             $grandTotal += $item->quantity * $item->price;
         }
 
-        return $this->currency . ' ' . number_format($grandTotal, 0, ',', '.');
+        if ($this->currency === 'IDR') {
+            return $this->currency . ' ' . number_format($grandTotal, 0, ',', '.');
+        }
+
+        return $this->currency . ' ' . number_format($grandTotal, 2, '.', ',');
     }
 
     /**
