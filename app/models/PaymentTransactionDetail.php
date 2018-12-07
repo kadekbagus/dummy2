@@ -102,7 +102,11 @@ class PaymentTransactionDetail extends Eloquent
      */
     public function getPrice()
     {
-        return $this->currency . ' ' . number_format($this->price, 0, ',', '.');
+        if ($this->currency === 'IDR') {
+            return $this->currency . ' ' . number_format($this->price, 0, ',', '.');
+        }
+
+        return $this->currency . ' ' . number_format($this->price, 2, '.', ',');
     }
 
     /**
@@ -112,6 +116,11 @@ class PaymentTransactionDetail extends Eloquent
      */
     public function getTotal()
     {
-        return $this->currency . ' ' . number_format($this->price * $this->quantity, 0, ',', '.');
+        $total = $this->price * $this->quantity;
+        if ($this->currency === 'IDR') {
+            return $this->currency . ' ' . number_format($total, 0, ',', '.');
+        }
+
+        return $this->currency . ' ' . number_format($total, 2, '.', ',');
     }
 }
