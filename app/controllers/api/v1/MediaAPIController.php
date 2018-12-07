@@ -44,8 +44,13 @@ class MediaAPIController extends ControllerAPI
 
         try {
             // Authenticate
-            $this->checkAuth();
-            $user = $this->api->user;
+            if (! $this->enableTransaction) {
+                // use passed user
+                $user = App::make('orbit.upload.user');
+            } else {
+                $this->checkAuth();
+                $user = $this->api->user;
+            }
             $role = $user->role;
             if (! in_array(strtolower($role->role_name), $this->uploadRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
@@ -296,8 +301,13 @@ class MediaAPIController extends ControllerAPI
 
         try {
             // Authenticate
-            $this->checkAuth();
-            $user = $this->api->user;
+            if (! $this->enableTransaction) {
+                // use passed user
+                $user = App::make('orbit.upload.user');
+            } else {
+                $this->checkAuth();
+                $user = $this->api->user;
+            }
             $role = $user->role;
             if (! in_array( strtolower($role->role_name), $this->uploadRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
@@ -599,7 +609,7 @@ class MediaAPIController extends ControllerAPI
      * @param boolean $enabled The source of the caller
      * @return MediaAPIController
      */
-    private function setEnableTransaction($enabled = true)
+    public function setEnableTransaction($enabled = true)
     {
         $this->enableTransaction = $enabled;
 
