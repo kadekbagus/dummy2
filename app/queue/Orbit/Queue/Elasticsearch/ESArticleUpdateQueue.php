@@ -51,7 +51,12 @@ class ESArticleUpdateQueue
 
         $articleId = $data['article_id'];
 
-        $article = Article::where('article_id', $articleId)
+        $article = Article::select(DB::raw("
+                                            {$prefix}articles.*,
+                                            {$prefix}countries.name as country_name
+                                            "))
+                            ->join('countries', 'countries.country_id', '=', 'articles.country_id')
+                            ->where('article_id', $articleId)
                             // call the all link object
                             ->with('objectNews')
                             ->with('objectPromotion')
@@ -169,7 +174,7 @@ class ESArticleUpdateQueue
                 'body' => $article->body,
                 'meta_title' => $article->meta_title,
                 'meta_description' => $article->meta_description,
-                // 'country' => $article->country,
+                'country' => $article->country_name,
                 'status' => $article->status,
                 'published_at' => date('Y-m-d', strtotime($article->published_at)) . 'T' . date('H:i:s', strtotime($article->published_at)) . 'Z',
 
