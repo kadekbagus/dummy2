@@ -6642,7 +6642,15 @@ return array(
                 'object_type' => 'Mall',
                 'parameter_name' => 'object_id'
             ),
-
+            // User views Stripe payment window.
+            '187' => array(
+                'name' => 'view_payment_page_stripe_payment_page',
+                'name_long' => 'View Payment Page (Stripe Payment Page)',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 
