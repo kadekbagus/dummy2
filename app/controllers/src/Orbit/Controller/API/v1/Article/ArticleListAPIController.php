@@ -88,13 +88,13 @@ class ArticleListAPIController extends ControllerAPI
 
             OrbitInput::get('article_id', function($article_id) use ($article)
             {
-                $article->whereIn('article_id', $article_id);
+                $article->where('article_id', $article_id);
             });
 
             // Filter merchant by name
             OrbitInput::get('title', function($title) use ($article)
             {
-                $article->whereIn('title', $title);
+                $article->where('title', $title);
             });
 
             // Filter merchant by matching name pattern
@@ -118,7 +118,7 @@ class ArticleListAPIController extends ControllerAPI
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
-            $_merchants = clone $article;
+            $_articles = clone $article;
 
             $take = PaginationNumber::parseTakeFromGet('merchant');
             $article->take($take);
@@ -154,15 +154,15 @@ class ArticleListAPIController extends ControllerAPI
             });
             $article->orderBy($sortBy, $sortMode);
 
-            $totalMerchants = RecordCounter::create($_merchants)->count();
+            $totalArticles = RecordCounter::create($_articles)->count();
             $listOfArticles = $article->get();
 
             $data = new stdclass();
-            $data->total_records = $totalMerchants;
+            $data->total_records = $totalArticles;
             $data->returned_records = count($listOfArticles);
             $data->records = $listOfArticles;
 
-            if ($totalMerchants === 0) {
+            if ($totalArticles === 0) {
                 $data->records = NULL;
                 $this->response->message = Lang::get('statuses.orbit.nodata.merchant');
             }

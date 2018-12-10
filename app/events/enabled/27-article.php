@@ -37,10 +37,15 @@ Event::listen('orbit.article.postnewarticle.after.save', function($controller, $
     unset($_POST['media_name_id']);
     unset($_POST['object_id']);
 
+
     if ($response->code !== 0)
     {
         throw new \Exception($response->message, $response->code);
     }
+
+    $article->setRelation('mediaCover', $response->data);
+    $article->mediaCover = $response->data;
+    $article->coverImagePath = $response->data[0]->variants[0]->path;
 });
 
 /**
@@ -66,7 +71,7 @@ Event::listen('orbit.article.postupdatearticle.after.save', function($controller
 
         if (is_object($oldCover)) {
             $_POST['media_id'] = $oldCover->media_id;
-            $response = MediaAPIController::create('raw')
+            $deleteResponse = MediaAPIController::create('raw')
                 ->setEnableTransaction(false)
                 ->delete();
             unset($_POST['media_id']);
@@ -87,6 +92,9 @@ Event::listen('orbit.article.postupdatearticle.after.save', function($controller
         {
             throw new \Exception($response->message, $response->code);
         }
+
+        $article->load('mediaCover');
+        $article->image = $response->data[0]->variants[0]->path;
     }
 });
 
