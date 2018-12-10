@@ -110,7 +110,7 @@ class MediaAPIController extends ControllerAPI
             $lastImage = Media::where('object_id', $objectId)
                 ->where('object_name', $objectName)
                 ->where('media_name_id', $mediaNameId)
-                ->orderBy('created_at', 'desc')
+                ->orderBy('media_id', 'desc')
                 ->first();
 
             $lastImageOrder = 0;
