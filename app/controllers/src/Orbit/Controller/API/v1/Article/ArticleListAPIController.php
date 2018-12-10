@@ -75,7 +75,6 @@ class ArticleListAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
 
             $article = Article::where('status', '!=', 'deleted')
-                                // call the all link object
                                 ->with('objectNews')
                                 ->with('objectPromotion')
                                 ->with('objectCoupon')
