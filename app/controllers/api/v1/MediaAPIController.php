@@ -110,7 +110,7 @@ class MediaAPIController extends ControllerAPI
             $lastImage = Media::where('object_id', $objectId)
                 ->where('object_name', $objectName)
                 ->where('media_name_id', $mediaNameId)
-                ->orderBy('media_name_id', 'desc')
+                ->orderBy('created_at', 'desc')
                 ->first();
 
             $lastImageOrder = 0;
@@ -523,6 +523,7 @@ class MediaAPIController extends ControllerAPI
     private function saveMetadata($imageMetas)
     {
         $result = array();
+        $imageMetas->last_image_order = $imageMetas->last_image_order + 1;
 
         foreach ($imageMetas->files as $variant=>$file) {
             // Save each variant
