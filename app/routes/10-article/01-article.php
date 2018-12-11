@@ -35,6 +35,18 @@ Route::post('/api/v1/article/update', function()
 
 Route::post('/app/v1/article/update', ['as' => 'article-api-article-update', 'uses' => 'IntermediateArticleAuthController@ArticleUpdate_postUpdateArticle']);
 
+/**
+ * List/Search country
+ */
+Route::get('/api/v1/article/country/{search}', function()
+{
+    return Orbit\Controller\API\v1\Merchant\CountryListAPIController::create()->getSearchCountry();
+})
+->where('search', '(list|search)');
+
+Route::get('/app/v1/article/country/{search}', ['as' => 'article-api-country-list', 'uses' => 'IntermediateArticleAuthController@CountryList_getSearchCountry'])
+    ->where('search', '(list|search)');
+
 
 
 
@@ -48,7 +60,7 @@ Route::get('/api/v1/pub/article-list', function()
     return Orbit\Controller\API\v1\Pub\Article\ArticleListAPIController::create()->getSearchArticle();
 });
 
-Route::get('/app/v1/pub/article-list', ['as' => 'pub-article-list', 'uses' => 'IntermediatePubAuthController@Article\ArticleListNew_getSearchArticle']);
+Route::get('/app/v1/pub/article-list', ['as' => 'pub-article-list', 'uses' => 'IntermediatePubAuthController@Article\ArticleList_getSearchArticle']);
 
 /**
  * Get article detail
