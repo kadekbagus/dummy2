@@ -6875,17 +6875,8 @@ return array(
                 'object_type' => 'Merchant',
                 'parameter_name' => 'object_id'
             ),
-            // user click brand photo on brand detail page
-            '191' => array(
-                'name' => 'click_brand_photo',
-                'name_long' => 'Click Brand Photo',
-                'module_name' => 'Merchant',
-                'type' => 'click',
-                'object_type' => 'Merchant',
-                'parameter_name' => 'object_id'
-            ),
             // user click brand promotion on brand detail page
-            '192' => array(
+            '191' => array(
                 'name' => 'click_brand_promotion',
                 'name_long' => 'Click Brand Promotion',
                 'module_name' => 'Merchant',
@@ -6894,7 +6885,7 @@ return array(
                 'parameter_name' => 'object_id'
             ),
             // user click brand event on brand detail page
-            '193' => array(
+            '192' => array(
                 'name' => 'click_brand_event',
                 'name_long' => 'Click Brand Event',
                 'module_name' => 'Merchant',
@@ -6903,7 +6894,7 @@ return array(
                 'parameter_name' => 'object_id'
             ),
             // user click brand coupon on brand detail page
-            '194' => array(
+            '193' => array(
                 'name' => 'click_brand_coupon',
                 'name_long' => 'Click Brand Coupon',
                 'module_name' => 'Merchant',
