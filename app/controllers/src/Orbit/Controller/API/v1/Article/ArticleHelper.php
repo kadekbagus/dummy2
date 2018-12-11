@@ -13,6 +13,8 @@ use Article;
 
 class ArticleHelper
 {
+    protected $valid_language = NULL;
+
     /**
      * Static method to instantiate the class.
      */
@@ -108,5 +110,29 @@ class ArticleHelper
 
             return TRUE;
         });
+
+        // Check language is exists
+        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
+            $lang_name = $value;
+
+            $language = Language::where('status', '=', 'active')
+                            ->where('name', $lang_name)
+                            ->first();
+
+            if (empty($language)) {
+                return FALSE;
+            }
+
+            $this->valid_language = $language;
+            return TRUE;
+        });
+
     }
+
+    public function getValidLanguage()
+    {
+        return $this->valid_language;
+    }
+
+
 }
