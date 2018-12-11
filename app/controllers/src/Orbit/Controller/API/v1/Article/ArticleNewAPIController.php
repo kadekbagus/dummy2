@@ -8,17 +8,18 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Validator;
+use Orbit\Controller\API\v1\Article\ArticleHelper;
 
 use Lang;
 use Config;
 use Category;
 use Event;
-
+use Tenant;
+use BaseMerchant;
 use Article;
 use ArticleLinkToObject;
 use ArticleVideo;
 
-use Orbit\Controller\API\v1\Article\ArticleHelper;
 
 class ArticleNewAPIController extends ControllerAPI
 {
@@ -197,13 +198,23 @@ class ArticleNewAPIController extends ControllerAPI
             $newArticle->object_mall = $mall;
 
             $merchant = array();
+
             foreach ($objectMerchants as $merchantId) {
-                $saveObjectMerchant = new ArticleLinkToObject();
-                $saveObjectMerchant->article_id = $newArticle->article_id;
-                $saveObjectMerchant->object_id = $merchantId;
-                $saveObjectMerchant->object_type = 'merchant';
-                $saveObjectMerchant->save();
-                $merchant[] = $saveObjectMerchant;
+                $merchantName = Tenant::select('name')->where('merchant_id', $merchantId)->first();
+
+                if (! empty($merchantName)) {
+                    $baseMerchant = BaseMerchant::where('name', $merchantName->name)->first();
+
+                    if (! empty($baseMerchant)) {
+                        $saveObjectMerchant = new ArticleLinkToObject();
+                        $saveObjectMerchant->article_id = $newArticle->article_id;
+                        $saveObjectMerchant->object_id = $baseMerchant->base_merchant_id;
+                        $saveObjectMerchant->object_type = 'merchant';
+                        $saveObjectMerchant->save();
+                        $merchant[] = $saveObjectMerchant;
+                    }
+                }
+
             }
             $newArticle->object_merchant = $merchant;
 
