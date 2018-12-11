@@ -10,26 +10,25 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Util\PaginationNumber;
-
-use Article;
+use BaseMerchant;
+use Country;
+use Mall;
 use Validator;
 use Lang;
-
 use DB;
 use Config;
 use stdclass;
-use Orbit\Controller\API\v1\Article\ArticleHelper;
 
-class ArticleListAPIController extends ControllerAPI
+class CountryListAPIController extends ControllerAPI
 {
-    protected $articleRoles = ['article writer', 'article publisher'];
+    protected $roles = ['article writer', 'article publisher'];
 
     /**
-     * GET Search / list Article
+     * GET Search Country
      *
      * @author Firmansyah <firmansyah@dominopos.com>
      */
-    public function getSearchArticle()
+    public function getSearchCountry()
     {
         try {
             $httpCode = 200;
@@ -43,14 +42,11 @@ class ArticleListAPIController extends ControllerAPI
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = $this->articleRoles;
+            $validRoles = $this->roles;
             if (! in_array(strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
-
-            $articleHelper = ArticleHelper::create();
-            // $articleHelper->merchantCustomValidator();
 
             $sort_by = OrbitInput::get('sortby');
 
@@ -59,10 +55,10 @@ class ArticleListAPIController extends ControllerAPI
                     'sortby' => $sort_by,
                 ),
                 array(
-                    'sortby' => 'in:title,published_at,created_at,status',
+                    'sortby' => 'in:name',
                 ),
                 array(
-                    'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: title,published_at,created_at,status',
+                    'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: name',
                 )
             );
 
@@ -74,59 +70,33 @@ class ArticleListAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $article = Article::where('status', '!=', 'deleted')
-                                ->with('objectNews')
-                                ->with('objectPromotion')
-                                ->with('objectCoupon')
-                                ->with('objectMall')
-                                ->with('objectMerchant')
-                                ->with('category')
-                                ->with('mediaCover')
-                                ->with('mediaContent')
-                                ->with('video');
+            $mallCountry = Mall::groupBy('country')->lists('country');
+            $countries = Country::select('country_id', 'name', 'code')->whereIn('name', $mallCountry);
 
-            OrbitInput::get('article_id', function($article_id) use ($article)
+            // Filter country by name
+            OrbitInput::get('name', function($name) use ($countries)
             {
-                $article->where('article_id', $article_id);
+                $countries->where('name', $name);
             });
 
-            // Filter merchant by name
-            OrbitInput::get('title', function($title) use ($article)
+            // Filter country by matching name pattern
+            OrbitInput::get('name_like', function($name) use ($countries)
             {
-                $article->where('title', $title);
+                $countries->where('name', 'like', "%$name%");
             });
-
-            // Filter merchant by matching name pattern
-            OrbitInput::get('title_like', function($title) use ($article)
-            {
-                $article->where('title', 'like', "%$title%");
-            });
-
-            // Add new relation based on request
-            OrbitInput::get('with', function ($with) use ($article) {
-                $with = (array) $with;
-
-                foreach ($with as $relation) {
-                    if ($relation === 'partners') {
-                        $article->with('partners');
-                    }
-                }
-            });
-
-            $article->groupBy('article_id');
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
-            $_articles = clone $article;
+            $_countries = clone $countries;
 
-            $take = PaginationNumber::parseTakeFromGet('merchant');
-            $article->take($take);
+            $take = PaginationNumber::parseTakeFromGet('country');
+            $countries->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();
-            $article->skip($skip);
+            $countries->skip($skip);
 
             // Default sort by
-            $sortBy = 'title';
+            $sortBy = 'name';
             // Default sort mode
             $sortMode = 'asc';
 
@@ -134,10 +104,7 @@ class ArticleListAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'title' => 'title',
-                    'published_at' => 'published_at',
-                    'created_at' => 'created_at',
-                    'status' => 'status',
+                    'name' => 'name'
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
@@ -151,20 +118,15 @@ class ArticleListAPIController extends ControllerAPI
                     $sortMode = 'desc';
                 }
             });
-            $article->orderBy($sortBy, $sortMode);
+            $countries->orderBy($sortBy, $sortMode);
 
-            $totalArticles = RecordCounter::create($_articles)->count();
-            $listOfArticles = $article->get();
+            $totalCountries = RecordCounter::create($_countries)->count();
+            $listOfCountries = $countries->get();
 
             $data = new stdclass();
-            $data->total_records = $totalArticles;
-            $data->returned_records = count($listOfArticles);
-            $data->records = $listOfArticles;
-
-            if ($totalArticles === 0) {
-                $data->records = NULL;
-                $this->response->message = Lang::get('statuses.orbit.nodata.merchant');
-            }
+            $data->total_records = $totalCountries;
+            $data->returned_records = count($listOfCountries);
+            $data->records = $listOfCountries;
 
             $this->response->data = $data;
         } catch (ACLForbiddenException $e) {

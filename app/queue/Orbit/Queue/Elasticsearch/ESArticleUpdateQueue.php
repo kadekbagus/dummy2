@@ -157,16 +157,26 @@ class ESArticleUpdateQueue
 
             // Categories
 
-            $categories = array();
+            $linkToCategories = array();
             foreach ($article->category as $category) {
-                $linkToMerchant = array(
+                $linkToCategory = array(
                     "category_id" => $category->category_id,
                     "name" => $category->category_name,
                 );
 
-                $categories[] = $linkToMerchant;
+                $linkToCategories[] = $linkToCategory;
             }
 
+            // Medias
+            $linkToMedias = array();
+            foreach ($article->media_cover as $media) {
+                $linkToMedia = array(
+                    "media_name_long" => $media->media_name_long,
+                    "image_url" => $media->path,
+                );
+
+                $linkToMedias[] = $linkToMedia;
+            }
 
             $body = [
                 'article_id' => $article->article_id,
@@ -183,7 +193,8 @@ class ESArticleUpdateQueue
                 'link_to_coupons' => $linkToCoupons,
                 'link_to_malls' => $linkToMalls,
                 'link_to_brands' => $linkToMerchants,
-                'link_to_categories' => $categories
+                'link_to_categories' => $categories,
+                'media' => $linkToMedias
             ];
 
             if ($response_search['hits']['total'] > 0) {
