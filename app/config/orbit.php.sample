@@ -1507,6 +1507,71 @@ return array(
     ),
 
     'upload'    => array(
+        // new type to handle all image upload => media
+        // used by MediaAPIController.php
+        'media' => array(
+            'image' => array(
+                // File name format (img-[ObjectID]-[variation-suffix]-[Microtime].[Extension])
+                'file_name_format' => 'img-%s-%s-%s.%s',
+
+                // Media name IDs mapping (media_name_id => object_name)
+                'media_names' => [
+                    'merchant_photos' => 'merchant',
+                    'merchant_other_photos' => 'merchant',
+                    'base_merchant_photos' => 'base_merchant',
+                    'base_merchant_other_photos' => 'base_merchant',
+                    'article_cover_image' => 'article',
+                    'article_content_image' => 'article',
+                    'marketplace_image' => 'marketplace',
+                    'product_image' => 'product',
+                ],
+
+                // Allowed Mimetype
+                'mime_type' => array('image/jpeg', 'image/png'),
+
+                // Maximum file size allowed in bytes
+                'file_size' => 3000000,
+
+                // The target path which file to be stored
+                // image type should go to subdirectory of path
+                // eg: 'uploads/media/images/merchant/[merchant_id]/merchant_photos/'
+                // eg: 'uploads/media/images/merchant/[merchant_id]/merchant_other_photos/'
+                'path_format' => 'uploads/media/images/%s/%s/%s/',
+
+                // thumbnail sizes in pixels
+                'thumbnail_size' => [
+                    'desktop' => [
+                        // will ignore height if true
+                        'keep_aspect_ratio' => true,
+                        // enable to make it fit
+                        'crop_fit' => false,
+                        'width' => 275,
+                        'height' => 275
+                    ],
+                    'mobile' => [
+                        // will ignore height if true
+                        'keep_aspect_ratio' => true,
+                        // enable to make it fit
+                        'crop_fit' => false,
+                        'width' => 180,
+                        'height' => 180
+                    ]
+                ],
+
+                // mobile image resize
+                'mobile_size' => [
+                    'width' => 414,
+                ],
+
+                // image quality
+                'qualities' => [
+                    'orig' => 100,
+                    'high' => 90,
+                    'medium' => 50,
+                    'low' => 30,
+                ]
+            ),
+        ),
        'merchant'  => array(
             'logo' => array(
                 // Allowed Extension
