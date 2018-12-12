@@ -1,9 +1,9 @@
 <?php
 
-class Product extends Eloquent
+class MarketPlace extends Eloquent
 {
     /**
-    * Product Model
+    * MarketPlace Model
     *
     * @author kadek <kadek@dominopos.com>
     *
@@ -15,13 +15,13 @@ class Product extends Eloquent
      */
     use ModelStatusTrait;
 
-    protected $table = 'products';
+    protected $table = 'marketplaces';
 
-    protected $primaryKey = 'product_id';
+    protected $primaryKey = 'marketplace_id';
 
     public function media()
     {
-        return $this->hasMany('Media', 'object_id', 'product_id')
+        return $this->hasMany('Media', 'object_id', 'marketplace_id')
                     ->where('object_name', 'product');
     }
 }
