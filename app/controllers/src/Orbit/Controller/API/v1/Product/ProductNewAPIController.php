@@ -76,7 +76,7 @@ class ProductNewAPIController extends ControllerAPI
                 ),
                 array(
                     'name'             => 'required',
-                    'status'           => 'required|in:active,inactive',
+                    'status'           => 'in:active,inactive',
                     'country_id'       => 'required',
                 )
             );
@@ -91,7 +91,7 @@ class ProductNewAPIController extends ControllerAPI
             Event::fire('orbit.newproduct.postnewproduct.after.validation', array($this, $validator));
 
             $newProduct = new Product;
-            $newProduct->name = $title;
+            $newProduct->name = $name;
             $newProduct->short_description = $shortDescription;
             $newProduct->status = $status;
             $newProduct->country_id = $countryId;
