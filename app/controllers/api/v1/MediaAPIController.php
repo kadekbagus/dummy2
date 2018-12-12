@@ -17,7 +17,7 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 class MediaAPIController extends ControllerAPI
 {
     /** Allowed roles */
-    protected $uploadRoles = ['merchant database admin', 'article writer', 'article publisher'];
+    protected $uploadRoles = ['merchant database admin', 'article writer', 'article publisher', 'product manager'];
 
     /**
      * Pass false if called from another Class (if caller Class already emit transaction)
