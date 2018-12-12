@@ -123,7 +123,8 @@ return array(
 		'Fideloper\Proxy\ProxyServiceProvider',
 		'Orbit\RoutingServiceProvider',
         'Laraeval\Laraeval\LaraevalServiceProvider',
-        'Artdarek\OAuth\OAuthServiceProvider'
+        'Artdarek\OAuth\OAuthServiceProvider',
+        Intervention\Image\ImageServiceProvider::class
 	),
 
 	/*
@@ -191,6 +192,7 @@ return array(
 		'Validator'         => 'Illuminate\Support\Facades\Validator',
 		'View'              => 'Illuminate\Support\Facades\View',
 		'OAuth' 			=> 'Artdarek\OAuth\Facade\OAuth',
+        'Image'             => Intervention\Image\Facades\Image::class
 
 	),
 
