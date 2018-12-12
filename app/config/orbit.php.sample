@@ -6744,6 +6744,70 @@ return array(
                 'parameter_name' => 'object_id'
             ),
 
+            // Articles Activities
+            '187' => array(
+                'name' => 'click_see_all_articles',
+                'name_long' => 'Click See All Articles',
+                'module_name' => 'Article',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+
+            '188' => array(
+                'name' => 'click_tab_menu',
+                'name_long' => 'Click Tab Menu',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+
+            '189' => array(
+                'name' => 'click_article_list',
+                'name_long' => 'Click Article List',
+                'module_name' => 'Article',
+                'type' => 'click',
+                'object_type' => 'Article',
+                'parameter_name' => 'object_id'
+            ),
+
+            '190' => array(
+                'name' => 'view_article_detail',
+                'name_long' => 'View Article Detail Page',
+                'module_name' => 'Article',
+                'type' => 'view',
+                'object_type' => 'Article',
+                'parameter_name' => 'object_id'
+            ),
+
+            '191' => array(
+                'name' => 'click_image_article',
+                'name_long' => 'Click Image Article',
+                'module_name' => 'Article',
+                'type' => 'click',
+                'object_type' => 'Article',
+                'parameter_name' => 'object_id'
+            ),
+
+            '192' => array(
+                'name' => 'click_play_video_article',
+                'name_long' => 'Click Play Video Article',
+                'module_name' => 'Article',
+                'type' => 'click',
+                'object_type' => 'Article',
+                'parameter_name' => 'object_id'
+            ),
+
+            '193' => array(
+                'name' => 'click_share_article',
+                'name_long' => ' Click Share Article',
+                'module_name' => 'Article',
+                'type' => 'click',
+                'object_type' => 'Article',
+                'parameter_name' => 'object_id'
+            ),
+
         ),
     ),
 

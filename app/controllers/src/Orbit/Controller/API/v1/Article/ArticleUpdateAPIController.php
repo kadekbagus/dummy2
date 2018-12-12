@@ -8,27 +8,27 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Validator;
+use Orbit\Controller\API\v1\Article\ArticleHelper;
 
 use Lang;
 use Config;
 use Category;
 use Event;
-
+use Tenant;
+use BaseMerchant;
 use Article;
 use ArticleLinkToObject;
 use ArticleVideo;
 
-use Orbit\Controller\API\v1\Article\ArticleHelper;
 
 class ArticleUpdateAPIController extends ControllerAPI
 {
     protected $articleRoles = ['article writer', 'article publisher'];
 
-
     /**
-     * Create new article on article manager portal.
+     * Update article on article manager portal.
      *
-     * @author firmansyah <firmansyah@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      */
     public function postUpdateArticle()
     {
@@ -45,7 +45,6 @@ class ArticleUpdateAPIController extends ControllerAPI
             // Try to check access control list, does this user allowed to
             // perform this action
             $user = $this->api->user;
-
             Event::fire('orbit.article.postupdatearticle.before.authz', array($this, $user));
 
             // @Todo: Use ACL authentication instead
@@ -57,8 +56,6 @@ class ArticleUpdateAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.article.postupdatearticle.after.authz', array($this, $user));
-
-            $this->registerCustomValidation();
 
             $articleHelper = ArticleHelper::create();
             $articleHelper->articleCustomValidator();
@@ -149,7 +146,7 @@ class ArticleUpdateAPIController extends ControllerAPI
 
             Event::fire('orbit.article.postupdatearticle.before.save', array($this, $updatedArticle));
 
-            $updatedArticle->modified_by = $this->api->user->user_id;
+            $updatedArticle->modified_by = $user->user_id;
             $updatedArticle->touch();
 
             $updatedArticle->save();
@@ -230,12 +227,21 @@ class ArticleUpdateAPIController extends ControllerAPI
 
                 $merchant = array();
                 foreach ($objectMerchants as $merchantId) {
-                    $saveObjectMerchant = new ArticleLinkToObject();
-                    $saveObjectMerchant->article_id = $articleId;
-                    $saveObjectMerchant->object_id = $merchantId;
-                    $saveObjectMerchant->object_type = 'merchant';
-                    $saveObjectMerchant->save();
-                    $merchant[] = $saveObjectMerchant;
+                    $merchantName = Tenant::select('name')->where('merchant_id', $merchantId)->first();
+
+                    if (! empty($merchantName)) {
+                        $baseMerchant = BaseMerchant::where('name', $merchantName->name)->first();
+
+                        if (! empty($baseMerchant)) {
+                            $saveObjectMerchant = new ArticleLinkToObject();
+                            $saveObjectMerchant->article_id = $articleId;
+                            $saveObjectMerchant->object_id = $baseMerchant->base_merchant_id;
+                            $saveObjectMerchant->object_type = 'merchant';
+                            $saveObjectMerchant->save();
+                            $merchant[] = $saveObjectMerchant;
+                        }
+                    }
+
                 }
                 $updatedArticle->object_merchant = $merchant;
             });

@@ -74,7 +74,9 @@ class ArticleListAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $article = Article::where('status', '!=', 'deleted')
+            $article = Article::select(DB::raw("{$prefix}articles.*, {$prefix}countries.name as country_name"))
+                                ->join('countries', 'articles.country_id', '=', 'countries.country_id')
+                                ->where('articles.status', '!=', 'deleted')
                                 ->with('objectNews')
                                 ->with('objectPromotion')
                                 ->with('objectCoupon')
@@ -102,16 +104,9 @@ class ArticleListAPIController extends ControllerAPI
                 $article->where('title', 'like', "%$title%");
             });
 
-            // Add new relation based on request
-            OrbitInput::get('with', function ($with) use ($article) {
-                $with = (array) $with;
-
-                foreach ($with as $relation) {
-                    if ($relation === 'partners') {
-                        $article->with('partners');
-                    }
-                }
-            });
+            if ($role->role_name = 'Article Writer') {
+                $article->where('created_by', $user->user_id);
+            }
 
             $article->groupBy('article_id');
 
@@ -136,8 +131,8 @@ class ArticleListAPIController extends ControllerAPI
                 $sortByMapping = array(
                     'title' => 'title',
                     'published_at' => 'published_at',
-                    'created_at' => 'created_at',
-                    'status' => 'status',
+                    'created_at' => 'articles.created_at',
+                    'status' => 'articles.status',
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
