@@ -28,3 +28,11 @@ Route::post('/api/v1/new-product/new', function()
 Route::post('/app/v1/new-product/new', ['as' => 'product-api-product-new', 'uses' => 'IntermediateProductAuthController@ProductNew_postNewProduct']);
 
 
+Route::post('/api/v1/new-product/update', function()
+{
+    return Orbit\Controller\API\v1\Product\ProductUpdateAPIController::create()->postUpdateProduct();
+});
+
+Route::post('/app/v1/new-product/update', ['as' => 'product-api-product-update', 'uses' => 'IntermediateProductAuthController@ProductUpdate_postUpdateProduct']);
+
+

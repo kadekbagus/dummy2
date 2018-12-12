@@ -63,6 +63,8 @@ class ProductNewAPIController extends ControllerAPI
             $shortDescription = OrbitInput::post('short_description');
             $status = OrbitInput::post('status');
             $countryId = OrbitInput::post('country_id');
+            $categories = OrbitInput::post('categories', []);
+            $marketplaces = OrbitInput::post('marketplaces', []);
 
             // Begin database transaction
             $this->beginTransaction();
@@ -99,6 +101,28 @@ class ProductNewAPIController extends ControllerAPI
             Event::fire('orbit.newproduct.postnewproduct.before.save', array($this, $newProduct));
 
             $newProduct->save();
+
+            $category = array();
+            foreach ($categories as $categoryId) {
+                $saveObjectCategories = new ProductLinkToObject();
+                $saveObjectCategories->product_id = $newProduct->product_id;
+                $saveObjectCategories->object_id = $categoryId;
+                $saveObjectCategories->object_type = 'category';
+                $saveObjectCategories->save();
+                $category[] = $saveObjectCategories;
+            }
+            $newProduct->category = $category;
+
+            $marketplace = array();
+            foreach ($marketplaces as $marketPlaceId) {
+                $saveObjectMarketPlaces = new ProductLinkToObject();
+                $saveObjectMarketPlaces->product_id = $newProduct->product_id;
+                $saveObjectMarketPlaces->object_id = $marketPlaceId;
+                $saveObjectMarketPlaces->object_type = 'marketplace';
+                $saveObjectMarketPlaces->save();
+                $marketplace[] = $saveObjectMarketPlaces;
+            }
+            $newProduct->marketplace = $marketplace;
 
 
             Event::fire('orbit.newproduct.postnewproduct.after.save', array($this, $newProduct));
