@@ -1,4 +1,4 @@
-<?php namespace Orbit\Controller\API\v1\Marketplace;
+<?php namespace Orbit\Controller\API\v1\Product;
 
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
