@@ -1558,6 +1558,8 @@ return array(
                     'base_merchant_other_photos' => 'base_merchant',
                     'article_cover_image' => 'article',
                     'article_content_image' => 'article',
+                    'marketplace_image' => 'marketplace',
+                    'product_image' => 'product',
                 ],
 
                 // Allowed Mimetype
