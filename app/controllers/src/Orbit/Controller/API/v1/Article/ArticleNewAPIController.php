@@ -145,6 +145,7 @@ class ArticleNewAPIController extends ControllerAPI
             $newArticle->body = $body;
             $newArticle->status = $status;
             $newArticle->country_id = $countryId;
+            $newArticle->created_by = $user->user_id;
             $newArticle->published_at = $publishedAt;
 
             Event::fire('orbit.article.postnewarticle.before.save', array($this, $newArticle));

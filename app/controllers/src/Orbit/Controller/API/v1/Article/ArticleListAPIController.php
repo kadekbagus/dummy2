@@ -104,6 +104,10 @@ class ArticleListAPIController extends ControllerAPI
                 $article->where('title', 'like', "%$title%");
             });
 
+            if ($role->role_name = 'Article Writer') {
+                $article->where('created_by', $user->user_id);
+            }
+
             $article->groupBy('article_id');
 
             // Clone the query builder which still does not include the take,
