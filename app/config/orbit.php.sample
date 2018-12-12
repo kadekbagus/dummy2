@@ -1488,6 +1488,7 @@ return array(
                 'Set-X-OMS-CS',
                 'Set-X-OMS-MDM',
                 'Set-X-OMS-MT',
+                'Set-X-OMS-PP',
             ],
 
             // No need protocol, just enter domain name
