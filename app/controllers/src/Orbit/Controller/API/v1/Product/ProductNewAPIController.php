@@ -34,17 +34,17 @@ class ProductNewAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.product.postnewproduct.before.auth', array($this));
+            Event::fire('orbit.newproduct.postnewproduct.before.auth', array($this));
 
             // Require authentication
             $this->checkAuth();
 
-            Event::fire('orbit.product.postnewproduct.after.auth', array($this));
+            Event::fire('orbit.newproduct.postnewproduct.after.auth', array($this));
 
             // Try to check access control list, does this user allowed to
             // perform this action
             $user = $this->api->user;
-            Event::fire('orbit.product.postnewproduct.before.authz', array($this, $user));
+            Event::fire('orbit.newproduct.postnewproduct.before.authz', array($this, $user));
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
@@ -54,10 +54,10 @@ class ProductNewAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            Event::fire('orbit.product.postnewproduct.after.authz', array($this, $user));
+            Event::fire('orbit.newproduct.postnewproduct.after.authz', array($this, $user));
 
-            $productHelper = ProducteHelper::create();
-            $productHelper->articleCustomValidator();
+            $productHelper = ProductHelper::create();
+            $productHelper->productCustomValidator();
 
             $name = OrbitInput::post('name');
             $shortDescription = OrbitInput::post('short_description');
@@ -88,7 +88,7 @@ class ProductNewAPIController extends ControllerAPI
             }
 
 
-            Event::fire('orbit.product.postnewproduct.after.validation', array($this, $validator));
+            Event::fire('orbit.newproduct.postnewproduct.after.validation', array($this, $validator));
 
             $newProduct = new Product;
             $newProduct->name = $title;
@@ -96,21 +96,21 @@ class ProductNewAPIController extends ControllerAPI
             $newProduct->status = $status;
             $newProduct->country_id = $countryId;
 
-            Event::fire('orbit.product.postnewproduct.before.save', array($this, $newProduct));
+            Event::fire('orbit.newproduct.postnewproduct.before.save', array($this, $newProduct));
 
             $newProduct->save();
 
 
-            Event::fire('orbit.article.postnewproduct.after.save', array($this, $newProduct));
+            Event::fire('orbit.newproduct.postnewproduct.after.save', array($this, $newProduct));
 
             $this->response->data = $newProduct;
 
             // Commit the changes
             $this->commit();
 
-          Event::fire('orbit.article.postnewproduct.after.commit', array($this, $newProduct));
+          Event::fire('orbit.newproduct.postnewproduct.after.commit', array($this, $newProduct));
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.article.postnewproduct.access.forbidden', array($this, $e));
+            Event::fire('orbit.newproduct.postnewproduct.access.forbidden', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -121,7 +121,7 @@ class ProductNewAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.article.postnewproduct.invalid.arguments', array($this, $e));
+            Event::fire('orbit.newproduct.postnewproduct.invalid.arguments', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -132,7 +132,7 @@ class ProductNewAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
         } catch (QueryException $e) {
-            Event::fire('orbit.article.postnewproduct.query.error', array($this, $e));
+            Event::fire('orbit.newproduct.postnewproduct.query.error', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -149,7 +149,7 @@ class ProductNewAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
         } catch (Exception $e) {
-            Event::fire('orbit.article.postnewproduct.general.exception', array($this, $e));
+            Event::fire('orbit.newproduct.postnewproduct.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
