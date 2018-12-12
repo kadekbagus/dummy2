@@ -17,17 +17,12 @@ use \URL;
 use Redis;
 
 use Article;
-
-use News;
-use Advert;
-use NewsMerchant;
 use Language;
 use Validator;
-
 use Orbit\Helper\Util\PaginationNumber;
 use Activity;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
-use Orbit\Controller\API\v1\Pub\News\NewsHelper;
+
 use Mall;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
@@ -150,7 +145,6 @@ class ArticleListAPIController extends PubControllerAPI
             $timestamp = date("Y-m-d H:i:s");
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
             $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
-            $dateNow = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
             $dateTime = explode(' ', $dateTime);
             $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
 
@@ -169,22 +163,14 @@ class ArticleListAPIController extends PubControllerAPI
                                         'status' => 'active'
                                     )
                                 )
+                            ),
+                            array(
+                                'range' => array(
+                                    'published_at' => array(
+                                        'lte' => $dateTimeEs
+                                    )
+                                )
                             )
-                            // ,
-                            // array(
-                            //     'range' => array(
-                            //         'published_at' => array(
-                            //             'lte' => $dateTimeEs
-                            //         )
-                            //     )
-                            // ) ,
-                            // array(
-                            //     'range' => array(
-                            //         'end_date' => array(
-                            //             'gte' => $dateTimeEs
-                            //         )
-                            //     )
-                            // )
                         )
                     )
                 )
@@ -201,20 +187,20 @@ class ArticleListAPIController extends PubControllerAPI
                     $withKeywordSearch = true;
                     $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.articles.keyword', '');
 
-                    $priority['name'] = Config::get('orbit.elasticsearch.priority.articles.name', '^6');
-                    $priority['object_type'] = Config::get('orbit.elasticsearch.priority.articles.object_type', '^5');
-                    $priority['keywords'] = Config::get('orbit.elasticsearch.priority.articles.keywords', '^4');
-                    $priority['description'] = Config::get('orbit.elasticsearch.priority.articles.description', '^3');
-                    $priority['mall_name'] = Config::get('orbit.elasticsearch.priority.articles.mall_name', '^3');
-                    $priority['city'] = Config::get('orbit.elasticsearch.priority.articles.city', '^2');
-                    $priority['province'] = Config::get('orbit.elasticsearch.priority.articles.province', '^2');
-                    $priority['country'] = Config::get('orbit.elasticsearch.priority.articles.country', '^2');
+                    $priority['title'] = Config::get('orbit.elasticsearch.priority.articles.title', '^6');
+                    $priority['body'] = Config::get('orbit.elasticsearch.priority.articles.body', '^5');
 
-                    $filterKeyword['bool']['should'][] = array('nested' => array('path' => 'translation', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('translation.name'.$priority['name'], 'translation.description'.$priority['description'])))));
-
-                    $filterKeyword['bool']['should'][] = array('nested' => array('path' => 'link_to_tenant', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('link_to_tenant.city'.$priority['city'], 'link_to_tenant.province'.$priority['province'], 'link_to_tenant.country'.$priority['country'], 'link_to_tenant.mall_name'.$priority['mall_name'])))));
-
-                    $filterKeyword['bool']['should'][] = array('multi_match' => array('query' => $keyword, 'fields' => array('object_type'.$priority['object_type'], 'keywords'.$priority['keywords'])));
+                    $filterKeyword['bool']['should'][] = array(
+                                                                'query' => array(
+                                                                    'multi_match' => array(
+                                                                        'query' => $keyword,
+                                                                        'fields' => array(
+                                                                            'title' . $priority['title'],
+                                                                            'body' . $priority['body']
+                                                                        )
+                                                                    )
+                                                                )
+                                                            );
 
                     if ($shouldMatch != '') {
                         $filterKeyword['bool']['minimum_should_match'] = $shouldMatch;
@@ -226,10 +212,41 @@ class ArticleListAPIController extends PubControllerAPI
 
             OrbitInput::get('mall_id', function($mallId) use (&$jsonQuery) {
                 if (! empty($mallId)) {
-                    $withMallId = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.parent_id' => $mallId))))));
+                    $withMallId = array('nested' => array('path' => 'link_to_malls', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_malls.mall_id' => $mallId))))));
                     $jsonQuery['query']['bool']['filter'][] = $withMallId;
                 }
              });
+
+            OrbitInput::get('brand_id', function($brandId) use (&$jsonQuery) {
+                if (! empty($brandId)) {
+                    $withBrandId = array('nested' => array('path' => 'link_to_brands', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_brands.brand_id' => $brandId))))));
+                    $jsonQuery['query']['bool']['filter'][] = $withBrandId;
+                }
+             });
+
+            OrbitInput::get('event_id', function($eventId) use (&$jsonQuery) {
+                if (! empty($eventId)) {
+                    $withEventId = array('nested' => array('path' => 'link_to_events', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_events.event_id' => $eventId))))));
+                    $jsonQuery['query']['bool']['filter'][] = $withEventId;
+                }
+             });
+
+            OrbitInput::get('promotion_id', function($promotionId) use (&$jsonQuery) {
+                if (! empty($promotionId)) {
+                    $withPromotionId = array('nested' => array('path' => 'link_to_promotions', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_promotions.promotion_id' => $promotionId))))));
+                    $jsonQuery['query']['bool']['filter'][] = $withPromotionId;
+                }
+             });
+
+            OrbitInput::get('coupon_id', function($couponId) use (&$jsonQuery) {
+                if (! empty($couponId)) {
+                    $withCouponId = array('nested' => array('path' => 'link_to_coupons', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_coupons.coupon_id' => $couponId))))));
+                    $jsonQuery['query']['bool']['filter'][] = $withCouponId;
+                }
+             });
+
+            // get the category of object
+
 
 
             // filter by category_id
@@ -250,19 +267,14 @@ class ArticleListAPIController extends PubControllerAPI
                 $jsonQuery['query']['bool']['filter'][] = $categoryFilter;
             });
 
-
+            // filter by country
             $countryCityFilterArr = [];
             $countryData = null;
-            // filter by country
             OrbitInput::get('country', function ($countryFilter) use (&$jsonQuery, &$countryCityFilterArr, &$countryData) {
                 $countryData = Country::select('country_id')->where('name', $countryFilter)->first();
 
-                $countryCityFilterArr = ['nested' => ['path' => 'link_to_tenant', 'query' => ['bool' => []], 'inner_hits' => ['name' => 'country_city_hits']]];
-
-                $countryCityFilterArr['nested']['query']['bool'] = ['must' => ['match' => ['link_to_tenant.country.raw' => $countryFilter]]];
+                $countryCityFilterArr['query']['bool'] = ['must' => ['match' => ['country' => $countryFilter]]];
             });
-
-
 
             if (! empty($countryCityFilterArr)) {
                 $jsonQuery['query']['bool']['filter'][] = $countryCityFilterArr;
@@ -280,7 +292,6 @@ class ArticleListAPIController extends PubControllerAPI
 
             $sortByPageType = array();
             $pageTypeScore = '';
-            if ($list_type === 'featured') { } else { }
 
             $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
             $sortPage = array('_script' => array('script' => $sortPageScript, 'type' => 'string', 'order' => 'desc'));
@@ -313,7 +324,6 @@ class ArticleListAPIController extends PubControllerAPI
             $esIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.articles.index');
             $locationId = ! empty($mallId) ? $mallId : 0;
 
-
             $esParam = [
                 'index'  => $esIndex,
                 'type'   => Config::get('orbit.elasticsearch.indices.articles.type'),
@@ -330,7 +340,7 @@ class ArticleListAPIController extends PubControllerAPI
                 $response = $client->search($esParam);
             }
 
-            $listOfRec = $response['hits'];
+            $records = $response['hits']['hits'];
 
             $cdnConfig = Config::get('orbit.cdn');
             $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
@@ -342,13 +352,13 @@ class ArticleListAPIController extends PubControllerAPI
             }
 
             $data = new \stdclass();
-            $data->returned_records = count($listOfRec);
-            $data->total_records = $listOfRec['total'];
+            $data->returned_records = count($records);
+            $data->total_records = $response['hits']['total'];
             if (is_object($mall)) {
                 $data->mall_name = $mall->name;
                 $data->mall_city = $mall->city;
             }
-            $data->records = $listOfRec;
+            $data->records = $records;
 
             $activityNotes = sprintf('Page viewed: Article list');
             $activity->setUser($user)
@@ -361,7 +371,6 @@ class ArticleListAPIController extends PubControllerAPI
                 ->setObjectDisplayName($viewType)
                 ->responseOK()
                 ->save();
-
 
             $this->response->data = $data;
             $this->response->code = 0;
