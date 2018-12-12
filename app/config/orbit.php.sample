@@ -926,6 +926,7 @@ return array(
             'mdm_portal' => 'X-OMS-MDM',
             'mt_portal' => 'X-OMS-MT',
             'rrp_portal' => 'X-OMS-RRP',
+            'pp_portal' => 'X-OMS-PP'
         ],
 
         /**
@@ -944,6 +945,7 @@ return array(
             'mdm_portal' => '8',
             'mt_portal' => '9',
             'rrp_portal' => '10',
+            'pp_portal' => '11'
         ],
 
         /**
@@ -1390,6 +1392,33 @@ return array(
                 // From Cookie
                 'cookie'    => array(
                     'name'      => 'X-OMS-RRP',
+                    // Expire time, should be set equals or higher than
+                    // SessionConifg.expire
+                    'expire' => 62208000,   // two years
+                    // Path of the cookie
+                    'path'      => '/',
+                    // domain
+                    'domain'    => NULL,
+                    // secure transfer via HTTPS only
+                    'secure'    => FALSE,
+                    // Deny access from client side script
+                    'httponly'  => TRUE
+                ),
+            ),
+
+            'pp_portal' => array(
+                'expire' => 3600,   // 1 hour
+                // From HTTP Headers
+                'header'  => array(
+                    'name'      => 'X-OMS-PP'
+                ),
+                // From Query String
+                'query_string' => array(
+                    'name'      => 'X-OMS-PP'
+                ),
+                // From Cookie
+                'cookie'    => array(
+                    'name'      => 'X-OMS-PP',
                     // Expire time, should be set equals or higher than
                     // SessionConifg.expire
                     'expire' => 62208000,   // two years
