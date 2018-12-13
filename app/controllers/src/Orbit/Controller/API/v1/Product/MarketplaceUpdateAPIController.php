@@ -18,7 +18,7 @@ use Tenant;
 use BaseMerchant;
 use Product;
 use ProductLinkToObject;
-use MarketPlace;
+use Marketplace;
 
 class MarketplaceUpdateAPIController extends ControllerAPI
 {
@@ -59,7 +59,7 @@ class MarketplaceUpdateAPIController extends ControllerAPI
             $productHelper = ProductHelper::create();
             $productHelper->productCustomValidator();
 
-            $productId = OrbitInput::post('product_id');
+            $marketplaceId = OrbitInput::post('marketplace_id');
             $status = OrbitInput::post('status');
 
             // Begin database transaction
@@ -67,11 +67,11 @@ class MarketplaceUpdateAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'product_id'       => $productId,
+                    'marketplace_id'   => $marketplaceId,
                     'status'           => $status,
                 ),
                 array(
-                    'product_id'       => 'required',
+                    'marketplace_id'   => 'required',
                     'status'           => 'in:active,inactive',
                 )
             );
@@ -84,73 +84,42 @@ class MarketplaceUpdateAPIController extends ControllerAPI
 
             Event::fire('orbit.marketplace.postupdatemarketplace.after.validation', array($this, $validator));
 
-            $updatedProduct = Product::where('product_id', $productId)->first();
+            $updatedMarketplace = Marketplace::where('marketplace_id', $marketplaceId)->first();
 
-            OrbitInput::post('name', function($name) use ($updatedProduct) {
-                $updatedProduct->name = $name;
+            OrbitInput::post('name', function($name) use ($updatedMarketplace) {
+                $updatedMarketplace->name = $name;
             });
 
-            OrbitInput::post('short_description', function($short_description) use ($updatedProduct) {
-                $updatedProduct->short_description = $short_description;
+            OrbitInput::post('short_description', function($short_description) use ($updatedMarketplace) {
+                $updatedMarketplace->short_description = $short_description;
             });
 
-            OrbitInput::post('status', function($status) use ($updatedProduct) {
-                $updatedProduct->status = $status;
+            OrbitInput::post('status', function($status) use ($updatedMarketplace) {
+                $updatedMarketplace->status = $status;
             });
 
-            OrbitInput::post('country_id', function($country_id) use ($updatedProduct) {
-                $updatedProduct->country_id = $country_id;
+            OrbitInput::post('country_id', function($country_id) use ($updatedMarketplace) {
+                $updatedMarketplace->country_id = $country_id;
             });
 
-            Event::fire('orbit.marketplace.postupdatemarketplace.before.save', array($this, $updatedProduct));
-
-            $updatedProduct->modified_by = $user->user_id;
-            $updatedProduct->touch();
-
-            $updatedProduct->save();
-
-            OrbitInput::post('categories', function($categories) use ($updatedProduct, $articleId) {
-                $deletedOldData = ProductLinkToObject::where('product_id', '=', $articleId)
-                                                     ->where('object_type', '=', 'category')
-                                                     ->delete();
-
-                $category = array();
-                foreach ($categories as $categoryId) {
-                    $saveObjectCategories = new ProductLinkToObject();
-                    $saveObjectCategories->product_id = $articleId;
-                    $saveObjectCategories->object_id = $categoryId;
-                    $saveObjectCategories->object_type = 'category';
-                    $saveObjectCategories->save();
-                    $category[] = $saveObjectCategories;
-                }
-                $updatedProduct->category = $category;
+            OrbitInput::post('website_url', function($website_url) use ($updatedMarketplace) {
+                $updatedMarketplace->website_url = $website_url;
             });
 
-            OrbitInput::post('marketplaces', function($marketplaces) use ($updatedProduct, $articleId) {
-                $deletedOldData = ProductLinkToObject::where('product_id', '=', $articleId)
-                                                     ->where('object_type', '=', 'marketplace')
-                                                     ->delete();
+            Event::fire('orbit.marketplace.postupdatemarketplace.before.save', array($this, $updatedMarketplace));
 
-                $marketplace = array();
-                foreach ($marketplaces as $marketplaceId) {
-                    $saveObjectCategories = new ProductLinkToObject();
-                    $saveObjectCategories->product_id = $articleId;
-                    $saveObjectCategories->object_id = $marketplaceId;
-                    $saveObjectCategories->object_type = 'marketplace';
-                    $saveObjectCategories->save();
-                    $marketplace[] = $saveObjectCategories;
-                }
-                $updatedProduct->marketplace = $marketplace;
-            });
+            $updatedMarketplace->modified_by = $user->user_id;
+            $updatedMarketplace->touch();
+            $updatedMarketplace->save();
 
-            Event::fire('orbit.marketplace.postupdatemarketplace.after.save', array($this, $updatedProduct));
+            Event::fire('orbit.marketplace.postupdatemarketplace.after.save', array($this, $updatedMarketplace));
 
-            $this->response->data = $updatedProduct;
+            $this->response->data = $updatedMarketplace;
 
             // Commit the changes
             $this->commit();
 
-          Event::fire('orbit.marketplace.postupdatemarketplace.after.commit', array($this, $updatedProduct));
+          Event::fire('orbit.marketplace.postupdatemarketplace.after.commit', array($this, $updatedMarketplace));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.marketplace.postupdatemarketplace.access.forbidden', array($this, $e));
 

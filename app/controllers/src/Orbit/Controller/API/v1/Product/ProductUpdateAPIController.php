@@ -109,15 +109,16 @@ class ProductUpdateAPIController extends ControllerAPI
 
             $updatedProduct->save();
 
-            OrbitInput::post('categories', function($categories) use ($updatedProduct, $articleId) {
-                $deletedOldData = ProductLinkToObject::where('product_id', '=', $articleId)
+            // update category
+            OrbitInput::post('categories', function($categories) use ($updatedProduct, $productId) {
+                $deletedOldData = ProductLinkToObject::where('product_id', '=', $productId)
                                                      ->where('object_type', '=', 'category')
                                                      ->delete();
 
                 $category = array();
                 foreach ($categories as $categoryId) {
                     $saveObjectCategories = new ProductLinkToObject();
-                    $saveObjectCategories->product_id = $articleId;
+                    $saveObjectCategories->product_id = $productId;
                     $saveObjectCategories->object_id = $categoryId;
                     $saveObjectCategories->object_type = 'category';
                     $saveObjectCategories->save();
@@ -126,21 +127,27 @@ class ProductUpdateAPIController extends ControllerAPI
                 $updatedProduct->category = $category;
             });
 
-            OrbitInput::post('marketplaces', function($marketplaces) use ($updatedProduct, $articleId) {
-                $deletedOldData = ProductLinkToObject::where('product_id', '=', $articleId)
-                                                     ->where('object_type', '=', 'marketplace')
+            // update brands
+            OrbitInput::post('brand_ids', function($brandIds) use ($updatedProduct, $productId) {
+                $deletedOldData = ProductLinkToObject::where('product_id', '=', $productId)
+                                                     ->where('object_type', '=', 'brand')
                                                      ->delete();
 
-                $marketplace = array();
-                foreach ($marketplaces as $marketplaceId) {
+                $brands = array();
+                foreach ($brandIds as $brandId) {
                     $saveObjectCategories = new ProductLinkToObject();
-                    $saveObjectCategories->product_id = $articleId;
-                    $saveObjectCategories->object_id = $marketplaceId;
-                    $saveObjectCategories->object_type = 'marketplace';
+                    $saveObjectCategories->product_id = $newProduct->product_id;
+                    $saveObjectCategories->object_id = $brandId;
+                    $saveObjectCategories->object_type = 'brand';
                     $saveObjectCategories->save();
-                    $marketplace[] = $saveObjectCategories;
+                    $brands[] = $saveObjectCategories;
                 }
-                $updatedProduct->marketplace = $marketplace;
+                $updatedProduct->brands = $brands;
+            });
+
+            // update marketplaces
+            OrbitInput::post('marketplaces', function($marketplace_json_string) use ($updatedProduct, $productHelper) {
+                $productHelper->validateAndSaveMarketplaces($updatedProduct, $marketplace_json_string, $scenario = 'update');
             });
 
             Event::fire('orbit.newproduct.postupdateproduct.after.save', array($this, $updatedProduct));
