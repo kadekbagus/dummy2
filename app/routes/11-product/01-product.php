@@ -34,41 +34,41 @@ Route::post('/api/v1/new-product/update', function()
 Route::post('/app/v1/new-product/update', ['as' => 'product-api-product-update', 'uses' => 'IntermediateProductAuthController@ProductUpdate_postUpdateProduct']);
 
 
-Route::post('/api/v1/marketplace/new', function()
-{
-    return Orbit\Controller\API\v1\Product\MarketplaceNewAPIController::create()->postNewMarketPlace();
-});
-Route::post('/app/v1/marketplace/new', ['as' => 'product-api-marketplace-new', 'uses' => 'IntermediateProductAuthController@MarketplaceUpdate_postNewMarketPlace']);
-
-
-Route::post('/api/v1/marketplace/update', function()
-{
-    return Orbit\Controller\API\v1\Product\MarketplaceUpdateAPIController::create()->postUpdateMarketPlace();
-});
-Route::post('/app/v1/marketplace/update', ['as' => 'product-api-marketplace-update', 'uses' => 'IntermediateProductAuthController@MarketplaceUpdate_postUpdateMarketPlace']);
-
 
 /**
  * List/Search country
  */
-Route::get('/api/v1/product/country/{search}', function()
+Route::get('/api/v1/new-product/country/{search}', function()
 {
     return Orbit\Controller\API\v1\Product\CountryListAPIController::create()->getSearchCountry();
 })
 ->where('search', '(list|search)');
 
-Route::get('/app/v1/product/country/{search}', ['as' => 'product-api-country-list', 'uses' => 'IntermediateProductAuthController@CountryList_getSearchCountry'])
+Route::get('/app/v1/new-product/country/{search}', ['as' => 'product-api-country-list', 'uses' => 'IntermediateProductAuthController@CountryList_getSearchCountry'])
     ->where('search', '(list|search)');
 
 
 /**
  * List/Search category
  */
-Route::get('/api/v1/product/category/{search}', function()
+Route::get('/api/v1/new-product/category/{search}', function()
 {
     return Orbit\Controller\API\v1\Product\CategoryListAPIController::create()->getSearchCategory();
 })
 ->where('search', '(list|search)');
 
-Route::get('/app/v1/product/category/{search}', ['as' => 'product-api-category-list', 'uses' => 'IntermediateProductAuthController@CategoryList_getSearchCategory'])
+Route::get('/app/v1/new-product/category/{search}', ['as' => 'product-api-category-list', 'uses' => 'IntermediateProductAuthController@CategoryList_getSearchCategory'])
+    ->where('search', '(list|search)');
+
+
+/**
+ * List/Search store
+ */
+Route::get('/api/v1/new-product/store/{search}', function()
+{
+    return Orbit\Controller\API\v1\Product\StoreListAPIController::create()->getSearchStore();
+})
+->where('search', '(list|search)');
+
+Route::get('/app/v1/new-product/store/{search}', ['as' => 'product-api-store-list', 'uses' => 'IntermediateProductAuthController@StoreList_getSearchStore'])
     ->where('search', '(list|search)');
