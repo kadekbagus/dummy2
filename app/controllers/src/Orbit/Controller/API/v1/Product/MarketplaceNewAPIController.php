@@ -18,7 +18,7 @@ use Tenant;
 use BaseMerchant;
 use Product;
 use ProductLinkToObject;
-use MarketPlace;
+use Marketplace;
 
 class MarketplaceNewAPIController extends ControllerAPI
 {
@@ -61,10 +61,9 @@ class MarketplaceNewAPIController extends ControllerAPI
 
             $name = OrbitInput::post('name');
             $shortDescription = OrbitInput::post('short_description');
-            $status = OrbitInput::post('status');
+            $status = OrbitInput::post('status', 'inactive');
             $countryId = OrbitInput::post('country_id');
-            $categories = OrbitInput::post('categories', []);
-            $marketplaces = OrbitInput::post('marketplaces', []);
+            $websiteUrl = OrbitInput::post('website_url');
 
             // Begin database transaction
             $this->beginTransaction();
@@ -89,50 +88,27 @@ class MarketplaceNewAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-
             Event::fire('orbit.marketplace.postnewmarketplace.after.validation', array($this, $validator));
 
-            $newProduct = new Product;
-            $newProduct->name = $name;
-            $newProduct->short_description = $shortDescription;
-            $newProduct->status = $status;
-            $newProduct->country_id = $countryId;
+            $newMarketPlace = new Marketplace;
+            $newMarketPlace->name = $name;
+            $newMarketPlace->short_description = $shortDescription;
+            $newMarketPlace->status = $status;
+            $newMarketPlace->country_id = $countryId;
+            $newMarketPlace->website_url = $websiteUrl;
 
-            Event::fire('orbit.marketplace.postnewmarketplace.before.save', array($this, $newProduct));
+            Event::fire('orbit.marketplace.postnewmarketplace.before.save', array($this, $newMarketPlace));
 
-            $newProduct->save();
+            $newMarketPlace->save();
 
-            $category = array();
-            foreach ($categories as $categoryId) {
-                $saveObjectCategories = new ProductLinkToObject();
-                $saveObjectCategories->product_id = $newProduct->product_id;
-                $saveObjectCategories->object_id = $categoryId;
-                $saveObjectCategories->object_type = 'category';
-                $saveObjectCategories->save();
-                $category[] = $saveObjectCategories;
-            }
-            $newProduct->category = $category;
+            Event::fire('orbit.marketplace.postnewmarketplace.after.save', array($this, $newMarketPlace));
 
-            $marketplace = array();
-            foreach ($marketplaces as $marketPlaceId) {
-                $saveObjectMarketPlaces = new ProductLinkToObject();
-                $saveObjectMarketPlaces->product_id = $newProduct->product_id;
-                $saveObjectMarketPlaces->object_id = $marketPlaceId;
-                $saveObjectMarketPlaces->object_type = 'marketplace';
-                $saveObjectMarketPlaces->save();
-                $marketplace[] = $saveObjectMarketPlaces;
-            }
-            $newProduct->marketplace = $marketplace;
-
-
-            Event::fire('orbit.marketplace.postnewmarketplace.after.save', array($this, $newProduct));
-
-            $this->response->data = $newProduct;
+            $this->response->data = $newMarketPlace;
 
             // Commit the changes
             $this->commit();
 
-          Event::fire('orbit.marketplace.postnewmarketplace.after.commit', array($this, $newProduct));
+          Event::fire('orbit.marketplace.postnewmarketplace.after.commit', array($this, $newMarketPlace));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.marketplace.postnewmarketplace.access.forbidden', array($this, $e));
 

@@ -23,7 +23,7 @@ Route::post('/api/v1/marketplace/new', function()
 {
     return Orbit\Controller\API\v1\Product\MarketplaceNewAPIController::create()->postNewMarketPlace();
 });
-Route::post('/app/v1/marketplace/new', ['as' => 'product-api-marketplace-new', 'uses' => 'IntermediateProductAuthController@MarketplaceUpdate_postNewMarketPlace']);
+Route::post('/app/v1/marketplace/new', ['as' => 'product-api-marketplace-new', 'uses' => 'IntermediateProductAuthController@MarketplaceNew_postNewMarketPlace']);
 
 
 Route::post('/api/v1/marketplace/update', function()
