@@ -48,3 +48,27 @@ Route::post('/api/v1/marketplace/update', function()
 Route::post('/app/v1/marketplace/update', ['as' => 'product-api-marketplace-update', 'uses' => 'IntermediateProductAuthController@MarketplaceUpdate_postUpdateMarketPlace']);
 
 
+/**
+ * List/Search country
+ */
+Route::get('/api/v1/product/country/{search}', function()
+{
+    return Orbit\Controller\API\v1\Product\CountryListAPIController::create()->getSearchCountry();
+})
+->where('search', '(list|search)');
+
+Route::get('/app/v1/product/country/{search}', ['as' => 'product-api-country-list', 'uses' => 'IntermediateProductAuthController@CountryList_getSearchCountry'])
+    ->where('search', '(list|search)');
+
+
+/**
+ * List/Search category
+ */
+Route::get('/api/v1/product/category/{search}', function()
+{
+    return Orbit\Controller\API\v1\Product\CategoryListAPIController::create()->getSearchCategory();
+})
+->where('search', '(list|search)');
+
+Route::get('/app/v1/product/category/{search}', ['as' => 'product-api-category-list', 'uses' => 'IntermediateProductAuthController@CategoryList_getSearchCategory'])
+    ->where('search', '(list|search)');
