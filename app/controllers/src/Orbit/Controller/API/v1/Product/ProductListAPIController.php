@@ -13,6 +13,8 @@ use Orbit\Helper\Util\PaginationNumber;
 use Product;
 use Validator;
 use Lang;
+use DB;
+use stdclass;
 
 class ProductListAPIController extends ControllerAPI
 {

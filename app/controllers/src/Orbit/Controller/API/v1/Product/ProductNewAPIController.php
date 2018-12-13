@@ -61,7 +61,7 @@ class ProductNewAPIController extends ControllerAPI
 
             $name = OrbitInput::post('name');
             $shortDescription = OrbitInput::post('short_description');
-            $status = OrbitInput::post('status');
+            $status = OrbitInput::post('status', 'inactive');
             $countryId = OrbitInput::post('country_id');
             $categories = OrbitInput::post('categories', []);
             $marketplaces = OrbitInput::post('marketplaces', []);

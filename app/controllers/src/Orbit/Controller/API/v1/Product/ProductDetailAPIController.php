@@ -10,6 +10,8 @@ use Illuminate\Database\QueryException;
 
 use Product;
 use Lang;
+use DB;
+use Validator;
 
 class ProductDetailAPIController extends ControllerAPI
 {
@@ -43,6 +45,21 @@ class ProductDetailAPIController extends ControllerAPI
             $productId = OrbitInput::get('product_id');
 
             $prefix = DB::getTablePrefix();
+
+            $validator = Validator::make(
+                array(
+                    'product_id' => $productId,
+                ),
+                array(
+                    'product_id' => 'required',
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
 
             $product = Product::select(DB::raw("
                                     {$prefix}products.*,

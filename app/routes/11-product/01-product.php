@@ -17,7 +17,7 @@ Route::get('/api/v1/new-product/detail', function()
     return Orbit\Controller\API\v1\Product\ProductDetailAPIController::create()->getDetailProduct();
 });
 
-Route::get('/app/v1/new-product/{search}', ['as' => 'product-api-product-detail', 'uses' => 'IntermediateProductAuthController@ProductDetail_getDetailProduct']);
+Route::get('/app/v1/new-product/detail', ['as' => 'product-api-product-detail', 'uses' => 'IntermediateProductAuthController@ProductDetail_getDetailProduct']);
 
 
 Route::post('/api/v1/new-product/new', function()
