@@ -11,18 +11,6 @@ class Article extends Eloquent
 
     protected $primaryKey = 'article_id';
 
-    /*
-        Link to Malls [[malls]]
-        Link to Brands (Merchant) [[brands]]
-
-        Link to Events [[events]]
-        Link to Promotions [[promotions]]
-        Link to Coupons [[coupons]]
-
-        Article Body Images
-        Article Body Videos (YouTube)
-    */
-
     public function objectNews()
     {
         return $this->hasMany('ArticleLinkToObject', 'article_id', 'article_id')
@@ -61,12 +49,21 @@ class Article extends Eloquent
                             });
     }
 
-    public function objectStore()
+    public function objectMerchant()
     {
         return $this->hasMany('ArticleLinkToObject', 'article_id', 'article_id')
-                    ->where('article_link_to_objects.object_type', 'store')
-                    ->join('merchants', function($q) {
-                                $q->on('merchant_id', '=', 'object_id');
+                    ->where('article_link_to_objects.object_type', 'merchant')
+                    ->join('base_merchants', function($q) {
+                                $q->on('base_merchant_id', '=', 'object_id');
+                            });
+    }
+
+    public function category()
+    {
+        return $this->hasMany('ArticleLinkToObject', 'article_id', 'article_id')
+                    ->where('article_link_to_objects.object_type', 'category')
+                    ->join('categories', function($q) {
+                                $q->on('category_id', '=', 'object_id');
                             });
     }
 
