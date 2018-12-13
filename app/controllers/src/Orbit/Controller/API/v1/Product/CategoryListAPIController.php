@@ -51,12 +51,8 @@ class CategoryListAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.category.getsearchcategory.before.auth', array($this));
-
             // Require authentication
             $this->checkAuth();
-
-            Event::fire('orbit.category.getsearchcategory.after.auth', array($this));
 
             // Try to check access control list, does this user allowed to
             // perform this action
@@ -286,16 +282,12 @@ class CategoryListAPIController extends ControllerAPI
 
             $this->response->data = $data;
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.category.getsearchcategory.access.forbidden', array($this, $e));
-
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.category.getsearchcategory.invalid.arguments', array($this, $e));
-
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
@@ -306,8 +298,6 @@ class CategoryListAPIController extends ControllerAPI
             $this->response->data = $result;
             $httpCode = 403;
         } catch (QueryException $e) {
-            Event::fire('orbit.category.getsearchcategory.query.error', array($this, $e));
-
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
 
@@ -320,8 +310,6 @@ class CategoryListAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 500;
         } catch (Exception $e) {
-            Event::fire('orbit.category.getsearchcategory.general.exception', array($this, $e));
-
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
@@ -329,8 +317,119 @@ class CategoryListAPIController extends ControllerAPI
         }
 
         $output = $this->render($httpCode);
-        Event::fire('orbit.category.getsearchcategory.before.render', array($this, &$output));
 
         return $output;
+    }
+
+
+    protected function registerCustomValidation()
+    {
+        // Check the existance of default_language
+        Validator::extend('orbit.empty.default_en', function ($attribute, $value, $parameters) {
+            $lang = Language::excludeDeleted()
+                        ->where('name', $value)
+                        ->first();
+
+            if (empty($lang) || $value !== 'en') {
+                return FALSE;
+            }
+
+            $this->valid_default_lang = $lang;
+
+            return TRUE;
+        });
+
+        // Check the existance of language
+        Validator::extend('orbit.empty.language', function ($attribute, $value, $parameters) {
+            $lang = Language::excludeDeleted()
+                        ->where('name', $value)
+                        ->first();
+
+            if (empty($lang)) {
+                return FALSE;
+            }
+
+            $this->valid_lang = $lang;
+
+            return TRUE;
+        });
+
+        // Check the existance of category id
+        Validator::extend('orbit.empty.category', function ($attribute, $value, $parameters) {
+            $category = Category::excludeDeleted()
+                        ->where('category_id', $value)
+                        ->first();
+
+            if (empty($category)) {
+                return FALSE;
+            }
+
+            $this->valid_category = $category;
+
+            return TRUE;
+        });
+
+        // Check the existance of merchant id
+        Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) {
+            $merchant = Mall::excludeDeleted()
+                        ->isMall()
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($merchant)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.merchant', $merchant);
+
+            return TRUE;
+        });
+
+        // Check category name, it should not exists
+        Validator::extend('orbit.exists.category_name', function ($attribute, $value, $parameters) {
+            $categoryName = Category::excludeDeleted()
+                        ->where('category_name', $value)
+                        ->where('merchant_id', '0')
+                        ->first();
+
+            if (! empty($categoryName)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.validation.category_name', $categoryName);
+
+            return TRUE;
+        });
+
+        // Check category name, it should not exists (for update)
+        Validator::extend('category_name_exists_but_me', function ($attribute, $value, $parameters) {
+            $category_id = trim($parameters[0]);
+
+            $category = Category::excludeDeleted()
+                        ->where('category_name', $value)
+                        ->where('category_id', '!=', $category_id)
+                        ->where('merchant_id', '0')
+                        ->first();
+
+            if (! empty($category)) {
+                return FALSE;
+            }
+
+            $this->update_valid_category = $category;
+
+            return TRUE;
+        });
+
+        // Check the existence of the category status
+        Validator::extend('orbit.empty.category_status', function ($attribute, $value, $parameters) {
+            $valid = false;
+            $statuses = array('active', 'inactive', 'pending', 'blocked', 'deleted');
+            foreach ($statuses as $status) {
+                if($value === $status) $valid = $valid || TRUE;
+            }
+
+            return $valid;
+        });
+
     }
 }
