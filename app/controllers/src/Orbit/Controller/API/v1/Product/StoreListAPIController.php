@@ -86,23 +86,18 @@ class StoreListAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
             $store = BaseStore::excludeDeleted('base_stores')
-                            ->select('base_merchants.base_merchant_id', 'base_merchants.country_id', 'countries.name as country_name',
+                            ->select('base_merchants.base_merchant_id',
+                                'base_merchants.country_id', 'countries.name as country_name',
                                 DB::raw("{$prefix}base_merchants.name AS merchant"),
                                 'base_stores.base_store_id',
                                 DB::raw("{$prefix}merchants.merchant_id AS mall_id"),
                                 DB::raw("{$prefix}merchants.name AS location"),
-                                'base_stores.floor_id',
-                                DB::raw("{$prefix}objects.object_name AS floor"),
-                                'base_stores.unit', 'base_stores.phone',
-                                'base_stores.verification_number',
-                                'base_stores.is_payment_acquire',
-                                'base_stores.status',
-                                'base_stores.created_at')
+                                'base_stores.status')
                             ->join('base_merchants', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
                             ->leftJoin('objects', 'base_stores.floor_id', '=', 'objects.object_id')
                             ->leftJoin('merchants', 'base_stores.merchant_id', '=', 'merchants.merchant_id')
                             ->leftJoin('countries', 'base_merchants.country_id', '=', 'countries.country_id')
-                            ->groupBy('base_stores.base_store_id')
+                            ->groupBy('base_stores.base_merchant_id')
                             ;
 
             // Filter store by merchant name
@@ -214,7 +209,7 @@ class StoreListAPIController extends ControllerAPI
                     }
                 });
             } else {
-                $store->with('bank', 'objectContact', 'financialContactDetail', 'paymentProvider', 'productTags');
+                //$store->with('bank', 'objectContact', 'financialContactDetail', 'paymentProvider', 'productTags');
                 $storeList = $store->get();
             }
 

@@ -65,6 +65,7 @@ class ProductNewAPIController extends ControllerAPI
             $countryId = OrbitInput::post('country_id');
             $categories = OrbitInput::post('categories', []);
             $marketplaces = OrbitInput::post('marketplaces', []);
+            $brandIds = OrbitInput::post('brand_ids', []);
 
             // Begin database transaction
             $this->beginTransaction();
@@ -89,7 +90,6 @@ class ProductNewAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-
             Event::fire('orbit.newproduct.postnewproduct.after.validation', array($this, $validator));
 
             $newProduct = new Product;
@@ -113,6 +113,16 @@ class ProductNewAPIController extends ControllerAPI
             }
             $newProduct->category = $category;
 
+            $brands = array();
+            foreach ($brandIds as $brandId) {
+                $saveObjectCategories = new ProductLinkToObject();
+                $saveObjectCategories->product_id = $newProduct->product_id;
+                $saveObjectCategories->object_id = $brandId;
+                $saveObjectCategories->object_type = 'brand';
+                $saveObjectCategories->save();
+                $brands[] = $saveObjectCategories;
+            }
+            $newProduct->brands = $brands;
 
             // save translations
             OrbitInput::post('marketplaces', function($marketplace_json_string) use ($newProduct, $productHelper) {
