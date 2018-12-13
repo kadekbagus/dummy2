@@ -70,13 +70,13 @@ class Article extends Eloquent
     public function mediaCover()
     {
         return $this->hasMany('Media', 'object_id', 'article_id')
-                    ->where('object_name', 'article_cover_image');
+                    ->where('media_name_id', 'article_cover_image');
     }
 
     public function mediaContent()
     {
         return $this->hasMany('Media', 'object_id', 'article_id')
-                    ->where('object_name', 'article_content_image');
+                    ->where('media_name_id', 'article_content_image');
     }
 
     public function video()
