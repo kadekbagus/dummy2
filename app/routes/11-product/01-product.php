@@ -62,13 +62,13 @@ Route::get('/app/v1/new-product/category/{search}', ['as' => 'product-api-catego
 
 
 /**
- * List/Search store
+ * List/Search brand
  */
-Route::get('/api/v1/new-product/store/{search}', function()
+Route::get('/api/v1/new-product/brand/{search}', function()
 {
     return Orbit\Controller\API\v1\Product\StoreListAPIController::create()->getSearchStore();
 })
 ->where('search', '(list|search)');
 
-Route::get('/app/v1/new-product/store/{search}', ['as' => 'product-api-store-list', 'uses' => 'IntermediateProductAuthController@StoreList_getSearchStore'])
+Route::get('/app/v1/new-product/brand/{search}', ['as' => 'product-api-brand-list', 'uses' => 'IntermediateProductAuthController@StoreList_getSearchStore'])
     ->where('search', '(list|search)');
