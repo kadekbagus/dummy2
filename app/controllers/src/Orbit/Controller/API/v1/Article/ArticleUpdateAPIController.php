@@ -90,6 +90,7 @@ class ArticleUpdateAPIController extends ControllerAPI
                     'body'             => $body,
                     'status'           => $status,
                     'country_id'       => $countryId,
+                    'published_at'     => $publishedAt,
                 ),
                 array(
                     'title'            => 'required|orbit.exist.title_not_me:' . $articleId,
@@ -99,6 +100,7 @@ class ArticleUpdateAPIController extends ControllerAPI
                     'body'             => 'required',
                     'status'           => 'required',
                     'country_id'       => 'required',
+                    'published_at'     => 'required',
                 ),
                 array(
                     'orbit.exist.title_not_me' => 'Title is already exist',
@@ -142,6 +144,10 @@ class ArticleUpdateAPIController extends ControllerAPI
 
             OrbitInput::post('country_id', function($countryId) use ($updatedArticle) {
                 $updatedArticle->country_id = $countryId;
+            });
+
+            OrbitInput::post('published_at', function($publishedAt) use ($updatedArticle) {
+                $updatedArticle->published_at = $publishedAt;
             });
 
             Event::fire('orbit.article.postupdatearticle.before.save', array($this, $updatedArticle));
