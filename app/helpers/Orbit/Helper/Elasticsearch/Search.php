@@ -10,7 +10,7 @@ use Config;
 *
 * @todo  make it more generic like laravel's eloquent.
 */
-class Search implements ElasticsearchInterface
+class Search
 {
     // ES Client
     protected $client = null;
