@@ -27,8 +27,8 @@ class Product extends Eloquent
 
     public function merchants()
     {
-        return $this->belongsToMany('Tenant', 'product_link_to_object', 'product_id', 'object_id')
-            ->select('merchant_id', 'name')
+        return $this->belongsToMany('BaseMerchant', 'product_link_to_object', 'product_id', 'object_id')
+            ->select('base_merchant_id', 'name')
             ->where('product_link_to_object.object_type', '=', 'brand');
     }
 
