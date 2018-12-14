@@ -10,6 +10,7 @@ use App;
 use Language;
 use Lang;
 use Product;
+use ProductLinkToObject;
 
 class ProductHelper
 {
@@ -437,11 +438,12 @@ class ProductHelper
                     if (empty($existing_marketplace)) {
                         $operations[] = ['create', $marketplace_id, $marketplace->website_url];
                     } else {
-                        $operations[] = ['update', $existing_marketplace, $marketplace->website_url];
+                        $operations[] = ['update', $existing_marketplace, $marketplace];
                     }
                 }
             }
 
+            $updateData = [];
             foreach ($operations as $operation) {
                 $op = $operation[0];
                 if ($op === 'create') {
@@ -459,11 +461,12 @@ class ProductHelper
                     $existing_translation = $operation[1];
                     $data = $operation[2];
                     foreach ($data as $field => $value) {
-                        $existing_translation->{$field} = $value;
+                        $existing_translation->product_url = $value;
+                        $updateData[] = $existing_translation;
                     }
                     $existing_translation->save();
 
-                    $newProduct->setRelation('translation_'. $existing_translation->product_id, $existing_translation);
+                    $newProduct->marketplaces = $updateData;
                 }
                 elseif ($op === 'delete') {
                     /** @var MerchantTranslation $existing_translation */
@@ -473,7 +476,7 @@ class ProductHelper
             }
 
             // to prevent error on saving base merchant
-            unset($newProduct->marketplaces);
+            //unset($newProduct->marketplaces);
         }
     }
 }
