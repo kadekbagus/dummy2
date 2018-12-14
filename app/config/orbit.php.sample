@@ -260,7 +260,12 @@ return array(
                 'address_line' => '',
                 'country'      => '',
                 'description'  => ''
-            ]
+            ],
+
+            'articles' => [
+                 'title' => '^3',
+                 'body'  => '^5',
+            ],
         ]
     ],
 
