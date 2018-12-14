@@ -1,6 +1,6 @@
 <?php
 
-class MarketPlace extends Eloquent
+class Marketplace extends Eloquent
 {
     /**
     * MarketPlace Model
@@ -22,6 +22,6 @@ class MarketPlace extends Eloquent
     public function media()
     {
         return $this->hasMany('Media', 'object_id', 'marketplace_id')
-                    ->where('object_name', 'product');
+                    ->where('object_name', 'marketplace');
     }
 }

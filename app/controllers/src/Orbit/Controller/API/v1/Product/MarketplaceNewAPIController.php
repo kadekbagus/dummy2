@@ -18,9 +18,9 @@ use Tenant;
 use BaseMerchant;
 use Product;
 use ProductLinkToObject;
+use Marketplace;
 
-
-class ProductNewAPIController extends ControllerAPI
+class MarketplaceNewAPIController extends ControllerAPI
 {
     protected $productRoles = ['product manager'];
 
@@ -29,22 +29,22 @@ class ProductNewAPIController extends ControllerAPI
      *
      * @author kadek <kadek@dominopos.com>
      */
-    public function postNewProduct()
+    public function postNewMarketPlace()
     {
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.newproduct.postnewproduct.before.auth', array($this));
+            Event::fire('orbit.marketplace.postnewmarketplace.before.auth', array($this));
 
             // Require authentication
             $this->checkAuth();
 
-            Event::fire('orbit.newproduct.postnewproduct.after.auth', array($this));
+            Event::fire('orbit.marketplace.postnewmarketplace.after.auth', array($this));
 
             // Try to check access control list, does this user allowed to
             // perform this action
             $user = $this->api->user;
-            Event::fire('orbit.newproduct.postnewproduct.before.authz', array($this, $user));
+            Event::fire('orbit.marketplace.postnewmarketplace.before.authz', array($this, $user));
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
@@ -54,7 +54,7 @@ class ProductNewAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            Event::fire('orbit.newproduct.postnewproduct.after.authz', array($this, $user));
+            Event::fire('orbit.marketplace.postnewmarketplace.after.authz', array($this, $user));
 
             $productHelper = ProductHelper::create();
             $productHelper->productCustomValidator();
@@ -63,9 +63,7 @@ class ProductNewAPIController extends ControllerAPI
             $shortDescription = OrbitInput::post('short_description');
             $status = OrbitInput::post('status', 'inactive');
             $countryId = OrbitInput::post('country_id');
-            $categories = OrbitInput::post('categories', []);
-            $marketplaces = OrbitInput::post('marketplaces', []);
-            $brandIds = OrbitInput::post('brand_ids', []);
+            $websiteUrl = OrbitInput::post('website_url');
 
             // Begin database transaction
             $this->beginTransaction();
@@ -90,55 +88,29 @@ class ProductNewAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            Event::fire('orbit.newproduct.postnewproduct.after.validation', array($this, $validator));
+            Event::fire('orbit.marketplace.postnewmarketplace.after.validation', array($this, $validator));
 
-            $newProduct = new Product;
-            $newProduct->name = $name;
-            $newProduct->short_description = $shortDescription;
-            $newProduct->status = $status;
-            $newProduct->country_id = $countryId;
+            $newMarketPlace = new Marketplace;
+            $newMarketPlace->name = $name;
+            $newMarketPlace->short_description = $shortDescription;
+            $newMarketPlace->status = $status;
+            $newMarketPlace->country_id = $countryId;
+            $newMarketPlace->website_url = $websiteUrl;
 
-            Event::fire('orbit.newproduct.postnewproduct.before.save', array($this, $newProduct));
+            Event::fire('orbit.marketplace.postnewmarketplace.before.save', array($this, $newMarketPlace));
 
-            $newProduct->save();
+            $newMarketPlace->save();
 
-            $category = array();
-            foreach ($categories as $categoryId) {
-                $saveObjectCategories = new ProductLinkToObject();
-                $saveObjectCategories->product_id = $newProduct->product_id;
-                $saveObjectCategories->object_id = $categoryId;
-                $saveObjectCategories->object_type = 'category';
-                $saveObjectCategories->save();
-                $category[] = $saveObjectCategories;
-            }
-            $newProduct->category = $category;
+            Event::fire('orbit.marketplace.postnewmarketplace.after.save', array($this, $newMarketPlace));
 
-            $brands = array();
-            foreach ($brandIds as $brandId) {
-                $saveObjectCategories = new ProductLinkToObject();
-                $saveObjectCategories->product_id = $newProduct->product_id;
-                $saveObjectCategories->object_id = $brandId;
-                $saveObjectCategories->object_type = 'brand';
-                $saveObjectCategories->save();
-                $brands[] = $saveObjectCategories;
-            }
-            $newProduct->brands = $brands;
-
-            // save translations
-            OrbitInput::post('marketplaces', function($marketplace_json_string) use ($newProduct, $productHelper) {
-                $productHelper->validateAndSaveMarketplaces($newProduct, $marketplace_json_string, $scenario = 'create');
-            });
-
-            Event::fire('orbit.newproduct.postnewproduct.after.save', array($this, $newProduct));
-
-            $this->response->data = $newProduct;
+            $this->response->data = $newMarketPlace;
 
             // Commit the changes
             $this->commit();
 
-          Event::fire('orbit.newproduct.postnewproduct.after.commit', array($this, $newProduct));
+          Event::fire('orbit.marketplace.postnewmarketplace.after.commit', array($this, $newMarketPlace));
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.newproduct.postnewproduct.access.forbidden', array($this, $e));
+            Event::fire('orbit.marketplace.postnewmarketplace.access.forbidden', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -149,7 +121,7 @@ class ProductNewAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.newproduct.postnewproduct.invalid.arguments', array($this, $e));
+            Event::fire('orbit.marketplace.postnewmarketplace.invalid.arguments', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -160,7 +132,7 @@ class ProductNewAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
         } catch (QueryException $e) {
-            Event::fire('orbit.newproduct.postnewproduct.query.error', array($this, $e));
+            Event::fire('orbit.marketplace.postnewmarketplace.query.error', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -177,7 +149,7 @@ class ProductNewAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
         } catch (Exception $e) {
-            Event::fire('orbit.newproduct.postnewproduct.general.exception', array($this, $e));
+            Event::fire('orbit.marketplace.postnewmarketplace.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';

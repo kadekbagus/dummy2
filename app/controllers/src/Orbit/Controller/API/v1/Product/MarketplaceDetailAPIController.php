@@ -1,4 +1,4 @@
-<?php namespace Orbit\Controller\API\v1\Marketplace;
+<?php namespace Orbit\Controller\API\v1\Product;
 
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -10,6 +10,8 @@ use Illuminate\Database\QueryException;
 
 use Marketplace;
 use Lang;
+use DB;
+use Validator;
 
 class MarketplaceDetailAPIController extends ControllerAPI
 {
@@ -43,6 +45,21 @@ class MarketplaceDetailAPIController extends ControllerAPI
             $marketplaceId = OrbitInput::get('marketplace_id');
 
             $prefix = DB::getTablePrefix();
+
+            $validator = Validator::make(
+                array(
+                    'marketplace_id' => $marketplaceId,
+                ),
+                array(
+                    'marketplace_id' => 'required',
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
 
             $marketplace = Marketplace::select(DB::raw("
                                     {$prefix}marketplaces.*,

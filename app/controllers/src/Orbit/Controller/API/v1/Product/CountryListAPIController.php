@@ -1,5 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Product;
 
+use OrbitShop\API\v1\ResponseProvider;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -9,23 +10,25 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Util\PaginationNumber;
-
-use Product;
+use BaseMerchant;
+use Country;
+use Mall;
 use Validator;
 use Lang;
 use DB;
+use Config;
 use stdclass;
 
-class ProductListAPIController extends ControllerAPI
+class CountryListAPIController extends ControllerAPI
 {
-    protected $allowedRoles = ['product manager'];
+    protected $roles = ['product manager'];
 
     /**
-     * GET Search / list Product
+     * GET Search Country
      *
-     * @author Ahmad <ahmad@dominopos.com>
+     * @author kadek <kadek@dominopos.com>
      */
-    public function getSearchProduct()
+    public function getSearchCountry()
     {
         try {
             $httpCode = 200;
@@ -39,7 +42,7 @@ class ProductListAPIController extends ControllerAPI
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = $this->allowedRoles;
+            $validRoles = $this->roles;
             if (! in_array(strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -52,10 +55,10 @@ class ProductListAPIController extends ControllerAPI
                     'sortby' => $sort_by,
                 ),
                 array(
-                    'sortby' => 'in:name,status',
+                    'sortby' => 'in:name',
                 ),
                 array(
-                    'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: name, status',
+                    'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: name',
                 )
             );
 
@@ -67,31 +70,30 @@ class ProductListAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $product = Product::select(DB::raw("
-                                    {$prefix}products.product_id,
-                                    {$prefix}products.name,
-                                    {$prefix}products.status"
-                                ));
+            $mallCountry = Mall::groupBy('country')->lists('country');
+            $countries = Country::select('country_id', 'name', 'code')->whereIn('name', $mallCountry);
 
-            OrbitInput::get('product_id', function($product_id) use ($product)
+            // Filter country by name
+            OrbitInput::get('name', function($name) use ($countries)
             {
-                $product->where('product_id', $product_id);
+                $countries->where('name', $name);
             });
 
-            OrbitInput::get('name_like', function($name) use ($product)
+            // Filter country by matching name pattern
+            OrbitInput::get('name_like', function($name) use ($countries)
             {
-                $product->where('name', 'like', "%$name%");
+                $countries->where('name', 'like', "%$name%");
             });
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
-            $_product = clone $product;
+            $_countries = clone $countries;
 
-            $take = PaginationNumber::parseTakeFromGet('merchant');
-            $product->take($take);
+            $take = PaginationNumber::parseTakeFromGet('country');
+            $countries->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();
-            $product->skip($skip);
+            $countries->skip($skip);
 
             // Default sort by
             $sortBy = 'name';
@@ -102,8 +104,7 @@ class ProductListAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'name' => 'products.name',
-                    'status' => 'products.status',
+                    'name' => 'name'
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
@@ -117,20 +118,15 @@ class ProductListAPIController extends ControllerAPI
                     $sortMode = 'desc';
                 }
             });
-            $product->orderBy($sortBy, $sortMode);
+            $countries->orderBy($sortBy, $sortMode);
 
-            $totalItems = RecordCounter::create($_product)->count();
-            $listOfItems = $product->get();
+            $totalCountries = RecordCounter::create($_countries)->count();
+            $listOfCountries = $countries->get();
 
             $data = new stdclass();
-            $data->total_records = $totalItems;
-            $data->returned_records = count($listOfItems);
-            $data->records = $listOfItems;
-
-            if ($totalItems === 0) {
-                $data->records = NULL;
-                $this->response->message = "There is no product that matched your search criteria";
-            }
+            $data->total_records = $totalCountries;
+            $data->returned_records = count($listOfCountries);
+            $data->records = $listOfCountries;
 
             $this->response->data = $data;
         } catch (ACLForbiddenException $e) {
