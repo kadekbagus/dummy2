@@ -616,6 +616,7 @@ class MenuCounterAPIController extends PubControllerAPI
             $listOfRec['promotions'] = 0;
             $listOfRec['coupons'] = 0;
             $listOfRec['news'] = 0;
+            $listOfRec['articles'] = 0;
 
             foreach ($campaignRecords as $campaign) {
                 $key = str_replace($esPrefix, '', $campaign['key']);

@@ -1,50 +1,63 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Article;
-/**
- * @author firmansyah <firmansyah@dominopos.com>
- * @desc Controller for article list and search in landing page
- */
 
+use Config;
+use Exception;
+use Article;
+use ArticleSearch;
+use Validator;
+use Activity;
+use Mall;
+use Tenant;
+use News;
+use Coupon;
+use stdClass;
 use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
-use Helper\EloquentRecordCounter as RecordCounter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
-use \Config;
-use \Exception;
-use DominoPOS\OrbitACL\ACL;
-use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
-use \DB;
-use \URL;
-use Redis;
-
-use Article;
-use Language;
-use Validator;
 use Orbit\Helper\Util\PaginationNumber;
-use Activity;
-use Orbit\Controller\API\v1\Pub\SocMedAPIController;
-
-use Mall;
-use Orbit\Helper\Util\ObjectPartnerBuilder;
-use Orbit\Helper\Database\Cache as OrbitDBCache;
 use Orbit\Helper\Util\SimpleCache;
 use Orbit\Helper\Util\CdnUrlGenerator;
-use Elasticsearch\ClientBuilder;
+use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
+use DominoPOS\OrbitACL\ACL;
+use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Carbon\Carbon as Carbon;
-use stdClass;
-use Country;
-use UserSponsor;
 
 use Orbit\Controller\API\v1\Article\ArticleHelper;
 
-
+/**
+ * Class that handle get article list.
+ */
 class ArticleListAPIController extends PubControllerAPI
 {
+    protected $valid_language = NULL;
+
     protected $withoutScore = FALSE;
 
     /**
-     * GET - get active article, and also provide for searching
+     * Enable / disable scroll function on ES
+     */
+    protected $useScroll = FALSE;
+
+    /**
+     * Scroll duration when $useScroll is TRUE
+     */
+    protected $scrollDuration = '20s';
+
+    /**
+     * Searcher instance.
+     */
+    protected $searcher = null;
+
+    function __construct()
+    {
+        parent::__construct();
+        $this->searcher = new ArticleSearch();
+    }
+
+    /**
+     * GET - get active article in all mall, and also provide for searching
      *
-     * @author Firmansyayh <firmansyah@dominopos.com>
+     * @author Budi <budi@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -78,17 +91,15 @@ class ArticleListAPIController extends PubControllerAPI
 
         try {
             $user = $this->getUser();
-            $host = Config::get('orbit.elasticsearch');
-            $sort_by = OrbitInput::get('sortby', 'created_date');
-            $sort_mode = OrbitInput::get('sortmode','desc');
+            $sortBy = OrbitInput::get('sortby', 'created_date');
+            $sortMode = OrbitInput::get('sortmode','desc');
+            $language = OrbitInput::get('language', 'id');
             $countryFilter = OrbitInput::get('country', null);
-
-
-            $ul = OrbitInput::get('ul', null);
-
-            $mallId = OrbitInput::get('mall_id', null);
-            $category_id = OrbitInput::get('category_id');
-            $list_type = OrbitInput::get('list_type', 'featured');
+            $objectType = OrbitInput::get('object_type', null);
+            $objectId = OrbitInput::get('object_id', null);
+            // $mallId = OrbitInput::get('mall_id', null);
+            $categoryIds = OrbitInput::get('category_id', []);
+            // $list_type = OrbitInput::get('list_type', 'featured');
             $from_mall_ci = OrbitInput::get('from_mall_ci', null);
             $no_total_records = OrbitInput::get('no_total_records', null);
             $take = PaginationNumber::parseTakeFromGet('news');
@@ -99,30 +110,39 @@ class ArticleListAPIController extends PubControllerAPI
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
 
-            $articleHelper = ArticleHelper::create();
-            $articleHelper->articleCustomValidator();
+            $couponHelper = CouponHelper::create();
+            $couponHelper->couponCustomValidator();
 
             $validator = Validator::make(
                 array(
-                    'sortby'   => $sort_by,
+                    'language' => $language,
+                    'sortby'   => $sortBy,
+                    // 'list_type'   => $list_type,
                 ),
                 array(
-                    'sortby'   => 'in:name,created_date,updated_date,rating',
+                    'language' => 'required|orbit.empty.language_default',
+                    'sortby'   => 'in:name,created_date,updated_date,relevance',
+                    'list_type'   => 'in:featured,preferred',
+                ),
+                array(
                 )
             );
 
             // Pass all possible parameters to be used as cache key.
             // Make sure there is no missing one.
             $cacheKey = [
-                'sort_by' => $sort_by,
-                'sort_mode' => $sort_mode,
-                'mall_id' => $mallId,
+                'sortBy' => $sortBy,
+                'sortMode' => $sortMode,
+                'language' => $language,
+                'object_type' => $objectType,
+                'object_id' => $objectId,
+                // 'mall_id' => $mallId,
+                // 'list_type' => $list_type,
                 'from_mall_ci' => $from_mall_ci,
-                'category_id' => $category_id,
+                'category_id' => $categoryIds,
                 'no_total_record' => $no_total_records,
-                'take' => $take,
-                'skip' => $skip,
-                'country' => $countryFilter
+                'take' => $take, 'skip' => $skip,
+                'country' => $countryFilter,
             ];
 
             // Run the validation
@@ -131,219 +151,116 @@ class ArticleListAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $prefix = DB::getTablePrefix();
-
-            $client = ClientBuilder::create() // Instantiate a new ClientBuilder
-                    ->setHosts($host['hosts']) // Set the hosts
-                    ->build();
-
-            $withScore = false;
-            $esTake = $take;
+            $valid_language = $couponHelper->getValidLanguage();
 
             //Get now time, time must be 2017-01-09T15:30:00Z
             $timezone = 'Asia/Jakarta'; // now with jakarta timezone
             $timestamp = date("Y-m-d H:i:s");
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
             $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
+            $dateNow = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
             $dateTime = explode(' ', $dateTime);
             $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
 
-            $jsonQuery = array(
-                'from' => $skip,
-                'size' => $esTake,
-                'fields' => array(
-                    "_source"
-                ) ,
-                'query' => array(
-                    'bool' => array(
-                        'filter' => array(
-                            array(
-                                'query' => array(
-                                    'match' => array(
-                                        'status' => 'active'
-                                    )
-                                )
-                            ),
-                            array(
-                                'range' => array(
-                                    'published_at' => array(
-                                        'lte' => $dateTimeEs
-                                    )
-                                )
-                            )
-                        )
-                    )
-                )
-            );
+            $withScore = false;
 
-            $withKeywordSearch = false;
-            $filterKeyword = [];
-            OrbitInput::get('keyword', function($keyword) use (&$jsonQuery, &$searchFlag, &$withScore, &$cacheKey, &$filterKeyword, &$withKeywordSearch)
-            {
+            $this->searcher->setPaginationParams(['from' => $skip, 'size' => $take]);
+
+            // Only search active promotions..
+            $this->searcher->isActive();
+
+            // Only filter based on specific country.
+            if (! empty($countryFilter) && $countryFilter != 0) {
+                $this->searcher->filterByCountry($countryFilter);
+            }
+
+            // Filter by linked object like malls, brands, etc...
+            // Linked object should have higher priority than category.
+            $this->searcher->filterByLinkedObject($objectType, $objectId);
+
+            // Filter by given keyword...
+            // Keyword can be a Mall Name (for mall detail page)
+            $keyword = OrbitInput::get('keyword', null);
+            $forbiddenCharacter = array('>', '<', '(', ')', '{', '}', '[', ']', '^', '"', '~', '/');
+            $keyword = str_replace($forbiddenCharacter, '', $keyword);
+            if (! empty($keyword)) {
                 $cacheKey['keyword'] = $keyword;
-
-                if ($keyword != '') {
-                    $searchFlag = $searchFlag || TRUE;
-                    $withKeywordSearch = true;
-                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.articles.keyword', '');
-
-                    $priority['title'] = Config::get('orbit.elasticsearch.priority.articles.title', '^6');
-                    $priority['body'] = Config::get('orbit.elasticsearch.priority.articles.body', '^5');
-
-                    $filterKeyword['bool']['should'][] = array(
-                                                                'query' => array(
-                                                                    'multi_match' => array(
-                                                                        'query' => $keyword,
-                                                                        'fields' => array(
-                                                                            'title' . $priority['title'],
-                                                                            'body' . $priority['body']
-                                                                        )
-                                                                    )
-                                                                )
-                                                            );
-
-                    if ($shouldMatch != '') {
-                        $filterKeyword['bool']['minimum_should_match'] = $shouldMatch;
-                    }
-
-                    $jsonQuery['query']['bool']['filter'][] = $filterKeyword;
-                }
-            });
-
-            OrbitInput::get('mall_id', function($mallId) use (&$jsonQuery) {
-                if (! empty($mallId)) {
-                    $withMallId = array('nested' => array('path' => 'link_to_malls', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_malls.mall_id' => $mallId))))));
-                    $jsonQuery['query']['bool']['filter'][] = $withMallId;
-                }
-             });
-
-            OrbitInput::get('brand_id', function($brandId) use (&$jsonQuery) {
-                if (! empty($brandId)) {
-                    $withBrandId = array('nested' => array('path' => 'link_to_brands', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_brands.brand_id' => $brandId))))));
-                    $jsonQuery['query']['bool']['filter'][] = $withBrandId;
-                }
-             });
-
-            OrbitInput::get('event_id', function($eventId) use (&$jsonQuery) {
-                if (! empty($eventId)) {
-                    $withEventId = array('nested' => array('path' => 'link_to_events', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_events.event_id' => $eventId))))));
-                    $jsonQuery['query']['bool']['filter'][] = $withEventId;
-                }
-             });
-
-            OrbitInput::get('promotion_id', function($promotionId) use (&$jsonQuery) {
-                if (! empty($promotionId)) {
-                    $withPromotionId = array('nested' => array('path' => 'link_to_promotions', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_promotions.promotion_id' => $promotionId))))));
-                    $jsonQuery['query']['bool']['filter'][] = $withPromotionId;
-                }
-             });
-
-            OrbitInput::get('coupon_id', function($couponId) use (&$jsonQuery) {
-                if (! empty($couponId)) {
-                    $withCouponId = array('nested' => array('path' => 'link_to_coupons', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_coupons.coupon_id' => $couponId))))));
-                    $jsonQuery['query']['bool']['filter'][] = $withCouponId;
-                }
-             });
-
-            // get the category of object
-
-
-
-            // filter by category_id
-            OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag) {
-                $searchFlag = $searchFlag || TRUE;
-                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.articles.category', '');
-                if (! is_array($categoryIds)) {
-                    $categoryIds = (array)$categoryIds;
-                }
-
-                foreach ($categoryIds as $key => $value) {
-                    $categoryFilter['bool']['should'][] = array('match' => array('category_ids' => $value));
-                }
-
-                if ($shouldMatch != '') {
-                    $categoryFilter['bool']['minimum_should_match'] = $shouldMatch;
-                }
-                $jsonQuery['query']['bool']['filter'][] = $categoryFilter;
-            });
-
-            // filter by country
-            $countryCityFilterArr = [];
-            $countryData = null;
-            OrbitInput::get('country', function ($countryFilter) use (&$jsonQuery, &$countryCityFilterArr, &$countryData) {
-                $countryData = Country::select('country_id')->where('name', $countryFilter)->first();
-
-                $countryCityFilterArr['query']['bool'] = ['must' => ['match' => ['country' => $countryFilter]]];
-            });
-
-            if (! empty($countryCityFilterArr)) {
-                $jsonQuery['query']['bool']['filter'][] = $countryCityFilterArr;
+                $this->searcher->filterByKeyword($keyword);
             }
 
-            // sort by name or location
-            $defaultSort = $sort = array('published_at' => array('order' => 'desc'));
-            if ($sort_by === 'created_date') {
-                $sort = array('published_at' => array('order' => $sort_mode));
-            } elseif ($sort_by === 'updated_date') {
-                $sort = array('updated_at' => array('order' => $sort_mode));
-            } else {
-                $sort = array('_script' => array('script' => $sortScript, 'type' => 'string', 'order' => $sort_mode));
+            // Get object categories.
+            // Useful for case like related article to a campaign/object.
+            // We will query the object to root of their store/mall and get the category.
+            $objectCategories = $this->getObjectCategories();
+
+            // Merge with the requested categories (if any).
+            $categoryIds = array_merge($categoryIds, $objectCategories);
+
+            if (! empty($categoryIds)) {
+                $this->searcher->filterByCategories($categoryIds);
             }
 
-            $sortByPageType = array();
-            $pageTypeScore = '';
+            $this->searcher->minimumShouldMatch(1);
 
-            $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
-            $sortPage = array('_script' => array('script' => $sortPageScript, 'type' => 'string', 'order' => 'desc'));
-
-            $sortby = array($sortPage, $sort, $defaultSort);
-            if ($withScore) {
-                $sortby = array($sortPage, "_score", $sort, $defaultSort);
+            // Next sorting based on Users's selection.
+            switch ($sortBy) {
+                case 'relevance':
+                    // For related article, landing page must pass sortBy relevance.
+                    $this->searcher->sortByRelevance();
+                    break;
+                default:
+                    $this->searcher->sortByPublishingDate($sortMode);
+                    break;
             }
-            $jsonQuery["sort"] = $sortby;
 
+            if ($this->useScroll) {
+                $this->searcher->setParams([
+                    'search_type' => 'scan',
+                    'scroll' => $this->scrollDuration,
+                ]);
+                $this->searcher->removeParamItem('body.aggs');
 
-            if ($this->withoutScore) {
-                // remove _score sort
-                $found = FALSE;
-                $sortby = array_filter($sortby, function($val) use(&$found) {
-                        if ($val === '_score') {
-                            $found = $found || TRUE;
-                        }
-                        return $val !== '_score';
-                    });
-
-                if($found) {
-                    // redindex array if _score is eliminated
-                    $sortby = array_values($sortby);
-                }
+                return $this->searcher->getResult();
             }
-            $jsonQuery['sort'] = $sortby;
-
-            $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
-            $esIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.articles.index');
-            $locationId = ! empty($mallId) ? $mallId : 0;
-
-            $esParam = [
-                'index'  => $esIndex,
-                'type'   => Config::get('orbit.elasticsearch.indices.articles.type'),
-                'body' => json_encode($jsonQuery)
-            ];
 
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-                $response = $recordCache->get($serializedCacheKey, function() use ($client, &$esParam) {
-                    return $client->search($esParam);
+                $response = $recordCache->get($serializedCacheKey, function() {
+                    return $this->searcher->getResult();
                 });
                 $recordCache->put($serializedCacheKey, $response);
             } else {
-                $response = $client->search($esParam);
+                $response = $this->searcher->getResult();
             }
 
-            $records = $response['hits']['hits'];
+            $records = $response['hits'];
 
+            $listOfRec = array();
             $cdnConfig = Config::get('orbit.cdn');
             $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+
+            foreach ($records['hits'] as $record) {
+                $data = array();
+                $default_lang = '';
+                $pageView = 0;
+                foreach ($record['_source'] as $key => $value) {
+                    $data[$key] = $value;
+
+                    // Get full image url
+                    if ($key === 'media') {
+                        foreach($value as $index => $media) {
+                            $localPath = isset($media['image_url']) ? $media['image_url'] : '';
+                            $cdnPath = isset($media['image_cdn_url']) ? $media['image_cdn_url'] : '';
+
+                            $data['media'][$index]['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
+                        }
+                    }
+                }
+
+                $data['page_view'] = $pageView;
+                $data['score'] = $record['_score'];
+                $listOfRec[] = $data;
+            }
 
             // frontend need the mall name
             $mall = null;
@@ -352,25 +269,46 @@ class ArticleListAPIController extends PubControllerAPI
             }
 
             $data = new \stdclass();
-            $data->returned_records = count($records);
-            $data->total_records = $response['hits']['total'];
+            $data->returned_records = count($listOfRec);
+            $data->total_records = $records['total'];
             if (is_object($mall)) {
                 $data->mall_name = $mall->name;
                 $data->mall_city = $mall->city;
             }
-            $data->records = $records;
+            $data->records = $listOfRec;
 
-            $activityNotes = sprintf('Page viewed: Article list');
-            $activity->setUser($user)
-                ->setActivityName('view_article_main_page')
-                ->setActivityNameLong('View Article Main Page')
-                ->setObject(null)
-                ->setLocation($mall)
-                ->setModuleName('Article')
-                ->setNotes($activityNotes)
-                ->setObjectDisplayName($viewType)
-                ->responseOK()
-                ->save();
+            // save activity when accessing listing
+            // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
+            // moved from generic activity number 32
+            if (OrbitInput::get('from_homepage', '') !== 'y') {
+                if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
+                    if (is_object($mall)) {
+                        $activityNotes = sprintf('Page viewed: View mall article list');
+                        $activity->setUser($user)
+                            ->setActivityName('view_mall_article_list')
+                            ->setActivityNameLong('View mall article list')
+                            ->setObject(null)
+                            ->setLocation($mall)
+                            ->setModuleName('Article')
+                            ->setNotes($activityNotes)
+                            ->setObjectDisplayName($viewType)
+                            ->responseOK()
+                            ->save();
+                    } else {
+                        $activityNotes = sprintf('Page viewed: Article list');
+                        $activity->setUser($user)
+                            ->setActivityName('view_articles_main_page')
+                            ->setActivityNameLong('View Articles Main Page')
+                            ->setObject(null)
+                            ->setLocation($mall)
+                            ->setModuleName('Article')
+                            ->setNotes($activityNotes)
+                            ->setObjectDisplayName($viewType)
+                            ->responseOK()
+                            ->save();
+                    }
+                }
+            }
 
             $this->response->data = $data;
             $this->response->code = 0;
@@ -432,5 +370,122 @@ class ArticleListAPIController extends PubControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    /**
+     * Force $useScroll value to TRUE, ignoring previously set value
+     * @param $bool boolean
+     */
+    public function setUseScroll()
+    {
+        $this->useScroll = TRUE;
+
+        return $this;
+    }
+
+    /**
+     * Set $scrollDuration, use less when $useScroll is FALSE
+     * @param $scrollDuration int
+     */
+    public function setScrollDuration($scrollDuration=20)
+    {
+        $this->scrollDuration = $scrollDuration . 's';
+
+        return $this;
+    }
+
+    /**
+     * Get Searcher
+     */
+    public function getSearcher()
+    {
+        return $this->searcher->getActiveClient();
+    }
+
+    /**
+     * Get object categories.
+     *
+     * @return [type] [description]
+     */
+    private function getObjectCategories()
+    {
+        $objectType = OrbitInput::get('object_type', '');
+        $objectId = OrbitInput::get('object_id', '');
+
+        switch ($objectType) {
+            case 'event':
+            case 'promotion':
+                return $this->getNewsCategory($objectId);
+                break;
+
+            case 'brand':
+                return $this->getBrandCategory($objectId);
+                break;
+
+            case 'coupon':
+                return $this->getCouponCategory($objectId);
+                break;
+
+            default:
+                return [];
+                break;
+        }
+    }
+
+    /**
+     * Get news/promotion categories.
+     *
+     * @param  string $newsId [description]
+     * @return [type]         [description]
+     */
+    private function getNewsCategory($newsId = '')
+    {
+        return News::select('categories.category_id')
+                     ->leftJoin('news_merchant', 'news.news_id', '=', 'news_merchant.news_id')
+                     ->leftJoin('category_merchant', 'news_merchant.merchant_id', '=', 'category_merchant.merchant_id')
+                     ->join('categories', 'category_merchant.category_id', '=', 'categories.category_id')
+                     ->where('categories.merchant_id', 0)
+                     ->where('categories.status', 'active')
+                     ->where('news.news_id', $newsId)
+                     ->groupBy('categories.category_id')
+                     ->get()->lists('category_id');
+    }
+
+    /**
+     * Get Brand/store categories.
+     *
+     * @param  string $brandId [description]
+     * @return [type]          [description]
+     */
+    private function getBrandCategory($brandId = '')
+    {
+        return Tenant::select('categories.category_id')
+                       ->leftJoin('category_merchant', 'merchants.merchant_id', '=', 'category_merchant.merchant_id')
+                       ->join('categories', 'category_merchant.category_id', '=', 'categories.category_id')
+                       ->where('categories.merchant_id', 0)
+                       ->where('categories.status', 'active')
+                       ->where('merchants.merchant_id', $brandId)
+                       ->groupBy('categories.category_id')
+                       ->get()->lists('category_id');
+    }
+
+    /**
+     * Get coupon categories.
+     *
+     * @param  string $couponId [description]
+     * @return [type]           [description]
+     */
+    private function getCouponCategory($couponId = '')
+    {
+        return Coupon::select('category_merchant.category_id')
+                       ->leftJoin('promotion_retailer', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
+                       ->leftJoin('merchants', 'promotion_retailer.retailer_id', '=', 'merchants.merchant_id')
+                       ->leftJoin('category_merchant', 'merchants.merchant_id', '=', 'category_merchant.merchant_id')
+                       ->join('categories', 'category_merchant.category_id', '=', 'categories.category_id')
+                       ->where('categories.merchant_id', 0)
+                       ->where('categories.status', 'active')
+                       ->where('promotions.promotion_id', $couponId)
+                       ->groupBy('categories.category_id')
+                       ->get()->lists('category_id');
     }
 }
