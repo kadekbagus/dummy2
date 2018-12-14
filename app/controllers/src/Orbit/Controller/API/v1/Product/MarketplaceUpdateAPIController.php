@@ -48,7 +48,7 @@ class MarketplaceUpdateAPIController extends ControllerAPI
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = $this->articleRoles;
+            $validRoles = $this->productRoles;
             if (! in_array(strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -60,7 +60,7 @@ class MarketplaceUpdateAPIController extends ControllerAPI
             $productHelper->productCustomValidator();
 
             $marketplaceId = OrbitInput::post('marketplace_id');
-            $status = OrbitInput::post('status');
+            $status = OrbitInput::post('status', 'inactive');
 
             // Begin database transaction
             $this->beginTransaction();
@@ -108,7 +108,6 @@ class MarketplaceUpdateAPIController extends ControllerAPI
 
             Event::fire('orbit.marketplace.postupdatemarketplace.before.save', array($this, $updatedMarketplace));
 
-            $updatedMarketplace->modified_by = $user->user_id;
             $updatedMarketplace->touch();
             $updatedMarketplace->save();
 
