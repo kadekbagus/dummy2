@@ -412,68 +412,68 @@ class ProductHelper
             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'marketplace']));
         }
 
-        foreach ($data as $marketplace_id => $marketplace) {
-            print_r($marketplace);
+        if (!empty($data)) {
+            foreach ($data as $marketplace_id => $marketplace) {
+                $existing_marketplace = ProductLinkToObject::where('product_id', '=', $newProduct->product_id)
+                                                            ->where('object_id', '=', $marketplace_id)
+                                                            ->where('object_type', '=', 'marketplace')
+                                                            ->first();
 
-            $existing_marketplace = ProductLinkToObject::where('product_id', '=', $newProduct->product_id)
-                                                        ->where('object_id', '=', $marketplace_id)
-                                                        ->where('object_type', '=', 'marketplace')
-                                                        ->first();
-
-            if ($marketplace === null) {
-                // deleting, verify exists
-                if (empty($existing_marketplace)) {
-                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
-                }
-                $operations[] = ['delete', $existing_marketplace];
-            } else {
-                foreach ($marketplace as $field => $value) {
-                    if (!in_array($field, $valid_fields, TRUE)) {
-                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.key'));
+                if ($marketplace === null) {
+                    // deleting, verify exists
+                    if (empty($existing_marketplace)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
                     }
-                    if ($value !== null && !is_string($value)) {
-                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.value'));
-                    }
-                }
-                if (empty($existing_marketplace)) {
-                    $operations[] = ['create', $marketplace_id, $marketplace->website_url];
+                    $operations[] = ['delete', $existing_marketplace];
                 } else {
-                    $operations[] = ['update', $existing_marketplace, $marketplace->website_url];
+                    foreach ($marketplace as $field => $value) {
+                        if (!in_array($field, $valid_fields, TRUE)) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.key'));
+                        }
+                        if ($value !== null && !is_string($value)) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.value'));
+                        }
+                    }
+                    if (empty($existing_marketplace)) {
+                        $operations[] = ['create', $marketplace_id, $marketplace->website_url];
+                    } else {
+                        $operations[] = ['update', $existing_marketplace, $marketplace->website_url];
+                    }
                 }
             }
-        }
 
-        foreach ($operations as $operation) {
-            $op = $operation[0];
-            if ($op === 'create') {
-                $saveObjectMarketPlaces = new ProductLinkToObject();
-                $saveObjectMarketPlaces->product_id = $newProduct->product_id;
-                $saveObjectMarketPlaces->object_id = $operation[1];
-                $saveObjectMarketPlaces->object_type = 'marketplace';
-                $saveObjectMarketPlaces->product_url = $operation[2];
-                $saveObjectMarketPlaces->save();
-                $marketplaceData[] = $saveObjectMarketPlaces;
-                $newProduct->marketplaces = $marketplaceData;
-            }
-            elseif ($op === 'update') {
-                /** @var MerchantTranslation $existing_translation */
-                $existing_translation = $operation[1];
-                $data = $operation[2];
-                foreach ($data as $field => $value) {
-                    $existing_translation->{$field} = $value;
+            foreach ($operations as $operation) {
+                $op = $operation[0];
+                if ($op === 'create') {
+                    $saveObjectMarketPlaces = new ProductLinkToObject();
+                    $saveObjectMarketPlaces->product_id = $newProduct->product_id;
+                    $saveObjectMarketPlaces->object_id = $operation[1];
+                    $saveObjectMarketPlaces->object_type = 'marketplace';
+                    $saveObjectMarketPlaces->product_url = $operation[2];
+                    $saveObjectMarketPlaces->save();
+                    $marketplaceData[] = $saveObjectMarketPlaces;
+                    $newProduct->marketplaces = $marketplaceData;
                 }
-                $existing_translation->save();
+                elseif ($op === 'update') {
+                    /** @var MerchantTranslation $existing_translation */
+                    $existing_translation = $operation[1];
+                    $data = $operation[2];
+                    foreach ($data as $field => $value) {
+                        $existing_translation->{$field} = $value;
+                    }
+                    $existing_translation->save();
 
-                $newProduct->setRelation('translation_'. $existing_translation->product_id, $existing_translation);
+                    $newProduct->setRelation('translation_'. $existing_translation->product_id, $existing_translation);
+                }
+                elseif ($op === 'delete') {
+                    /** @var MerchantTranslation $existing_translation */
+                    $existing_translation = $operation[1];
+                    $existing_translation->delete();
+                }
             }
-            elseif ($op === 'delete') {
-                /** @var MerchantTranslation $existing_translation */
-                $existing_translation = $operation[1];
-                $existing_translation->delete();
-            }
+
+            // to prevent error on saving base merchant
+            unset($newProduct->marketplaces);
         }
-
-        // to prevent error on saving base merchant
-        unset($newProduct->marketplaces);
     }
 }
