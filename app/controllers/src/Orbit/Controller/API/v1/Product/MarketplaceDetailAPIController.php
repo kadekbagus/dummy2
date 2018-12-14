@@ -12,6 +12,7 @@ use Marketplace;
 use Lang;
 use DB;
 use Validator;
+use Config;
 
 class MarketplaceDetailAPIController extends ControllerAPI
 {

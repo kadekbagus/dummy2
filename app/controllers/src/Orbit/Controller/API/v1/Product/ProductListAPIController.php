@@ -15,6 +15,7 @@ use Validator;
 use Lang;
 use DB;
 use stdclass;
+use Config;
 
 class ProductListAPIController extends ControllerAPI
 {
