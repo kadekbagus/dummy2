@@ -97,6 +97,7 @@ class StoreListAPIController extends ControllerAPI
                             ->leftJoin('objects', 'base_stores.floor_id', '=', 'objects.object_id')
                             ->leftJoin('merchants', 'base_stores.merchant_id', '=', 'merchants.merchant_id')
                             ->leftJoin('countries', 'base_merchants.country_id', '=', 'countries.country_id')
+                            ->where('base_stores.status', '=', 'active')
                             ->groupBy('base_stores.base_merchant_id')
                             ;
 
@@ -130,11 +131,11 @@ class StoreListAPIController extends ControllerAPI
                 $store->where('base_merchants.country_id', $country_id);
             });
 
-            // Filter store by country
-            OrbitInput::get('status', function($status) use ($store)
-            {
-                $store->where('base_stores.status', 'like', $status);
-            });
+            // // Filter store by country
+            // OrbitInput::get('status', function($status) use ($store)
+            // {
+            //     $store->where('base_stores.status', 'like', $status);
+            // });
 
 
             // Add new relation based on request
