@@ -48,7 +48,7 @@ class ProductUpdateAPIController extends ControllerAPI
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = $this->articleRoles;
+            $validRoles = $this->productRoles;
             if (! in_array(strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -104,9 +104,7 @@ class ProductUpdateAPIController extends ControllerAPI
 
             Event::fire('orbit.newproduct.postupdateproduct.before.save', array($this, $updatedProduct));
 
-            $updatedProduct->modified_by = $user->user_id;
             $updatedProduct->touch();
-
             $updatedProduct->save();
 
             // update category
@@ -136,7 +134,7 @@ class ProductUpdateAPIController extends ControllerAPI
                 $brands = array();
                 foreach ($brandIds as $brandId) {
                     $saveObjectCategories = new ProductLinkToObject();
-                    $saveObjectCategories->product_id = $newProduct->product_id;
+                    $saveObjectCategories->product_id = $productId;
                     $saveObjectCategories->object_id = $brandId;
                     $saveObjectCategories->object_type = 'brand';
                     $saveObjectCategories->save();
