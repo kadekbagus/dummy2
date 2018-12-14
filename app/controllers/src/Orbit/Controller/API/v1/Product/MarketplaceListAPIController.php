@@ -87,6 +87,11 @@ class MarketplaceListAPIController extends ControllerAPI
                 $marketplace->where('name', 'like', "%$name%");
             });
 
+            OrbitInput::get('status', function($status) use ($marketplace)
+            {
+                $marketplace->where('status', $status);
+            });
+
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_marketplace = clone $marketplace;
