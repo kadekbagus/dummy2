@@ -194,7 +194,7 @@ class ESArticleUpdateQueue
                 'link_to_coupons' => $linkToCoupons,
                 'link_to_malls' => $linkToMalls,
                 'link_to_brands' => $linkToMerchants,
-                'link_to_categories' => $categories,
+                'link_to_categories' => $linkToCategories,
                 'media' => $linkToMedias
             ];
 
