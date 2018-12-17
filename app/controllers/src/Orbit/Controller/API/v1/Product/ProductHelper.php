@@ -447,40 +447,27 @@ class ProductHelper
             foreach ($operations as $operation) {
                 $op = $operation[0];
                 if ($op === 'create') {
-                    if (! isset($operation[2]) || empty($operation[2])) {
-                        throw new \Exception("Website URL is required", 1);
-                    }
-                    if (filter_var($operation[2], FILTER_VALIDATE_URL) !== false) {
-                        $saveObjectMarketPlaces = new ProductLinkToObject();
-                        $saveObjectMarketPlaces->product_id = $newProduct->product_id;
-                        $saveObjectMarketPlaces->object_id = $operation[1];
-                        $saveObjectMarketPlaces->object_type = 'marketplace';
-                        $saveObjectMarketPlaces->product_url = $operation[2];
-                        $saveObjectMarketPlaces->save();
-                        $marketplaceData[] = $saveObjectMarketPlaces;
-                        $newProduct->marketplaces = $marketplaceData;
-                    } else {
-                        throw new \Exception("Website URL is invalid", 1);
-                    }
+                    $saveObjectMarketPlaces = new ProductLinkToObject();
+                    $saveObjectMarketPlaces->product_id = $newProduct->product_id;
+                    $saveObjectMarketPlaces->object_id = $operation[1];
+                    $saveObjectMarketPlaces->object_type = 'marketplace';
+                    $saveObjectMarketPlaces->product_url = $operation[2];
+                    $saveObjectMarketPlaces->save();
+                    $marketplaceData[] = $saveObjectMarketPlaces;
+                    $newProduct->marketplaces = $marketplaceData;
                 }
                 elseif ($op === 'update') {
                     /** @var MerchantTranslation $existing_translation */
                     $existing_translation = $operation[1];
-                    if (! isset($operation[2]) || empty($operation[2])) {
-                        throw new \Exception("Website URL is required", 1);
-                    }
-                    if (filter_var($operation[2], FILTER_VALIDATE_URL) !== false) {
-                        $data = $operation[2];
-                        foreach ($data as $field => $value) {
-                            $existing_translation->product_url = $value;
-                            $updateData[] = $existing_translation;
-                        }
-                        $existing_translation->save();
 
-                        $newProduct->marketplaces = $updateData;
-                    } else {
-                        throw new \Exception("Website URL is invalid", 1);
+                    $data = $operation[2];
+                    foreach ($data as $field => $value) {
+                        $existing_translation->product_url = $value;
+                        $updateData[] = $existing_translation;
                     }
+                    $existing_translation->save();
+
+                    $newProduct->marketplaces = $updateData;
                 }
                 elseif ($op === 'delete') {
                     /** @var MerchantTranslation $existing_translation */
