@@ -81,8 +81,8 @@ class MarketplaceNewAPIController extends ControllerAPI
                     'country_id'       => 'required',
                 ),
                 array(
-                    'name'             => 'E-Commerce Name field is required',
-                    'country_id'       => 'E-Commerce Country field is required',
+                    'name.required'             => 'E-Commerce Name field is required',
+                    'country_id.required'       => 'E-Commerce Country field is required',
                 )
             );
 

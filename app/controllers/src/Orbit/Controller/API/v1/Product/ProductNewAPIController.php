@@ -83,8 +83,8 @@ class ProductNewAPIController extends ControllerAPI
                     'country_id'       => 'required',
                 ),
                 array(
-                    'name'             => 'Product Title field is required',
-                    'country_id'       => 'Country field is required',
+                    'name.required'             => 'Product Title field is required',
+                    'country_id.required'       => 'Country field is required',
                 )
             );
 
