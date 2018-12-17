@@ -12,6 +12,7 @@ use \DB;
 use \URL;
 
 use Article;
+use ArticleLinkToObject;
 
 use Validator;
 use Orbit\Helper\Util\PaginationNumber;
@@ -33,7 +34,7 @@ class ArticleDetailAPIController extends PubControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param string article_id
+     * @param string slug
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -48,6 +49,7 @@ class ArticleDetailAPIController extends PubControllerAPI
             $user = $this->getUser();
 
             $articleId = OrbitInput::get('article_id', null);
+            $slug = OrbitInput::get('slug', null);
             $language = OrbitInput::get('language', 'id');
             $mallId = OrbitInput::get('mall_id', null);
             $country = OrbitInput::get('country', null);
@@ -56,15 +58,15 @@ class ArticleDetailAPIController extends PubControllerAPI
             $articleHelper->articleCustomValidator();
             $validator = Validator::make(
                 array(
-                    'article_id' => $articleId,
+                    'slug' => $slug,
                     'language' => $language,
                 ),
                 array(
-                    'article_id' => 'required',
+                    'slug' => 'required',
                     'language' => 'required|orbit.empty.language_default',
                 ),
                 array(
-                    'required' => 'News ID is required',
+                    'required' => 'Slug is required',
                 )
             );
 
@@ -92,36 +94,209 @@ class ArticleDetailAPIController extends PubControllerAPI
                 $location = 0;
             }
 
-            $article = Article::where('status', '!=', 'deleted')
-                                ->with('objectNews')
-                                ->with('objectPromotion')
-                                ->with('objectCoupon')
-                                ->with('objectMall')
-                                ->with('objectMerchant')
+            // get now date
+            date_default_timezone_set('Asia/jakarta');
+            $nowDate = date("Y-m-d H:i:s");
+
+            $article = Article::where('status', '=', 'active')
+                                ->where('published_at', '<=', $nowDate)
                                 ->with('category')
                                 ->with('mediaCover')
                                 ->with('mediaContent')
                                 ->with('video')
-                                ->where('article_id', $articleId)
+                                ->where('slug', $slug)
                                 ->first();
+
 
             $message = 'Request Ok';
             if (! is_object($article)) {
-                throw new OrbitCustomException('Article that you specify is not found', News::NOT_FOUND_ERROR_CODE, NULL);
+                throw new OrbitCustomException('Article that you specify is not found', Article::NOT_FOUND_ERROR_CODE, NULL);
             }
+
+            $articleId = $article->article_id;
+
+            // Get the object detail
+            $objectNews = ArticleLinkToObject::select(
+                                                'news.news_id as news_id',
+                                                DB::Raw("
+                                                    CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as news_name,
+                                                    CASE WHEN (SELECT {$image}
+                                                        FROM orb_media m
+                                                        WHERE m.media_name_long = 'news_translation_image_orig'
+                                                        AND m.object_id = {$prefix}news_translations.news_translation_id) is null
+                                                    THEN
+                                                        (SELECT {$image}
+                                                        FROM orb_media m
+                                                        WHERE m.media_name_long = 'news_translation_image_orig'
+                                                        AND m.object_id = default_translation.news_translation_id)
+                                                    ELSE
+                                                        (SELECT {$image}
+                                                        FROM orb_media m
+                                                        WHERE m.media_name_long = 'news_translation_image_orig'
+                                                        AND m.object_id = {$prefix}news_translations.news_translation_id)
+                                                    END AS original_media_path
+                                                "),
+                                                'news.object_type',
+                                                'news.end_date',
+                                                'news.is_exclusive',
+                                                'news.status',
+                                                DB::raw("default_translation.news_name as default_name")
+                                            )
+                                            ->join('news', function($q) {
+                                                $q->on('news_id', '=', 'object_id')
+                                                  ->on('news.object_type', '=', DB::raw("'news'"))
+                                                  ->on('news.status', '=', DB::raw("'active'"));
+                                            })
+                                            ->leftJoin('news_translations', function ($q) use ($valid_language) {
+                                                $q->on('news_translations.news_id', '=', 'news.news_id')
+                                                  ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                                            })
+                                            ->leftJoin('news_translations as default_translation', function ($q) use ($prefix){
+                                                $q->on(DB::raw("default_translation.news_id"), '=', 'news.news_id')
+                                                  ->on(DB::raw("default_translation.merchant_language_id"), '=', DB::raw("'KXyS14LOVSgGUMPB'") );
+                                            })
+                                            ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                                            ->where('article_link_to_objects.object_type', 'news')
+                                            ->where('article_id',$articleId)
+                                            ->get();
+
+            $article['object_news'] = $objectNews;
+
+
+            $objectPromotion = ArticleLinkToObject::select(
+                                                'news.news_id as promotion_id',
+                                                DB::Raw("
+                                                    CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as promotion_name,
+                                                    CASE WHEN (SELECT {$image}
+                                                        FROM orb_media m
+                                                        WHERE m.media_name_long = 'news_translation_image_orig'
+                                                        AND m.object_id = {$prefix}news_translations.news_translation_id) is null
+                                                    THEN
+                                                        (SELECT {$image}
+                                                        FROM orb_media m
+                                                        WHERE m.media_name_long = 'news_translation_image_orig'
+                                                        AND m.object_id = default_translation.news_translation_id)
+                                                    ELSE
+                                                        (SELECT {$image}
+                                                        FROM orb_media m
+                                                        WHERE m.media_name_long = 'news_translation_image_orig'
+                                                        AND m.object_id = {$prefix}news_translations.news_translation_id)
+                                                    END AS original_media_path
+                                                "),
+                                                'news.object_type',
+                                                'news.end_date',
+                                                'news.is_exclusive',
+                                                DB::raw("default_translation.news_name as default_name")
+                                            )
+                                            ->join('news', function($q) {
+                                                $q->on('news_id', '=', 'object_id')
+                                                  ->on('news.object_type', '=', DB::raw("'promotion'"))
+                                                  ->on('news.status', '=', DB::raw("'active'"));
+                                            })
+                                            ->leftJoin('news_translations', function ($q) use ($valid_language) {
+                                                $q->on('news_translations.news_id', '=', 'news.news_id')
+                                                  ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                                            })
+                                            ->leftJoin('news_translations as default_translation', function ($q) use ($prefix){
+                                                $q->on(DB::raw("default_translation.news_id"), '=', 'news.news_id')
+                                                  ->on(DB::raw("default_translation.merchant_language_id"), '=', DB::raw("'KXyS14LOVSgGUMPB'") );
+                                            })
+                                            ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                                            ->where('article_link_to_objects.object_type', 'promotion')
+                                            ->where('article_id',$articleId)
+                                            ->get();
+
+            $article['object_promotion'] = $objectPromotion;
+
+
+            $objectCoupon = ArticleLinkToObject::select(
+                                                'promotions.promotion_id as coupon_id',
+                                                DB::Raw("
+                                                    CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
+                                                    CASE WHEN (SELECT {$image}
+                                                        FROM orb_media m
+                                                        WHERE m.media_name_long = 'coupon_translation_image_orig'
+                                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id) is null
+                                                    THEN
+                                                        (SELECT {$image}
+                                                        FROM orb_media m
+                                                        WHERE m.media_name_long = 'coupon_translation_image_orig'
+                                                        AND m.object_id = default_translation.coupon_translation_id)
+                                                    ELSE
+                                                        (SELECT {$image}
+                                                        FROM orb_media m
+                                                        WHERE m.media_name_long = 'coupon_translation_image_orig'
+                                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id)
+                                                    END AS original_media_path
+                                                "),
+                                                'promotions.end_date',
+                                                DB::raw("default_translation.promotion_name as default_name")
+                                            )
+                                            ->leftJoin('promotions', function($q) {
+                                                $q->on('promotion_id', '=', 'object_id')
+                                                  ->on('promotions.status', '=', DB::raw("'active'"));
+                                            })
+                                            ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
+                                                $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                                                  ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                                            })
+                                            ->leftJoin('coupon_translations as default_translation', function ($q) use ($prefix){
+                                                $q->on(DB::raw("default_translation.promotion_id"), '=', 'promotions.promotion_id')
+                                                  ->on(DB::raw("default_translation.merchant_language_id"), '=', DB::raw("'KXyS14LOVSgGUMPB'") );
+                                            })
+                                            ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                                            ->where('article_link_to_objects.object_type', 'coupon')
+                                            ->where('article_id',$articleId)
+                                            ->get();
+
+            $article['object_coupon'] = $objectCoupon;
+
+
+            $objectMall = ArticleLinkToObject::select(
+                                                'merchants.merchant_id as mall_id',
+                                                'merchants.name',
+                                                DB::raw("
+                                                        (SELECT {$image}
+                                                        FROM orb_media m
+                                                        WHERE m.media_name_long = 'mall_logo_orig'
+                                                        AND m.object_id = mall_id) as original_media_path
+                                                    ")
+                                            )
+                                            ->join('merchants', function($q) {
+                                                $q->on('merchants.merchant_id', '=', 'object_id')
+                                                  ->on('merchants.object_type', '=', DB::raw("'mall'"))
+                                                  ->on('merchants.status', '=', DB::raw("'active'"));
+                                            })
+                                            ->where('article_link_to_objects.object_type', 'mall')
+                                            ->where('article_id',$articleId)
+                                            ->get();
+
+            $article['object_mall'] = $objectMall;
+
+
+            $objectMerchant = ArticleLinkToObject::select(
+                                                'base_merchants.base_merchant_id as merchant_id',
+                                                'base_merchants.name'
+                                                ,
+                                                DB::raw("
+                                                        (SELECT {$image}
+                                                        FROM orb_media m
+                                                        WHERE m.media_name_long = 'base_merchant_logo_orig'
+                                                        AND m.object_id = base_merchant_id) as original_media_path
+                                                    ")
+                                            )
+                                            ->leftJoin('base_merchants', function($q) {
+                                                $q->on('base_merchant_id', '=', 'object_id')
+                                                  ->on('base_merchants.status', '=', DB::raw("'active'"));
+                                            })
+                                            ->where('article_link_to_objects.object_type', 'merchant')
+                                            ->where('article_id',$articleId)
+                                            ->get();
+
+            $article['object_merchant'] = $objectMerchant;
 
             $mall = null;
-
-            // Only campaign having status ongoing and is_started true can going to detail page
-            if ($article->status == 'inactive') {
-                $mallName = 'gtm';
-
-                $customData = new \stdClass;
-                $customData->type = 'article';
-                $customData->location = $location;
-                $customData->mall_name = $mallName;
-                throw new OrbitCustomException('News is inactive', News::INACTIVE_ERROR_CODE, $customData);
-            }
+            $mallName = 'gtm';
 
             $activityNotes = sprintf('Page viewed: Landing Page Article Detail Page');
             $activity->setUser($user)
