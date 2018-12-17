@@ -81,6 +81,10 @@ class ProductNewAPIController extends ControllerAPI
                     'name'             => 'required',
                     'status'           => 'in:active,inactive',
                     'country_id'       => 'required',
+                ),
+                array(
+                    'name'             => 'Product Title field is required',
+                    'country_id'       => 'Country field is required',
                 )
             );
 

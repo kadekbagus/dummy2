@@ -60,6 +60,7 @@ class ProductUpdateAPIController extends ControllerAPI
             $productHelper->productCustomValidator();
 
             $productId = OrbitInput::post('product_id');
+            $name = OrbitInput::post('name');
             $status = OrbitInput::post('status');
 
             // Begin database transaction
@@ -68,11 +69,16 @@ class ProductUpdateAPIController extends ControllerAPI
             $validator = Validator::make(
                 array(
                     'product_id'       => $productId,
+                    'name'             => $name,
                     'status'           => $status,
                 ),
                 array(
                     'product_id'       => 'required',
+                    'name'             => 'required',
                     'status'           => 'in:active,inactive',
+                ),
+                array(
+                    'name'             => 'Product Title field is required',
                 )
             );
 
