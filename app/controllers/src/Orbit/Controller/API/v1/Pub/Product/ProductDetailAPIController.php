@@ -7,13 +7,14 @@ use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
+use OrbitShop\API\v1\PubControllerAPI;
 
 use Product;
 use Lang;
 use DB;
 use Validator;
 
-class ProductDetailAPIController extends ControllerAPI
+class ProductDetailAPIController extends PubControllerAPI
 {
     protected $allowedRoles = ['product manager'];
 
@@ -24,23 +25,11 @@ class ProductDetailAPIController extends ControllerAPI
      */
     public function getDetailProduct()
     {
+        $httpCode = 200;
+        $user = NULL;
+
         try {
-            $httpCode = 200;
-
-            // Require authentication
-            $this->checkAuth();
-
-            // Try to check access control list, does this user allowed to
-            // perform this action
-            $user = $this->api->user;
-
-            // @Todo: Use ACL authentication instead
-            $role = $user->role;
-            $validRoles = $this->allowedRoles;
-            if (! in_array(strtolower($role->role_name), $validRoles)) {
-                $message = 'Your role are not allowed to access this resource.';
-                ACL::throwAccessForbidden($message);
-            }
+            $user = $this->getUser();
 
             $productId = OrbitInput::get('product_id');
 
@@ -61,13 +50,7 @@ class ProductDetailAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $product = Product::select(DB::raw("
-                                    {$prefix}products.*,
-                                    {$prefix}countries.country_id as country_id,
-                                    {$prefix}countries.name as country_name"
-                                ))
-                                ->join('countries', 'products.country_id', '=', 'countries.country_id')
-                                ->with('media', 'marketplace')
+            $product = Product::with('media', 'categories', 'marketplaces.media', 'country')
                                 ->where('product_id', $productId)
                                 ->firstOrFail();
 

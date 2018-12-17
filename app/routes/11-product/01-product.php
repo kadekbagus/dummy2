@@ -85,3 +85,14 @@ Route::get('/api/v1/pub/brand-product/{search}', function()
 
 Route::get('/app/v1/pub/brand-product/{search}', ['as' => 'pub-brand-product-list', 'uses' => 'IntermediatePubAuthController@Product\ProductList_getSearchProduct'])
     ->where('search', '(list|search)');
+
+
+/**
+ * Detail product on brand detail page
+ */
+Route::get('/api/v1/pub/brand-product/detail', function()
+{
+    return Orbit\Controller\API\v1\Pub\Product\ProductDetailAPIController::create()->getDetailProduct();
+});
+
+Route::get('/app/v1/pub/brand-product/detail', ['as' => 'pub-brand-product-detail', 'uses' => 'IntermediatePubAuthController@Product\ProductDetail_getDetailProduct']);

@@ -17,7 +17,6 @@ use \DB;
 use \URL;
 use Validator;
 use Orbit\Helper\Util\PaginationNumber;
-use Activity;
 use Orbit\Controller\API\v1\Pub\Product\ProductHelper;
 use Mall;
 use Partner;
@@ -31,7 +30,6 @@ class ProductListAPIController extends PubControllerAPI
      public function getSearchProduct()
     {
         $httpCode = 200;
-        $activity = Activity::mobileci()->setActivityType('view');
         $user = NULL;
 
         try{
