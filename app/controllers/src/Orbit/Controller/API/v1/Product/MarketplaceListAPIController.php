@@ -15,6 +15,7 @@ use Validator;
 use Lang;
 use DB;
 use stdclass;
+use Config;
 
 class MarketplaceListAPIController extends ControllerAPI
 {
@@ -84,6 +85,11 @@ class MarketplaceListAPIController extends ControllerAPI
             OrbitInput::get('name_like', function($name) use ($marketplace)
             {
                 $marketplace->where('name', 'like', "%$name%");
+            });
+
+            OrbitInput::get('status', function($status) use ($marketplace)
+            {
+                $marketplace->where('status', $status);
             });
 
             // Clone the query builder which still does not include the take,

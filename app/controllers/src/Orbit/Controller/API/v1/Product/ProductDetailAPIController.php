@@ -12,6 +12,7 @@ use Product;
 use Lang;
 use DB;
 use Validator;
+use Config;
 
 class ProductDetailAPIController extends ControllerAPI
 {
@@ -61,13 +62,7 @@ class ProductDetailAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $product = Product::select(DB::raw("
-                                    {$prefix}products.*,
-                                    {$prefix}countries.country_id as country_id,
-                                    {$prefix}countries.name as country_name"
-                                ))
-                                ->join('countries', 'products.country_id', '=', 'countries.country_id')
-                                ->with('media')
+            $product = Product::with('media', 'merchants', 'categories', 'marketplaces', 'country')
                                 ->where('product_id', $productId)
                                 ->firstOrFail();
 
