@@ -181,6 +181,7 @@ class ESArticleUpdateQueue
             $body = [
                 'article_id' => $article->article_id,
                 'title' => $article->title,
+                'slug' => $article->slug,
                 'body' => $article->body,
                 'meta_title' => $article->meta_title,
                 'meta_description' => $article->meta_description,
