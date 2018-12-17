@@ -72,6 +72,7 @@ class MarketplaceUpdateAPIController extends ControllerAPI
                     'marketplace_id'   => $marketplaceId,
                     'name'             => $name,
                     'status'           => $status,
+                    'country_id'       => $countryId,
                 ),
                 array(
                     'marketplace_id'   => 'required',
