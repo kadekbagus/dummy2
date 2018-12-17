@@ -13,6 +13,7 @@ use \URL;
 
 use Article;
 use ArticleLinkToObject;
+use Media;
 
 use Validator;
 use Orbit\Helper\Util\PaginationNumber;
@@ -84,9 +85,9 @@ class ArticleDetailAPIController extends PubControllerAPI
             $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
             $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
 
-            $image = "CONCAT({$this->quote($urlPrefix)}, m.path)";
+            $image = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path)";
             if ($usingCdn) {
-                $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
+                $image = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
             }
 
             $location = $mallId;
@@ -99,12 +100,10 @@ class ArticleDetailAPIController extends PubControllerAPI
             $nowDate = date("Y-m-d H:i:s");
 
             $article = Article::where('status', '=', 'active')
-                                ->where('published_at', '<=', $nowDate)
                                 ->with('category')
-                                ->with('mediaCover')
-                                ->with('mediaContent')
                                 ->with('video')
                                 ->where('slug', $slug)
+                                ->where('published_at', '<=', $nowDate)
                                 ->first();
 
 
@@ -121,19 +120,19 @@ class ArticleDetailAPIController extends PubControllerAPI
                                                 DB::Raw("
                                                     CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as news_name,
                                                     CASE WHEN (SELECT {$image}
-                                                        FROM orb_media m
-                                                        WHERE m.media_name_long = 'news_translation_image_orig'
-                                                        AND m.object_id = {$prefix}news_translations.news_translation_id) is null
+                                                        FROM orb_media
+                                                        WHERE {$prefix}media.media_name_long = 'news_translation_image_orig'
+                                                        AND {$prefix}media.object_id = {$prefix}news_translations.news_translation_id) is null
                                                     THEN
                                                         (SELECT {$image}
-                                                        FROM orb_media m
-                                                        WHERE m.media_name_long = 'news_translation_image_orig'
-                                                        AND m.object_id = default_translation.news_translation_id)
+                                                        FROM orb_media
+                                                        WHERE {$prefix}media.media_name_long = 'news_translation_image_orig'
+                                                        AND {$prefix}media.object_id = default_translation.news_translation_id)
                                                     ELSE
                                                         (SELECT {$image}
-                                                        FROM orb_media m
-                                                        WHERE m.media_name_long = 'news_translation_image_orig'
-                                                        AND m.object_id = {$prefix}news_translations.news_translation_id)
+                                                        FROM orb_media
+                                                        WHERE {$prefix}media.media_name_long = 'news_translation_image_orig'
+                                                        AND {$prefix}media.object_id = {$prefix}news_translations.news_translation_id)
                                                     END AS original_media_path
                                                 "),
                                                 'news.object_type',
@@ -168,19 +167,19 @@ class ArticleDetailAPIController extends PubControllerAPI
                                                 DB::Raw("
                                                     CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as promotion_name,
                                                     CASE WHEN (SELECT {$image}
-                                                        FROM orb_media m
-                                                        WHERE m.media_name_long = 'news_translation_image_orig'
-                                                        AND m.object_id = {$prefix}news_translations.news_translation_id) is null
+                                                        FROM orb_media
+                                                        WHERE {$prefix}media.media_name_long = 'news_translation_image_orig'
+                                                        AND {$prefix}media.object_id = {$prefix}news_translations.news_translation_id) is null
                                                     THEN
                                                         (SELECT {$image}
-                                                        FROM orb_media m
-                                                        WHERE m.media_name_long = 'news_translation_image_orig'
-                                                        AND m.object_id = default_translation.news_translation_id)
+                                                        FROM orb_media
+                                                        WHERE {$prefix}media.media_name_long = 'news_translation_image_orig'
+                                                        AND {$prefix}media.object_id = default_translation.news_translation_id)
                                                     ELSE
                                                         (SELECT {$image}
-                                                        FROM orb_media m
-                                                        WHERE m.media_name_long = 'news_translation_image_orig'
-                                                        AND m.object_id = {$prefix}news_translations.news_translation_id)
+                                                        FROM orb_media
+                                                        WHERE {$prefix}media.media_name_long = 'news_translation_image_orig'
+                                                        AND {$prefix}media.object_id = {$prefix}news_translations.news_translation_id)
                                                     END AS original_media_path
                                                 "),
                                                 'news.object_type',
@@ -214,19 +213,19 @@ class ArticleDetailAPIController extends PubControllerAPI
                                                 DB::Raw("
                                                     CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
                                                     CASE WHEN (SELECT {$image}
-                                                        FROM orb_media m
-                                                        WHERE m.media_name_long = 'coupon_translation_image_orig'
-                                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id) is null
+                                                        FROM orb_media
+                                                        WHERE {$prefix}media.media_name_long = 'coupon_translation_image_orig'
+                                                        AND {$prefix}media.object_id = {$prefix}coupon_translations.coupon_translation_id) is null
                                                     THEN
                                                         (SELECT {$image}
-                                                        FROM orb_media m
-                                                        WHERE m.media_name_long = 'coupon_translation_image_orig'
-                                                        AND m.object_id = default_translation.coupon_translation_id)
+                                                        FROM orb_media
+                                                        WHERE {$prefix}media.media_name_long = 'coupon_translation_image_orig'
+                                                        AND {$prefix}media.object_id = default_translation.coupon_translation_id)
                                                     ELSE
                                                         (SELECT {$image}
-                                                        FROM orb_media m
-                                                        WHERE m.media_name_long = 'coupon_translation_image_orig'
-                                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id)
+                                                        FROM orb_media
+                                                        WHERE {$prefix}media.media_name_long = 'coupon_translation_image_orig'
+                                                        AND {$prefix}media.object_id = {$prefix}coupon_translations.coupon_translation_id)
                                                     END AS original_media_path
                                                 "),
                                                 'promotions.end_date',
@@ -257,9 +256,9 @@ class ArticleDetailAPIController extends PubControllerAPI
                                                 'merchants.name',
                                                 DB::raw("
                                                         (SELECT {$image}
-                                                        FROM orb_media m
-                                                        WHERE m.media_name_long = 'mall_logo_orig'
-                                                        AND m.object_id = mall_id) as original_media_path
+                                                        FROM orb_media
+                                                        WHERE {$prefix}media.media_name_long = 'mall_logo_orig'
+                                                        AND {$prefix}media.object_id = mall_id) as original_media_path
                                                     ")
                                             )
                                             ->join('merchants', function($q) {
@@ -280,9 +279,9 @@ class ArticleDetailAPIController extends PubControllerAPI
                                                 ,
                                                 DB::raw("
                                                         (SELECT {$image}
-                                                        FROM orb_media m
-                                                        WHERE m.media_name_long = 'base_merchant_logo_orig'
-                                                        AND m.object_id = base_merchant_id) as original_media_path
+                                                        FROM orb_media
+                                                        WHERE {$prefix}media.media_name_long = 'base_merchant_logo_orig'
+                                                        AND {$prefix}media.object_id = base_merchant_id) as original_media_path
                                                     ")
                                             )
                                             ->leftJoin('base_merchants', function($q) {
@@ -294,6 +293,45 @@ class ArticleDetailAPIController extends PubControllerAPI
                                             ->get();
 
             $article['object_merchant'] = $objectMerchant;
+
+
+            $objectMerchant = ArticleLinkToObject::select(
+                                                'base_merchants.base_merchant_id as merchant_id',
+                                                'base_merchants.name'
+                                                ,
+                                                DB::raw("
+                                                        (SELECT {$image}
+                                                        FROM orb_media
+                                                        WHERE {$prefix}media.media_name_long = 'base_merchant_logo_orig'
+                                                        AND {$prefix}media.object_id = base_merchant_id) as original_media_path
+                                                    ")
+                                            )
+                                            ->leftJoin('base_merchants', function($q) {
+                                                $q->on('base_merchant_id', '=', 'object_id')
+                                                  ->on('base_merchants.status', '=', DB::raw("'active'"));
+                                            })
+                                            ->where('article_link_to_objects.object_type', 'merchant')
+                                            ->where('article_id',$articleId)
+                                            ->get();
+
+            $article['object_merchant'] = $objectMerchant;
+
+
+            $mediaCover = Media::select('media.*',DB::raw("{$image} as original_media_path"))
+                                ->where('media_name_id', 'article_cover_image')
+                                ->where('object_id',$articleId)
+                                ->get();
+
+            $article['media_cover'] = $mediaCover;
+
+
+            $mediaContent = Media::select('media.*',DB::raw("{$image} as original_media_path"))
+                                ->where('media_name_id', 'article_content_image')
+                                ->where('object_id',$articleId)
+                                ->get();
+
+            $article['media_content'] = $mediaContent;
+
 
             $mall = null;
             $mallName = 'gtm';
