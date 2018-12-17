@@ -7,6 +7,8 @@ class Article extends Eloquent
      * @author Firmansyah <firmansyah@dominopos.com>
      */
 
+    const NOT_FOUND_ERROR_CODE = 404;
+
     protected $table = 'articles';
 
     protected $primaryKey = 'article_id';
