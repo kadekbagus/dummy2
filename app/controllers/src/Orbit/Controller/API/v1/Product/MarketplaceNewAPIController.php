@@ -83,6 +83,7 @@ class MarketplaceNewAPIController extends ControllerAPI
                 array(
                     'name'             => 'E-Commerce Name field is required',
                     'country_id'       => 'E-Commerce Country field is required',
+                )
             );
 
             // Run the validation

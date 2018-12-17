@@ -60,6 +60,8 @@ class MarketplaceUpdateAPIController extends ControllerAPI
             $productHelper->productCustomValidator();
 
             $marketplaceId = OrbitInput::post('marketplace_id');
+            $name = OrbitInput::post('name');
+            $countryId = OrbitInput::post('country_id');
             $status = OrbitInput::post('status', 'inactive');
 
             // Begin database transaction
@@ -68,11 +70,18 @@ class MarketplaceUpdateAPIController extends ControllerAPI
             $validator = Validator::make(
                 array(
                     'marketplace_id'   => $marketplaceId,
+                    'name'             => $name,
                     'status'           => $status,
                 ),
                 array(
                     'marketplace_id'   => 'required',
+                    'name'             => 'required',
                     'status'           => 'in:active,inactive',
+                    'country_id'       => 'required',
+                ),
+                array(
+                    'name'             => 'E-Commerce Name field is required',
+                    'country_id'       => 'E-Commerce Country field is required',
                 )
             );
 
