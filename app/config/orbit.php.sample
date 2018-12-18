@@ -6839,8 +6839,17 @@ return array(
                 'object_type' => 'Mall',
                 'parameter_name' => 'object_id'
             ),
-            // user click brand photo thumbnail on brand detail page
+            // User views Stripe payment window.
             '187' => array(
+                'name' => 'view_payment_page_stripe_payment_page',
+                'name_long' => 'View Payment Page (Stripe Payment Page)',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
+            // user click brand photo thumbnail on brand detail page
+            '188' => array(
                 'name' => 'click_brand_photo',
                 'name_long' => 'Click Brand Photo Thumbnail',
                 'module_name' => 'Merchant',
@@ -6849,7 +6858,7 @@ return array(
                 'parameter_name' => 'object_id'
             ),
             // user click brand other photo thumbnail on brand detail page
-            '188' => array(
+            '189' => array(
                 'name' => 'click_brand_other_photo',
                 'name_long' => 'Click Brand Other Photo Thumbnail',
                 'module_name' => 'Merchant',
@@ -6858,7 +6867,7 @@ return array(
                 'parameter_name' => 'object_id'
             ),
             // user click video thumbnail on brand detail page
-            '189' => array(
+            '190' => array(
                 'name' => 'click_video_thumbnail',
                 'name_long' => 'Click Video Thumbnail',
                 'module_name' => 'Merchant',
@@ -6867,7 +6876,7 @@ return array(
                 'parameter_name' => 'object_id'
             ),
             // user click video play brand on brand detail page
-            '190' => array(
+            '191' => array(
                 'name' => 'click_play_video_brand',
                 'name_long' => 'Click Video Play Brand',
                 'module_name' => 'Merchant',
@@ -6876,7 +6885,7 @@ return array(
                 'parameter_name' => 'object_id'
             ),
             // user click brand promotion on brand detail page
-            '191' => array(
+            '192' => array(
                 'name' => 'click_brand_promotion',
                 'name_long' => 'Click Brand Promotion',
                 'module_name' => 'Merchant',
@@ -6885,7 +6894,7 @@ return array(
                 'parameter_name' => 'object_id'
             ),
             // user click brand event on brand detail page
-            '192' => array(
+            '193' => array(
                 'name' => 'click_brand_event',
                 'name_long' => 'Click Brand Event',
                 'module_name' => 'Merchant',
@@ -6894,7 +6903,7 @@ return array(
                 'parameter_name' => 'object_id'
             ),
             // user click brand coupon on brand detail page
-            '193' => array(
+            '194' => array(
                 'name' => 'click_brand_coupon',
                 'name_long' => 'Click Brand Coupon',
                 'module_name' => 'Merchant',

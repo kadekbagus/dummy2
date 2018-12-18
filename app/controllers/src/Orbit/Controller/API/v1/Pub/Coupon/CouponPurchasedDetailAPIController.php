@@ -88,6 +88,7 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
                                     {$prefix}payment_transactions.external_payment_transaction_id,
                                     {$prefix}payment_transactions.user_name,
                                     {$prefix}payment_transactions.user_email,
+                                    {$prefix}payment_transactions.currency,
                                     {$prefix}payment_transactions.amount,
                                     {$prefix}promotions.price_selling,
                                     FORMAT({$prefix}payment_transactions.amount / {$prefix}promotions.price_selling, 0) as qty,
@@ -162,6 +163,20 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
             if (!$coupon) {
                 OrbitShopAPI::throwInvalidArgument('purchased detail not found');
             }
+
+            // Fallback to IDR by default?
+            if (empty($coupon->currency)) {
+                $coupon->currency = 'IDR';
+            }
+
+            // if ($coupon->currency === 'IDR') {
+            //     $coupon->price_selling = number_format($coupon->price_selling, 0, ',', '.');
+            //     $coupon->amount = number_format($coupon->amount, 0, ',', '.');
+            // }
+            // else {
+            //     $coupon->price_selling = number_format($coupon->price_selling, 2, '.', ',');
+            //     $coupon->amount = number_format($coupon->amount, 2, '.', ',');
+            // }
 
             // get Imahe from local when image cdn is null
             if ($coupon->cdnPath == null) {
