@@ -254,17 +254,16 @@ class ArticleDetailAPIController extends PubControllerAPI
             $objectMall = ArticleLinkToObject::select(
                                                 'merchants.merchant_id as mall_id',
                                                 'merchants.name',
-                                                DB::raw("
-                                                        (SELECT {$image}
-                                                        FROM orb_media
-                                                        WHERE {$prefix}media.media_name_long = 'mall_logo_orig'
-                                                        AND {$prefix}media.object_id = mall_id) as original_media_path
-                                                    ")
+                                                DB::raw("{$image} as original_media_path")
                                             )
                                             ->join('merchants', function($q) {
                                                 $q->on('merchants.merchant_id', '=', 'object_id')
                                                   ->on('merchants.object_type', '=', DB::raw("'mall'"))
                                                   ->on('merchants.status', '=', DB::raw("'active'"));
+                                            })
+                                            ->leftJoin('media', function($q) {
+                                                $q->on('media.media_name_long', '=', DB::raw("'mall_logo_orig'"))
+                                                  ->on('media.object_id', '=', 'merchants.merchant_id');
                                             })
                                             ->where('article_link_to_objects.object_type', 'mall')
                                             ->where('article_id',$articleId)
@@ -275,40 +274,16 @@ class ArticleDetailAPIController extends PubControllerAPI
 
             $objectMerchant = ArticleLinkToObject::select(
                                                 'base_merchants.base_merchant_id as merchant_id',
-                                                'base_merchants.name'
-                                                ,
-                                                DB::raw("
-                                                        (SELECT {$image}
-                                                        FROM orb_media
-                                                        WHERE {$prefix}media.media_name_long = 'base_merchant_logo_orig'
-                                                        AND {$prefix}media.object_id = base_merchant_id) as original_media_path
-                                                    ")
+                                                'base_merchants.name',
+                                                DB::raw("{$image} as original_media_path")
                                             )
                                             ->leftJoin('base_merchants', function($q) {
                                                 $q->on('base_merchant_id', '=', 'object_id')
                                                   ->on('base_merchants.status', '=', DB::raw("'active'"));
                                             })
-                                            ->where('article_link_to_objects.object_type', 'merchant')
-                                            ->where('article_id',$articleId)
-                                            ->get();
-
-            $article['object_merchant'] = $objectMerchant;
-
-
-            $objectMerchant = ArticleLinkToObject::select(
-                                                'base_merchants.base_merchant_id as merchant_id',
-                                                'base_merchants.name'
-                                                ,
-                                                DB::raw("
-                                                        (SELECT {$image}
-                                                        FROM orb_media
-                                                        WHERE {$prefix}media.media_name_long = 'base_merchant_logo_orig'
-                                                        AND {$prefix}media.object_id = base_merchant_id) as original_media_path
-                                                    ")
-                                            )
-                                            ->leftJoin('base_merchants', function($q) {
-                                                $q->on('base_merchant_id', '=', 'object_id')
-                                                  ->on('base_merchants.status', '=', DB::raw("'active'"));
+                                            ->leftJoin('media', function($q) {
+                                                $q->on('media.media_name_long', '=', DB::raw("'base_merchant_logo_orig'"))
+                                                  ->on('media.object_id', '=', 'base_merchant_id');
                                             })
                                             ->where('article_link_to_objects.object_type', 'merchant')
                                             ->where('article_id',$articleId)
