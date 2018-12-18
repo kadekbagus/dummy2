@@ -62,6 +62,7 @@ class MarketplaceUpdateAPIController extends ControllerAPI
             $marketplaceId = OrbitInput::post('marketplace_id');
             $name = OrbitInput::post('name');
             $countryId = OrbitInput::post('country_id');
+            $websiteUrl = OrbitInput::post('website_url');
             $status = OrbitInput::post('status', 'inactive');
 
             // Begin database transaction
@@ -73,12 +74,14 @@ class MarketplaceUpdateAPIController extends ControllerAPI
                     'name'             => $name,
                     'status'           => $status,
                     'country_id'       => $countryId,
+                    'website_url'      => $websiteUrl,
                 ),
                 array(
                     'marketplace_id'   => 'required',
                     'name'             => 'required',
                     'status'           => 'in:active,inactive',
                     'country_id'       => 'required',
+                    'website_url'      => 'url',
                 ),
                 array(
                     'name.required'             => 'E-Commerce Name field is required',

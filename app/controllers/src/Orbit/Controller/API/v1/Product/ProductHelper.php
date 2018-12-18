@@ -459,6 +459,7 @@ class ProductHelper
                 elseif ($op === 'update') {
                     /** @var MerchantTranslation $existing_translation */
                     $existing_translation = $operation[1];
+
                     $data = $operation[2];
                     foreach ($data as $field => $value) {
                         $existing_translation->product_url = $value;
