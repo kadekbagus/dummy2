@@ -6738,6 +6738,25 @@ return array(
                 'parameter_name' => 'object_id'
             ),
 
+            // user click brand product
+            '194' => array(
+                'name' => 'click_brand_product',
+                'name_long' => 'Click Brand Product',
+                'module_name' => 'Product',
+                'type' => 'click',
+                'object_type' => 'Product',
+                'parameter_name' => 'object_id'
+            ),
+
+            // user click brand product detail
+            '195' => array(
+                'name' => 'click_brand_product_detail_link',
+                'name_long' => 'Click Brand Product Link',
+                'module_name' => 'Product',
+                'type' => 'click',
+                'object_type' => 'Product',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 
