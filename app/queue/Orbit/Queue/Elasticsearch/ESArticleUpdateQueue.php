@@ -181,6 +181,7 @@ class ESArticleUpdateQueue
             $body = [
                 'article_id' => $article->article_id,
                 'title' => $article->title,
+                'slug' => $article->slug,
                 'body' => $article->body,
                 'meta_title' => $article->meta_title,
                 'meta_description' => $article->meta_description,
@@ -193,7 +194,7 @@ class ESArticleUpdateQueue
                 'link_to_coupons' => $linkToCoupons,
                 'link_to_malls' => $linkToMalls,
                 'link_to_brands' => $linkToMerchants,
-                'link_to_categories' => $categories,
+                'link_to_categories' => $linkToCategories,
                 'media' => $linkToMedias
             ];
 

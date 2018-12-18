@@ -104,7 +104,7 @@ class ArticleListAPIController extends ControllerAPI
                 $article->where('title', 'like', "%$title%");
             });
 
-            if ($role->role_name = 'Article Writer') {
+            if ($role->role_name == 'Article Writer') {
                 $article->where('created_by', $user->user_id);
             }
 
@@ -158,7 +158,7 @@ class ArticleListAPIController extends ControllerAPI
 
             if ($totalArticles === 0) {
                 $data->records = NULL;
-                $this->response->message = Lang::get('statuses.orbit.nodata.merchant');
+                $this->response->message = "There is no article that matched your search criteria";
             }
 
             $this->response->data = $data;
