@@ -77,6 +77,7 @@ class StoreAlsoLikeListAPIController extends PubControllerAPI
             $mallId = OrbitInput::get('mall_id', null);
             $esConfig = Config::get('orbit.elasticsearch');
             $esIndex = 'stores';
+            $storeId = OrbitInput::get('store_id');
 
             $esNameBuilder = new IndexNameBuilder($esConfig);
             $esCurrentCampaignParams = [
@@ -103,6 +104,7 @@ class StoreAlsoLikeListAPIController extends PubControllerAPI
                 'lat'         => $lat,
                 'mall_id'     => $mallId,
                 'token'       => $token,
+                'store_id'    => $storeId,
                 'filter'      => 'Y',
                 'primary_key' => 'merchant_id'
             ];
@@ -184,6 +186,7 @@ class StoreAlsoLikeListAPIController extends PubControllerAPI
         $_GET['token'] = $params['token'];
         $_GET['from_homepage'] = 'y';   // prevent activity recording
         $_GET['excluded_ids'] = (array)$params['except_id'];
+        $_GET['store_id'] = $params['store_id'];
 
         if ($params['sort_by'] === 'location') {
             unset($_GET['cities']);
