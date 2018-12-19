@@ -100,6 +100,18 @@ class MerchantNewAPIController extends ControllerAPI
             $bankAddress = OrbitInput::post('bank_address',[]);
             $swiftCodes = OrbitInput::post('swift_codes',[]);
 
+            $instagramUrl = OrbitInput::post('instagram_url');
+            $twitterUrl = OrbitInput::post('twitter_url');
+            $youtubeUrl = OrbitInput::post('youtube_url');
+            $lineUrl = OrbitInput::post('line_url');
+            $otherPhotoSectionTitle = OrbitInput::post('other_photo_section_title');
+            $videoId1 = OrbitInput::post('video_id_1');
+            $videoId2 = OrbitInput::post('video_id_2');
+            $videoId3 = OrbitInput::post('video_id_3');
+            $videoId4 = OrbitInput::post('video_id_4');
+            $videoId5 = OrbitInput::post('video_id_5');
+            $videoId6 = OrbitInput::post('video_id_6');
+
             // Begin database transaction
             $this->beginTransaction();
 
@@ -169,6 +181,17 @@ class MerchantNewAPIController extends ControllerAPI
             $newBaseMerchant->is_payment_acquire = $paymentAcquire;
             $newBaseMerchant->gender = $gender;
             $newBaseMerchant->status = 'active';
+            $newBaseMerchant->instagram_url = $instagramUrl;
+            $newBaseMerchant->twitter_url = $twitterUrl;
+            $newBaseMerchant->youtube_url = $youtubeUrl;
+            $newBaseMerchant->line_url = $lineUrl;
+            $newBaseMerchant->other_photo_section_title = $otherPhotoSectionTitle;
+            $newBaseMerchant->video_id_1 = $videoId1;
+            $newBaseMerchant->video_id_2 = $videoId2;
+            $newBaseMerchant->video_id_3 = $videoId3;
+            $newBaseMerchant->video_id_4 = $videoId4;
+            $newBaseMerchant->video_id_5 = $videoId5;
+            $newBaseMerchant->video_id_6 = $videoId6;
 
             if (! empty($translations) ) {
                 $dataTranslations = @json_decode($translations);
