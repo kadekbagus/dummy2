@@ -103,6 +103,8 @@ class MenuCounterAPIController extends PubControllerAPI
             $merchantJsonQuery = array('from' => 0, 'size' => 1);
             $storeJsonQuery = $merchantJsonQuery;
 
+            $articleJsonQuery =array('from' => 0,'size' => 1,'query' => array('bool' => array('filter' => array(array('query' => array('match' => array('status' => 'active')))))));
+
             // get user lat and lon
             if ($location == 'mylocation') {
                 if (! empty($ul)) {
@@ -160,6 +162,8 @@ class MenuCounterAPIController extends PubControllerAPI
             $campaignCityFilter = [];
             $keywordMallFilter = [];
             $keywordMallFilterShould = [];
+            $keywordArticleFilter = [];
+            $keywordArticleFilterShould = [];
             $categoryCampaignFilter = [];
             $categoryStoreFilter = [];
             $sponsorFilter = [];
@@ -282,7 +286,7 @@ class MenuCounterAPIController extends PubControllerAPI
             });
 
             // filter by keywords
-            OrbitInput::get('keywords', function($keywords) use (&$keywordFilter, &$keywordFilterShould, &$keywordMallFilter, &$keywordMallFilterShould) {
+            OrbitInput::get('keywords', function($keywords) use (&$keywordFilter, &$keywordFilterShould, &$keywordMallFilter, &$keywordMallFilterShould, &$keywordArticleFilter, &$keywordArticleFilterShould) {
                 $forbiddenCharacter = array('>', '<', '(', ')', '{', '}', '[', ']', '^', '"', '~', '/');
                 $keywords = str_replace($forbiddenCharacter, '', $keywords);
 
@@ -342,6 +346,30 @@ class MenuCounterAPIController extends PubControllerAPI
                                             "country" . $priorityCountry,
                                             "province" . $priorityProvince,
                                             "city" . $priorityCity)));
+
+                // for article
+                $priorityTitle = isset($esPriority['articles']['title']) ? $esPriority['articles']['title'] : '^6';
+                $priorityBody = isset($esPriority['articles']['body']) ? $esPriority['articles']['body'] : '^6';
+
+                $keywordArticleFilter = array(
+                                            'query_string' => array(
+                                                'query' => '*' . $keywords . '*',
+                                                'fields' => array(
+                                                    "title" . $priorityTitle,
+                                                    "body" . $priorityBody,
+                                                )
+                                            )
+                                        );
+
+                $keywordArticleFilterShould = array(
+                                                    'query_string' => array(
+                                                        'query' => '*' . $keywords . '*',
+                                                        'fields' => array(
+                                                            "country" . $priorityCountry
+                                                        )
+                                                    )
+                                                );
+
             });
 
             // filter by category
@@ -536,6 +564,14 @@ class MenuCounterAPIController extends PubControllerAPI
                 $mallJsonQuery['query']['bool']['should'][] = $keywordMallFilterShould;
             }
 
+            if (! empty($keywordArticleFilter)) {
+                $articleJsonQuery['query']['bool']['must'][] = $keywordArticleFilter;
+            }
+
+            if (! empty($keywordArticleFilterShould)) {
+                $articleJsonQuery['query']['bool']['should'][] = $keywordArticleFilterShould;
+            }
+
             if (! empty($categoryCampaignFilter)) {
                 $campaignJsonQuery['query']['bool']['must'][] = $categoryCampaignFilter;
                 $couponJsonQuery['query']['bool']['must'][] = $categoryCampaignFilter;
@@ -570,6 +606,7 @@ class MenuCounterAPIController extends PubControllerAPI
             $mallIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.malldata.index');
             $merchantIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores');
             $storeIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.store_details.index', 'store_details');
+            $articleIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.articles.index');
 
             // call es campaign
             $campaignParam = [
@@ -610,6 +647,15 @@ class MenuCounterAPIController extends PubControllerAPI
             ];
             $storeResponse = $client->search($storeParam);
 
+            // articles
+            $articleParam = [
+                'index'  => $articleIndex,
+                'type'   => Config::get('orbit.elasticsearch.indices.articles.type'),
+                'body' => json_encode($articleJsonQuery)
+            ];
+
+            $articleResponse = $client->search($articleParam);
+
             $campaignRecords = $campaignResponse['aggregations']['campaign_index']['buckets'];
             $couponRecords = $couponResponse['aggregations']['campaign_index']['buckets'];
             $listOfRec = array();
@@ -631,6 +677,7 @@ class MenuCounterAPIController extends PubControllerAPI
             $listOfRec['mall'] = empty($mallResponse['hits']['total']) ? 0 : $mallResponse['hits']['total'];
             $listOfRec['merchants'] = empty($merchantResponse['hits']['total']) ? 0 : $merchantResponse['hits']['total'];
             $listOfRec['stores'] = empty($storeResponse['hits']['total']) ? 0 : $storeResponse['hits']['total'];
+            $listOfRec['articles'] = empty($articleResponse['hits']['total']) ? 0 : $articleResponse['hits']['total'];
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
