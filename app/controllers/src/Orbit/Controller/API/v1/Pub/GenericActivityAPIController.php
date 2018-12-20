@@ -215,6 +215,10 @@ class GenericActivityAPIController extends PubControllerAPI
                             $activity->setObjectDisplayName('Events');
                             break;
 
+                        case 'articles':
+                            $activity->setObjectDisplayName('Articles');
+                            break;
+
                         default:
                             $activity->setObjectDisplayName('undefined');
                             break;
