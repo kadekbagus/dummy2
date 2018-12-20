@@ -112,6 +112,7 @@ class GenericActivityAPIController extends PubControllerAPI
                             'promotion' => 'News',
                             'news'      => 'News',
                             'event'     => 'News',
+                            'article'   => 'Article',
                             'paymentprovider' => 'PaymentProvider',
                             'paymenttransaction' => 'PaymentTransaction',
                         ];
