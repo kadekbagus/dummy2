@@ -7,6 +7,7 @@
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Controller\API\v1\Merchant\Merchant\MerchantUploadLogoAPIController;
 use Orbit\Controller\API\v1\Merchant\Merchant\MerchantUploadLogoThirdPartyAPIController;
+use Orbit\Controller\API\v1\Merchant\Merchant\MerchantUploadBannerAPIController;
 
 
 /**
@@ -62,8 +63,29 @@ Event::listen('orbit.basemerchant.postnewbasemerchant.after.save', function($con
         }
     }
 
+    // upload banner brand detail page
+    $banner = OrbitInput::files('banner');
+
+    if (! empty($banner)) {
+        $_POST['merchant_id'] = $baseMerchant->base_merchant_id;
+        $_POST['object_type'] = $baseMerchant->object_type;
+
+        // This will be used on UploadAPIController
+        App::instance('orbit.upload.user', $controller->api->user);
+
+        $response = MerchantUploadBannerAPIController::create('raw')
+                                       ->setCalledFrom('merchant.new')
+                                       ->postUploadMerchantBanner();
+
+        if ($response->code !== 0)
+        {
+            throw new \Exception($response->message, $response->code);
+        }
+    }
+
     $baseMerchant->load('mediaLogo');
     $baseMerchant->load('mediaLogoGrab');
+    $baseMerchant->load('mediaBanner');
 });
 
 /**
@@ -118,7 +140,27 @@ Event::listen('orbit.basemerchant.postupdatebasemerchant.after.save', function($
         }
     }
 
+    // upload banner brand detail page
+    $banner = OrbitInput::files('banner');
+
+    if (! empty($banner)) {
+        $_POST['merchant_id'] = $baseMerchant->base_merchant_id;
+        $_POST['object_type'] = $baseMerchant->object_type;
+
+        // This will be used on UploadAPIController
+        App::instance('orbit.upload.user', $controller->api->user);
+
+        $response = MerchantUploadBannerAPIController::create('raw')
+                                       ->setCalledFrom('merchant.update')
+                                       ->postUploadMerchantBanner();
+
+        if ($response->code !== 0)
+        {
+            throw new \Exception($response->message, $response->code);
+        }
+    }
+
     $baseMerchant->load('mediaLogo');
     $baseMerchant->load('mediaLogoGrab');
-
+    $baseMerchant->load('mediaBanner');
 });
