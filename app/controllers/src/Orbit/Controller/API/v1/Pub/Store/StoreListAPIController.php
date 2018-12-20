@@ -239,6 +239,11 @@ class StoreListAPIController extends PubControllerAPI
                 }
              });
 
+            // filter by mall_id
+            OrbitInput::get('store_id', function($storeId) use (&$jsonQuery) {
+                $jsonQuery['query']['bool']['must_not'][] = array('match' => ['merchant_id' => $storeId]);
+             });
+
             // filter by category_id
             OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
