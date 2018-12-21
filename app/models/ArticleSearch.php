@@ -74,7 +74,7 @@ class ArticleSearch extends Search
             $priorityFields[] = $field . $this->esConfig['priority'][$this->index][$field];
         }
 
-        $this->must([
+        $this->should([
             'bool' => [
                 'should' => [
                     [
@@ -99,14 +99,11 @@ class ArticleSearch extends Search
         $this->must(['match' => ['country' => $countryName]]);
     }
 
-    public function relatedTo($objectType = '', $objectId = '', $categories = [])
-    {
-
-    }
-
     /**
      * Filter by linked object.
      *
+     * @todo  add boost/priority to make sure that the result will
+     *        always be sorted by linked object (then by keyword/categories)
      * @param  string $objectType [description]
      * @param  string $objectId   [description]
      * @return [type]             [description]
@@ -159,6 +156,19 @@ class ArticleSearch extends Search
                         ]
                     ]
                 ],
+            ]);
+        }
+    }
+
+    public function filterExclude($excludedItems = [])
+    {
+        if (! empty($excludedItems)) {
+            $excludedItems = ! is_array($excludedItems) ? [$excludedItems] : $excludedItems;
+
+            $this->mustNot([
+                'terms' => [
+                    '_id' => $excludedItems
+                ]
             ]);
         }
     }

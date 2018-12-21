@@ -106,6 +106,7 @@ class ArticleListAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
             $viewType = OrbitInput::get('view_type', 'grid');
+            $excludedItems = OrbitInput::get('except', []);
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -140,6 +141,7 @@ class ArticleListAPIController extends PubControllerAPI
                 // 'list_type' => $list_type,
                 'from_mall_ci' => $from_mall_ci,
                 'category_id' => $categoryIds,
+                'excludedItems' => $excludedItems,
                 'no_total_record' => $no_total_records,
                 'take' => $take, 'skip' => $skip,
                 'country' => $countryFilter,
@@ -173,6 +175,9 @@ class ArticleListAPIController extends PubControllerAPI
             if (! empty($countryFilter) && $countryFilter != 0) {
                 $this->searcher->filterByCountry($countryFilter);
             }
+
+            // Exclude an article
+            $this->searcher->filterExclude($excludedItems);
 
             // Filter by linked object like malls, brands, etc...
             // Linked object should have higher priority than category.
