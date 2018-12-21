@@ -401,6 +401,8 @@ class CouponListNewAPIController extends PubControllerAPI
                 $pageView = 0;
                 $data['placement_type'] = null;
                 $data['placement_type_orig'] = null;
+                $data['coupon_country'] = 'Indonesia';
+                $data['currency'] = 'IDR';
                 $campaignId = '';
                 foreach ($record['_source'] as $key => $value) {
                     if ($key === "name") {
@@ -530,6 +532,18 @@ class CouponListNewAPIController extends PubControllerAPI
                                 if ($dt['location_id'] === $mallId) {
                                     $pageView = $dt['total_views'];
                                 }
+                            }
+                        }
+                    }
+
+                    if ($key === 'link_to_tenant') {
+                        if (! empty($data[$key]) && isset($data[$key][0])) {
+                            $data['coupon_country'] = $data[$key][0]['country'];
+                            if ($data['coupon_country'] === 'Indonesia') {
+                                $data['currency'] = 'IDR';
+                            }
+                            else {
+                                $data['currency'] = 'SGD';
                             }
                         }
                     }

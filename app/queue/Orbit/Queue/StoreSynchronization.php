@@ -355,6 +355,18 @@ class StoreSynchronization
                     $tenant->mobile_default_language = $store->mobile_default_language;
                     $tenant->is_payment_acquire = $store->is_payment_acquire;
                     $tenant->gender = $baseMerchant->gender;
+                    $tenant->facebook_url = $baseMerchant->facebook_url;
+                    $tenant->instagram_url = $baseMerchant->instagram_url;
+                    $tenant->twitter_url = $baseMerchant->twitter_url;
+                    $tenant->youtube_url = $baseMerchant->youtube_url;
+                    $tenant->line_url = $baseMerchant->line_url;
+                    $tenant->other_photo_section_title = $baseMerchant->other_photo_section_title;
+                    $tenant->video_id_1 = $baseMerchant->video_id_1;
+                    $tenant->video_id_2 = $baseMerchant->video_id_2;
+                    $tenant->video_id_3 = $baseMerchant->video_id_3;
+                    $tenant->video_id_4 = $baseMerchant->video_id_4;
+                    $tenant->video_id_5 = $baseMerchant->video_id_5;
+                    $tenant->video_id_6 = $baseMerchant->video_id_6;
                     $tenant->save();
 
                     // handle inactive store
@@ -702,7 +714,14 @@ class StoreSynchronization
                                 ->get();
                     $map_image = $this->updateMedia('map', $map, $base_store_id);
 
-                    $images = array_merge($logo_image, $pic_image, $map_image);
+                    // copy banner from base_store directory to retailer directory
+                    $banner = Media::where('object_name', 'base_merchant')
+                                    ->where('media_name_id', 'base_merchant_banner')
+                                    ->where('object_id', $base_merchant_id)
+                                    ->get();
+                    $banner_image = $this->updateMedia('banner', $banner, $base_store_id);
+
+                    $images = array_merge($logo_image, $pic_image, $map_image, $banner_image);
 
                     // get presync data
                     $presync = PreSync::where('sync_id', $sync_id)
@@ -825,6 +844,11 @@ class StoreSynchronization
 
                 case 'map':
                     $nameid = "retailer_map";
+                    break;
+
+                case 'banner':
+                    $filename = $store_id . '-' . $dt->file_name;
+                    $nameid = "retailer_banner";
                     break;
 
                 default:
