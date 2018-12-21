@@ -125,7 +125,7 @@ class GetCouponQueue
                         ->setUser($payment->user)
                         ->setActivityType('click')
                         ->setActivityName('coupon_added_to_wallet')
-                        ->setActivityNameLong('Coupon Added to Wallet')
+                        ->setActivityNameLong('Coupon Added To Wallet')
                         ->setModuleName('Coupon')
                         ->setObject($coupon)
                         ->setNotes(Coupon::TYPE_HOT_DEALS)
