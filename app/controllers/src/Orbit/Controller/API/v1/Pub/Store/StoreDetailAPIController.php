@@ -264,6 +264,8 @@ class StoreDetailAPIController extends PubControllerAPI
                     $img->media_name_long = $photos[$key]->media_name_long;
                     $img->cdn_url = $validImage;
                     $img->cdn_bucket_name = $photos[$key]->cdn_bucket_name;
+                    $img->file_name = $photos[$key]->file_name;
+                    $img->metadata = $photos[$key]->metadata;
                     $validPhotos[] = $img;
                 }
             }
@@ -280,6 +282,8 @@ class StoreDetailAPIController extends PubControllerAPI
                     $img->media_name_long = $otherPhotos[$key]->media_name_long;
                     $img->cdn_url = $validImage;
                     $img->cdn_bucket_name = $otherPhotos[$key]->cdn_bucket_name;
+                    $img->file_name = $otherPhotos[$key]->file_name;
+                    $img->metadata = $otherPhotos[$key]->metadata;
                     $validOtherPhotos[] = $img;
                 }
             }
