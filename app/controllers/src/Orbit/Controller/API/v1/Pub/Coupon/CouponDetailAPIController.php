@@ -157,10 +157,12 @@ class CouponDetailAPIController extends PubControllerAPI
                             'promotions.price_selling as price_new',
                             'promotions.max_quantity_per_purchase',
                             'promotions.max_quantity_per_user',
+                            'promotions.currency',
                             'coupon_sepulsa.how_to_buy_and_redeem',
                             'coupon_sepulsa.terms_and_conditions',
                             'issued_coupons.url as redeem_url',
                             DB::raw('payment.payment_midtrans_info'),
+                            DB::raw("m.country as coupon_country"),
                             'promotions.promotion_type',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
 
@@ -213,7 +215,17 @@ class CouponDetailAPIController extends PubControllerAPI
                             DB::raw("
                                 CASE WHEN reserved_issued_coupons.status = 'reserved'
                                     THEN 'true'
-                                ELSE 'false' END as is_reserved")
+                                ELSE 'false' END as is_reserved"),
+                            DB::raw("
+                                (SELECT
+                                    count({$prefix}issued_coupons.issued_coupon_id) as issued_coupons_per_user
+                                FROM {$prefix}issued_coupons
+                                WHERE
+                                    {$prefix}issued_coupons.promotion_id = '{$couponId}' AND
+                                    {$prefix}issued_coupons.user_id = '{$user->user_id}' AND
+                                    {$prefix}issued_coupons.status IN ('issued', 'redeemed', 'reserved')
+                                ) as used_coupons_count
+                                ")
                         )
                         ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                         ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
@@ -299,6 +311,25 @@ class CouponDetailAPIController extends PubControllerAPI
             $message = 'Request Ok';
             if (! is_object($coupon)) {
                 throw new OrbitCustomException('Coupon that you specify is not found', Coupon::NOT_FOUND_ERROR_CODE, NULL);
+            }
+
+            // Set currency and payment method information
+            // so frontend can load proper payment gateway UI.
+            // TODO: Set currency value for all paid coupon in DB (might need data migration)
+            if (! empty($coupon->coupon_country) && $coupon->coupon_country !== 'Indonesia') {
+                $coupon->currency = 'SGD';
+                $coupon->payment_method = 'stripe';
+            }
+            else {
+                $coupon->currency = 'IDR';
+                $coupon->payment_method = 'midtrans';
+            }
+
+            // calculate remaining coupon for the user.
+            // 9999 means unlimited quantity per user.
+            $coupon->available_coupons_count = 9999;
+            if (! empty($coupon->max_quantity_per_user)) {
+                $coupon->available_coupons_count = $coupon->max_quantity_per_user - $coupon->used_coupons_count;
             }
 
             $mall = null;
