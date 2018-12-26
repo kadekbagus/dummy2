@@ -172,7 +172,7 @@ class ArticleListAPIController extends PubControllerAPI
             $this->searcher->isActive();
 
             // Only filter based on specific country.
-            if (! empty($countryFilter) && $countryFilter != 0) {
+            if (! empty($countryFilter) && $countryFilter !== 0) {
                 $this->searcher->filterByCountry($countryFilter);
             }
 
