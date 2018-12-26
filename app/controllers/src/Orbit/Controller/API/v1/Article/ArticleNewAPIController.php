@@ -200,22 +200,17 @@ class ArticleNewAPIController extends ControllerAPI
 
             $merchant = array();
 
-            foreach ($objectMerchants as $merchantId) {
-                $merchantName = Tenant::select('name')->where('merchant_id', $merchantId)->first();
+            foreach ($objectMerchants as $merchantName) {
+                $baseMerchant = BaseMerchant::where('name', $merchantName)->first();
 
-                if (! empty($merchantName)) {
-                    $baseMerchant = BaseMerchant::where('name', $merchantName->name)->first();
-
-                    if (! empty($baseMerchant)) {
-                        $saveObjectMerchant = new ArticleLinkToObject();
-                        $saveObjectMerchant->article_id = $newArticle->article_id;
-                        $saveObjectMerchant->object_id = $baseMerchant->base_merchant_id;
-                        $saveObjectMerchant->object_type = 'merchant';
-                        $saveObjectMerchant->save();
-                        $merchant[] = $saveObjectMerchant;
-                    }
+                if (! empty($baseMerchant)) {
+                    $saveObjectMerchant = new ArticleLinkToObject();
+                    $saveObjectMerchant->article_id = $newArticle->article_id;
+                    $saveObjectMerchant->object_id = $baseMerchant->base_merchant_id;
+                    $saveObjectMerchant->object_type = 'merchant';
+                    $saveObjectMerchant->save();
+                    $merchant[] = $saveObjectMerchant;
                 }
-
             }
             $newArticle->object_merchant = $merchant;
 

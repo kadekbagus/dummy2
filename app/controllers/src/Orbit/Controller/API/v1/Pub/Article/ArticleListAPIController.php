@@ -172,7 +172,7 @@ class ArticleListAPIController extends PubControllerAPI
             $this->searcher->isActive();
 
             // Only filter based on specific country.
-            if (! empty($countryFilter) && $countryFilter != 0) {
+            if (! empty($countryFilter) && $countryFilter !== '0') {
                 $this->searcher->filterByCountry($countryFilter);
             }
 
@@ -212,6 +212,7 @@ class ArticleListAPIController extends PubControllerAPI
                 case 'relevance':
                     // For related article, landing page must pass sortBy relevance.
                     $this->searcher->sortByRelevance();
+                    $this->searcher->sortByPublishingDate();
                     break;
                 default:
                     $this->searcher->sortByPublishingDate($sortMode);

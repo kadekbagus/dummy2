@@ -174,9 +174,10 @@ class MenuCounterAPIController extends PubControllerAPI
             $countryData = null;
             $genderFilter = [];
             $genderFilterStore = [];
+            $articleCountryFilter = [];
 
             // filter by country
-            OrbitInput::get('country', function ($countryFilter) use (&$campaignJsonQuery, &$mallJsonQuery, &$campaignCountryCityFilterArr, &$countryData, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr, &$campaignCountryFilter, &$storeCountryFilter) {
+            OrbitInput::get('country', function ($countryFilter) use (&$campaignJsonQuery, &$mallJsonQuery, &$campaignCountryCityFilterArr, &$countryData, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr, &$campaignCountryFilter, &$storeCountryFilter, &$articleCountryFilter) {
                 $countryData = Country::select('country_id')->where('name', $countryFilter)->first();
 
                 // campaign
@@ -216,6 +217,8 @@ class MenuCounterAPIController extends PubControllerAPI
                                                 'name' => 'country_city_hits'
                                             ],
                                         ]];
+
+                $articleCountryFilter = ['match' => ['country' => $countryFilter]];
             });
 
             // filter by city, only filter when countryFilter is not empty
@@ -562,6 +565,10 @@ class MenuCounterAPIController extends PubControllerAPI
 
             if (! empty($keywordMallFilterShould)) {
                 $mallJsonQuery['query']['bool']['should'][] = $keywordMallFilterShould;
+            }
+
+            if (! empty($articleCountryFilter)) {
+                $articleJsonQuery['query']['bool']['must'][] = $articleCountryFilter;
             }
 
             if (! empty($keywordArticleFilter)) {
