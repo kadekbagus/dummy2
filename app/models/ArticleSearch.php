@@ -32,6 +32,7 @@ class ArticleSearch extends Search
     public function isActive($params = [])
     {
         $this->must([ 'match' => ['status' => 'active']]);
+        $this->must([ 'range' => ['published_at' => ['lte' => $params['dateTimeEs']]] ]);
     }
 
     /**
