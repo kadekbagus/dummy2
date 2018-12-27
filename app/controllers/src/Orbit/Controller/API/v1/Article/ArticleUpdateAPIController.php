@@ -232,22 +232,17 @@ class ArticleUpdateAPIController extends ControllerAPI
                                                      ->delete();
 
                 $merchant = array();
-                foreach ($objectMerchants as $merchantId) {
-                    $merchantName = Tenant::select('name')->where('merchant_id', $merchantId)->first();
+                foreach ($objectMerchants as $merchantName) {
+                    $baseMerchant = BaseMerchant::where('name', $merchantName)->first();
 
-                    if (! empty($merchantName)) {
-                        $baseMerchant = BaseMerchant::where('name', $merchantName->name)->first();
-
-                        if (! empty($baseMerchant)) {
-                            $saveObjectMerchant = new ArticleLinkToObject();
-                            $saveObjectMerchant->article_id = $articleId;
-                            $saveObjectMerchant->object_id = $baseMerchant->base_merchant_id;
-                            $saveObjectMerchant->object_type = 'merchant';
-                            $saveObjectMerchant->save();
-                            $merchant[] = $saveObjectMerchant;
-                        }
+                    if (! empty($baseMerchant)) {
+                        $saveObjectMerchant = new ArticleLinkToObject();
+                        $saveObjectMerchant->article_id = $articleId;
+                        $saveObjectMerchant->object_id = $baseMerchant->base_merchant_id;
+                        $saveObjectMerchant->object_type = 'merchant';
+                        $saveObjectMerchant->save();
+                        $merchant[] = $saveObjectMerchant;
                     }
-
                 }
                 $updatedArticle->object_merchant = $merchant;
             });

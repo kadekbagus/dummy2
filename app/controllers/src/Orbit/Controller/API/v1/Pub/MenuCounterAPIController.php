@@ -174,9 +174,11 @@ class MenuCounterAPIController extends PubControllerAPI
             $countryData = null;
             $genderFilter = [];
             $genderFilterStore = [];
+            $articleCountryFilter = [];
+            $categoryArticleFilter = [];
 
             // filter by country
-            OrbitInput::get('country', function ($countryFilter) use (&$campaignJsonQuery, &$mallJsonQuery, &$campaignCountryCityFilterArr, &$countryData, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr, &$campaignCountryFilter, &$storeCountryFilter) {
+            OrbitInput::get('country', function ($countryFilter) use (&$campaignJsonQuery, &$mallJsonQuery, &$campaignCountryCityFilterArr, &$countryData, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr, &$campaignCountryFilter, &$storeCountryFilter, &$articleCountryFilter) {
                 $countryData = Country::select('country_id')->where('name', $countryFilter)->first();
 
                 // campaign
@@ -216,6 +218,8 @@ class MenuCounterAPIController extends PubControllerAPI
                                                 'name' => 'country_city_hits'
                                             ],
                                         ]];
+
+                $articleCountryFilter = ['match' => ['country' => $countryFilter]];
             });
 
             // filter by city, only filter when countryFilter is not empty
@@ -373,11 +377,24 @@ class MenuCounterAPIController extends PubControllerAPI
             });
 
             // filter by category
-            OrbitInput::get('category_id', function($category_ids) use (&$categoryCampaignFilter, &$categoryStoreFilter) {
+            OrbitInput::get('category_id', function($category_ids) use (&$categoryCampaignFilter, &$categoryStoreFilter, &$categoryArticleFilter) {
                 foreach((array) $category_ids as $category_id) {
                     $categoryCampaignFilter['bool']['should'][] = ['match' => ['category_ids' => $category_id]];
                     $categoryStoreFilter['bool']['should'][] = ['match' => ['category' => $category_id]];
+
+                    $arrArticleCategories[] = ['match' => ['link_to_categories.category_id' => $category_id]];
                 }
+
+                $categoryArticleFilter['bool']['should'] = [
+                        'nested' => [
+                            'path' => 'link_to_categories',
+                            'query' => [
+                                'bool' => [
+                                    'should' => $arrArticleCategories
+                                ]
+                            ]
+                        ]
+                ];
             });
 
             // filter by sponsor provider
@@ -564,6 +581,10 @@ class MenuCounterAPIController extends PubControllerAPI
                 $mallJsonQuery['query']['bool']['should'][] = $keywordMallFilterShould;
             }
 
+            if (! empty($articleCountryFilter)) {
+                $articleJsonQuery['query']['bool']['must'][] = $articleCountryFilter;
+            }
+
             if (! empty($keywordArticleFilter)) {
                 $articleJsonQuery['query']['bool']['must'][] = $keywordArticleFilter;
             }
@@ -578,8 +599,11 @@ class MenuCounterAPIController extends PubControllerAPI
             }
 
             if (! empty($categoryStoreFilter)) {
-                //$storeJsonQuery['query']['bool']['must'][] = $categoryStoreFilter;
                 $merchantJsonQuery['query']['bool']['must'][] = $categoryStoreFilter;
+            }
+
+            if (! empty($categoryArticleFilter)) {
+                $articleJsonQuery['query']['bool']['must'][] = $categoryArticleFilter;
             }
 
             if (! empty($sponsorFilter)) {
