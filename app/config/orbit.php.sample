@@ -945,7 +945,7 @@ return array(
             'mdm_portal' => '8',
             'mt_portal' => '9',
             'rrp_portal' => '10',
-            'pp_portal' => '11'
+            'pp_portal' => '12'
         ],
 
         /**
@@ -1405,6 +1405,33 @@ return array(
                     'httponly'  => TRUE
                 ),
             ),
+
+            'pp_portal' => array(
+                'expire' => 3600,   // 1 hour
+                // From HTTP Headers
+                'header'  => array(
+                    'name'      => 'X-OMS-PP'
+                ),
+                // From Query String
+                'query_string' => array(
+                    'name'      => 'X-OMS-PP'
+                ),
+                // From Cookie
+                'cookie'    => array(
+                    'name'      => 'X-OMS-PP',
+                    // Expire time, should be set equals or higher than
+                    // SessionConifg.expire
+                    'expire' => 62208000,   // two years
+                    // Path of the cookie
+                    'path'      => '/',
+                    // domain
+                    'domain'    => NULL,
+                    // secure transfer via HTTPS only
+                    'secure'    => FALSE,
+                    // Deny access from client side script
+                    'httponly'  => TRUE
+                ),
+            ),
         ),
     ),
 
@@ -1461,6 +1488,7 @@ return array(
                 'Set-X-OMS-CS',
                 'Set-X-OMS-MDM',
                 'Set-X-OMS-MT',
+                'Set-X-OMS-PP',
             ],
 
             // No need protocol, just enter domain name
@@ -6845,7 +6873,25 @@ return array(
                 'object_type' => 'Mall',
                 'parameter_name' => 'object_id'
             ),
+            // user click brand product
+            '202' => array(
+                'name' => 'click_brand_product',
+                'name_long' => 'Click Brand Product',
+                'module_name' => 'Product',
+                'type' => 'click',
+                'object_type' => 'Product',
+                'parameter_name' => 'object_id'
+            ),
 
+            // user click brand product detail
+            '203' => array(
+                'name' => 'click_brand_product_detail_link',
+                'name_long' => 'Click Brand Product Link',
+                'module_name' => 'Product',
+                'type' => 'click',
+                'object_type' => 'Product',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 
