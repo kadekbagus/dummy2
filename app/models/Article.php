@@ -74,7 +74,8 @@ class Article extends Eloquent
     public function mediaCover()
     {
         return $this->hasMany('Media', 'object_id', 'article_id')
-                    ->where('media_name_id', 'article_cover_image');
+                    ->where('media_name_id', 'article_cover_image')
+                    ->orderBy('media.created_at', 'desc');
     }
 
     public function mediaContent()
