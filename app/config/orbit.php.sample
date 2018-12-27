@@ -7010,7 +7010,7 @@ return array(
 
             '201' => array(
                 'name' => 'click_share_article',
-                'name_long' => ' Click Share Article',
+                'name_long' => 'Click Share Article',
                 'module_name' => 'Article',
                 'type' => 'click',
                 'object_type' => 'Article',
