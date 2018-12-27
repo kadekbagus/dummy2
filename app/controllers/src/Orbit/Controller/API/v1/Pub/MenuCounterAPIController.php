@@ -175,6 +175,7 @@ class MenuCounterAPIController extends PubControllerAPI
             $genderFilter = [];
             $genderFilterStore = [];
             $articleCountryFilter = [];
+            $categoryArticleFilter = [];
 
             // filter by country
             OrbitInput::get('country', function ($countryFilter) use (&$campaignJsonQuery, &$mallJsonQuery, &$campaignCountryCityFilterArr, &$countryData, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr, &$campaignCountryFilter, &$storeCountryFilter, &$articleCountryFilter) {
@@ -376,11 +377,24 @@ class MenuCounterAPIController extends PubControllerAPI
             });
 
             // filter by category
-            OrbitInput::get('category_id', function($category_ids) use (&$categoryCampaignFilter, &$categoryStoreFilter) {
+            OrbitInput::get('category_id', function($category_ids) use (&$categoryCampaignFilter, &$categoryStoreFilter, &$categoryArticleFilter) {
                 foreach((array) $category_ids as $category_id) {
                     $categoryCampaignFilter['bool']['should'][] = ['match' => ['category_ids' => $category_id]];
                     $categoryStoreFilter['bool']['should'][] = ['match' => ['category' => $category_id]];
+
+                    $arrArticleCategories[] = ['match' => ['link_to_categories.category_id' => $category_id]];
                 }
+
+                $categoryArticleFilter['bool']['should'] = [
+                        'nested' => [
+                            'path' => 'link_to_categories',
+                            'query' => [
+                                'bool' => [
+                                    'should' => $arrArticleCategories
+                                ]
+                            ]
+                        ]
+                ];
             });
 
             // filter by sponsor provider
@@ -585,8 +599,11 @@ class MenuCounterAPIController extends PubControllerAPI
             }
 
             if (! empty($categoryStoreFilter)) {
-                //$storeJsonQuery['query']['bool']['must'][] = $categoryStoreFilter;
                 $merchantJsonQuery['query']['bool']['must'][] = $categoryStoreFilter;
+            }
+
+            if (! empty($categoryArticleFilter)) {
+                $articleJsonQuery['query']['bool']['must'][] = $categoryArticleFilter;
             }
 
             if (! empty($sponsorFilter)) {
