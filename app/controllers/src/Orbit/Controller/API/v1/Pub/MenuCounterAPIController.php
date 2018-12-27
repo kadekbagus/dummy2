@@ -103,7 +103,7 @@ class MenuCounterAPIController extends PubControllerAPI
             $merchantJsonQuery = array('from' => 0, 'size' => 1);
             $storeJsonQuery = $merchantJsonQuery;
 
-            $articleJsonQuery =array('from' => 0,'size' => 1,'query' => array('bool' => array('filter' => array(array('query' => array('match' => array('status' => 'active')))))));
+            $articleJsonQuery = array('from' => 0,'size' => 1,'query' => array('bool' => array('filter' => array(array('query' => array('match' => array('status' => 'active'))),array('range' => array('published_at' => array('lte' => $dateTimeEs)))))));
 
             // get user lat and lon
             if ($location == 'mylocation') {

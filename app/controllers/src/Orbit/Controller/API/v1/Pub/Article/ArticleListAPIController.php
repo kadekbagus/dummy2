@@ -169,7 +169,8 @@ class ArticleListAPIController extends PubControllerAPI
             $this->searcher->setPaginationParams(['from' => $skip, 'size' => $take]);
 
             // Only search active promotions..
-            $this->searcher->isActive();
+            // $this->searcher->isActive();
+            $this->searcher->isActive(compact('dateTimeEs'));
 
             // Only filter based on specific country.
             if (! empty($countryFilter) && $countryFilter !== '0') {
