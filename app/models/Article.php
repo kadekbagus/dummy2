@@ -57,8 +57,8 @@ class Article extends Eloquent
     {
         return $this->hasMany('ArticleLinkToObject', 'article_id', 'article_id')
                     ->where('article_link_to_objects.object_type', 'merchant')
-                    ->join('base_merchants', function($q) {
-                                $q->on('base_merchant_id', '=', 'object_id');
+                    ->join('merchants', function($q) {
+                                $q->on('merchant_id', '=', 'object_id');
                             });
     }
 

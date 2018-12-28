@@ -53,7 +53,7 @@ class ArticleDetailAPIController extends PubControllerAPI
             $slug = OrbitInput::get('slug', null);
             $language = OrbitInput::get('language', 'id');
             $mallId = OrbitInput::get('mall_id', null);
-            $country = OrbitInput::get('country', null);
+            $country = OrbitInput::get('country', 'null');
 
             $articleHelper = ArticleHelper::create();
             $articleHelper->articleCustomValidator();
@@ -277,21 +277,21 @@ class ArticleDetailAPIController extends PubControllerAPI
 
 
             $objectMerchant = ArticleLinkToObject::select(
-                                                'base_merchants.base_merchant_id as merchant_id',
-                                                'base_merchants.name',
+                                                'merchants.merchant_id',
+                                                'merchants.name',
                                                 DB::raw("{$image} as original_media_path")
                                             )
-                                            ->leftJoin('base_merchants', function($q) {
-                                                $q->on('base_merchant_id', '=', 'object_id')
-                                                  ->on('base_merchants.status', '=', DB::raw("'active'"));
+                                            ->leftJoin('merchants', function($q) {
+                                                $q->on('merchant_id', '=', 'object_id')
+                                                  ->on('merchants.status', '=', DB::raw("'active'"));
                                             })
                                             ->leftJoin('media', function($q) {
-                                                $q->on('media.media_name_long', '=', DB::raw("'base_merchant_logo_orig'"))
-                                                  ->on('media.object_id', '=', 'base_merchant_id');
+                                                $q->on('media.media_name_long', '=', DB::raw("'retailer_logo_orig'"))
+                                                  ->on('media.object_id', '=', 'merchants.merchant_id');
                                             })
                                             ->where('article_link_to_objects.object_type', 'merchant')
                                             ->where('article_id',$articleId)
-                                            ->groupBy('base_merchants.base_merchant_id')
+                                            ->groupBy('merchants.merchant_id')
                                             ->get();
 
             $article['object_merchant'] = $objectMerchant;
