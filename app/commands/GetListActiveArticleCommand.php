@@ -50,7 +50,6 @@ class GetListActiveArticleCommand extends Command
         do {
             $articles = DB::select("SELECT {$fields}
                 FROM {$prefix}articles
-                WHERE {$prefix}articles.status='active'
                 {$raw}
                 LIMIT $skip, $take");
 

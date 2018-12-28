@@ -283,6 +283,19 @@ class ArticleUpdateAPIController extends ControllerAPI
                 $updatedArticle->videos = $video;
             });
 
+            // Remove all key in Redis articles
+            if (Config::get('orbit.cache.ng_redis_enabled', FALSE)) {
+                $redis = Cache::getRedis();
+                $keyName = array('article','home');
+                foreach ($keyName as $value) {
+                    $keys = $redis->keys("*$value*");
+                    if (! empty($keys)) {
+                        foreach ($keys as $key) {
+                            $redis->del($key);
+                        }
+                    }
+                }
+            }
 
             Event::fire('orbit.article.postupdatearticle.after.save', array($this, $updatedArticle));
 

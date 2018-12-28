@@ -372,6 +372,7 @@ class Activity extends Eloquent
             $primaryKey = $object->getKeyName();
             $this->object_id = $object->$primaryKey;
             $this->object_name = get_class($object);
+
             switch (get_class($object)) {
                 case 'News':
                     if (strtolower($object->object_type) === 'promotion') {
@@ -453,6 +454,10 @@ class Activity extends Eloquent
 
                 case 'PaymentProvider':
                     $this->object_display_name = $object->payment_name;
+                    break;
+
+                case 'Article':
+                    $this->object_display_name = $object->title;
                     break;
 
                 case 'PaymentTransaction':
