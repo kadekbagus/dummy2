@@ -7419,6 +7419,12 @@ return array(
                 'enable' => FALSE,
                 'cache_ttl' => 60
             ],
+
+            // article list specific cache setting
+            'article-list' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
         ],
 
         // If value is TRUE, Redis key will be deleted when store / campaign inactive
