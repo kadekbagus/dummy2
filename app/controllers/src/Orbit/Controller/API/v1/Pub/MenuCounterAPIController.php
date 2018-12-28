@@ -284,9 +284,10 @@ class MenuCounterAPIController extends PubControllerAPI
             });
 
             // filter by mall_id (use in mall homepage/mall detail)
-            OrbitInput::get('mall_id', function ($mallId) use (&$mallFilterCampaign, &$mallFilterStore) {
+            OrbitInput::get('mall_id', function ($mallId) use (&$mallFilterCampaign, &$mallFilterStore, &$mallFilterArticle) {
                 $mallFilterCampaign = ['nested' => ['path' => 'link_to_tenant', 'query' => ['bool' => ['must' => ['match' => ['link_to_tenant.parent_id' => $mallId]]]], 'inner_hits' => ['name' => 'link_tenant_hits']]];
                 $mallFilterStore = ['nested' => ['path' => 'tenant_detail', 'query' => ['bool' => ['must' => ['match' => ['tenant_detail.mall_id' => $mallId]]]], 'inner_hits' => ['name' => 'tenant_detail_hits']]];
+                $mallFilterArticle = ['nested' => ['path' => 'link_to_malls', 'query' => ['bool' => ['must' => ['match' => ['link_to_malls.mall_id' => $mallId]]]]]];
             });
 
             // filter by keywords
@@ -560,6 +561,10 @@ class MenuCounterAPIController extends PubControllerAPI
 
             if (! empty($mallFilterStore)) {
                 $merchantJsonQuery['query']['bool']['filter'][] = $mallFilterStore;
+            }
+
+            if (! empty($mallFilterArticle)) {
+                $articleJsonQuery['query']['bool']['filter'][] = $mallFilterArticle;
             }
 
             if (! empty($keywordFilter)) {
