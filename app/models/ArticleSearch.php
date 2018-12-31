@@ -122,6 +122,10 @@ class ArticleSearch extends Search
                 $linkPath = 'brands';
                 $keyId = 'brand_id';
                 break;
+            case 'store':
+                $linkPath = 'brands';
+                $keyId = 'brand_id';
+                break;
             case 'coupon':
                 $linkPath = 'coupons';
                 $keyId = 'coupon_id';
