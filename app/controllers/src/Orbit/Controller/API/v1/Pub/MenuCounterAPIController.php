@@ -103,7 +103,7 @@ class MenuCounterAPIController extends PubControllerAPI
             $merchantJsonQuery = array('from' => 0, 'size' => 1);
             $storeJsonQuery = $merchantJsonQuery;
 
-            $articleJsonQuery = array('from' => 0,'size' => 1,'query' => array('bool' => array('filter' => array(array('query' => array('match' => array('status' => 'active'))),array('range' => array('published_at' => array('lte' => $dateTimeEs)))))));
+            $articleJsonQuery =array('from' => 0,'size' => 1,'query' => array('bool' => array('must' => array(array('match' => array('status' => 'active')) ,array('range' => array('published_at' => array('lte' => $dateTimeEs)))),'minimum_should_match' => 1)));
 
             // get user lat and lon
             if ($location == 'mylocation') {
@@ -287,7 +287,7 @@ class MenuCounterAPIController extends PubControllerAPI
             OrbitInput::get('mall_id', function ($mallId) use (&$mallFilterCampaign, &$mallFilterStore, &$mallFilterArticle) {
                 $mallFilterCampaign = ['nested' => ['path' => 'link_to_tenant', 'query' => ['bool' => ['must' => ['match' => ['link_to_tenant.parent_id' => $mallId]]]], 'inner_hits' => ['name' => 'link_tenant_hits']]];
                 $mallFilterStore = ['nested' => ['path' => 'tenant_detail', 'query' => ['bool' => ['must' => ['match' => ['tenant_detail.mall_id' => $mallId]]]], 'inner_hits' => ['name' => 'tenant_detail_hits']]];
-                $mallFilterArticle = ['nested' => ['path' => 'link_to_malls', 'query' => ['bool' => ['must' => ['match' => ['link_to_malls.mall_id' => $mallId]]]]]];
+                $mallFilterArticle = ['nested' => ['path' => 'link_to_malls', 'query' => ['bool' => ['should' => ['match' => ['link_to_malls.mall_id' => $mallId]]]]]];
             });
 
             // filter by keywords
@@ -356,21 +356,12 @@ class MenuCounterAPIController extends PubControllerAPI
                 $priorityTitle = isset($esPriority['articles']['title']) ? $esPriority['articles']['title'] : '^6';
                 $priorityBody = isset($esPriority['articles']['body']) ? $esPriority['articles']['body'] : '^6';
 
-                $keywordArticleFilter = array(
-                                            'query_string' => array(
-                                                'query' => '*' . $keywords . '*',
-                                                'fields' => array(
-                                                    "title" . $priorityTitle,
-                                                    "body" . $priorityBody,
-                                                )
-                                            )
-                                        );
-
                 $keywordArticleFilterShould = array(
                                                     'query_string' => array(
                                                         'query' => '*' . $keywords . '*',
                                                         'fields' => array(
-                                                            "country" . $priorityCountry
+                                                            "title" . $priorityTitle,
+                                                            "body" . $priorityBody
                                                         )
                                                     )
                                                 );
@@ -564,7 +555,7 @@ class MenuCounterAPIController extends PubControllerAPI
             }
 
             if (! empty($mallFilterArticle)) {
-                $articleJsonQuery['query']['bool']['filter'][] = $mallFilterArticle;
+                $articleJsonQuery['query']['bool']['should'][] = $mallFilterArticle;
             }
 
             if (! empty($keywordFilter)) {
@@ -605,11 +596,11 @@ class MenuCounterAPIController extends PubControllerAPI
 
             if (! empty($categoryArticleFilter)) {
                 $articleJsonQuery['query']['bool']['must'][] = $categoryArticleFilter;
+                $articleJsonQuery['query']['bool']['must'][] = $categoryArticleFilter;
             }
 
             if (! empty($sponsorFilter)) {
                 $campaignJsonQuery['query']['bool']['must'][] = $sponsorFilter;
-                $couponJsonQuery['query']['bool']['must'][] = $sponsorFilter;
             }
 
             if (! empty($partnerFilterMustNot)) {
