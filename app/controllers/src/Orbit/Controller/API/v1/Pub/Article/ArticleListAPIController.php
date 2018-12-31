@@ -426,6 +426,7 @@ class ArticleListAPIController extends PubControllerAPI
                 break;
 
             case 'brand':
+            case 'store':
                 return $this->getBrandCategory($objectId);
                 break;
 

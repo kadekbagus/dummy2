@@ -585,6 +585,29 @@ class MenuCounterAPIController extends PubControllerAPI
                 $articleJsonQuery['query']['bool']['should'][] = $keywordArticleFilterShould;
             }
 
+            if (empty($keywordArticleFilterShould) && !empty($mallId)) {
+                $mall = Mall::where('merchant_id', '=', $mallId)->first();
+
+                if (! empty($mall)) {
+                    $esPriority = Config::get('orbit.elasticsearch.priority');
+                    $priorityTitle = isset($esPriority['articles']['title']) ? $esPriority['articles']['title'] : '^6';
+                    $priorityBody = isset($esPriority['articles']['body']) ? $esPriority['articles']['body'] : '^6';
+
+                    $keywordArticleFilterShould = array(
+                                                        'query_string' => array(
+                                                            'query' => '*' . $mall->name . '*',
+                                                            'fields' => array(
+                                                                "title" . $priorityTitle,
+                                                                "body" . $priorityBody
+                                                            )
+                                                        )
+                                                    );
+                    $articleJsonQuery['query']['bool']['should'][] = $keywordArticleFilterShould;
+
+                }
+            }
+
+
             if (! empty($categoryCampaignFilter)) {
                 $campaignJsonQuery['query']['bool']['must'][] = $categoryCampaignFilter;
                 $couponJsonQuery['query']['bool']['must'][] = $categoryCampaignFilter;
