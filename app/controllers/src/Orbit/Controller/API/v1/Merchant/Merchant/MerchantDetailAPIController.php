@@ -72,6 +72,7 @@ class MerchantDetailAPIController extends ControllerAPI
                                                     'keywords',
                                                     'mediaLogo',
                                                     'mediaLogoGrab',
+                                                    'mediaBanner',
                                                     'partners',
                                                     'country',
                                                     'supportedLanguage',
