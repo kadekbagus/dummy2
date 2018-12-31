@@ -6911,6 +6911,33 @@ return array(
                 'object_type' => 'Merchant',
                 'parameter_name' => 'object_id'
             ),
+            // user click brand social button on brand detail page
+            '204' => array(
+                'name' => 'click_brand_social_button',
+                'name_long' => 'Click Brand Social Button',
+                'module_name' => 'Merchant',
+                'type' => 'click',
+                'object_type' => 'Merchant',
+                'parameter_name' => 'object_id'
+            ),
+            // user click brand product on brand detail page
+            '205' => array(
+                'name' => 'click_brand_product',
+                'name_long' => 'Click Brand Product',
+                'module_name' => 'Merchant',
+                'type' => 'click',
+                'object_type' => 'Merchant',
+                'parameter_name' => 'object_id'
+            ),
+            // user click brand article on brand detail page
+            '206' => array(
+                'name' => 'click_brand_article',
+                'name_long' => 'Click Brand Article',
+                'module_name' => 'Merchant',
+                'type' => 'click',
+                'object_type' => 'Merchant',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 
