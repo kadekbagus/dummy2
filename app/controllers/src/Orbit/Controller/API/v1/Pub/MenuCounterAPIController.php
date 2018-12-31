@@ -590,10 +590,6 @@ class MenuCounterAPIController extends PubControllerAPI
                 $articleJsonQuery['query']['bool']['must'][] = $articleCountryFilter;
             }
 
-            if (! empty($keywordArticleFilter)) {
-                $articleJsonQuery['query']['bool']['must'][] = $keywordArticleFilter;
-            }
-
             if (! empty($keywordArticleFilterShould)) {
                 $articleJsonQuery['query']['bool']['should'][] = $keywordArticleFilterShould;
             }
