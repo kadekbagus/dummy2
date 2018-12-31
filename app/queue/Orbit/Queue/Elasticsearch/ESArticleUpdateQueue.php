@@ -148,7 +148,7 @@ class ESArticleUpdateQueue
             $linkToMerchants = array();
             foreach ($article->object_merchant as $merchant) {
                 $linkToMerchant = array(
-                    "brand_id" => $merchant->base_merchant_id,
+                    "brand_id" => $merchant->merchant_id,
                     "name" => $merchant->name,
                 );
 
