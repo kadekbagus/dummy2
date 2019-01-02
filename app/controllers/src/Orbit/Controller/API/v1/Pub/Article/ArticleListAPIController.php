@@ -197,18 +197,13 @@ class ArticleListAPIController extends PubControllerAPI
             // Get object categories.
             // Useful for case like related article to a campaign/object.
             // We will query the object to root of their store/mall and get the category.
-            $objectCategories = $this->getObjectCategories();
-
             // Merge with the requested categories (if any).
-            $categoryIds = array_merge($categoryIds, $objectCategories);
+            $categoryIds = array_merge($categoryIds, $this->getObjectCategories());
 
             if (! empty($categoryIds)) {
                 $this->searcher->filterByCategories($categoryIds);
             }
 
-            $this->searcher->minimumShouldMatch(1);
-
-            // Next sorting based on Users's selection.
             switch ($sortBy) {
                 case 'relevance':
                     // For related article, landing page must pass sortBy relevance.
