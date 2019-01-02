@@ -31,8 +31,8 @@ class ArticleSearch extends Search
      */
     public function isActive($params = [])
     {
-        $this->must([ 'match' => ['status' => 'active']]);
-        $this->must([ 'range' => ['published_at' => ['lte' => $params['dateTimeEs']]] ]);
+        $this->filter([ 'match' => ['status' => 'active']]);
+        $this->filter([ 'range' => ['published_at' => ['lte' => $params['dateTimeEs']]] ]);
     }
 
     /**
@@ -48,12 +48,13 @@ class ArticleSearch extends Search
             $arrCategories[] = ['match' => ['link_to_categories.category_id' => $category]];
         }
 
-        $this->should([
+        $this->must([
             'nested' => [
                 'path' => 'link_to_categories',
                 'query' => [
                     'bool' => [
-                        'should' => $arrCategories
+                        'should' => $arrCategories,
+                        'minimum_should_match' => 1,
                     ]
                 ]
             ],
@@ -97,7 +98,7 @@ class ArticleSearch extends Search
      */
     public function filterByCountry($countryName = '')
     {
-        $this->must(['match' => ['country' => $countryName]]);
+        $this->filter(['match' => ['country' => $countryName]]);
     }
 
     /**
@@ -119,9 +120,6 @@ class ArticleSearch extends Search
                 $keyId = 'mall_id';
                 break;
             case 'brand':
-                $linkPath = 'brands';
-                $keyId = 'brand_id';
-                break;
             case 'store':
                 $linkPath = 'brands';
                 $keyId = 'brand_id';
@@ -157,7 +155,8 @@ class ArticleSearch extends Search
                                         "link_to_{$linkPath}.{$keyId}" => $objectId
                                     ]
                                 ]
-                            ]
+                            ],
+                            // 'minimum_should_match' => 1,
                         ]
                     ]
                 ],
