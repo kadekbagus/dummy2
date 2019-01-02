@@ -128,6 +128,9 @@ Artisan::add(new ElasticsearchResyncPromotionCommand);
 // Initial Promotion data migration
 Artisan::add(new ElasticsearchResyncStoreCommand);
 
+// Initial article data migration
+Artisan::add(new ElasticsearchResyncArticleCommand);
+
 // Clear Promotion data in ES
 Artisan::add(new ElasticsearchClearPromotionCommand);
 
@@ -160,6 +163,9 @@ Artisan::add(new GetListActiveMallCommand);
 
 // List all active advert
 Artisan::add(new GetListActiveAdvertCommand);
+
+// List all active advert
+Artisan::add(new GetListActiveArticleCommand);
 
 // Fill table mall_countries
 Artisan::add(new FillTableMallCountriesCommand);

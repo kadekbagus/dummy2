@@ -3,6 +3,7 @@
 namespace Orbit\Helper\Elasticsearch;
 
 use Elasticsearch\ClientBuilder;
+use Config;
 
 /**
 * Base ES Search helper...
@@ -31,6 +32,10 @@ class Search
 
     function __construct($ESConfig = [])
     {
+        if (empty($ESConfig)) {
+            $ESConfig = Config::get('orbit.elasticsearch');
+        }
+
         $this->esConfig = $ESConfig;
 
         $this->client = new ClientBuilder;
@@ -141,6 +146,17 @@ class Search
     public function should($query = [])
     {
         $this->searchParam['body']['query']['bool']['should'][] = $query;
+    }
+
+    /**
+     * Add minimum_should_match into query.
+     *
+     * @param  string $minimumMatch [description]
+     * @return [type]               [description]
+     */
+    public function minimumShouldMatch($minimumMatch = '')
+    {
+        $this->searchParam['body']['query']['bool']['minimum_should_match'] = $minimumMatch;
     }
 
     /**
@@ -256,5 +272,28 @@ class Search
     public function getActiveClient()
     {
         return $this->client;
+    }
+
+    /**
+     * Init default search params.
+     *
+     * @return [type] [description]
+     */
+    public function setDefaultSearchParam()
+    {
+        $this->searchParam = [
+            'index' => '',
+            'type' => '',
+            'body' => [
+                'from' => 0,
+                'size' => 20,
+                'fields' => [
+                    '_source'
+                ],
+                'query' => [],
+                'track_scores' => true,
+                'sort' => []
+            ]
+        ];
     }
 }
