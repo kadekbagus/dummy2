@@ -417,7 +417,7 @@ class ProductHelper
             $deletedLink->delete(true);
         }
 
-        if (!empty($data)) {
+        if (! empty($data) && $data[0] !== '') {
             foreach ($data as $item) {
                 $itemObj = @json_decode($item);
                 if (json_last_error() != JSON_ERROR_NONE) {
