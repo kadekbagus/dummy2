@@ -411,8 +411,9 @@ class ProductHelper
         $deletedLinks = ProductLinkToObject::where('product_id', '=', $newProduct->product_id)
             ->where('object_type', '=', 'marketplace')
             ->get();
-        if (! empty($deletedLinks)) {
-            $deletedLinks->delete(true);
+
+        foreach ($deletedLinks as $deletedLink) {
+            $deletedLink->delete(true);
         }
 
         if (!empty($data)) {
