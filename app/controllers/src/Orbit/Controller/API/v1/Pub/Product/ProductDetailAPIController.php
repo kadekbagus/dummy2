@@ -59,7 +59,10 @@ class ProductDetailAPIController extends PubControllerAPI
             $validLanguage = $this->validLanguage;
             $product = Product::with([
                     'media',
-                    'marketplaces.media',
+                    'marketplaces' => function ($q) {
+                        $q->with('media');
+                        $q->where('marketplaces.status', 'active');
+                    }
                     'country',
                     'categories' => function ($q) use ($validLanguage, $prefix) {
                         $q->select(
