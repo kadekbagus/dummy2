@@ -103,7 +103,7 @@ class MenuCounterAPIController extends PubControllerAPI
             $merchantJsonQuery = array('from' => 0, 'size' => 1);
             $storeJsonQuery = $merchantJsonQuery;
 
-            $articleJsonQuery =array('from' => 0,'size' => 1,'query' => array('bool' => array('filter' => array(array('match' => array('status' => 'active')) ,array('range' => array('published_at' => array('lte' => $dateTimeEs)))))));
+            $articleJsonQuery =array('from' => 0,'size' => 1,'query' => array('bool' => array('must' => array(array('match' => array('status' => 'active')) ,array('range' => array('published_at' => array('lte' => $dateTimeEs)))),'minimum_should_match' => 1)));
 
             // get user lat and lon
             if ($location == 'mylocation') {
@@ -377,13 +377,12 @@ class MenuCounterAPIController extends PubControllerAPI
                     $arrArticleCategories[] = ['match' => ['link_to_categories.category_id' => $category_id]];
                 }
 
-                $categoryArticleFilter = [
+                $categoryArticleFilter['bool']['should'] = [
                         'nested' => [
                             'path' => 'link_to_categories',
                             'query' => [
                                 'bool' => [
-                                    'should' => $arrArticleCategories,
-                                    'minimum_should_match' => 1,
+                                    'should' => $arrArticleCategories
                                 ]
                             ]
                         ]
@@ -579,7 +578,7 @@ class MenuCounterAPIController extends PubControllerAPI
             }
 
             if (! empty($articleCountryFilter)) {
-                $articleJsonQuery['query']['bool']['filter'][] = $articleCountryFilter;
+                $articleJsonQuery['query']['bool']['must'][] = $articleCountryFilter;
             }
 
             if (! empty($keywordArticleFilterShould)) {
@@ -619,6 +618,7 @@ class MenuCounterAPIController extends PubControllerAPI
             }
 
             if (! empty($categoryArticleFilter)) {
+                $articleJsonQuery['query']['bool']['must'][] = $categoryArticleFilter;
                 $articleJsonQuery['query']['bool']['must'][] = $categoryArticleFilter;
             }
 
