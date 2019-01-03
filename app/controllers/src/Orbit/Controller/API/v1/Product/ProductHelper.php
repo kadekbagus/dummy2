@@ -406,6 +406,7 @@ class ProductHelper
     public function validateAndSaveMarketplaces($newProduct, $marketplace_json_string, $scenario = 'create')
     {
         $data = $marketplace_json_string;
+        $marketplaceData = [];
 
         // delete existing links
         $deletedLinks = ProductLinkToObject::where('product_id', '=', $newProduct->product_id)
@@ -418,17 +419,22 @@ class ProductHelper
 
         if (!empty($data)) {
             foreach ($data as $item) {
-                if (empty($item->website_url)) {
+                $itemObj = @json_decode($item);
+                if (json_last_error() != JSON_ERROR_NONE) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'marketplace']));
+                }
+                if (empty($itemObj->website_url)) {
                     OrbitShopAPI::throwInvalidArgument('Website URL is required');
                 }
                 $saveObjectMarketPlaces = new ProductLinkToObject();
                 $saveObjectMarketPlaces->product_id = $newProduct->product_id;
-                $saveObjectMarketPlaces->object_id = $item->id;
+                $saveObjectMarketPlaces->object_id = $itemObj->id;
                 $saveObjectMarketPlaces->object_type = 'marketplace';
-                $saveObjectMarketPlaces->product_url = $item->website_url;
+                $saveObjectMarketPlaces->product_url = $itemObj->website_url;
                 $saveObjectMarketPlaces->save();
-                $newProduct->marketplaces = $marketplaceData;
+                $marketplaceData[] = $saveObjectMarketPlaces;
             }
+            $newProduct->marketplaces = $marketplaceData;
         }
     }
 }
