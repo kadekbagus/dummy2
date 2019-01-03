@@ -62,7 +62,7 @@ class ProductDetailAPIController extends PubControllerAPI
                     'marketplaces' => function ($q) {
                         $q->with('media');
                         $q->where('marketplaces.status', 'active');
-                    }
+                    },
                     'country',
                     'categories' => function ($q) use ($validLanguage, $prefix) {
                         $q->select(
