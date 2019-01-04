@@ -44,10 +44,6 @@ Event::listen('orbit.rating.postnewmedia', function($controller, $rating)
     }
 
     return $response->data;
-
-    // $rating->setRelation('mediaCover', $response->data);
-    // $rating->mediaCover = $response->data;
-    // $rating->coverImagePath = $response->data[0]->variants[0]->path;
 });
 
 /**
@@ -57,7 +53,7 @@ Event::listen('orbit.rating.postnewmedia', function($controller, $rating)
  * @param ratingNewAPIController $controller - The instance of the ratingNewAPIController or its subclass
  * @param rating $rating - Instance of object rating
  */
-Event::listen('orbit.rating.postupdatemedia', function($controller, $rating)
+Event::listen('orbit.rating.postdeletemedia', function($controller, $rating)
 {
     $images = Input::file(null);
 
