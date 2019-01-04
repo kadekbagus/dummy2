@@ -177,7 +177,7 @@ class RatingNewAPIController extends PubControllerAPI
             }
 
             // upload image
-            $uploadMedias = Event::fire('orbit.rating.postnewmedia', array($this, $dateTime));
+            $uploadMedias = Event::fire('orbit.rating.postnewmedia', array($this, $body));
 
             $images = array();
 
@@ -189,6 +189,8 @@ class RatingNewAPIController extends PubControllerAPI
                         $images[$key][$keyVar]['url'] = $variant->path ;
                         $images[$key][$keyVar]['cdn_url'] = '' ;
                         $images[$key][$keyVar]['metadata'] = $variant->metadata;
+                        $images[$key][$keyVar]['approval_status'] = 'pending';
+                        $images[$key][$keyVar]['rejection_message'] = '';
                     }
                 }
             }

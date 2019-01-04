@@ -28,7 +28,7 @@ Event::listen('orbit.rating.postnewmedia', function($controller, $rating)
 
     // Use MediaAPIController class to upload the image
     $_POST['media_name_id'] = 'review_image';
-    $_POST['object_id'] = 'rr_666';
+    $_POST['object_id'] = $rating['object_id'];
 
     $response = MediaAPIController::create('raw')
         ->setEnableTransaction(false)
