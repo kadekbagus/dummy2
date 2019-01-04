@@ -17,10 +17,17 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 class MediaAPIController extends ControllerAPI
 {
     /** Allowed roles */
-    protected $uploadRoles = ['consumer', 'merchant database admin'];
+    protected $uploadRoles = ['consumer', 'merchant database admin', 'article writer', 'article publisher', 'product manager'];
 
     /**
-     * * This uploader receive multiple file input and will make 4 variant for each image
+     * Pass false if called from another Class (if caller Class already emit transaction)
+     * false: disable transaction
+     *
+     * @var string */
+    protected $enableTransaction = true;
+
+    /**
+     * This uploader receive multiple file input and will make 4 variant for each image
      * (original, desktop thumbnail, mobile thumbnail, and medium quality image)
      *
      * Variant: 'orig', 'desktop_thumb', 'mobile_thumb', 'desktop_medium', 'mobile_medium'
@@ -37,8 +44,13 @@ class MediaAPIController extends ControllerAPI
 
         try {
             // Authenticate
-            $this->checkAuth();
-            $user = $this->api->user;
+            if (! $this->enableTransaction) {
+                // use passed user
+                $user = App::make('orbit.upload.user');
+            } else {
+                $this->checkAuth();
+                $user = $this->api->user;
+            }
             $role = $user->role;
             if (! in_array(strtolower($role->role_name), $this->uploadRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
@@ -73,8 +85,10 @@ class MediaAPIController extends ControllerAPI
                 throw new Exception($errorMessage, 1);
             }
 
-            // Begin database transaction
-            $this->beginTransaction();
+            if ($this->enableTransaction) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
 
             $images = $images['images'];
 
@@ -226,34 +240,45 @@ class MediaAPIController extends ControllerAPI
                 $lastImageOrder++;
             }
 
-            // Commit the changes
-            $this->commit();
+            if ($this->enableTransaction) {
+                // Commit the changes
+                $this->commit();
+            }
 
             $this->response->data = $compiledImages;
 
         } catch (ACLForbiddenException $e) {
             $httpCode = 500;
-            $this->rollBack();
+            if ($this->enableTransaction) {
+                $this->rollBack();
+            }
             $this->response->code = $httpCode;
             $this->response->status = 'error';
             $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
             $this->response->message = $e->getMessage();
         } catch (InvalidArgsException $e) {
             $httpCode = 500;
-            $this->rollBack();
+            if ($this->enableTransaction) {
+                $this->rollBack();
+            }
             $this->response->code = $httpCode;
             $this->response->status = 'error';
             $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
             $this->response->message = $e->getMessage();
         } catch (QueryException $e) {
             $httpCode = 500;
-            $this->rollBack();
+            if ($this->enableTransaction) {
+                $this->rollBack();
+            }
             $this->response->code = $httpCode;
             $this->response->status = 'error';
             $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
             $this->response->message = $e->getMessage();
         } catch (\Exception $e) {
             $httpCode = 500;
+            if ($this->enableTransaction) {
+                $this->rollBack();
+            }
             $this->response->code = $httpCode;
             $this->response->status = 'error';
             $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
@@ -276,8 +301,13 @@ class MediaAPIController extends ControllerAPI
 
         try {
             // Authenticate
-            $this->checkAuth();
-            $user = $this->api->user;
+            if (! $this->enableTransaction) {
+                // use passed user
+                $user = App::make('orbit.upload.user');
+            } else {
+                $this->checkAuth();
+                $user = $this->api->user;
+            }
             $role = $user->role;
             if (! in_array( strtolower($role->role_name), $this->uploadRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
@@ -307,8 +337,10 @@ class MediaAPIController extends ControllerAPI
                 throw new Exception($errorMessage, 1);
             }
 
-            // Begin database transaction
-            $this->beginTransaction();
+            if ($this->enableTransaction) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
 
             // get 1 media variant id
             $media = Media::where('media_id', $mediaId)->firstOrFail();
@@ -358,34 +390,45 @@ class MediaAPIController extends ControllerAPI
                 $deletedMedia->delete(true);
             }
 
-            // Commit the changes
-            $this->commit();
+            if ($this->enableTransaction) {
+                // Commit the changes
+                $this->commit();
+            }
 
             $this->response->data = $objectId;
 
         } catch (ACLForbiddenException $e) {
             $httpCode = 500;
-            $this->rollBack();
+            if ($this->enableTransaction) {
+                $this->rollBack();
+            }
             $this->response->code = $httpCode;
             $this->response->status = 'error';
             $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
             $this->response->message = $e->getMessage();
         } catch (InvalidArgsException $e) {
             $httpCode = 500;
-            $this->rollBack();
+            if ($this->enableTransaction) {
+                $this->rollBack();
+            }
             $this->response->code = $httpCode;
             $this->response->status = 'error';
             $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
             $this->response->message = $e->getMessage();
         } catch (QueryException $e) {
             $httpCode = 500;
-            $this->rollBack();
+            if ($this->enableTransaction) {
+                $this->rollBack();
+            }
             $this->response->code = $httpCode;
             $this->response->status = 'error';
             $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
             $this->response->message = $e->getMessage();
         } catch (\Exception $e) {
             $httpCode = 500;
+            if ($this->enableTransaction) {
+                $this->rollBack();
+            }
             $this->response->code = $httpCode;
             $this->response->status = 'error';
             $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
@@ -486,21 +529,18 @@ class MediaAPIController extends ControllerAPI
 
         } catch (ACLForbiddenException $e) {
             $httpCode = 500;
-            $this->rollBack();
             $this->response->code = $httpCode;
             $this->response->status = 'error';
             $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
             $this->response->message = $e->getMessage();
         } catch (InvalidArgsException $e) {
             $httpCode = 500;
-            $this->rollBack();
             $this->response->code = $httpCode;
             $this->response->status = 'error';
             $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
             $this->response->message = $e->getMessage();
         } catch (QueryException $e) {
             $httpCode = 500;
-            $this->rollBack();
             $this->response->code = $httpCode;
             $this->response->status = 'error';
             $this->response->data = Config::get('app.debug') ? [$e->getFile(), $e->getLine()] : null;
@@ -563,5 +603,17 @@ class MediaAPIController extends ControllerAPI
         }
 
         return $result;
+    }
+
+    /**
+     * Set the enableTransaction
+     * @param boolean $enabled The source of the caller
+     * @return MediaAPIController
+     */
+    public function setEnableTransaction($enabled = true)
+    {
+        $this->enableTransaction = $enabled;
+
+        return $this;
     }
 }
