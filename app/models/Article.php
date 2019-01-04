@@ -9,7 +9,7 @@ class Article extends Eloquent
 
     use ModelStatusTrait;
 
-    const NOT_FOUND_ERROR_CODE = 404;
+    const NOT_FOUND_ERROR_CODE = 4040;
 
     protected $table = 'articles';
 
@@ -57,8 +57,8 @@ class Article extends Eloquent
     {
         return $this->hasMany('ArticleLinkToObject', 'article_id', 'article_id')
                     ->where('article_link_to_objects.object_type', 'merchant')
-                    ->join('base_merchants', function($q) {
-                                $q->on('base_merchant_id', '=', 'object_id');
+                    ->join('merchants', function($q) {
+                                $q->on('merchant_id', '=', 'object_id');
                             });
     }
 
@@ -74,7 +74,8 @@ class Article extends Eloquent
     public function mediaCover()
     {
         return $this->hasMany('Media', 'object_id', 'article_id')
-                    ->where('media_name_id', 'article_cover_image');
+                    ->where('media_name_id', 'article_cover_image')
+                    ->orderBy('media.created_at', 'desc');
     }
 
     public function mediaContent()

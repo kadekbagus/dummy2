@@ -9,13 +9,14 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Validator;
 use Orbit\Controller\API\v1\Article\ArticleHelper;
+use DB;
+use Cache;
 
 use Lang;
 use Config;
 use Category;
 use Event;
 use Tenant;
-use BaseMerchant;
 use Article;
 use ArticleLinkToObject;
 use ArticleVideo;
@@ -59,6 +60,7 @@ class ArticleUpdateAPIController extends ControllerAPI
 
             $articleHelper = ArticleHelper::create();
             $articleHelper->articleCustomValidator();
+            $prefix = DB::getTablePrefix();
 
             $articleId = OrbitInput::post('article_id');
             $title = OrbitInput::post('title');
@@ -226,19 +228,34 @@ class ArticleUpdateAPIController extends ControllerAPI
                 $updatedArticle->object_mall = $mall;
             });
 
-            OrbitInput::post('object_merchants', function($objectMerchants) use ($updatedArticle, $articleId) {
+            OrbitInput::post('object_merchants', function($objectMerchants) use ($updatedArticle, $articleId, $prefix, $countryId) {
                 $deletedOldData = ArticleLinkToObject::where('article_id', '=', $articleId)
                                                      ->where('object_type', '=', 'merchant')
                                                      ->delete();
 
                 $merchant = array();
                 foreach ($objectMerchants as $merchantName) {
-                    $baseMerchant = BaseMerchant::where('name', $merchantName)->first();
+                    $store = Tenant::select('merchants.merchant_id','merchants.name')
+                                    ->join(DB::raw("(
+                                        select merchant_id, name, status, parent_id, city,
+                                               province, country_id, address_line1, operating_hours
+                                        from {$prefix}merchants
+                                        where status = 'active'
+                                            and object_type = 'mall'
+                                        ) as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
 
-                    if (! empty($baseMerchant)) {
+                                    ->whereRaw("{$prefix}merchants.status = 'active'")
+                                    ->whereRaw("oms.status = 'active'")
+                                    ->where('merchants.name', '=', $merchantName)
+                                    ->whereRaw("oms.country_id = '{$countryId}'")
+                                    ->orderBy('merchants.created_at', 'asc')
+                                    ->first();
+
+
+                    if (! empty($store)) {
                         $saveObjectMerchant = new ArticleLinkToObject();
                         $saveObjectMerchant->article_id = $articleId;
-                        $saveObjectMerchant->object_id = $baseMerchant->base_merchant_id;
+                        $saveObjectMerchant->object_id = $store->merchant_id;
                         $saveObjectMerchant->object_type = 'merchant';
                         $saveObjectMerchant->save();
                         $merchant[] = $saveObjectMerchant;
@@ -283,6 +300,19 @@ class ArticleUpdateAPIController extends ControllerAPI
                 $updatedArticle->videos = $video;
             });
 
+            // Remove all key in Redis articles
+            if (Config::get('orbit.cache.ng_redis_enabled', FALSE)) {
+                $redis = Cache::getRedis();
+                $keyName = array('article','home');
+                foreach ($keyName as $value) {
+                    $keys = $redis->keys("*$value*");
+                    if (! empty($keys)) {
+                        foreach ($keys as $key) {
+                            $redis->del($key);
+                        }
+                    }
+                }
+            }
 
             Event::fire('orbit.article.postupdatearticle.after.save', array($this, $updatedArticle));
 

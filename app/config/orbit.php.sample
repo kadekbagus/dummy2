@@ -7037,7 +7037,7 @@ return array(
 
             '201' => array(
                 'name' => 'click_share_article',
-                'name_long' => ' Click Share Article',
+                'name_long' => 'Click Share Article',
                 'module_name' => 'Article',
                 'type' => 'click',
                 'object_type' => 'Article',
@@ -7443,6 +7443,12 @@ return array(
 
             // store counter cache
             'store-counter' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
+
+            // article list specific cache setting
+            'article-list' => [
                 'enable' => FALSE,
                 'cache_ttl' => 60
             ],

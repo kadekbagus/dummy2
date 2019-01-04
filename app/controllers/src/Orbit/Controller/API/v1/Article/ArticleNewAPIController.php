@@ -9,13 +9,13 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Validator;
 use Orbit\Controller\API\v1\Article\ArticleHelper;
+use DB;
 
 use Lang;
 use Config;
 use Category;
 use Event;
 use Tenant;
-use BaseMerchant;
 use Article;
 use ArticleLinkToObject;
 use ArticleVideo;
@@ -59,6 +59,8 @@ class ArticleNewAPIController extends ControllerAPI
 
             $articleHelper = ArticleHelper::create();
             $articleHelper->articleCustomValidator();
+
+            $prefix = DB::getTablePrefix();
 
             $title = OrbitInput::post('title');
             $slug = OrbitInput::post('slug');
@@ -201,12 +203,25 @@ class ArticleNewAPIController extends ControllerAPI
             $merchant = array();
 
             foreach ($objectMerchants as $merchantName) {
-                $baseMerchant = BaseMerchant::where('name', $merchantName)->first();
+                $store = Tenant::select('merchants.merchant_id','merchants.name')
+                                ->join(DB::raw("(
+                                    select merchant_id, name, status, parent_id, city,
+                                           province, country_id, address_line1, operating_hours
+                                    from {$prefix}merchants
+                                    where status = 'active'
+                                        and object_type = 'mall'
+                                    ) as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                ->whereRaw("{$prefix}merchants.status = 'active'")
+                                ->whereRaw("oms.status = 'active'")
+                                ->where('merchants.name', '=', $merchantName)
+                                ->whereRaw("oms.country_id = '{$countryId}'")
+                                ->orderBy('merchants.created_at', 'asc')
+                                ->first();
 
-                if (! empty($baseMerchant)) {
+                if (! empty($store)) {
                     $saveObjectMerchant = new ArticleLinkToObject();
                     $saveObjectMerchant->article_id = $newArticle->article_id;
-                    $saveObjectMerchant->object_id = $baseMerchant->base_merchant_id;
+                    $saveObjectMerchant->object_id = $store->merchant_id;
                     $saveObjectMerchant->object_type = 'merchant';
                     $saveObjectMerchant->save();
                     $merchant[] = $saveObjectMerchant;

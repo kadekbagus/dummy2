@@ -12,8 +12,6 @@ class ArticleSearch extends Search
 {
     protected $index = 'articles';
 
-    protected $searchLinkedObject = true;
-
     function __construct($ESConfig = [])
     {
         parent::__construct($ESConfig);
@@ -31,7 +29,8 @@ class ArticleSearch extends Search
      */
     public function isActive($params = [])
     {
-        $this->must([ 'match' => ['status' => 'active']]);
+        $this->filter([ 'match' => ['status' => 'active']]);
+        $this->filter([ 'range' => ['published_at' => ['lte' => $params['dateTimeEs']]] ]);
     }
 
     /**
@@ -39,7 +38,7 @@ class ArticleSearch extends Search
      *
      * @return [type] [description]
      */
-    public function filterByCategories($categories = [])
+    public function filterByCategories($categories = [], $logic = 'must')
     {
         $arrCategories = [];
 
@@ -47,12 +46,13 @@ class ArticleSearch extends Search
             $arrCategories[] = ['match' => ['link_to_categories.category_id' => $category]];
         }
 
-        $this->should([
+        $this->{$logic}([
             'nested' => [
                 'path' => 'link_to_categories',
                 'query' => [
                     'bool' => [
-                        'should' => $arrCategories
+                        'should' => $arrCategories,
+                        // 'minimum_should_match' => 1,
                     ]
                 ]
             ],
@@ -65,7 +65,7 @@ class ArticleSearch extends Search
      * @param  string $keyword [description]
      * @return [type]          [description]
      */
-    public function filterByKeyword($keyword = '')
+    public function filterByKeyword($keyword = '', $logic = 'should')
     {
         $keywordFields = ['title', 'body'];
 
@@ -74,16 +74,10 @@ class ArticleSearch extends Search
             $priorityFields[] = $field . $this->esConfig['priority'][$this->index][$field];
         }
 
-        $this->should([
-            'bool' => [
-                'should' => [
-                    [
-                        'query_string' => [
-                            'query' => '*' . $keyword . '*',
-                            'fields' => $priorityFields
-                        ]
-                    ],
-                ]
+        $this->{$logic}([
+            'query_string' => [
+                'query' => '*' . $keyword . '*',
+                'fields' => $priorityFields
             ]
         ]);
     }
@@ -96,7 +90,7 @@ class ArticleSearch extends Search
      */
     public function filterByCountry($countryName = '')
     {
-        $this->must(['match' => ['country' => $countryName]]);
+        $this->filter(['match' => ['country' => $countryName]]);
     }
 
     /**
@@ -108,27 +102,30 @@ class ArticleSearch extends Search
      * @param  string $objectId   [description]
      * @return [type]             [description]
      */
-    public function filterByLinkedObject($objectType = '', $objectId = '')
+    public function filterByLinkedObject($objectType = '', $objectId = '', $logic = 'should')
     {
-        $linkPath = '';
-        $keyId = '';
         switch ($objectType) {
             case 'mall':
                 $linkPath = 'malls';
                 $keyId = 'mall_id';
                 break;
+
             case 'brand':
+            case 'store':
                 $linkPath = 'brands';
                 $keyId = 'brand_id';
                 break;
+
             case 'coupon':
                 $linkPath = 'coupons';
                 $keyId = 'coupon_id';
                 break;
+
             case 'event':
                 $linkPath = 'events';
                 $keyId = 'event_id';
                 break;
+
             case 'promotion':
                 $linkPath = 'promotions';
                 $keyId = 'promotion_id';
@@ -136,28 +133,25 @@ class ArticleSearch extends Search
 
             default:
                 // Dont add any query
-                $this->searchLinkedObject = false;
                 break;
         }
 
-        if (! empty($linkPath) && ! empty($keyId)) {
-            $this->should([
-                'nested' => [
-                    'path' => "link_to_{$linkPath}",
-                    'query' => [
-                        'bool' => [
-                            'should' => [
-                                [
-                                    'match' => [
-                                        "link_to_{$linkPath}.{$keyId}" => $objectId
-                                    ]
+        $this->{$logic}([
+            'nested' => [
+                'path' => "link_to_{$linkPath}",
+                'query' => [
+                    'bool' => [
+                        'should' => [
+                            [
+                                'match' => [
+                                    "link_to_{$linkPath}.{$keyId}" => $objectId
                                 ]
                             ]
-                        ]
+                        ],
                     ]
-                ],
-            ]);
-        }
+                ]
+            ],
+        ]);
     }
 
     public function filterExclude($excludedItems = [])
