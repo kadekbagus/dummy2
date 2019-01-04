@@ -17,7 +17,7 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 class MediaAPIController extends ControllerAPI
 {
     /** Allowed roles */
-    protected $uploadRoles = ['merchant database admin'];
+    protected $uploadRoles = ['consumer', 'merchant database admin'];
 
     /**
      * * This uploader receive multiple file input and will make 4 variant for each image
