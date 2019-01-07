@@ -61,6 +61,13 @@ class RatingNewAPIController extends PubControllerAPI
         $parentId = OrbitInput::post('parent_id', NULL);
         $userIdReplied = OrbitInput::post('user_id_replied', NULL);
         $reviewIdReplied = OrbitInput::post('review_id_replied', NULL);
+
+        // Cdn
+        $prefix = DB::getTablePrefix();
+        $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+        $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+        $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
         if ($isReply) {
             //No rating when reply, so need overide the rating
             $rating = 0;
@@ -186,7 +193,7 @@ class RatingNewAPIController extends PubControllerAPI
                     foreach ($medias->variants as $keyVar => $variant) {
                         $images[$key][$keyVar]['media_id'] = $variant->media_id ;
                         $images[$key][$keyVar]['variant_name'] = $variant->media_name_long ;
-                        $images[$key][$keyVar]['url'] = $variant->path ;
+                        $images[$key][$keyVar]['url'] = $urlPrefix . $variant->path ;
                         $images[$key][$keyVar]['cdn_url'] = '' ;
                         $images[$key][$keyVar]['metadata'] = $variant->metadata;
                         $images[$key][$keyVar]['approval_status'] = 'pending';

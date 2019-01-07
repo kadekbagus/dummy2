@@ -85,32 +85,33 @@ class ReviewRatingImageApprovalAPIController extends ControllerAPI
 
             $getReview = $mongoClient->setEndPoint("reviews/$reviewId")->request('GET');
 
-            // if ($approvalType == 'approved' || $approvalType == 'pending') {
-                foreach ($getReview->data->images as $key => $images) {
-
-                    $status = $images[0]->approval_status;
-                    if (in_array($images[0]->media_id, $imagesIds)) {
-                        $status = $approvalType;
-                    }
-
-                    if ($status != 'rejected') {
-                        foreach ($images as $keyVar => $image) {
-                            $newImages[$key][$keyVar]['media_id'] = $image->media_id ;
-                            $newImages[$key][$keyVar]['variant_name'] = $image->variant_name ;
-                            $newImages[$key][$keyVar]['url'] = $image->url ;
-                            $newImages[$key][$keyVar]['cdn_url'] = '' ;
-                            $newImages[$key][$keyVar]['metadata'] = $image->metadata;
-                            $newImages[$key][$keyVar]['approval_status'] = $status;
-                            $newImages[$key][$keyVar]['rejection_message'] = '';
-                        }
-                    }
-
+            // Update status image, or deleted when rejected
+            foreach ($getReview->data->images as $key => $images) {
+                $status = $images[0]->approval_status;
+                if (in_array($images[0]->media_id, $imagesIds)) {
+                    $status = $approvalType;
                 }
-            // }
+
+                if ($status == 'rejected') {
+                    // delete from db
+                    $deleteMedia = Event::fire('orbit.rating.postdeletemedia', array($this, $images));
+
+                } else {
+                    foreach ($images as $keyVar => $image) {
+                        $newImages[$key][$keyVar]['media_id'] = $image->media_id ;
+                        $newImages[$key][$keyVar]['variant_name'] = $image->variant_name ;
+                        $newImages[$key][$keyVar]['url'] = $image->url ;
+                        $newImages[$key][$keyVar]['cdn_url'] = '' ;
+                        $newImages[$key][$keyVar]['metadata'] = $image->metadata;
+                        $newImages[$key][$keyVar]['approval_status'] = $status;
+                        $newImages[$key][$keyVar]['rejection_message'] = '';
+                    }
+                }
+            }
+
 
             /* TODO */
             if ($approvalType == 'rejected') {
-                // delete image
                 // send email
             } elseif ($approvalType == 'rejected' || $approvalType == 'rejected') {
                 // send email
