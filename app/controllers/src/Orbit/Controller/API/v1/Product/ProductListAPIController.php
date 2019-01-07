@@ -46,17 +46,21 @@ class ProductListAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            $sort_by = OrbitInput::get('sortby');
+            $sortBy = OrbitInput::get('sortby');
+            $status = OrbitInput::get('status');
 
             $validator = Validator::make(
                 array(
-                    'sortby' => $sort_by,
+                    'sortby' => $sortBy,
+                    'status' => $status,
                 ),
                 array(
                     'sortby' => 'in:name,status',
+                    'status' => 'in:active,inactive',
                 ),
                 array(
                     'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: name, status',
+                    'status.in' => 'The sort by argument you specified is not valid, the valid values are: active, inactive',
                 )
             );
 
@@ -82,6 +86,11 @@ class ProductListAPIController extends ControllerAPI
             OrbitInput::get('name_like', function($name) use ($product)
             {
                 $product->where('name', 'like', "%$name%");
+            });
+
+            OrbitInput::get('status', function($status) use ($product)
+            {
+                $product->where('status', $status);
             });
 
             // Clone the query builder which still does not include the take,

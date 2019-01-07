@@ -62,9 +62,18 @@ class ProductDetailAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $product = Product::with('media', 'merchants', 'categories', 'marketplaces', 'country')
-                                ->where('product_id', $productId)
-                                ->firstOrFail();
+            $product = Product::with([
+                    'media',
+                    'merchants' => function ($q) use ($prefix) {
+                        $q->select(DB::raw("{$prefix}base_merchants.name, base_merchant_id"), 'countries.name as country_name')
+                            ->leftJoin('countries', 'base_merchants.country_id', '=', 'countries.country_id');
+                    },
+                    'categories',
+                    'marketplaces',
+                    'country'
+                ])
+                ->where('product_id', $productId)
+                ->firstOrFail();
 
             $this->response->data = $product;
         } catch (ACLForbiddenException $e) {
