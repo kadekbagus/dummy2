@@ -176,6 +176,29 @@ class RatingNewAPIController extends PubControllerAPI
                 }
             }
 
+            // upload image
+            $uploadMedias = Event::fire('orbit.rating.postnewmedia', array($this, $body));
+
+            $images = array();
+
+            if (count($uploadMedias[0]) > 0) {
+                foreach ($uploadMedias[0] as $key => $medias) {
+                    foreach ($medias->variants as $keyVar => $variant) {
+                        $images[$key][$keyVar]['media_id'] = $variant->media_id ;
+                        $images[$key][$keyVar]['variant_name'] = $variant->media_name_long ;
+                        $images[$key][$keyVar]['url'] = $variant->path ;
+                        $images[$key][$keyVar]['cdn_url'] = '' ;
+                        $images[$key][$keyVar]['metadata'] = $variant->metadata;
+                        $images[$key][$keyVar]['approval_status'] = 'pending';
+                        $images[$key][$keyVar]['rejection_message'] = '';
+                    }
+                }
+            }
+
+            if (! empty($images)) {
+                $body['images'] = $images;
+            }
+
             $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body + $bodyLocation);
             $response = $mongoClient->setEndPoint('reviews') // express endpoint
                                     ->request('POST');

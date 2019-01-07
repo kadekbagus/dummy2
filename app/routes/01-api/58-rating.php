@@ -113,3 +113,13 @@ Route::post('/api/v1/review/reply/delete', function()
 });
 
 Route::post('/app/v1/review/reply/delete', 'IntermediateAuthController@RatingReview_postDeleteReply');
+
+/**
+ * Reply to a Review
+ */
+Route::post('/api/v1/review/imageapproval', function()
+{
+    return ReviewRatingImageApprovalAPIController::create()->postReplyReviewRating();
+});
+
+Route::post('/app/v1/review/imageapproval', 'IntermediateAuthController@ReviewRatingImageApproval_postImageApproval');
