@@ -199,6 +199,8 @@ class NewsDetailAPIController extends PubControllerAPI
                 throw new OrbitCustomException('News that you specify is not found', News::NOT_FOUND_ERROR_CODE, NULL);
             }
 
+            $news->category_ids = $this->getNewsCategory($newsId);
+
             $mall = null;
             if (! empty($mallId)) {
                 $mall = Mall::excludeDeleted()->where('merchant_id', '=', $mallId)->first();
@@ -369,5 +371,24 @@ class NewsDetailAPIController extends PubControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    /**
+     * Get news/promotion categories.
+     *
+     * @param  string $newsId [description]
+     * @return [type]         [description]
+     */
+    private function getNewsCategory($newsId = '')
+    {
+        return News::select('categories.category_id')
+                     ->leftJoin('news_merchant', 'news.news_id', '=', 'news_merchant.news_id')
+                     ->leftJoin('category_merchant', 'news_merchant.merchant_id', '=', 'category_merchant.merchant_id')
+                     ->join('categories', 'category_merchant.category_id', '=', 'categories.category_id')
+                     ->where('categories.merchant_id', 0)
+                     ->where('categories.status', 'active')
+                     ->where('news.news_id', $newsId)
+                     ->groupBy('categories.category_id')
+                     ->get()->lists('category_id');
     }
 }

@@ -9,7 +9,7 @@ class Article extends Eloquent
 
     use ModelStatusTrait;
 
-    const NOT_FOUND_ERROR_CODE = 404;
+    const NOT_FOUND_ERROR_CODE = 4040;
 
     protected $table = 'articles';
 

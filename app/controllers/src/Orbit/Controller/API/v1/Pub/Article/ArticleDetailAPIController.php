@@ -99,8 +99,7 @@ class ArticleDetailAPIController extends PubControllerAPI
             date_default_timezone_set('Asia/jakarta');
             $nowDate = date("Y-m-d H:i:s");
 
-            $article = Article::where('status', '=', 'active')
-                                ->with('category')
+            $article = Article::with('category')
                                 ->with('video')
                                 ->where('slug', $slug)
                                 ->where('published_at', '<=', $nowDate)
@@ -108,8 +107,36 @@ class ArticleDetailAPIController extends PubControllerAPI
 
 
             $message = 'Request Ok';
+            // If article is inactive/not found, then set custom data so that
+            // frontend can take action properly.
             if (! is_object($article)) {
-                throw new OrbitCustomException('Article that you specify is not found', Article::NOT_FOUND_ERROR_CODE, NULL);
+                $httpCode = 404;
+                $customData = new \stdClass;
+                $customData->type = 'article';
+                $customData->location = 0;
+                $customData->article = null;
+
+                $this->response->data = $customData;
+                $this->response->code = Article::NOT_FOUND_ERROR_CODE;
+                $this->response->status = 'error';
+                $this->response->message = $message;
+
+                return $this->render($httpCode);
+            }
+
+            if ($article->status === 'inactive') {
+                $httpCode = 404;
+                $customData = new \stdClass;
+                $customData->type = 'article';
+                $customData->location = 0;
+                $customData->status = 'inactive';
+
+                $this->response->data = $customData;
+                $this->response->code = Article::NOT_FOUND_ERROR_CODE;
+                $this->response->status = 'error';
+                $this->response->message = $message;
+
+                return $this->render($httpCode);
             }
 
             $articleId = $article->article_id;

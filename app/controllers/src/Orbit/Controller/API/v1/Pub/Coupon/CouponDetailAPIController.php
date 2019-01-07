@@ -342,6 +342,8 @@ class CouponDetailAPIController extends PubControllerAPI
                 $coupon->max_quantity_per_purchase = Config::get('orbit.transaction.max_quantity_per_purchase', 5);
             }
 
+            $coupon->category_ids = $this->getCouponCategory($couponId);
+
             // Only campaign having status ongoing and is_started true can going to detail page
             if (! in_array($coupon->campaign_status, ['ongoing', 'expired']) || ($coupon->campaign_status == 'ongoing' && $coupon->is_started == 'false')) {
                 $mallName = 'gtm';
@@ -551,5 +553,25 @@ class CouponDetailAPIController extends PubControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    /**
+     * Get coupon categories.
+     *
+     * @param  string $couponId [description]
+     * @return [type]           [description]
+     */
+    private function getCouponCategory($couponId = '')
+    {
+        return Coupon::select('category_merchant.category_id')
+                       ->leftJoin('promotion_retailer', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
+                       ->leftJoin('merchants', 'promotion_retailer.retailer_id', '=', 'merchants.merchant_id')
+                       ->leftJoin('category_merchant', 'merchants.merchant_id', '=', 'category_merchant.merchant_id')
+                       ->join('categories', 'category_merchant.category_id', '=', 'categories.category_id')
+                       ->where('categories.merchant_id', 0)
+                       ->where('categories.status', 'active')
+                       ->where('promotions.promotion_id', $couponId)
+                       ->groupBy('categories.category_id')
+                       ->get()->lists('category_id');
     }
 }
