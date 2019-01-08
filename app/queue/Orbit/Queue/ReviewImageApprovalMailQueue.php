@@ -101,14 +101,10 @@ class ReviewImageApprovalMailQueue
             'reject_reason' => $data['reject_reason'],
         ];
 
-        $mailviews = [
-            'html' => 'emails.review-images-approval.approve'
-        ];
+        $mailviews = 'emails.review-images-approval.approve';
 
         if ($data['approval_type'] == 'rejected') {
-            $mailviews = [
-                'html' => 'emails.review-images-approval.reject'
-            ];
+            $mailviews = 'emails.review-images-approval.reject';
         }
 
         Mail::send($mailviews, $emailData, function($message) use ($data)
