@@ -52,7 +52,7 @@
 
         <div class="footer">
             <div><strong>PT. Dominopos Kreasi Jaya</strong></div>
-            <div>Tower E-Lantai2, 18 Parc Place, SCBD</div>
+            <div>Tower E - Lantai 2, 18 Parc Place, SCBD</div>
             <div>Jalan Jend. Sudirman Kav 52-53, Senayan, Jakarta Selatan 12190</div>
         </div>
     </div>
