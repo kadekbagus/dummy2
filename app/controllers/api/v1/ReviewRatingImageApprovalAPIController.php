@@ -128,7 +128,7 @@ class ReviewRatingImageApprovalAPIController extends ControllerAPI
                 // send email
                 Queue::push('Orbit\\Queue\\ReviewImageApprovedMailQueue', [
                     'review_id' => $getReview->data->_id,
-                    'user_fullname' => $userReview->user_firstname .' '. $userReview->user_lastname,
+                    'fullname' => $userReview->user_firstname .' '. $userReview->user_lastname,
                     'email' => $userReview->user_email,
                     'object_id' => $getReview->data->object_id,
                     'object_type' => $getReview->data->object_type,

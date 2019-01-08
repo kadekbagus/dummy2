@@ -47,7 +47,7 @@ class ReviewImageApprovedMailQueue
     {
         $reviewId = $data['review_id'];
         $email =  $data['email'];
-        $userFullname =  $data['user_fullname'];
+        $fullname =  $data['fullname'];
         $object_id =  $data['object_id'];
         $object_type =  $data['object_type'];
         $review =  $data['review'];
@@ -57,13 +57,13 @@ class ReviewImageApprovedMailQueue
         try {
             // We do not check the validity of the issued coupon, because it
             // should be validated in code which calls this queue
-            $message = 'Review ID: ' . reviewId;
+            $message = 'Review ID: ' . $reviewId;
             $message = sprintf('[Job ID: `%s`] REVIEW IMAGE APPROVED QUEUE -- Status: OK -- Send email to: %s -- Review ID: %s -- Message: %s',
                                 $job->getJobId(), $email, $reviewId, $message);
 
-            $this->sendCouponEmail([
+            $this->sendImageApprovalEmail([
                                         'email' => $email,
-                                        'user_fullname' => $userFullname,
+                                        'fullname' => $fullname,
                                         'review_id' => $reviewId,
                                         'object_id' => $object_id ,
                                         'object_type' => $object_type ,
@@ -98,17 +98,17 @@ class ReviewImageApprovedMailQueue
     }
 
     /**
-     * Sending email to user which contains coupon information.
+     * Sending email to user for image review approval
      *
-     * @author Rio Astamal <rio@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      * @param array $data
      * @return void
      */
-    protected function sendCouponEmail($data)
+    protected function sendImageApprovalEmail($data)
     {
         $emailData = [
             'email' => $data['email'],
-            'user_fullname' => $data['user_fullname'],
+            'fullname' => $data['fullname'],
             'object_id' => $data['object_id'],
             'object_type' => $data['object_type'],
             'review' => $data['review'],
@@ -117,8 +117,7 @@ class ReviewImageApprovedMailQueue
         ];
 
         $mailviews = [
-            'html' => 'emails.rating.review-rating-image-approved-html',
-            'text' => 'emails.rating.review-rating-image-approved-text'
+            'html' => 'emails.review-images-approval.approve'
         ];
 
         Mail::send($mailviews, $emailData, function($message) use ($data)
@@ -127,7 +126,8 @@ class ReviewImageApprovedMailQueue
             $from = $emailconf['email'];
             $name = $emailconf['name'];
 
-            $subject = $emailData['message'];
+            $subject = $data['message'];
+
             $message->from($from, $name)->subject($subject);
             $message->to($data['email']);
         });
