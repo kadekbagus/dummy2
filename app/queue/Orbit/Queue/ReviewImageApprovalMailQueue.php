@@ -13,7 +13,7 @@ use Exception;
 use ModelNotFoundException;
 use Log;
 
-class ReviewImageApprovedMailQueue
+class ReviewImageApprovalMailQueue
 {
     /**
      * Laravel main method to fire a job on a queue.
@@ -25,6 +25,8 @@ class ReviewImageApprovedMailQueue
     public function fire($job, $data)
     {
         $reviewId = $data['review_id'];
+        $approval_type = $data['approval_type'];
+        $reject_reason = $data['reject_reason'];
         $email =  $data['email'];
         $fullname =  $data['fullname'];
         $object_id =  $data['object_id'];
@@ -49,6 +51,8 @@ class ReviewImageApprovedMailQueue
                                         'review' => $review ,
                                         'url_detail' => $url_detail,
                                         'subject' => $subject,
+                                        'approval_type' => $approval_type,
+                                        'reject_reason' => $reject_reason,
                                     ]);
 
             $job->delete();
@@ -93,11 +97,19 @@ class ReviewImageApprovedMailQueue
             'review' => $data['review'],
             'url_detail' => $data['url_detail'],
             'subject' => $data['subject'],
+            'approval_type' => $data['approval_type'],
+            'reject_reason' => $data['reject_reason'],
         ];
 
         $mailviews = [
             'html' => 'emails.review-images-approval.approve'
         ];
+
+        if ($data['approval_type'] == 'rejected') {
+            $mailviews = [
+                'html' => 'emails.review-images-approval.reject'
+            ];
+        }
 
         Mail::send($mailviews, $emailData, function($message) use ($data)
         {
