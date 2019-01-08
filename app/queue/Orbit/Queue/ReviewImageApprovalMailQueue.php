@@ -113,7 +113,7 @@ class ReviewImageApprovalMailQueue
             $from = $emailconf['email'];
             $name = $emailconf['name'];
 
-            $subject = $data['subject'];
+            $subject = $emailData['subject'];
 
             $message->from($from, $name)->subject($subject);
             $message->to($data['email']);
