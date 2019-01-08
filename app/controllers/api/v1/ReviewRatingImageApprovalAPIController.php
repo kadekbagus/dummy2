@@ -134,7 +134,7 @@ class ReviewRatingImageApprovalAPIController extends ControllerAPI
                     'object_type' => $getReview->data->object_type,
                     'review' => $getReview->data->review,
                     'url_detail' => $urlDetail,
-                    'message' => 'Your review image(s) has been approved',
+                    'subject' => 'Your review image(s) has been approved',
                 ]);
             }
 

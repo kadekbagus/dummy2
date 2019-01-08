@@ -20,28 +20,7 @@ class ReviewImageApprovedMailQueue
      *
      * @author Firmansyah <firmansyah@dominopos.com>
      * @param Job $job
-     * @param array $data [
-     *          issued_coupon_id => NUM,
-     *          redeem_url => STRING,
-     *          email => STRING
-     * ]
      */
-
-
-    /*
-        use Orbit\FakeJob;
-        $fakeJob = new FakeJob();
-        $reviewImageApproval = new \Orbit\Queue\ReviewImageApprovedMailQueue();
-        $sendEmail = $reviewImageApproval->fire($fakeJob, [
-                        'email' => 'firmansyah@dominoposa.com',
-                        'review_id' => '5c32f9aea076ae70c04752ab',
-                        'object_id' => 'LyiObOXoxTgqnA34',
-                        'object_type' => 'event',
-                        'review' => 'isi review',
-                        'url_detail' => 'http://gotomals.com',
-                    ]);
-        print_r($sendEmail);
-    */
 
     public function fire($job, $data)
     {
@@ -52,7 +31,7 @@ class ReviewImageApprovedMailQueue
         $object_type =  $data['object_type'];
         $review =  $data['review'];
         $url_detail = $data['url_detail'];
-        $message = $data['message'];
+        $subject = $data['subject'];
 
         try {
             // We do not check the validity of the issued coupon, because it
@@ -69,7 +48,7 @@ class ReviewImageApprovedMailQueue
                                         'object_type' => $object_type ,
                                         'review' => $review ,
                                         'url_detail' => $url_detail,
-                                        'message' => $message,
+                                        'subject' => $subject,
                                     ]);
 
             $job->delete();
@@ -113,7 +92,7 @@ class ReviewImageApprovedMailQueue
             'object_type' => $data['object_type'],
             'review' => $data['review'],
             'url_detail' => $data['url_detail'],
-            'message' => $data['message'],
+            'subject' => $data['subject'],
         ];
 
         $mailviews = [
@@ -126,7 +105,7 @@ class ReviewImageApprovedMailQueue
             $from = $emailconf['email'];
             $name = $emailconf['name'];
 
-            $subject = $data['message'];
+            $subject = $data['subject'];
 
             $message->from($from, $name)->subject($subject);
             $message->to($data['email']);
