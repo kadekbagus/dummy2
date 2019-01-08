@@ -36,7 +36,7 @@
             <span>Notice</span>
         </div>
         <div class="content">
-            <p>Dear, {{ fullname }}</p>
+            <p>Dear, {{ $fullname }}</p>
             <p>Your review image(s) has been approved.</p>
             <p>Thank you for your contribution.</p>
         </div>
