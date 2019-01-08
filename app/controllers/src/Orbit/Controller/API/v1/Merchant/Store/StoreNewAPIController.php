@@ -99,6 +99,12 @@ class StoreNewAPIController extends ControllerAPI
             $swiftCodes = OrbitInput::post('swift_codes',[]);
             $productTags = OrbitInput::post('product_tags');
             $productTags = (array) $productTags;
+            $url = OrbitInput::post('url');
+            $facebook_url = OrbitInput::post('facebook_url');
+            $instagram_url = OrbitInput::post('instagram_url');
+            $twitter_url = OrbitInput::post('twitter_url');
+            $youtube_url = OrbitInput::post('youtube_url');
+            $line_url = OrbitInput::post('line_url');
 
             $storeHelper = StoreHelper::create();
             $storeHelper->storeCustomValidator();
@@ -166,6 +172,12 @@ class StoreNewAPIController extends ControllerAPI
             $newstore->status = $status;
             $newstore->verification_number = $verification_number;
             $newstore->is_payment_acquire = $paymentAcquire;
+            $newstore->url = $url;
+            $newstore->facebook_url = $facebook_url;
+            $newstore->instagram_url = $instagram_url;
+            $newstore->twitter_url = $twitter_url;
+            $newstore->youtube_url = $youtube_url;
+            $newstore->line_url = $line_url;
             $newstore->save();
 
             // save product tag
