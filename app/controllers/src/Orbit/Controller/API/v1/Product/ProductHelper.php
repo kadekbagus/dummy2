@@ -48,8 +48,11 @@ class ProductHelper
 
         // Check empty marketplace
         Validator::extend('orbit.empty.marketplaces', function ($attribute, $value, $parameters) {
-            $data = $value;
-            if (empty($data[0]) || $data[0] == '') {
+            $itemObj = @json_decode($value[0]);
+            if (json_last_error() != JSON_ERROR_NONE) {
+                return FALSE;
+            }
+            if (empty($itemObj->id) || empty($itemObj->website_url)) {
                 return FALSE;
             }
 

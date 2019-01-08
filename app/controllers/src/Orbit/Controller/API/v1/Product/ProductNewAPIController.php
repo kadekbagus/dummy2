@@ -80,6 +80,7 @@ class ProductNewAPIController extends ControllerAPI
                     'short_description' => $shortDescription,
                     'categories'        => $categories,
                     'brand_ids'         => $brandIds,
+                    'marketplaces'      => $marketplaces,
                 ),
                 array(
                     'name'              => 'required',
@@ -89,6 +90,7 @@ class ProductNewAPIController extends ControllerAPI
                     'short_description' => 'required',
                     'categories'        => 'required|array',
                     'brand_ids'         => 'required|array',
+                    'marketplaces'      => 'required|orbit.empty.marketplaces',
                 ),
                 array(
                     'name.required'                 => 'Product Title field is required',
@@ -97,6 +99,7 @@ class ProductNewAPIController extends ControllerAPI
                     'short_description.required'    => 'Product Description is required',
                     'categories.required'           => 'Product Category is required',
                     'brand_ids.required'            => 'Link to Brand is required',
+                    'orbit.empty.marketplaces'      => 'Link to Affiliates is required',
                 )
             );
 
