@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Your images submission has been approved | Gotomalls.com</title>
+    <title>Your images submission has been rejected | Gotomalls.com</title>
     <style type="text/css">
         img {
             width:300px;
