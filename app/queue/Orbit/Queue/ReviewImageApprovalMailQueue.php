@@ -33,6 +33,7 @@ class ReviewImageApprovalMailQueue
         $object_type =  $data['object_type'];
         $review =  $data['review'];
         $url_detail = $data['url_detail'];
+        $subject = $data['subject'];
 
         try {
             // We do not check the validity of the issued coupon, because it
@@ -49,6 +50,7 @@ class ReviewImageApprovalMailQueue
                                         'object_type' => $object_type ,
                                         'review' => $review ,
                                         'url_detail' => $url_detail,
+                                        'subject' => $subject,
                                         'approval_type' => $approval_type,
                                         'reject_reason' => $reject_reason,
                                     ]);
@@ -87,14 +89,6 @@ class ReviewImageApprovalMailQueue
      */
     protected function sendImageApprovalEmail($data)
     {
-        $mailviews = 'emails.review-images-approval.approve';
-        $subject = 'Your review image(s) has been approved';
-
-        if ($data['approval_type'] == 'rejected') {
-            $mailviews = 'emails.review-images-approval.reject';
-            $subject = 'Your review image(s) has been rejected';
-        }
-
         $emailData = [
             'email' => $data['email'],
             'fullname' => $data['fullname'],
@@ -102,10 +96,16 @@ class ReviewImageApprovalMailQueue
             'object_type' => $data['object_type'],
             'review' => $data['review'],
             'url_detail' => $data['url_detail'],
-            'subject' => $subject,
+            'subject' => $data['subject'],
             'approval_type' => $data['approval_type'],
             'reject_reason' => $data['reject_reason'],
         ];
+
+        $mailviews = 'emails.review-images-approval.approve';
+
+        if ($data['approval_type'] == 'rejected') {
+            $mailviews = 'emails.review-images-approval.reject';
+        }
 
         Mail::send($mailviews, $emailData, function($message) use ($data)
         {
@@ -113,7 +113,7 @@ class ReviewImageApprovalMailQueue
             $from = $emailconf['email'];
             $name = $emailconf['name'];
 
-            $subject = $emailData['subject'];
+            $subject = $data['subject'];
 
             $message->from($from, $name)->subject($subject);
             $message->to($data['email']);
