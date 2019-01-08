@@ -523,6 +523,61 @@ class SocMedAPIController extends PubControllerAPI
     }
 
     /**
+     * GET - FB Article Share dummy page
+     *
+     * @param string    `id`          (required)
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     */
+    public function getArticleDetailView()
+    {
+        $languageEnId = null;
+        $language = Language::where('name', 'en')->first();
+
+        if (! empty($language)) {
+            $languageEnId = $language->language_id;
+        }
+
+
+        $id = OrbitInput::get('id');
+        $country = OrbitInput::get('country', null);
+        $cities = OrbitInput::get('cities', null);
+
+        $prefix = DB::getTablePrefix();
+
+        $article = Article::where('article_id', $articleId)
+                            ->where('status', 'active')
+                            ->with('mediaCover')
+                            ->first();
+
+        if (! is_object($article)) {
+            // item not found
+            $data = $this->createEmptyViewData();
+
+            return View::make('mobile-ci.templates.fb-sharer', compact('data'));
+        }
+
+        $data = new stdclass();
+        $data->url = static::getSharedUrl('promotional-event', $article->article_id, $article->title, $country, $cities);
+        $data->title = $article->title;
+        $data->description = $article->description;
+        $data->mall = new stdclass();
+        $data->mall->name = 'Gotomalls.com';
+
+        if (empty($article->media_cover[0]->path)) {
+            $data->image_url = NULL;
+        } else {
+            $data->image_url = $article->media_cover[0]->path;
+        }
+
+        $data->image_dimension = $this->getImageDimension($article->media_cover[0]->path);
+
+        return View::make('mobile-ci.templates.fb-sharer', compact('data'));
+    }
+
+    /**
      * Static method to get shared url
      *
      * @param string $type - ('promotion' | 'news' | 'coupon') - (required)
@@ -544,6 +599,9 @@ class SocMedAPIController extends PubControllerAPI
                 break;
             case 'coupon':
                 $routeName = 'pub-share-coupon';
+                break;
+            case 'article':
+                $routeName = 'pub-share-article';
                 break;
             case 'store':
                 $routeName = 'pub-share-store';

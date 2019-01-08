@@ -1,5 +1,6 @@
-<?php namespace Orbit\Controller\API\v1\Product;
+<?php namespace Orbit\Controller\API\v1\Article;
 
+use OrbitShop\API\v1\ResponseProvider;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -10,23 +11,25 @@ use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Util\PaginationNumber;
 
-use Product;
+use Article;
 use Validator;
 use Lang;
-use DB;
-use stdclass;
-use Config;
 
-class ProductListAPIController extends ControllerAPI
+use DB;
+use Config;
+use stdclass;
+use Orbit\Controller\API\v1\Article\ArticleHelper;
+
+class ArticleListAPIController extends ControllerAPI
 {
-    protected $allowedRoles = ['product manager'];
+    protected $articleRoles = ['article writer', 'article publisher'];
 
     /**
-     * GET Search / list Product
+     * GET Search / list Article
      *
-     * @author Ahmad <ahmad@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      */
-    public function getSearchProduct()
+    public function getSearchArticle()
     {
         try {
             $httpCode = 200;
@@ -40,27 +43,26 @@ class ProductListAPIController extends ControllerAPI
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = $this->allowedRoles;
+            $validRoles = $this->articleRoles;
             if (! in_array(strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
 
-            $sortBy = OrbitInput::get('sortby');
-            $status = OrbitInput::get('status');
+            $articleHelper = ArticleHelper::create();
+            // $articleHelper->merchantCustomValidator();
+
+            $sort_by = OrbitInput::get('sortby');
 
             $validator = Validator::make(
                 array(
-                    'sortby' => $sortBy,
-                    'status' => $status,
+                    'sortby' => $sort_by,
                 ),
                 array(
-                    'sortby' => 'in:name,status',
-                    'status' => 'in:active,inactive',
+                    'sortby' => 'in:title,published_at,created_at,status',
                 ),
                 array(
-                    'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: name, status',
-                    'status.in' => 'The sort by argument you specified is not valid, the valid values are: active, inactive',
+                    'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: title,published_at,created_at,status',
                 )
             );
 
@@ -72,39 +74,54 @@ class ProductListAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $product = Product::select(DB::raw("
-                                    {$prefix}products.product_id,
-                                    {$prefix}products.name,
-                                    {$prefix}products.status"
-                                ));
+            $article = Article::select(DB::raw("{$prefix}articles.*, {$prefix}countries.name as country_name"))
+                                ->join('countries', 'articles.country_id', '=', 'countries.country_id')
+                                ->where('articles.status', '!=', 'deleted')
+                                ->with('objectNews')
+                                ->with('objectPromotion')
+                                ->with('objectCoupon')
+                                ->with('objectMall')
+                                ->with('objectMerchant')
+                                ->with('category')
+                                ->with('mediaCover')
+                                ->with('mediaContent')
+                                ->with('video');
 
-            OrbitInput::get('product_id', function($product_id) use ($product)
+            OrbitInput::get('article_id', function($article_id) use ($article)
             {
-                $product->where('product_id', $product_id);
+                $article->where('article_id', $article_id);
             });
 
-            OrbitInput::get('name_like', function($name) use ($product)
+            // Filter merchant by name
+            OrbitInput::get('title', function($title) use ($article)
             {
-                $product->where('name', 'like', "%$name%");
+                $article->where('title', $title);
             });
 
-            OrbitInput::get('status', function($status) use ($product)
+            // Filter merchant by matching name pattern
+            OrbitInput::get('title_like', function($title) use ($article)
             {
-                $product->where('status', $status);
+                $article->where('title', 'like', "%$title%");
             });
+
+            if ($role->role_name == 'Article Writer') {
+                $article->where('created_by', $user->user_id);
+            }
+
+            $article->groupBy('article_id');
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
-            $_product = clone $product;
+            $_articles = clone $article;
 
             $take = PaginationNumber::parseTakeFromGet('merchant');
-            $product->take($take);
+            $article->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();
-            $product->skip($skip);
+            $article->skip($skip);
 
             // Default sort by
-            $sortBy = 'name';
+            $sortBy = 'title';
             // Default sort mode
             $sortMode = 'asc';
 
@@ -112,8 +129,10 @@ class ProductListAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'name' => 'products.name',
-                    'status' => 'products.status',
+                    'title' => 'title',
+                    'published_at' => 'published_at',
+                    'created_at' => 'articles.created_at',
+                    'status' => 'articles.status',
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
@@ -127,19 +146,19 @@ class ProductListAPIController extends ControllerAPI
                     $sortMode = 'desc';
                 }
             });
-            $product->orderBy($sortBy, $sortMode);
+            $article->orderBy($sortBy, $sortMode);
 
-            $totalItems = RecordCounter::create($_product)->count();
-            $listOfItems = $product->get();
+            $totalArticles = RecordCounter::create($_articles)->count();
+            $listOfArticles = $article->get();
 
             $data = new stdclass();
-            $data->total_records = $totalItems;
-            $data->returned_records = count($listOfItems);
-            $data->records = $listOfItems;
+            $data->total_records = $totalArticles;
+            $data->returned_records = count($listOfArticles);
+            $data->records = $listOfArticles;
 
-            if ($totalItems === 0) {
+            if ($totalArticles === 0) {
                 $data->records = NULL;
-                $this->response->message = "There is no product that matched your search criteria";
+                $this->response->message = "There is no article that matched your search criteria";
             }
 
             $this->response->data = $data;

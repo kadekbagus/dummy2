@@ -46,17 +46,21 @@ class MarketplaceListAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            $sort_by = OrbitInput::get('sortby');
+            $sortBy = OrbitInput::get('sortby');
+            $status = OrbitInput::get('status');
 
             $validator = Validator::make(
                 array(
-                    'sortby' => $sort_by,
+                    'sortby' => $sortBy,
+                    'status' => $status,
                 ),
                 array(
                     'sortby' => 'in:name,website_url,country_name,status',
+                    'status' => 'in:active,inactive',
                 ),
                 array(
                     'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: name, website_url, country_name, status',
+                    'status.in' => 'The sort by argument you specified is not valid, the valid values are: active, inactive',
                 )
             );
 
