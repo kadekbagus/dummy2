@@ -10,22 +10,18 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Text\Util\LineChecker;
-use Helper\EloquentRecordCounter as RecordCounter;
 use DominoPOS\OrbitUploader\Uploader as OrbitUploader;
 use Carbon\Carbon as Carbon;
-use Orbit\Helper\OneSignal\OneSignal;
 use Orbit\Helper\MongoDB\Client as MongoClient;
-
-use Orbit\Helper\Util\PaginationNumber;
 
 class ReviewRatingImageApprovalAPIController extends ControllerAPI
 {
-    protected $viewRoles = ['merchant review admin', 'master review admin', 'consumer'];
+    protected $viewRoles = ['merchant review admin', 'master review admin'];
 
     /**
-     * POST - Reply to a Review/Rating
+     * POST - Review image of rating review
      *
-     * @author budi <budi@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * @param string        location_id         parent/main review
      *
@@ -56,7 +52,6 @@ class ReviewRatingImageApprovalAPIController extends ControllerAPI
             $reviewId = OrbitInput::post('review_id');
             $imagesIds = OrbitInput::post('image_ids');
             $approvalType = OrbitInput::post('approval_type'); // reject/ pending
-            $rejectedStatus = OrbitInput::post('rejected_status'); // reject/ pending
             $rejectedMessage = OrbitInput::post('rejection_message');
 
             $this->registerCustomValidation();
@@ -109,14 +104,6 @@ class ReviewRatingImageApprovalAPIController extends ControllerAPI
                 }
             }
 
-
-            /* TODO */
-            if ($approvalType == 'rejected') {
-                // send email
-            } elseif ($approvalType == 'rejected' || $approvalType == 'rejected') {
-                // send email
-            }
-
             $updateDataReview = [
                 '_id' => $reviewId,
                 'images' => $newImages,
@@ -128,6 +115,28 @@ class ReviewRatingImageApprovalAPIController extends ControllerAPI
                                         ->request('PUT');
 
             $getReview = $mongoClient->setEndPoint("reviews/$reviewId")->request('GET');
+
+            /* TODO */
+            if ($approvalType == 'rejected') {
+
+            } elseif ($approvalType == 'approved' || $approvalType == 'pending') {
+
+                $userReview = User::where('user_id', $getReview->data->user_id)->first();
+
+                $urlDetail = Config::get('app.url') .'/'. $getReview->data->object_type .'/'. $getReview->data->object_id . '/' . $getReview->data->object_type;
+
+                // send email
+                Queue::push('Orbit\\Queue\\ReviewImageApprovedMailQueue', [
+                    'review_id' => $getReview->data->_id,
+                    'user_fullname' => $userReview->user_firstname .' '. $userReview->user_lastname,
+                    'email' => $userReview->user_email,
+                    'object_id' => $getReview->data->object_id,
+                    'object_type' => $getReview->data->object_type,
+                    'review' => $getReview->data->review,
+                    'url_detail' => $urlDetail,
+                    'message' => 'Your review image(s) has been approved',
+                ]);
+            }
 
             $this->response->data = $getReview->data;
             $this->response->code = 0;
