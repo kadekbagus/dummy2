@@ -46,6 +46,16 @@ class ProductHelper
             return TRUE;
         });
 
+        // Check empty marketplace
+        Validator::extend('orbit.empty.marketplaces', function ($attribute, $value, $parameters) {
+            $data = $value;
+            if (empty($data[0]) || $data[0] == '') {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
+
         // Check the validity of URL
         Validator::extend('orbit.formaterror.url.web', function ($attribute, $value, $parameters) {
             $url = 'http://' . $value;
