@@ -122,7 +122,6 @@ class ReviewRatingImageApprovalAPIController extends ControllerAPI
             $urlDetail = Config::get('app.url') .'/'. $getReview->data->object_type .'/'. $getReview->data->object_id . '/' . $getReview->data->object_type;
 
             Queue::push('Orbit\\Queue\\ReviewImageApprovalMailQueue', [
-                'subject' => 'Your review image(s) has been approved',
                 'reject_reason' => $rejectedMessage,
                 'approval_type' => $approvalType,
                 'review_id' => $getReview->data->_id,
