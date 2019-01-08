@@ -46,7 +46,7 @@
             <p>Dear, {{ fullname }}</p>
             <p>We are sorry, your review image(s) has been rejected because of:</p>
             <ul class="reject-reasons">
-                <li>{{ rejectReason }}</li>
+                <li>{{ reject_reason }}</li>
             </ul>
         </div>
 

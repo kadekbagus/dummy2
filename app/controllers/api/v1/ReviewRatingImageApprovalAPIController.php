@@ -116,27 +116,22 @@ class ReviewRatingImageApprovalAPIController extends ControllerAPI
 
             $getReview = $mongoClient->setEndPoint("reviews/$reviewId")->request('GET');
 
-            /* TODO */
-            if ($approvalType == 'rejected') {
+            // Send email
+            $userReview = User::where('user_id', $getReview->data->user_id)->first();
+            $urlDetail = Config::get('app.url') .'/'. $getReview->data->object_type .'/'. $getReview->data->object_id . '/' . $getReview->data->object_type;
 
-            } elseif ($approvalType == 'approved' || $approvalType == 'pending') {
-
-                $userReview = User::where('user_id', $getReview->data->user_id)->first();
-
-                $urlDetail = Config::get('app.url') .'/'. $getReview->data->object_type .'/'. $getReview->data->object_id . '/' . $getReview->data->object_type;
-
-                // send email
-                Queue::push('Orbit\\Queue\\ReviewImageApprovedMailQueue', [
-                    'review_id' => $getReview->data->_id,
-                    'fullname' => $userReview->user_firstname .' '. $userReview->user_lastname,
-                    'email' => $userReview->user_email,
-                    'object_id' => $getReview->data->object_id,
-                    'object_type' => $getReview->data->object_type,
-                    'review' => $getReview->data->review,
-                    'url_detail' => $urlDetail,
-                    'subject' => 'Your review image(s) has been approved',
-                ]);
-            }
+            Queue::push('Orbit\\Queue\\ReviewImageApprovalMailQueue', [
+                'subject' => 'Your review image(s) has been approved',
+                'rejected_reason' => $rejectedMessage,
+                'reject_reason' => $approvalType,
+                'review_id' => $getReview->data->_id,
+                'fullname' => $userReview->user_firstname .' '. $userReview->user_lastname,
+                'email' => $userReview->user_email,
+                'object_id' => $getReview->data->object_id,
+                'object_type' => $getReview->data->object_type,
+                'review' => $getReview->data->review,
+                'url_detail' => $urlDetail,
+            ]);
 
             $this->response->data = $getReview->data;
             $this->response->code = 0;
