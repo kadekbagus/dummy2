@@ -122,10 +122,9 @@ class ReviewRatingImageApprovalAPIController extends ControllerAPI
             $urlDetail = Config::get('app.url') .'/'. $getReview->data->object_type .'/'. $getReview->data->object_id . '/' . $getReview->data->object_type;
 
             $subject = 'Your review image(s) has been approved';
-            if (condition) {
+            if ($approvalType == 'rejected') {
                 $subject = 'Your review image(s) has been rejected';
             }
-
 
             Queue::push('Orbit\\Queue\\ReviewImageApprovalMailQueue', [
                 'subject' => $subject,
