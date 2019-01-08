@@ -97,7 +97,7 @@ class ProductUpdateAPIController extends ControllerAPI
                     'short_description.required'    => 'Product Description is required',
                     'categories.required'           => 'Product Category is required',
                     'brand_ids.required'            => 'Link to Brand is required',
-                    'orbit.empty.marketplaces'       => 'Link to Affiliates is required',
+                    'orbit.empty.marketplaces'      => 'Link to Affiliates is required',
                 )
             );
 
