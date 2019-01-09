@@ -80,7 +80,7 @@ class ReviewRatingImageApprovalAPIController extends ControllerAPI
 
             $getReview = $mongoClient->setEndPoint("reviews/$reviewId")->request('GET');
 
-            $newImages = array();
+            $newImages = '';
             // Update status image, or deleted when rejected
             foreach ($getReview->data->images as $key => $images) {
                 $status = $images[0]->approval_status;
