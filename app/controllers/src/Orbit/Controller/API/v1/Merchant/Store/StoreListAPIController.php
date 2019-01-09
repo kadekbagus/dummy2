@@ -97,7 +97,14 @@ class StoreListAPIController extends ControllerAPI
                                 'base_stores.verification_number',
                                 'base_stores.is_payment_acquire',
                                 'base_stores.status',
-                                'base_stores.created_at')
+                                'base_stores.created_at',
+                                'base_stores.url',
+                                'base_stores.facebook_url',
+                                'base_stores.instagram_url',
+                                'base_stores.twitter_url',
+                                'base_stores.youtube_url',
+                                'base_stores.line_url'
+                                )
                             ->join('base_merchants', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
                             ->leftJoin('objects', 'base_stores.floor_id', '=', 'objects.object_id')
                             ->leftJoin('merchants', 'base_stores.merchant_id', '=', 'merchants.merchant_id')
