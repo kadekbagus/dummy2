@@ -75,9 +75,7 @@ class RatingNewAPIController extends PubControllerAPI
 
         try {
             $user = $this->getUser();
-echo "<pre>";
-print_r($user->user_firstname);
-die();
+
             $session = SessionPreparer::prepareSession();
 
             // should always check the role

@@ -35,9 +35,14 @@ class ReviewImageNeedApprovalMailQueue
             $message = sprintf('[Job ID: `%s`] REVIEW IMAGE NEED APPROVAL QUEUE -- Status: OK -- Send email to: %s -- Review ID: %s -- Message: %s',
                                 $job->getJobId(), $email, $reviewId, $message);
 
+            $emailAdminReviewConf = Config::get('orbit.rating_review.email');
+            $emailAdminReviewTo = $emailconf['to'];
+
             $this->sendImageApprovalEmail([
-                                        'email' => $email,
-                                        'review_id' => $reviewId,
+                                        'subject' => $subject,
+                                        'user_email' => $userEmail,
+                                        'user_fullname' => $userFullname,
+                                        'email_admin_review' => $emailAdminReviewTo,
                                     ]);
 
             $job->delete();
@@ -74,23 +79,21 @@ class ReviewImageNeedApprovalMailQueue
      */
     protected function sendImageApprovalEmail($data)
     {
-        $emailData = [
-            'email' => $data['email'],
-            'fullname' => $data['fullname'],
-        ];
+        $emailData = array();
 
         $mailviews = 'emails.review-images-approval.need_approval';
 
         Mail::send($mailviews, $emailData, function($message) use ($data)
         {
-            $emailconf = Config::get('orbit.rating_review.email');
-            $from = $emailconf['to'];
+            $emailconf = Config::get('orbit.generic_email.sender');
+            $from = $emailconf['email'];
             $name = $emailconf['name'];
 
             $subject = $data['subject'];
 
             $message->from($from, $name)->subject($subject);
-            $message->to($data['email']);
+            $message->to($data['email_admin_review']);
+
         });
     }
 }
