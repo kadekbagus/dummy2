@@ -75,7 +75,9 @@ class RatingNewAPIController extends PubControllerAPI
 
         try {
             $user = $this->getUser();
-
+echo "<pre>";
+print_r($user->user_firstname);
+die();
             $session = SessionPreparer::prepareSession();
 
             // should always check the role
@@ -204,6 +206,13 @@ class RatingNewAPIController extends PubControllerAPI
 
             if (! empty($images)) {
                 $body['images'] = $images;
+
+                //send email to admin
+                Queue::push('Orbit\\Queue\\ReviewImageNeedApprovalMailQueue', [
+                    'subject' => 'There is a review with image(s) that needs your approval',
+                    'user_email' => $user->user_email,
+                    'user_fullname' => $user->user_firstname .' '. $user->user_lastname,
+                ]);
             }
 
             $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body + $bodyLocation);
