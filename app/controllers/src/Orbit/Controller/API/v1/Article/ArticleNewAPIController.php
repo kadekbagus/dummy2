@@ -91,6 +91,7 @@ class ArticleNewAPIController extends ControllerAPI
                     'body'             => $body,
                     'status'           => $status,
                     'country_id'       => $countryId,
+                    'categories'       => $categories,
                 ),
                 array(
                     'title'            => 'required|orbit.exist.title:' . $title,
@@ -100,6 +101,7 @@ class ArticleNewAPIController extends ControllerAPI
                     'body'             => 'required',
                     'status'           => 'required',
                     'country_id'       => 'required',
+                    'categories'       => 'required',
                 ),
                 array(
                     'orbit.exist.title' => 'Title is already exist',

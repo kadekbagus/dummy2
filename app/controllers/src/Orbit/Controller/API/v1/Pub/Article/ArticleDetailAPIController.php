@@ -260,7 +260,7 @@ class ArticleDetailAPIController extends PubControllerAPI
                                                 'promotions.end_date',
                                                 DB::raw("default_translation.promotion_name as default_name")
                                             )
-                                            ->leftJoin('promotions', function($q) {
+                                            ->join('promotions', function($q) {
                                                 $q->on('promotion_id', '=', 'object_id')
                                                   ->on('promotions.status', '=', DB::raw("'active'"));
                                             })
@@ -308,7 +308,7 @@ class ArticleDetailAPIController extends PubControllerAPI
                                                 'merchants.name',
                                                 DB::raw("{$image} as original_media_path")
                                             )
-                                            ->leftJoin('merchants', function($q) {
+                                            ->join('merchants', function($q) {
                                                 $q->on('merchant_id', '=', 'object_id')
                                                   ->on('merchants.status', '=', DB::raw("'active'"));
                                             })
