@@ -159,3 +159,14 @@ Route::get('/api/v1/pub/news-featured/list', function()
 });
 
 Route::get('/app/v1/pub/news-featured/list', ['as' => 'pub-news-featured-list', 'uses' => 'IntermediatePubAuthController@News\NewsFeaturedList_getFeaturedNews']);
+
+
+/**
+ * List of news on all malls for Article Portal
+ */
+Route::get('/api/v1/suggestion-list', function()
+{
+    return SuggestionListAPIController::create()->getSuggestionList();
+});
+
+Route::get('/app/v1/suggestion-list', ['as' => 'suggestion-list', 'uses' => 'IntermediateAuthController@SuggestionList_getSuggestionList']);
