@@ -104,6 +104,8 @@ class ArticleSearch extends Search
      */
     public function filterByLinkedObject($objectType = '', $objectId = '', $logic = 'should')
     {
+        $linkPath = '';
+        $keyId = '';
         switch ($objectType) {
             case 'mall':
                 $linkPath = 'malls';
@@ -136,22 +138,24 @@ class ArticleSearch extends Search
                 break;
         }
 
-        $this->{$logic}([
-            'nested' => [
-                'path' => "link_to_{$linkPath}",
-                'query' => [
-                    'bool' => [
-                        'should' => [
-                            [
-                                'match' => [
-                                    "link_to_{$linkPath}.{$keyId}" => $objectId
+        if (! empty($linkPath) && ! empty($keyId)) {
+            $this->{$logic}([
+                'nested' => [
+                    'path' => "link_to_{$linkPath}",
+                    'query' => [
+                        'bool' => [
+                            'should' => [
+                                [
+                                    'match' => [
+                                        "link_to_{$linkPath}.{$keyId}" => $objectId
+                                    ]
                                 ]
-                            ]
-                        ],
+                            ],
+                        ]
                     ]
-                ]
-            ],
-        ]);
+                ],
+            ]);
+        }
     }
 
     public function filterExclude($excludedItems = [])
