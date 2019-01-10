@@ -165,6 +165,7 @@ class ArticleDetailAPIController extends PubControllerAPI
                                                 'news.object_type',
                                                 'news.end_date',
                                                 'news.is_exclusive',
+                                                'news.is_having_reward',
                                                 'news.status',
                                                 DB::raw("default_translation.news_name as default_name")
                                             )
@@ -213,6 +214,7 @@ class ArticleDetailAPIController extends PubControllerAPI
                                                 'news.object_type',
                                                 'news.end_date',
                                                 'news.is_exclusive',
+                                                'news.is_having_reward',
                                                 DB::raw("default_translation.news_name as default_name")
                                             )
                                             ->join('news', function($q) {
