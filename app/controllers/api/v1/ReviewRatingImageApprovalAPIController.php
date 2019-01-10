@@ -81,6 +81,7 @@ class ReviewRatingImageApprovalAPIController extends ControllerAPI
             $getReview = $mongoClient->setEndPoint("reviews/$reviewId")->request('GET');
 
             $newImages = '';
+            $is_image_reviewing = 'n';
             // Update status image, or deleted when rejected
             foreach ($getReview->data->images as $key => $images) {
                 $status = $images[0]->approval_status;
@@ -91,6 +92,7 @@ class ReviewRatingImageApprovalAPIController extends ControllerAPI
                 if ($status == 'rejected') {
                     // delete from db
                     $deleteMedia = Event::fire('orbit.rating.postdeletemedia', array($this, $images));
+                    $is_image_reviewing = 'y';
 
                 } else {
                     foreach ($images as $keyVar => $image) {
@@ -102,13 +104,17 @@ class ReviewRatingImageApprovalAPIController extends ControllerAPI
                         $newImages[$key][$keyVar]['approval_status'] = $status;
                         $newImages[$key][$keyVar]['rejection_message'] = '';
                     }
+
+                    $is_image_reviewing = 'y';
                 }
             }
+
 
             $updateDataReview = [
                 '_id' => $reviewId,
                 'images' => $newImages,
                 'status' => 'active',
+                'is_image_reviewing' => $is_image_reviewing,
             ];
 
             $updateReview = $mongoClient->setFormParam($updateDataReview)

@@ -27,16 +27,18 @@ class ReviewImageNeedApprovalMailQueue
         $subject = $data['subject'];
         $user_email = $data['user_email'];
         $user_fullname = $data['user_fullname'];
+        $objectId = $data['object_id'];
+        $emailAdminReviewConf = Config::get('orbit.rating_review.email');
+        $emailAdminReviewTo = $emailAdminReviewConf['to'][0];
 
         try {
+
             // We do not check the validity of the issued coupon, because it
             // should be validated in code which calls this queue
-            $message = 'Review ID: ' . $reviewId;
-            $message = sprintf('[Job ID: `%s`] REVIEW IMAGE NEED APPROVAL QUEUE -- Status: OK -- Send email to: %s -- Review ID: %s -- Message: %s',
-                                $job->getJobId(), $email, $reviewId, $message);
+            $message = 'Object ID: ' . $objectId;
+            $message = sprintf('[Job ID: `%s`] REVIEW IMAGE NEED APPROVAL QUEUE -- Status: OK -- Send email to: %s -- Object ID: %s -- Message: %s',
+                                $job->getJobId(), $emailAdminReviewTo, $objectId, $message);
 
-            $emailAdminReviewConf = Config::get('orbit.rating_review.email');
-            $emailAdminReviewTo = $emailconf['to'];
 
             $this->sendImageApprovalEmail([
                                         'subject' => $subject,
@@ -51,12 +53,12 @@ class ReviewImageNeedApprovalMailQueue
 
             return ['status' => 'ok', 'message' => $message];
         } catch (ModelNotFoundException $e) {
-            $message = sprintf('[Job ID: `%s`] REVIEW IMAGE NEED APPROVAL QUEUE -- Status: FAIL -- Send email to: %s -- Review ID: %s -- Message: %s -- File: %s -- Line: %s',
-                                $job->getJobId(), $email, $reviewId,
+            $message = sprintf('[Job ID: `%s`] REVIEW IMAGE NEED APPROVAL QUEUE -- Status: FAIL -- Send email to: %s -- Object ID: %s -- Message: %s -- File: %s -- Line: %s',
+                                $job->getJobId(), $emailAdminReviewTo, $objectId,
                                 $e->getMessage(), $e->getFile(), $e->getLine());
         } catch (Exception $e) {
-            $message = sprintf('[Job ID: `%s`] REVIEW IMAGE NEED APPROVAL QUEUE -- Status: FAIL -- Send email to: %s -- Review ID: %s -- Message: %s -- File: %s -- Line: %s',
-                                $job->getJobId(), $email, $reviewId,
+            $message = sprintf('[Job ID: `%s`] REVIEW IMAGE NEED APPROVAL QUEUE -- Status: FAIL -- Send email to: %s -- Object ID: %s -- Message: %s -- File: %s -- Line: %s',
+                                $job->getJobId(), $emailAdminReviewTo, $objectId,
                                 $e->getMessage(), $e->getFile(), $e->getLine());
         }
 

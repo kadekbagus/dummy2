@@ -101,6 +101,7 @@ class RatingReviewAPIController extends ControllerAPI
             $rating = OrbitInput::get('rating', null);
             $review = OrbitInput::get('review', null);
             $type = OrbitInput::get('type', null);
+            $is_image_reviewing = OrbitInput::get('is_image_reviewing', null);
 
             // Default sort by
             $sortBy = 'created_at';
@@ -211,6 +212,11 @@ class RatingReviewAPIController extends ControllerAPI
             // filter type
             if (!empty($type)) {
                 $queryString['object_type_portal'] = $type;
+            }
+
+            // filter type
+            if (!empty($is_image_reviewing)) {
+                $queryString['is_image_reviewing'] = $is_image_reviewing;
             }
 
             $mongoConfig = Config::get('database.mongodb');
