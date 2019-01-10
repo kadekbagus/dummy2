@@ -35,6 +35,7 @@ use Carbon\Carbon as Carbon;
 use stdClass;
 use Country;
 use Redis;
+use BaseStore;
 
 class NewsFeaturedListAPIController extends PubControllerAPI
 {
@@ -222,6 +223,23 @@ class NewsFeaturedListAPIController extends PubControllerAPI
                 if (! empty($sponsorProviderIds) && is_array($sponsorProviderIds)) {
                     $withSponsorProviderIds = array('nested' => array('path' => 'sponsor_provider', 'query' => array('filtered' => array('filter' => array('terms' => array('sponsor_provider.sponsor_id' => $sponsorProviderIds))))));
                     $jsonQuery['query']['bool']['filter'][] = $withSponsorProviderIds;
+                }
+             });
+
+            OrbitInput::get('brand_id', function($brandId) use (&$jsonQuery) {
+                if (! empty($brandId)) {
+                    $baseStore = BaseStore::select('base_merchant_id')->where('base_store_id', '=', $brandId)->first();
+                    if ($baseStore) {
+                        $tenantIds = [];
+                        $stores = BaseStore::select('base_store_id')->where('base_merchant_id', '=', $baseStore->base_merchant_id)->get();
+                        if (count($stores)) {
+                            foreach($stores as $key=>$value) {
+                                $tenantIds[] = $value->base_store_id;
+                            }
+                        }
+                        $withBrandId = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('terms' => array('link_to_tenant.merchant_id' => $tenantIds))))));
+                        $jsonQuery['query']['bool']['filter'][] = $withBrandId;
+                    }
                 }
              });
 

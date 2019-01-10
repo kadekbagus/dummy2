@@ -165,6 +165,50 @@ class MerchantUpdateAPIController extends ControllerAPI
                 $updatedBaseMerchant->gender = $gender;
             });
 
+            OrbitInput::post('instagram_url', function($instagram_url) use ($updatedBaseMerchant) {
+                $updatedBaseMerchant->instagram_url = $instagram_url;
+            });
+
+            OrbitInput::post('twitter_url', function($twitter_url) use ($updatedBaseMerchant) {
+                $updatedBaseMerchant->twitter_url = $twitter_url;
+            });
+
+            OrbitInput::post('youtube_url', function($youtube_url) use ($updatedBaseMerchant) {
+                $updatedBaseMerchant->youtube_url = $youtube_url;
+            });
+
+            OrbitInput::post('line_url', function($line_url) use ($updatedBaseMerchant) {
+                $updatedBaseMerchant->line_url = $line_url;
+            });
+
+            OrbitInput::post('other_photo_section_title', function($other_photo_section_title) use ($updatedBaseMerchant) {
+                $updatedBaseMerchant->other_photo_section_title = $other_photo_section_title;
+            });
+
+            OrbitInput::post('video_id_1', function($video_id_1) use ($updatedBaseMerchant) {
+                $updatedBaseMerchant->video_id_1 = $video_id_1;
+            });
+
+            OrbitInput::post('video_id_2', function($video_id_2) use ($updatedBaseMerchant) {
+                $updatedBaseMerchant->video_id_2 = $video_id_2;
+            });
+
+            OrbitInput::post('video_id_3', function($video_id_3) use ($updatedBaseMerchant) {
+                $updatedBaseMerchant->video_id_3 = $video_id_3;
+            });
+
+            OrbitInput::post('video_id_4', function($video_id_4) use ($updatedBaseMerchant) {
+                $updatedBaseMerchant->video_id_4 = $video_id_4;
+            });
+
+            OrbitInput::post('video_id_5', function($video_id_5) use ($updatedBaseMerchant) {
+                $updatedBaseMerchant->video_id_5 = $video_id_5;
+            });
+
+            OrbitInput::post('video_id_6', function($video_id_6) use ($updatedBaseMerchant) {
+                $updatedBaseMerchant->video_id_6 = $video_id_6;
+            });
+
             // Translations
             $idLanguageEnglish = Language::select('language_id')->where('name', '=', 'en')->first();
 
