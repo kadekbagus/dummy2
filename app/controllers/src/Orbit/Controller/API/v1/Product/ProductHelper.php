@@ -437,7 +437,7 @@ class ProductHelper
                     OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'marketplace']));
                 }
                 if (empty($itemObj->website_url)) {
-                    OrbitShopAPI::throwInvalidArgument('Product Website is required');
+                    OrbitShopAPI::throwInvalidArgument('Product URL is required');
                 }
                 $saveObjectMarketPlaces = new ProductLinkToObject();
                 $saveObjectMarketPlaces->product_id = $newProduct->product_id;
