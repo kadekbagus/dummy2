@@ -631,4 +631,23 @@ class PromotionSearch extends Search
             ]
         ];
     }
+
+    /**
+     * filter by gender
+     *
+     * @return void
+     */
+    public function filterByGender($gender = '')
+    {
+        switch ($gender){
+            case 'male':
+                 $this->mustNot(['match' => ['is_all_gender' => 'F']]);
+                 break;
+            case 'female':
+                 $this->mustNot(['match' => ['is_all_gender' => 'M']]);
+                 break;
+            default:
+                // do nothing
+        }
+    }
 }

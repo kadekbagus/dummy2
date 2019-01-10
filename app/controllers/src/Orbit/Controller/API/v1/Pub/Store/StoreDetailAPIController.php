@@ -143,7 +143,19 @@ class StoreDetailAPIController extends PubControllerAPI
                                             )
                                         END as custom_page_title
                                     "),
-                                'merchants.url'
+                                'merchants.url',
+                                'merchants.facebook_url',
+                                'merchants.instagram_url',
+                                'merchants.twitter_url',
+                                'merchants.youtube_url',
+                                'merchants.line_url',
+                                'merchants.other_photo_section_title',
+                                'merchants.video_id_1',
+                                'merchants.video_id_2',
+                                'merchants.video_id_3',
+                                'merchants.video_id_4',
+                                'merchants.video_id_5',
+                                'merchants.video_id_6'
                             )
                 ->with(['categories' => function ($q) use ($valid_language, $prefix) {
                         $q->select(
@@ -195,6 +207,11 @@ class StoreDetailAPIController extends PubControllerAPI
                     }, 'product_tags' => function ($q) {
                         $q->addSelect('product_tag', 'object_id');
                         $q->groupBy('product_tag');
+                    }, 'mediaBanner' => function ($q) use ($image) {
+                        $q->select(
+                                DB::raw("{$image}"),
+                                'media.object_id'
+                            );
                     }
                     ])
                 ->join(DB::raw("(select merchant_id, country_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
@@ -209,6 +226,68 @@ class StoreDetailAPIController extends PubControllerAPI
                             ->where('merchants.merchant_id', $merchantId)
                             ->first();
 
+            // get photos for brand detail page
+            $brandPhotos = Tenant::select('merchants.merchant_id')
+                                    ->with(['baseStore' => function($q) {
+                                        $q->with(['baseMerchant' => function($q2) {
+                                            $q2->with('mediaPhotos');
+                                            $q2->with('mediaOtherPhotos');
+                                        }]);
+                                    }])
+                                    ->where('merchant_id', '=', $merchantId)
+                                    ->first();
+            $photos = [];
+            $otherPhotos = [];
+            if ($brandPhotos) {
+                if (isset($brandPhotos->baseStore) && isset($brandPhotos->baseStore->baseMerchant)) {
+                    if (isset($brandPhotos->baseStore->baseMerchant->mediaPhotos)) {
+                        $photos = $brandPhotos->baseStore->baseMerchant->mediaPhotos;
+                    }
+                    if (isset($brandPhotos->baseStore->baseMerchant->mediaOtherPhotos)) {
+                        $otherPhotos = $brandPhotos->baseStore->baseMerchant->mediaOtherPhotos;
+                    }
+                }
+            }
+
+            // use cdn image when available
+            $validPhotos = [];
+            $validOtherPhotos = [];
+            if (!empty($photos[0])) {
+                foreach ($photos as $key => $value) {
+                    if ($photos[$key]->cdn_url != '' && $usingCdn) {
+                        $validImage = $photos[$key]->cdn_url;
+                    } else {
+                        $validImage = $urlPrefix.$photos[$key]->path;
+                    }
+                    $img = new stdClass();
+                    $img->media_id = $photos[$key]->media_id;
+                    $img->media_name_long = $photos[$key]->media_name_long;
+                    $img->cdn_url = $validImage;
+                    $img->cdn_bucket_name = $photos[$key]->cdn_bucket_name;
+                    $img->file_name = $photos[$key]->file_name;
+                    $img->metadata = $photos[$key]->metadata;
+                    $validPhotos[] = $img;
+                }
+            }
+
+            if (!empty($otherPhotos[0])) {
+                foreach ($otherPhotos as $key => $value) {
+                    if ($otherPhotos[$key]->cdn_url != '' && $usingCdn) {
+                        $validImage = $otherPhotos[$key]->cdn_url;
+                    } else {
+                        $validImage = $urlPrefix.$otherPhotos[$key]->path;
+                    }
+                    $img = new stdClass();
+                    $img->media_id = $otherPhotos[$key]->media_id;
+                    $img->media_name_long = $otherPhotos[$key]->media_name_long;
+                    $img->cdn_url = $validImage;
+                    $img->cdn_bucket_name = $otherPhotos[$key]->cdn_bucket_name;
+                    $img->file_name = $otherPhotos[$key]->file_name;
+                    $img->metadata = $otherPhotos[$key]->metadata;
+                    $validOtherPhotos[] = $img;
+                }
+            }
+
             if (! is_object($storeInfo)) {
                 throw new OrbitCustomException('Unable to find store.', Tenant::NOT_FOUND_ERROR_CODE, NULL);
             }
@@ -216,6 +295,8 @@ class StoreDetailAPIController extends PubControllerAPI
             if (! empty($mallId)) {
                 $mall = Mall::excludeDeleted()->where('merchant_id', '=', $mallId)->first();
             }
+
+            $store->category_ids = $this->getBrandCategory($merchantId);
 
             if ($storeInfo->status != 'active') {
                 $mallName = 'gtm';
@@ -286,6 +367,7 @@ class StoreDetailAPIController extends PubControllerAPI
             }
             $store->total_view = $totalPageViews;
 
+
             // Get status followed
             $role = $user->role->role_name;
             $objectFollow = [];
@@ -322,6 +404,9 @@ class StoreDetailAPIController extends PubControllerAPI
             $store->rating_average = $reviewCounter->getAverage();
             $store->review_counter = $reviewCounter->getCounter();
             // ---- END OF RATING ----
+
+            $store->media_photos = $validPhotos;
+            $store->media_other_photos = $validOtherPhotos;
 
             if (is_object($mall)) {
                 $activityNotes = sprintf('Page viewed: View mall store detail page');
@@ -465,6 +550,24 @@ class StoreDetailAPIController extends PubControllerAPI
         $follow = $follow->getFollowStatus();
 
         return $follow;
+    }
+
+    /**
+     * Get Brand/store categories.
+     *
+     * @param  string $brandId [description]
+     * @return [type]          [description]
+     */
+    private function getBrandCategory($brandId = '')
+    {
+        return Tenant::select('categories.category_id')
+                       ->leftJoin('category_merchant', 'merchants.merchant_id', '=', 'category_merchant.merchant_id')
+                       ->join('categories', 'category_merchant.category_id', '=', 'categories.category_id')
+                       ->where('categories.merchant_id', 0)
+                       ->where('categories.status', 'active')
+                       ->where('merchants.merchant_id', $brandId)
+                       ->groupBy('categories.category_id')
+                       ->get()->lists('category_id');
     }
 
 }

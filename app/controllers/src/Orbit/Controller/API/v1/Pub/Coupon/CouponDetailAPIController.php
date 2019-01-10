@@ -51,6 +51,8 @@ class CouponDetailAPIController extends PubControllerAPI
             $mallId = OrbitInput::get('mall_id', null);
             $partnerToken = OrbitInput::get('token', null);
             $notificationId = OrbitInput::get('notification_id', null);
+            $forRedeem = OrbitInput::get('for_redeem', 'N');
+            $selectedIssuedCouponId = OrbitInput::get('issued_coupon_id', null);
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -153,10 +155,14 @@ class CouponDetailAPIController extends PubControllerAPI
                             'promotions.promotion_type as coupon_type',
                             'promotions.price_old',
                             'promotions.price_selling as price_new',
+                            'promotions.max_quantity_per_purchase',
+                            'promotions.max_quantity_per_user',
+                            'promotions.currency',
                             'coupon_sepulsa.how_to_buy_and_redeem',
                             'coupon_sepulsa.terms_and_conditions',
                             'issued_coupons.url as redeem_url',
                             DB::raw('payment.payment_midtrans_info'),
+                            DB::raw("m.country as coupon_country"),
                             'promotions.promotion_type',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
 
@@ -209,7 +215,17 @@ class CouponDetailAPIController extends PubControllerAPI
                             DB::raw("
                                 CASE WHEN reserved_issued_coupons.status = 'reserved'
                                     THEN 'true'
-                                ELSE 'false' END as is_reserved")
+                                ELSE 'false' END as is_reserved"),
+                            DB::raw("
+                                (SELECT
+                                    count({$prefix}issued_coupons.issued_coupon_id) as issued_coupons_per_user
+                                FROM {$prefix}issued_coupons
+                                WHERE
+                                    {$prefix}issued_coupons.promotion_id = '{$couponId}' AND
+                                    {$prefix}issued_coupons.user_id = '{$user->user_id}' AND
+                                    {$prefix}issued_coupons.status IN ('issued', 'redeemed', 'reserved')
+                                ) as used_coupons_count
+                                ")
                         )
                         ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                         ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
@@ -223,10 +239,17 @@ class CouponDetailAPIController extends PubControllerAPI
                               ->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id');
                         })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-                        ->leftJoin('issued_coupons', function ($q) use ($user) {
+                        ->leftJoin('issued_coupons', function ($q) use ($user, $prefix, $forRedeem, $selectedIssuedCouponId) {
                                 $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                                 $q->on('issued_coupons.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
-                                $q->on('issued_coupons.status', '=', DB::Raw("'issued'"));
+
+                                if ($forRedeem === 'Y' && ! empty($selectedIssuedCouponId)) {
+                                    $q->on(DB::raw("({$prefix}issued_coupons.status = 'issued' OR {$prefix}issued_coupons.status"), '=', DB::Raw("'redeemed')"));
+                                }
+                                else {
+                                    $q->on('issued_coupons.status', '=', DB::raw("'issued'"));
+                                }
+
                                 $q->on('issued_coupons.expired_date', '>=', DB::Raw("CONVERT_TZ(NOW(), '+00:00', 'Asia/jakarta')"));
                             })
                         ->leftJoin('issued_coupons as reserved_issued_coupons', function ($q) use ($user) {
@@ -279,9 +302,9 @@ class CouponDetailAPIController extends PubControllerAPI
                         ->first();
             });
 
-            OrbitInput::get('issued_coupon_id', function($issuedCouponId) use ($coupon) {
-                $coupon->where('issued_coupons.issued_coupon_id', $issuedCouponId);
-            });
+            if ($forRedeem === 'Y' && ! empty($selectedIssuedCouponId)) {
+                $coupon->where('issued_coupons.issued_coupon_id', $selectedIssuedCouponId);
+            }
 
             $coupon = $coupon->first();
 
@@ -290,10 +313,36 @@ class CouponDetailAPIController extends PubControllerAPI
                 throw new OrbitCustomException('Coupon that you specify is not found', Coupon::NOT_FOUND_ERROR_CODE, NULL);
             }
 
+            // Set currency and payment method information
+            // so frontend can load proper payment gateway UI.
+            // TODO: Set currency value for all paid coupon in DB (might need data migration)
+            if (! empty($coupon->coupon_country) && $coupon->coupon_country !== 'Indonesia') {
+                $coupon->currency = 'SGD';
+                $coupon->payment_method = 'stripe';
+            }
+            else {
+                $coupon->currency = 'IDR';
+                $coupon->payment_method = 'midtrans';
+            }
+
+            // calculate remaining coupon for the user.
+            // 9999 means unlimited quantity per user.
+            $coupon->available_coupons_count = 9999;
+            if (! empty($coupon->max_quantity_per_user)) {
+                $coupon->available_coupons_count = $coupon->max_quantity_per_user - $coupon->used_coupons_count;
+            }
+
             $mall = null;
             if (! empty($mallId)) {
                 $mall = Mall::excludeDeleted()->where('merchant_id', '=', $mallId)->first();
             }
+
+            // Use default max quantity per purchase for old data (that doesn't have max_quantity_per_purchase set)
+            if (empty($coupon->max_quantity_per_purchase)) {
+                $coupon->max_quantity_per_purchase = Config::get('orbit.transaction.max_quantity_per_purchase', 5);
+            }
+
+            $coupon->category_ids = $this->getCouponCategory($couponId);
 
             // Only campaign having status ongoing and is_started true can going to detail page
             if (! in_array($coupon->campaign_status, ['ongoing', 'expired']) || ($coupon->campaign_status == 'ongoing' && $coupon->is_started == 'false')) {
@@ -504,5 +553,25 @@ class CouponDetailAPIController extends PubControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    /**
+     * Get coupon categories.
+     *
+     * @param  string $couponId [description]
+     * @return [type]           [description]
+     */
+    private function getCouponCategory($couponId = '')
+    {
+        return Coupon::select('category_merchant.category_id')
+                       ->leftJoin('promotion_retailer', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
+                       ->leftJoin('merchants', 'promotion_retailer.retailer_id', '=', 'merchants.merchant_id')
+                       ->leftJoin('category_merchant', 'merchants.merchant_id', '=', 'category_merchant.merchant_id')
+                       ->join('categories', 'category_merchant.category_id', '=', 'categories.category_id')
+                       ->where('categories.merchant_id', 0)
+                       ->where('categories.status', 'active')
+                       ->where('promotions.promotion_id', $couponId)
+                       ->groupBy('categories.category_id')
+                       ->get()->lists('category_id');
     }
 }
