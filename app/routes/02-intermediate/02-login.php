@@ -39,6 +39,9 @@ Route::post('/app/v1/logout/rrp', 'IntermediateLoginController@getLogout');
 Route::post('/app/v1/login/amp', 'IntermediateLoginController@postLoginAMP');
 Route::post('/app/v1/logout/amp', 'IntermediateLoginController@getLogout');
 
+Route::post('/app/v1/login/pp', 'IntermediateLoginController@postLoginPP');
+Route::post('/app/v1/logout/pp', 'IntermediateLoginController@getLogout');
+
 Route::group(['before' => 'orbit-settings'], function() {
     // Route::post('/app/v1/customer/login', 'IntermediateLoginController@postLoginMobileCI');
 });
