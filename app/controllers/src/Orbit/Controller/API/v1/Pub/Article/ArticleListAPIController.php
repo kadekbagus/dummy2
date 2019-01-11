@@ -168,6 +168,10 @@ class ArticleListAPIController extends PubControllerAPI
 
             $this->searcher->setPaginationParams(['from' => $skip, 'size' => $take]);
 
+            $searchKeyword = false;
+            $searchCategories = false;
+            $searchLinkedObjects = false;
+
             // Only search active promotions..
             // $this->searcher->isActive();
             $this->searcher->isActive(compact('dateTimeEs'));
@@ -182,7 +186,9 @@ class ArticleListAPIController extends PubControllerAPI
 
             // Filter by linked object like malls, brands, etc...
             // Linked object should have higher priority than category.
-            $this->searcher->filterByLinkedObject($objectType, $objectId);
+            if (! empty($objectType) && ! empty($objectId)) {
+                $searchLinkedObjects = true;
+            }
 
             // Filter by given keyword...
             // Keyword can be a Mall Name (for mall detail page)
@@ -191,7 +197,7 @@ class ArticleListAPIController extends PubControllerAPI
             $keyword = str_replace($forbiddenCharacter, '', $keyword);
             if (! empty($keyword)) {
                 $cacheKey['keyword'] = $keyword;
-                $this->searcher->filterByKeyword($keyword);
+                $searchKeyword = true;
             }
 
             // Get object categories.
@@ -201,7 +207,31 @@ class ArticleListAPIController extends PubControllerAPI
             $categoryIds = array_merge($categoryIds, $this->getObjectCategories());
 
             if (! empty($categoryIds)) {
-                $this->searcher->filterByCategories($categoryIds);
+                $searchCategories = true;
+            }
+
+            // Build search filter
+            if ($searchLinkedObjects) {
+                $this->searcher->filterByLinkedObject($objectType, $objectId, 'should');
+
+                if ($searchCategories) {
+                    $this->searcher->filterByCategories($categoryIds, 'should');
+                }
+
+                if ($searchKeyword) {
+                    $this->searcher->filterByKeyword($keyword, 'should');
+                }
+
+                $this->searcher->minimumShouldMatch(1);
+            }
+            else {
+                if ($searchCategories) {
+                    $this->searcher->filterByCategories($categoryIds, 'must');
+                }
+
+                if ($searchKeyword) {
+                    $this->searcher->filterByKeyword($keyword, 'must');
+                }
             }
 
             switch ($sortBy) {
@@ -214,6 +244,8 @@ class ArticleListAPIController extends PubControllerAPI
                     $this->searcher->sortByPublishingDate($sortMode);
                     break;
             }
+
+            // return \Response::json($this->searcher->getRequestParam('body'));
 
             if ($this->useScroll) {
                 $this->searcher->setParams([
