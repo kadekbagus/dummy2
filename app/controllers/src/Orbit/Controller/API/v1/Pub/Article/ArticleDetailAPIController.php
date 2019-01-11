@@ -165,6 +165,7 @@ class ArticleDetailAPIController extends PubControllerAPI
                                                 'news.object_type',
                                                 'news.end_date',
                                                 'news.is_exclusive',
+                                                'news.is_having_reward',
                                                 'news.status',
                                                 DB::raw("default_translation.news_name as default_name")
                                             )
@@ -185,6 +186,7 @@ class ArticleDetailAPIController extends PubControllerAPI
                                             ->where('article_link_to_objects.object_type', 'news')
                                             ->where('article_id',$articleId)
                                             ->groupBy('news.news_id')
+                                            ->orderBy('news.news_name', 'asc')
                                             ->get();
 
             $article['object_news'] = $objectNews;
@@ -213,6 +215,7 @@ class ArticleDetailAPIController extends PubControllerAPI
                                                 'news.object_type',
                                                 'news.end_date',
                                                 'news.is_exclusive',
+                                                'news.is_having_reward',
                                                 DB::raw("default_translation.news_name as default_name")
                                             )
                                             ->join('news', function($q) {
@@ -232,6 +235,7 @@ class ArticleDetailAPIController extends PubControllerAPI
                                             ->where('article_link_to_objects.object_type', 'promotion')
                                             ->where('article_id',$articleId)
                                             ->groupBy('news.news_id')
+                                            ->orderBy('news.news_name', 'asc')
                                             ->get();
 
             $article['object_promotion'] = $objectPromotion;
@@ -276,6 +280,7 @@ class ArticleDetailAPIController extends PubControllerAPI
                                             ->where('article_link_to_objects.object_type', 'coupon')
                                             ->where('article_id',$articleId)
                                             ->groupBy('promotions.promotion_id')
+                                            ->orderBy('promotions.promotion_name', 'asc')
                                             ->get();
 
             $article['object_coupon'] = $objectCoupon;
@@ -298,6 +303,7 @@ class ArticleDetailAPIController extends PubControllerAPI
                                             ->where('article_link_to_objects.object_type', 'mall')
                                             ->where('article_id',$articleId)
                                             ->groupBy('merchants.merchant_id')
+                                            ->orderBy('merchants.name', 'asc')
                                             ->get();
 
             $article['object_mall'] = $objectMall;
@@ -319,6 +325,7 @@ class ArticleDetailAPIController extends PubControllerAPI
                                             ->where('article_link_to_objects.object_type', 'merchant')
                                             ->where('article_id',$articleId)
                                             ->groupBy('merchants.merchant_id')
+                                            ->orderBy('merchants.name')
                                             ->get();
 
             $article['object_merchant'] = $objectMerchant;
