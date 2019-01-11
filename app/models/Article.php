@@ -89,5 +89,10 @@ class Article extends Eloquent
         return $this->hasMany('ArticleVideo', 'article_id', 'article_id');
     }
 
+    public function cities()
+    {
+        return $this->hasMany('MallCity', 'article_id', 'article_id');
+    }
+
 
 }

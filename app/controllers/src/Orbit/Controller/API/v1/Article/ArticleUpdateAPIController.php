@@ -20,7 +20,7 @@ use Tenant;
 use Article;
 use ArticleLinkToObject;
 use ArticleVideo;
-
+use MallCity;
 
 class ArticleUpdateAPIController extends ControllerAPI
 {
@@ -79,6 +79,7 @@ class ArticleUpdateAPIController extends ControllerAPI
             $objectMerchants = OrbitInput::post('object_merchants', []);
             $categories = OrbitInput::post('categories', []);
             $videos = OrbitInput::post('videos', []);
+            $cities = OrbitInput::post('cities', []);
 
             // Begin database transaction
             $this->beginTransaction();
@@ -158,6 +159,22 @@ class ArticleUpdateAPIController extends ControllerAPI
             $updatedArticle->touch();
 
             $updatedArticle->save();
+
+            // save article cities
+            OrbitInput::post('cities', function($cities) use ($updatedArticle, $articleId) {
+                $deletedOldData = MallCity::where('article_id', '=', $articleId)->delete();
+
+                $news = array();
+                foreach ($cities as $mall_city_id) {
+                    $saveCities = new MallCity();
+                    $saveCities->article_id = $articleId;
+                    $saveCities->mall_city_id = $mall_city_id;
+                    $saveCities->save();
+                    $news[] = $saveCities;
+                }
+                $updatedArticle->cities = $news;
+            });
+
 
             // save article object
             OrbitInput::post('object_news', function($objectNews) use ($updatedArticle, $articleId) {
