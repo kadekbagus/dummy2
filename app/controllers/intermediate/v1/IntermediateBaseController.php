@@ -295,6 +295,44 @@ class IntermediateBaseController extends Controller
                 $signature = Generator::genSignature($apikey->api_secret_key);
                 $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = $signature;
             }
+        } elseif ($theClass === 'IntermediateArticleAuthController') {
+            $namespace = 'Orbit\Controller\API\v1\Article\\';
+            if ($userId = $this->authCheck()) {
+                $user = User::findOnWriteConnection($userId);
+
+                // This will query the database if the apikey has not been set up yet
+                $apikey = $user->apikey;
+
+                if (empty($apikey)) {
+                    // Create new one
+                    $apikey = $user->createAPiKey();
+                }
+
+                // Generate the signature
+                $_GET['apikey'] = $apikey->api_key;
+                $_GET['apitimestamp'] = time();
+                $signature = Generator::genSignature($apikey->api_secret_key);
+                $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = $signature;
+            }
+        } elseif ($theClass === 'IntermediateProductAuthController') {
+            $namespace = 'Orbit\Controller\API\v1\Product\\';
+            if ($userId = $this->authCheck()) {
+                $user = User::findOnWriteConnection($userId);
+
+                // This will query the database if the apikey has not been set up yet
+                $apikey = $user->apikey;
+
+                if (empty($apikey)) {
+                    // Create new one
+                    $apikey = $user->createAPiKey();
+                }
+
+                // Generate the signature
+                $_GET['apikey'] = $apikey->api_key;
+                $_GET['apitimestamp'] = time();
+                $signature = Generator::genSignature($apikey->api_secret_key);
+                $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = $signature;
+            }
         }
 
         // Call the API class
