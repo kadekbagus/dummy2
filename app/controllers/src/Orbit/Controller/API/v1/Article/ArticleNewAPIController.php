@@ -167,10 +167,7 @@ class ArticleNewAPIController extends ControllerAPI
                 $city[] = $saveCities;
             }
             $newArticle->cities = $city;
-echo "<pre>";
-print_r($cities);
-print_r($newArticle->cities);
-die();
+
             // save article object
             $news = array();
             foreach ($objectNews as $newsId) {
