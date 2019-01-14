@@ -96,6 +96,11 @@ class MarketplaceListAPIController extends ControllerAPI
                 $marketplace->where('marketplaces.status', $status);
             });
 
+            OrbitInput::get('country_id', function($country_id) use ($marketplace)
+            {
+                $marketplace->where('marketplaces.country_id', $country_id);
+            });
+
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_marketplace = clone $marketplace;
