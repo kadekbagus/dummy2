@@ -296,6 +296,8 @@ class StoreDetailAPIController extends PubControllerAPI
                 $mall = Mall::excludeDeleted()->where('merchant_id', '=', $mallId)->first();
             }
 
+            $store->category_ids = $this->getBrandCategory($merchantId);
+
             if ($storeInfo->status != 'active') {
                 $mallName = 'gtm';
                 if (! empty($mall)) {
@@ -548,6 +550,24 @@ class StoreDetailAPIController extends PubControllerAPI
         $follow = $follow->getFollowStatus();
 
         return $follow;
+    }
+
+    /**
+     * Get Brand/store categories.
+     *
+     * @param  string $brandId [description]
+     * @return [type]          [description]
+     */
+    private function getBrandCategory($brandId = '')
+    {
+        return Tenant::select('categories.category_id')
+                       ->leftJoin('category_merchant', 'merchants.merchant_id', '=', 'category_merchant.merchant_id')
+                       ->join('categories', 'category_merchant.category_id', '=', 'categories.category_id')
+                       ->where('categories.merchant_id', 0)
+                       ->where('categories.status', 'active')
+                       ->where('merchants.merchant_id', $brandId)
+                       ->groupBy('categories.category_id')
+                       ->get()->lists('category_id');
     }
 
 }

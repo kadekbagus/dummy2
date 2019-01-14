@@ -26,6 +26,8 @@ use Activity;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 use Mall;
+use Tenant;
+use Coupon;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use Orbit\Helper\Util\SimpleCache;
@@ -36,6 +38,7 @@ use stdClass;
 use Country;
 use UserSponsor;
 use UserDetail;
+use ArticleSearch;
 
 class MenuCounterAPIController extends PubControllerAPI
 {
@@ -78,6 +81,9 @@ class MenuCounterAPIController extends PubControllerAPI
             $mallId = OrbitInput::get('mall_id', null);
             $keyword = OrbitInput::get('keyword', null);
             $myCCFilter = OrbitInput::get('my_cc_filter', false);
+            $articleCategories = OrbitInput::get('category_id', []);
+            $articleObjectType = OrbitInput::get('object_type', null);
+            $articleObjectId = OrbitInput::get('object_id', null);
 
             $prefix = DB::getTablePrefix();
 
@@ -103,7 +109,9 @@ class MenuCounterAPIController extends PubControllerAPI
             $merchantJsonQuery = array('from' => 0, 'size' => 1);
             $storeJsonQuery = $merchantJsonQuery;
 
-            $articleJsonQuery =array('from' => 0,'size' => 1,'query' => array('bool' => array('filter' => array(array('match' => array('status' => 'active')) ,array('range' => array('published_at' => array('lte' => $dateTimeEs)))))));
+            $articleSearcher = new ArticleSearch();
+            $articleSearcher->setPaginationParams(['from' => 0, 'size' => 1]);
+            $articleSearcher->isActive(compact('dateTimeEs'));
 
             // get user lat and lon
             if ($location == 'mylocation') {
@@ -162,8 +170,6 @@ class MenuCounterAPIController extends PubControllerAPI
             $campaignCityFilter = [];
             $keywordMallFilter = [];
             $keywordMallFilterShould = [];
-            $keywordArticleFilter = [];
-            $keywordArticleFilterShould = [];
             $categoryCampaignFilter = [];
             $categoryStoreFilter = [];
             $sponsorFilter = [];
@@ -174,11 +180,13 @@ class MenuCounterAPIController extends PubControllerAPI
             $countryData = null;
             $genderFilter = [];
             $genderFilterStore = [];
-            $articleCountryFilter = [];
-            $categoryArticleFilter = [];
+            $articleLinkedObjectFilter = [];
+            $searchLinkedObjects = false;
+            $searchCategories = false;
+            $searchKeyword = false;
 
             // filter by country
-            OrbitInput::get('country', function ($countryFilter) use (&$campaignJsonQuery, &$mallJsonQuery, &$campaignCountryCityFilterArr, &$countryData, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr, &$campaignCountryFilter, &$storeCountryFilter, &$articleCountryFilter) {
+            OrbitInput::get('country', function ($countryFilter) use (&$campaignJsonQuery, &$mallJsonQuery, &$campaignCountryCityFilterArr, &$countryData, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr, &$campaignCountryFilter, &$storeCountryFilter, &$articleSearcher) {
                 $countryData = Country::select('country_id')->where('name', $countryFilter)->first();
 
                 // campaign
@@ -219,7 +227,7 @@ class MenuCounterAPIController extends PubControllerAPI
                                             ],
                                         ]];
 
-                $articleCountryFilter = ['match' => ['country' => $countryFilter]];
+                $articleSearcher->filterByCountry($countryFilter);
             });
 
             // filter by city, only filter when countryFilter is not empty
@@ -284,14 +292,17 @@ class MenuCounterAPIController extends PubControllerAPI
             });
 
             // filter by mall_id (use in mall homepage/mall detail)
-            OrbitInput::get('mall_id', function ($mallId) use (&$mallFilterCampaign, &$mallFilterStore, &$mallFilterArticle) {
+            OrbitInput::get('mall_id', function ($mallId) use (&$mallFilterCampaign, &$mallFilterStore) {
                 $mallFilterCampaign = ['nested' => ['path' => 'link_to_tenant', 'query' => ['bool' => ['must' => ['match' => ['link_to_tenant.parent_id' => $mallId]]]], 'inner_hits' => ['name' => 'link_tenant_hits']]];
                 $mallFilterStore = ['nested' => ['path' => 'tenant_detail', 'query' => ['bool' => ['must' => ['match' => ['tenant_detail.mall_id' => $mallId]]]], 'inner_hits' => ['name' => 'tenant_detail_hits']]];
-                $mallFilterArticle = ['nested' => ['path' => 'link_to_malls', 'query' => ['bool' => ['should' => ['match' => ['link_to_malls.mall_id' => $mallId]]]]]];
             });
 
+            if (! empty($articleObjectType) && ! empty($articleObjectId)) {
+                $searchLinkedObjects = true;
+            }
+
             // filter by keywords
-            OrbitInput::get('keywords', function($keywords) use (&$keywordFilter, &$keywordFilterShould, &$keywordMallFilter, &$keywordMallFilterShould, &$keywordArticleFilter, &$keywordArticleFilterShould) {
+            OrbitInput::get('keywords', function($keywords) use (&$keywordFilter, &$keywordFilterShould, &$keywordMallFilter, &$keywordMallFilterShould) {
                 $forbiddenCharacter = array('>', '<', '(', ')', '{', '}', '[', ']', '^', '"', '~', '/');
                 $keywords = str_replace($forbiddenCharacter, '', $keywords);
 
@@ -352,43 +363,32 @@ class MenuCounterAPIController extends PubControllerAPI
                                             "province" . $priorityProvince,
                                             "city" . $priorityCity)));
 
-                // for article
-                $priorityTitle = isset($esPriority['articles']['title']) ? $esPriority['articles']['title'] : '^6';
-                $priorityBody = isset($esPriority['articles']['body']) ? $esPriority['articles']['body'] : '^6';
-
-                $keywordArticleFilterShould = array(
-                                                    'query_string' => array(
-                                                        'query' => '*' . $keywords . '*',
-                                                        'fields' => array(
-                                                            "title" . $priorityTitle,
-                                                            "body" . $priorityBody
-                                                        )
-                                                    )
-                                                );
-
             });
 
+            $articleKeyword = OrbitInput::get('keywords', null);
+            $forbiddenCharacter = array('>', '<', '(', ')', '{', '}', '[', ']', '^', '"', '~', '/');
+            $articleKeyword = str_replace($forbiddenCharacter, '', $articleKeyword);
+            if (! empty($articleKeyword)) {
+                $searchKeyword = true;
+            }
+
             // filter by category
-            OrbitInput::get('category_id', function($category_ids) use (&$categoryCampaignFilter, &$categoryStoreFilter, &$categoryArticleFilter) {
+            OrbitInput::get('category_id', function($category_ids) use (&$categoryCampaignFilter, &$categoryStoreFilter) {
                 foreach((array) $category_ids as $category_id) {
                     $categoryCampaignFilter['bool']['should'][] = ['match' => ['category_ids' => $category_id]];
                     $categoryStoreFilter['bool']['should'][] = ['match' => ['category' => $category_id]];
-
-                    $arrArticleCategories[] = ['match' => ['link_to_categories.category_id' => $category_id]];
                 }
-
-                $categoryArticleFilter = [
-                        'nested' => [
-                            'path' => 'link_to_categories',
-                            'query' => [
-                                'bool' => [
-                                    'should' => $arrArticleCategories,
-                                    'minimum_should_match' => 1,
-                                ]
-                            ]
-                        ]
-                ];
             });
+
+            // Get object categories.
+            // Useful for case like related article to a campaign/object.
+            // We will query the object to root of their store/mall and get the category.
+            // Merge with the requested categories (if any).
+            $articleCategories = array_merge($articleCategories, $this->getObjectCategories());
+
+            if (! empty($articleCategories)) {
+                $searchCategories = true;
+            }
 
             // filter by sponsor provider
             OrbitInput::get('sponsor_provider_ids', function($sponsor_provider_ids) use (&$sponsorFilter) {
@@ -501,6 +501,29 @@ class MenuCounterAPIController extends PubControllerAPI
                 }
             });
 
+            // Build article search filter.
+            if ($searchLinkedObjects) {
+                $articleSearcher->filterByLinkedObject($articleObjectType, $articleObjectId, 'should');
+
+                if ($searchCategories) {
+                    $articleSearcher->filterByCategories($articleCategories, 'should');
+                }
+
+                if ($searchKeyword) {
+                    $articleSearcher->filterByKeyword($articleKeyword, 'should');
+                }
+
+                $articleSearcher->minimumShouldMatch(1);
+            }
+            else {
+                if ($searchCategories) {
+                    $articleSearcher->filterByCategories($articleCategories, 'must');
+                }
+
+                if ($searchKeyword) {
+                    $articleSearcher->filterByKeyword($articleKeyword, 'must');
+                }
+            }
 
             /* old query
             if (! empty($campaignCountryCityFilterArr)) {
@@ -555,10 +578,6 @@ class MenuCounterAPIController extends PubControllerAPI
                 $merchantJsonQuery['query']['bool']['filter'][] = $mallFilterStore;
             }
 
-            if (! empty($mallFilterArticle)) {
-                $articleJsonQuery['query']['bool']['should'][] = $mallFilterArticle;
-            }
-
             if (! empty($keywordFilter)) {
                 $merchantJsonQuery['query']['bool']['must'][] = $keywordFilter;
                 $campaignJsonQuery['query']['bool']['must'][] = $keywordFilter;
@@ -578,37 +597,6 @@ class MenuCounterAPIController extends PubControllerAPI
                 $mallJsonQuery['query']['bool']['should'][] = $keywordMallFilterShould;
             }
 
-            if (! empty($articleCountryFilter)) {
-                $articleJsonQuery['query']['bool']['filter'][] = $articleCountryFilter;
-            }
-
-            if (! empty($keywordArticleFilterShould)) {
-                $articleJsonQuery['query']['bool']['should'][] = $keywordArticleFilterShould;
-            }
-
-            if (empty($keywordArticleFilterShould) && !empty($mallId)) {
-                $mall = Mall::where('merchant_id', '=', $mallId)->first();
-
-                if (! empty($mall)) {
-                    $esPriority = Config::get('orbit.elasticsearch.priority');
-                    $priorityTitle = isset($esPriority['articles']['title']) ? $esPriority['articles']['title'] : '^6';
-                    $priorityBody = isset($esPriority['articles']['body']) ? $esPriority['articles']['body'] : '^6';
-
-                    $keywordArticleFilterShould = array(
-                                                        'query_string' => array(
-                                                            'query' => '*' . $mall->name . '*',
-                                                            'fields' => array(
-                                                                "title" . $priorityTitle,
-                                                                "body" . $priorityBody
-                                                            )
-                                                        )
-                                                    );
-                    $articleJsonQuery['query']['bool']['should'][] = $keywordArticleFilterShould;
-
-                }
-            }
-
-
             if (! empty($categoryCampaignFilter)) {
                 $campaignJsonQuery['query']['bool']['must'][] = $categoryCampaignFilter;
                 $couponJsonQuery['query']['bool']['must'][] = $categoryCampaignFilter;
@@ -616,10 +604,6 @@ class MenuCounterAPIController extends PubControllerAPI
 
             if (! empty($categoryStoreFilter)) {
                 $merchantJsonQuery['query']['bool']['must'][] = $categoryStoreFilter;
-            }
-
-            if (! empty($categoryArticleFilter)) {
-                $articleJsonQuery['query']['bool']['must'][] = $categoryArticleFilter;
             }
 
             if (! empty($sponsorFilter)) {
@@ -645,7 +629,6 @@ class MenuCounterAPIController extends PubControllerAPI
             $mallIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.malldata.index');
             $merchantIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores');
             $storeIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.store_details.index', 'store_details');
-            $articleIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.articles.index');
 
             // call es campaign
             $campaignParam = [
@@ -686,14 +669,8 @@ class MenuCounterAPIController extends PubControllerAPI
             ];
             $storeResponse = $client->search($storeParam);
 
-            // articles
-            $articleParam = [
-                'index'  => $articleIndex,
-                'type'   => Config::get('orbit.elasticsearch.indices.articles.type'),
-                'body' => json_encode($articleJsonQuery)
-            ];
-
-            $articleResponse = $client->search($articleParam);
+            // Get article list
+            $articleResponse = $articleSearcher->getResult();
 
             $campaignRecords = $campaignResponse['aggregations']['campaign_index']['buckets'];
             $couponRecords = $couponResponse['aggregations']['campaign_index']['buckets'];
@@ -783,5 +760,93 @@ class MenuCounterAPIController extends PubControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    /**
+     * Get object categories.
+     *
+     * @return [type] [description]
+     */
+    private function getObjectCategories()
+    {
+        $objectType = OrbitInput::get('object_type', '');
+        $objectId = OrbitInput::get('object_id', '');
+
+        switch ($objectType) {
+            case 'event':
+            case 'promotion':
+                return $this->getNewsCategory($objectId);
+                break;
+
+            case 'brand':
+            case 'store':
+                return $this->getBrandCategory($objectId);
+                break;
+
+            case 'coupon':
+                return $this->getCouponCategory($objectId);
+                break;
+
+            default:
+                return [];
+                break;
+        }
+    }
+
+    /**
+     * Get news/promotion categories.
+     *
+     * @param  string $newsId [description]
+     * @return [type]         [description]
+     */
+    private function getNewsCategory($newsId = '')
+    {
+        return News::select('categories.category_id')
+                     ->leftJoin('news_merchant', 'news.news_id', '=', 'news_merchant.news_id')
+                     ->leftJoin('category_merchant', 'news_merchant.merchant_id', '=', 'category_merchant.merchant_id')
+                     ->join('categories', 'category_merchant.category_id', '=', 'categories.category_id')
+                     ->where('categories.merchant_id', 0)
+                     ->where('categories.status', 'active')
+                     ->where('news.news_id', $newsId)
+                     ->groupBy('categories.category_id')
+                     ->get()->lists('category_id');
+    }
+
+    /**
+     * Get Brand/store categories.
+     *
+     * @param  string $brandId [description]
+     * @return [type]          [description]
+     */
+    private function getBrandCategory($brandId = '')
+    {
+        return Tenant::select('categories.category_id')
+                       ->leftJoin('category_merchant', 'merchants.merchant_id', '=', 'category_merchant.merchant_id')
+                       ->join('categories', 'category_merchant.category_id', '=', 'categories.category_id')
+                       ->where('categories.merchant_id', 0)
+                       ->where('categories.status', 'active')
+                       ->where('merchants.merchant_id', $brandId)
+                       ->groupBy('categories.category_id')
+                       ->get()->lists('category_id');
+    }
+
+    /**
+     * Get coupon categories.
+     *
+     * @param  string $couponId [description]
+     * @return [type]           [description]
+     */
+    private function getCouponCategory($couponId = '')
+    {
+        return Coupon::select('category_merchant.category_id')
+                       ->leftJoin('promotion_retailer', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
+                       ->leftJoin('merchants', 'promotion_retailer.retailer_id', '=', 'merchants.merchant_id')
+                       ->leftJoin('category_merchant', 'merchants.merchant_id', '=', 'category_merchant.merchant_id')
+                       ->join('categories', 'category_merchant.category_id', '=', 'categories.category_id')
+                       ->where('categories.merchant_id', 0)
+                       ->where('categories.status', 'active')
+                       ->where('promotions.promotion_id', $couponId)
+                       ->groupBy('categories.category_id')
+                       ->get()->lists('category_id');
     }
 }
