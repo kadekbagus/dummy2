@@ -19,7 +19,7 @@ use Tenant;
 use Article;
 use ArticleLinkToObject;
 use ArticleVideo;
-use MallCity;
+use ArticleCity;
 
 
 class ArticleNewAPIController extends ControllerAPI
@@ -70,7 +70,6 @@ class ArticleNewAPIController extends ControllerAPI
             $body = OrbitInput::post('body');
             $status = OrbitInput::post('status', 'inactive');
             $countryId = OrbitInput::post('country_id');
-            $cities = OrbitInput::post('cities');
             $publishedAt = OrbitInput::post('published_at');
 
             $objectNews = OrbitInput::post('object_news', []);
@@ -80,6 +79,7 @@ class ArticleNewAPIController extends ControllerAPI
             $objectMerchants = OrbitInput::post('object_merchants', []);
             $categories = OrbitInput::post('categories', []);
             $videos = OrbitInput::post('videos', []);
+            $cities = OrbitInput::post('cities', []);
 
             // Begin database transaction
             $this->beginTransaction();
@@ -155,20 +155,22 @@ class ArticleNewAPIController extends ControllerAPI
             $newArticle->published_at = $publishedAt;
 
             Event::fire('orbit.article.postnewarticle.before.save', array($this, $newArticle));
-
             $newArticle->save();
 
             // save cities
-            $cities = array();
+            $city = array();
             foreach ($cities as $mall_city_id) {
-                $saveCities = new MallCity();
+                $saveCities = new ArticleCity();
                 $saveCities->article_id = $newArticle->article_id;
                 $saveCities->mall_city_id = $mall_city_id;
                 $saveCities->save();
-                $cities[] = $saveCities;
+                $city[] = $saveCities;
             }
-            $newArticle->cities = $cities;
-
+            $newArticle->cities = $city;
+echo "<pre>";
+print_r($cities);
+print_r($newArticle->cities);
+die();
             // save article object
             $news = array();
             foreach ($objectNews as $newsId) {
@@ -266,7 +268,6 @@ class ArticleNewAPIController extends ControllerAPI
                 $video[] = $saveVideo;
             }
             $newArticle->videos = $video;
-
 
             Event::fire('orbit.article.postnewarticle.after.save', array($this, $newArticle));
 
