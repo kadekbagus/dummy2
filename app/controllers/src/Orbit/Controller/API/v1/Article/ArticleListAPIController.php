@@ -85,7 +85,8 @@ class ArticleListAPIController extends ControllerAPI
                                 ->with('category')
                                 ->with('mediaCover')
                                 ->with('mediaContent')
-                                ->with('video');
+                                ->with('video')
+                                ->with('cities');
 
             OrbitInput::get('article_id', function($article_id) use ($article)
             {
