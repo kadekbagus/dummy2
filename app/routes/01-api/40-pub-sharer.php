@@ -48,6 +48,15 @@ Route::group(
                 }
             )
         );
+        Route::get('/pub/sharer/facebook/article-detail',
+            array(
+                'as' => 'pub-share-article',
+                function()
+                {
+                    return Orbit\Controller\API\v1\Pub\SocMedAPIController::create()->getArticleDetailView();
+                }
+            )
+        );
     }
 );
 
