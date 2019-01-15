@@ -91,7 +91,8 @@ class Article extends Eloquent
 
     public function cities()
     {
-        return $this->hasMany('ArticleCity', 'article_id', 'article_id');
+        return $this->hasMany('ArticleCity', 'article_id', 'article_id')
+                    ->join('mall_cities', 'mall_cities.mall_city_id', '=', 'article_cities.mall_city_id');
     }
 
 
