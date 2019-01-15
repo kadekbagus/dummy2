@@ -103,14 +103,9 @@ class ESArticleUpdateQueue
                 'body' => []
             ];
 
-
             $cities = array();
             foreach ($article->cities as $city) {
-                $cities = array(
-                    "name" => $city->city,
-                );
-
-                $cities[] = $cities;
+                $cities[] = $city->city;
             }
 
             // Article Objects
@@ -199,6 +194,7 @@ class ESArticleUpdateQueue
                 'status' => $article->status,
                 'published_at' => date('Y-m-d', strtotime($article->published_at)) . 'T' . date('H:i:s', strtotime($article->published_at)) . 'Z',
 
+                'city' => $cities,
                 'link_to_events' => $linkToEvents,
                 'link_to_promotions' => $linkToPromotions,
                 'link_to_coupons' => $linkToCoupons,
