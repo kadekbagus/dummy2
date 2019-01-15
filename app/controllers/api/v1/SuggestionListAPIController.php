@@ -36,6 +36,7 @@ class SuggestionListAPIController extends ControllerAPI
             $host = Config::get('orbit.elasticsearch');
             $language = OrbitInput::get('language', 'id');
             $mallCountries = OrbitInput::get('country', null);
+            $mallCities = OrbitInput::get('cities', null);
 
             $validator = Validator::make(
                 array(
