@@ -231,7 +231,7 @@ class MenuCounterAPIController extends PubControllerAPI
             });
 
             // filter by city, only filter when countryFilter is not empty
-            OrbitInput::get('cities', function ($cityFilters) use (&$campaignJsonQuery, &$mallJsonQuery, $countryFilter, &$campaignCountryCityFilterArr, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr, &$campaignCityFilter, &$storeCityFilter) {
+            OrbitInput::get('cities', function ($cityFilters) use (&$campaignJsonQuery, &$mallJsonQuery, $countryFilter, &$campaignCountryCityFilterArr, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr, &$campaignCityFilter, &$storeCityFilter, &$articleSearcher) {
                 if (! empty($countryFilter)) {
                     $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.news.city', '');
                     $campaignCityFilterArr = [];
@@ -289,6 +289,7 @@ class MenuCounterAPIController extends PubControllerAPI
                     ];
                 }
 
+                $articleSearcher->filterByCities($cityFilters);
             });
 
             // filter by mall_id (use in mall homepage/mall detail)
