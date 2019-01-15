@@ -938,6 +938,7 @@ return array(
             'mt_portal' => 'X-OMS-MT',
             'rrp_portal' => 'X-OMS-RRP',
             'am_portal' => 'X-OMS-AMP',
+            'pp_portal' => 'X-OMS-PP'
         ],
 
         /**
@@ -957,6 +958,7 @@ return array(
             'mt_portal' => '9',
             'rrp_portal' => '10',
             'am_portal' => '11',
+            'pp_portal' => '12'
         ],
 
         /**
@@ -1443,6 +1445,33 @@ return array(
                     'httponly'  => TRUE
                 ),
             ),
+
+            'pp_portal' => array(
+                'expire' => 3600,   // 1 hour
+                // From HTTP Headers
+                'header'  => array(
+                    'name'      => 'X-OMS-PP'
+                ),
+                // From Query String
+                'query_string' => array(
+                    'name'      => 'X-OMS-PP'
+                ),
+                // From Cookie
+                'cookie'    => array(
+                    'name'      => 'X-OMS-PP',
+                    // Expire time, should be set equals or higher than
+                    // SessionConifg.expire
+                    'expire' => 62208000,   // two years
+                    // Path of the cookie
+                    'path'      => '/',
+                    // domain
+                    'domain'    => NULL,
+                    // secure transfer via HTTPS only
+                    'secure'    => FALSE,
+                    // Deny access from client side script
+                    'httponly'  => TRUE
+                ),
+            ),
         ),
     ),
 
@@ -1500,6 +1529,7 @@ return array(
                 'Set-X-OMS-MDM',
                 'Set-X-OMS-MT',
                 'Set-X-OMS-AMP',
+                'Set-X-OMS-PP',
             ],
 
             // No need protocol, just enter domain name
@@ -6899,7 +6929,7 @@ return array(
                 'name_long' => 'Click Brand Photo Thumbnail',
                 'module_name' => 'Merchant',
                 'type' => 'click',
-                'object_type' => 'Tenant',
+                'object_type' => 'Merchant',
                 'parameter_name' => 'object_id'
             ),
             // user click brand other photo thumbnail on brand detail page
@@ -6908,7 +6938,7 @@ return array(
                 'name_long' => 'Click Brand Other Photo Thumbnail',
                 'module_name' => 'Merchant',
                 'type' => 'click',
-                'object_type' => 'Tenant',
+                'object_type' => 'Merchant',
                 'parameter_name' => 'object_id'
             ),
             // user click video thumbnail on brand detail page
@@ -6917,7 +6947,7 @@ return array(
                 'name_long' => 'Click Video Thumbnail',
                 'module_name' => 'Merchant',
                 'type' => 'click',
-                'object_type' => 'Tenant',
+                'object_type' => 'Merchant',
                 'parameter_name' => 'object_id'
             ),
             // user click video play brand on brand detail page
@@ -6926,7 +6956,7 @@ return array(
                 'name_long' => 'Click Video Play Brand',
                 'module_name' => 'Merchant',
                 'type' => 'click',
-                'object_type' => 'Tenant',
+                'object_type' => 'Merchant',
                 'parameter_name' => 'object_id'
             ),
             // user click brand promotion on brand detail page
@@ -6935,7 +6965,7 @@ return array(
                 'name_long' => 'Click Brand Promotion',
                 'module_name' => 'Merchant',
                 'type' => 'click',
-                'object_type' => 'Tenant',
+                'object_type' => 'Merchant',
                 'parameter_name' => 'object_id'
             ),
             // user click brand event on brand detail page
@@ -6944,7 +6974,7 @@ return array(
                 'name_long' => 'Click Brand Event',
                 'module_name' => 'Merchant',
                 'type' => 'click',
-                'object_type' => 'Tenant',
+                'object_type' => 'Merchant',
                 'parameter_name' => 'object_id'
             ),
             // user click brand coupon on brand detail page
@@ -6953,34 +6983,7 @@ return array(
                 'name_long' => 'Click Brand Coupon',
                 'module_name' => 'Merchant',
                 'type' => 'click',
-                'object_type' => 'Tenant',
-                'parameter_name' => 'object_id'
-            ),
-            // user click brand social button on brand detail page
-            '204' => array(
-                'name' => 'click_brand_social_button',
-                'name_long' => 'Click Brand Social Button',
-                'module_name' => 'Merchant',
-                'type' => 'click',
-                'object_type' => 'Tenant',
-                'parameter_name' => 'object_id'
-            ),
-            // user click brand product on brand detail page
-            '205' => array(
-                'name' => 'click_brand_product',
-                'name_long' => 'Click Brand Product',
-                'module_name' => 'Merchant',
-                'type' => 'click',
-                'object_type' => 'Tenant',
-                'parameter_name' => 'object_id'
-            ),
-            // user click brand article on brand detail page
-            '206' => array(
-                'name' => 'click_brand_article',
-                'name_long' => 'Click Brand Article',
-                'module_name' => 'Merchant',
-                'type' => 'click',
-                'object_type' => 'Tenant',
+                'object_type' => 'Merchant',
                 'parameter_name' => 'object_id'
             ),
             // Articles Activities
@@ -7043,7 +7046,51 @@ return array(
                 'object_type' => 'Article',
                 'parameter_name' => 'object_id'
             ),
-
+            // user click brand product
+            '202' => array(
+                'name' => 'click_brand_product',
+                'name_long' => 'Click Brand Product',
+                'module_name' => 'Product',
+                'type' => 'click',
+                'object_type' => 'Product',
+                'parameter_name' => 'object_id'
+            ),
+            // user click brand product detail
+            '203' => array(
+                'name' => 'click_brand_product_detail_link',
+                'name_long' => 'Click Brand Product Link',
+                'module_name' => 'Product',
+                'type' => 'click',
+                'object_type' => 'Product',
+                'parameter_name' => 'object_id'
+            ),
+            // user click brand social button on brand detail page
+            '204' => array(
+                'name' => 'click_brand_social_button',
+                'name_long' => 'Click Brand Social Button',
+                'module_name' => 'Merchant',
+                'type' => 'click',
+                'object_type' => 'Tenant',
+                'parameter_name' => 'object_id'
+            ),
+            // user click brand product on brand detail page
+            '205' => array(
+                'name' => 'click_brand_product',
+                'name_long' => 'Click Brand Product',
+                'module_name' => 'Merchant',
+                'type' => 'click',
+                'object_type' => 'Tenant',
+                'parameter_name' => 'object_id'
+            ),
+            // user click brand article on brand detail page
+            '206' => array(
+                'name' => 'click_brand_article',
+                'name_long' => 'Click Brand Article',
+                'module_name' => 'Merchant',
+                'type' => 'click',
+                'object_type' => 'Tenant',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 
