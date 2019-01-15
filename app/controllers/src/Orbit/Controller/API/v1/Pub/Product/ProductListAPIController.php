@@ -61,6 +61,14 @@ class ProductListAPIController extends PubControllerAPI
             }
 
             $prefix = DB::getTablePrefix();
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $image = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as cdn_url";
+            if ($usingCdn) {
+                $image = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as cdn_url";
+            }
 
             $baseStore = BaseStore::select('base_merchant_id')->where('base_store_id', '=', $storeId)->first();
             $baseMerchantId = $baseStore->base_merchant_id;
@@ -75,7 +83,23 @@ class ProductListAPIController extends PubControllerAPI
                                                ->where('product_link_to_object.object_type', '=', 'brand')
                                                ->where('product_link_to_object.object_id', '=', $baseMerchantId);
                                     })
-                                ->with('media')
+                                ->with(['media' => function ($q) use ($image) {
+                                        $q->select(
+                                                DB::raw("{$image}"),
+                                                'media.media_id',
+                                                'media.media_name_id',
+                                                'media.media_name_long',
+                                                'media.object_id',
+                                                'media.object_name',
+                                                'media.file_name',
+                                                'media.file_extension',
+                                                'media.file_size',
+                                                'media.mime_type',
+                                                'media.path',
+                                                'media.cdn_bucket_name',
+                                                'media.metadata'
+                                            );
+                                  }])
                                 ->where('products.status', '=', 'active');
 
             OrbitInput::get('product_id', function($product_id) use ($product)
