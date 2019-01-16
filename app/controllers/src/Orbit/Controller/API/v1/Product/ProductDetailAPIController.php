@@ -69,7 +69,10 @@ class ProductDetailAPIController extends ControllerAPI
                             ->leftJoin('countries', 'base_merchants.country_id', '=', 'countries.country_id');
                     },
                     'categories',
-                    'marketplaces',
+                    'marketplaces' => function ($q) {
+                        $q->addSelect('marketplaces.status')
+                          ->where('marketplaces.status', '=', 'active');
+                    },
                     'country'
                 ])
                 ->where('product_id', $productId)

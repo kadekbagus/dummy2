@@ -46,6 +46,19 @@ class ProductHelper
             return TRUE;
         });
 
+        // Check empty marketplace
+        Validator::extend('orbit.empty.marketplaces', function ($attribute, $value, $parameters) {
+            $itemObj = @json_decode($value[0]);
+            if (json_last_error() != JSON_ERROR_NONE) {
+                return FALSE;
+            }
+            if (empty($itemObj->id) || empty($itemObj->website_url)) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
+
         // Check the validity of URL
         Validator::extend('orbit.formaterror.url.web', function ($attribute, $value, $parameters) {
             $url = 'http://' . $value;
@@ -424,7 +437,7 @@ class ProductHelper
                     OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'marketplace']));
                 }
                 if (empty($itemObj->website_url)) {
-                    OrbitShopAPI::throwInvalidArgument('Website URL is required');
+                    OrbitShopAPI::throwInvalidArgument('Product URL is required');
                 }
                 $saveObjectMarketPlaces = new ProductLinkToObject();
                 $saveObjectMarketPlaces->product_id = $newProduct->product_id;

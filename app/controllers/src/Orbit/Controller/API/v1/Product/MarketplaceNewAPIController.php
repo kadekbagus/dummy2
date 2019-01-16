@@ -64,6 +64,7 @@ class MarketplaceNewAPIController extends ControllerAPI
             $status = OrbitInput::post('status', 'inactive');
             $countryId = OrbitInput::post('country_id');
             $websiteUrl = OrbitInput::post('website_url');
+            $images = \Input::file('images');
 
             // Begin database transaction
             $this->beginTransaction();
@@ -75,16 +76,19 @@ class MarketplaceNewAPIController extends ControllerAPI
                     'status'           => $status,
                     'country_id'       => $countryId,
                     'website_url'      => $websiteUrl,
+                    'images'           => $images,
                 ),
                 array(
                     'name'             => 'required',
                     'status'           => 'in:active,inactive',
                     'country_id'       => 'required',
                     'website_url'      => 'url',
+                    'images'           => 'required|array',
                 ),
                 array(
-                    'name.required'             => 'E-Commerce Name field is required',
-                    'country_id.required'       => 'E-Commerce Country field is required',
+                    'name.required'             => 'Affiliates Name field is required',
+                    'country_id.required'       => 'Affiliates Country field is required',
+                    'images.required'           => 'Affiliates Logo field is required',
                 )
             );
 

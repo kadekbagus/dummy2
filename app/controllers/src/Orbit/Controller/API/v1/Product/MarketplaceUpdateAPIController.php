@@ -84,8 +84,8 @@ class MarketplaceUpdateAPIController extends ControllerAPI
                     'website_url'      => 'url',
                 ),
                 array(
-                    'name.required'             => 'E-Commerce Name field is required',
-                    'country_id.required'       => 'E-Commerce Country field is required',
+                    'name.required'             => 'Affiliates Name field is required',
+                    'country_id.required'       => 'Affiliates Country field is required',
                 )
             );
 

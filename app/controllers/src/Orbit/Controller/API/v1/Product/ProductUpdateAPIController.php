@@ -61,28 +61,43 @@ class ProductUpdateAPIController extends ControllerAPI
 
             $productId = OrbitInput::post('product_id');
             $name = OrbitInput::post('name');
-            $countryId = OrbitInput::post('country_id');
+            $shortDescription = OrbitInput::post('short_description');
             $status = OrbitInput::post('status');
+            $countryId = OrbitInput::post('country_id');
+            $categories = OrbitInput::post('categories');
+            $marketplaces = OrbitInput::post('marketplaces');
+            $brandIds = OrbitInput::post('brand_ids');
 
             // Begin database transaction
             $this->beginTransaction();
 
             $validator = Validator::make(
                 array(
-                    'product_id'       => $productId,
-                    'name'             => $name,
-                    'status'           => $status,
-                    'country_id'       => $countryId,
+                    'product_id'        => $productId,
+                    'name'              => $name,
+                    'status'            => $status,
+                    'country_id'        => $countryId,
+                    'short_description' => $shortDescription,
+                    'categories'        => $categories,
+                    'brand_ids'         => $brandIds,
+                    'marketplaces'      => $marketplaces,
                 ),
                 array(
-                    'product_id'       => 'required',
-                    'name'             => 'required',
-                    'status'           => 'in:active,inactive',
-                    'country_id'       => 'required',
+                    'product_id'        => 'required',
+                    'status'            => 'in:active,inactive',
+                    'country_id'        => 'required',
+                    'short_description' => 'required',
+                    'categories'        => 'required|array',
+                    'brand_ids'         => 'required|array',
+                    'marketplaces'      => 'required|orbit.empty.marketplaces',
                 ),
                 array(
-                    'name.required'             => 'Product Title field is required',
-                    'country_id.required'       => 'Country field is required',
+                    'name.required'                 => 'Product Title field is required',
+                    'country_id.required'           => 'Country field is required',
+                    'short_description.required'    => 'Product Description is required',
+                    'categories.required'           => 'Product Category is required',
+                    'brand_ids.required'            => 'Link to Brand is required',
+                    'orbit.empty.marketplaces'      => 'Link to Affiliates is required',
                 )
             );
 
