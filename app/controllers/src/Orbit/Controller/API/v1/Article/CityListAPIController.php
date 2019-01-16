@@ -10,26 +10,23 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Util\PaginationNumber;
-
-use Article;
 use Validator;
 use Lang;
-
 use DB;
 use Config;
 use stdclass;
-use Orbit\Controller\API\v1\Article\ArticleHelper;
+use MallCity;
 
-class ArticleListAPIController extends ControllerAPI
+class CityListAPIController extends ControllerAPI
 {
-    protected $articleRoles = ['article writer', 'article publisher'];
+    protected $roles = ['article writer', 'article publisher'];
 
     /**
-     * GET Search / list Article
+     * GET Search Citie
      *
      * @author Firmansyah <firmansyah@dominopos.com>
      */
-    public function getSearchArticle()
+    public function getSearchCity()
     {
         try {
             $httpCode = 200;
@@ -43,14 +40,11 @@ class ArticleListAPIController extends ControllerAPI
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = $this->articleRoles;
+            $validRoles = $this->roles;
             if (! in_array(strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
-
-            $articleHelper = ArticleHelper::create();
-            // $articleHelper->merchantCustomValidator();
 
             $sort_by = OrbitInput::get('sortby');
 
@@ -59,10 +53,10 @@ class ArticleListAPIController extends ControllerAPI
                     'sortby' => $sort_by,
                 ),
                 array(
-                    'sortby' => 'in:title,published_at,created_at,status',
+                    'sortby' => 'in:name',
                 ),
                 array(
-                    'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: title,published_at,created_at,status',
+                    'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: name',
                 )
             );
 
@@ -74,55 +68,38 @@ class ArticleListAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $article = Article::select(DB::raw("{$prefix}articles.*, {$prefix}countries.name as country_name"))
-                                ->join('countries', 'articles.country_id', '=', 'countries.country_id')
-                                ->where('articles.status', '!=', 'deleted')
-                                ->with('objectNews')
-                                ->with('objectPromotion')
-                                ->with('objectCoupon')
-                                ->with('objectMall')
-                                ->with('objectMerchant')
-                                ->with('category')
-                                ->with('mediaCover')
-                                ->with('mediaContent')
-                                ->with('video')
-                                ->with('cities');
+            $cities = MallCity::select('mall_city_id', 'city', 'country_id');
 
-            OrbitInput::get('article_id', function($article_id) use ($article)
+            // Filter city by name
+            OrbitInput::get('name', function($name) use ($cities)
             {
-                $article->where('article_id', $article_id);
+                $cities->where('city', $name);
             });
 
-            // Filter merchant by name
-            OrbitInput::get('title', function($title) use ($article)
+            // Filter city by matching name pattern
+            OrbitInput::get('name_like', function($name) use ($cities)
             {
-                $article->where('title', $title);
+                $cities->where('city', 'like', "%$name%");
             });
 
-            // Filter merchant by matching name pattern
-            OrbitInput::get('title_like', function($title) use ($article)
+            // Filter city by matching name pattern
+            OrbitInput::get('country_id', function($countryId) use ($cities)
             {
-                $article->where('title', 'like', "%$title%");
+                $cities->where('country_id', $countryId);
             });
-
-            if ($role->role_name == 'Article Writer') {
-                $article->where('created_by', $user->user_id);
-            }
-
-            $article->groupBy('article_id');
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
-            $_articles = clone $article;
+            $_cities = clone $cities;
 
-            $take = PaginationNumber::parseTakeFromGet('merchant');
-            $article->take($take);
+            $take = PaginationNumber::parseTakeFromGet('country');
+            $cities->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();
-            $article->skip($skip);
+            $cities->skip($skip);
 
             // Default sort by
-            $sortBy = 'title';
+            $sortBy = 'city';
             // Default sort mode
             $sortMode = 'asc';
 
@@ -130,10 +107,7 @@ class ArticleListAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'title' => 'title',
-                    'published_at' => 'published_at',
-                    'created_at' => 'articles.created_at',
-                    'status' => 'articles.status',
+                    'name' => 'city'
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
@@ -147,20 +121,15 @@ class ArticleListAPIController extends ControllerAPI
                     $sortMode = 'desc';
                 }
             });
-            $article->orderBy($sortBy, $sortMode);
+            $cities->orderBy($sortBy, $sortMode);
 
-            $totalArticles = RecordCounter::create($_articles)->count();
-            $listOfArticles = $article->get();
+            $totalCities = RecordCounter::create($_cities)->count();
+            $listOfCities = $cities->get();
 
             $data = new stdclass();
-            $data->total_records = $totalArticles;
-            $data->returned_records = count($listOfArticles);
-            $data->records = $listOfArticles;
-
-            if ($totalArticles === 0) {
-                $data->records = NULL;
-                $this->response->message = "There is no article that matched your search criteria";
-            }
+            $data->total_records = $totalCities;
+            $data->returned_records = count($listOfCities);
+            $data->records = $listOfCities;
 
             $this->response->data = $data;
         } catch (ACLForbiddenException $e) {
