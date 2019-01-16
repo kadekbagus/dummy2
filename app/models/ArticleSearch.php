@@ -104,6 +104,8 @@ class ArticleSearch extends Search
      */
     public function filterByLinkedObject($objectType = '', $objectId = '', $logic = 'should')
     {
+        $linkPath = '';
+        $keyId = '';
         switch ($objectType) {
             case 'mall':
                 $linkPath = 'malls';
@@ -113,7 +115,7 @@ class ArticleSearch extends Search
             case 'brand':
             case 'store':
                 $linkPath = 'brands';
-                $keyId = 'brand_id';
+                $keyId = 'name.raw';
                 break;
 
             case 'coupon':
@@ -136,22 +138,40 @@ class ArticleSearch extends Search
                 break;
         }
 
-        $this->{$logic}([
-            'nested' => [
-                'path' => "link_to_{$linkPath}",
-                'query' => [
-                    'bool' => [
-                        'should' => [
-                            [
+        if ($objectType == 'brand' || $objectType == 'store') {
+            // get Query name
+            $storeName = Tenant::select('name', 'country_id')
+                            ->where('merchant_id', $objectId)
+                            ->firstOrFail();
+
+            $matchQuery =   [
+                                'match' => [
+                                    "link_to_{$linkPath}.{$keyId}" => $storeName->name
+                                ]
+                            ];
+
+        } else {
+            $matchQuery =   [
                                 'match' => [
                                     "link_to_{$linkPath}.{$keyId}" => $objectId
                                 ]
-                            ]
-                        ],
+                            ];
+        }
+
+        if (! empty($linkPath) && ! empty($keyId)) {
+            $this->{$logic}([
+                'nested' => [
+                    'path' => "link_to_{$linkPath}",
+                    'query' => [
+                        'bool' => [
+                            'should' => [
+                                $matchQuery
+                            ],
+                        ]
                     ]
-                ]
-            ],
-        ]);
+                ],
+            ]);
+        }
     }
 
     public function filterExclude($excludedItems = [])

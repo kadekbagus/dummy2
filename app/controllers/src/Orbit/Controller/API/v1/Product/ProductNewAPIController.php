@@ -66,25 +66,40 @@ class ProductNewAPIController extends ControllerAPI
             $categories = OrbitInput::post('categories', []);
             $marketplaces = OrbitInput::post('marketplaces', []);
             $brandIds = OrbitInput::post('brand_ids', []);
+            $images = \Input::file('images');
 
             // Begin database transaction
             $this->beginTransaction();
 
             $validator = Validator::make(
                 array(
-                    'name'             => $name,
-                    'short_description'=> $shortDescription,
-                    'status'           => $status,
-                    'country_id'       => $countryId,
+                    'name'              => $name,
+                    'status'            => $status,
+                    'country_id'        => $countryId,
+                    'images'            => $images,
+                    'short_description' => $shortDescription,
+                    'categories'        => $categories,
+                    'brand_ids'         => $brandIds,
+                    'marketplaces'      => $marketplaces,
                 ),
                 array(
-                    'name'             => 'required',
-                    'status'           => 'in:active,inactive',
-                    'country_id'       => 'required',
+                    'name'              => 'required',
+                    'status'            => 'in:active,inactive',
+                    'country_id'        => 'required',
+                    'images'            => 'required|array',
+                    'short_description' => 'required',
+                    'categories'        => 'required|array',
+                    'brand_ids'         => 'required|array',
+                    'marketplaces'      => 'required|orbit.empty.marketplaces',
                 ),
                 array(
-                    'name.required'             => 'Product Title field is required',
-                    'country_id.required'       => 'Country field is required',
+                    'name.required'                 => 'Product Title field is required',
+                    'country_id.required'           => 'Country field is required',
+                    'images.required'               => 'Product Image is required',
+                    'short_description.required'    => 'Product Description is required',
+                    'categories.required'           => 'Product Category is required',
+                    'brand_ids.required'            => 'Link to Brand is required',
+                    'orbit.empty.marketplaces'      => 'Link to Affiliates is required',
                 )
             );
 
