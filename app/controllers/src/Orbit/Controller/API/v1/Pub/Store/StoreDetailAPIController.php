@@ -92,6 +92,11 @@ class StoreDetailAPIController extends PubControllerAPI
                 $image = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as path";
             }
 
+            $image2 = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as cdn_url";
+            if ($usingCdn) {
+                $image2 = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as cdn_url";
+            }
+
             $location = $mallId;
             if (empty($location)) {
                 $location = 0;
@@ -186,10 +191,16 @@ class StoreDetailAPIController extends PubControllerAPI
                                 DB::raw("{$image}"),
                                 'media.object_id'
                             );
-                    }, 'mediaImageOrig' => function ($q) use ($image) {
+                    }, 'mediaImageOrig' => function ($q) use ($image, $image2) {
                         $q->select(
                                 DB::raw("{$image}"),
-                                'media.object_id'
+                                DB::raw("{$image2}"),
+                                'media.object_id',
+                                'media.media_id',
+                                'media.media_name_long',
+                                'media.cdn_bucket_name',
+                                'media.file_name',
+                                'media.metadata'
                             );
                     }, 'mediaImageCroppedDefault' => function ($q) use ($image) {
                         $q->select(
@@ -311,8 +322,13 @@ class StoreDetailAPIController extends PubControllerAPI
                 throw new OrbitCustomException('Store is inactive', Tenant::INACTIVE_ERROR_CODE, $customData);
             }
 
+
             $store = $store->orderBy('merchants.created_at', 'asc')
                 ->first();
+
+            foreach ($store->mediaImageOrig as $key => $value) {
+                $validPhotos[] = $store->mediaImageOrig[$key];
+            }
 
             // Config page_views
             $configPageViewSource = Config::get('orbit.page_view.source', FALSE);
