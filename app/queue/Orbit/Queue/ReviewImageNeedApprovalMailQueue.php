@@ -25,8 +25,8 @@ class ReviewImageNeedApprovalMailQueue
     public function fire($job, $data)
     {
         $subject = $data['subject'];
-        $user_email = $data['user_email'];
-        $user_fullname = $data['user_fullname'];
+        $userEmail = $data['user_email'];
+        $userFullname = $data['user_fullname'];
         $objectId = $data['object_id'];
         $emailAdminReviewConf = Config::get('orbit.rating_review.email');
         $emailAdminReviewTo = $emailAdminReviewConf['to'][0];
