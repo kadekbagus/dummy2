@@ -343,14 +343,23 @@ class StoreDetailAPIController extends PubControllerAPI
             }
 
             // Get base_merchant_id
-            $baseMerchants = BaseMerchant::select('base_merchant_id')
+            $baseMerchants = BaseMerchant::select('base_merchant_id', 'url', 'facebook_url', 'instagram_url', 'twitter_url', 'youtube_url', 'line_url')
                                         ->where('name', $store->name)
                                         ->where('country_id', $store->country_id)
                                         ->first();
 
             $baseMerchantId = null;
             if (! empty($baseMerchants)) {
-                $baseMerchantId =$baseMerchants->base_merchant_id;
+                $baseMerchantId = $baseMerchants->base_merchant_id;
+                // brand level
+                if (empty($mallId)) {
+                    $store->url = $baseMerchants->url;
+                    $store->facebook_url = $baseMerchants->facebook_url;
+                    $store->instagram_url = $baseMerchants->instagram_url;
+                    $store->twitter_url = $baseMerchants->twitter_url;
+                    $store->youtube_url = $baseMerchants->youtube_url;
+                    $store->line_url = $baseMerchants->line_url;
+                }
             }
 
             // Get total page views, depend of config what DB used
