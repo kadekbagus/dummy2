@@ -156,7 +156,6 @@ class RatingNewAPIController extends PubControllerAPI
                 'created_at'         => $dateTime,
                 'updated_at'         => $dateTime,
                 'is_reply'           => 'n',
-                'is_image_reviewing' => 'n',
             ];
 
             // Adding new parameter for reply
@@ -206,6 +205,7 @@ class RatingNewAPIController extends PubControllerAPI
 
             if (! empty($images)) {
                 $body['images'] = $images;
+                $body['is_image_reviewing'] = 'n';
 
                 //send email to admin
                 Queue::push('Orbit\\Queue\\ReviewImageNeedApprovalMailQueue', [
