@@ -365,7 +365,7 @@ class MenuCounterAPIController extends PubControllerAPI
 
             });
 
-            $articleKeyword = OrbitInput::get('keywords', null);
+            $articleKeyword = OrbitInput::get('article_keywords', null);
             $forbiddenCharacter = array('>', '<', '(', ')', '{', '}', '[', ']', '^', '"', '~', '/');
             $articleKeyword = str_replace($forbiddenCharacter, '', $articleKeyword);
             if (! empty($articleKeyword)) {
