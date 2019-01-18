@@ -1,6 +1,5 @@
-<?php namespace Orbit\Controller\API\v1\Article;
+<?php namespace Orbit\Controller\API\v1\Product;
 
-use OrbitShop\API\v1\ResponseProvider;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -11,25 +10,23 @@ use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Util\PaginationNumber;
 
-use Article;
+use Marketplace;
 use Validator;
 use Lang;
-
 use DB;
-use Config;
 use stdclass;
-use Orbit\Controller\API\v1\Article\ArticleHelper;
+use Config;
 
-class ArticleListAPIController extends ControllerAPI
+class MarketplaceListAPIController extends ControllerAPI
 {
-    protected $articleRoles = ['article writer', 'article publisher'];
+    protected $allowedRoles = ['product manager'];
 
     /**
-     * GET Search / list Article
+     * GET Search / list Marketplace
      *
-     * @author Firmansyah <firmansyah@dominopos.com>
+     * @author Ahmad <ahmad@dominopos.com>
      */
-    public function getSearchArticle()
+    public function getSearchMarketplace()
     {
         try {
             $httpCode = 200;
@@ -43,26 +40,27 @@ class ArticleListAPIController extends ControllerAPI
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = $this->articleRoles;
+            $validRoles = $this->allowedRoles;
             if (! in_array(strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
 
-            $articleHelper = ArticleHelper::create();
-            // $articleHelper->merchantCustomValidator();
-
-            $sort_by = OrbitInput::get('sortby');
+            $sortBy = OrbitInput::get('sortby');
+            $status = OrbitInput::get('status');
 
             $validator = Validator::make(
                 array(
-                    'sortby' => $sort_by,
+                    'sortby' => $sortBy,
+                    'status' => $status,
                 ),
                 array(
-                    'sortby' => 'in:title,published_at,created_at,status',
+                    'sortby' => 'in:name,website_url,country_name,status',
+                    'status' => 'in:active,inactive',
                 ),
                 array(
-                    'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: title,published_at,created_at,status',
+                    'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: name, website_url, country_name, status',
+                    'status.in' => 'The sort by argument you specified is not valid, the valid values are: active, inactive',
                 )
             );
 
@@ -74,55 +72,47 @@ class ArticleListAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $article = Article::select(DB::raw("{$prefix}articles.*, {$prefix}countries.name as country_name"))
-                                ->join('countries', 'articles.country_id', '=', 'countries.country_id')
-                                ->where('articles.status', '!=', 'deleted')
-                                ->with('objectNews')
-                                ->with('objectPromotion')
-                                ->with('objectCoupon')
-                                ->with('objectMall')
-                                ->with('objectMerchant')
-                                ->with('category')
-                                ->with('mediaCover')
-                                ->with('mediaContent')
-                                ->with('video')
-                                ->with('cities');
+            $marketplace = Marketplace::select(DB::raw("
+                                    {$prefix}marketplaces.marketplace_id,
+                                    {$prefix}marketplaces.name,
+                                    {$prefix}marketplaces.website_url,
+                                    {$prefix}countries.name as country_name,
+                                    {$prefix}marketplaces.status"
+                                ))
+                                ->join('countries', 'marketplaces.country_id', '=', 'countries.country_id');
 
-            OrbitInput::get('article_id', function($article_id) use ($article)
+            OrbitInput::get('marketplace_id', function($marketplaceId) use ($marketplace)
             {
-                $article->where('article_id', $article_id);
+                $marketplace->where('marketplaces.marketplace_id', $marketplaceId);
             });
 
-            // Filter merchant by name
-            OrbitInput::get('title', function($title) use ($article)
+            OrbitInput::get('name_like', function($name) use ($marketplace)
             {
-                $article->where('title', $title);
+                $marketplace->where('marketplaces.name', 'like', "%$name%");
             });
 
-            // Filter merchant by matching name pattern
-            OrbitInput::get('title_like', function($title) use ($article)
+            OrbitInput::get('status', function($status) use ($marketplace)
             {
-                $article->where('title', 'like', "%$title%");
+                $marketplace->where('marketplaces.status', $status);
             });
 
-            if ($role->role_name == 'Article Writer') {
-                $article->where('created_by', $user->user_id);
-            }
-
-            $article->groupBy('article_id');
+            OrbitInput::get('country_id', function($country_id) use ($marketplace)
+            {
+                $marketplace->where('marketplaces.country_id', $country_id);
+            });
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
-            $_articles = clone $article;
+            $_marketplace = clone $marketplace;
 
             $take = PaginationNumber::parseTakeFromGet('merchant');
-            $article->take($take);
+            $marketplace->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();
-            $article->skip($skip);
+            $marketplace->skip($skip);
 
             // Default sort by
-            $sortBy = 'title';
+            $sortBy = 'name';
             // Default sort mode
             $sortMode = 'asc';
 
@@ -130,10 +120,10 @@ class ArticleListAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'title' => 'title',
-                    'published_at' => 'published_at',
-                    'created_at' => 'articles.created_at',
-                    'status' => 'articles.status',
+                    'name' => 'marketplaces.name',
+                    'website_url' => 'website_url',
+                    'country_name' => 'country_name',
+                    'status' => 'marketplaces.status',
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
@@ -147,19 +137,19 @@ class ArticleListAPIController extends ControllerAPI
                     $sortMode = 'desc';
                 }
             });
-            $article->orderBy($sortBy, $sortMode);
+            $marketplace->orderBy($sortBy, $sortMode);
 
-            $totalArticles = RecordCounter::create($_articles)->count();
-            $listOfArticles = $article->get();
+            $totalItems = RecordCounter::create($_marketplace)->count();
+            $listOfItems = $marketplace->get();
 
             $data = new stdclass();
-            $data->total_records = $totalArticles;
-            $data->returned_records = count($listOfArticles);
-            $data->records = $listOfArticles;
+            $data->total_records = $totalItems;
+            $data->returned_records = count($listOfItems);
+            $data->records = $listOfItems;
 
-            if ($totalArticles === 0) {
+            if ($totalItems === 0) {
                 $data->records = NULL;
-                $this->response->message = "There is no article that matched your search criteria";
+                $this->response->message = "There is no marketplace that matched your search criteria";
             }
 
             $this->response->data = $data;
