@@ -334,15 +334,7 @@ class StoreSynchronization
 
                     $storeName = $store->name;
                     $countryName = $countryNames->name;
-
-                    // check base store data for urls, if exist use base store data if not use base merchant
                     $baseStore = BaseStore::where('base_store_id', '=', $base_store_id)->first();
-                    $tenantUrl = (isset($baseStore->url)) ? $baseStore->url : $baseMerchant->url;
-                    $tenantFacebookUrl = (isset($baseStore->facebook_url)) ? $baseStore->facebook_url : $baseMerchant->facebook_url;
-                    $tenantInstagramUrl = (isset($baseStore->instagram_url)) ? $baseStore->instagram_url : $baseMerchant->instagram_url;
-                    $tenantLineUrl = (isset($baseStore->line_url)) ? $baseStore->line_url : $baseMerchant->line_url;
-                    $tenantTwitterUrl = (isset($baseStore->twitter_url)) ? $baseStore->twitter_url : $baseMerchant->twitter_url;
-                    $tenantYoutubeUrl = (isset($baseStore->youtube_url)) ? $baseStore->youtube_url : $baseMerchant->youtube_url;
 
                     $tenant->merchant_id = $base_store_id;
                     $tenant->name = $store->name;
@@ -355,7 +347,7 @@ class StoreSynchronization
                     $tenant->parent_id = $store->merchant_id;
                     $tenant->is_mall = 'no';
                     $tenant->is_subscribed = 'Y';
-                    $tenant->url = $tenantUrl;
+                    $tenant->url = $baseStore->url;
                     $tenant->floor_id = empty($store->floor_id) ? 0 : $store->floor_id;
                     $tenant->floor = $store->object_name;
                     $tenant->unit = $store->unit;
@@ -364,11 +356,11 @@ class StoreSynchronization
                     $tenant->mobile_default_language = $store->mobile_default_language;
                     $tenant->is_payment_acquire = $store->is_payment_acquire;
                     $tenant->gender = $baseMerchant->gender;
-                    $tenant->facebook_url = $tenantFacebookUrl;
-                    $tenant->instagram_url = $tenantInstagramUrl;
-                    $tenant->twitter_url = $tenantTwitterUrl;
-                    $tenant->youtube_url = $tenantYoutubeUrl;
-                    $tenant->line_url = $tenantLineUrl;
+                    $tenant->facebook_url = $baseStore->facebook_url;
+                    $tenant->instagram_url = $baseStore->instagram_url;
+                    $tenant->twitter_url = $baseStore->twitter_url;
+                    $tenant->youtube_url = $baseStore->youtube_url;
+                    $tenant->line_url = $baseStore->line_url;
                     $tenant->other_photo_section_title = $baseMerchant->other_photo_section_title;
                     $tenant->video_id_1 = $baseMerchant->video_id_1;
                     $tenant->video_id_2 = $baseMerchant->video_id_2;
