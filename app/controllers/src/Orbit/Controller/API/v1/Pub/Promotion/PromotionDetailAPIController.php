@@ -197,6 +197,8 @@ class PromotionDetailAPIController extends PubControllerAPI
                 $mall = Mall::excludeDeleted()->where('merchant_id', '=', $mallId)->first();
             }
 
+            $promotion->category_ids = $this->getNewsCategory($promotionId);
+
             // Only campaign having status ongoing and is_started true can going to detail page
             if (! in_array($promotion->campaign_status, ['ongoing', 'expired']) || ($promotion->campaign_status == 'ongoing' && $promotion->is_started == 'false')) {
                 $mallName = 'gtm';
@@ -363,5 +365,24 @@ class PromotionDetailAPIController extends PubControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    /**
+     * Get news/promotion categories.
+     *
+     * @param  string $newsId [description]
+     * @return [type]         [description]
+     */
+    private function getNewsCategory($newsId = '')
+    {
+        return News::select('categories.category_id')
+                     ->leftJoin('news_merchant', 'news.news_id', '=', 'news_merchant.news_id')
+                     ->leftJoin('category_merchant', 'news_merchant.merchant_id', '=', 'category_merchant.merchant_id')
+                     ->join('categories', 'category_merchant.category_id', '=', 'categories.category_id')
+                     ->where('categories.merchant_id', 0)
+                     ->where('categories.status', 'active')
+                     ->where('news.news_id', $newsId)
+                     ->groupBy('categories.category_id')
+                     ->get()->lists('category_id');
     }
 }

@@ -160,6 +160,10 @@ class GenerateSitemapCommand extends Command
                     $this->generatePartnerDetailsSitemap();
                     break;
 
+                case 'article-detail':
+                    $this->generateArticleListSitemap();
+                    break;
+
                 case 'misc':
                     $this->generateMiscListSitemap();
                     break;
@@ -169,6 +173,7 @@ class GenerateSitemapCommand extends Command
                     $this->generateMiscListSitemap();
                     $this->generateAllListSitemap();
                     $this->generateAllDetailSitemap();
+                    $this->generateArticleListSitemap();
                     break;
             }
         } catch (\Exception $e) {
@@ -551,6 +556,57 @@ class GenerateSitemapCommand extends Command
     }
 
     /**
+     * Generate all Article detail sitemap
+     *
+     * @param string $mall_id
+     * @param string $mall_slug
+     * @return void
+     */
+    protected function generateArticleListSitemap()
+    {
+        $detailUri = Config::get('orbit.sitemap.uri_properties.detail.article', []);
+
+        if (! empty($this->country)) {
+            $_GET['country'] = $this->country;
+        }
+
+        $_GET['take'] = 50;
+        $_GET['skip'] = 0;
+
+        $listController = Orbit\Controller\API\v1\Pub\Article\ArticleListAPIController::create('raw')
+            ->setUser($this->user)
+            ->setUseScroll();
+
+        $scroller = $listController->getSearcher();
+
+        $response = $listController->getSearchArticle();
+
+        if ($this->scrollResponseCheck($response)) {
+            $scrollId = $response['_scroll_id'];
+
+            while (true) {
+                // Execute a Scroll request
+                $scrollResponse = $scroller->scroll(["scroll_id" => $scrollId, "scroll" => "20s"]);
+
+                // Check to see if we got any search hits from the scroll
+                if (count($scrollResponse['hits']['hits']) > 0) {
+                    // If yes, Do Work Here
+
+                    $urlTemplate = $this->urlTemplate;
+
+                    // build the url
+                    $this->detailAppender($this->scrollRecords($scrollResponse), 'article', $urlTemplate, $detailUri, null, null);
+
+                    // Get new scrollId
+                    $scrollId = $scrollResponse['_scroll_id'];
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
      * Single function to append urls
      *
      * @param $xml DOMDocument
@@ -578,10 +634,14 @@ class GenerateSitemapCommand extends Command
                     $name = isset($record['coupon_name']) ? $record['coupon_name'] : $record['name'];
                     break;
 
+                case 'article':
+                    $id = $record['article_id'];
+                    $slug = $record['slug'];
+                    break;
+
                 case 'store':
                     $id = $record['merchant_id'];
                     $name = $record['name'];
-
                     break;
 
                 case 'partner':
@@ -599,7 +659,12 @@ class GenerateSitemapCommand extends Command
             if (! empty($mall_id)) {
                 $this->urlStringPrinter(sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $id, Str::slug($name))), date('c', $updatedAt), $detailUri['changefreq']);
             } else {
-                $this->urlStringPrinter(sprintf(sprintf($urlTemplate, $detailUri['uri']), $id, Str::slug($name)), date('c', $updatedAt), $detailUri['changefreq']);
+                if ($type == 'article') {
+                    $this->urlStringPrinter(sprintf(sprintf($urlTemplate, $detailUri['uri']), $slug), date('c', $updatedAt), $detailUri['changefreq']);
+                } else {
+                    $this->urlStringPrinter(sprintf(sprintf($urlTemplate, $detailUri['uri']), $id, Str::slug($name)), date('c', $updatedAt), $detailUri['changefreq']);
+                }
+
             }
         }
     }
