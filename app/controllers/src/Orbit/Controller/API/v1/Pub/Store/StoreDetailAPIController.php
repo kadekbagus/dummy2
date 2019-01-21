@@ -343,8 +343,7 @@ class StoreDetailAPIController extends PubControllerAPI
             }
 
             // Get base_merchant_id
-            $baseMerchants = BaseMerchant::select('base_merchant_id', 'url', 'facebook_url', 'instagram_url', 'twitter_url', 'youtube_url', 'line_url')
-                                        ->where('name', $store->name)
+            $baseMerchants = BaseMerchant::where('name', $store->name)
                                         ->where('country_id', $store->country_id)
                                         ->first();
 
@@ -359,6 +358,12 @@ class StoreDetailAPIController extends PubControllerAPI
                     $store->twitter_url = $baseMerchants->twitter_url;
                     $store->youtube_url = $baseMerchants->youtube_url;
                     $store->line_url = $baseMerchants->line_url;
+                    $store->video_id_1 = $baseMerchants->video_id_1;
+                    $store->video_id_2 = $baseMerchants->video_id_2;
+                    $store->video_id_3 = $baseMerchants->video_id_3;
+                    $store->video_id_4 = $baseMerchants->video_id_4;
+                    $store->video_id_5 = $baseMerchants->video_id_5;
+                    $store->video_id_6 = $baseMerchants->video_id_6;
                 }
             }
 
