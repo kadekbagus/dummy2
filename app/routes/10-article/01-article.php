@@ -47,6 +47,17 @@ Route::get('/api/v1/article/country/{search}', function()
 Route::get('/app/v1/article/country/{search}', ['as' => 'article-api-country-list', 'uses' => 'IntermediateArticleAuthController@CountryList_getSearchCountry'])
     ->where('search', '(list|search)');
 
+/**
+ * List/Search cities
+ */
+Route::get('/api/v1/article/city/{search}', function()
+{
+    return Orbit\Controller\API\v1\Merchant\CityListAPIController::create()->getSearchCity();
+})
+->where('search', '(list|search)');
+
+Route::get('/app/v1/article/city/{search}', ['as' => 'article-api-city-list', 'uses' => 'IntermediateArticleAuthController@CityList_getSearchCity'])
+    ->where('search', '(list|search)');
 
 
 
