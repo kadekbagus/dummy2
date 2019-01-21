@@ -103,12 +103,12 @@ class StoreListAPIController extends ControllerAPI
                                 'base_stores.instagram_url',
                                 'base_stores.twitter_url',
                                 'base_stores.youtube_url',
-                                'base_stores.line_url'
-                                'base_stores.video_id_1'
-                                'base_stores.video_id_2'
-                                'base_stores.video_id_3'
-                                'base_stores.video_id_4'
-                                'base_stores.video_id_5'
+                                'base_stores.line_url',
+                                'base_stores.video_id_1',
+                                'base_stores.video_id_2',
+                                'base_stores.video_id_3',
+                                'base_stores.video_id_4',
+                                'base_stores.video_id_5',
                                 'base_stores.video_id_6'
                                 )
                             ->join('base_merchants', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
