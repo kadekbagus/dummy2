@@ -173,7 +173,8 @@ class GenerateSitemapCommand extends Command
                     $this->generateMiscListSitemap();
                     $this->generateAllListSitemap();
                     $this->generateAllDetailSitemap();
-                    $this->generateArticleListSitemap();
+                    /* Disabled, as the article will have different sitemap than the rest */
+                    // $this->generateArticleListSitemap();
                     break;
             }
         } catch (\Exception $e) {
