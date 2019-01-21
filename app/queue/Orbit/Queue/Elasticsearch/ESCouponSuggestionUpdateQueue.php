@@ -68,8 +68,7 @@ class ESCouponSuggestionUpdateQueue
                     ->leftJoin('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                     ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                     ->leftJoin('issued_coupons', function($q) {
-                        $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id')
-                            ->where('issued_coupons.status', '=', "available");
+                        $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                     })
                     ->where('promotions.promotion_id', $couponId)
                     ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
