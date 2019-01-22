@@ -93,6 +93,24 @@ class ArticleSearch extends Search
         $this->filter(['match' => ['country' => $countryName]]);
     }
 
+
+    /**
+     * Filte by Cities...
+     *
+     * @param  array  $area [description]
+     * @return [type]       [description]
+     */
+    public function filterByCities($cities = [])
+    {
+        $arrCities = [];
+
+        foreach($cities as $city) {
+            $arrCities[] = ['match' => ['city' => $city]];
+        }
+
+        $this->filter(['bool' =>['should' => $arrCities]]);
+    }
+
     /**
      * Filter by linked object.
      *
