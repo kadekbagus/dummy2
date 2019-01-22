@@ -12,6 +12,7 @@ use \DB;
 use \URL;
 
 use Article;
+use ArticleCity;
 use ArticleLinkToObject;
 use Media;
 
@@ -329,6 +330,12 @@ class ArticleDetailAPIController extends PubControllerAPI
                                             ->get();
 
             $article['object_merchant'] = $objectMerchant;
+
+            $cities = ArticleCity::select('mall_cities.mall_city_id', 'mall_cities.city')
+                                            ->join('mall_cities', 'mall_cities.mall_city_id', '=', 'article_cities.mall_city_id')
+                                            ->get();
+
+            $article['cities'] = $cities;
 
 
             $mediaCover = Media::select('media.*',DB::raw("{$image} as original_media_path"))
