@@ -24,10 +24,10 @@ class ReviewRatingReplyAPIController extends ControllerAPI
 
     /**
      * POST - Reply to a Review/Rating
-     * 
+     *
      * @author budi <budi@dominopos.com>
      *
-     * @param string        location_id         parent/main review 
+     * @param string        location_id         parent/main review
      *
      * @return Illuminate\Support\Facades\Response
      *
@@ -51,7 +51,7 @@ class ReviewRatingReplyAPIController extends ControllerAPI
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
-            
+
             // Set logged in user as review admin for testing purpose
             // Should be removed when committing to remote, and use auth lines above.
             // $user = User::where('user_id', 'LZBVROXoxP0tlX5Y')->first();
@@ -119,7 +119,7 @@ class ReviewRatingReplyAPIController extends ControllerAPI
                 $errorMessage = 'Main Review (' . $parentId . ') not found.';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-            
+
             $objectId = $mainReview->data->object_id;
             $objectType = $mainReview->data->object_type;
 

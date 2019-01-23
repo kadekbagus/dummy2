@@ -279,7 +279,6 @@ class IntermediateLoginController extends IntermediateBaseController
         return $this->render($response);
     }
 
-
     /**
      * Login for Rating and Review Portal (RRP)
      * @author kadek <kadek@dominopos.com>
