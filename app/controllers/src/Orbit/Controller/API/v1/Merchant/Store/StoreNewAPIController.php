@@ -99,6 +99,18 @@ class StoreNewAPIController extends ControllerAPI
             $swiftCodes = OrbitInput::post('swift_codes',[]);
             $productTags = OrbitInput::post('product_tags');
             $productTags = (array) $productTags;
+            $url = OrbitInput::post('url');
+            $facebook_url = OrbitInput::post('facebook_url');
+            $instagram_url = OrbitInput::post('instagram_url');
+            $twitter_url = OrbitInput::post('twitter_url');
+            $youtube_url = OrbitInput::post('youtube_url');
+            $line_url = OrbitInput::post('line_url');
+            $videoId1 = OrbitInput::post('video_id_1');
+            $videoId2 = OrbitInput::post('video_id_2');
+            $videoId3 = OrbitInput::post('video_id_3');
+            $videoId4 = OrbitInput::post('video_id_4');
+            $videoId5 = OrbitInput::post('video_id_5');
+            $videoId6 = OrbitInput::post('video_id_6');
 
             $storeHelper = StoreHelper::create();
             $storeHelper->storeCustomValidator();
@@ -166,6 +178,18 @@ class StoreNewAPIController extends ControllerAPI
             $newstore->status = $status;
             $newstore->verification_number = $verification_number;
             $newstore->is_payment_acquire = $paymentAcquire;
+            $newstore->url = $url;
+            $newstore->facebook_url = $facebook_url;
+            $newstore->instagram_url = $instagram_url;
+            $newstore->twitter_url = $twitter_url;
+            $newstore->youtube_url = $youtube_url;
+            $newstore->line_url = $line_url;
+            $newstore->video_id_1 = $videoId1;
+            $newstore->video_id_2 = $videoId2;
+            $newstore->video_id_3 = $videoId3;
+            $newstore->video_id_4 = $videoId4;
+            $newstore->video_id_5 = $videoId5;
+            $newstore->video_id_6 = $videoId6;
             $newstore->save();
 
             // save product tag
