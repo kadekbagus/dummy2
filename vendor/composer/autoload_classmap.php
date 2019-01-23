@@ -1672,6 +1672,7 @@ return array(
     'ImportIP2Location' => $baseDir . '/app/commands/ImportIP2Location.php',
     'Inbox' => $baseDir . '/app/models/Inbox.php',
     'InboxAPIController' => $baseDir . '/app/controllers/api/v1/InboxAPIController.php',
+    'IntermediateArticleAuthController' => $baseDir . '/app/controllers/intermediate/v1/IntermediateArticleAuthController.php',
     'IntermediateAuthBrowserController' => $baseDir . '/app/controllers/intermediate/v1/IntermediateAuthBrowserController.php',
     'IntermediateAuthController' => $baseDir . '/app/controllers/intermediate/v1/IntermediateAuthController.php',
     'IntermediateBaseController' => $baseDir . '/app/controllers/intermediate/v1/IntermediateBaseController.php',

@@ -1789,9 +1789,9 @@ class LoginAPIController extends ControllerAPI
     }
 
     /**
-     * POST - Login for product marketplace portal
+     * POST - Login for Article Manager Portal
      *
-     * @author kadek <kadek@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -1799,7 +1799,7 @@ class LoginAPIController extends ControllerAPI
      * @param string    `password`              (required) - Password for the account
      * @return Illuminate\Support\Facades\Response
      */
-    public function postLoginPP()
+    public function postLoginAMP()
     {
         $activity = Activity::portal()
                             ->setActivityType('login');
@@ -1817,14 +1817,13 @@ class LoginAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $roles = ['Product Manager'];
+            $roles = ['Article Writer', 'Article Publisher'];
 
-            $user = User::select('users.*', 'roles.*')
-                        ->with('role')
-                        ->active()
-                        ->join('roles', 'users.user_role_id', '=', 'roles.role_id')
+            $user = User::join('roles', 'users.user_role_id', '=', 'roles.role_id')
                         ->where('user_email', $email)
                         ->whereIn('roles.role_name', $roles)
+                        ->with('role')
+                        ->active()
                         ->first();
 
             if (! is_object($user)) {
@@ -1895,9 +1894,9 @@ class LoginAPIController extends ControllerAPI
     }
 
     /**
-     * POST - Login for Article Manager Portal
+     * POST - Login for product marketplace portal
      *
-     * @author Firmansyah <firmansyah@dominopos.com>
+     * @author kadek <kadek@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -1905,7 +1904,7 @@ class LoginAPIController extends ControllerAPI
      * @param string    `password`              (required) - Password for the account
      * @return Illuminate\Support\Facades\Response
      */
-    public function postLoginAMP()
+    public function postLoginPP()
     {
         $activity = Activity::portal()
                             ->setActivityType('login');
@@ -1923,13 +1922,14 @@ class LoginAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $roles = ['Article Writer', 'Article Publisher'];
+            $roles = ['Product Manager'];
 
-            $user = User::join('roles', 'users.user_role_id', '=', 'roles.role_id')
-                        ->where('user_email', $email)
-                        ->whereIn('roles.role_name', $roles)
+            $user = User::select('users.*', 'roles.*')
                         ->with('role')
                         ->active()
+                        ->join('roles', 'users.user_role_id', '=', 'roles.role_id')
+                        ->where('user_email', $email)
+                        ->whereIn('roles.role_name', $roles)
                         ->first();
 
             if (! is_object($user)) {

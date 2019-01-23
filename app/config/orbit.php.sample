@@ -938,7 +938,7 @@ return array(
             'mt_portal' => 'X-OMS-MT',
             'rrp_portal' => 'X-OMS-RRP',
             'am_portal' => 'X-OMS-AMP',
-            'pp_portal' => 'X-OMS-PP'
+            'pp_portal' => 'X-OMS-PP',
         ],
 
         /**
@@ -958,7 +958,7 @@ return array(
             'mt_portal' => '9',
             'rrp_portal' => '10',
             'am_portal' => '11',
-            'pp_portal' => '12'
+            'pp_portal' => '12',
         ],
 
         /**
@@ -6929,7 +6929,7 @@ return array(
                 'name_long' => 'Click Brand Photo Thumbnail',
                 'module_name' => 'Merchant',
                 'type' => 'click',
-                'object_type' => 'Merchant',
+                'object_type' => 'Tenant',
                 'parameter_name' => 'object_id'
             ),
             // user click brand other photo thumbnail on brand detail page
@@ -6938,7 +6938,7 @@ return array(
                 'name_long' => 'Click Brand Other Photo Thumbnail',
                 'module_name' => 'Merchant',
                 'type' => 'click',
-                'object_type' => 'Merchant',
+                'object_type' => 'Tenant',
                 'parameter_name' => 'object_id'
             ),
             // user click video thumbnail on brand detail page
@@ -6947,7 +6947,7 @@ return array(
                 'name_long' => 'Click Video Thumbnail',
                 'module_name' => 'Merchant',
                 'type' => 'click',
-                'object_type' => 'Merchant',
+                'object_type' => 'Tenant',
                 'parameter_name' => 'object_id'
             ),
             // user click video play brand on brand detail page
@@ -6956,7 +6956,7 @@ return array(
                 'name_long' => 'Click Video Play Brand',
                 'module_name' => 'Merchant',
                 'type' => 'click',
-                'object_type' => 'Merchant',
+                'object_type' => 'Tenant',
                 'parameter_name' => 'object_id'
             ),
             // user click brand promotion on brand detail page
@@ -6965,7 +6965,7 @@ return array(
                 'name_long' => 'Click Brand Promotion',
                 'module_name' => 'Merchant',
                 'type' => 'click',
-                'object_type' => 'Merchant',
+                'object_type' => 'Tenant',
                 'parameter_name' => 'object_id'
             ),
             // user click brand event on brand detail page
@@ -6974,7 +6974,7 @@ return array(
                 'name_long' => 'Click Brand Event',
                 'module_name' => 'Merchant',
                 'type' => 'click',
-                'object_type' => 'Merchant',
+                'object_type' => 'Tenant',
                 'parameter_name' => 'object_id'
             ),
             // user click brand coupon on brand detail page
