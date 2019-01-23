@@ -22,6 +22,7 @@ use Carbon\Carbon as Carbon;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use Event;
 use News;
+use Queue;
 
 class RatingNewAPIController extends PubControllerAPI
 {
@@ -61,6 +62,13 @@ class RatingNewAPIController extends PubControllerAPI
         $parentId = OrbitInput::post('parent_id', NULL);
         $userIdReplied = OrbitInput::post('user_id_replied', NULL);
         $reviewIdReplied = OrbitInput::post('review_id_replied', NULL);
+
+        // Cdn
+        $prefix = DB::getTablePrefix();
+        $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+        $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+        $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
         if ($isReply) {
             //No rating when reply, so need overide the rating
             $rating = 0;
@@ -138,16 +146,16 @@ class RatingNewAPIController extends PubControllerAPI
             $dateTime = $date->toDateTimeString();
 
             $body = [
-                'object_id'       => $objectId,
-                'object_type'     => $objectType,
-                'user_id'         => $user->user_id,
-                'rating'          => $rating,
-                'review'          => $review,
-                'status'          => $status,
-                'approval_status' => $approvalStatus,
-                'created_at'      => $dateTime,
-                'updated_at'      => $dateTime,
-                'is_reply'        => 'n',
+                'object_id'          => $objectId,
+                'object_type'        => $objectType,
+                'user_id'            => $user->user_id,
+                'rating'             => $rating,
+                'review'             => $review,
+                'status'             => $status,
+                'approval_status'    => $approvalStatus,
+                'created_at'         => $dateTime,
+                'updated_at'         => $dateTime,
+                'is_reply'           => 'n',
             ];
 
             // Adding new parameter for reply
@@ -174,6 +182,38 @@ class RatingNewAPIController extends PubControllerAPI
                         'country_id'      => $location->country_id,
                     ];
                 }
+            }
+
+            // upload image
+            $uploadMedias = Event::fire('orbit.rating.postnewmedia', array($this, $body));
+
+            $images = array();
+
+            if (count($uploadMedias[0]) > 0) {
+                foreach ($uploadMedias[0] as $key => $medias) {
+                    foreach ($medias->variants as $keyVar => $variant) {
+                        $images[$key][$keyVar]['media_id'] = $variant->media_id ;
+                        $images[$key][$keyVar]['variant_name'] = $variant->media_name_long ;
+                        $images[$key][$keyVar]['url'] = $urlPrefix . $variant->path ;
+                        $images[$key][$keyVar]['cdn_url'] = '' ;
+                        $images[$key][$keyVar]['metadata'] = $variant->metadata;
+                        $images[$key][$keyVar]['approval_status'] = 'pending';
+                        $images[$key][$keyVar]['rejection_message'] = '';
+                    }
+                }
+            }
+
+            if (! empty($images)) {
+                $body['images'] = $images;
+                $body['is_image_reviewing'] = 'n';
+
+                //send email to admin
+                Queue::push('Orbit\\Queue\\ReviewImageNeedApprovalMailQueue', [
+                    'subject' => 'There is a review with image(s) that needs your approval',
+                    'object_id' => $objectId,
+                    'user_email' => $user->user_email,
+                    'user_fullname' => $user->user_firstname .' '. $user->user_lastname,
+                ]);
             }
 
             $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body + $bodyLocation);

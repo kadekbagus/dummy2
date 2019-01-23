@@ -1595,6 +1595,7 @@ return array(
                     'article_content_image' => 'article',
                     'marketplace_image' => 'marketplace',
                     'product_image' => 'product',
+                    'review_image' => 'review',
                 ],
 
                 // Allowed Mimetype
@@ -6983,7 +6984,7 @@ return array(
                 'name_long' => 'Click Brand Coupon',
                 'module_name' => 'Merchant',
                 'type' => 'click',
-                'object_type' => 'Merchant',
+                'object_type' => 'Tenant',
                 'parameter_name' => 'object_id'
             ),
             // Articles Activities
