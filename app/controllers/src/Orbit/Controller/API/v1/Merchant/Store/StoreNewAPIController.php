@@ -105,6 +105,12 @@ class StoreNewAPIController extends ControllerAPI
             $twitter_url = OrbitInput::post('twitter_url');
             $youtube_url = OrbitInput::post('youtube_url');
             $line_url = OrbitInput::post('line_url');
+            $videoId1 = OrbitInput::post('video_id_1');
+            $videoId2 = OrbitInput::post('video_id_2');
+            $videoId3 = OrbitInput::post('video_id_3');
+            $videoId4 = OrbitInput::post('video_id_4');
+            $videoId5 = OrbitInput::post('video_id_5');
+            $videoId6 = OrbitInput::post('video_id_6');
 
             $storeHelper = StoreHelper::create();
             $storeHelper->storeCustomValidator();
@@ -178,6 +184,12 @@ class StoreNewAPIController extends ControllerAPI
             $newstore->twitter_url = $twitter_url;
             $newstore->youtube_url = $youtube_url;
             $newstore->line_url = $line_url;
+            $newstore->video_id_1 = $videoId1;
+            $newstore->video_id_2 = $videoId2;
+            $newstore->video_id_3 = $videoId3;
+            $newstore->video_id_4 = $videoId4;
+            $newstore->video_id_5 = $videoId5;
+            $newstore->video_id_6 = $videoId6;
             $newstore->save();
 
             // save product tag

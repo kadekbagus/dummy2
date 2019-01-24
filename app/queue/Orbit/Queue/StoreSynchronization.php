@@ -362,12 +362,12 @@ class StoreSynchronization
                     $tenant->youtube_url = $baseStore->youtube_url;
                     $tenant->line_url = $baseStore->line_url;
                     $tenant->other_photo_section_title = $baseMerchant->other_photo_section_title;
-                    $tenant->video_id_1 = $baseMerchant->video_id_1;
-                    $tenant->video_id_2 = $baseMerchant->video_id_2;
-                    $tenant->video_id_3 = $baseMerchant->video_id_3;
-                    $tenant->video_id_4 = $baseMerchant->video_id_4;
-                    $tenant->video_id_5 = $baseMerchant->video_id_5;
-                    $tenant->video_id_6 = $baseMerchant->video_id_6;
+                    $tenant->video_id_1 = $baseStore->video_id_1;
+                    $tenant->video_id_2 = $baseStore->video_id_2;
+                    $tenant->video_id_3 = $baseStore->video_id_3;
+                    $tenant->video_id_4 = $baseStore->video_id_4;
+                    $tenant->video_id_5 = $baseStore->video_id_5;
+                    $tenant->video_id_6 = $baseStore->video_id_6;
                     $tenant->save();
 
                     // handle inactive store
