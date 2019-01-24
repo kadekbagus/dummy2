@@ -215,6 +215,13 @@ class CouponFeaturedListAPIController extends PubControllerAPI
                 }
              });
 
+            OrbitInput::get('store_id', function($storeId) use (&$jsonQuery) {
+                if (! empty($storeId)) {
+                    $withStoreId = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.merchant_id' => $storeId))))));
+                    $jsonQuery['query']['bool']['filter'][] = $withStoreId;
+                }
+            });
+
             OrbitInput::get('sponsor_provider_ids', function($sponsorProviderIds) use (&$jsonQuery) {
                 if (! empty($sponsorProviderIds) && is_array($sponsorProviderIds)) {
                     $withSponsorProviderIds = array('nested' => array('path' => 'sponsor_provider', 'query' => array('filtered' => array('filter' => array('terms' => array('sponsor_provider.sponsor_id' => $sponsorProviderIds))))));
