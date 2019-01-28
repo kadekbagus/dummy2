@@ -59,7 +59,7 @@ class ArticleListAPIController extends ControllerAPI
                     'sortby' => $sort_by,
                 ),
                 array(
-                    'sortby' => 'in:title,published_at,created_at,status',
+                    'sortby' => 'in:title,published_at,created_at,updated_at,status',
                 ),
                 array(
                     'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: title,published_at,created_at,status',
@@ -133,6 +133,7 @@ class ArticleListAPIController extends ControllerAPI
                     'title' => 'title',
                     'published_at' => 'published_at',
                     'created_at' => 'articles.created_at',
+                    'updated_at' => 'articles.updated_at',
                     'status' => 'articles.status',
                 );
 
