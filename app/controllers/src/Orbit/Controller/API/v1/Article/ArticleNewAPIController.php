@@ -260,7 +260,7 @@ class ArticleNewAPIController extends ControllerAPI
                 $saveVideo = new ArticleVideo();
                 $saveVideo->article_id = $newArticle->article_id;
                 $saveVideo->video_id = $youtubeVideoId;
-                $saveVideo->tag_name = 'video_00' . $counter;
+                $saveVideo->tag_name = 'video_' . $counter;
                 $saveVideo->save();
                 $video[] = $saveVideo;
             }
