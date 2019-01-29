@@ -27,7 +27,7 @@ class SitemapReaderAPIController extends PubControllerAPI
     {
         try {
             $filePath = storage_path();
-            $fileName = Config::get('orbit.sitemap.filename', 'sitemap-article.xml');
+            $fileName = Config::get('orbit.sitemap.filename_article', 'sitemap-article.xml');
 
             // return inline sitemap xml
             return Response::download($filePath . '/' . $fileName, $fileName, [], 'inline');

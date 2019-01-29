@@ -3054,7 +3054,6 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'PHPParser_Unserializer' => __DIR__ . '/..' . '/nikic/php-parser/lib/PHPParser/Unserializer.php',
         'PHPParser_Unserializer_XML' => __DIR__ . '/..' . '/nikic/php-parser/lib/PHPParser/Unserializer/XML.php',
         'POS\\Product' => __DIR__ . '/../..' . '/app/models/POS/Product.php',
-        'PPRoleTableSeeder' => __DIR__ . '/../..' . '/app/database/seeds/PPRoleTableSeeder.php',
         'Page' => __DIR__ . '/../..' . '/app/models/Page.php',
         'Partner' => __DIR__ . '/../..' . '/app/models/Partner.php',
         'PartnerAPIController' => __DIR__ . '/../..' . '/app/controllers/api/v1/PartnerAPIController.php',
