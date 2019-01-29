@@ -334,6 +334,7 @@ class StoreSynchronization
 
                     $storeName = $store->name;
                     $countryName = $countryNames->name;
+                    $baseStore = BaseStore::where('base_store_id', '=', $base_store_id)->first();
 
                     $tenant->merchant_id = $base_store_id;
                     $tenant->name = $store->name;
@@ -346,7 +347,7 @@ class StoreSynchronization
                     $tenant->parent_id = $store->merchant_id;
                     $tenant->is_mall = 'no';
                     $tenant->is_subscribed = 'Y';
-                    $tenant->url = $store->url;
+                    $tenant->url = $baseStore->url;
                     $tenant->floor_id = empty($store->floor_id) ? 0 : $store->floor_id;
                     $tenant->floor = $store->object_name;
                     $tenant->unit = $store->unit;
@@ -355,18 +356,18 @@ class StoreSynchronization
                     $tenant->mobile_default_language = $store->mobile_default_language;
                     $tenant->is_payment_acquire = $store->is_payment_acquire;
                     $tenant->gender = $baseMerchant->gender;
-                    $tenant->facebook_url = $baseMerchant->facebook_url;
-                    $tenant->instagram_url = $baseMerchant->instagram_url;
-                    $tenant->twitter_url = $baseMerchant->twitter_url;
-                    $tenant->youtube_url = $baseMerchant->youtube_url;
-                    $tenant->line_url = $baseMerchant->line_url;
+                    $tenant->facebook_url = $baseStore->facebook_url;
+                    $tenant->instagram_url = $baseStore->instagram_url;
+                    $tenant->twitter_url = $baseStore->twitter_url;
+                    $tenant->youtube_url = $baseStore->youtube_url;
+                    $tenant->line_url = $baseStore->line_url;
                     $tenant->other_photo_section_title = $baseMerchant->other_photo_section_title;
-                    $tenant->video_id_1 = $baseMerchant->video_id_1;
-                    $tenant->video_id_2 = $baseMerchant->video_id_2;
-                    $tenant->video_id_3 = $baseMerchant->video_id_3;
-                    $tenant->video_id_4 = $baseMerchant->video_id_4;
-                    $tenant->video_id_5 = $baseMerchant->video_id_5;
-                    $tenant->video_id_6 = $baseMerchant->video_id_6;
+                    $tenant->video_id_1 = $baseStore->video_id_1;
+                    $tenant->video_id_2 = $baseStore->video_id_2;
+                    $tenant->video_id_3 = $baseStore->video_id_3;
+                    $tenant->video_id_4 = $baseStore->video_id_4;
+                    $tenant->video_id_5 = $baseStore->video_id_5;
+                    $tenant->video_id_6 = $baseStore->video_id_6;
                     $tenant->save();
 
                     // handle inactive store

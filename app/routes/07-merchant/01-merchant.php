@@ -122,3 +122,14 @@ Route::get('/api/v1/merchant/payment-provider/{search}', function()
 
 Route::get('/app/v1/merchant/payment-provider/{search}', ['as' => 'merchant-api-payment-provider-list', 'uses' => 'IntermediateMerchantAuthController@PaymentProviderList_getSearchPaymentProvider'])
     ->where('search', '(list|search)');
+
+
+/**
+ * Merchant Copy To Store
+ */
+Route::post('/api/v1/merchant/copy-to-store', function()
+{
+    return Orbit\Controller\API\v1\Merchant\Merchant\MerchantCopyToStoreAPIController::create()->postMerchantCopyToStore();
+});
+
+Route::post('/app/v1/merchant/copy-to-store', ['as' => 'merchant-copy-to-store', 'uses' => 'IntermediateMerchantAuthController@Merchant\MerchantCopyToStore_postMerchantCopyToStore']);

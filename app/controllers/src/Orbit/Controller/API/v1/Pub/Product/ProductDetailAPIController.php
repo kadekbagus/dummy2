@@ -14,6 +14,7 @@ use Lang;
 use DB;
 use Validator;
 use Language;
+use Config;
 
 class ProductDetailAPIController extends PubControllerAPI
 {
@@ -56,11 +57,53 @@ class ProductDetailAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $prefix = DB::getTablePrefix();
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $image = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as cdn_url";
+            if ($usingCdn) {
+                $image = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as cdn_url";
+            }
+
             $validLanguage = $this->validLanguage;
             $product = Product::with([
-                    'media',
-                    'marketplaces' => function ($q) {
-                        $q->with('media');
+                    'media' => function ($q) use ($image) {
+                                        $q->select(
+                                                DB::raw("{$image}"),
+                                                'media.media_id',
+                                                'media.media_name_id',
+                                                'media.media_name_long',
+                                                'media.object_id',
+                                                'media.object_name',
+                                                'media.file_name',
+                                                'media.file_extension',
+                                                'media.file_size',
+                                                'media.mime_type',
+                                                'media.path',
+                                                'media.cdn_bucket_name',
+                                                'media.metadata'
+                                            );
+                    },
+                    'marketplaces' => function ($q) use ($image) {
+                        $q->with(['media' => function ($q) use ($image) {
+                                        $q->select(
+                                                DB::raw("{$image}"),
+                                                'media.media_id',
+                                                'media.media_name_id',
+                                                'media.media_name_long',
+                                                'media.object_id',
+                                                'media.object_name',
+                                                'media.file_name',
+                                                'media.file_extension',
+                                                'media.file_size',
+                                                'media.mime_type',
+                                                'media.path',
+                                                'media.cdn_bucket_name',
+                                                'media.metadata'
+                                            );
+                                  }]);
                         $q->where('marketplaces.status', 'active');
                     },
                     'country',
