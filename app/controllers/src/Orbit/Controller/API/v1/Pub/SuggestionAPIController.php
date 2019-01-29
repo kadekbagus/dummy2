@@ -18,6 +18,7 @@ use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
 use Language;
 use DB;
+use Tenant;
 
 class SuggestionAPIController extends PubControllerAPI
 {
@@ -135,6 +136,23 @@ class SuggestionAPIController extends PubControllerAPI
             $listSuggestion = [];
             if (isset($response['gtm_suggestions'])) {
                 $listSuggestion = $response['gtm_suggestions'][0]['options'];
+                if (! empty($mallId)) {
+                    foreach ($listSuggestion as &$itemSuggestion) {
+                        if ($itemSuggestion['payload']['type'] == 'store') {
+                            $baseID = $itemSuggestion['payload']['id'];
+                            $storeName = $itemSuggestion['text'];
+                            $mallStore = Tenant::where('name', $storeName)
+                                ->where('status', 'active')
+                                ->where('object_type', 'tenant')
+                                ->where('parent_id', $mallId)
+                                ->first();
+
+                            if (is_object($mallStore)) {
+                                $itemSuggestion['payload']['id'] = $mallStore->merchant_id;
+                            }
+                        }
+                    }
+                }
             }
 
             $this->response->data = new stdClass();
