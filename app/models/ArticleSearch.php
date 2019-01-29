@@ -93,6 +93,24 @@ class ArticleSearch extends Search
         $this->filter(['match' => ['country' => $countryName]]);
     }
 
+
+    /**
+     * Filte by Cities...
+     *
+     * @param  array  $area [description]
+     * @return [type]       [description]
+     */
+    public function filterByCities($cities = [])
+    {
+        $arrCities = [];
+
+        foreach($cities as $city) {
+            $arrCities[] = ['match' => ['city' => $city]];
+        }
+
+        $this->filter(['bool' =>['should' => $arrCities]]);
+    }
+
     /**
      * Filter by linked object.
      *
@@ -115,7 +133,7 @@ class ArticleSearch extends Search
             case 'brand':
             case 'store':
                 $linkPath = 'brands';
-                $keyId = 'brand_id';
+                $keyId = 'name.raw';
                 break;
 
             case 'coupon':
@@ -138,6 +156,26 @@ class ArticleSearch extends Search
                 break;
         }
 
+        if ($objectType == 'brand' || $objectType == 'store') {
+            // get Query name
+            $storeName = Tenant::select('name', 'country_id')
+                            ->where('merchant_id', $objectId)
+                            ->firstOrFail();
+
+            $matchQuery =   [
+                                'match' => [
+                                    "link_to_{$linkPath}.{$keyId}" => $storeName->name
+                                ]
+                            ];
+
+        } else {
+            $matchQuery =   [
+                                'match' => [
+                                    "link_to_{$linkPath}.{$keyId}" => $objectId
+                                ]
+                            ];
+        }
+
         if (! empty($linkPath) && ! empty($keyId)) {
             $this->{$logic}([
                 'nested' => [
@@ -145,11 +183,7 @@ class ArticleSearch extends Search
                     'query' => [
                         'bool' => [
                             'should' => [
-                                [
-                                    'match' => [
-                                        "link_to_{$linkPath}.{$keyId}" => $objectId
-                                    ]
-                                ]
+                                $matchQuery
                             ],
                         ]
                     ]
