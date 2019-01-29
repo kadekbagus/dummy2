@@ -95,6 +95,7 @@ class ArticleListAPIController extends PubControllerAPI
             $sortMode = OrbitInput::get('sortmode','desc');
             $language = OrbitInput::get('language', 'id');
             $countryFilter = OrbitInput::get('country', null);
+            $cityFilters = OrbitInput::get('cities', []);
             $objectType = OrbitInput::get('object_type', null);
             $objectId = OrbitInput::get('object_id', null);
             // $mallId = OrbitInput::get('mall_id', null);
@@ -145,6 +146,7 @@ class ArticleListAPIController extends PubControllerAPI
                 'no_total_record' => $no_total_records,
                 'take' => $take, 'skip' => $skip,
                 'country' => $countryFilter,
+                'cities' => $cityFilters,
             ];
 
             // Run the validation
@@ -179,6 +181,10 @@ class ArticleListAPIController extends PubControllerAPI
             // Only filter based on specific country.
             if (! empty($countryFilter) && $countryFilter !== '0') {
                 $this->searcher->filterByCountry($countryFilter);
+            }
+
+            if (! empty($cityFilters) && $cityFilters !== '0') {
+                $this->searcher->filterByCities($cityFilters);
             }
 
             // Exclude an article

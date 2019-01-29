@@ -67,6 +67,7 @@ class ESArticleUpdateQueue
                             ->with('mediaCover')
                             ->with('mediaContent')
                             ->with('video')
+                            ->with('cities')
                             ->first();
 
         if (! is_object($article)) {
@@ -102,6 +103,10 @@ class ESArticleUpdateQueue
                 'body' => []
             ];
 
+            $cities = array();
+            foreach ($article->cities as $city) {
+                $cities[] = $city->city;
+            }
 
             // Article Objects
 
@@ -189,6 +194,7 @@ class ESArticleUpdateQueue
                 'status' => $article->status,
                 'published_at' => date('Y-m-d', strtotime($article->published_at)) . 'T' . date('H:i:s', strtotime($article->published_at)) . 'Z',
 
+                'city' => $cities,
                 'link_to_events' => $linkToEvents,
                 'link_to_promotions' => $linkToPromotions,
                 'link_to_coupons' => $linkToCoupons,
