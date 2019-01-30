@@ -22,6 +22,7 @@ use ObjectFinancialDetail;
 use MerchantStorePaymentProvider;
 use ProductTag;
 use BaseStoreProductTag;
+use Language;
 
 class StoreNewAPIController extends ControllerAPI
 {
@@ -123,6 +124,7 @@ class StoreNewAPIController extends ControllerAPI
 
             $validation_data = [
                 'base_merchant_id'    => $base_merchant_id,
+                'translations'        => $translations,
                 'mall_id'             => $mall_id,
                 'floor_id'            => $floor_id,
                 'status'              => $status,
@@ -131,6 +133,7 @@ class StoreNewAPIController extends ControllerAPI
 
             $validation_error = [
                 'base_merchant_id'    => 'required|orbit.empty.base_merchant',
+                'translations'        => 'required',
                 'mall_id'             => 'required|orbit.empty.mall|orbit.mall.country:' . $base_merchant_id,
                 'floor_id'            => 'orbit.empty.floor:' . $mall_id,
                 'status'              => 'in:active,inactive',
@@ -191,6 +194,9 @@ class StoreNewAPIController extends ControllerAPI
             $newstore->video_id_4 = $videoId4;
             $newstore->video_id_5 = $videoId5;
             $newstore->video_id_6 = $videoId6;
+
+            // Translations
+            $idLanguageEnglish = Language::select('language_id')->where('name', '=', 'en')->first();
 
             if (! empty($translations) ) {
                 $dataTranslations = @json_decode($translations);

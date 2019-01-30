@@ -23,6 +23,7 @@ use CouponRetailer;
 use CouponRetailerRedeem;
 use NewsMerchant;
 use BaseStoreTranslation;
+use Language;
 
 class StoreHelper
 {

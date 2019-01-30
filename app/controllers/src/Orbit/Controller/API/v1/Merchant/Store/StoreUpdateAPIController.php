@@ -24,6 +24,7 @@ use ObjectFinancialDetail;
 use MerchantStorePaymentProvider;
 use ProductTag;
 use BaseStoreProductTag;
+use Language;
 
 class StoreUpdateAPIController extends ControllerAPI
 {
@@ -102,6 +103,7 @@ class StoreUpdateAPIController extends ControllerAPI
             $bankAddress = OrbitInput::post('bank_address',[]);
             $swiftCodes = OrbitInput::post('swift_codes',[]);
             $productTags = OrbitInput::post('product_tags', []);
+            $translations = OrbitInput::post('translations');
 
             $storeHelper = StoreHelper::create();
             $storeHelper->storeCustomValidator();
@@ -114,6 +116,7 @@ class StoreUpdateAPIController extends ControllerAPI
             $validation_data = [
                 'base_store_id'       => $baseStoreId,
                 'base_merchant_id'    => $baseMerchantId,
+                'translations'        => $translations,
                 'mall_id'             => $mallId,
                 'floor_id'            => $floor_id,
                 'status'              => $status,
@@ -123,6 +126,7 @@ class StoreUpdateAPIController extends ControllerAPI
             $validation_error = [
                 'base_store_id'       => 'required|orbit.empty.base_store',
                 'base_merchant_id'    => 'required|orbit.empty.base_merchant',
+                'translations'        => 'required',
                 'mall_id'             => 'required|orbit.empty.mall|orbit.mall.country:' . $baseMerchantId,
                 'floor_id'            => 'orbit.empty.floor:' . $mallId,
                 'status'              => 'in:active,inactive',
@@ -241,6 +245,9 @@ class StoreUpdateAPIController extends ControllerAPI
             OrbitInput::post('video_id_6', function($video_id_6) use ($updatestore) {
                 $updatestore->video_id_6 = $video_id_6;
             });
+
+            // Translations
+            $idLanguageEnglish = Language::select('language_id')->where('name', '=', 'en')->first();
 
             // Check for english content
             $dataTranslations = @json_decode($translations);
