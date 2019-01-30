@@ -28,6 +28,8 @@ use BaseMerchantProductTag;
 use App;
 use BaseStore;
 use Orbit\Controller\API\v1\Merchant\Merchant\MerchantHelper;
+use Orbit\Database\ObjectID;
+use DB;
 
 class MerchantCopyToStoreAPIController extends ControllerAPI
 {
@@ -112,7 +114,25 @@ class MerchantCopyToStoreAPIController extends ControllerAPI
                     $store->video_id_4 = $baseMerchant->video_id_4;
                     $store->video_id_5 = $baseMerchant->video_id_5;
                     $store->video_id_6 = $baseMerchant->video_id_6;
+                    $store->description = $baseMerchant->description;
+                    $store->custom_title = $baseMerchant->custom_title;
                     $store->save();
+
+                    $translations = [];
+                    foreach ($baseMerchant->baseMerchantTranslation as $base_translation) {
+                        $translations[] = [ 'base_store_translation_id' => ObjectID::make(),
+                                            'base_store_id' => $store->base_store_id,
+                                            'language_id' => $base_translation->language_id,
+                                            'description' => $base_translation->description,
+                                            'custom_title' => $base_translation->custom_title,
+                                           "created_at" => date("Y-m-d H:i:s"),
+                                           "updated_at" => date("Y-m-d H:i:s") ];
+                    }
+                    if (! empty($translations)) {
+                        DB::table('base_store_translations')->insert($translations);
+                    }
+
+                    $store->translation = $translations;
                     $returnBaseStores[] = $store;
                 }
             });
