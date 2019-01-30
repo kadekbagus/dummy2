@@ -19,7 +19,7 @@ use Config;
 
 class ProductListAPIController extends ControllerAPI
 {
-    protected $allowedRoles = ['product manager'];
+    protected $allowedRoles = ['product manager', 'article publisher', 'article writer'];
 
     /**
      * GET Search / list Product
