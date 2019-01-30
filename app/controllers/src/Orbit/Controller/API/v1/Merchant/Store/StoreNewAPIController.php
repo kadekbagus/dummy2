@@ -111,6 +111,7 @@ class StoreNewAPIController extends ControllerAPI
             $videoId4 = OrbitInput::post('video_id_4');
             $videoId5 = OrbitInput::post('video_id_5');
             $videoId6 = OrbitInput::post('video_id_6');
+            $translations = OrbitInput::post('translations');
 
             $storeHelper = StoreHelper::create();
             $storeHelper->storeCustomValidator();
@@ -190,6 +191,30 @@ class StoreNewAPIController extends ControllerAPI
             $newstore->video_id_4 = $videoId4;
             $newstore->video_id_5 = $videoId5;
             $newstore->video_id_6 = $videoId6;
+
+            if (! empty($translations) ) {
+                $dataTranslations = @json_decode($translations);
+                if (json_last_error() != JSON_ERROR_NONE) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+                }
+
+                if (! is_null($dataTranslations)) {
+                    // Get english tenant description for saving to default language
+                    foreach ($dataTranslations as $key => $val) {
+                        // Validation language id from translation
+                        $language = Language::where('language_id', '=', $key)->first();
+                        if (empty($language)) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                        }
+
+                        if ($key === $idLanguageEnglish->language_id) {
+                            $newstore->description = $val->description;
+                            $newstore->custom_title = $val->custom_title;
+                        }
+                    }
+                }
+            }
+
             $newstore->save();
 
             // save product tag
@@ -383,6 +408,11 @@ class StoreNewAPIController extends ControllerAPI
 
             $newstore->mall_id = $mall_id;
             $newstore->location = $storeHelper->getValidMall()->name;
+
+            // save translations
+            OrbitInput::post('translations', function($translation_json_string) use ($newstore, $storeHelper) {
+                $storeHelper->validateAndSaveTranslations($newstore, $translation_json_string, $scenario = 'create');
+            });
 
             Event::fire('orbit.basestore.postnewstore.after.save', array($this, $newstore));
             $this->response->data = $newstore;
