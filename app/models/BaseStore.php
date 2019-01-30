@@ -261,4 +261,9 @@ class BaseStore extends Eloquent
                     ->join('product_tags', 'product_tags.product_tag_id', '=', 'base_store_product_tag.product_tag_id');
     }
 
+    public function baseStoreTranslation()
+    {
+        return $this->hasMany('BaseStoreTranslation', 'base_store_id', 'base_store_id');
+    }
+
 }
