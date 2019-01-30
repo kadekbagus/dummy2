@@ -88,6 +88,12 @@ class ProductListAPIController extends ControllerAPI
                 $product->where('name', 'like', "%$name%");
             });
 
+            OrbitInput::get('country', function($country) use ($product)
+            {
+                $product->leftJoin('countries', 'countries.country_id', '=', 'products.country_id')
+                    ->where('countries.name', $country);
+            });
+
             OrbitInput::get('status', function($status) use ($product)
             {
                 $product->where('status', $status);
