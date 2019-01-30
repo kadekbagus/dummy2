@@ -87,7 +87,7 @@ class ProductListAPIController extends ControllerAPI
 
             OrbitInput::get('name_like', function($name) use ($product)
             {
-                $product->where('name', 'like', "%$name%");
+                $product->where('products.name', 'like', "%$name%");
             });
 
             OrbitInput::get('country', function($country) use ($product)
