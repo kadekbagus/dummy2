@@ -124,7 +124,7 @@ class StoreNewAPIController extends ControllerAPI
 
             $validation_data = [
                 'base_merchant_id'    => $base_merchant_id,
-                'translations'        => $translations,
+                //'translations'        => $translations,
                 'mall_id'             => $mall_id,
                 'floor_id'            => $floor_id,
                 'status'              => $status,
@@ -133,7 +133,7 @@ class StoreNewAPIController extends ControllerAPI
 
             $validation_error = [
                 'base_merchant_id'    => 'required|orbit.empty.base_merchant',
-                'translations'        => 'required',
+                //'translations'        => 'required',
                 'mall_id'             => 'required|orbit.empty.mall|orbit.mall.country:' . $base_merchant_id,
                 'floor_id'            => 'orbit.empty.floor:' . $mall_id,
                 'status'              => 'in:active,inactive',
@@ -196,30 +196,31 @@ class StoreNewAPIController extends ControllerAPI
             $newstore->video_id_6 = $videoId6;
 
             // Translations
+            OrbitInput::post('translations', function($translations) use ($newstore) {
             $idLanguageEnglish = Language::select('language_id')->where('name', '=', 'en')->first();
+                if (! empty($translations) ) {
+                    $dataTranslations = @json_decode($translations);
+                    if (json_last_error() != JSON_ERROR_NONE) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+                    }
 
-            if (! empty($translations) ) {
-                $dataTranslations = @json_decode($translations);
-                if (json_last_error() != JSON_ERROR_NONE) {
-                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
-                }
+                    if (! is_null($dataTranslations)) {
+                        // Get english tenant description for saving to default language
+                        foreach ($dataTranslations as $key => $val) {
+                            // Validation language id from translation
+                            $language = Language::where('language_id', '=', $key)->first();
+                            if (empty($language)) {
+                                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                            }
 
-                if (! is_null($dataTranslations)) {
-                    // Get english tenant description for saving to default language
-                    foreach ($dataTranslations as $key => $val) {
-                        // Validation language id from translation
-                        $language = Language::where('language_id', '=', $key)->first();
-                        if (empty($language)) {
-                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
-                        }
-
-                        if ($key === $idLanguageEnglish->language_id) {
-                            $newstore->description = $val->description;
-                            $newstore->custom_title = $val->custom_title;
+                            if ($key === $idLanguageEnglish->language_id) {
+                                $newstore->description = $val->description;
+                                $newstore->custom_title = $val->custom_title;
+                            }
                         }
                     }
                 }
-            }
+            });
 
             $newstore->save();
 
