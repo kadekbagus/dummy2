@@ -30,6 +30,7 @@ use BaseStore;
 use Orbit\Controller\API\v1\Merchant\Merchant\MerchantHelper;
 use Orbit\Database\ObjectID;
 use DB;
+use BaseStoreTranslation;
 
 class MerchantCopyToStoreAPIController extends ControllerAPI
 {
@@ -117,6 +118,9 @@ class MerchantCopyToStoreAPIController extends ControllerAPI
                     $store->description = $baseMerchant->description;
                     $store->custom_title = $baseMerchant->custom_title;
                     $store->save();
+
+                    // delete previous translation
+                    $deleteTranslation = BaseStoreTranslation::where('base_store_id', '=', $store->base_store_id)->delete();
 
                     $translations = [];
                     foreach ($baseMerchant->baseMerchantTranslation as $base_translation) {

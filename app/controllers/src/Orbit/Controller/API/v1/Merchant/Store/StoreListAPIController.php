@@ -109,7 +109,9 @@ class StoreListAPIController extends ControllerAPI
                                 'base_stores.video_id_3',
                                 'base_stores.video_id_4',
                                 'base_stores.video_id_5',
-                                'base_stores.video_id_6'
+                                'base_stores.video_id_6',
+                                'base_stores.description',
+                                'base_stores.custom_title'
                                 )
                             ->with('baseStoreTranslation')
                             ->join('base_merchants', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
