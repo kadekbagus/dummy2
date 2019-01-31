@@ -124,7 +124,7 @@ class StoreNewAPIController extends ControllerAPI
 
             $validation_data = [
                 'base_merchant_id'    => $base_merchant_id,
-                //'translations'        => $translations,
+                'translations'        => $translations,
                 'mall_id'             => $mall_id,
                 'floor_id'            => $floor_id,
                 'status'              => $status,
@@ -133,7 +133,7 @@ class StoreNewAPIController extends ControllerAPI
 
             $validation_error = [
                 'base_merchant_id'    => 'required|orbit.empty.base_merchant',
-                //'translations'        => 'required',
+                'translations'        => 'required',
                 'mall_id'             => 'required|orbit.empty.mall|orbit.mall.country:' . $base_merchant_id,
                 'floor_id'            => 'orbit.empty.floor:' . $mall_id,
                 'status'              => 'in:active,inactive',

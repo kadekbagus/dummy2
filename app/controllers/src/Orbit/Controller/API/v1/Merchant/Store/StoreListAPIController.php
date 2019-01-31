@@ -113,7 +113,7 @@ class StoreListAPIController extends ControllerAPI
                                 'base_stores.description',
                                 'base_stores.custom_title'
                                 )
-                            ->with('baseStoreTranslation')
+                            ->with('baseStoreTranslation','supportedLanguage')
                             ->join('base_merchants', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
                             ->leftJoin('objects', 'base_stores.floor_id', '=', 'objects.object_id')
                             ->leftJoin('merchants', 'base_stores.merchant_id', '=', 'merchants.merchant_id')
