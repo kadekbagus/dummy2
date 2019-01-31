@@ -19,7 +19,7 @@ use Config;
 
 class ProductListAPIController extends ControllerAPI
 {
-    protected $allowedRoles = ['product manager'];
+    protected $allowedRoles = ['product manager', 'article publisher', 'article writer'];
 
     /**
      * GET Search / list Product
@@ -55,7 +55,7 @@ class ProductListAPIController extends ControllerAPI
                     'status' => $status,
                 ),
                 array(
-                    'sortby' => 'in:name,status',
+                    'sortby' => 'in:name,status,created_at,updated_at',
                     'status' => 'in:active,inactive',
                 ),
                 array(
@@ -75,7 +75,9 @@ class ProductListAPIController extends ControllerAPI
             $product = Product::select(DB::raw("
                                     {$prefix}products.product_id,
                                     {$prefix}products.name,
-                                    {$prefix}products.status"
+                                    {$prefix}products.status,
+                                    {$prefix}products.created_at,
+                                    {$prefix}products.updated_at"
                                 ));
 
             OrbitInput::get('product_id', function($product_id) use ($product)
@@ -85,7 +87,13 @@ class ProductListAPIController extends ControllerAPI
 
             OrbitInput::get('name_like', function($name) use ($product)
             {
-                $product->where('name', 'like', "%$name%");
+                $product->where('products.name', 'like', "%$name%");
+            });
+
+            OrbitInput::get('country', function($country) use ($product)
+            {
+                $product->leftJoin('countries', 'countries.country_id', '=', 'products.country_id')
+                    ->where('countries.name', $country);
             });
 
             OrbitInput::get('status', function($status) use ($product)
@@ -112,8 +120,10 @@ class ProductListAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'name' => 'products.name',
-                    'status' => 'products.status',
+                    'name'       => 'products.name',
+                    'status'     => 'products.status',
+                    'created_at' => 'products.created_at',
+                    'updated_at' => 'products.updated_at',
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {

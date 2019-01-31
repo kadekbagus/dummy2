@@ -77,6 +77,7 @@ class ArticleUpdateAPIController extends ControllerAPI
             $objectCoupons = OrbitInput::post('object_coupons', []);
             $objectMalls = OrbitInput::post('object_malls', []);
             $objectMerchants = OrbitInput::post('object_merchants', []);
+            $objectProducts = OrbitInput::post('object_products', []);
             $categories = OrbitInput::post('categories', []);
             $videos = OrbitInput::post('videos', []);
             $cities = OrbitInput::post('cities', []);
@@ -243,6 +244,23 @@ class ArticleUpdateAPIController extends ControllerAPI
                     $mall[] = $saveObjectMall;
                 }
                 $updatedArticle->object_mall = $mall;
+            });
+
+            OrbitInput::post('object_products', function($objectProducts) use ($updatedArticle, $articleId) {
+                $deletedOldData = ArticleLinkToObject::where('article_id', '=', $articleId)
+                                                     ->where('object_type', '=', 'product')
+                                                     ->delete();
+
+                $product = array();
+                foreach ($objectProducts as $productId) {
+                    $saveObjectProduct = new ArticleLinkToObject();
+                    $saveObjectProduct->article_id = $articleId;
+                    $saveObjectProduct->object_id = $productId;
+                    $saveObjectProduct->object_type = 'product';
+                    $saveObjectProduct->save();
+                    $product[] = $saveObjectProduct;
+                }
+                $updatedArticle->object_product = $product;
             });
 
             OrbitInput::post('object_merchants', function($objectMerchants) use ($updatedArticle, $articleId, $prefix, $countryId) {
