@@ -563,7 +563,7 @@ class StoreSynchronization
                     // delete translation
                     $delete_translation = MerchantTranslation::where('merchant_id', $base_store_id)->delete(true);
                     // insert translation
-                    $base_translations = BaseMerchantTranslation::where('base_merchant_id', $base_merchant_id)->get();
+                    $base_translations = BaseStoreTranslation::where('base_store_id', $base_store_id)->get();
                     $translations = array();
                     foreach ($base_translations as $base_translation) {
                         $translations[] = [ 'merchant_translation_id' => ObjectID::make(),
