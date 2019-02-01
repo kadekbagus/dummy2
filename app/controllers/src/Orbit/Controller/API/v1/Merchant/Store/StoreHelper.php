@@ -313,6 +313,15 @@ class StoreHelper
 
             return TRUE;
         });
+
+        // Check the images, we are allowed array of images but not more that one
+        Validator::extend('nomore.than.one', function ($attribute, $value, $parameters) {
+            if (is_array($value['name']) && count($value['name']) > 1) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
     }
 
     public function getValidBaseStore()

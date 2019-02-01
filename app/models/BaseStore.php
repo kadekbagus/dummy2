@@ -272,4 +272,10 @@ class BaseStore extends Eloquent
                     ->join('languages', 'languages.language_id', '=', 'object_supported_language.language_id')
                     ->where('object_supported_language.object_type', '=', 'base_merchant');
     }
+
+    public function mediaBanner()
+    {
+        return $this->media()->where('media_name_id', 'base_store_banner');
+    }
+
 }
