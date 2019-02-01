@@ -163,6 +163,12 @@ return array(
                  'index' => 'store_mall_level_suggestions',
                  'type'  => 'basic'
             ],
+
+            'articles' => [
+                 'index' => 'articles',
+                 'type'  => 'basic'
+            ],
+
         ],
 
         // index list will be include in suggestion
@@ -254,7 +260,12 @@ return array(
                 'address_line' => '',
                 'country'      => '',
                 'description'  => ''
-            ]
+            ],
+
+            'articles' => [
+                 'title' => '^3',
+                 'body'  => '^5',
+            ],
         ]
     ],
 
@@ -926,6 +937,8 @@ return array(
             'mdm_portal' => 'X-OMS-MDM',
             'mt_portal' => 'X-OMS-MT',
             'rrp_portal' => 'X-OMS-RRP',
+            'am_portal' => 'X-OMS-AMP',
+            'pp_portal' => 'X-OMS-PP',
         ],
 
         /**
@@ -944,6 +957,8 @@ return array(
             'mdm_portal' => '8',
             'mt_portal' => '9',
             'rrp_portal' => '10',
+            'am_portal' => '11',
+            'pp_portal' => '12',
         ],
 
         /**
@@ -1064,6 +1079,33 @@ return array(
          * @Todo: use this config instead
          */
         'origin' => array(
+            'am_portal' => array(
+                'expire' => 3600,   // 1 hour
+                // From HTTP Headers
+                'header'  => array(
+                    'name'      => 'X-OMS-AMP'
+                ),
+                // From Query String
+                'query_string' => array(
+                    'name'      => 'X-OMS-AMP'
+                ),
+                // From Cookie
+                'cookie'    => array(
+                    'name'      => 'X-OMS-AMP',
+                    // Expire time, should be set equals or higher than
+                    // SessionConifg.expire
+                    'expire' => 62208000,   // two years
+                    // Path of the cookie
+                    'path'      => '/',
+                    // domain
+                    'domain'    => NULL,
+                    // secure transfer via HTTPS only
+                    'secure'    => FALSE,
+                    // Deny access from client side script
+                    'httponly'  => TRUE
+                ),
+            ),
+
             'mobile_ci' => array(
                 'expire' => 62208000,   // two years
 
@@ -1403,6 +1445,33 @@ return array(
                     'httponly'  => TRUE
                 ),
             ),
+
+            'pp_portal' => array(
+                'expire' => 3600,   // 1 hour
+                // From HTTP Headers
+                'header'  => array(
+                    'name'      => 'X-OMS-PP'
+                ),
+                // From Query String
+                'query_string' => array(
+                    'name'      => 'X-OMS-PP'
+                ),
+                // From Cookie
+                'cookie'    => array(
+                    'name'      => 'X-OMS-PP',
+                    // Expire time, should be set equals or higher than
+                    // SessionConifg.expire
+                    'expire' => 62208000,   // two years
+                    // Path of the cookie
+                    'path'      => '/',
+                    // domain
+                    'domain'    => NULL,
+                    // secure transfer via HTTPS only
+                    'secure'    => FALSE,
+                    // Deny access from client side script
+                    'httponly'  => TRUE
+                ),
+            ),
         ),
     ),
 
@@ -1459,6 +1528,8 @@ return array(
                 'Set-X-OMS-CS',
                 'Set-X-OMS-MDM',
                 'Set-X-OMS-MT',
+                'Set-X-OMS-AMP',
+                'Set-X-OMS-PP',
             ],
 
             // No need protocol, just enter domain name
@@ -1520,6 +1591,10 @@ return array(
                     'merchant_other_photos' => 'merchant',
                     'base_merchant_photos' => 'base_merchant',
                     'base_merchant_other_photos' => 'base_merchant',
+                    'article_cover_image' => 'article',
+                    'article_content_image' => 'article',
+                    'marketplace_image' => 'marketplace',
+                    'product_image' => 'product',
                     'review_image' => 'review',
                 ],
 
@@ -6909,7 +6984,85 @@ return array(
                 'name_long' => 'Click Brand Coupon',
                 'module_name' => 'Merchant',
                 'type' => 'click',
-                'object_type' => 'Tenant',
+                'object_type' => 'Merchant',
+                'parameter_name' => 'object_id'
+            ),
+            // Articles Activities
+            '195' => array(
+                'name' => 'click_see_all_articles',
+                'name_long' => 'Click See All Articles',
+                'module_name' => 'Article',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            '196' => array(
+                'name' => 'click_tab_menu',
+                'name_long' => 'Click Tab Menu',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            '197' => array(
+                'name' => 'click_article_list',
+                'name_long' => 'Click Article List',
+                'module_name' => 'Article',
+                'type' => 'click',
+                'object_type' => 'Article',
+                'parameter_name' => 'object_id'
+            ),
+            '198' => array(
+                'name' => 'view_article_detail',
+                'name_long' => 'View Article Detail Page',
+                'module_name' => 'Article',
+                'type' => 'view',
+                'object_type' => 'Article',
+                'parameter_name' => 'object_id'
+            ),
+
+            '199' => array(
+                'name' => 'click_image_article',
+                'name_long' => 'Click Image Article',
+                'module_name' => 'Article',
+                'type' => 'click',
+                'object_type' => 'Article',
+                'parameter_name' => 'object_id'
+            ),
+
+            '200' => array(
+                'name' => 'click_play_video_article',
+                'name_long' => 'Click Play Video Article',
+                'module_name' => 'Article',
+                'type' => 'click',
+                'object_type' => 'Article',
+                'parameter_name' => 'object_id'
+            ),
+
+            '201' => array(
+                'name' => 'click_share_article',
+                'name_long' => 'Click Share Article',
+                'module_name' => 'Article',
+                'type' => 'click',
+                'object_type' => 'Article',
+                'parameter_name' => 'object_id'
+            ),
+            // user click brand product
+            '202' => array(
+                'name' => 'click_brand_product',
+                'name_long' => 'Click Brand Product',
+                'module_name' => 'Product',
+                'type' => 'click',
+                'object_type' => 'Product',
+                'parameter_name' => 'object_id'
+            ),
+            // user click brand product detail
+            '203' => array(
+                'name' => 'click_brand_product_detail_link',
+                'name_long' => 'Click Brand Product Link',
+                'module_name' => 'Product',
+                'type' => 'click',
+                'object_type' => 'Product',
                 'parameter_name' => 'object_id'
             ),
             // user click brand social button on brand detail page
@@ -7341,6 +7494,12 @@ return array(
                 'enable' => FALSE,
                 'cache_ttl' => 60
             ],
+
+            // article list specific cache setting
+            'article-list' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
         ],
 
         // If value is TRUE, Redis key will be deleted when store / campaign inactive
@@ -7443,6 +7602,8 @@ return array(
         // file name, make sure it is the same file name as when you generate in
         // artisan command: php artisan generate:sitemap > app/storage/sitemap.xml
         'filename' => 'sitemap.xml',
+        // sitemap filename for articles
+        'filename_article' => 'sitemap-article.xml',
         // old config, for version 3.x angular based frontend app
         'hashbang' => FALSE,
         // URI mapping for each type of URLs
@@ -7468,6 +7629,10 @@ return array(
                     'uri' => 'malls',
                     'changefreq' => 'daily',
                 ),
+                'article' => array(
+                    'uri' => 'articles',
+                    'changefreq' => 'daily',
+                ),
             ),
             'detail' => array(
                 'promotion' => array(
@@ -7476,6 +7641,10 @@ return array(
                 ),
                 'event' => array(
                     'uri' => 'events/%s/%s',
+                    'changefreq' => 'monthly',
+                ),
+                'article' => array(
+                    'uri' => 'articles/%s',
                     'changefreq' => 'monthly',
                 ),
                 'promotional-event' => array(

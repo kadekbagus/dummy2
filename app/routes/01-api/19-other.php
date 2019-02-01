@@ -80,6 +80,14 @@ Route::get('/api/v1/pub/sitemap', function()
 /**
  * Get sitemap
  */
+Route::get('/api/v1/pub/sitemap-article', function()
+{
+    return Orbit\Controller\API\v1\Pub\SitemapReaderAPIController::create()->getSitemapArticle();
+});
+
+/**
+ * Get sitemap
+ */
 Route::get('/api/v1/store-list-adactive', function()
 {
     return Orbit\Controller\API\v1\Pub\Store\StoreListAdactiveAPIController::create()->getStoreListAdactive();
