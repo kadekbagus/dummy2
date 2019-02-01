@@ -603,12 +603,6 @@ class RatingReviewAPIController extends ControllerAPI
             $reply = $mongoClient->setEndPoint('reviews/' . $reviewId)
                                     ->request('GET');
 
-            // Make sure user has the right to delete the reply.
-            if ($reply->data->user_id !== $user->user_id) {
-                $errorMessage = 'You do not have right to delete the reply.';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-
             $deleteReply = $mongoClient->setEndPoint('reviews/' . $reviewId)
                                         ->request('DELETE');
 
