@@ -25,6 +25,7 @@ use MerchantStorePaymentProvider;
 use ProductTag;
 use BaseStoreProductTag;
 use Language;
+use Orbit\Database\ObjectID;
 
 class StoreUpdateAPIController extends ControllerAPI
 {
@@ -104,6 +105,7 @@ class StoreUpdateAPIController extends ControllerAPI
             $swiftCodes = OrbitInput::post('swift_codes',[]);
             $productTags = OrbitInput::post('product_tags', []);
             $translations = OrbitInput::post('translations');
+            $banner = OrbitInput::files('banner', null);
 
             $storeHelper = StoreHelper::create();
             $storeHelper->storeCustomValidator();

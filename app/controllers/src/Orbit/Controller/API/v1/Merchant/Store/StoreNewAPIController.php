@@ -23,6 +23,7 @@ use MerchantStorePaymentProvider;
 use ProductTag;
 use BaseStoreProductTag;
 use Language;
+use Orbit\Database\ObjectID;
 
 class StoreNewAPIController extends ControllerAPI
 {
@@ -113,6 +114,7 @@ class StoreNewAPIController extends ControllerAPI
             $videoId5 = OrbitInput::post('video_id_5');
             $videoId6 = OrbitInput::post('video_id_6');
             $translations = OrbitInput::post('translations');
+            $banner = OrbitInput::files('banner', null);
 
             $storeHelper = StoreHelper::create();
             $storeHelper->storeCustomValidator();
@@ -223,6 +225,42 @@ class StoreNewAPIController extends ControllerAPI
             });
 
             $newstore->save();
+
+            // if banner not send, copy banner from base merchant
+            $storeBanner = array();
+            if (empty($banner)) {
+                $bannerMerchant = Media::where('object_name', 'base_merchant')
+                                    ->where('media_name_id', 'base_merchant_banner')
+                                    ->where('object_id', $base_merchant_id)
+                                    ->get();
+
+                if (count($bannerMerchant)) {
+                    foreach ($bannerMerchant as $bm) {
+                        $storeBanner[] = [ "media_id" => ObjectID::make(),
+                                           "media_name_id" => 'base_store_banner',
+                                           "media_name_long" => str_replace('base_merchant_', 'base_store_', $bm->media_name_long),
+                                           "object_id" => $base_store_id,
+                                           "object_name" => 'base_store',
+                                           "file_name" => $bm->file_name,
+                                           "file_extension" => $bm->file_extension,
+                                           "file_size" => $bm->file_size,
+                                           "mime_type" => $bm->mime_type,
+                                           "path" => $bm->path,
+                                           "cdn_url" => $bm->cdn_url,
+                                           "cdn_bucket_name" => $bm->cdn_bucket_name,
+                                           "metadata" => $bm->metadata,
+                                           "modified_by" => $user->user_id,
+                                           "created_at" => date("Y-m-d H:i:s"),
+                                           "updated_at" => date("Y-m-d H:i:s")];
+                    }
+                }
+            }
+
+            if (! empty($storeBanner)) {
+                DB::table('media')->insert($storeBanner);
+            }
+
+            $newstore->media_banner = $storeBanner;
 
             // save product tag
             $tenantProductTags = array();
