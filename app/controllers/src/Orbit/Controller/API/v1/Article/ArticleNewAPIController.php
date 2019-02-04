@@ -77,6 +77,7 @@ class ArticleNewAPIController extends ControllerAPI
             $objectCoupons = OrbitInput::post('object_coupons', []);
             $objectMalls = OrbitInput::post('object_malls', []);
             $objectMerchants = OrbitInput::post('object_merchants', []);
+            $objectProducts = OrbitInput::post('object_products', []);
             $categories = OrbitInput::post('categories', []);
             $videos = OrbitInput::post('videos', []);
             $cities = OrbitInput::post('cities', []);
@@ -213,6 +214,17 @@ class ArticleNewAPIController extends ControllerAPI
             }
             $newArticle->object_mall = $mall;
 
+            $product = array();
+            foreach ($objectProducts as $productId) {
+                $saveObjectProduct = new ArticleLinkToObject();
+                $saveObjectProduct->article_id = $newArticle->article_id;
+                $saveObjectProduct->object_id = $productId;
+                $saveObjectProduct->object_type = 'product';
+                $saveObjectProduct->save();
+                $mall[] = $saveObjectProduct;
+            }
+            $newArticle->object_product = $product;
+
             $merchant = array();
 
             foreach ($objectMerchants as $merchantName) {
@@ -260,7 +272,7 @@ class ArticleNewAPIController extends ControllerAPI
                 $saveVideo = new ArticleVideo();
                 $saveVideo->article_id = $newArticle->article_id;
                 $saveVideo->video_id = $youtubeVideoId;
-                $saveVideo->tag_name = 'video_00' . $counter;
+                $saveVideo->tag_name = 'video_' . $counter;
                 $saveVideo->save();
                 $video[] = $saveVideo;
             }
