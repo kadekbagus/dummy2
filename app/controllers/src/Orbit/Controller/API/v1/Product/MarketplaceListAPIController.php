@@ -55,7 +55,7 @@ class MarketplaceListAPIController extends ControllerAPI
                     'status' => $status,
                 ),
                 array(
-                    'sortby' => 'in:name,website_url,country_name,status',
+                    'sortby' => 'in:name,website_url,country_name,status,created_at,updated_at',
                     'status' => 'in:active,inactive',
                 ),
                 array(
@@ -77,7 +77,9 @@ class MarketplaceListAPIController extends ControllerAPI
                                     {$prefix}marketplaces.name,
                                     {$prefix}marketplaces.website_url,
                                     {$prefix}countries.name as country_name,
-                                    {$prefix}marketplaces.status"
+                                    {$prefix}marketplaces.status,
+                                    {$prefix}marketplaces.created_at,
+                                    {$prefix}marketplaces.updated_at"
                                 ))
                                 ->join('countries', 'marketplaces.country_id', '=', 'countries.country_id');
 
@@ -124,6 +126,8 @@ class MarketplaceListAPIController extends ControllerAPI
                     'website_url' => 'website_url',
                     'country_name' => 'country_name',
                     'status' => 'marketplaces.status',
+                    'created_at' => 'marketplaces.created_at',
+                    'updated_at' => 'marketplaces.updated_at',
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
