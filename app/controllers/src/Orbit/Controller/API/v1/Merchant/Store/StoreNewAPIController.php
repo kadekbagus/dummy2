@@ -24,6 +24,7 @@ use ProductTag;
 use BaseStoreProductTag;
 use Language;
 use Orbit\Database\ObjectID;
+use Media;
 
 class StoreNewAPIController extends ControllerAPI
 {
@@ -234,18 +235,32 @@ class StoreNewAPIController extends ControllerAPI
                                     ->where('object_id', $base_merchant_id)
                                     ->get();
 
+                $path = public_path();
+                $baseConfig = Config::get('orbit.upload.base_store');
+                $type = 'banner';
+
                 if (count($bannerMerchant)) {
                     foreach ($bannerMerchant as $bm) {
+
+                        $filename = $newstore->base_store_id . '-' . $bm->file_name;
+                        $sourceMediaPath = $path . DS . $baseConfig[$type]['path'] . DS . $bm->file_name;
+                        $destMediaPath = $path . DS . $baseConfig[$type]['path'] . DS . $filename;
+
+                        if (! @copy($sourceMediaPath, $destMediaPath)) {
+                            OrbitShopAPI::throwInvalidArgument('failed copy banner image from merchant');
+                        }
+
                         $storeBanner[] = [ "media_id" => ObjectID::make(),
                                            "media_name_id" => 'base_store_banner',
                                            "media_name_long" => str_replace('base_merchant_', 'base_store_', $bm->media_name_long),
-                                           "object_id" => $base_store_id,
+                                           "object_id" => $newstore->base_store_id,
                                            "object_name" => 'base_store',
                                            "file_name" => $bm->file_name,
                                            "file_extension" => $bm->file_extension,
                                            "file_size" => $bm->file_size,
                                            "mime_type" => $bm->mime_type,
-                                           "path" => $bm->path,
+                                           "path" => $baseConfig[$type]['path'] . DS . $filename,
+                                           "realpath" => $destMediaPath,
                                            "cdn_url" => $bm->cdn_url,
                                            "cdn_bucket_name" => $bm->cdn_bucket_name,
                                            "metadata" => $bm->metadata,
