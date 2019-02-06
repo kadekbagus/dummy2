@@ -309,3 +309,6 @@ Artisan::add(new SendEmailBeforePaymentExpiredCommand);
 
 // Check Sepulsa Active Vouchers against our Active Campaign.
 Artisan::add(new SepulsaActiveVoucherReportCommand);
+
+// Check Sepulsa Active Vouchers against our Active Campaign.
+Artisan::add(new CopyStoreDataCommand);

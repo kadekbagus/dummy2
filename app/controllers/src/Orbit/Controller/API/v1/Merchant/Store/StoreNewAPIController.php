@@ -247,7 +247,7 @@ class StoreNewAPIController extends ControllerAPI
                         $destMediaPath = $path . DS . $baseConfig[$type]['path'] . DS . $filename;
 
                         if (! @copy($sourceMediaPath, $destMediaPath)) {
-                            OrbitShopAPI::throwInvalidArgument('failed copy banner image from merchant');
+                            OrbitShopAPI::throwInvalidArgument('failed copy banner image from base merchant');
                         }
 
                         $storeBanner[] = [ "media_id" => ObjectID::make(),
@@ -269,10 +269,10 @@ class StoreNewAPIController extends ControllerAPI
                                            "updated_at" => date("Y-m-d H:i:s")];
                     }
                 }
-            }
 
-            if (! empty($storeBanner)) {
-                DB::table('media')->insert($storeBanner);
+                if (! empty($storeBanner)) {
+                    DB::table('media')->insert($storeBanner);
+                }
             }
 
             $newstore->media_banner = $storeBanner;
