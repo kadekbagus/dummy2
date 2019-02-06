@@ -12,14 +12,14 @@ class CopyStoreDataCommand extends Command {
 	 *
 	 * @var string
 	 */
-	protected $name = 'store:copy-data';
+	protected $name = 'base-store:copy';
 
 	/**
 	 * The console command description.
 	 *
 	 * @var string
 	 */
-	protected $description = 'Command for copy base merchant translation and banner image to base store.';
+	protected $description = 'copy base merchant translation and banner image to base store.';
 
 	/**
 	 * Create a new command instance.
@@ -169,7 +169,7 @@ class CopyStoreDataCommand extends Command {
 	protected function getOptions()
 	{
         return array(
-             array('id', null, InputOption::VALUE_OPTIONAL, 'Store id to copy.', null),
+             array('id', null, InputOption::VALUE_OPTIONAL, 'Store id or base store id to copy.', null),
             array('dry-run', null, InputOption::VALUE_NONE, 'Run in dry-run mode, no data will be sent', null),
         );
 	}
