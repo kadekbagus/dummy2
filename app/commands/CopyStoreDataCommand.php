@@ -48,12 +48,14 @@ class CopyStoreDataCommand extends Command {
 
             $baseStore = BaseStore::where('base_store_id', '=', $input)->first();
             if (!$baseStore) {
-            	 throw new Exception("store not found", 1);
+            	 throw new Exception(sprintf('store with id "%s" not found', $input), 1);
             }
 
             $translations = [];
             $baseStoreId = $baseStore->base_store_id;
             $baseMerchantId = $baseStore->base_merchant_id;
+            $baseMerchant = BaseMerchant::where('base_merchant_id', '=', $baseMerchantId)->first();
+            $merchantName = $baseMerchant->name;
 
             // copy translation
             $baseMerchantTranslation = BaseMerchantTranslation::where('base_merchant_id', '=', $baseMerchantId)->get();
@@ -73,10 +75,10 @@ class CopyStoreDataCommand extends Command {
                 }
                 if (! empty($translations)) {
                     DB::table('base_store_translations')->insert($translations);
-                	$this->info(sprintf('translation data has been successfully copy'));
+                	$this->info(sprintf('translation for "%s" store_id "%s" has been successfully copy', $merchantName, $baseStoreId));
                 }
             } else {
-            	$this->error('translation not found');
+            	$this->error(sprintf('translation for "%s" store_id "%s" not found', $merchantName, $baseStoreId));
             }
 
             // copy banner image
@@ -115,7 +117,7 @@ class CopyStoreDataCommand extends Command {
                     $destMediaPath = $path . DS . $baseConfig[$type]['path'] . DS . $filename;
 
                     if (! @copy($sourceMediaPath, $destMediaPath)) {
-                        $this->error('failed copy banner image from base merchant');
+                      throw new Exception(sprintf('failed copy banner image for "%s" store_id "%s"', $merchantName, $baseStoreId));
                     }
 
                     $storeBanner[] = [ "media_id" => ObjectID::make(),
@@ -138,10 +140,10 @@ class CopyStoreDataCommand extends Command {
 
 	            if (! empty($storeBanner)) {
 	                DB::table('media')->insert($storeBanner);
-	                $this->info(sprintf('banner image has been successfully copy'));
+	                $this->info(sprintf('banner image for "%s" store_id "%s" has been successfully copy', $merchantName, $baseStoreId));
 	            }
             } else {
-            	$this->error('banner not found');
+            	$this->error(sprintf('banner image for "%s" store_id "%s" not found', $merchantName, $baseStoreId));
             }
 
 
