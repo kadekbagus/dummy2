@@ -31,6 +31,7 @@ use Orbit\Controller\API\v1\Merchant\Merchant\MerchantHelper;
 use Orbit\Database\ObjectID;
 use DB;
 use BaseStoreTranslation;
+use BaseStoreProductTag;
 
 class MerchantCopyToStoreAPIController extends ControllerAPI
 {
@@ -136,7 +137,25 @@ class MerchantCopyToStoreAPIController extends ControllerAPI
                         DB::table('base_store_translations')->insert($translations);
                     }
 
+                    // delete previous product tags
+                    $deleteProductTag = BaseStoreProductTag::where('base_store_id', '=', $store->base_store_id)->delete();
+
+                    // copy product tags
+                    $productTags = [];
+                    foreach($baseMerchant->productTags as $product_tag) {
+                        $productTags[] = ["base_store_product_tag_id" => ObjectID::make(),
+                                          "base_store_id" => $store->base_store_id,
+                                          "product_tag_id" => $product_tag->product_tag_id,
+                                          "created_at" => date("Y-m-d H:i:s"),
+                                          "updated_at" => date("Y-m-d H:i:s")
+                                        ];
+                    }
+                    if (! empty($productTags)) {
+                        DB::table('base_store_product_tag')->insert($productTags);
+                    }
+
                     $store->translation = $translations;
+                    $store->product_tags = $productTags;
                     $returnBaseStores[] = $store;
                 }
             });
