@@ -403,6 +403,9 @@ class StoreHelper
                     if ($value !== null && !is_string($value)) {
                         OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.value'));
                     }
+                    if ($field=='description' && $value == '') {
+                        OrbitShopAPI::throwInvalidArgument('Description field is required');
+                    }
                 }
                 if (empty($existing_translation)) {
                     $operations[] = ['create', $language_id, $translations];
