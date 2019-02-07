@@ -158,7 +158,7 @@ class CopyStoreDataCommand extends Command {
 
                 $user = User::where('username', 'orbitadmin')->firstOrFail();
 
-                $this->info(sprintf('running store sync with data "%s" user "%s"', $syncData, $user));
+                $this->info(sprintf('running store sync with store_id "%s" user "%s"', $baseStoreId, $user->user_email));
 
                 // queue for data synchronization
                 Queue::push('Orbit\\Queue\\StoreSynchronization', [

@@ -48,6 +48,7 @@ use ProductTagObject;
 use BaseStoreProductTag;
 use BaseMerchantProductTag;
 use CouponRetailerRedeem;
+use BaseStoreTranslation;
 
 class StoreSynchronization
 {
