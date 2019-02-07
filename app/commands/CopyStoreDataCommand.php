@@ -7,38 +7,40 @@ use Orbit\Database\ObjectID;
 
 class CopyStoreDataCommand extends Command {
 
-	/**
-	 * The console command name.
-	 *
-	 * @var string
-	 */
-	protected $name = 'base-store:copy';
+  /**
+   * The console command name.
+   *
+   * @var string
+   */
+  protected $name = 'base-store:copy';
 
-	/**
-	 * The console command description.
-	 *
-	 * @var string
-	 */
-	protected $description = 'copy base merchant translation and banner image to base store.';
+  /**
+   * The console command description.
+   *
+   * @var string
+   */
+  protected $description = 'copy base merchant translation and banner image to base store.';
 
-	/**
-	 * Create a new command instance.
-	 *
-	 * @return void
-	 */
-	public function __construct()
-	{
-		parent::__construct();
-	}
+  /**
+   * Create a new command instance.
+   *
+   * @return void
+   */
+  public function __construct()
+  {
+    parent::__construct();
+  }
 
-	/**
-	 * Execute the console command.
-	 *
-	 * @return mixed
-	 */
-	public function fire()
-	{
-		try {
+  /**
+   * Execute the console command.
+   *
+   * @return mixed
+   */
+  public function fire()
+  {
+    try {
+            DB::beginTransaction();
+            $updateFlag = false;
             $input = ! empty($this->option('id')) ? $this->option('id') : file_get_contents("php://stdin");
             $input = trim($input);
 
@@ -48,7 +50,7 @@ class CopyStoreDataCommand extends Command {
 
             $baseStore = BaseStore::where('base_store_id', '=', $input)->first();
             if (!$baseStore) {
-            	 throw new Exception(sprintf('store with id "%s" not found', $input), 1);
+               throw new Exception(sprintf('store with id "%s" not found', $input), 1);
             }
 
             $translations = [];
@@ -61,7 +63,7 @@ class CopyStoreDataCommand extends Command {
             $baseMerchantTranslation = BaseMerchantTranslation::where('base_merchant_id', '=', $baseMerchantId)->get();
 
             if (count($baseMerchantTranslation)) {
-            	// delete previous translation
+              // delete previous translation
                 $deleteTranslation = BaseStoreTranslation::where('base_store_id', '=', $baseStoreId)->delete();
 
                 foreach ($baseMerchantTranslation as $base_translation) {
@@ -74,11 +76,13 @@ class CopyStoreDataCommand extends Command {
                                        "updated_at" => date("Y-m-d H:i:s") ];
                 }
                 if (! empty($translations)) {
-                    DB::table('base_store_translations')->insert($translations);
-                	$this->info(sprintf('translation for "%s" store_id "%s" has been successfully copy', $merchantName, $baseStoreId));
+                  $updateFlag = true;
+                  DB::table('base_store_translations')->insert($translations);
+                  $this->info(sprintf('translation for "%s" store_id "%s" has been successfully copy', $merchantName, $baseStoreId));
                 }
             } else {
-            	$this->error(sprintf('translation for "%s" store_id "%s" not found', $merchantName, $baseStoreId));
+
+              $this->error(sprintf('translation for "%s" store_id "%s" not found', $merchantName, $baseStoreId));
             }
 
             // copy banner image
@@ -89,26 +93,26 @@ class CopyStoreDataCommand extends Command {
 
             $storeBanner = array();
             if (count($bannerMerchant)) {
-            	$path = public_path();
+              $path = public_path();
                 $baseConfig = Config::get('orbit.upload.base_store');
                 $type = 'banner';
 
                 // delete previous store banner
-	            $pastMedia = Media::where('object_id', $baseStoreId)
-	                              ->where('object_name', 'base_store')
-	                              ->where('media_name_id', 'base_store_banner');
+              $pastMedia = Media::where('object_id', $baseStoreId)
+                                ->where('object_name', 'base_store')
+                                ->where('media_name_id', 'base_store_banner');
 
-	            // Delete each files
-	            $oldMediaFiles = $pastMedia->get();
-	            foreach ($oldMediaFiles as $oldMedia) {
-	                // No need to check the return status, just delete and forget
-	                @unlink($oldMedia->realpath);
-	            }
+              // Delete each files
+              $oldMediaFiles = $pastMedia->get();
+              foreach ($oldMediaFiles as $oldMedia) {
+                  // No need to check the return status, just delete and forget
+                  @unlink($oldMedia->realpath);
+              }
 
-	            // Delete from database
-	            if (count($oldMediaFiles) > 0) {
-	                $pastMedia->delete();
-	            }
+              // Delete from database
+              if (count($oldMediaFiles) > 0) {
+                  $pastMedia->delete();
+              }
 
                 foreach ($bannerMerchant as $bm) {
 
@@ -138,42 +142,63 @@ class CopyStoreDataCommand extends Command {
                                        "updated_at" => date("Y-m-d H:i:s")];
                 }
 
-	            if (! empty($storeBanner)) {
-	                DB::table('media')->insert($storeBanner);
-	                $this->info(sprintf('banner image for "%s" store_id "%s" has been successfully copy', $merchantName, $baseStoreId));
-	            }
+              if (! empty($storeBanner)) {
+                  $updateFlag = true;
+                  DB::table('media')->insert($storeBanner);
+                  $this->info(sprintf('banner image for "%s" store_id "%s" has been successfully copy', $merchantName, $baseStoreId));
+              }
             } else {
-            	$this->error(sprintf('banner image for "%s" store_id "%s" not found', $merchantName, $baseStoreId));
+              $this->error(sprintf('banner image for "%s" store_id "%s" not found', $merchantName, $baseStoreId));
             }
 
+            if ($updateFlag) {
+                $syncType = 'store';
+                $syncData = [$baseStoreId];
+                $queueName = Config::get('queue.connections.store_sync.queue', 'store_sync');
 
+                $user = User::where('username', 'orbitadmin')->firstOrFail();
+
+                $this->info(sprintf('running store sync with data "%s" user "%s"', $syncData, $user));
+
+                // queue for data synchronization
+                Queue::push('Orbit\\Queue\\StoreSynchronization', [
+                    'sync_type' => $syncType,
+                    'sync_data' => $syncData,
+                    'user' => $user->user_id
+                ], $queueName);
+            }
+            DB::commit();
         } catch (\Exception $e) {
+            DB::rollBack();
             $this->error($e->getMessage());
         }
-	}
+  }
 
-	/**
-	 * Get the console command arguments.
-	 *
-	 * @return array
-	 */
-	protected function getArguments()
-	{
-		return array(
-		);
-	}
+  /**
+   * Get the console command arguments.
+   *
+   * @return array
+   */
+  protected function getArguments()
+  {
+    return array(
+    );
+  }
 
-	/**
-	 * Get the console command options.
-	 *
-	 * @return array
-	 */
-	protected function getOptions()
-	{
+  /**
+   * Get the console command options.
+   *
+   * @return array
+   */
+  protected function getOptions()
+  {
         return array(
              array('id', null, InputOption::VALUE_OPTIONAL, 'Store id or base store id to copy.', null),
             array('dry-run', null, InputOption::VALUE_NONE, 'Run in dry-run mode, no data will be sent', null),
         );
-	}
+  }
 
 }
+
+
+
