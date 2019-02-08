@@ -19,7 +19,7 @@ use Config;
 
 class ProductListAPIController extends ControllerAPI
 {
-    protected $allowedRoles = ['product manager'];
+    protected $allowedRoles = ['product manager', 'article publisher', 'article writer'];
 
     /**
      * GET Search / list Product
@@ -87,7 +87,13 @@ class ProductListAPIController extends ControllerAPI
 
             OrbitInput::get('name_like', function($name) use ($product)
             {
-                $product->where('name', 'like', "%$name%");
+                $product->where('products.name', 'like', "%$name%");
+            });
+
+            OrbitInput::get('country', function($country) use ($product)
+            {
+                $product->leftJoin('countries', 'countries.country_id', '=', 'products.country_id')
+                    ->where('countries.name', $country);
             });
 
             OrbitInput::get('status', function($status) use ($product)
