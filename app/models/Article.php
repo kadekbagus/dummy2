@@ -52,13 +52,22 @@ class Article extends Eloquent
                                 $q->on('merchant_id', '=', 'object_id');
                             });
     }
-    
+
     public function objectProduct()
     {
         return $this->hasMany('ArticleLinkToObject', 'article_id', 'article_id')
                     ->where('article_link_to_objects.object_type', 'product')
                     ->join('products', function($q) {
                                 $q->on('product_id', '=', 'object_id');
+                            });
+    }
+
+    public function objectArticle()
+    {
+        return $this->hasMany('ArticleLinkToObject', 'article_id', 'article_id')
+                    ->where('article_link_to_objects.object_type', 'article')
+                    ->join('articles', function($q) {
+                                $q->on('article_id', '=', 'object_id');
                             });
     }
 

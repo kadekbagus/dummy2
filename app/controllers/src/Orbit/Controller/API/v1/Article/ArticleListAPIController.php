@@ -83,6 +83,7 @@ class ArticleListAPIController extends ControllerAPI
                                 ->with('objectMall')
                                 ->with('objectMerchant')
                                 ->with('objectProduct')
+                                ->with('objectArticle')
                                 ->with('category')
                                 ->with('mediaCover')
                                 ->with('mediaContent')
