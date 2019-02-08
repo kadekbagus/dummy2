@@ -31,7 +31,7 @@ class MerchantHelper
     {
         // Check the existance of base merchant id
         Validator::extend('orbit.empty.base_merchant', function ($attribute, $value, $parameters) {
-            $baseMerchant = BaseMerchant::excludeDeleted()
+            $baseMerchant = BaseMerchant::with('baseMerchantTranslation', 'productTags')->excludeDeleted()
                                    ->where('base_merchant_id', $value)
                                    ->first();
 
