@@ -48,6 +48,7 @@ use ProductTagObject;
 use BaseStoreProductTag;
 use BaseMerchantProductTag;
 use CouponRetailerRedeem;
+use BaseStoreTranslation;
 
 class StoreSynchronization
 {
@@ -563,7 +564,7 @@ class StoreSynchronization
                     // delete translation
                     $delete_translation = MerchantTranslation::where('merchant_id', $base_store_id)->delete(true);
                     // insert translation
-                    $base_translations = BaseMerchantTranslation::where('base_merchant_id', $base_merchant_id)->get();
+                    $base_translations = BaseStoreTranslation::where('base_store_id', $base_store_id)->get();
                     $translations = array();
                     foreach ($base_translations as $base_translation) {
                         $translations[] = [ 'merchant_translation_id' => ObjectID::make(),
@@ -716,10 +717,22 @@ class StoreSynchronization
                     $map_image = $this->updateMedia('map', $map, $base_store_id);
 
                     // copy banner from base_store directory to retailer directory
-                    $banner = Media::where('object_name', 'base_merchant')
-                                    ->where('media_name_id', 'base_merchant_banner')
-                                    ->where('object_id', $base_merchant_id)
-                                    ->get();
+                    $bannerStore = Media::where('object_name', 'base_store')
+                                        ->where('media_name_id', 'base_store_banner')
+                                        ->where('object_id', $base_store_id)
+                                        ->get();
+
+                    $bannerMerchant = Media::where('object_name', 'base_merchant')
+                                        ->where('media_name_id', 'base_merchant_banner')
+                                        ->where('object_id', $base_merchant_id)
+                                        ->get();
+
+                    // if banner store exist use banner store, if not use merchant banner
+                    if (count($bannerStore)) {
+                        $banner = $bannerStore;
+                    } else {
+                        $banner = $bannerMerchant;
+                    }
                     $banner_image = $this->updateMedia('banner', $banner, $base_store_id);
 
                     $images = array_merge($logo_image, $pic_image, $map_image, $banner_image);
