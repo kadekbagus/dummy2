@@ -217,6 +217,7 @@ class RatingReviewAPIController extends ControllerAPI
             // filter type
             if (!empty($is_image_reviewing)) {
                 $queryString['is_image_reviewing'] = $is_image_reviewing;
+                $queryString['status'] = 'active';
             }
 
             $mongoConfig = Config::get('database.mongodb');
