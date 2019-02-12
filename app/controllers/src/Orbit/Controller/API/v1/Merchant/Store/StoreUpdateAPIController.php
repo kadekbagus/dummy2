@@ -194,6 +194,54 @@ class StoreUpdateAPIController extends ControllerAPI
                 $updatestore->is_payment_acquire = $paymentAcquire;
             });
 
+            OrbitInput::post('url', function($url) use ($updatestore) {
+                $updatestore->url = $url;
+            });
+
+            OrbitInput::post('facebook_url', function($facebook_url) use ($updatestore) {
+                $updatestore->facebook_url = $facebook_url;
+            });
+
+            OrbitInput::post('instagram_url', function($instagram_url) use ($updatestore) {
+                $updatestore->instagram_url = $instagram_url;
+            });
+
+            OrbitInput::post('twitter_url', function($twitter_url) use ($updatestore) {
+                $updatestore->twitter_url = $twitter_url;
+            });
+
+            OrbitInput::post('youtube_url', function($youtube_url) use ($updatestore) {
+                $updatestore->youtube_url = $youtube_url;
+            });
+
+            OrbitInput::post('line_url', function($line_url) use ($updatestore) {
+                $updatestore->line_url = $line_url;
+            });
+
+            OrbitInput::post('video_id_1', function($video_id_1) use ($updatestore) {
+                $updatestore->video_id_1 = $video_id_1;
+            });
+
+            OrbitInput::post('video_id_2', function($video_id_2) use ($updatestore) {
+                $updatestore->video_id_2 = $video_id_2;
+            });
+
+            OrbitInput::post('video_id_3', function($video_id_3) use ($updatestore) {
+                $updatestore->video_id_3 = $video_id_3;
+            });
+
+            OrbitInput::post('video_id_4', function($video_id_4) use ($updatestore) {
+                $updatestore->video_id_4 = $video_id_4;
+            });
+
+            OrbitInput::post('video_id_5', function($video_id_5) use ($updatestore) {
+                $updatestore->video_id_5 = $video_id_5;
+            });
+
+            OrbitInput::post('video_id_6', function($video_id_6) use ($updatestore) {
+                $updatestore->video_id_6 = $video_id_6;
+            });
+
             $updatestore->save();
 
             OrbitInput::post('product_tags', function($productTags) use ($updatestore, $user, $baseStoreId) {
