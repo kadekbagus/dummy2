@@ -24,6 +24,16 @@ Route::post('/api/v1/pub/rating/update', function()
 Route::post('/app/v1/pub/rating/update', ['as' => 'rating-update', 'uses' => 'IntermediatePubAuthController@Rating\RatingUpdate_postUpdateRating']);
 
 /**
+ * Post update rating reply
+ */
+Route::post('/api/v1/pub/rating-reply/update', function()
+{
+    return Orbit\Controller\API\v1\Pub\Rating\RatingReplyUpdateAPIController::create()->postUpdateRatingReply();
+});
+
+Route::post('/app/v1/pub/rating-reply/update', ['as' => 'rating-reply-update', 'uses' => 'IntermediatePubAuthController@Rating\RatingReplyUpdate_postUpdateRatingReply']);
+
+/**
  * List rating and review
  */
 Route::get('/api/v1/pub/rating/list', function()
