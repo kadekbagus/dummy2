@@ -429,9 +429,6 @@ class NewsAPIController extends ControllerAPI
             // Commit the changes
             $this->commit();
 
-            // Push notification
-            Event::fire('orbit.news.postupdatenews-storenotificationupdate.after.commit', array($this, $newnews, $id_language_default));
-
             // Successfull Creation
             $activityNotes = sprintf('News Created: %s', $newnews->news_name);
             $activity->setUser($user)
@@ -1063,7 +1060,6 @@ class NewsAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.news.postupdatenews.after.save', array($this, $updatednews));
-            Event::fire('orbit.news.postupdatenews-mallnotification.after.save', array($this, $updatednews));
             $this->response->data = $updatednews;
             // $this->response->data->translation_default = $updatednews_default_language;
 
@@ -1071,6 +1067,7 @@ class NewsAPIController extends ControllerAPI
             $this->commit();
 
             // Push notification
+            Event::fire('orbit.news.postupdatenews-mallnotification.after.commit', array($this, $updatednews));
             Event::fire('orbit.news.postupdatenews-storenotificationupdate.after.commit', array($this, $updatednews));
 
             // Successfull Update

@@ -2435,7 +2435,6 @@ class CouponAPIController extends ControllerAPI
             });
 
             Event::fire('orbit.coupon.postupdatecoupon.after.save', array($this, $updatedcoupon));
-            Event::fire('orbit.coupon.postupdatecoupon-mallnotification.after.save', array($this, $updatedcoupon));
 
             OrbitInput::post('translations', function($translation_json_string) use ($updatedcoupon, $mallid, $is_3rd_party_promotion) {
                 $is_third_party = $is_3rd_party_promotion === 'Y' ? TRUE : FALSE;
@@ -2504,6 +2503,7 @@ class CouponAPIController extends ControllerAPI
             $this->commit();
 
             // Push notification
+            Event::fire('orbit.coupon.postupdatecoupon-mallnotification.after.commit', array($this, $updatedcoupon));
             Event::fire('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commit', array($this, $updatedcoupon));
 
             // Successfull Update
