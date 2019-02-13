@@ -68,6 +68,7 @@ class UserCIAPIController extends BaseAPIController
             }
 
             $data = new \stdclass();
+            $data->id = $user->user_id;
             $data->email = $user->user_email;
             $data->firstname = $user->user_firstname;
             $data->lastname = $user->user_lastname;
