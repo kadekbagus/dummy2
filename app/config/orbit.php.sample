@@ -7100,6 +7100,15 @@ return array(
                 'object_type' => 'Mall',
                 'parameter_name' => 'object_id'
             ),
+            // user click video play brand on brand detail page
+            '208' => array(
+                'name' => 'click_play_video_mall',
+                'name_long' => 'Click Video Play Mall',
+                'module_name' => 'Mall',
+                'type' => 'click',
+                'object_type' => 'Mall',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 
