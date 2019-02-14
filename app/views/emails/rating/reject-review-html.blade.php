@@ -27,8 +27,11 @@
             margin-top : 100px;
         }
 
-        .review-data {
+        .reject-reasons {
             list-style: none;
+        }
+        .reject-reasons li {
+            color : red;
         }
     </style>
 </head>
@@ -41,18 +44,7 @@
         </div>
         <div class="content">
             <p>Dear, {{ $fullname }}</p>
-            <p>We are sorry, your review on {{$location}} has been rejected.</p>
-            <p>The details as follow:</p>
-            <ul class="review-data">
-                <li>Date: {{ $date }} UTC</li>
-                <li>Type: {{ $type }}</li>
-                <li>Location: {{ $location_detail }}</li>
-                <li>Name: {{ $name }}</li>
-                <li>Email: {{ $email }}</li>
-                <li>Review ID: {{ $review_id }}</li>
-                <li>Rating: {{ $rating }}</li>
-                <li>Review: {{ $review }}</li>
-            </ul>
+            <p>We are sorry, your review for {{ $campaignAndLocationInfo }} has been rejected.</p>
         </div>
 
         <div class="footer">
