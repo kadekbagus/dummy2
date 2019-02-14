@@ -7091,6 +7091,15 @@ return array(
                 'object_type' => 'Tenant',
                 'parameter_name' => 'object_id'
             ),
+            // user click video thumbnail on mall detail page
+            '207' => array(
+                'name' => 'click_video_thumbnail',
+                'name_long' => 'Click Video Thumbnail',
+                'module_name' => 'Mall',
+                'type' => 'click',
+                'object_type' => 'Mall',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 
