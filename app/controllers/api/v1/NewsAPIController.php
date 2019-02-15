@@ -1063,12 +1063,22 @@ class NewsAPIController extends ControllerAPI
             $this->response->data = $updatednews;
             // $this->response->data->translation_default = $updatednews_default_language;
 
+            // Push notification
+            Queue::push('Orbit\\Queue\\Notification\\NewsMallNotificationQueue', [
+                'news_id' => $updatednews->news_id,
+            ]);
+
+            Queue::push('Orbit\\Queue\\Notification\\NewsStoreNotificationQueue', [
+                'news_id' => $updatednews->news_id,
+            ]);
+
+
+            // Event::fire('orbit.news.postupdatenews-mallnotification.after.commit', array($this, $updatednews));
+            // Event::fire('orbit.news.postupdatenews-storenotificationupdate.after.commit', array($this, $updatednews));
+
             // Commit the changes
             $this->commit();
 
-            // Push notification
-            Event::fire('orbit.news.postupdatenews-mallnotification.after.commit', array($this, $updatednews));
-            Event::fire('orbit.news.postupdatenews-storenotificationupdate.after.commit', array($this, $updatednews));
 
             // Successfull Update
             $activityNotes = sprintf('News updated: %s', $updatednews->news_name);
