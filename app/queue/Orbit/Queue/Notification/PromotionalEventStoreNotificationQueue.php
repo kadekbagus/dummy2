@@ -1,6 +1,6 @@
 <?php namespace Orbit\Queue\Notification;
 /**
- * Process queue for sent news / promotion store notification
+ * Process queue for sent promotional event store notification
  *
  */
 use Config;
@@ -16,7 +16,7 @@ use Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
 use stdClass;
 
-class NewsStoreNotificationQueue
+class PromotionalEventStoreNotificationQueue
 {
     /**
      * Laravel main method to fire a job on a queue.
@@ -39,12 +39,13 @@ class NewsStoreNotificationQueue
 
             return [
                 'status' => 'fail',
-                'message' => sprintf('[Job ID: `%s`] News Store Notification News ID %s is not found or inactive .', $job->getJobId(), $newsId)
+                'message' => sprintf('[Job ID: `%s`] Promotional Event Store Notification News ID %s is not found or inactive .', $job->getJobId(), $newsId)
             ];
         }
 
 
         try {
+
 
             //Check date and status
             $timezone = 'Asia/Jakarta'; // now with jakarta timezone
@@ -58,16 +59,13 @@ class NewsStoreNotificationQueue
             $oneSignalConfig = Config::get('orbit.vendor_push_notification.onesignal');
             $table_prefix = DB::getTablePrefix();
 
-            if ($updatednews->status === 'active') {
+            if ($updatedPromotionalEvent->status === 'active') {
 
                 // check existing notification
-                $objectType = $updatednews->object_type;
-                if ($objectType === 'news') {
-                    $objectType = 'event';
-                }
+                $objectType = 'event';
 
                 $queryStringStoreObject = [
-                    'object_id' => $newsId,
+                    'object_id' => $updatedPromotionalEvent->news_id,
                     'object_type' => $objectType,
                 ];
 
@@ -77,7 +75,7 @@ class NewsStoreNotificationQueue
 
                 $newsMain = News::join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
                                  ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
-                                 ->where('news_id', '=', $newsId);
+                                 ->where('news_id', '=', $updatedPromotionalEvent->news_id);
 
                 $langNews = $newsMain->select(DB::raw('default_languages.name as default_language_name'))->first();
                 $defaultLangName = $langNews->default_language_name;
@@ -87,7 +85,7 @@ class NewsStoreNotificationQueue
                                  ->first();
 
                 $userSponsor = [];
-                if ($updatednews->is_sponsored === 'Y') {
+                if ($updatedPromotionalEvent->is_sponsored === 'Y') {
                     // Notification Credit Card & E-wallet
                     // get campaign cities
                     $cities = News::select('news.news_name',
@@ -111,7 +109,7 @@ class NewsStoreNotificationQueue
                                       ->leftJoin(DB::raw("{$table_prefix}mall_cities as mc2"), function($join) {
                                             $join->on(DB::raw('mc2.city'), '=', DB::raw('m2.city'));
                                         })
-                                      ->where('news.news_id', '=', $newsId)
+                                      ->where('news.news_id', '=', $updatedPromotionalEvent->news_id)
                                       ->groupBy('city_id')
                                       ->get();
 
@@ -129,7 +127,7 @@ class NewsStoreNotificationQueue
                                                             ->join('sponsor_providers','sponsor_providers.sponsor_provider_id', '=', 'object_sponsor.sponsor_provider_id')
                                                             ->where('sponsor_providers.status', 'active')
                                                             ->where('sponsor_providers.object_type', 'ewallet')
-                                                            ->where('object_sponsor.object_id', $newsId)
+                                                            ->where('object_sponsor.object_id', $updatedPromotionalEvent->news_id)
                                                             ->get();
 
                     if (!empty($sponsorProviderEwallet)) {
@@ -144,7 +142,7 @@ class NewsStoreNotificationQueue
                                                             ->join('sponsor_credit_cards','sponsor_credit_cards.sponsor_provider_id', '=', 'sponsor_providers.sponsor_provider_id')
                                                             ->where('sponsor_providers.status', 'active')
                                                             ->where('sponsor_providers.object_type', 'bank')
-                                                            ->where('object_sponsor.object_id', $newsId)
+                                                            ->where('object_sponsor.object_id', $updatedPromotionalEvent->news_id)
                                                             ->get();
 
                     if (!empty($sponsorProviderCreditCard)) {
@@ -169,7 +167,7 @@ class NewsStoreNotificationQueue
                     }
                 }
 
-                $launchUrl = LandingPageUrlGenerator::create($_news->object_type, $_news->news_id, $_news->news_name)->generateUrl(true);
+                $launchUrl = LandingPageUrlGenerator::create('promotional-event', $_news->news_id, $_news->news_name)->generateUrl(true);
                 $attachmentPath = null;
                 $attachmentRealPath = null;
                 $cdnUrl = null;
@@ -200,7 +198,6 @@ class NewsStoreNotificationQueue
                         }
                     }
                 }
-
 
                 // Insert when no data, update when exist
                 if (! empty($storeObjectNotifications->data->records)) {
@@ -235,11 +232,9 @@ class NewsStoreNotificationQueue
                                                         ->request('PUT');
                         }
                     }
-
-
                 } else {
                     // Insert
-                    $newsLinkToTenant = NewsMerchant::where('news_id', $newsId)
+                    $newsLinkToTenant = NewsMerchant::where('news_id', $updatedPromotionalEvent->news_id)
                                                     ->lists('merchant_id');
 
                     $tenantIds = '';
@@ -247,12 +242,12 @@ class NewsStoreNotificationQueue
                         $tenantIds = json_encode($newsLinkToTenant);
                     }
 
-                    // get user_ids and tokens
                     $queryStringUserFollow = [
                         'object_id'   => $tenantIds,
                         'object_type' => 'store'
                     ];
 
+                    // get user_ids and tokens
                     $userFollows = $mongoClient->setQueryString($queryStringUserFollow)
                                             ->setEndPoint('user-id-follows')
                                             ->request('GET');
@@ -272,27 +267,15 @@ class NewsStoreNotificationQueue
                             $userIds = array_values(array_unique($userIds));
                         }
 
-                        // Split data
-                        $totalUserIds = count($userIds);
-                        if (count($totalUserIds) > 0) {
-                            $chunkSize = 100;
-                            $chunkedArray = array_chunk($userIds, $chunkSize);
+                        $queryStringUserNotifToken['user_ids'] = json_encode($userIds);
 
-                            foreach ($chunkedArray as $chunk) {
+                        $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
+                                            ->setEndPoint('user-notification-tokens')
+                                            ->request('POST');
 
-                                $queryStringUserNotifToken['user_ids'] = json_encode($chunk);
-
-                                $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
-                                                    ->setEndPoint('user-notification-tokens')
-                                                    ->request('POST');
-
-                                if ($notificationTokens->data->total_records > 0) {
-                                    foreach ($notificationTokens->data->records as $key => $val) {
-                                        $notificationToken[] = $val->notification_token;
-                                    }
-                                }
-
-                                usleep(100000);
+                        if ($notificationTokens->data->total_records > 0) {
+                            foreach ($notificationTokens->data->records as $key => $val) {
+                                $notificationToken[] = $val->notification_token;
                             }
                         }
 
@@ -338,8 +321,6 @@ class NewsStoreNotificationQueue
                         $storeObjectNotif = $mongoClient->setFormParam($bodyStoreObjectNotifications)
                                                         ->setEndPoint('store-object-notifications')
                                                         ->request('POST');
-
-
                     }
 
                     // If there is no follower but there is user linked to credit-card/ewallet
@@ -410,7 +391,7 @@ class NewsStoreNotificationQueue
 
             return [
                 'status' => 'ok',
-                'message' => sprintf('[Job ID: `%s`] News Store Notification; Status: OK; News ID: %s; Total Token: %s ',
+                'message' => sprintf('[Job ID: `%s`] Promotional Event Store Notification; Status: OK; News ID: %s; Total Token: %s ',
                                 $job->getJobId(),
                                 $newsId,
                                 count($tokens)
@@ -427,7 +408,7 @@ class NewsStoreNotificationQueue
 
             return [
                 'status' => 'fail',
-                'message' => sprintf('[Job ID: `%s`] News Store Notification; Status: FAIL; News ID: %s; Total Token: %s; Code: %s; Message: %s',
+                'message' => sprintf('[Job ID: `%s`] Promotional Event Store Notification; Status: FAIL; News ID: %s; Total Token: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
                                 $newsId,
                                 count($notificationToken),

@@ -1,6 +1,6 @@
 <?php namespace Orbit\Queue\Notification;
 /**
- * Process queue for sent news / promotion mall notification
+ * Process queue for sent promotional event mall notification
  *
  */
 use Config;
@@ -16,7 +16,7 @@ use Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
 use stdClass;
 
-class NewsMallNotificationQueue
+class PromotionalEventMallNotificationQueue
 {
     /**
      * Laravel main method to fire a job on a queue.
@@ -39,7 +39,7 @@ class NewsMallNotificationQueue
 
             return [
                 'status' => 'fail',
-                'message' => sprintf('[Job ID: `%s`] News Mall Notification News ID %s is not found or inactive .', $job->getJobId(), $newsId)
+                'message' => sprintf('[Job ID: `%s`] Promotional Event Mall Notification News ID %s is not found or inactive .', $job->getJobId(), $newsId)
             ];
         }
 
@@ -72,7 +72,7 @@ class NewsMallNotificationQueue
                             ->excludeDeleted('news')
                             ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                             ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
-                            ->where('news.news_id', $newsId)
+                            ->where('news.news_id', $news->news_id)
                             ->groupBy(DB::raw("CASE WHEN {$prefix}merchants.object_type ='tenant'
                                                 THEN {$prefix}merchants.parent_id
                                                 ELSE {$prefix}merchants.merchant_id END"))
@@ -138,10 +138,10 @@ class NewsMallNotificationQueue
                              ->with('translations.media')
                              ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
                              ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
-                             ->where('news_id', '=', $newsId)
+                             ->where('news_id', '=', $news->news_id)
                              ->first();
 
-                $launchUrl = LandingPageUrlGenerator::create($_news->object_type , $_news->news_id, $_news->news_name)->generateUrl(true);
+                $launchUrl = LandingPageUrlGenerator::create('promotional-event', $_news->news_id, $_news->news_name)->generateUrl(true);
 
                 $headings = new stdClass();
                 $contents = new stdClass();
@@ -258,6 +258,7 @@ class NewsMallNotificationQueue
                             'created_at' => $dateTime
                         ];
 
+
                         $mallObjectNotification = $mongoClient->setFormParam($insertMallObjectNotification)
                                                               ->setEndPoint('mall-object-notifications')
                                                               ->request('POST');
@@ -297,12 +298,13 @@ class NewsMallNotificationQueue
             }
 
 
+
             // Safely delete the object
             $job->delete();
 
             return [
                 'status' => 'ok',
-                'message' => sprintf('[Job ID: `%s`] News Mall Notification; Status: OK; News ID: %s; Total Token: %s ',
+                'message' => sprintf('[Job ID: `%s`] Promotional Event Mall Notification; Status: OK; News ID: %s; Total Token: %s ',
                                 $job->getJobId(),
                                 $newsId,
                                 count($tokens)
@@ -319,7 +321,7 @@ class NewsMallNotificationQueue
 
             return [
                 'status' => 'fail',
-                'message' => sprintf('[Job ID: `%s`] News Mall Notification; Status: FAIL; News ID: %s; Total Token: %s; Code: %s; Message: %s',
+                'message' => sprintf('[Job ID: `%s`] Promotional Event Mall Notification; Status: FAIL; News ID: %s; Total Token: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
                                 $newsId,
                                 count($tokens),

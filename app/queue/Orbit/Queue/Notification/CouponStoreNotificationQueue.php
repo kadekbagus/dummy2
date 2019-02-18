@@ -349,7 +349,7 @@ class CouponStoreNotificationQueue
 
                         $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
                                             ->setEndPoint('user-notification-tokens')
-                                            ->request('GET');
+                                            ->request('POST');
 
                         if ($notificationTokens->data->total_records > 0) {
                             foreach ($notificationTokens->data->records as $key => $val) {
