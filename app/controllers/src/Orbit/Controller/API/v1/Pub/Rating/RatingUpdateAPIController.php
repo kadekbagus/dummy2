@@ -70,11 +70,13 @@ class RatingUpdateAPIController extends PubControllerAPI
 
             $validator = Validator::make(
                 array(
+                    'review'    => $review,
                     'rating_id' => $ratingId,
-                    'rating' => $rating
+                    'rating'    => $rating
                 ),
                 array(
-                    'rating' => 'required',
+                    'review'    => 'max:1000',
+                    'rating'    => 'required',
                     'rating_id' => 'required',
                 )
             );
