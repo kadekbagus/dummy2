@@ -87,17 +87,19 @@ class RatingNewAPIController extends PubControllerAPI
             }
 
             $validatorColumn = array(
+                                'review'      => $review,
                                 'object_id'   => $objectId,
                                 'object_type' => $objectType,
                                 'rating'      => $rating,
-                                'location_id' => $locationId
+                                'location_id' => $locationId,
                             );
 
             $validation = array(
+                            'review'      => 'max:1000',
                             'object_id'   => 'required',
                             'object_type' => 'required',
                             'rating'      => 'required',
-                            'location_id' => 'required'
+                            'location_id' => 'required',
                         );
 
             // Add validation rule for reply review
