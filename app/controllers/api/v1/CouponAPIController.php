@@ -2503,8 +2503,16 @@ class CouponAPIController extends ControllerAPI
             $this->commit();
 
             // Push notification
-            Event::fire('orbit.coupon.postupdatecoupon-mallnotification.after.commit', array($this, $updatedcoupon));
-            Event::fire('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commit', array($this, $updatedcoupon));
+            Queue::push('Orbit\\Queue\\Notification\\CouponMallNotificationQueue', [
+                'coupon_id' => $updatedcoupon->promotion_id,
+            ]);
+
+            Queue::push('Orbit\\Queue\\Notification\\CouponStoreNotificationQueue', [
+                'coupon_id' => $updatedcoupon->promotion_id,
+            ]);
+
+            // Event::fire('orbit.coupon.postupdatecoupon-mallnotification.after.commit', array($this, $updatedcoupon));
+            // Event::fire('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commit', array($this, $updatedcoupon));
 
             // Successfull Update
             $activityNotes = sprintf('Coupon updated: %s', $updatedcoupon->promotion_name);
