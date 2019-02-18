@@ -64,11 +64,7 @@ class Article extends Eloquent
 
     public function objectArticle()
     {
-        return $this->hasMany('ArticleLinkToObject', 'article_id', 'article_id')
-                    ->where('article_link_to_objects.object_type', 'article')
-                    ->join('articles', function($q) {
-                                $q->on('article_id', '=', 'object_id');
-                            });
+        return $this->belongsToMany('Article', 'article_link_to_objects', 'article_id', 'object_id');
     }
 
     public function objectMerchant()
