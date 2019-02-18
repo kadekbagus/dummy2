@@ -32,7 +32,7 @@ class CouponMallNotificationQueue
         $prefix = DB::getTablePrefix();
         $couponId = $data['coupon_id'];
 
-        $updatedcoupon = Coupon::excludeDeleted()->where('coupon_id', $couponId)->where('status', 'active')->first();
+        $updatedcoupon = Coupon::excludeDeleted()->where('promotion_id', $couponId)->where('status', 'active')->first();
 
         if (empty($updatedcoupon)) {
             $job->delete();
@@ -130,7 +130,6 @@ class CouponMallNotificationQueue
                 }
 
                 $tokens = array_values(array_unique($tokens));
-
 
                 $_coupon = Coupon::select('promotions.*',
                                       DB::raw('default_languages.name as default_language_name'),
@@ -296,7 +295,6 @@ class CouponMallNotificationQueue
                     }
                 }
             }
-
 
             // Safely delete the object
             $job->delete();
