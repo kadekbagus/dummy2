@@ -55,6 +55,7 @@ class ArticleListAPIController extends ControllerAPI
 
             $sort_by = OrbitInput::get('sortby');
             $isSuggestion = OrbitInput::get('is_suggestion', 'N');
+            $countryId = OrbitInput::get('country_id');
 
             $validator = Validator::make(
                 array(
@@ -84,6 +85,10 @@ class ArticleListAPIController extends ControllerAPI
                                 "))
                                 ->where('articles.status', 'active')
                                 ->where('published_at', '<=', Carbon::now());
+
+                if (! empty($countryId)) {
+                    $article->where('country_id', $countryId);
+                }
             }
             else {
                 $article = Article::select(DB::raw("{$prefix}articles.*, {$prefix}countries.name as country_name"))
@@ -103,9 +108,14 @@ class ArticleListAPIController extends ControllerAPI
                                     ->with('cities');
             }
 
-            OrbitInput::get('article_id', function($article_id) use ($article)
+            OrbitInput::get('article_id', function($article_id) use ($article, $isSuggestion)
             {
-                $article->where('article_id', $article_id);
+                if ($isSuggestion === 'Y') {
+                    $article->whereNotIn('article_id', [$article_id]);
+                }
+                else {
+                    $article->where('article_id', $article_id);
+                }
             });
 
             // Filter merchant by name
