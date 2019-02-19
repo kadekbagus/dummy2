@@ -439,7 +439,7 @@ Event::listen('orbit.promotionalevent.postupdatepromotionalevent.after.commit', 
 
 });
 
-Event::listen('orbit.promotionalevent.postupdatepromotionalevent-mallnotification.after.save', function($controller, $news)
+Event::listen('orbit.promotionalevent.postupdatepromotionalevent-mallnotification.after.commit', function($controller, $news)
 {
     if ($news->status === 'active')
     {
