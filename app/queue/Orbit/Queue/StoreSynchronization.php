@@ -187,9 +187,11 @@ class StoreSynchronization
 
 
                     // Push notification
+                    $queueName = Config::get('queue.connections.gtm_notification.queue', 'gtm_notification');
+
                     Queue::push('Orbit\\Queue\\Notification\\StoreSynchronizationMallNotificationQueue', [
                         'base_store_id' => $base_store_id,
-                    ]);
+                    ], $queueName);
 
 
                     //country

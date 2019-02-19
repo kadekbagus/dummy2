@@ -1119,12 +1119,14 @@ class PromotionalEventAPIController extends ControllerAPI
 
 
             // Push notification
+            $queueName = Config::get('queue.connections.gtm_notification.queue', 'gtm_notification');
+
             Queue::push('Orbit\\Queue\\Notification\\PromotionalEventMallNotificationQueue', [
                 'news_id' => $updatednews->news_id,
-            ]);
+            ], $queueName);
             Queue::push('Orbit\\Queue\\Notification\\PromotionalEventStoreNotificationQueue', [
                 'news_id' => $updatednews->news_id,
-            ]);
+            ], $queueName);
 
 
             // Successfull Update

@@ -1068,12 +1068,14 @@ class NewsAPIController extends ControllerAPI
 
 
             // Push notification
+            $queueName = Config::get('queue.connections.gtm_notification.queue', 'gtm_notification');
+
             Queue::push('Orbit\\Queue\\Notification\\NewsMallNotificationQueue', [
                 'news_id' => $updatednews->news_id,
-            ]);
+            ], $queueName);
             Queue::push('Orbit\\Queue\\Notification\\NewsStoreNotificationQueue', [
                 'news_id' => $updatednews->news_id,
-            ]);
+            ], $queueName);
 
             // Successfull Update
             $activityNotes = sprintf('News updated: %s', $updatednews->news_name);
