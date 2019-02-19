@@ -12,6 +12,9 @@ use Orbit\FakeJob;
 use Orbit\Helper\Util\JobBurier;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use Coupon;
+use ObjectSponsor;
+use UserSponsor;
+use CouponMerchant;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
 use stdClass;
@@ -413,7 +416,7 @@ class CouponStoreNotificationQueue
                 'message' => sprintf('[Job ID: `%s`] Coupon Store Notification; Status: OK; Coupon ID: %s; Total Token: %s ',
                                 $job->getJobId(),
                                 $couponId,
-                                count($tokens)
+                                count($notificationToken)
                             )
             ];
 
