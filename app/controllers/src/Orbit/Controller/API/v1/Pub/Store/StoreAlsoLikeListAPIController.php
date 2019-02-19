@@ -190,7 +190,7 @@ class StoreAlsoLikeListAPIController extends PubControllerAPI
         $_GET['store_id'] = $params['store_id'];
 
         // for store detail filter the same store
-        if (empty($params['mall_id']) && ! empty($params['store_id'])) {
+        if (!empty($params['mall_id']) && !empty($params['store_id'])) {
             $_baseStore = BaseStore::select('base_merchant_id')->where('base_store_id', '=', $params['store_id'])->first();
             if ($_baseStore) {
                 $_baseStores = BaseStore::where('base_merchant_id', '=', $_baseStore->base_merchant_id)->where('status', '=', 'active')->get();
