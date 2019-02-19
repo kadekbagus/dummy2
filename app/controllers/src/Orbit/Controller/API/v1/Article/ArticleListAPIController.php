@@ -55,7 +55,7 @@ class ArticleListAPIController extends ControllerAPI
 
             $sort_by = OrbitInput::get('sortby');
             $isSuggestion = OrbitInput::get('is_suggestion', 'N');
-            $countryId = OrbitInput::get('country_id');
+            $country = OrbitInput::get('country');
 
             $validator = Validator::make(
                 array(
@@ -81,13 +81,15 @@ class ArticleListAPIController extends ControllerAPI
                 $article = Article::select(DB::raw("
                                     {$prefix}articles.article_id,
                                     {$prefix}articles.slug,
-                                    {$prefix}articles.title
+                                    {$prefix}articles.title,
+                                    {$prefix}countries.name as country_name
                                 "))
+                                ->join('countries', 'articles.country_id', '=', 'countries.country_id')
                                 ->where('articles.status', 'active')
                                 ->where('published_at', '<=', Carbon::now());
 
-                if (! empty($countryId)) {
-                    $article->where('country_id', $countryId);
+                if (! empty($country)) {
+                    $article->where('country_name', $country);
                 }
             }
             else {
