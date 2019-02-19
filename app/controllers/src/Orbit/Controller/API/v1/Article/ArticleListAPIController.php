@@ -89,7 +89,7 @@ class ArticleListAPIController extends ControllerAPI
                                 ->where('published_at', '<=', Carbon::now());
 
                 if (! empty($country)) {
-                    $article->where('country_name', $country);
+                    $article->where('countries.name', $country);
                 }
             }
             else {
