@@ -263,6 +263,22 @@ class ArticleUpdateAPIController extends ControllerAPI
                 $updatedArticle->object_product = $product;
             });
 
+            OrbitInput::post('object_articles', function($objectArticles) use ($updatedArticle, $articleId) {
+                $deletedOldData = ArticleLinkToObject::where('article_id', '=', $articleId)
+                                                     ->where('object_type', '=', 'article')
+                                                     ->delete();
+
+                $articles = array();
+                foreach ($objectArticles as $linkedArticleId) {
+                    $saveObjectArticle = new ArticleLinkToObject();
+                    $saveObjectArticle->article_id = $articleId;
+                    $saveObjectArticle->object_id = $linkedArticleId;
+                    $saveObjectArticle->object_type = 'article';
+                    $saveObjectArticle->save();
+                }
+                $updatedArticle->object_article = $articles;
+            });
+
             OrbitInput::post('object_merchants', function($objectMerchants) use ($updatedArticle, $articleId, $prefix, $countryId) {
                 $deletedOldData = ArticleLinkToObject::where('article_id', '=', $articleId)
                                                      ->where('object_type', '=', 'merchant')
