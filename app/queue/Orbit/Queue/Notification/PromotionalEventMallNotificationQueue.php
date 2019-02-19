@@ -115,7 +115,7 @@ class PromotionalEventMallNotificationQueue
                     foreach ($chunkedArray as $chunk) {
 
                         $tokenSearch = ['user_ids' => json_encode($chunk), 'notification_provider' => 'onesignal'];
-                        $tokenData = $mongoClient->setQueryString($tokenSearch)
+                        $tokenData = $mongoClient->setFormParam($tokenSearch)
                                                  ->setEndPoint('user-notification-tokens')
                                                  ->request('POST');
 
