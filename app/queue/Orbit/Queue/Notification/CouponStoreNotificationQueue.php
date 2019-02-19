@@ -34,6 +34,7 @@ class CouponStoreNotificationQueue
     {
         $prefix = DB::getTablePrefix();
         $couponId = $data['coupon_id'];
+        $notificationToken = array();
 
         $updatedcoupon = Coupon::excludeDeleted()->where('promotion_id', $couponId)->where('status', 'active')->first();
 
@@ -285,7 +286,7 @@ class CouponStoreNotificationQueue
 
                                 $queryStringUserNotifToken['user_ids'] = json_encode($chunk);
 
-                                $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
+                                $notificationTokens = $mongoClient->setFormParam($queryStringUserNotifToken)
                                                     ->setEndPoint('user-notification-tokens')
                                                     ->request('POST');
 
@@ -350,7 +351,7 @@ class CouponStoreNotificationQueue
                         $userIds = $userSponsor;
                         $queryStringUserNotifToken['user_ids'] = json_encode($userIds);
 
-                        $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
+                        $notificationTokens = $mongoClient->setFormParam($queryStringUserNotifToken)
                                             ->setEndPoint('user-notification-tokens')
                                             ->request('POST');
 
