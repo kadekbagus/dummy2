@@ -86,7 +86,7 @@ class ArticleListAPIController extends ControllerAPI
                                 "))
                                 ->join('countries', 'articles.country_id', '=', 'countries.country_id')
                                 ->where('articles.status', 'active')
-                                ->where('published_at', '<=', Carbon::now());
+                                ->where('published_at', '<=', Carbon::now('Asia/Jakarta'));
 
                 if (! empty($country)) {
                     $article->where('countries.name', $country);
@@ -129,7 +129,7 @@ class ArticleListAPIController extends ControllerAPI
             // Filter merchant by matching name pattern
             OrbitInput::get('title_like', function($title) use ($article)
             {
-                $article->where('title', 'like', "%$title%");
+                $article->where('title', 'like', "%{$title}%");
             });
 
             if ($role->role_name == 'Article Writer') {
