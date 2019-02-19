@@ -34,6 +34,7 @@ class NewsStoreNotificationQueue
     {
         $prefix = DB::getTablePrefix();
         $newsId = $data['news_id'];
+        $notificationToken = array();
 
         $updatednews = News::excludeDeleted()->where('news_id', $newsId)->where('status', 'active')->first();
 
@@ -285,7 +286,7 @@ class NewsStoreNotificationQueue
 
                                 $queryStringUserNotifToken['user_ids'] = json_encode($chunk);
 
-                                $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
+                                $notificationTokens = $mongoClient->setFormParam($queryStringUserNotifToken)
                                                     ->setEndPoint('user-notification-tokens')
                                                     ->request('POST');
 
@@ -350,7 +351,7 @@ class NewsStoreNotificationQueue
                         $userIds = $userSponsor;
                         $queryStringUserNotifToken['user_ids'] = json_encode($userIds);
 
-                        $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
+                        $notificationTokens = $mongoClient->setFormParam($queryStringUserNotifToken)
                                             ->setEndPoint('user-notification-tokens')
                                             ->request('POST');
 
