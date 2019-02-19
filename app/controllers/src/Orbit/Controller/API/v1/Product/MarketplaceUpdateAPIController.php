@@ -171,7 +171,7 @@ class MarketplaceUpdateAPIController extends ControllerAPI
 
             // Rollback the changes
             $this->rollBack();
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             Event::fire('orbit.marketplace.postupdatemarketplace.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());

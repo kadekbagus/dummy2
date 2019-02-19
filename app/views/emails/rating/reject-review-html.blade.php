@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Your images submission has been approved | Gotomalls.com</title>
+    <title>Your review submission has been rejected | Gotomalls.com</title>
     <style type="text/css">
         .container {
             padding:20px;
@@ -24,7 +24,14 @@
         }
 
         .container .footer {
-            margin-top : 50px;
+            margin-top : 100px;
+        }
+
+        .reject-reasons {
+            list-style: none;
+        }
+        .reject-reasons li {
+            color : red;
         }
     </style>
 </head>
@@ -37,8 +44,7 @@
         </div>
         <div class="content">
             <p>Dear, {{ $fullname }}</p>
-            <p>Your review image(s) for {{ $campaign_and_location_info }} has been approved.</p>
-            <p>Thank you for your contribution.</p>
+            <p>We are sorry, your review for {{ $campaignAndLocationInfo }} has been rejected.</p>
         </div>
 
         <div class="footer">

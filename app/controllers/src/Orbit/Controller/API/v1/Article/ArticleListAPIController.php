@@ -19,6 +19,7 @@ use DB;
 use Config;
 use stdclass;
 use Orbit\Controller\API\v1\Article\ArticleHelper;
+use Carbon\Carbon;
 
 class ArticleListAPIController extends ControllerAPI
 {
@@ -53,6 +54,7 @@ class ArticleListAPIController extends ControllerAPI
             // $articleHelper->merchantCustomValidator();
 
             $sort_by = OrbitInput::get('sortby');
+            $isSuggestion = OrbitInput::get('is_suggestion', 'N');
 
             $validator = Validator::make(
                 array(
@@ -74,20 +76,32 @@ class ArticleListAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $article = Article::select(DB::raw("{$prefix}articles.*, {$prefix}countries.name as country_name"))
-                                ->join('countries', 'articles.country_id', '=', 'countries.country_id')
-                                ->where('articles.status', '!=', 'deleted')
-                                ->with('objectNews')
-                                ->with('objectPromotion')
-                                ->with('objectCoupon')
-                                ->with('objectMall')
-                                ->with('objectMerchant')
-                                ->with('objectProduct')
-                                ->with('category')
-                                ->with('mediaCover')
-                                ->with('mediaContent')
-                                ->with('video')
-                                ->with('cities');
+            if ($isSuggestion === 'Y') {
+                $article = Article::select(DB::raw("
+                                    {$prefix}articles.article_id,
+                                    {$prefix}articles.slug,
+                                    {$prefix}articles.title
+                                "))
+                                ->where('articles.status', 'active')
+                                ->where('published_at', '<=', Carbon::now());
+            }
+            else {
+                $article = Article::select(DB::raw("{$prefix}articles.*, {$prefix}countries.name as country_name"))
+                                    ->join('countries', 'articles.country_id', '=', 'countries.country_id')
+                                    ->where('articles.status', '!=', 'deleted')
+                                    ->with('objectNews')
+                                    ->with('objectPromotion')
+                                    ->with('objectCoupon')
+                                    ->with('objectMall')
+                                    ->with('objectMerchant')
+                                    ->with('objectProduct')
+                                    ->with('objectArticle')
+                                    ->with('category')
+                                    ->with('mediaCover')
+                                    ->with('mediaContent')
+                                    ->with('video')
+                                    ->with('cities');
+            }
 
             OrbitInput::get('article_id', function($article_id) use ($article)
             {
