@@ -16,6 +16,8 @@ use Carbon\Carbon as Carbon;
 use Orbit\Helper\OneSignal\OneSignal;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 
+use Orbit\Notifications\RatingReview\RatingReviewRejectedNotification;
+
 class RatingReviewAPIController extends ControllerAPI
 {
     protected $viewRoles = ['merchant review admin', 'master review admin'];
@@ -217,6 +219,7 @@ class RatingReviewAPIController extends ControllerAPI
             // filter type
             if (!empty($is_image_reviewing)) {
                 $queryString['is_image_reviewing'] = $is_image_reviewing;
+                $queryString['status'] = 'active';
             }
 
             $mongoConfig = Config::get('database.mongodb');
@@ -441,6 +444,7 @@ class RatingReviewAPIController extends ControllerAPI
 
         return $output;
     }
+
     /**
      * POST - delete review
      * @author Firmansyah <firmansyah@dominopos.com>
@@ -473,7 +477,6 @@ class RatingReviewAPIController extends ControllerAPI
             }
 
             $reviewId = OrbitInput::post('review_id');
-            $review = OrbitInput::post('review');
 
             $this->registerCustomValidation();
 
@@ -508,6 +511,9 @@ class RatingReviewAPIController extends ControllerAPI
                                         ->request('PUT');
 
             $getReview = $mongoClient->setEndPoint("reviews/$reviewId")->request('GET');
+
+            // Send notification to Customer.
+            (new RatingReviewRejectedNotification($getReview->data))->send();
 
             $this->response->data = $getReview->data;
             $this->response->code = 0;
