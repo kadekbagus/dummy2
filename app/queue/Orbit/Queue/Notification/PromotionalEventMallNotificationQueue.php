@@ -32,9 +32,9 @@ class PromotionalEventMallNotificationQueue
         $prefix = DB::getTablePrefix();
         $newsId = $data['news_id'];
 
-        $updatednews = News::excludeDeleted()->where('news_id', $newsId)->where('status', 'active')->first();
+        $news = News::excludeDeleted()->where('news_id', $newsId)->where('status', 'active')->first();
 
-        if (empty($updatednews)) {
+        if (empty($news)) {
             $job->delete();
 
             return [
