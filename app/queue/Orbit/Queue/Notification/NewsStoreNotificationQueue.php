@@ -12,6 +12,9 @@ use Orbit\FakeJob;
 use Orbit\Helper\Util\JobBurier;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use News;
+use NewsMerchant;
+use ObjectSponsor;
+use UserSponsor;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
 use stdClass;
@@ -413,7 +416,7 @@ class NewsStoreNotificationQueue
                 'message' => sprintf('[Job ID: `%s`] News Store Notification; Status: OK; News ID: %s; Total Token: %s ',
                                 $job->getJobId(),
                                 $newsId,
-                                count($tokens)
+                                count($notificationToken)
                             )
             ];
 
