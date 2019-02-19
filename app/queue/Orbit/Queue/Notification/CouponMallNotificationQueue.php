@@ -32,9 +32,9 @@ class CouponMallNotificationQueue
         $prefix = DB::getTablePrefix();
         $couponId = $data['coupon_id'];
 
-        $updatedcoupon = Coupon::excludeDeleted()->where('promotion_id', $couponId)->where('status', 'active')->first();
+        $coupon = Coupon::excludeDeleted()->where('promotion_id', $couponId)->where('status', 'active')->first();
 
-        if (empty($updatedcoupon)) {
+        if (empty($coupon)) {
             $job->delete();
 
             return [
