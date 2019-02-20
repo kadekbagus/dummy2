@@ -169,7 +169,7 @@ class RatingReviewAPIController extends ControllerAPI
                     'skip'         => $skip,
                     'sortBy'       => $sortBy,
                     'sortMode'     => $sortMode,
-                    'store_ids'    => $storeIds
+                    'store_ids'    => json_encode($storeIds)
                 ];
             }
 
