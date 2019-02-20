@@ -442,7 +442,7 @@ Event::listen('orbit.coupon.postaddtowallet.after.commit', function($controller,
 });
 
 
-Event::listen('orbit.coupon.postupdatecoupon-mallnotification.after.save', function($controller, $coupon)
+Event::listen('orbit.coupon.postupdatecoupon-mallnotification.after.commit', function($controller, $coupon)
 {
     if ($coupon->status === 'active')
     {
