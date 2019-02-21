@@ -68,8 +68,8 @@ class RatingReplyUpdateAPIController extends PubControllerAPI
                     'review' => $review
                 ),
                 array(
-                    'review' => 'required',
                     'reply_id' => 'required',
+                    'review' => 'required|max:1000',
                 )
             );
 
