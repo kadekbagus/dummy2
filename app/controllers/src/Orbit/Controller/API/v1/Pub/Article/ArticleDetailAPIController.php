@@ -331,6 +331,27 @@ class ArticleDetailAPIController extends PubControllerAPI
 
             $article['object_product'] = $objectProduct;
 
+            $objectArticle = ArticleLinkToObject::select(
+                                                'articles.article_id',
+                                                'articles.slug',
+                                                'articles.title',
+                                                DB::raw("{$image} as original_media_path")
+                                            )
+                                            ->join('articles', function($q) {
+                                                $q->on('articles.article_id', '=', 'object_id')
+                                                  ->on('articles.status', '=', DB::raw("'active'"));
+                                            })
+                                            ->leftJoin('media', function($q) {
+                                                $q->on('media.object_id', '=', 'articles.article_id')
+                                                  ->on('media.media_name_long', '=', DB::raw("'article_cover_image_orig'"));
+                                            })
+                                            ->where('article_link_to_objects.object_type', 'article')
+                                            ->where('article_link_to_objects.article_id', $articleId)
+                                            ->groupBy('articles.article_id')
+                                            ->orderBy('articles.published_at', 'desc')
+                                            ->get();
+
+            $article['object_article'] = $objectArticle;
 
             $objectMerchant = ArticleLinkToObject::select(
                                                 'merchants.merchant_id',
