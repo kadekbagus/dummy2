@@ -70,6 +70,9 @@ class RatingReplyUpdateAPIController extends PubControllerAPI
                 array(
                     'reply_id' => 'required',
                     'review' => 'required|max:1000',
+                ),
+                array(
+                    'max' => 'REVIEW_FAILED_MAX_CHAR_EXCEEDED',
                 )
             );
 
