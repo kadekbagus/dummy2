@@ -52,7 +52,7 @@ class Article extends Eloquent
                                 $q->on('merchant_id', '=', 'object_id');
                             });
     }
-    
+
     public function objectProduct()
     {
         return $this->hasMany('ArticleLinkToObject', 'article_id', 'article_id')
@@ -60,6 +60,11 @@ class Article extends Eloquent
                     ->join('products', function($q) {
                                 $q->on('product_id', '=', 'object_id');
                             });
+    }
+
+    public function objectArticle()
+    {
+        return $this->belongsToMany('Article', 'article_link_to_objects', 'article_id', 'object_id');
     }
 
     public function objectMerchant()
