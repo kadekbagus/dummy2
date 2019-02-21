@@ -204,6 +204,9 @@ class ArticleListAPIController extends PubControllerAPI
             if (! empty($keyword)) {
                 $cacheKey['keyword'] = $keyword;
                 $searchKeyword = true;
+
+                // Force to sort by relevance if keyword is set.
+                $sortBy = 'relevance';
             }
 
             // Get object categories.
@@ -250,8 +253,6 @@ class ArticleListAPIController extends PubControllerAPI
                     $this->searcher->sortByPublishingDate($sortMode);
                     break;
             }
-
-            // return \Response::json($this->searcher->getRequestParam('body'));
 
             if ($this->useScroll) {
                 $this->searcher->setParams([

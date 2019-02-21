@@ -19,6 +19,7 @@ use DB;
 use Config;
 use stdclass;
 use Orbit\Controller\API\v1\Article\ArticleHelper;
+use Carbon\Carbon;
 
 class ArticleListAPIController extends ControllerAPI
 {
@@ -53,6 +54,8 @@ class ArticleListAPIController extends ControllerAPI
             // $articleHelper->merchantCustomValidator();
 
             $sort_by = OrbitInput::get('sortby');
+            $isSuggestion = OrbitInput::get('is_suggestion', 'N');
+            $country = OrbitInput::get('country');
 
             $validator = Validator::make(
                 array(
@@ -74,24 +77,47 @@ class ArticleListAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $article = Article::select(DB::raw("{$prefix}articles.*, {$prefix}countries.name as country_name"))
+            if ($isSuggestion === 'Y') {
+                $article = Article::select(DB::raw("
+                                    {$prefix}articles.article_id,
+                                    {$prefix}articles.slug,
+                                    {$prefix}articles.title,
+                                    {$prefix}countries.name as country_name
+                                "))
                                 ->join('countries', 'articles.country_id', '=', 'countries.country_id')
-                                ->where('articles.status', '!=', 'deleted')
-                                ->with('objectNews')
-                                ->with('objectPromotion')
-                                ->with('objectCoupon')
-                                ->with('objectMall')
-                                ->with('objectMerchant')
-                                ->with('objectProduct')
-                                ->with('category')
-                                ->with('mediaCover')
-                                ->with('mediaContent')
-                                ->with('video')
-                                ->with('cities');
+                                ->where('articles.status', 'active')
+                                ->where('published_at', '<=', Carbon::now('Asia/Jakarta'));
 
-            OrbitInput::get('article_id', function($article_id) use ($article)
+                if (! empty($country)) {
+                    $article->where('countries.name', $country);
+                }
+            }
+            else {
+                $article = Article::select(DB::raw("{$prefix}articles.*, {$prefix}countries.name as country_name"))
+                                    ->join('countries', 'articles.country_id', '=', 'countries.country_id')
+                                    ->where('articles.status', '!=', 'deleted')
+                                    ->with('objectNews')
+                                    ->with('objectPromotion')
+                                    ->with('objectCoupon')
+                                    ->with('objectMall')
+                                    ->with('objectMerchant')
+                                    ->with('objectProduct')
+                                    ->with('objectArticle')
+                                    ->with('category')
+                                    ->with('mediaCover')
+                                    ->with('mediaContent')
+                                    ->with('video')
+                                    ->with('cities');
+            }
+
+            OrbitInput::get('article_id', function($article_id) use ($article, $isSuggestion)
             {
-                $article->where('article_id', $article_id);
+                if ($isSuggestion === 'Y') {
+                    $article->whereNotIn('article_id', [$article_id]);
+                }
+                else {
+                    $article->where('article_id', $article_id);
+                }
             });
 
             // Filter merchant by name
@@ -103,7 +129,7 @@ class ArticleListAPIController extends ControllerAPI
             // Filter merchant by matching name pattern
             OrbitInput::get('title_like', function($title) use ($article)
             {
-                $article->where('title', 'like', "%$title%");
+                $article->where('title', 'like', "%{$title}%");
             });
 
             if ($role->role_name == 'Article Writer') {
