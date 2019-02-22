@@ -32,14 +32,14 @@ class StoreSynchronizationMallNotificationQueue
         $prefix = DB::getTablePrefix();
         $baseStoreId = $data['base_store_id'];
 
-        $activeStore = Tenant::where('merchant_id', $baseStoreId)->where('status', 'active')->first();
+        $store = Tenant::where('merchant_id', $baseStoreId)->where('status', 'active')->first();
 
-        if (empty($activeStore)) {
+        if (empty($store)) {
             $job->delete();
 
             return [
                 'status' => 'fail',
-                'message' => sprintf('[Job ID: `%s`] Store Synch Mall Notification News ID %s is not found or inactive .', $job->getJobId(), $newsId)
+                'message' => sprintf('[Job ID: `%s`] Store Synch Mall Notification News ID %s is not found or inactive .', $job->getJobId(), $baseStoreId)
             ];
         }
 
@@ -191,7 +191,7 @@ class StoreSynchronizationMallNotificationQueue
                 'status' => 'ok',
                 'message' => sprintf('[Job ID: `%s`] Store Synch Mall Notification; Status: OK; News ID: %s; Total Token: %s ',
                                 $job->getJobId(),
-                                $newsId,
+                                $baseStoreId,
                                 count($tokens)
                             )
             ];
@@ -208,7 +208,7 @@ class StoreSynchronizationMallNotificationQueue
                 'status' => 'fail',
                 'message' => sprintf('[Job ID: `%s`] Store Synch Mall Notification; Status: FAIL; News ID: %s; Total Token: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
-                                $newsId,
+                                $baseStoreId,
                                 count($tokens),
                                 $e->getCode(),
                                 $e->getMessage())
