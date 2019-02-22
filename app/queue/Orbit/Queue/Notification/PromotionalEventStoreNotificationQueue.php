@@ -36,9 +36,9 @@ class PromotionalEventStoreNotificationQueue
         $newsId = $data['news_id'];
         $notificationToken = array();
 
-        $updatednews = News::excludeDeleted()->where('news_id', $newsId)->where('status', 'active')->first();
+        $updatedPromotionalEvent = News::excludeDeleted()->where('news_id', $newsId)->where('status', 'active')->first();
 
-        if (empty($updatednews)) {
+        if (empty($updatedPromotionalEvent)) {
             $job->delete();
 
             return [
