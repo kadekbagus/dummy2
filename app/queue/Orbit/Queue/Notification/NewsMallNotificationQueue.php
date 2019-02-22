@@ -63,7 +63,7 @@ class NewsMallNotificationQueue
             $cdnUrl = null;
             $cdnBucketName = null;
             $notificationId = null;
-            $tokens = null;
+            $tokens = array();
 
             $prefix = DB::getTablePrefix();
             $malls = News::select(DB::raw("CASE WHEN {$prefix}merchants.object_type ='tenant' THEN {$prefix}merchants.parent_id
