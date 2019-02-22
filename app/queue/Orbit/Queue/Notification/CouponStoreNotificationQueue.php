@@ -15,6 +15,7 @@ use Coupon;
 use ObjectSponsor;
 use UserSponsor;
 use CouponMerchant;
+use PromotionRetailer;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
 use stdClass;
