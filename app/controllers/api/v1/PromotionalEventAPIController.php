@@ -1111,15 +1111,23 @@ class PromotionalEventAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.promotionalevent.postupdatepromotionalevent.after.save', array($this, $updatedpromotional_event));
-            Event::fire('orbit.promotionalevent.postupdatepromotionalevent-mallnotification.after.save', array($this, $updatedpromotional_event));
             $this->response->data = $updatedpromotional_event;
             // $this->response->data->translation_default = $updatedpromotional_event_default_language;
 
             // Commit the changes
             $this->commit();
 
+
             // Push notification
-            Event::fire('orbit.promotionalevent.postupdatepromotionalevent-storenotificationupdate.after.commit', array($this, $updatedpromotional_event));
+            $queueName = Config::get('queue.connections.gtm_notification.queue', 'gtm_notification');
+
+            Queue::push('Orbit\\Queue\\Notification\\PromotionalEventMallNotificationQueue', [
+                'news_id' => $updatedpromotional_event->news_id,
+            ], $queueName);
+            Queue::push('Orbit\\Queue\\Notification\\PromotionalEventStoreNotificationQueue', [
+                'news_id' => $updatedpromotional_event->news_id,
+            ], $queueName);
+
 
             // Successfull Update
             $activityNotes = sprintf('PromotionalEvent updated: %s', $updatedpromotional_event->news_name);
