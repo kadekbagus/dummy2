@@ -235,6 +235,8 @@ class StoreSynchronization
                     $tenant->video_id_4 = $baseStore->video_id_4;
                     $tenant->video_id_5 = $baseStore->video_id_5;
                     $tenant->video_id_6 = $baseStore->video_id_6;
+                    $tenant->disable_ads = $baseStore->disable_ads;
+                    $tenant->disable_ymal = $baseStore->disable_ymal;
                     $tenant->save();
 
                     // handle inactive store

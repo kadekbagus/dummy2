@@ -85,7 +85,8 @@ class MerchantNewAPIController extends ControllerAPI
             $gender = OrbitInput::post('gender', 'A');
             $productTags = OrbitInput::post('product_tags');
             $productTags = (array) $productTags;
-
+            $disable_ads = OrbitInput::post('disable_ads','n');
+            $disable_ymal = OrbitInput::post('disable_ymal','n');
             // Payment_acquire
             $paymentAcquire = OrbitInput::post('payment_acquire', 'N'); // Y or N
             $contactName = OrbitInput::post('contact_name');
@@ -126,6 +127,8 @@ class MerchantNewAPIController extends ControllerAPI
                     'merchantName'            => 'required|orbit.exist.merchant_name:' . $countryId,
                     'country'                 => 'required',
                     'languages'               => 'required|array',
+                    'disable_ads'             => 'in:n,y',
+                    'disable_ymal'            => 'in:n,y',
                     'mobile_default_language' => 'required|size:2|orbit.supported.language'
                 ),
                 array(
@@ -192,6 +195,8 @@ class MerchantNewAPIController extends ControllerAPI
             $newBaseMerchant->video_id_4 = $videoId4;
             $newBaseMerchant->video_id_5 = $videoId5;
             $newBaseMerchant->video_id_6 = $videoId6;
+            $newBaseMerchant->disable_ads = $disable_ads;
+            $newBaseMerchant->disable_ymal = $disable_ymal;
 
             if (! empty($translations) ) {
                 $dataTranslations = @json_decode($translations);
