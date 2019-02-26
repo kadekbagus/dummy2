@@ -79,14 +79,19 @@ class FeedbackNewAPIController extends PubControllerAPI
             $feedback['email'] = $user->user_email;
             $feedback['date'] = Carbon::now()->format('d F Y');
 
-            $cs = new User;
-            $cs->email = Config::get('orbit.feedback.cs_email', 'cs@gotomalls.com');
+            $csEmails = Config::get('orbit.feedback.cs_email', ['cs@gotomalls.com']);
+            $csEmails = ! is_array($csEmails) ? [$csEmails] : $csEmails;
 
-            if ($feedback['is_mall'] === 'Y') {
-                $cs->notify(new MallFeedbackNotification($feedback));
-            }
-            else {
-                $cs->notify(new StoreFeedbackNotification($feedback));
+            foreach($csEmails as $email) {
+                $cs = new User;
+                $cs->email = $email;
+
+                if ($feedback['is_mall'] === 'Y') {
+                    $cs->notify(new MallFeedbackNotification($feedback));
+                }
+                else {
+                    $cs->notify(new StoreFeedbackNotification($feedback));
+                }
             }
 
         } catch (ACLForbiddenException $e) {
