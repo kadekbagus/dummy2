@@ -15,6 +15,7 @@ use Coupon;
 use ObjectSponsor;
 use UserSponsor;
 use CouponMerchant;
+use PromotionRetailer;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
 use stdClass;
@@ -62,39 +63,41 @@ class CouponStoreNotificationQueue
             $oneSignalConfig = Config::get('orbit.vendor_push_notification.onesignal');
             $table_prefix = DB::getTablePrefix();
 
-            if ($updatednews->status === 'active') {
+            if ($updatedcoupon->status === 'active') {
 
                 // check existing notification
-                $objectType = $updatednews->object_type;
-                if ($objectType === 'news') {
-                    $objectType = 'event';
-                }
+                $objectType = 'coupon';
 
                 $queryStringStoreObject = [
-                    'object_id' => $couponId,
+                    'object_id' => $updatedcoupon->promotion_id,
                     'object_type' => $objectType,
                 ];
 
                 $storeObjectNotifications = $mongoClient->setQueryString($queryStringStoreObject)
-                                        ->setEndPoint('store-object-notifications')
-                                        ->request('GET');
+                                                        ->setEndPoint('store-object-notifications')
+                                                        ->request('GET');
 
-                $newsMain = Coupon::join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
-                                 ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
-                                 ->where('news_id', '=', $couponId);
+                $storeNotification = null;
 
-                $langCoupon = $newsMain->select(DB::raw('default_languages.name as default_language_name'))->first();
+                $couponMain = Coupon::join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
+                                    ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
+                                    ->where('promotions.promotion_id', '=', $updatedcoupon->promotion_id);
+
+                $langCoupon = $couponMain->select(DB::raw('default_languages.name as default_language_name'))->first();
                 $defaultLangName = $langCoupon->default_language_name;
 
-                $_news = $newsMain->select('news.*', DB::raw('default_languages.name as default_language_name'), DB::raw('default_languages.language_id as default_language_id'))
-                                 ->with('translations.media')
-                                 ->first();
+                $_coupon = $couponMain->select('promotions.*',
+                                          DB::raw('default_languages.name as default_language_name'),
+                                          DB::raw('default_languages.language_id as default_language_id')
+                                     )
+                                     ->with('translations.media')
+                                     ->first();
 
                 $userSponsor = [];
-                if ($updatednews->is_sponsored === 'Y') {
+                if ($updatedcoupon->is_sponsored === 'Y') {
                     // Notification Credit Card & E-wallet
                     // get campaign cities
-                    $cities = Coupon::select('news.news_name',
+                    $cities = Coupon::select('promotions.promotion_name',
                                             DB::raw("CASE WHEN m1.object_type = 'tenant' THEN m2.city
                                                           WHEN m1.object_type = 'mall' THEN m1.city
                                                     END as city"),
@@ -102,9 +105,9 @@ class CouponStoreNotificationQueue
                                                           WHEN m1.object_type = 'mall' THEN mc1.mall_city_id
                                                     END as city_id")
                                             )
-                                      ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                                      ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                       ->leftJoin(DB::raw("{$table_prefix}merchants as m1"), function($join) {
-                                            $join->on(DB::raw('m1.merchant_id'), '=', 'news_merchant.merchant_id');
+                                            $join->on(DB::raw('m1.merchant_id'), '=', 'promotion_retailer.retailer_id');
                                         })
                                       ->leftJoin(DB::raw("{$table_prefix}merchants as m2"), function($join) {
                                             $join->on(DB::raw('m2.merchant_id'), '=', DB::raw('m1.parent_id'));
@@ -115,7 +118,7 @@ class CouponStoreNotificationQueue
                                       ->leftJoin(DB::raw("{$table_prefix}mall_cities as mc2"), function($join) {
                                             $join->on(DB::raw('mc2.city'), '=', DB::raw('m2.city'));
                                         })
-                                      ->where('news.news_id', '=', $couponId)
+                                      ->where('promotions.promotion_id', '=', $updatedcoupon->promotion_id)
                                       ->groupBy('city_id')
                                       ->get();
 
@@ -133,7 +136,7 @@ class CouponStoreNotificationQueue
                                                             ->join('sponsor_providers','sponsor_providers.sponsor_provider_id', '=', 'object_sponsor.sponsor_provider_id')
                                                             ->where('sponsor_providers.status', 'active')
                                                             ->where('sponsor_providers.object_type', 'ewallet')
-                                                            ->where('object_sponsor.object_id', $couponId)
+                                                            ->where('object_sponsor.object_id', $updatedcoupon->promotion_id)
                                                             ->get();
 
                     if (!empty($sponsorProviderEwallet)) {
@@ -148,7 +151,7 @@ class CouponStoreNotificationQueue
                                                             ->join('sponsor_credit_cards','sponsor_credit_cards.sponsor_provider_id', '=', 'sponsor_providers.sponsor_provider_id')
                                                             ->where('sponsor_providers.status', 'active')
                                                             ->where('sponsor_providers.object_type', 'bank')
-                                                            ->where('object_sponsor.object_id', $couponId)
+                                                            ->where('object_sponsor.object_id', $updatedcoupon->promotion_id)
                                                             ->get();
 
                     if (!empty($sponsorProviderCreditCard)) {
@@ -173,7 +176,7 @@ class CouponStoreNotificationQueue
                     }
                 }
 
-                $launchUrl = LandingPageUrlGenerator::create($_news->object_type, $_news->news_id, $_news->news_name)->generateUrl(true);
+                $launchUrl = LandingPageUrlGenerator::create('coupon', $_coupon->promotion_id, $_coupon->promotion_name)->generateUrl(true);
                 $attachmentPath = null;
                 $attachmentRealPath = null;
                 $cdnUrl = null;
@@ -183,17 +186,17 @@ class CouponStoreNotificationQueue
                 $contents = new stdClass();
 
                 // get heading, content, and image
-                foreach ($_news->translations as $translation) {
+                foreach ($_coupon->translations as $translation) {
                     $languageName = $translation['name'];
-                    if (! empty($translation['news_name'])) {
-                        $headings->$languageName = $translation['news_name'];
+                    if (! empty($translation['promotion_name'])) {
+                        $headings->$languageName = $translation['promotion_name'];
                         $contents->$languageName = substr(str_replace('&nbsp;', ' ', strip_tags($translation['description'])), 0, 40) . '...';
                     }
 
-                    if ($translation['merchant_language_id'] === $_news->default_language_id) {
+                    if ($translation['merchant_language_id'] === $_coupon->default_language_id) {
                         if (! empty($translation->media)) {
                             foreach ($translation->media as $media) {
-                                if ($media['media_name_long'] === 'news_translation_image_orig') {
+                                if ($media['media_name_long'] === 'coupon_translation_image_orig') {
                                     $attachmentPath = $media['path'];
                                     $attachmentRealPath = $media['realpath'];
                                     $cdnUrl = $media['cdn_url'];
@@ -205,19 +208,18 @@ class CouponStoreNotificationQueue
                     }
                 }
 
-
                 // Insert when no data, update when exist
                 if (! empty($storeObjectNotifications->data->records)) {
                     // Update name, description and image
                     if ($storeObjectNotifications->data->records[0]->status === 'pending') {
                         $notificationId = isset($storeObjectNotifications->data->records[0]->notification->_id) ? $storeObjectNotifications->data->records[0]->notification->_id : '';
-                        $bodyUpdateNotification['title'] = $_news->news_name;
+                        $bodyUpdateNotification['title'] = $_coupon->promotion_name;
                         $bodyUpdateNotification['launch_url'] = $launchUrl;
                         $bodyUpdateNotification['attachment_path'] = $attachmentPath;
                         $bodyUpdateNotification['attachment_realpath'] = $attachmentRealPath;
                         $bodyUpdateNotification['cdn_url'] = $cdnUrl;
                         $bodyUpdateNotification['cdn_bucket_name'] = $cdnBucketName;
-                        $bodyUpdateNotification['default_language'] = $_news->default_language_name;
+                        $bodyUpdateNotification['default_language'] = $_coupon->default_language_name;
                         $bodyUpdateNotification['headings'] = $headings;
                         $bodyUpdateNotification['contents'] = $contents;
                         $bodyUpdateNotification['mime_type'] = $mimeType;
@@ -239,21 +241,18 @@ class CouponStoreNotificationQueue
                                                         ->request('PUT');
                         }
                     }
-
-
                 } else {
                     // Insert
-                    $newsLinkToTenant = CouponMerchant::where('news_id', $couponId)
-                                                    ->lists('merchant_id');
+                    $couponLinkToTenant = PromotionRetailer::where('promotion_id', $updatedcoupon->promotion_id)
+                                                    ->lists('retailer_id');
 
                     $tenantIds = '';
-                    if (count($newsLinkToTenant) > 0) {
-                        $tenantIds = json_encode($newsLinkToTenant);
+                    if (count($couponLinkToTenant) > 0) {
+                        $tenantIds = $couponLinkToTenant;
                     }
 
-                    // get user_ids and tokens
                     $queryStringUserFollow = [
-                        'object_id'   => $tenantIds,
+                        'object_id'   => json_encode($tenantIds),
                         'object_type' => 'store'
                     ];
 
@@ -286,9 +285,9 @@ class CouponStoreNotificationQueue
 
                                 $queryStringUserNotifToken['user_ids'] = json_encode($chunk);
 
-                                $notificationTokens = $mongoClient->setFormParam($queryStringUserNotifToken)
+                                $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
                                                     ->setEndPoint('user-notification-tokens')
-                                                    ->request('POST');
+                                                    ->request('GET');
 
                                 if ($notificationTokens->data->total_records > 0) {
                                     foreach ($notificationTokens->data->records as $key => $val) {
@@ -302,13 +301,13 @@ class CouponStoreNotificationQueue
 
                         // save to notifications collection in mongodb
                         $dataNotification = [
-                            'title' => $_news->news_name,
+                            'title' => $_coupon->promotion_name,
                             'launch_url' => $launchUrl,
                             'attachment_path' => $attachmentPath,
                             'attachment_realpath' => $attachmentRealPath,
                             'cdn_url' => $cdnUrl,
                             'cdn_bucket_name' => $cdnBucketName,
-                            'default_language' => $_news->default_language_name,
+                            'default_language' => $_coupon->default_language_name,
                             'headings' => $headings,
                             'contents' => $contents,
                             'type' => $objectType,
@@ -332,18 +331,16 @@ class CouponStoreNotificationQueue
                         // save to store_object_notifications collection in mongodb
                         $bodyStoreObjectNotifications = [
                             'notification' => $notification->data,
-                            'object_id' => $_news->news_id,
+                            'object_id' => $_coupon->promotion_id,
                             'object_type' => $objectType,
                             'status' => 'pending',
-                            'start_date' => $_news->begin_date,
+                            'start_date' => $_coupon->begin_date,
                             'created_at' => $dateTime
                         ];
 
                         $storeObjectNotif = $mongoClient->setFormParam($bodyStoreObjectNotifications)
                                                         ->setEndPoint('store-object-notifications')
                                                         ->request('POST');
-
-
                     }
 
                     // If there is no follower but there is user linked to credit-card/ewallet
@@ -351,9 +348,9 @@ class CouponStoreNotificationQueue
                         $userIds = $userSponsor;
                         $queryStringUserNotifToken['user_ids'] = json_encode($userIds);
 
-                        $notificationTokens = $mongoClient->setFormParam($queryStringUserNotifToken)
+                        $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
                                             ->setEndPoint('user-notification-tokens')
-                                            ->request('POST');
+                                            ->request('GET');
 
                         if ($notificationTokens->data->total_records > 0) {
                             foreach ($notificationTokens->data->records as $key => $val) {
@@ -363,13 +360,13 @@ class CouponStoreNotificationQueue
 
                         // save to notifications collection in mongodb
                         $dataNotification = [
-                            'title' => $_news->news_name,
+                            'title' => $_coupon->promotion_name,
                             'launch_url' => $launchUrl,
                             'attachment_path' => $attachmentPath,
                             'attachment_realpath' => $attachmentRealPath,
                             'cdn_url' => $cdnUrl,
                             'cdn_bucket_name' => $cdnBucketName,
-                            'default_language' => $_news->default_language_name,
+                            'default_language' => $_coupon->default_language_name,
                             'headings' => $headings,
                             'contents' => $contents,
                             'type' => $objectType,
@@ -393,10 +390,10 @@ class CouponStoreNotificationQueue
                         // save to store_object_notifications collection in mongodb
                         $bodyStoreObjectNotifications = [
                             'notification' => $notification->data,
-                            'object_id' => $_news->news_id,
+                            'object_id' => $_coupon->promotion_id,
                             'object_type' => $objectType,
                             'status' => 'pending',
-                            'start_date' => $_news->begin_date,
+                            'start_date' => $_coupon->begin_date,
                             'created_at' => $dateTime
                         ];
 
@@ -405,6 +402,7 @@ class CouponStoreNotificationQueue
                                                         ->request('POST');
                     }
                 }
+
 
             }
 
