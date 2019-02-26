@@ -78,6 +78,8 @@ class MerchantListAPIController extends ControllerAPI
                                         'base_merchants.country_id',
                                         'countries.name as country_name',
                                         'base_merchants.name',
+                                        'base_merchants.disable_ads',
+                                        'base_merchants.disable_ymal',
                                         DB::raw("(CASE
                                             WHEN COUNT({$prefix}pre_exports.object_id) > 0 THEN 'in_progress'
                                             ELSE
