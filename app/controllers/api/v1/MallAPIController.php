@@ -324,6 +324,13 @@ class MallAPIController extends ControllerAPI
             $ipcity = OrbitInput::post('ipcity', []);
             $disable_ads = OrbitInput::post('disable_ads', 'n');
             $disable_ymal = OrbitInput::post('disable_ymal', 'n');
+            $video_id_1 = OrbitInput::post('video_id_1');
+            $video_id_2 = OrbitInput::post('video_id_2');
+            $video_id_3 = OrbitInput::post('video_id_3');
+            $video_id_4 = OrbitInput::post('video_id_4');
+            $video_id_5 = OrbitInput::post('video_id_5');
+            $video_id_6 = OrbitInput::post('video_id_6');
+            $other_photo_section_title = OrbitInput::post('other_photo_section_title');
 
             // generate array validation image
             $logo_validation = $this->generate_validation_image('mall_logo', $logo, 'orbit.upload.mall.logo');
@@ -551,6 +558,14 @@ class MallAPIController extends ControllerAPI
             $newmall->pos_language = $pos_language;
             $newmall->disable_ads = $disable_ads;
             $newmall->disable_ymal = $disable_ymal;
+
+            $newmall->video_id_1 = $video_id_1;
+            $newmall->video_id_2 = $video_id_2;
+            $newmall->video_id_3 = $video_id_3;
+            $newmall->video_id_4 = $video_id_4;
+            $newmall->video_id_5 = $video_id_5;
+            $newmall->video_id_6 = $video_id_6;
+            $newmall->other_photo_section_title = $other_photo_section_title;
 
             $newmall->modified_by = $this->api->user->user_id;
 
@@ -1084,6 +1099,13 @@ class MallAPIController extends ControllerAPI
                                         'merchants.parent_id',
                                         'merchants.disable_ads',
                                         'merchants.disable_ymal',
+                                        'merchants.video_id_1',
+                                        'merchants.video_id_2',
+                                        'merchants.video_id_3',
+                                        'merchants.video_id_4',
+                                        'merchants.video_id_5',
+                                        'merchants.video_id_6',
+                                        'merchants.other_photo_section_title',
                                         'countries.code as country_code',
                                         DB::raw("TRIM(TRAILING {$this->quote($subdomain)} FROM {$prefix}merchants.ci_domain) as subdomain"),
                                         DB::raw('count(tenant.merchant_id) AS total_tenant'),
@@ -1137,6 +1159,7 @@ class MallAPIController extends ControllerAPI
                                             )
                                             > 0 THEN 'true' ELSE 'false' END as disable_mobile_default_language")
                                     )
+                                ->with(['mediaPhotos', 'mediaOtherPhotos'])
                                 ->leftJoin('merchants AS tenant', function($join) {
                                         $join->on(DB::raw('tenant.parent_id'), '=', 'merchants.merchant_id')
                                             ->where(DB::raw('tenant.status'), '!=', 'deleted')
@@ -2097,6 +2120,34 @@ class MallAPIController extends ControllerAPI
 
             OrbitInput::post('disable_ymal', function($disable_ymal) use ($updatedmall) {
                 $updatedmall->disable_ymal = $disable_ymal;
+            });
+
+            OrbitInput::post('video_id_1', function($video_id_1) use ($updatedmall) {
+                $updatedmall->video_id_1 = $video_id_1;
+            });
+
+            OrbitInput::post('video_id_2', function($video_id_2) use ($updatedmall) {
+                $updatedmall->video_id_2 = $video_id_2;
+            });
+
+            OrbitInput::post('video_id_3', function($video_id_3) use ($updatedmall) {
+                $updatedmall->video_id_3 = $video_id_3;
+            });
+
+            OrbitInput::post('video_id_4', function($video_id_4) use ($updatedmall) {
+                $updatedmall->video_id_4 = $video_id_4;
+            });
+
+            OrbitInput::post('video_id_5', function($video_id_5) use ($updatedmall) {
+                $updatedmall->video_id_5 = $video_id_5;
+            });
+
+            OrbitInput::post('video_id_6', function($video_id_6) use ($updatedmall) {
+                $updatedmall->video_id_6 = $video_id_6;
+            });
+
+            OrbitInput::post('other_photo_section_title', function($other_photo_section_title) use ($updatedmall) {
+                $updatedmall->other_photo_section_title = $other_photo_section_title;
             });
 
             $updatedmall->modified_by = $this->api->user->user_id;
