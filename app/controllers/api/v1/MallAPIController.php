@@ -1159,7 +1159,6 @@ class MallAPIController extends ControllerAPI
                                             )
                                             > 0 THEN 'true' ELSE 'false' END as disable_mobile_default_language")
                                     )
-                                ->with(['mediaPhotos', 'mediaOtherPhotos'])
                                 ->leftJoin('merchants AS tenant', function($join) {
                                         $join->on(DB::raw('tenant.parent_id'), '=', 'merchants.merchant_id')
                                             ->where(DB::raw('tenant.status'), '!=', 'deleted')
