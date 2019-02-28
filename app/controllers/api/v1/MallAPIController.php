@@ -330,6 +330,7 @@ class MallAPIController extends ControllerAPI
             $video_id_4 = OrbitInput::post('video_id_4');
             $video_id_5 = OrbitInput::post('video_id_5');
             $video_id_6 = OrbitInput::post('video_id_6');
+            $other_photo_section_title = OrbitInput::post('other_photo_section_title');
 
             // generate array validation image
             $logo_validation = $this->generate_validation_image('mall_logo', $logo, 'orbit.upload.mall.logo');
@@ -564,6 +565,7 @@ class MallAPIController extends ControllerAPI
             $newmall->video_id_4 = $video_id_4;
             $newmall->video_id_5 = $video_id_5;
             $newmall->video_id_6 = $video_id_6;
+            $newmall->other_photo_section_title = $other_photo_section_title;
 
             $newmall->modified_by = $this->api->user->user_id;
 
@@ -1103,6 +1105,7 @@ class MallAPIController extends ControllerAPI
                                         'merchants.video_id_4',
                                         'merchants.video_id_5',
                                         'merchants.video_id_6',
+                                        'merchants.other_photo_section_title',
                                         'countries.code as country_code',
                                         DB::raw("TRIM(TRAILING {$this->quote($subdomain)} FROM {$prefix}merchants.ci_domain) as subdomain"),
                                         DB::raw('count(tenant.merchant_id) AS total_tenant'),
@@ -2140,6 +2143,10 @@ class MallAPIController extends ControllerAPI
 
             OrbitInput::post('video_id_6', function($video_id_6) use ($updatedmall) {
                 $updatedmall->video_id_6 = $video_id_6;
+            });
+
+            OrbitInput::post('other_photo_section_title', function($other_photo_section_title) use ($updatedmall) {
+                $updatedmall->other_photo_section_title = $other_photo_section_title;
             });
 
             $updatedmall->modified_by = $this->api->user->user_id;
