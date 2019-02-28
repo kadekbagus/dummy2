@@ -11,16 +11,12 @@ use Orbit\FakeJob;
 use Orbit\Helper\Util\JobBurier;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use stdClass;
-
 use Media;
 use News;
 use Coupon;
-
-
 use Orbit\Helper\OneSignal\OneSignal;
 use Orbit\Helper\Util\CdnUrlGenerator;
-
-
+use Carbon\Carbon as Carbon;
 
 class UserStoreNotificationQueue
 {
@@ -30,17 +26,28 @@ class UserStoreNotificationQueue
      * @author firmansyah <firmansyah@dominopos.com>
      * @param Job $job
      * @param array $data [
-     *    'object_id' => The object Id in the media
-     *    'object_type' => The object Id in the media
+     *    'object_id' => campaign_id
+     *    'object_type' => campaign type
+     *    'mongo_id' => mongo id
      * ]
      */
     public function fire($job, $data)
     {
+        $timezone = 'Asia/Jakarta'; // now with jakarta timezone
+        $timestamp = date("Y-m-d H:i:s");
+        $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
+        $dateTime = $date->toDateTimeString();
+        $dateTimeNow = $date->setTimezone($timezone)->toDateTimeString();
+
         $prefix = DB::getTablePrefix();
+
         $oneSignalConfig = Config::get('orbit.vendor_push_notification.onesignal');
+        $mongoConfig = Config::get('database.mongodb');
+        $mongoClient = MongoClient::create($mongoConfig);
 
         $objectId = $data['object_id'];
         $objectType = $data['object_type'];
+        $mongoId = $data['mongo_id'];
 
         try {
 
@@ -94,14 +101,27 @@ class UserStoreNotificationQueue
             $defaultLangName = 'id';
             $imageUrl = '';
 
-            if (! empty($campaign)) {
-                $defaultLangName = $campaign->default_language_name;
-                $imageUrl = $campaign->image_url;
+            if (empty($campaign)) {
+                $job->delete();
+
+                return [
+                    'status' => 'fail',
+                    'message' => sprintf('[Job ID: `%s`] User Store Notification Campaign ID %s, Object Type %s is not found .', $job->getJobId(), $objectId, $objectType)
+                ];
             }
+
+            $defaultLangName = $campaign->default_language_name;
+            $imageUrl = $campaign->image_url;
+
 
             // Get image url
             $cdnConfig = Config::get('orbit.cdn');
             $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+
+            // get single mongo data
+            $storeObjectNotification = $mongoClient->setEndPoint('store-object-notifications/' . $mongoId)
+                                                    ->request('GET')
+                                                    ->data;
 
             // send to onesignal
             if (! empty($storeObjectNotification->notification->notification_tokens)) {
@@ -226,7 +246,7 @@ class UserStoreNotificationQueue
                                 $job->getJobId(),
                                 $objectId,
                                 $objectType,
-                                count($notificationToken)
+                                count($notificationTokens)
                             )
             ];
 
@@ -243,7 +263,7 @@ class UserStoreNotificationQueue
                                 $job->getJobId(),
                                 $objectId,
                                 $objectType,
-                                count($notificationToken),
+                                count($notificationTokens),
                                 $e->getCode(),
                                 $e->getMessage())
             ];

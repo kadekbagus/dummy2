@@ -21,7 +21,7 @@ class UserNotificationStoreCommand extends Command {
      *
      * @var string
      */
-    protected $description = 'Command description.';
+    protected $description = 'Command for sending user store notification.';
 
     /**
      * Create a new command instance.
@@ -57,26 +57,29 @@ class UserNotificationStoreCommand extends Command {
         $queryStringStoreObject['status'] = 'pending';
 
         $storeObjectNotifications = $mongoClient->setQueryString($queryStringStoreObject)
-                                ->setEndPoint('store-object-notifications')
-                                ->request('GET');
+                                                ->setEndPoint('store-object-notifications')
+                                                ->request('GET');
 
-        if (! empty($storeObjectNotifications->data->records)) {
+        $totalRecords = $storeObjectNotifications->data->total_records;
+
+        if ($totalRecords > 0) {
             foreach ($storeObjectNotifications->data->records as $key => $storeObjectNotification) {
 
                 $objectId = $storeObjectNotification->object_id;
                 $objectType = $storeObjectNotification->object_type;
+                $mongoId = $storeObjectNotification->_id;
 
-
-                // Queue for single record mongoDB result
+                // Queue per single record
                 Queue::push('Orbit\\Queue\\Notification\\UserStoreNotificationQueue', [
                     'object_id' => $objectId,
                     'object_type' => $objectType,
+                    'mongo_id' => $mongoId,
                 ], $queueName);
             }
-
-            // $this->info('Cronjob User Notification For Store, Running at ' . $dateTimeNow . ' successfully');
-
         }
+
+        $this->info('Cronjob User Notification For Store, Running at ' . $dateTimeNow . '; Total record : ' . $totalRecords . ' successfully');
+
     }
 
     /**

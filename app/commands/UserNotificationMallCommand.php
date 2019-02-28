@@ -5,9 +5,6 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use Carbon\Carbon as Carbon;
-use Orbit\Helper\Util\CdnUrlGenerator;
-use Orbit\Helper\OneSignal\OneSignal;
-use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
 
 class UserNotificationMallCommand extends Command {
 
@@ -23,7 +20,7 @@ class UserNotificationMallCommand extends Command {
      *
      * @var string
      */
-    protected $description = 'Command for sending mall notification.';
+    protected $description = 'Command for sending user mall notification.';
 
     /**
      * Create a new command instance.
@@ -46,30 +43,34 @@ class UserNotificationMallCommand extends Command {
         $mongoClient = MongoClient::create($mongoConfig);
         $queueName = Config::get('queue.connections.gtm_notification.queue', 'gtm_notification');
 
-        $timezone = 'Asia/Makassar'; // jakarta timezone
+        $timezone = 'Asia/Jakarta'; // now with jakarta timezone
         $timestamp = date("Y-m-d H:i:s");
         $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
         $dateTime = $date->toDateTimeString();
+        $dateTimeNow = $date->setTimezone($timezone)->toDateTimeString();
 
         $mallObjectNotificationSearch['status'] = 'pending';
         $mallObjectNotifications = $mongoClient->setQueryString($mallObjectNotificationSearch)
                                                ->setEndPoint('mall-object-notifications')
                                                ->request('GET');
 
-        if (! empty($mallObjectNotifications->data->records))
-        {
-            foreach ($mallObjectNotifications->data->records as $key => $mallObjectNotification)
-            {
+        $totalRecords = $mallObjectNotifications->data->total_records;
 
+        if ($totalRecords > 0) {
+            foreach ($mallObjectNotifications->data->records as $key => $mallObjectNotification) {
                 $mallId = $mallObjectNotification->mall_id;
+                $mongoId = $mallObjectNotification->_id;
 
                 // Queue for single record mongoDB result
                 Queue::push('Orbit\\Queue\\Notification\\UserMallNotificationQueue', [
-                    'mall_id' => $mallId
+                    'mall_id' => $mallId,
+                    'mongo_id' => $mongoId
                 ], $queueName);
 
             }
         }
+
+        $this->info('Cronjob User Mall Notification; Running at ' . $dateTimeNow . '; Total record : ' . $totalRecords . ' successfully');
     }
 
     /**

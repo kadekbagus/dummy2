@@ -5,16 +5,18 @@
  */
 use Config;
 use DB;
-use Media;
 use Log;
 use Queue;
 use Orbit\FakeJob;
 use Orbit\Helper\Util\JobBurier;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use Mall;
-
-use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
 use stdClass;
+use Carbon\Carbon as Carbon;
+use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
+use Orbit\Helper\OneSignal\OneSignal;
+use Orbit\Helper\Util\CdnUrlGenerator;
+
 
 class UserMallNotificationQueue
 {
@@ -29,8 +31,18 @@ class UserMallNotificationQueue
      */
     public function fire($job, $data)
     {
+        $timezone = 'Asia/Jakarta'; // now with jakarta timezone
+        $timestamp = date("Y-m-d H:i:s");
+        $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
+        $dateTime = $date->toDateTimeString();
+        $dateTimeNow = $date->setTimezone($timezone)->toDateTimeString();
+
+        $mongoConfig = Config::get('database.mongodb');
+        $mongoClient = MongoClient::create($mongoConfig);
         $oneSignalConfig = Config::get('orbit.vendor_push_notification.onesignal');
+
         $mallId = $data['mall_id'];
+        $mallObjectNotificationId = $data['mongo_id'];
 
         $headings = null;
         $contents = null;
@@ -45,7 +57,6 @@ class UserMallNotificationQueue
         $notificationTokens = null;
         $vendorNotificationId = null;
 
-        $mallObjectNotificationId = $mallObjectNotification->_id;
         $mall = Mall::excludeDeleted('merchants')
                     ->leftJoin('media', 'media.object_id', '=', 'merchants.merchant_id')
                     ->where('media.media_name_long', '=', 'mall_logo_orig')
@@ -61,9 +72,7 @@ class UserMallNotificationQueue
             ];
         }
 
-
         try {
-
 
             // Get the user id
             $userFollowSearch = ['object_id'   => $mallId, 'object_type' => 'mall'];
@@ -209,10 +218,6 @@ class UserMallNotificationQueue
                 }
             }
 
-
-
-
-
             // Safely delete the object
             $job->delete();
 
@@ -221,7 +226,7 @@ class UserMallNotificationQueue
                 'message' => sprintf('[Job ID: `%s`] User Mall Notification; Status: OK; Mall ID: %s; Total Token: %s ',
                                 $job->getJobId(),
                                 $mallId,
-                                count($tokens)
+                                count($notificationTokens)
                             )
             ];
 
@@ -238,7 +243,7 @@ class UserMallNotificationQueue
                 'message' => sprintf('[Job ID: `%s`] User Mall Notification; Status: FAIL; Mall ID: %s; Total Token: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
                                 $mallId,
-                                count($tokens),
+                                count($notificationTokens),
                                 $e->getCode(),
                                 $e->getMessage())
             ];
