@@ -151,7 +151,7 @@ class MediaAPIController extends ControllerAPI
                 $imageMetas->modified_by = $user->user_id;
                 $imageMetas->last_image_order = $lastImageOrder;
 
-                $_image = Image::make($image);
+                $_image = Image::make($image->getRealPath())->orientate();
 
                 // Check allowed file mime
                 if (! in_array($_image->mime(), Config::get('orbit.upload.media.image.mime_type'))) {
