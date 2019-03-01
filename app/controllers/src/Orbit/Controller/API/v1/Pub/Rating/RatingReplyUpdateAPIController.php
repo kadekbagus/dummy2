@@ -23,10 +23,10 @@ use Orbit\Helper\MongoDB\Client as MongoClient;
 use Event;
 use News;
 
-class RatingUpdateAPIController extends PubControllerAPI
+class RatingReplyUpdateAPIController extends PubControllerAPI
 {
     /**
-     * POST - Update Rating
+     * POST - Update Rating Reply
      *
      * @param string object_id
      * @param string object_type
@@ -35,9 +35,9 @@ class RatingUpdateAPIController extends PubControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      *
-     * @author shelgi <shelgi@dominopos.com>
+     * @author Budi <budi@dominopos.com>
      */
-    public function postUpdateRating()
+    public function postUpdateRatingReply()
     {
         $activity = Activity::mobileci()
                             ->setActivityType('click');
@@ -46,14 +46,8 @@ class RatingUpdateAPIController extends PubControllerAPI
         $issuedCoupon = NULL;
         $retailer = null;
         $issued_coupon_code = null;
-        $objectId = OrbitInput::post('object_id', NULL);
-        $objectType = OrbitInput::post('object_type', NULL);
-        $locationId = OrbitInput::post('location_id', NULL);
-        $rating = OrbitInput::post('rating', NULL);
         $review = OrbitInput::post('review', '');
-        $ratingId = OrbitInput::post('rating_id', NULL);
-        $status = OrbitInput::post('status', 'active');
-        $approvalStatus = OrbitInput::post('approval_status', 'approved');
+        $replyId = OrbitInput::post('reply_id', NULL);
         $mongoConfig = Config::get('database.mongodb');
 
         try {
@@ -70,14 +64,15 @@ class RatingUpdateAPIController extends PubControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'review'    => $review,
-                    'rating_id' => $ratingId,
-                    'rating'    => $rating
+                    'reply_id' => $replyId,
+                    'review' => $review
                 ),
                 array(
-                    'review'    => 'max:1000',
-                    'rating'    => 'required',
-                    'rating_id' => 'required',
+                    'reply_id' => 'required',
+                    'review' => 'required|max:1000',
+                ),
+                array(
+                    'max' => 'REVIEW_FAILED_MAX_CHAR_EXCEEDED',
                 )
             );
 
@@ -94,9 +89,9 @@ class RatingUpdateAPIController extends PubControllerAPI
 
             // get review by id
             $mongoClient = MongoClient::create($mongoConfig);
-            $oldRating = $mongoClient->setEndPoint("reviews/$ratingId")->request('GET');
+            $oldRating = $mongoClient->setEndPoint("reviews/$replyId")->request('GET');
 
-            if (empty($oldRating)) {
+            if (empty($oldRating->data)) {
                 $errorMessage = 'Rating or Review ID not found';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
@@ -112,56 +107,25 @@ class RatingUpdateAPIController extends PubControllerAPI
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
             $dateTime = $date->toDateTimeString();
 
-            // check if object_id is promotional event, no nedd to check location_id
-            $isPromotionalEvent = 'N';
-            if ($oldRating->data->object_type === 'news') {
-                $news = News::where('news_id', $oldRating->data->object_id)->first();
-                $isPromotionalEvent = $news->is_having_reward;
-            }
-
             $body = [
-                'rating'          => $rating,
                 'review'          => $review,
-                'status'          => $status,
-                'approval_status' => $approvalStatus,
                 'updated_at'      => $dateTime,
-                '_id'             => $ratingId,
-                'object_id'       => $oldRating->data->object_id,
-                'object_type'     => $oldRating->data->object_type,
+                '_id'             => $replyId,
             ];
 
-            $bodyLocation = array();
-            if ($isPromotionalEvent === 'N') {
-                $location = CampaignLocation::select('merchants.name', 'merchants.country', DB::raw("IF({$prefix}merchants.object_type = 'tenant', oms.city, {$prefix}merchants.city) as city,
-                IF({$prefix}merchants.object_type = 'tenant', oms.country_id, {$prefix}merchants.country_id) as country_id"))
-                                      ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                      ->where('merchants.merchant_id', '=', $oldRating->data->location_id)
-                                      ->first();
-
-                $bodyLocation = [
-                    'location_id'     => $oldRating->data->location_id,
-                    'city'            => $location->city,
-                    'country_id'      => $location->country_id
-                ];
-            }
-
-            $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body + $bodyLocation);
+            $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body);
             $response = $mongoClient->setEndPoint('reviews') // express endpoint
                                     ->request('PUT');
 
             if ($response->status === 'success') {
                 $this->response->message = 'Request Ok';
+                $response->data->review = $review;
+                $response->data->updated_at = $dateTime;
                 $this->response->data = $response->data;
             } else {
-                $this->response->message = 'Add rating failed';
+                $this->response->message = 'Update reply failed';
                 $this->response->data = NULL;
             }
-
-            if ($isPromotionalEvent === 'N') {
-                $body['merchant_name'] = $location->name;
-                $body['country'] = $location->country;
-            }
-            Event::fire('orbit.rating.postrating.after.commit', array($this, $body));
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
