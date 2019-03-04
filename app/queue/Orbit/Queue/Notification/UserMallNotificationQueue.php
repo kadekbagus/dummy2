@@ -177,6 +177,10 @@ class UserMallNotificationQueue
                                               ->request('PUT');
 
             // update notification
+            $mallObjectNotification = $mongoClient->setEndPoint('mall-object-notifications/' . $mallObjectNotificationId)
+                                                    ->request('GET')
+                                                    ->data;
+
             $notificationIds = $mallObjectNotification->notification_ids;
             if (! empty($notificationIds)) {
                 foreach ($notificationIds as $key => $value) {
