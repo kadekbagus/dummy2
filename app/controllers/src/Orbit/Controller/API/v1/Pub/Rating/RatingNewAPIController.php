@@ -87,7 +87,7 @@ class RatingNewAPIController extends PubControllerAPI
             }
 
             $validatorColumn = array(
-                                'review'      => $review,
+                                'review'      => str_replace(["\r", "\n"], '', $review),
                                 'object_id'   => $objectId,
                                 'object_type' => $objectType,
                                 'rating'      => $rating,
@@ -128,7 +128,9 @@ class RatingNewAPIController extends PubControllerAPI
                 }
             }
 
-            $validator = Validator::make($validatorColumn, $validation);
+            $validator = Validator::make($validatorColumn, $validation, [
+                'max' => 'REVIEW_FAILED_MAX_CHAR_EXCEEDED',
+            ]);
 
             // Run the validation
             if ($validator->fails()) {
