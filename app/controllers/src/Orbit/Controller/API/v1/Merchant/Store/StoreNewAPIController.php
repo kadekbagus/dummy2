@@ -114,6 +114,8 @@ class StoreNewAPIController extends ControllerAPI
             $videoId4 = OrbitInput::post('video_id_4');
             $videoId5 = OrbitInput::post('video_id_5');
             $videoId6 = OrbitInput::post('video_id_6');
+            $disable_ads = OrbitInput::post('disable_ads');
+            $disable_ymal = OrbitInput::post('disable_ymal');
             $translations = OrbitInput::post('translations');
             $banner = OrbitInput::files('banner', null);
 
@@ -132,6 +134,8 @@ class StoreNewAPIController extends ControllerAPI
                 'floor_id'            => $floor_id,
                 'status'              => $status,
                 'verification_number' => $verification_number,
+                'disable_ads'         => $disable_ads,
+                'disable_ymal'        => $disable_ymal,
             ];
 
             $validation_error = [
@@ -141,6 +145,8 @@ class StoreNewAPIController extends ControllerAPI
                 'floor_id'            => 'orbit.empty.floor:' . $mall_id,
                 'status'              => 'in:active,inactive',
                 'verification_number' => 'alpha_num',
+                'disable_ads'         => 'in:n,y',
+                'disable_ymal'        => 'in:n,y',
             ];
 
             $validation_error_message = [
@@ -197,6 +203,8 @@ class StoreNewAPIController extends ControllerAPI
             $newstore->video_id_4 = $videoId4;
             $newstore->video_id_5 = $videoId5;
             $newstore->video_id_6 = $videoId6;
+            $newstore->disable_ads = $disable_ads;
+            $newstore->disable_ymal = $disable_ymal;
 
             // Translations
             OrbitInput::post('translations', function($translations) use ($newstore) {
