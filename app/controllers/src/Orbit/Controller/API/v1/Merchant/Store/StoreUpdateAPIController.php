@@ -106,6 +106,8 @@ class StoreUpdateAPIController extends ControllerAPI
             $productTags = OrbitInput::post('product_tags', []);
             $translations = OrbitInput::post('translations');
             $banner = OrbitInput::files('banner', null);
+            $disable_ads = OrbitInput::files('disable_ads', 'n');
+            $disable_ymal = OrbitInput::files('disable_ymal', 'n');
 
             $storeHelper = StoreHelper::create();
             $storeHelper->storeCustomValidator();
@@ -123,6 +125,8 @@ class StoreUpdateAPIController extends ControllerAPI
                 'floor_id'            => $floor_id,
                 'status'              => $status,
                 'verification_number' => $verification_number,
+                'disable_ads'         => $disable_ads,
+                'disable_ymal'        => $disable_ymal,
             ];
 
             $validation_error = [
@@ -133,6 +137,8 @@ class StoreUpdateAPIController extends ControllerAPI
                 'floor_id'            => 'orbit.empty.floor:' . $mallId,
                 'status'              => 'in:active,inactive',
                 'verification_number' => 'alpha_num',
+                'disable_ads'         => 'in:n,y',
+                'disable_ymal'        => 'in:n,y',
             ];
 
             $validation_error_message = [
@@ -246,6 +252,14 @@ class StoreUpdateAPIController extends ControllerAPI
 
             OrbitInput::post('video_id_6', function($video_id_6) use ($updatestore) {
                 $updatestore->video_id_6 = $video_id_6;
+            });
+
+            OrbitInput::post('disable_ads', function($disable_ads) use ($updatestore) {
+                $updatestore->disable_ads = $disable_ads;
+            });
+
+            OrbitInput::post('disable_ymal', function($disable_ymal) use ($updatestore) {
+                $updatestore->disable_ymal = $disable_ymal;
             });
 
             // Translations
