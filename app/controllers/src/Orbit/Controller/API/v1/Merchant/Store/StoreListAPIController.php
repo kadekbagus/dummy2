@@ -112,6 +112,8 @@ class StoreListAPIController extends ControllerAPI
                                 'base_stores.video_id_6',
                                 'base_stores.description',
                                 'base_stores.custom_title',
+                                'base_stores.disable_ads',
+                                'base_stores.disable_ymal',
                                 'base_merchants.mobile_default_language'
                                 )
                             ->with('baseStoreTranslation','supportedLanguage','mediaBanner')
