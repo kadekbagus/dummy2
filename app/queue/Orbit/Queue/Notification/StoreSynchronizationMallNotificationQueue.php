@@ -32,14 +32,14 @@ class StoreSynchronizationMallNotificationQueue
         $prefix = DB::getTablePrefix();
         $baseStoreId = $data['base_store_id'];
 
-        $activeStore = Tenant::where('merchant_id', $baseStoreId)->where('status', 'active')->first();
+        $store = Tenant::where('merchant_id', $baseStoreId)->where('status', 'active')->first();
 
-        if (empty($activeStore)) {
+        if (empty($store)) {
             $job->delete();
 
             return [
                 'status' => 'fail',
-                'message' => sprintf('[Job ID: `%s`] Store Synch Mall Notification News ID %s is not found or inactive .', $job->getJobId(), $newsId)
+                'message' => sprintf('[Job ID: `%s`] Store Synch Mall Notification News ID %s is not found or inactive .', $job->getJobId(), $baseStoreId)
             ];
         }
 
@@ -88,10 +88,10 @@ class StoreSynchronizationMallNotificationQueue
                     $tokens = array_values(array_unique($tokens));
                 }
 
-                $launchUrl = LandingPageUrlGenerator::create('store', $baseStoreId, $baseMerchant->name)->generateUrl();
+                $launchUrl = LandingPageUrlGenerator::create('store', $baseStoreId, $store->name)->generateUrl();
 
                 $dataNotification = [
-                    'title' => $baseMerchant->name,
+                    'title' => $store->name,
                     'launch_url' => $launchUrl,
                     'attachment_path' => $attachmentPath,
                     'attachment_realpath' => $attachmentRealPath,
@@ -114,7 +114,7 @@ class StoreSynchronizationMallNotificationQueue
                 ];
 
                 // check notification exist or not
-                $dataNotificationSearch = ['title' => $baseMerchant->name, 'launch_url' => $launchUrl, 'type' => 'store'];
+                $dataNotificationSearch = ['title' => $store->name, 'launch_url' => $launchUrl, 'type' => 'store'];
                 $notificationSearch = $mongoClient->setQueryString($dataNotificationSearch)
                                                   ->setEndPoint('notifications')
                                                   ->request('GET');
@@ -191,7 +191,7 @@ class StoreSynchronizationMallNotificationQueue
                 'status' => 'ok',
                 'message' => sprintf('[Job ID: `%s`] Store Synch Mall Notification; Status: OK; News ID: %s; Total Token: %s ',
                                 $job->getJobId(),
-                                $newsId,
+                                $baseStoreId,
                                 count($tokens)
                             )
             ];
@@ -208,7 +208,7 @@ class StoreSynchronizationMallNotificationQueue
                 'status' => 'fail',
                 'message' => sprintf('[Job ID: `%s`] Store Synch Mall Notification; Status: FAIL; News ID: %s; Total Token: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
-                                $newsId,
+                                $baseStoreId,
                                 count($tokens),
                                 $e->getCode(),
                                 $e->getMessage())
