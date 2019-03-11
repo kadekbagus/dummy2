@@ -151,7 +151,7 @@ class UserStoreNotificationQueue
                     $startLoop = 0;
                     $oneSignalId = array();
                     while ($stopLoop == false) {
-                        $newToken = array_slice($ , $startLoop, 1500);
+                        $newToken = array_slice($notificationTokens , $startLoop, 1500);
 
                         if (empty($newToken)) {
                             $stopLoop =  true;
