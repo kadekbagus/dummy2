@@ -1,6 +1,7 @@
 <?php namespace Orbit\Queue\Notification;
 /**
- * Process queue for sent user store notification
+ * Process queue for sending user store notification
+ * Fired from UserNotificationStoreCommand artisan command
  *
  */
 use Config;
