@@ -17,7 +17,7 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 class MediaAPIController extends ControllerAPI
 {
     /** Allowed roles */
-    protected $uploadRoles = ['merchant review admin', 'master review admin', 'consumer', 'merchant database admin', 'article writer', 'article publisher', 'product manager'];
+    protected $uploadRoles = ['merchant review admin', 'master review admin', 'consumer', 'merchant database admin', 'article writer', 'article publisher', 'product manager', 'super admin'];
 
     /**
      * Pass false if called from another Class (if caller Class already emit transaction)
@@ -151,7 +151,7 @@ class MediaAPIController extends ControllerAPI
                 $imageMetas->modified_by = $user->user_id;
                 $imageMetas->last_image_order = $lastImageOrder;
 
-                $_image = Image::make($image);
+                $_image = Image::make($image->getRealPath())->orientate();
 
                 // Check allowed file mime
                 if (! in_array($_image->mime(), Config::get('orbit.upload.media.image.mime_type'))) {

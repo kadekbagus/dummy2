@@ -309,3 +309,9 @@ Artisan::add(new SendEmailBeforePaymentExpiredCommand);
 
 // Check Sepulsa Active Vouchers against our Active Campaign.
 Artisan::add(new SepulsaActiveVoucherReportCommand);
+
+// Copy base merchant description and banner to base store.
+Artisan::add(new CopyStoreDataCommand);
+
+// List all base stores.
+Artisan::add(new GetListBaseStoreCommand);

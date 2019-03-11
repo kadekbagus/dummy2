@@ -6,6 +6,7 @@
  */
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Controller\API\v1\Merchant\Store\StoreUploadAPIController;
+use Orbit\Controller\API\v1\Merchant\Store\StoreUploadBannerAPIController;
 
 /**
  * Listen on:    `orbit.basestore.postnewstore.after.save`
@@ -89,6 +90,28 @@ Event::listen('orbit.basestore.postnewstore.after.save', function($controller, $
     }
     $base_store->load('mediaImageGrab');
     $base_store->load('mediaImageGrabOrig');
+
+    // store banner
+    $banner = OrbitInput::files('banner');
+
+    if (! empty($banner)) {
+        $_POST['base_store_id'] = $base_store->base_store_id;
+        // This will be used on StoreUploadAPIController
+        App::instance('orbit.upload.user', $controller->api->user);
+
+        $response = StoreUploadBannerAPIController::create('raw')
+                       ->setCalledFrom('store.new')
+                       ->postUploadStoreBanner();
+
+        if ($response->code !== 0)
+        {
+            throw new \Exception($response->message, $response->code);
+        }
+
+        $base_store->setRelation('media_banner', $response->data);
+        $base_store->media_banner = $response->data;
+    }
+    $base_store->load('mediaBanner');
 });
 
 
@@ -176,6 +199,29 @@ Event::listen('orbit.basestore.postupdatestore.after.save', function($controller
 
     // update required 3party grab field
     Queue::push('Orbit\\Queue\\GTMRequirementFieldUpdateQueue', ['id' => $base_store->base_store_id, 'from' => 'base_store']);
+
+    // store banner
+    $banner = OrbitInput::files('banner');
+
+    if (! empty($banner)) {
+        $_POST['base_store_id'] = $base_store->base_store_id;
+
+        // This will be used on StoreUploadAPIController
+        App::instance('orbit.upload.user', $controller->api->user);
+
+        $response = StoreUploadBannerAPIController::create('raw')
+                       ->setCalledFrom('store.update')
+                       ->postUploadStoreBanner();
+
+        if ($response->code !== 0)
+        {
+            throw new \Exception($response->message, $response->code);
+        }
+
+        $base_store->setRelation('media_banner', $response->data);
+        $base_store->media_banner = $response->data;
+    }
+    $base_store->load('mediaBanner');
 });
 
 Event::listen('orbit.basestore.sync.begin', function($syncObject) {

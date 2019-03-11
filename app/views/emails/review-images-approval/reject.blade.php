@@ -44,7 +44,7 @@
         </div>
         <div class="content">
             <p>Dear, {{ $fullname }}</p>
-            <p>We are sorry, your review image(s) has been rejected because of:</p>
+            <p>We are sorry, your review image(s) for {{ $campaign_and_location_info }} has been rejected because of:</p>
             <ul class="reject-reasons">
                 <li>{{ $reject_reason }}</li>
             </ul>

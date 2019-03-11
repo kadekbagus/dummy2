@@ -1596,6 +1596,8 @@ return array(
                     'marketplace_image' => 'marketplace',
                     'product_image' => 'product',
                     'review_image' => 'review',
+                    'mall_photos' => 'mall',
+                    'mall_other_photos' => 'mall',
                 ],
 
                 // Allowed Mimetype
@@ -7092,6 +7094,24 @@ return array(
                 'object_type' => 'Tenant',
                 'parameter_name' => 'object_id'
             ),
+            // user click video thumbnail on mall detail page
+            '207' => array(
+                'name' => 'click_video_thumbnail',
+                'name_long' => 'Click Video Thumbnail',
+                'module_name' => 'Mall',
+                'type' => 'click',
+                'object_type' => 'Mall',
+                'parameter_name' => 'object_id'
+            ),
+            // user click video play brand on brand detail page
+            '208' => array(
+                'name' => 'click_play_video_mall',
+                'name_long' => 'Click Video Play Mall',
+                'module_name' => 'Mall',
+                'type' => 'click',
+                'object_type' => 'Mall',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 
@@ -7977,7 +7997,7 @@ return array(
     'coupon_reserved_limit_time' => '10',
 
     'feedback' => [
-        'cs_email' => 'cs@gotomalls.com',
+        'cs_email' => ['cs@gotomalls.com'],
 
         // Time limit before Customer can send new Feedback for the same mall. (in minutes)
         'limit' => 10,

@@ -97,6 +97,8 @@ class MerchantUpdateAPIController extends ControllerAPI
             $accountNumbers = OrbitInput::post('account_numbers',[]);
             $bankAddress = OrbitInput::post('bank_address',[]);
             $swiftCodes = OrbitInput::post('swift_codes',[]);
+            $disable_ads = OrbitInput::post('disable_ads','n');
+            $disable_ymal = OrbitInput::post('disable_ymal','n');
 
             // Begin database transaction
             $this->beginTransaction();
@@ -113,6 +115,8 @@ class MerchantUpdateAPIController extends ControllerAPI
                 array(
                     'baseMerchantId'          => 'required|orbit.exist.base_merchant_id',
                     'translations'            => 'required',
+                    'disable_ads'             => 'in:n,y',
+                    'disable_ymal'            => 'in:n,y',
                     'merchantName'            => 'required|orbit.exist.merchant_name_not_me:' . $baseMerchantId . ',' . $countryId,
                     'country'                 => 'required|orbit.store.country:' . $baseMerchantId . ',' . $countryId,
                     'languages'               => 'required|array',
@@ -207,6 +211,14 @@ class MerchantUpdateAPIController extends ControllerAPI
 
             OrbitInput::post('video_id_6', function($video_id_6) use ($updatedBaseMerchant) {
                 $updatedBaseMerchant->video_id_6 = $video_id_6;
+            });
+
+            OrbitInput::post('disable_ads', function($disable_ads) use ($updatedBaseMerchant) {
+                $updatedBaseMerchant->disable_ads = $disable_ads;
+            });
+
+            OrbitInput::post('disable_ymal', function($disable_ymal) use ($updatedBaseMerchant) {
+                $updatedBaseMerchant->disable_ymal = $disable_ymal;
             });
 
             // Translations

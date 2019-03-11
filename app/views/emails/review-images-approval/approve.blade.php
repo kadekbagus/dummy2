@@ -37,7 +37,7 @@
         </div>
         <div class="content">
             <p>Dear, {{ $fullname }}</p>
-            <p>Your review image(s) has been approved.</p>
+            <p>Your review image(s) for {{ $campaign_and_location_info }} has been approved.</p>
             <p>Thank you for your contribution.</p>
         </div>
 

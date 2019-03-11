@@ -87,17 +87,19 @@ class RatingNewAPIController extends PubControllerAPI
             }
 
             $validatorColumn = array(
+                                'review'      => str_replace(["\r", "\n"], '', $review),
                                 'object_id'   => $objectId,
                                 'object_type' => $objectType,
                                 'rating'      => $rating,
-                                'location_id' => $locationId
+                                'location_id' => $locationId,
                             );
 
             $validation = array(
+                            'review'      => 'max:1000',
                             'object_id'   => 'required',
                             'object_type' => 'required',
                             'rating'      => 'required',
-                            'location_id' => 'required'
+                            'location_id' => 'required',
                         );
 
             // Add validation rule for reply review
@@ -126,7 +128,9 @@ class RatingNewAPIController extends PubControllerAPI
                 }
             }
 
-            $validator = Validator::make($validatorColumn, $validation);
+            $validator = Validator::make($validatorColumn, $validation, [
+                'max' => 'REVIEW_FAILED_MAX_CHAR_EXCEEDED',
+            ]);
 
             // Run the validation
             if ($validator->fails()) {

@@ -197,6 +197,8 @@ class MallInfoAPIController extends PubControllerAPI
                 $mallIds[] = $areadata['id'];
             }
 
+            $mallData = Mall::with(['mediaPhotos', 'mediaOtherPhotos'])->where('merchant_id', '=', $mallId)->first();
+
             // ---- START RATING ----
             $reviewCounter = \Orbit\Helper\MongoDB\Review\ReviewCounter::create(Config::get('database.mongodb'))
                 ->setObjectId($mallIds)
@@ -207,6 +209,15 @@ class MallInfoAPIController extends PubControllerAPI
             foreach ($listmall as &$itemMall) {
                 $itemMall['rating_average'] = $reviewCounter->getAverage();
                 $itemMall['review_counter'] = $reviewCounter->getCounter();
+                $itemMall['video_id_1'] = $mallData->video_id_1;
+                $itemMall['video_id_2'] = $mallData->video_id_2;
+                $itemMall['video_id_3'] = $mallData->video_id_3;
+                $itemMall['video_id_4'] = $mallData->video_id_4;
+                $itemMall['video_id_5'] = $mallData->video_id_5;
+                $itemMall['video_id_6'] = $mallData->video_id_6;
+                $itemMall['other_photo_section_title'] = $mallData->other_photo_section_title;
+                $itemMall['mall_photos'] = $mallData->media_photos;
+                $itemMall['mall_other_photos'] = $mallData->media_other_photos;
             }
             // ---- END OF RATING ----
 

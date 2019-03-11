@@ -195,7 +195,7 @@ class ProductNewAPIController extends ControllerAPI
 
             // Rollback the changes
             $this->rollBack();
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             Event::fire('orbit.newproduct.postnewproduct.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
