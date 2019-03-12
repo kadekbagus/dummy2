@@ -1,6 +1,7 @@
 <?php namespace Orbit\Queue\Notification;
 /**
- * Process queue for sent user store notification
+ * Process queue for sending user store notification
+ * Fired from UserNotificationStoreCommand artisan command
  *
  */
 use Config;
@@ -150,7 +151,7 @@ class UserStoreNotificationQueue
                     $startLoop = 0;
                     $oneSignalId = array();
                     while ($stopLoop == false) {
-                        $newToken = array_slice($notificationTokens, $startLoop, 1500);
+                        $newToken = array_slice($notificationTokens , $startLoop, 1500);
 
                         if (empty($newToken)) {
                             $stopLoop =  true;
@@ -207,6 +208,21 @@ class UserStoreNotificationQueue
 
             // send as inApps notification
             if (! empty($storeObjectNotification->notification->user_ids)) {
+                $bodyInApps = [
+                    'user_ids'       => $storeObjectNotification->notification->user_ids,
+                    'token'         => null,
+                    'notifications' => $storeObjectNotification->notification,
+                    'send_status'   => 'sent',
+                    'is_viewed'     => false,
+                    'is_read'       => false,
+                    'created_at'    => $dateTime,
+                    'image_url'     => $imageUrl
+                ];
+
+                $inApps = $mongoClient->setFormParam($bodyInApps)
+                    ->setEndPoint('user-notifications') // express endpoint
+                    ->request('POST');
+/*  
                 foreach ($storeObjectNotification->notification->user_ids as $userId) {
                     $bodyInApps = [
                         'user_id'       => $userId,
@@ -223,6 +239,7 @@ class UserStoreNotificationQueue
                                 ->setEndPoint('user-notifications') // express endpoint
                                 ->request('POST');
                 }
+*/
             }
 
             // Update status in store-object-notifications collection from pending to sent
