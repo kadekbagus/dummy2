@@ -205,7 +205,7 @@ class UserMallNotificationQueue
             // send as inApps notification
             if (! empty($userIds)) {
                 $bodyInApps = [
-                    'user_id'       => $userIds,
+                    'user_ids'       => $userIds,
                     'token'         => null,
                     'notifications' => $notificationMall,
                     'send_status'   => 'sent',
