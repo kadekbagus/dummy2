@@ -204,22 +204,20 @@ class UserMallNotificationQueue
 
             // send as inApps notification
             if (! empty($userIds)) {
-                foreach ($userIds as $userId) {
-                    $bodyInApps = [
-                        'user_id'       => $userId,
-                        'token'         => null,
-                        'notifications' => $notificationMall,
-                        'send_status'   => 'sent',
-                        'is_viewed'     => false,
-                        'is_read'       => false,
-                        'created_at'    => $dateTime,
-                        'image_url'     => $imageUrl
-                    ];
+                $bodyInApps = [
+                    'user_id'       => $userIds,
+                    'token'         => null,
+                    'notifications' => $notificationMall,
+                    'send_status'   => 'sent',
+                    'is_viewed'     => false,
+                    'is_read'       => false,
+                    'created_at'    => $dateTime,
+                    'image_url'     => $imageUrl
+                ];
 
-                    $inApps = $mongoClient->setFormParam($bodyInApps)
-                                          ->setEndPoint('user-notifications')
-                                          ->request('POST');
-                }
+                $inApps = $mongoClient->setFormParam($bodyInApps)
+                                      ->setEndPoint('user-notifications')
+                                      ->request('POST');
             }
 
             // Safely delete the object
