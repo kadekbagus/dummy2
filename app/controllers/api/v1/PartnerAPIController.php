@@ -16,7 +16,7 @@ use DominoPOS\OrbitUploader\Uploader as OrbitUploader;
 
 class PartnerAPIController extends ControllerAPI
 {
-    protected $viewPartnerRoles = ['super admin', 'mall admin', 'mall owner'];
+    protected $viewPartnerRoles = ['super admin', 'mall admin', 'mall owner', 'article writer', 'article publisher'];
     protected $modifyPartnerRoles = ['super admin', 'mall admin', 'mall owner'];
     protected $returnBuilder = FALSE;
     protected $defaultLanguage = 'en';
@@ -1160,6 +1160,12 @@ class PartnerAPIController extends ControllerAPI
             OrbitInput::get('start_date_to', function($end_date) use ($partners)
             {
                 $partners->where('partners.start_date', '<=', $end_date);
+            });
+
+            // Filter by start date to
+            OrbitInput::get('status', function($status) use ($partners)
+            {
+                $partners->where('partners.status', '<=', $status);
             });
 
             // Add new relation based on request
