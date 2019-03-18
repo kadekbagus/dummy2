@@ -115,6 +115,7 @@ class PartnerAPIController extends ControllerAPI
             $translations = OrbitInput::post('translations');
             $supported_languages = OrbitInput::post('supported_languages', []);
             $mobile_default_language = OrbitInput::post('mobile_default_language');
+            $partner_categories = OrbitInput::post('categories', []);
             $meta_title = OrbitInput::post('meta_title');
             $meta_description = OrbitInput::post('meta_description');
             $working_hours = OrbitInput::post('working_hours');
@@ -319,12 +320,17 @@ class PartnerAPIController extends ControllerAPI
                 }
             }
 
+            // Attach categories to partner...
+            foreach($partner_categories as $category) {
+                $newPartnerCategory = new PartnerCategory;
+                $newPartnerCategory->partner_id = $newPartner->partner_id;
+                $newPartnerCategory->category_id = $category;
+                $newPartnerCategory->save();
+            }
+
             Event::fire('orbit.partner.postnewpartner.after.save', array($this, $newPartner));
 
             Event::fire('orbit.partner.postnewpartner.after.save2', array($this, $newPartner));
-
-            // ???????
-            Event::fire('orbit.partner.postnewpartner.after.save3', array($this, $newPartner));
 
             $this->response->data = $newPartner;
 
@@ -708,6 +714,19 @@ class PartnerAPIController extends ControllerAPI
                 $updatedpartner->pop_up_content = $pop_up_content;
             });
 
+            OrbitInput::post('categories', function($categories) use ($updatedpartner) {
+                // Delete old categories...
+                PartnerCategory::where('partner_id', $updatedpartner->partner_id)->delete();
+
+                // Attach new categories...
+                foreach($categories as $category) {
+                    $newPartnerCategory = new PartnerCategory;
+                    $newPartnerCategory->partner_id = $updatedpartner->partner_id;
+                    $newPartnerCategory->category_id = $category;
+                    $newPartnerCategory->save();
+                }
+            });
+
             OrbitInput::post('meta_title', function($meta_title) use ($updatedpartner) {
                 $updatedpartner->meta_title = $meta_title;
             });
@@ -868,7 +887,6 @@ class PartnerAPIController extends ControllerAPI
 
             Event::fire('orbit.partner.postupdatepartner.after.save', array($this, $updatedpartner));
             Event::fire('orbit.partner.postupdatepartner.after.save2', array($this, $updatedpartner));
-            Event::fire('orbit.partner.postupdatepartner.after.save3', array($this, $updatedpartner));
 
             $this->response->data = $updatedpartner;
 
