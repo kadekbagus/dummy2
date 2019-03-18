@@ -115,6 +115,17 @@ class PartnerAPIController extends ControllerAPI
             $translations = OrbitInput::post('translations');
             $supported_languages = OrbitInput::post('supported_languages', []);
             $mobile_default_language = OrbitInput::post('mobile_default_language');
+            $meta_title = OrbitInput::post('meta_title');
+            $meta_description = OrbitInput::post('meta_description');
+            $working_hours = OrbitInput::post('working_hours');
+            $custom_photo_section_title = OrbitInput::post('custom_photo_section_title');
+            $button_color = OrbitInput::post('button_color');
+            $video_id_1 = OrbitInput::post('video_id_1');
+            $video_id_2 = OrbitInput::post('video_id_2');
+            $video_id_3 = OrbitInput::post('video_id_3');
+            $video_id_4 = OrbitInput::post('video_id_4');
+            $video_id_5 = OrbitInput::post('video_id_5');
+            $video_id_6 = OrbitInput::post('video_id_6');
 
             $affected_group_name_id = OrbitInput::post('affected_group_name_id');
 
@@ -239,6 +250,17 @@ class PartnerAPIController extends ControllerAPI
             $newPartner->is_visible = $is_visible;
             $newPartner->is_exclusive = $is_exclusive;
             $newPartner->mobile_default_language = $this->defaultLanguage;
+            $newPartner->meta_title = $meta_title;
+            $newPartner->meta_description = $meta_description;
+            $newPartner->working_hours = $working_hours;
+            $newPartner->custom_photo_section_title = $custom_photo_section_title;
+            $newPartner->button_color = $button_color;
+            $newPartner->video_id_1 = $video_id_1;
+            $newPartner->video_id_2 = $video_id_2;
+            $newPartner->video_id_3 = $video_id_3;
+            $newPartner->video_id_4 = $video_id_4;
+            $newPartner->video_id_5 = $video_id_5;
+            $newPartner->video_id_6 = $video_id_6;
 
             if (strtoupper($is_exclusive) === 'Y') {
                 $newPartner->pop_up_content = $pop_up_content;
@@ -681,6 +703,50 @@ class PartnerAPIController extends ControllerAPI
 
             OrbitInput::post('pop_up_content', function($pop_up_content) use ($updatedpartner) {
                 $updatedpartner->pop_up_content = $pop_up_content;
+            });
+
+            OrbitInput::post('meta_title', function($meta_title) use ($updatedpartner) {
+                $updatedpartner->meta_title = $meta_title;
+            });
+
+            OrbitInput::post('meta_description', function($meta_description) use ($updatedpartner) {
+                $updatedpartner->meta_description = $meta_description;
+            });
+
+            OrbitInput::post('custom_photo_section_title', function($custom_photo_section_title) use ($updatedpartner) {
+                $updatedpartner->custom_photo_section_title = $custom_photo_section_title;
+            });
+
+            OrbitInput::post('working_hours', function($working_hours) use ($updatedpartner) {
+                $updatedpartner->working_hours = $working_hours;
+            });
+
+            OrbitInput::post('button_color', function($button_color) use ($updatedpartner) {
+                $updatedpartner->button_color = $button_color;
+            });
+
+            OrbitInput::post('video_id_1', function($video_id_1) use ($updatedpartner) {
+                $updatedpartner->video_id_1 = $video_id_1;
+            });
+
+            OrbitInput::post('video_id_2', function($video_id_2) use ($updatedpartner) {
+                $updatedpartner->video_id_2 = $video_id_2;
+            });
+
+            OrbitInput::post('video_id_3', function($video_id_3) use ($updatedpartner) {
+                $updatedpartner->video_id_3 = $video_id_3;
+            });
+
+            OrbitInput::post('video_id_4', function($video_id_4) use ($updatedpartner) {
+                $updatedpartner->video_id_4 = $video_id_4;
+            });
+
+            OrbitInput::post('video_id_5', function($video_id_5) use ($updatedpartner) {
+                $updatedpartner->video_id_5 = $video_id_5;
+            });
+
+            OrbitInput::post('video_id_6', function($video_id_6) use ($updatedpartner) {
+                $updatedpartner->video_id_6 = $video_id_6;
             });
 
             OrbitInput::post('translations', function($translation_json_string) use ($updatedpartner) {
@@ -1680,7 +1746,7 @@ class PartnerAPIController extends ControllerAPI
          * value null it means set to null (use main language content instead).
          */
 
-        $valid_fields = ['description', 'pop_up_content'];
+        $valid_fields = ['description', 'pop_up_content', 'meta_title', 'meta_description'];
         $user = $this->api->user;
         $operations = [];
 
@@ -1691,30 +1757,35 @@ class PartnerAPIController extends ControllerAPI
 
         // translate for mall
         foreach ($data as $language_id => $translations) {
-            $language = Language::where('language_id', '=', $language_id)
-                ->first();
+            $language = Language::where('language_id', '=', $language_id)->first();
+
             if (empty($language)) {
                 OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.language'));
             }
+
             $existing_translation = PartnerTranslation::excludeDeleted()
                 ->where('partner_id', '=', $partner->partner_id)
                 ->where('language_id', '=', $language_id)
                 ->first();
+
             if ($translations === null) {
                 // deleting, verify exists
                 if (empty($existing_translation)) {
                     OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.language'));
                 }
+
                 $operations[] = ['delete', $existing_translation];
             } else {
                 foreach ($translations as $field => $value) {
                     if (!in_array($field, $valid_fields, true)) {
                         OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.key'));
                     }
+
                     if ($value !== null && !is_string($value)) {
                         OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.value'));
                     }
                 }
+
                 if (empty($existing_translation)) {
                     $operations[] = ['create', $language_id, $translations];
                 } else {

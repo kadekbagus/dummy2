@@ -1598,6 +1598,9 @@ return array(
                     'review_image' => 'review',
                     'mall_photos' => 'mall',
                     'mall_other_photos' => 'mall',
+                    'partner_photos' => 'partner',
+                    'partner_custom_photos' => 'partner',
+                    'partner_banners' => 'partner',
                 ],
 
                 // Allowed Mimetype
