@@ -323,6 +323,9 @@ class PartnerAPIController extends ControllerAPI
 
             Event::fire('orbit.partner.postnewpartner.after.save2', array($this, $newPartner));
 
+            // ???????
+            Event::fire('orbit.partner.postnewpartner.after.save3', array($this, $newPartner));
+
             $this->response->data = $newPartner;
 
             // Commit the changes
@@ -865,6 +868,7 @@ class PartnerAPIController extends ControllerAPI
 
             Event::fire('orbit.partner.postupdatepartner.after.save', array($this, $updatedpartner));
             Event::fire('orbit.partner.postupdatepartner.after.save2', array($this, $updatedpartner));
+            Event::fire('orbit.partner.postupdatepartner.after.save3', array($this, $updatedpartner));
 
             $this->response->data = $updatedpartner;
 
