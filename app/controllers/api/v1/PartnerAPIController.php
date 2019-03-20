@@ -128,6 +128,7 @@ class PartnerAPIController extends ControllerAPI
             $video_id_4 = OrbitInput::post('video_id_4');
             $video_id_5 = OrbitInput::post('video_id_5');
             $video_id_6 = OrbitInput::post('video_id_6');
+            $banners = OrbitInput::post('banners');
 
             $affected_group_name_id = OrbitInput::post('affected_group_name_id');
 
@@ -300,17 +301,20 @@ class PartnerAPIController extends ControllerAPI
                 $newPartner->load('supportedLanguages.language');
             }
 
-            if (! empty($social_media_uri)) {
-                $sosmed = SocialMedia::where('social_media_code', '=', $social_media_type)->first();
+            $socialMediaList = SocialMedia::get();
+            $newPartner->social_media = [];
+            foreach($socialMediaList as $socialMedia) {
+                $socialMediaCode = $socialMedia->social_media_code;
+                if (isset($social_media[$socialMediaCode]) && ! empty($social_media[$socialMediaCode])) {
+                    $newObjectSocialMedia = new ObjectSocialMedia();
+                    $newObjectSocialMedia->object_id = $newPartner->partner_id;
+                    $newObjectSocialMedia->object_type = 'partner';
+                    $newObjectSocialMedia->social_media_id = $socialMedia->social_media_id;
+                    $newObjectSocialMedia->social_media_uri = $social_media[$socialMediaCode];
+                    $newObjectSocialMedia->save();
 
-                $newObjectSocialMedia = new ObjectSocialMedia();
-                $newObjectSocialMedia->object_id = $newPartner->partner_id;
-                $newObjectSocialMedia->object_type = 'partner';
-                $newObjectSocialMedia->social_media_id = $sosmed->social_media_id;
-                $newObjectSocialMedia->social_media_uri = $social_media_uri;
-                $newObjectSocialMedia->save();
-
-                $newPartner->social_media = $newObjectSocialMedia;
+                    $newPartner->social_media[$socialMediaCode] = $newObjectSocialMedia;
+                }
             }
 
             if (is_array($affected_group_name_id)) {
@@ -851,27 +855,6 @@ class PartnerAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('social_media_uri', function($social_media_uri) use ($updatedpartner, $partner_id, $social_media_uri, $social_media_type) {
-                // Check update when exist and insert if not exist
-                $socialMedia = ObjectSocialMedia::where('object_id', $partner_id)
-                                ->where('object_type', 'partner')
-                                ->first();
-
-                 if (! empty($socialMedia)) {
-                    $socialMedia->social_media_uri = $social_media_uri;
-                    $socialMedia->save();
-                } else {
-                    $sosmed = SocialMedia::where('social_media_code', '=', $social_media_type)->first();
-
-                    $socialMedia = new ObjectSocialMedia();
-                    $socialMedia->object_id = $partner_id;
-                    $socialMedia->object_type = 'partner';
-                    $socialMedia->social_media_id = $sosmed->social_media_id;
-                    $socialMedia->social_media_uri = $social_media_uri;
-                    $socialMedia->save();
-                }
-            });
-
             OrbitInput::post('affected_group_name_id', function($affected_group_name_id) use ($updatedpartner) {
                 // del partner affected group
                 $del_partner_affected_group = PartnerAffectedGroup::where('partner_id', $updatedpartner->partner_id)->delete();
@@ -893,6 +876,28 @@ class PartnerAPIController extends ControllerAPI
 
             Event::fire('orbit.partner.postupdatepartner.after.save', array($this, $updatedpartner));
             Event::fire('orbit.partner.postupdatepartner.after.save2', array($this, $updatedpartner));
+
+            $partnerSocialMedia = [];
+            OrbitInput::post('social_media', function($social_media) use ($updatedpartner, &$partnerSocialMedia) {
+                ObjectSocialMedia::where('object_id', $updatedpartner->partner_id)->where('object_type', 'partner')->delete();
+
+                $socialMediaList = SocialMedia::get();
+                foreach($socialMediaList as $socialMedia) {
+                    $socialMediaCode = $socialMedia->social_media_code;
+                    if (isset($social_media[$socialMediaCode]) && ! empty($social_media[$socialMediaCode])) {
+                        $newObjectSocialMedia = new ObjectSocialMedia();
+                        $newObjectSocialMedia->object_id = $updatedpartner->partner_id;
+                        $newObjectSocialMedia->object_type = 'partner';
+                        $newObjectSocialMedia->social_media_id = $socialMedia->social_media_id;
+                        $newObjectSocialMedia->social_media_uri = $social_media[$socialMediaCode];
+                        $newObjectSocialMedia->save();
+
+                        $partnerSocialMedia[] = $newObjectSocialMedia;
+                    }
+                }
+            });
+
+            $updatedpartner->social_media = $partnerSocialMedia;
 
             $this->response->data = $updatedpartner;
 
