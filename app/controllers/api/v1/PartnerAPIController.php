@@ -734,6 +734,26 @@ class PartnerAPIController extends ControllerAPI
                 }
             });
 
+            $partnerSocialMedia = [];
+            OrbitInput::post('social_media', function($social_media) use ($updatedpartner, &$partnerSocialMedia) {
+                ObjectSocialMedia::where('object_id', $updatedpartner->partner_id)->where('object_type', 'partner')->delete();
+
+                $socialMediaList = SocialMedia::get();
+                foreach($socialMediaList as $socialMedia) {
+                    $socialMediaCode = $socialMedia->social_media_code;
+                    if (isset($social_media[$socialMediaCode]) && ! empty($social_media[$socialMediaCode])) {
+                        $newObjectSocialMedia = new ObjectSocialMedia();
+                        $newObjectSocialMedia->object_id = $updatedpartner->partner_id;
+                        $newObjectSocialMedia->object_type = 'partner';
+                        $newObjectSocialMedia->social_media_id = $socialMedia->social_media_id;
+                        $newObjectSocialMedia->social_media_uri = $social_media[$socialMediaCode];
+                        $newObjectSocialMedia->save();
+
+                        $partnerSocialMedia[] = $newObjectSocialMedia;
+                    }
+                }
+            });
+
             OrbitInput::post('meta_title', function($meta_title) use ($updatedpartner) {
                 $updatedpartner->meta_title = $meta_title;
             });
@@ -878,28 +898,7 @@ class PartnerAPIController extends ControllerAPI
             Event::fire('orbit.partner.postupdatepartner.after.save', array($this, $updatedpartner));
             Event::fire('orbit.partner.postupdatepartner.after.save2', array($this, $updatedpartner));
 
-            $partnerSocialMedia = [];
-            OrbitInput::post('social_media', function($social_media) use ($updatedpartner, &$partnerSocialMedia) {
-                ObjectSocialMedia::where('object_id', $updatedpartner->partner_id)->where('object_type', 'partner')->delete();
-
-                $socialMediaList = SocialMedia::get();
-                foreach($socialMediaList as $socialMedia) {
-                    $socialMediaCode = $socialMedia->social_media_code;
-                    if (isset($social_media[$socialMediaCode]) && ! empty($social_media[$socialMediaCode])) {
-                        $newObjectSocialMedia = new ObjectSocialMedia();
-                        $newObjectSocialMedia->object_id = $updatedpartner->partner_id;
-                        $newObjectSocialMedia->object_type = 'partner';
-                        $newObjectSocialMedia->social_media_id = $socialMedia->social_media_id;
-                        $newObjectSocialMedia->social_media_uri = $social_media[$socialMediaCode];
-                        $newObjectSocialMedia->save();
-
-                        $partnerSocialMedia[] = $newObjectSocialMedia;
-                    }
-                }
-            });
-
             $updatedpartner->social_media = $partnerSocialMedia;
-
             $this->response->data = $updatedpartner;
 
             // Commit the changes
