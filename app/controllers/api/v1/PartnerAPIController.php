@@ -107,6 +107,7 @@ class PartnerAPIController extends ControllerAPI
             $deeplink_url = OrbitInput::post('deeplink_url');
             $social_media_uri = OrbitInput::post('social_media_uri');
             $social_media_type = OrbitInput::post('social_media_type', 'facebook');
+            $social_media = OrbitInput::post('social_media', []);
             $logo = OrbitInput::files('logo');
             $image = OrbitInput::files('image');
             $is_exclusive = OrbitInput::post('is_exclusive', 'N');
