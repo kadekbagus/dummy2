@@ -121,6 +121,7 @@ class PartnerAPIController extends ControllerAPI
             $working_hours = OrbitInput::post('working_hours');
             $custom_photo_section_title = OrbitInput::post('custom_photo_section_title');
             $button_color = OrbitInput::post('button_color');
+            $button_text_color = OrbitInput::post('button_text_color');
             $video_id_1 = OrbitInput::post('video_id_1');
             $video_id_2 = OrbitInput::post('video_id_2');
             $video_id_3 = OrbitInput::post('video_id_3');
@@ -256,6 +257,7 @@ class PartnerAPIController extends ControllerAPI
             $newPartner->working_hours = $working_hours;
             $newPartner->custom_photo_section_title = $custom_photo_section_title;
             $newPartner->button_color = $button_color;
+            $newPartner->button_text_color = $button_text_color;
             $newPartner->video_id_1 = $video_id_1;
             $newPartner->video_id_2 = $video_id_2;
             $newPartner->video_id_3 = $video_id_3;
@@ -745,6 +747,10 @@ class PartnerAPIController extends ControllerAPI
 
             OrbitInput::post('button_color', function($button_color) use ($updatedpartner) {
                 $updatedpartner->button_color = $button_color;
+            });
+
+            OrbitInput::post('button_text_color', function($button_text_color) use ($updatedpartner) {
+                $updatedpartner->button_text_color = $button_text_color;
             });
 
             OrbitInput::post('video_id_1', function($video_id_1) use ($updatedpartner) {
