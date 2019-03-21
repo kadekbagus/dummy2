@@ -1452,7 +1452,11 @@ class PartnerAPIController extends ControllerAPI
                                     "), DB::raw('subQuery.partner_affected_group_id'), '=', 'partner_affected_group.partner_affected_group_id')
                                 ->groupBy(DB::raw("subQuery.partner_id"), DB::raw("subQuery.group_name"));
                             }]);
-                    } else {
+                    }
+                    else if ($relation === 'banners') {
+                        $partners->with(['banners.media']);
+                    }
+                    else {
                         $partners->with($relation);
                     }
                 }
