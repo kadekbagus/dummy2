@@ -299,6 +299,7 @@ class PartnerAPIController extends ControllerAPI
             }
 
             $social_media = json_decode($social_media, true);
+            $partnerSocialMedia = [];
             if (! empty($social_media)) {
                 $socialMediaList = SocialMedia::get();
                 $newPartner->social_media = [];
@@ -312,7 +313,7 @@ class PartnerAPIController extends ControllerAPI
                         $newObjectSocialMedia->social_media_uri = $social_media[$socialMediaCode];
                         $newObjectSocialMedia->save();
 
-                        $newPartner->social_media[$socialMediaCode] = $newObjectSocialMedia;
+                        $partnerSocialMedia[$socialMediaCode] = $newObjectSocialMedia;
                     }
                 }
             }
@@ -364,6 +365,7 @@ class PartnerAPIController extends ControllerAPI
             Event::fire('orbit.partner.postnewpartner.after.save2', array($this, $newPartner));
 
             $newPartner->partner_banners = $partnerBannersData;
+            $newPartner->social_media = $partnerSocialMedia;
             $this->response->data = $newPartner;
 
             // Commit the changes
@@ -1469,6 +1471,16 @@ class PartnerAPIController extends ControllerAPI
                     }
                     else if ($relation === 'banners') {
                         $partners->with(['banners.media']);
+                    }
+                    else if ($relation === 'categories') {
+                        $partners->with(['categories' => function($category) use ($prefix) {
+                            $category->select(DB::raw("{$prefix}categories.category_id"), 'category_name');
+                        }]);
+                    }
+                    else if ($relation === 'social_media') {
+                        $partners->with(['social_media' => function($socialMedia) use ($prefix) {
+                            $socialMedia->select(DB::raw("{$prefix}social_media.social_media_code as social_media"), 'social_media_uri');
+                        }]);
                     }
                     else {
                         $partners->with($relation);
