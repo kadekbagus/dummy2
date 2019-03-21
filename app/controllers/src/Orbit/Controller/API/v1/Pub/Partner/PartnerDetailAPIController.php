@@ -179,13 +179,17 @@ class PartnerDetailAPIController extends PubControllerAPI
                     $q->on('deeplinks.status', '=', DB::raw("'active'"));
                 })
                 ->with(['banners' => function($q) use ($photos) {
-                        $q->select('link_url', 'is_outbound', 'partner_id')
+                        $q->select('link_url', 'is_outbound', 'partner_id', 'partner_banner_id')
                             ->with(['media' => function($q2) use ($photos) {
-                                $q2->select(DB::raw("{$photos}"), 'object_id');
+                                $q2->select(DB::raw("{$photos}"), 'object_id', 'media_name_long');
                             }]);
                     },
-                    'mediaPhotos',
-                    'mediaCustomPhotos'
+                    'mediaPhotos' => function($q) {
+                        $q->select(DB::raw("{$photos}"), 'object_id', 'media_name_long');
+                    },
+                    'mediaCustomPhotos' => function($q) {
+                        $q->select(DB::raw("{$photos}"), 'object_id', 'media_name_long');
+                    }
                 ])
                 ->where('partners.status', 'active')
                 ->where('partners.partner_id', $partnerId)
