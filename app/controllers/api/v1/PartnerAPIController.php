@@ -1473,7 +1473,14 @@ class PartnerAPIController extends ControllerAPI
                         $partners->with(['banners.media']);
                     }
                     else if ($relation === 'categories') {
-                        $partners->with(['categories']);
+                        $partners->with(['categories' => function($category) use ($prefix) {
+                            $category->select(DB::raw("{$prefix}categories.category_id"), 'category_name');
+                        }]);
+                    }
+                    else if ($relation === 'social_media') {
+                        $partners->with(['social_media' => function($socialMedia) use ($prefix) {
+                            $socialMedia->select(DB::raw("{$prefix}social_media.social_media_code as social_media"), 'social_media_uri');
+                        }]);
                     }
                     else {
                         $partners->with($relation);
