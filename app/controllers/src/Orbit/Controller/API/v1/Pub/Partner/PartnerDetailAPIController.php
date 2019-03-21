@@ -92,6 +92,9 @@ class PartnerDetailAPIController extends PubControllerAPI
                 $logo = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as logo_url";
 
                 $image = "CASE WHEN (image_media.cdn_url is null or image_media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, image_media.path) ELSE image_media.cdn_url END as image_url";
+
+                // photos and custom photos
+                $photos = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as photo_url";
             }
 
             $partner = Partner::select(
@@ -175,6 +178,15 @@ class PartnerDetailAPIController extends PubControllerAPI
                     $q->on('deeplinks.object_type', '=', DB::raw("'partner'"));
                     $q->on('deeplinks.status', '=', DB::raw("'active'"));
                 })
+                ->with(['banners' => function($q) use ($photos) {
+                        $q->select('link_url', 'is_outbound', 'partner_id')
+                            ->with(['media' => function($q2) use ($photos) {
+                                $q2->select(DB::raw("{$photos}"), 'object_id');
+                            }]);
+                    },
+                    'mediaPhotos',
+                    'mediaCustomPhotos'
+                ])
                 ->where('partners.status', 'active')
                 ->where('partners.partner_id', $partnerId)
                 ->groupBy('partners.partner_id')
