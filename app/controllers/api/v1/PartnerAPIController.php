@@ -1472,6 +1472,9 @@ class PartnerAPIController extends ControllerAPI
                     else if ($relation === 'banners') {
                         $partners->with(['banners.media']);
                     }
+                    else if ($relation === 'categories') {
+                        $partners->with(['categories']);
+                    }
                     else {
                         $partners->with($relation);
                     }
