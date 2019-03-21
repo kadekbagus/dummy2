@@ -117,7 +117,37 @@ class PartnerDetailAPIController extends PubControllerAPI
                     DB::raw("{$image}"),
                     DB::Raw("
                         CASE WHEN ({$prefix}partner_translations.description = '' or {$prefix}partner_translations.description is null) THEN default_translation.description ELSE {$prefix}partner_translations.description END as description
-                    ")
+                    "),
+                    DB::raw("(SELECT social_media_uri FROM {$prefix}object_social_media
+                                LEFT JOIN {$prefix}social_media on {$prefix}social_media.social_media_id = {$prefix}object_social_media.social_media_id
+                              WHERE {$prefix}object_social_media.object_type = 'partner'
+                              AND {$prefix}object_social_media.object_id = {$this->quote($partnerId)}
+                              AND {$prefix}social_media.social_media_code = 'facebook'
+                     ) AS facebook_url"),
+                    DB::raw("(SELECT social_media_uri FROM {$prefix}object_social_media
+                                LEFT JOIN {$prefix}social_media on {$prefix}social_media.social_media_id = {$prefix}object_social_media.social_media_id
+                              WHERE {$prefix}object_social_media.object_type = 'partner'
+                              AND {$prefix}object_social_media.object_id = {$this->quote($partnerId)}
+                              AND {$prefix}social_media.social_media_code = 'twitter'
+                     ) AS twitter_url"),
+                    DB::raw("(SELECT social_media_uri FROM {$prefix}object_social_media
+                                LEFT JOIN {$prefix}social_media on {$prefix}social_media.social_media_id = {$prefix}object_social_media.social_media_id
+                              WHERE {$prefix}object_social_media.object_type = 'partner'
+                              AND {$prefix}object_social_media.object_id = {$this->quote($partnerId)}
+                              AND {$prefix}social_media.social_media_code = 'instagram'
+                     ) AS instagram_url"),
+                    DB::raw("(SELECT social_media_uri FROM {$prefix}object_social_media
+                                LEFT JOIN {$prefix}social_media on {$prefix}social_media.social_media_id = {$prefix}object_social_media.social_media_id
+                              WHERE {$prefix}object_social_media.object_type = 'partner'
+                              AND {$prefix}object_social_media.object_id = {$this->quote($partnerId)}
+                              AND {$prefix}social_media.social_media_code = 'youtube'
+                     ) AS youtube_url"),
+                    DB::raw("(SELECT social_media_uri FROM {$prefix}object_social_media
+                                LEFT JOIN {$prefix}social_media on {$prefix}social_media.social_media_id = {$prefix}object_social_media.social_media_id
+                              WHERE {$prefix}object_social_media.object_type = 'partner'
+                              AND {$prefix}object_social_media.object_id = {$this->quote($partnerId)}
+                              AND {$prefix}social_media.social_media_code = 'line'
+                     ) AS line_url")
                 )
                 ->leftJoin('media', function ($q) {
                     $q->on('media.object_id', '=', 'partners.partner_id');
