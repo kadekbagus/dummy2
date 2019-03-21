@@ -129,7 +129,7 @@ class PartnerAPIController extends ControllerAPI
             $video_id_4 = OrbitInput::post('video_id_4');
             $video_id_5 = OrbitInput::post('video_id_5');
             $video_id_6 = OrbitInput::post('video_id_6');
-            $banners = OrbitInput::post('banners', []);
+            $banners = OrbitInput::post('banners', '');
 
             $affected_group_name_id = OrbitInput::post('affected_group_name_id');
 
@@ -334,24 +334,28 @@ class PartnerAPIController extends ControllerAPI
                 $newPartnerCategory->save();
             }
 
-            foreach($banners as $bannerIndex => $banner) {
-                $isOutbound = isset($banner['is_outbound']) && $banner['is_outbound'] === 'Y' ? 'Y' : 'N';
+            $banners = json_decode($banners, true);
+            $partnerBannersData = [];
+            if (! empty($banners)) {
+                foreach($banners as $bannerIndex => $banner) {
+                    $isOutbound = isset($banner['is_outbound']) && $banner['is_outbound'] === 'Y' ? 'Y' : 'N';
 
-                $fileInputKey = "banners_image_{$bannerIndex}";
-                $banner['banner_id'] = ! isset($banner['banner_id']) ? '' : $banner['banner_id'];
-                $event = 'orbit.partner.postupdatepartnerbanner.after.save';
+                    $fileInputKey = "banners_image_{$bannerIndex}";
+                    $banner['banner_id'] = ! isset($banner['banner_id']) ? '' : $banner['banner_id'];
+                    $event = 'orbit.partner.postupdatepartnerbanner.after.save';
 
-                $partnerBanner = new PartnerBanner;
-                $partnerBanner->partner_id = $newPartner->partner_id;
-                $partnerBanner->is_outbound = $isOutbound;
-                $partnerBanner->link_url = $banner['link_url'];
-                $partnerBanner->save();
-                $keptBanners[] = $partnerBanner->partner_banner_id;
+                    $partnerBanner = new PartnerBanner;
+                    $partnerBanner->partner_id = $newPartner->partner_id;
+                    $partnerBanner->is_outbound = $isOutbound;
+                    $partnerBanner->link_url = $banner['link_url'];
+                    $partnerBanner->save();
+                    $keptBanners[] = $partnerBanner->partner_banner_id;
 
-                $partnerBannersData[] = $partnerBanner;
+                    $partnerBannersData[] = $partnerBanner;
 
-                if (Input::hasFile($fileInputKey)) {
-                    Event::fire($event, array($this, $newPartner, $partnerBanner, $bannerIndex));
+                    if (Input::hasFile($fileInputKey)) {
+                        Event::fire($event, array($this, $newPartner, $partnerBanner, $bannerIndex));
+                    }
                 }
             }
 
@@ -540,6 +544,7 @@ class PartnerAPIController extends ControllerAPI
             $social_media_type = OrbitInput::post('social_media_type', 'facebook');
             $logo = OrbitInput::files('logo');
             $image = OrbitInput::files('image');
+            $jsonBanners = OrbitInput::post('banners', '');
 
             $affected_group_name_id = OrbitInput::post('affected_group_name_id');
 
@@ -910,10 +915,11 @@ class PartnerAPIController extends ControllerAPI
                 }
             });
 
+            $banners = json_decode($jsonBanners, true);
             $partnerBannersData = [];
-            OrbitInput::post('banners', function($banners) use ($updatedpartner, &$partnerBannersData) {
+            $keptBanners = [];
+            if (! empty($banners)) {
                 $oldBannerIds = PartnerBanner::where('partner_id', $updatedpartner->partner_id)->lists('partner_banner_id');
-                $keptBanners = [];
                 foreach($banners as $bannerIndex => $banner) {
 
                     $isOutbound = isset($banner['is_outbound']) && $banner['is_outbound'] === 'Y' ? 'Y' : 'N';
@@ -947,18 +953,26 @@ class PartnerAPIController extends ControllerAPI
                         Event::fire($event, array($this, $updatedpartner, $partnerBanner, $bannerIndex));
                     }
                 }
+            }
 
-                // @todo delete cdn files...
+            // @todo delete cdn files...
+            if (empty($banners)) {
+                // if no banners being sent, then assume remove all the banners.
+                $shouldBeDeletedBanners = PartnerBanner::with(['media'])->where('partner_id', $updatedpartner->partner_id)->get();
+            }
+            else if (! empty($keptBanners)) {
+                // Otherwise, only delete the ones that not sent by frontend.
                 $shouldBeDeletedBanners = PartnerBanner::with(['media'])->whereNotIn('partner_banner_id', $keptBanners)->get();
-                foreach ($shouldBeDeletedBanners as $banner) {
-                    foreach($banner->media as $media) {
-                        @unlink($media->realpath);
-                        $media->delete();
-                    }
+            }
 
-                    $banner->delete();
+            foreach ($shouldBeDeletedBanners as $banner) {
+                foreach($banner->media as $media) {
+                    @unlink($media->realpath);
+                    $media->delete();
                 }
-            });
+
+                $banner->delete();
+            }
 
             $updatedpartner->setUpdatedAt($updatedpartner->freshTimestamp());
             $updatedpartner->save();
