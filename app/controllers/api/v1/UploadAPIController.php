@@ -10346,11 +10346,11 @@ class UploadAPIController extends ControllerAPI
     /**
      * Upload banner for Partner.
      *
-     * @author kadek<kadek@dominopos.com>
+     * @author Budi <budi@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
-     * @param integer    `partner_id`   (required) - ID of the partner
+     * @param integer    `partner_banner_id`   (required) - ID of the partner
      * @param file|array `images`       (required) - Image
      * @return Illuminate\Support\Facades\Response
      */
@@ -10362,7 +10362,7 @@ class UploadAPIController extends ControllerAPI
             Event::fire('orbit.upload.postuploadpartnerimage.before.auth', array($this));
 
             // Require authentication
-            if (! $this->calledFrom('partner.new, partner.update')) {
+            if (! $this->calledFrom('partner.new, partner.update, partnerbanner.new')) {
                 $this->checkAuth();
 
                 Event::fire('orbit.upload.postuploadpartnerimage.after.auth', array($this));
@@ -10385,8 +10385,10 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $partner_id = OrbitInput::post('partner_id');
-            $image = OrbitInput::files('banner');
+            $partner_banner_id = OrbitInput::post('partner_banner_id');
+            $partnerName = OrbitInput::post('partner_name');
+            $bannerIndex = OrbitInput::post('banner_index');
+            $image = OrbitInput::files("banners_image_{$bannerIndex}");
             $messages = array(
                 'nomore.than.one' => Lang::get('validation.max.array', array(
                     'max' => 1
@@ -10395,19 +10397,19 @@ class UploadAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'partner_id' => $partner_id,
+                    'partner_banner_id' => $partner_banner_id,
                     'banner'      => $image,
                 ),
                 array(
-                    'partner_id' => 'required|orbit.empty.partner',
-                    'banner'      => 'required|nomore.than.one',
+                    'partner_banner_id' => 'required|orbit.empty.partner_banner',
+                    'banner'      => 'required',
                 )
             );
 
             Event::fire('orbit.upload.postuploadpartnerimage.before.validation', array($this, $validator));
 
             // Begin database transaction
-            if (! $this->calledFrom('partner.new, partner.update')) {
+            if (! $this->calledFrom('partner.new, partner.update, partnerbanner.new')) {
                 $this->beginTransaction();
             }
 
@@ -10420,19 +10422,19 @@ class UploadAPIController extends ControllerAPI
 
             // We already had partner instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
-            $partner = App::make('orbit.empty.partner_id');
+            $partnerBanner = App::make('orbit.empty.partner_banner_id');
 
             // Callback to rename the file, we will format it as follow
-            // [PARTNER_ID]-[PARTNER_NAME_SLUG]
-            $renameFile = function($uploader, &$file, $dir) use ($partner)
+            // [PARTNER_banner_ID]-[PARTNER_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($partnerBanner, $partnerName)
             {
-                $partner_id = $partner->partner_id;
-                $slug = Str::slug($partner->partner_name);
-                $file['new']->name = sprintf('%s-%s-%s', $partner_id, $slug, time());
+                $partner_banner_id = $partnerBanner->partner_banner_id;
+                $slug = Str::slug($partnerName);
+                $file['new']->name = sprintf('%s-%s-%s', $partner_banner_id, $slug, time());
             };
 
             // Load the orbit configuration for partner upload image
-            $uploadimageConfig = Config::get('orbit.upload.partner.image');
+            $uploadimageConfig = Config::get('orbit.upload.partner.banner');
 
             $message = new UploaderMessage([]);
             $config = new UploaderConfig($uploadimageConfig);
@@ -10440,14 +10442,14 @@ class UploadAPIController extends ControllerAPI
             // Create the uploader object
             $uploader = new Uploader($config, $message);
 
-            Event::fire('orbit.upload.postuploadpartnerimage.before.save', array($this, $partner, $uploader));
+            Event::fire('orbit.upload.postuploadpartnerimage.before.save', array($this, $partnerBanner, $uploader));
 
             // Begin uploading the files
             $uploaded = $uploader->upload($image);
 
-            // Delete old partner image
-            $pastMedia = Media::where('object_id', $partner->partner_id)
-                              ->where('object_name', 'partner')
+            // Delete old partner banner
+            $pastMedia = Media::where('object_id', $partner_banner_id)
+                              ->where('object_name', 'partner_banner')
                               ->where('media_name_id', 'partner_banner');
 
             // Delete each files
@@ -10472,14 +10474,14 @@ class UploadAPIController extends ControllerAPI
 
             // Save the files metadata
             $object = array(
-                'id'            => $partner->partner_id,
-                'name'          => 'partner',
+                'id'            => $partnerBanner->partner_banner_id,
+                'name'          => 'partner_banner',
                 'media_name_id' => 'partner_banner',
                 'modified_by'   => 1
             );
             $mediaList = $this->saveMetadata($object, $uploaded);
 
-            Event::fire('orbit.upload.postuploadpartnerimage.after.save', array($this, $partner, $uploader));
+            Event::fire('orbit.upload.postuploadpartnerimage.after.save', array($this, $partnerBanner, $uploader));
 
             $extras = new \stdClass();
             $extras->isUpdate = $isUpdate;
@@ -10491,11 +10493,11 @@ class UploadAPIController extends ControllerAPI
             $this->response->message = Lang::get('statuses.orbit.uploaded.partner.main');
 
             // Commit the changes
-            if (! $this->calledFrom('partner.new, partner.update')) {
+            if (! $this->calledFrom('partner.new, partner.update, partnerbanner.new')) {
                 $this->commit();
             }
 
-            Event::fire('orbit.upload.postuploadpartnerimage.after.commit', array($this, $partner, $uploader));
+            Event::fire('orbit.upload.postuploadpartnerimage.after.commit', array($this, $partnerBanner, $uploader));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.upload.postuploadpartnerimage.access.forbidden', array($this, $e));
 
@@ -11996,6 +11998,18 @@ class UploadAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.partner_id', $partner);
+
+            return TRUE;
+        });
+
+        Validator::extend('orbit.empty.partner_banner', function ($attribute, $value, $parameters){
+            $partner = PartnerBanner::where('partner_banner_id', $value)->first();
+
+            if (empty($partner)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.partner_banner_id', $partner);
 
             return TRUE;
         });

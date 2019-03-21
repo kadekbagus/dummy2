@@ -51,14 +51,9 @@ class Partner extends Eloquent
         return $this->mediaOrig()->where('media_name_id', 'partner_image');
     }
 
-    public function mediaBanner()
+    public function banners()
     {
-        return $this->media()->where('media_name_id', 'partner_banner');
-    }
-
-    public function mediaBannerOrig()
-    {
-        return $this->mediaOrig()->where('media_name_id', 'partner_banner');
+        return $this->hasMany('PartnerBanner', 'partner_id', 'partner_id');
     }
 
     public function partnerAffectedGroup()
