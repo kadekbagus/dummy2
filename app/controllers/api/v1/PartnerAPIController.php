@@ -1260,10 +1260,16 @@ class PartnerAPIController extends ControllerAPI
                 $partners->where('partners.start_date', '<=', $end_date);
             });
 
-            // Filter by start date to
+            // Filter by status
             OrbitInput::get('status', function($status) use ($partners)
             {
-                $partners->where('partners.status', '<=', $status);
+                $partners->where('partners.status', $status);
+            });
+
+            //Filter by country_id
+            OrbitInput::get('country_id', function($countryId) use ($partners)
+            {
+                $partners->where('partners.country_id', $countryId);
             });
 
             // Add new relation based on request
