@@ -129,7 +129,7 @@ class PartnerAPIController extends ControllerAPI
             $video_id_4 = OrbitInput::post('video_id_4');
             $video_id_5 = OrbitInput::post('video_id_5');
             $video_id_6 = OrbitInput::post('video_id_6');
-            $banners = OrbitInput::post('banners');
+            $banners = OrbitInput::post('banners', '');
 
             $affected_group_name_id = OrbitInput::post('affected_group_name_id');
 
@@ -146,10 +146,8 @@ class PartnerAPIController extends ControllerAPI
                 'start_date'              => $start_date,
                 'end_date'                => $end_date,
                 'status'                  => $status,
-                'address'                 => $address,
                 'city'                    => $city,
                 'country_id'              => $country_id,
-                'phone'                   => $phone,
                 'contact_firstname'       => $contact_firstname,
                 'contact_lastname'        => $contact_lastname,
                 'affected_group_name_id'  => $affected_group_name_id,
@@ -164,10 +162,8 @@ class PartnerAPIController extends ControllerAPI
                 'start_date'              => 'date|orbit.empty.hour_format',
                 'end_date'                => 'date|orbit.empty.hour_format',
                 'status'                  => 'required|in:active,inactive',
-                'address'                 => 'required',
                 'city'                    => 'required',
                 'country_id'              => 'required',
-                'phone'                   => 'required',
                 'contact_firstname'       => 'required',
                 'contact_lastname'        => 'required',
                 'affected_group_name_id'  => 'array',
@@ -303,6 +299,7 @@ class PartnerAPIController extends ControllerAPI
             }
 
             $social_media = json_decode($social_media, true);
+            $partnerSocialMedia = [];
             if (! empty($social_media)) {
                 $socialMediaList = SocialMedia::get();
                 $newPartner->social_media = [];
@@ -316,7 +313,7 @@ class PartnerAPIController extends ControllerAPI
                         $newObjectSocialMedia->social_media_uri = $social_media[$socialMediaCode];
                         $newObjectSocialMedia->save();
 
-                        $newPartner->social_media[$socialMediaCode] = $newObjectSocialMedia;
+                        $partnerSocialMedia[$socialMediaCode] = $newObjectSocialMedia;
                     }
                 }
             }
@@ -338,10 +335,37 @@ class PartnerAPIController extends ControllerAPI
                 $newPartnerCategory->save();
             }
 
+            $banners = json_decode($banners, true);
+            $partnerBannersData = [];
+            if (! empty($banners)) {
+                foreach($banners as $bannerIndex => $banner) {
+                    $isOutbound = isset($banner['is_outbound']) && $banner['is_outbound'] === 'Y' ? 'Y' : 'N';
+
+                    $fileInputKey = "banners_image_{$bannerIndex}";
+                    $banner['banner_id'] = ! isset($banner['banner_id']) ? '' : $banner['banner_id'];
+                    $event = 'orbit.partner.postupdatepartnerbanner.after.save';
+
+                    $partnerBanner = new PartnerBanner;
+                    $partnerBanner->partner_id = $newPartner->partner_id;
+                    $partnerBanner->is_outbound = $isOutbound;
+                    $partnerBanner->link_url = $banner['link_url'];
+                    $partnerBanner->save();
+                    $keptBanners[] = $partnerBanner->partner_banner_id;
+
+                    $partnerBannersData[] = $partnerBanner;
+
+                    if (Input::hasFile($fileInputKey)) {
+                        Event::fire($event, array($this, $newPartner, $partnerBanner, $bannerIndex));
+                    }
+                }
+            }
+
             Event::fire('orbit.partner.postnewpartner.after.save', array($this, $newPartner));
 
             Event::fire('orbit.partner.postnewpartner.after.save2', array($this, $newPartner));
 
+            $newPartner->partner_banners = $partnerBannersData;
+            $newPartner->social_media = $partnerSocialMedia;
             $this->response->data = $newPartner;
 
             // Commit the changes
@@ -522,6 +546,7 @@ class PartnerAPIController extends ControllerAPI
             $social_media_type = OrbitInput::post('social_media_type', 'facebook');
             $logo = OrbitInput::files('logo');
             $image = OrbitInput::files('image');
+            $jsonBanners = OrbitInput::post('banners', '');
 
             $affected_group_name_id = OrbitInput::post('affected_group_name_id');
 
@@ -546,10 +571,8 @@ class PartnerAPIController extends ControllerAPI
                 'start_date'              => $start_date,
                 'end_date'                => $end_date,
                 'status'                  => $status,
-                'address'                 => $address,
                 'city'                    => $city,
                 'country_id'              => $country_id,
-                'phone'                   => $phone,
                 'contact_firstname'       => $contact_firstname,
                 'contact_lastname'        => $contact_lastname,
                 'affected_group_name_id'  => $affected_group_name_id,
@@ -565,10 +588,8 @@ class PartnerAPIController extends ControllerAPI
                 'start_date'              => 'date|orbit.empty.hour_format',
                 'end_date'                => 'date|orbit.empty.hour_format',
                 'status'                  => 'required|in:active,inactive|orbit.exists.partner_linked_to_active_campaign:' . $partner_id,
-                'address'                 => 'required',
                 'city'                    => 'required',
                 'country_id'              => 'required',
-                'phone'                   => 'required',
                 'contact_firstname'       => 'required',
                 'contact_lastname'        => 'required',
                 'affected_group_name_id'  => 'array',
@@ -896,6 +917,65 @@ class PartnerAPIController extends ControllerAPI
                 }
             });
 
+            $banners = json_decode($jsonBanners, true);
+            $partnerBannersData = [];
+            $keptBanners = [];
+            if (! empty($banners)) {
+                $oldBannerIds = PartnerBanner::where('partner_id', $updatedpartner->partner_id)->lists('partner_banner_id');
+                foreach($banners as $bannerIndex => $banner) {
+
+                    $isOutbound = isset($banner['is_outbound']) && $banner['is_outbound'] === 'Y' ? 'Y' : 'N';
+
+                    $fileInputKey = "banners_image_{$bannerIndex}";
+                    $event = 'orbit.partner.postupdatepartnerbanner.after.save';
+
+                    $banner['banner_id'] = ! isset($banner['banner_id']) ? '' : $banner['banner_id'];
+
+                    // If banner id is not empty, then it should be kept or update as needed.
+                    if (! empty($banner['banner_id'])) {
+                        $partnerBanner = PartnerBanner::where('partner_banner_id', $banner['banner_id'])->first();
+                        $partnerBanner->is_outbound = $isOutbound;
+                        $partnerBanner->link_url = $banner['link_url'];
+                        $partnerBanner->save();
+                        $keptBanners[] = $banner['banner_id'];
+                    }
+                    // If banner id is empty, assume it is a new banner item that need to be stored.
+                    else if (empty($banner['banner_id'])) {
+                        $partnerBanner = new PartnerBanner;
+                        $partnerBanner->partner_id = $updatedpartner->partner_id;
+                        $partnerBanner->is_outbound = $isOutbound;
+                        $partnerBanner->link_url = $banner['link_url'];
+                        $partnerBanner->save();
+                        $keptBanners[] = $partnerBanner->partner_banner_id;
+                    }
+
+                    $partnerBannersData[] = $partnerBanner;
+
+                    if (Input::hasFile($fileInputKey)) {
+                        Event::fire($event, array($this, $updatedpartner, $partnerBanner, $bannerIndex));
+                    }
+                }
+            }
+
+            // @todo delete cdn files...
+            if (empty($banners)) {
+                // if no banners being sent, then assume remove all the banners.
+                $shouldBeDeletedBanners = PartnerBanner::with(['media'])->where('partner_id', $updatedpartner->partner_id)->get();
+            }
+            else if (! empty($keptBanners)) {
+                // Otherwise, only delete the ones that not sent by frontend.
+                $shouldBeDeletedBanners = PartnerBanner::with(['media'])->whereNotIn('partner_banner_id', $keptBanners)->get();
+            }
+
+            foreach ($shouldBeDeletedBanners as $banner) {
+                foreach($banner->media as $media) {
+                    @unlink($media->realpath);
+                    $media->delete();
+                }
+
+                $banner->delete();
+            }
+
             $updatedpartner->setUpdatedAt($updatedpartner->freshTimestamp());
             $updatedpartner->save();
 
@@ -903,6 +983,7 @@ class PartnerAPIController extends ControllerAPI
             Event::fire('orbit.partner.postupdatepartner.after.save2', array($this, $updatedpartner));
 
             $updatedpartner->social_media = $partnerSocialMedia;
+            $updatedpartner->partner_banners = $partnerBannersData;
             $this->response->data = $updatedpartner;
 
             // Commit the changes
@@ -1387,7 +1468,21 @@ class PartnerAPIController extends ControllerAPI
                                     "), DB::raw('subQuery.partner_affected_group_id'), '=', 'partner_affected_group.partner_affected_group_id')
                                 ->groupBy(DB::raw("subQuery.partner_id"), DB::raw("subQuery.group_name"));
                             }]);
-                    } else {
+                    }
+                    else if ($relation === 'banners') {
+                        $partners->with(['banners.media']);
+                    }
+                    else if ($relation === 'categories') {
+                        $partners->with(['categories' => function($category) use ($prefix) {
+                            $category->select(DB::raw("{$prefix}categories.category_id"), 'category_name');
+                        }]);
+                    }
+                    else if ($relation === 'social_media') {
+                        $partners->with(['social_media' => function($socialMedia) use ($prefix) {
+                            $socialMedia->select(DB::raw("{$prefix}social_media.social_media_code as social_media"), 'social_media_uri');
+                        }]);
+                    }
+                    else {
                         $partners->with($relation);
                     }
                 }
