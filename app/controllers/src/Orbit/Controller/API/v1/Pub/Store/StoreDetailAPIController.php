@@ -107,6 +107,8 @@ class StoreDetailAPIController extends PubControllerAPI
                                 'merchants.name',
                                 'merchants.name as mall_name',
                                 'merchants.description as mall_description',
+                                'merchants.disable_ads',
+                                'merchants.disable_ymal',
                                 DB::raw('oms.country_id'),
                                 DB::Raw("CASE WHEN (
                                                 select mt.description

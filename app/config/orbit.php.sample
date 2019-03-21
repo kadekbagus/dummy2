@@ -1596,6 +1596,8 @@ return array(
                     'marketplace_image' => 'marketplace',
                     'product_image' => 'product',
                     'review_image' => 'review',
+                    'mall_photos' => 'mall',
+                    'mall_other_photos' => 'mall',
                 ],
 
                 // Allowed Mimetype
