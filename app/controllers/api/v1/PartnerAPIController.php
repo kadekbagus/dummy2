@@ -299,6 +299,7 @@ class PartnerAPIController extends ControllerAPI
             }
 
             $social_media = json_decode($social_media, true);
+            $partnerSocialMedia = [];
             if (! empty($social_media)) {
                 $socialMediaList = SocialMedia::get();
                 $newPartner->social_media = [];
@@ -312,7 +313,7 @@ class PartnerAPIController extends ControllerAPI
                         $newObjectSocialMedia->social_media_uri = $social_media[$socialMediaCode];
                         $newObjectSocialMedia->save();
 
-                        $newPartner->social_media[$socialMediaCode] = $newObjectSocialMedia;
+                        $partnerSocialMedia[$socialMediaCode] = $newObjectSocialMedia;
                     }
                 }
             }
@@ -364,6 +365,7 @@ class PartnerAPIController extends ControllerAPI
             Event::fire('orbit.partner.postnewpartner.after.save2', array($this, $newPartner));
 
             $newPartner->partner_banners = $partnerBannersData;
+            $newPartner->social_media = $partnerSocialMedia;
             $this->response->data = $newPartner;
 
             // Commit the changes
