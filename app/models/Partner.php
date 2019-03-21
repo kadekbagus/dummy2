@@ -56,6 +56,11 @@ class Partner extends Eloquent
         return $this->hasMany('PartnerBanner', 'partner_id', 'partner_id');
     }
 
+    public function categories()
+    {
+        return $this->hasMany('PartnerCategory', 'partner_id', 'partner_id');
+    }
+
     public function partnerAffectedGroup()
     {
         return $this->hasMany('PartnerAffectedGroup', 'partner_id', 'partner_id');
