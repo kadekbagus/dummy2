@@ -62,6 +62,15 @@ class Article extends Eloquent
                             });
     }
 
+    public function objectPartner()
+    {
+        return $this->hasMany('ArticleLinkToObject', 'article_id', 'article_id')
+                    ->where('article_link_to_objects.object_type', 'partner')
+                    ->join('partners', function($q) {
+                                $q->on('partner_id', '=', 'object_id');
+                            });
+    }
+
     public function objectArticle()
     {
         return $this->belongsToMany('Article', 'article_link_to_objects', 'article_id', 'object_id');
