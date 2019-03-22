@@ -117,6 +117,7 @@ class PartnerDetailAPIController extends PubControllerAPI
                     'partners.address',
                     'partners.city',
                     'partners.province',
+                    'partners.url',
                     DB::raw("{$logo}"),
                     DB::raw("{$image}"),
                     DB::Raw("
