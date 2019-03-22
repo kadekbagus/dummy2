@@ -88,10 +88,10 @@ class StoreSynchronizationMallNotificationQueue
                     $tokens = array_values(array_unique($tokens));
                 }
 
-                $launchUrl = LandingPageUrlGenerator::create('store', $baseStoreId, $baseMerchant->name)->generateUrl();
+                $launchUrl = LandingPageUrlGenerator::create('store', $baseStoreId, $store->name)->generateUrl();
 
                 $dataNotification = [
-                    'title' => $baseMerchant->name,
+                    'title' => $store->name,
                     'launch_url' => $launchUrl,
                     'attachment_path' => $attachmentPath,
                     'attachment_realpath' => $attachmentRealPath,
@@ -114,7 +114,7 @@ class StoreSynchronizationMallNotificationQueue
                 ];
 
                 // check notification exist or not
-                $dataNotificationSearch = ['title' => $baseMerchant->name, 'launch_url' => $launchUrl, 'type' => 'store'];
+                $dataNotificationSearch = ['title' => $store->name, 'launch_url' => $launchUrl, 'type' => 'store'];
                 $notificationSearch = $mongoClient->setQueryString($dataNotificationSearch)
                                                   ->setEndPoint('notifications')
                                                   ->request('GET');
