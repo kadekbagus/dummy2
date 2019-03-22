@@ -122,6 +122,12 @@ class PartnerDetailAPIController extends PubControllerAPI
                     DB::Raw("
                         CASE WHEN ({$prefix}partner_translations.description = '' or {$prefix}partner_translations.description is null) THEN default_translation.description ELSE {$prefix}partner_translations.description END as description
                     "),
+                    DB::Raw("
+                        CASE WHEN ({$prefix}partner_translations.meta_title = '' or {$prefix}partner_translations.meta_title is null) THEN default_translation.meta_title ELSE {$prefix}partner_translations.meta_title END as meta_title
+                    "),
+                    DB::Raw("
+                        CASE WHEN ({$prefix}partner_translations.meta_description = '' or {$prefix}partner_translations.meta_description is null) THEN default_translation.meta_description ELSE {$prefix}partner_translations.meta_description END as meta_description
+                    "),
                     DB::raw("(SELECT social_media_uri FROM {$prefix}object_social_media
                                 LEFT JOIN {$prefix}social_media on {$prefix}social_media.social_media_id = {$prefix}object_social_media.social_media_id
                               WHERE {$prefix}object_social_media.object_type = 'partner'
