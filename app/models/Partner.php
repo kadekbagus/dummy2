@@ -51,6 +51,35 @@ class Partner extends Eloquent
         return $this->mediaOrig()->where('media_name_id', 'partner_image');
     }
 
+    public function banners()
+    {
+        return $this->hasMany('PartnerBanner', 'partner_id', 'partner_id');
+    }
+
+    public function mediaPhotos()
+    {
+        return $this->hasMany('Media', 'object_id', 'partner_id')
+                    ->where('media_name_id', 'partner_photos')
+                    ->where('object_name', 'partner');
+    }
+
+    public function mediaCustomPhotos()
+    {
+        return $this->hasMany('Media', 'object_id', 'partner_id')
+                    ->where('media_name_id', 'partner_custom_photos')
+                    ->where('object_name', 'partner');
+    }
+
+    public function categories()
+    {
+        return $this->belongsToMany('Category', 'partner_categories', 'partner_id', 'category_id');
+    }
+
+    public function social_media()
+    {
+        return $this->belongsToMany('SocialMedia', 'object_social_media', 'object_id', 'social_media_id');
+    }
+
     public function partnerAffectedGroup()
     {
         return $this->hasMany('PartnerAffectedGroup', 'partner_id', 'partner_id');
