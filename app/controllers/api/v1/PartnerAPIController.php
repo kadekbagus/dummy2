@@ -964,7 +964,10 @@ class PartnerAPIController extends ControllerAPI
             }
             else if (! empty($keptBanners)) {
                 // Otherwise, only delete the ones that not sent by frontend.
-                $shouldBeDeletedBanners = PartnerBanner::with(['media'])->whereNotIn('partner_banner_id', $keptBanners)->get();
+                $shouldBeDeletedBanners = PartnerBanner::with(['media'])
+                    ->whereNotIn('partner_banner_id', $keptBanners)
+                    ->where('partner_id', $updatedpartner->partner_id)
+                    ->get();
             }
 
             foreach ($shouldBeDeletedBanners as $banner) {
