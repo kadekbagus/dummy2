@@ -1600,7 +1600,7 @@ return array(
                     'mall_other_photos' => 'mall',
                     'partner_photos' => 'partner',
                     'partner_custom_photos' => 'partner',
-                    'partner_banners' => 'partner',
+                    'partner_banners' => 'partner_banner',
                 ],
 
                 // Allowed Mimetype

@@ -1217,6 +1217,18 @@ class PartnerAPIController extends ControllerAPI
                             'partners.token',
                             'partners.pop_up_content',
                             'partners.mobile_default_language',
+                            'partners.meta_title',
+                            'partners.meta_description',
+                            'partners.working_hours',
+                            'partners.custom_photo_section_title',
+                            'partners.button_color',
+                            'partners.button_text_color',
+                            'partners.video_id_1',
+                            'partners.video_id_2',
+                            'partners.video_id_3',
+                            'partners.video_id_4',
+                            'partners.video_id_5',
+                            'partners.video_id_6',
                             DB::raw("
                             CASE WHEN (
                                     SELECT COUNT(object_partner_id)

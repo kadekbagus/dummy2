@@ -88,6 +88,7 @@ class PartnerDetailAPIController extends PubControllerAPI
 
             $logo = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as logo_url";
             $image = "CONCAT({$this->quote($urlPrefix)}, image_media.path) as image_url";
+            $photos = "CONCAT({$this->quote($urlPrefix)}, image_media.path) as photo_url";
             if ($usingCdn) {
                 $logo = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as logo_url";
 
@@ -178,16 +179,17 @@ class PartnerDetailAPIController extends PubControllerAPI
                     $q->on('deeplinks.object_type', '=', DB::raw("'partner'"));
                     $q->on('deeplinks.status', '=', DB::raw("'active'"));
                 })
-                ->with(['banners' => function($q) use ($photos) {
+                ->with([
+                    'banners' => function($q) use ($photos) {
                         $q->select('link_url', 'is_outbound', 'partner_id', 'partner_banner_id')
                             ->with(['media' => function($q2) use ($photos) {
                                 $q2->select(DB::raw("{$photos}"), 'object_id', 'media_name_long');
                             }]);
                     },
-                    'mediaPhotos' => function($q) {
+                    'mediaPhotos' => function($q) use ($photos) {
                         $q->select(DB::raw("{$photos}"), 'object_id', 'media_name_long');
                     },
-                    'mediaCustomPhotos' => function($q) {
+                    'mediaCustomPhotos' => function($q) use ($photos) {
                         $q->select(DB::raw("{$photos}"), 'object_id', 'media_name_long');
                     }
                 ])
