@@ -213,3 +213,31 @@ Event::listen('orbit.partner.postupdatepartner.after.save2', function($controlle
         ], $queueName);
     }
 });
+
+// For new/update partner banner
+Event::listen('orbit.partner.postupdatepartnerbanner.after.save', function($controller, $partner, $partnerBanner, $bannerIndex)
+{
+    // This will be used on UploadAPIController
+    App::instance('orbit.upload.user', $controller->api->user);
+
+    $inputName = "banners_image_{$bannerIndex}";
+    $_POST['media_name_id'] = 'partner_banners';
+    $_POST['object_id'] = $partnerBanner->partner_banner_id;
+
+    $response = MediaAPIController::create('raw')
+        ->setEnableTransaction(false)
+        ->setInputName($inputName)
+        ->upload();
+
+    if ($response->code !== 0)
+    {
+        throw new \Exception($response->message, $response->code);
+    }
+
+    unset($_POST['media_name_id']);
+    unset($_POST['object_id']);
+
+    $partnerBanner->setRelation('media', $response->data);
+    $partnerBanner->media = $response->data[0]->variants;
+    $partnerBanner->media_path = $response->data[0]->variants[1]->path;
+});

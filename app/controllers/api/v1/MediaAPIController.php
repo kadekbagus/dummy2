@@ -27,6 +27,13 @@ class MediaAPIController extends ControllerAPI
     protected $enableTransaction = true;
 
     /**
+     * Custom input file name. Useful for specific input with custom (maybe indexed) name.
+     * e.g. banners_image_0, banners_image_1, etc.
+     * @var string
+     */
+    protected $inputName = '';
+
+    /**
      * This uploader receive multiple file input and will make 4 variant for each image
      * (original, desktop thumbnail, mobile thumbnail, and medium quality image)
      *
@@ -64,7 +71,13 @@ class MediaAPIController extends ControllerAPI
 
             $objectId = OrbitInput::post('object_id');
             $mediaNameId = OrbitInput::post('media_name_id');
-            $images = Input::file(null);
+
+            if (empty($this->inputName)) {
+                $images = Input::file(null);
+            }
+            else {
+                $images = [$this->inputName => Input::file($this->inputName)];
+            }
 
             $mediaNames = implode(',', array_keys(Config::get('orbit.upload.media.image.media_names')));
 
@@ -90,7 +103,9 @@ class MediaAPIController extends ControllerAPI
                 $this->beginTransaction();
             }
 
-            $images = $images['images'];
+            if (empty($this->inputName)) {
+                $images = $images['images'];
+            }
 
             // get object name based on media_name_id
             $objectName = Config::get('orbit.upload.media.image.media_names.' . $mediaNameId);
@@ -105,7 +120,6 @@ class MediaAPIController extends ControllerAPI
 
             // returned image data
             $compiledImages = [];
-
 
             // create directory
             if (! file_exists($fileDir)) {
@@ -613,6 +627,19 @@ class MediaAPIController extends ControllerAPI
     public function setEnableTransaction($enabled = true)
     {
         $this->enableTransaction = $enabled;
+
+        return $this;
+    }
+
+    /**
+     * Set custom file input name that will be read by Input class.
+     *
+     * @param string $inputName the name of input that will be read.
+     * @return MediaAPIController current instance.
+     */
+    public function setInputName($inputName = '')
+    {
+        $this->inputName = $inputName;
 
         return $this;
     }

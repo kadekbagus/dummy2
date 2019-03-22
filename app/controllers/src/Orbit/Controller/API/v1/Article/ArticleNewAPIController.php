@@ -79,6 +79,7 @@ class ArticleNewAPIController extends ControllerAPI
             $objectMerchants = OrbitInput::post('object_merchants', []);
             $objectProducts = OrbitInput::post('object_products', []);
             $objectArticles = OrbitInput::post('object_articles', []);
+            $objectPartners = OrbitInput::post('object_partners', []);
             $categories = OrbitInput::post('categories', []);
             $videos = OrbitInput::post('videos', []);
             $cities = OrbitInput::post('cities', []);
@@ -222,6 +223,7 @@ class ArticleNewAPIController extends ControllerAPI
                 $saveObjectProduct->object_id = $productId;
                 $saveObjectProduct->object_type = 'product';
                 $saveObjectProduct->save();
+                $product[] = $saveObjectProduct;
             }
             $newArticle->object_product = $product;
 
@@ -232,8 +234,20 @@ class ArticleNewAPIController extends ControllerAPI
                 $saveObjectArticle->object_id = $articleId;
                 $saveObjectArticle->object_type = 'article';
                 $saveObjectArticle->save();
+                $articles[] = $saveObjectArticle;
             }
             $newArticle->object_article = $articles;
+
+            $partners = array();
+            foreach ($objectPartners as $partnerId) {
+                $saveObjectPartner = new ArticleLinkToObject();
+                $saveObjectPartner->article_id = $newArticle->article_id;
+                $saveObjectPartner->object_id = $partnerId;
+                $saveObjectPartner->object_type = 'partner';
+                $saveObjectPartner->save();
+                $partners[] = $saveObjectPartner;
+            }
+            $newArticle->object_partner = $partners;
 
             $merchant = array();
 
