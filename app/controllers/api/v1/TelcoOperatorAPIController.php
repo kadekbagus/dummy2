@@ -154,9 +154,6 @@ class TelcoOperatorAPIController extends ControllerAPI
             $this->rollBack();
         }
 
-        // Save the activity
-        $activity->save();
-
         return $this->render($httpCode);
     }
 
@@ -295,9 +292,6 @@ class TelcoOperatorAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
         }
-
-        // Save the activity
-        $activity->save();
 
         return $this->render($httpCode);
     }
@@ -486,9 +480,6 @@ class TelcoOperatorAPIController extends ControllerAPI
             $this->rollBack();
         }
 
-        // Save the activity
-        $activity->save();
-
         return $this->render($httpCode);
     }
 
@@ -594,9 +585,6 @@ class TelcoOperatorAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
         }
-
-        // Save the activity
-        $activity->save();
 
         return $this->render($httpCode);
     }
