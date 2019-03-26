@@ -70,6 +70,8 @@ class TelcoOperatorAPIController extends ControllerAPI
                 'status'                  => 'required|in:active,inactive',
             ];
 
+            $validation_error_message = [];
+
             // add validation image
             if (! empty($logo_validation)) {
                 $validation_data += $logo_validation['data'];
@@ -154,9 +156,6 @@ class TelcoOperatorAPIController extends ControllerAPI
             $this->rollBack();
         }
 
-        // Save the activity
-        $activity->save();
-
         return $this->render($httpCode);
     }
 
@@ -213,6 +212,8 @@ class TelcoOperatorAPIController extends ControllerAPI
                 'identification_prefix_numbers' => 'required',
                 'status'                  => 'required|in:active,inactive',
             ];
+
+            $validation_error_message = [];
 
             // add validation image
             if (! empty($logo_validation)) {
@@ -295,9 +296,6 @@ class TelcoOperatorAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
         }
-
-        // Save the activity
-        $activity->save();
 
         return $this->render($httpCode);
     }
@@ -486,9 +484,6 @@ class TelcoOperatorAPIController extends ControllerAPI
             $this->rollBack();
         }
 
-        // Save the activity
-        $activity->save();
-
         return $this->render($httpCode);
     }
 
@@ -594,9 +589,6 @@ class TelcoOperatorAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
         }
-
-        // Save the activity
-        $activity->save();
 
         return $this->render($httpCode);
     }
