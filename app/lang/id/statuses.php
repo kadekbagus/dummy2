@@ -55,6 +55,7 @@ return array(
             'mall'          => 'Tidak ada mall yang sesuai kriteria.',
             'mallgroup'     => 'Tidak ada mall group yang sesuai kriteria.',
             'tenant'        => 'Tidak ada tenant yang sesuai kriteria.',
+            'telco'         => 'Tidak ada telco operator yang sesuai kriteria.',
         ),
         'uploaded'  => array(
             'merchant' => array(
