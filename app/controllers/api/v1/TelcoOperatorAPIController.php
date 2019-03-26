@@ -201,8 +201,8 @@ class TelcoOperatorAPIController extends ControllerAPI
             $validation_data = [
                 'telco_operator_id'       => $telcoOperatorId,
                 'name'                    => $name,
-                'country_id'              => $country_id,
-                'identification_prefix_numbers' => $identification_prefix_numbers,
+                'country_id'              => $countryId,
+                'identification_prefix_numbers' => $identificationPrefixNumbers,
                 'status'                  => $status,
             ];
 
