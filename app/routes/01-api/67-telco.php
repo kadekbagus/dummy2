@@ -23,3 +23,11 @@ Route::get('/api/v1/telco/list', function()
 {
     return TelcoOperatorAPIController::create()->getSearchTelcoOperator();
 });
+
+/**
+ * Telco Detail
+ */
+Route::get('/api/v1/telco/detail', function()
+{
+    return TelcoOperatorAPIController::create()->getDetailTelcoOperator();
+});

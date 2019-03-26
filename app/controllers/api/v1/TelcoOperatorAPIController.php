@@ -37,7 +37,7 @@ class TelcoOperatorAPIController extends ControllerAPI
 
             // Try to check access control list, does this user allowed to
             // perform this action
-            $user = $this->api->user
+            $user = $this->api->user;
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
@@ -46,8 +46,6 @@ class TelcoOperatorAPIController extends ControllerAPI
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
-
-            $this->registerCustomValidation();
 
             $name = OrbitInput::post('name');
             $countryId = OrbitInput::post('country_id');
@@ -190,8 +188,6 @@ class TelcoOperatorAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            $this->registerCustomValidation();
-
             $telcoOperatorId = OrbitInput::post('telco_operator_id');
             $name = OrbitInput::post('name');
             $countryId = OrbitInput::post('country_id');
@@ -333,8 +329,6 @@ class TelcoOperatorAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            $this->registerCustomValidation();
-
             $sortBy = OrbitInput::get('sortby');
 
             $validator = Validator::make(
@@ -342,7 +336,7 @@ class TelcoOperatorAPIController extends ControllerAPI
                     'sort_by' => $sortBy,
                 ),
                 array(
-                    'sort_by' => 'in:name, status',
+                    'sort_by' => 'in:name, country_name, status',
                 )
             );
 
@@ -371,11 +365,11 @@ class TelcoOperatorAPIController extends ControllerAPI
                 }
             }
 
-            $telcos = TelcoOperator::select('telco_operator_id', 'telco_operators.name as telco_name', 'countries.name as country_name', 'telco_operators.status')
+            $telcos = TelcoOperator::select('telco_operator_id', 'telco_operators.name as name', 'countries.name as country_name', 'telco_operators.status')
                 ->leftJoin('countries', 'countries.country_id', '=', 'telco_operators.country_id')
                 ->with(['mediaLogo' => function($q) {
                     $q->select('media_id', 'path', 'media_name_long', 'object_id');
-                });
+                }]);
 
             $_telcos = clone $telcos;
 
@@ -414,9 +408,9 @@ class TelcoOperatorAPIController extends ControllerAPI
             OrbitInput::get('sortby', function ($_sortBy) use (&$sortBy) {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'name'         => 'telco_name',
+                    'name'         => 'name',
                     'country_name' => 'country_name',
-                    'status'       => 'telcos.status',
+                    'status'       => 'telco_operators.status',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -448,6 +442,115 @@ class TelcoOperatorAPIController extends ControllerAPI
             }
 
             $this->response->data = $data;
+
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+        } catch (QueryException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+        } catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getLine();
+
+            // Rollback the changes
+            $this->rollBack();
+        }
+
+        // Save the activity
+        $activity->save();
+
+        return $this->render($httpCode);
+    }
+
+    /**
+     * POST - Get Telco Detail
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getDetailTelcoOperator()
+    {
+        $user = NULL;
+        try {
+            $httpCode = 200;
+
+            $this->checkAuth();
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->viewTelcoRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $telcoOperatorId = OrbitInput::get('telco_operator_id');
+
+            $validator = Validator::make(
+                array(
+                    'telco_operator_id' => $telcoOperatorId,
+                ),
+                array(
+                    'telco_operator_id' => 'required',
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $telco = TelcoOperator::select(
+                    'telco_operator_id',
+                    'telco_operators.name as name',
+                    'countries.name as country_name',
+                    'countries.country_id as country_id',
+                    'identification_prefix_numbers',
+                    'telco_operators.status')
+                ->leftJoin('countries', 'countries.country_id', '=', 'telco_operators.country_id')
+                ->with(['mediaLogo' => function($q) {
+                    $q->select('media_id', 'path', 'media_name_long', 'object_id');
+                }])
+                ->where('telco_operator_id', $telcoOperatorId)
+                ->firstOrFail();
+
+            $this->response->data = $telco;
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();

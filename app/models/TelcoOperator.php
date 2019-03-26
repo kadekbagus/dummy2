@@ -8,7 +8,7 @@ class TelcoOperator extends Eloquent
     public function media()
     {
         return $this->hasMany('Media', 'object_id', 'partner_id')
-                    ->where('object_name', 'partner');
+                    ->where('object_name', 'telco_operator');
     }
 
     public function mediaOrig()
@@ -20,11 +20,11 @@ class TelcoOperator extends Eloquent
 
 	public function mediaLogo()
     {
-        return $this->media()->where('media_name_id', 'telco_logo');
+        return $this->media()->where('media_name_id', 'telco_operator_logo');
     }
 
     public function mediaLogoOrig()
     {
-        return $this->mediaOrig()->where('media_name_id', 'telco_logo');
+        return $this->mediaOrig()->where('media_name_id', 'telco_operator_logo');
     }
 }
