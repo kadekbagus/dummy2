@@ -70,6 +70,8 @@ class TelcoOperatorAPIController extends ControllerAPI
                 'status'                  => 'required|in:active,inactive',
             ];
 
+            $validation_error_message = [];
+
             // add validation image
             if (! empty($logo_validation)) {
                 $validation_data += $logo_validation['data'];
@@ -210,6 +212,8 @@ class TelcoOperatorAPIController extends ControllerAPI
                 'identification_prefix_numbers' => 'required',
                 'status'                  => 'required|in:active,inactive',
             ];
+
+            $validation_error_message = [];
 
             // add validation image
             if (! empty($logo_validation)) {
