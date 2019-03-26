@@ -246,8 +246,8 @@ class TelcoOperatorAPIController extends ControllerAPI
                 ->firstOrFail();
 
             $updatedTelco->name = $name;
-            $updatedTelco->country_id = $country_id;
-            $updatedTelco->identification_prefix_numbers = $identification_prefix_numbers;
+            $updatedTelco->country_id = $countryId;
+            $updatedTelco->identification_prefix_numbers = $identificationPrefixNumbers;
             $updatedTelco->status = $status;
 
             $updatedTelco->save();
