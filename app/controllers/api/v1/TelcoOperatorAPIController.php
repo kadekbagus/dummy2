@@ -54,6 +54,8 @@ class TelcoOperatorAPIController extends ControllerAPI
             $status = OrbitInput::post('status');
             $logo = OrbitInput::files('logo');
 
+            $this->registerCustomValidation();
+
             // generate array validation image
             $logo_validation = $this->generate_validation_image('telco_logo', $logo, 'orbit.upload.telco.logo');
 
@@ -194,6 +196,8 @@ class TelcoOperatorAPIController extends ControllerAPI
             $identificationPrefixNumbers = OrbitInput::post('identification_prefix_numbers');
             $status = OrbitInput::post('status');
             $logo = OrbitInput::files('logo');
+
+            $this->registerCustomValidation();
 
             // generate array validation image
             $logo_validation = $this->generate_validation_image('telco_logo', $logo, 'orbit.upload.telco.logo');
@@ -628,6 +632,31 @@ class TelcoOperatorAPIController extends ControllerAPI
         }
 
         return $validation;
+    }
+
+    protected function registerCustomValidation()
+    {
+        Validator::extend('orbit.file.max_size', function ($attribute, $value, $parameters) {
+            $config_size = $parameters[0];
+            $file_size = $value;
+
+            if ($file_size > $config_size) {
+                return false;
+            }
+
+            return true;
+        });
+
+        // Check the images, we are allowed array of images but not more than
+        Validator::extend('nomore.than', function ($attribute, $value, $parameters) {
+            $max_count = $parameters[0];
+
+            if (is_array($value['name']) && count($value['name']) > $max_count) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
     }
 
 }
