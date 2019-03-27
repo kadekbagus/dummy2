@@ -68,14 +68,14 @@ class TelcoOperatorAPIController extends ControllerAPI
             ];
 
             $validation_error = [
-                'pulsa_operator_name'     => 'required|orbit.telco_name.unique',
+                'pulsa_operator_name'     => 'required|orbit.telco.unique',
                 'pulsa_operator_country'  => 'required',
                 'identification_prefix_numbers' => 'required',
                 'status'                  => 'required|in:active,inactive',
             ];
 
             $validation_error_message = [
-                'orbit.telco_name.unique' => 'A Pulsa Operator is already exist with that name'
+                'orbit.telco.unique' => 'A Pulsa Operator is already exist with that name'
             ];
 
             // add validation image
@@ -215,14 +215,14 @@ class TelcoOperatorAPIController extends ControllerAPI
 
             $validation_error = [
                 'telco_operator_id'       => 'required',
-                'pulsa_operator_name'     => 'required|orbit.telco_name.update_unique',
+                'pulsa_operator_name'     => 'required|orbit.telco.updateunique',
                 'pulsa_operator_country'  => 'required',
                 'identification_prefix_numbers' => 'required',
                 'status'                  => 'required|in:active,inactive',
             ];
 
             $validation_error_message = [
-                'orbit.telco_name.update_unique' => 'A Pulsa Operator is already exist with that name'
+                'orbit.telco.updateunique' => 'A Pulsa Operator is already exist with that name'
             ];
 
             // add validation image
@@ -652,7 +652,7 @@ class TelcoOperatorAPIController extends ControllerAPI
             return true;
         });
 
-        Validator::extend('orbit.telco_name.unique', function ($attribute, $value, $parameters) {
+        Validator::extend('orbit.telco.unique', function ($attribute, $value, $parameters) {
             $name = $value;
 
             $existingTelco = TelcoOperator::where('name', $name)->first();
@@ -664,7 +664,7 @@ class TelcoOperatorAPIController extends ControllerAPI
             return true;
         });
 
-        Validator::extend('orbit.telco_name.update_unique ', function ($attribute, $value, $parameters) {
+        Validator::extend('orbit.telco.updateunique ', function ($attribute, $value, $parameters) {
             $name = $value;
             $id = $parameters[0];
 
