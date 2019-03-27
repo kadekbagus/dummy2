@@ -339,7 +339,7 @@ class TelcoOperatorAPIController extends ControllerAPI
                     'sort_by' => $sortBy,
                 ),
                 array(
-                    'sort_by' => 'in:name, country_name, status',
+                    'sort_by' => 'in:name,country_name,status',
                 )
             );
 
