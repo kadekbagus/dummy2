@@ -67,7 +67,7 @@ class PulsaAPIController extends ControllerAPI
             $description = OrbitInput::post('description');
             $value = OrbitInput::post('value');
             $price = OrbitInput::post('price');
-            $quantity = OrbitInput::post('quantity');
+            $quantity = OrbitInput::post('quantity', 0);
 
             $validator = Validator::make(
                 array(
@@ -76,15 +76,16 @@ class PulsaAPIController extends ControllerAPI
                     'pulsa_display_name'    => $pulsa_display_name,
                     'value'                 => $value,
                     'price'                 => $price,
-                    'quantity'              => $quantity,
                 ),
                 array(
-                    'telco_operator_id'     => 'required',
+                    'telco_operator_id'     => 'required|orbit.empty.telcooperator',
                     'pulsa_code'            => 'required',
                     'pulsa_display_name'    => 'required',
                     'value'                 => 'required',
                     'price'                 => 'required',
-                    'quantity'              => 'required',
+                ),
+                array(
+                    'orbit.empty.telcooperator' => 'telco operator not found'
                 )
             );
 
@@ -592,5 +593,20 @@ class PulsaAPIController extends ControllerAPI
         }
 
         return $this->render($httpCode);
+    }
+
+    protected function registerCustomValidation()
+    {
+        Validator::extend('orbit.empty.telcooperator', function ($attribute, $value, $parameters) {
+            $telco = TelcoOperator::where('telco_operator_id', $value)->first();
+
+            if (empty($telco)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.telcooperator', $telco);
+
+            return TRUE;
+        });
     }
 }
