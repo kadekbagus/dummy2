@@ -332,10 +332,10 @@ class PulsaAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:pulsa_item_id,pulsa_code,pulsa_display_name,value,price,name',
+                    'sort_by' => 'in:pulsa_item_id,pulsa_code,pulsa_display_name,value,price,name,quantity',
                 ),
                 array(
-                    'in' => 'The sort by argument you specified is not valid, the valid values are: pulsa_item_id,pulsa_code,pulsa_display_name,value,price,name',
+                    'in' => 'The sort by argument you specified is not valid, the valid values are: pulsa_item_id,pulsa_code,pulsa_display_name,value,price,name,quantity',
                 )
             );
 
