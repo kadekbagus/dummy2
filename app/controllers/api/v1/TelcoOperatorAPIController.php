@@ -68,13 +68,15 @@ class TelcoOperatorAPIController extends ControllerAPI
             ];
 
             $validation_error = [
-                'pulsa_operator_name'     => 'required',
+                'pulsa_operator_name'     => 'required|orbit.telco_name.unique',
                 'pulsa_operator_country'  => 'required',
                 'identification_prefix_numbers' => 'required',
                 'status'                  => 'required|in:active,inactive',
             ];
 
-            $validation_error_message = [];
+            $validation_error_message = [
+                'orbit.telco_name.unique' => 'A Pulsa Operator is already exist with that name'
+            ];
 
             // add validation image
             if (! empty($logo_validation)) {
@@ -213,13 +215,15 @@ class TelcoOperatorAPIController extends ControllerAPI
 
             $validation_error = [
                 'telco_operator_id'       => 'required',
-                'pulsa_operator_name'     => 'required',
+                'pulsa_operator_name'     => 'required|orbit.telco_name.update_unique',
                 'pulsa_operator_country'  => 'required',
                 'identification_prefix_numbers' => 'required',
                 'status'                  => 'required|in:active,inactive',
             ];
 
-            $validation_error_message = [];
+            $validation_error_message = [
+                'orbit.telco_name.update_unique' => 'A Pulsa Operator is already exist with that name'
+            ];
 
             // add validation image
             if (! empty($logo_validation)) {
@@ -642,6 +646,33 @@ class TelcoOperatorAPIController extends ControllerAPI
             $file_size = $value;
 
             if ($file_size > $config_size) {
+                return false;
+            }
+
+            return true;
+        });
+
+        Validator::extend('orbit.telco_name.unique', function ($attribute, $value, $parameters) {
+            $name = $value;
+
+            $existingTelco = TelcoOperator::where('name', $name)->first();
+
+            if (is_object($existingTelco)) {
+                return false;
+            }
+
+            return true;
+        });
+
+        Validator::extend('orbit.telco_name.update_unique ', function ($attribute, $value, $parameters) {
+            $name = $value;
+            $id = $parameters[0];
+
+            $existingTelco = TelcoOperator::where('name', $name)
+                ->where('telco_operator_id', '<>', $id)
+                ->first();
+
+            if (is_object($existingTelco)) {
                 return false;
             }
 
