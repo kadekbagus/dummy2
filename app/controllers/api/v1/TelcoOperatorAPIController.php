@@ -404,7 +404,7 @@ class TelcoOperatorAPIController extends ControllerAPI
             }
 
             // Default sort by
-            $sortBy = 'telcos.name';
+            $sortBy = 'telco_operators.name';
             // Default sort mode
             $sortMode = 'asc';
 
