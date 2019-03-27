@@ -7,7 +7,7 @@ class TelcoOperator extends Eloquent
 
     public function media()
     {
-        return $this->hasMany('Media', 'object_id', 'partner_id')
+        return $this->hasMany('Media', 'object_id', 'telco_operator_id')
                     ->where('object_name', 'telco_operator');
     }
 
