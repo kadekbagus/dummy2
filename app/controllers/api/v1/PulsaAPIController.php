@@ -68,6 +68,7 @@ class PulsaAPIController extends ControllerAPI
             $value = OrbitInput::post('value');
             $price = OrbitInput::post('price');
             $quantity = OrbitInput::post('quantity', 0);
+            $status = OrbitInput::post('status');
 
             $validator = Validator::make(
                 array(
@@ -106,6 +107,7 @@ class PulsaAPIController extends ControllerAPI
             $newPulsa->value = $value;
             $newPulsa->price = $price;
             $newPulsa->quantity = $quantity;
+            $newPulsa->status = $status;
             $newPulsa->save();
 
             // Commit the changes
@@ -253,6 +255,10 @@ class PulsaAPIController extends ControllerAPI
                 $updatedPulsa->quantity = $quantity;
             });
 
+            OrbitInput::post('status', function($status) use ($updatedPulsa) {
+                $updatedPulsa->status = $status;
+            });
+
             $updatedPulsa->save();
             // Commit the changes
             $this->commit();
@@ -332,10 +338,10 @@ class PulsaAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:pulsa_item_id,pulsa_code,pulsa_display_name,value,price,name,quantity',
+                    'sort_by' => 'in:pulsa_item_id,pulsa_code,pulsa_display_name,value,price,name,quantity,status',
                 ),
                 array(
-                    'in' => 'The sort by argument you specified is not valid, the valid values are: pulsa_item_id,pulsa_code,pulsa_display_name,value,price,name,quantity',
+                    'in' => 'The sort by argument you specified is not valid, the valid values are: pulsa_item_id,pulsa_code,pulsa_display_name,value,price,name,quantity,status',
                 )
             );
 
@@ -366,7 +372,7 @@ class PulsaAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $pulsa = Pulsa::select('pulsa.pulsa_item_id', 'pulsa.pulsa_display_name', 'telco_operators.name', 'pulsa.value', 'pulsa.price', 'pulsa.quantity')
+            $pulsa = Pulsa::select('pulsa.pulsa_item_id', 'pulsa.pulsa_display_name', 'telco_operators.name', 'pulsa.value', 'pulsa.price', 'pulsa.quantity', 'pulsa.status')
                           ->leftJoin('telco_operators', 'telco_operators.telco_operator_id', '=', 'pulsa.telco_operator_id');
 
             // Filter pulsa by pulsa item id
@@ -412,6 +418,12 @@ class PulsaAPIController extends ControllerAPI
                 $pulsa->where('pulsa.quantity', $quantity);
             });
 
+            // Filter pulsa by status
+            OrbitInput::get('status', function($status) use ($pulsa)
+            {
+                $pulsa->where('pulsa.status', $status);
+            });
+
             $_pulsa = clone $pulsa;
 
             // if not printing / exporting data then do pagination.
@@ -452,6 +464,7 @@ class PulsaAPIController extends ControllerAPI
                     'value'              => 'pulsa.value',
                     'price'              => 'pulsa.price',
                     'quantity'           => 'pulsa.quantity',
+                    'status'             => 'pulsa.status',
                     'name'               => 'telco_operators.name',
                 );
 
