@@ -13,6 +13,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
 use DominoPOS\OrbitUploader\Uploader as OrbitUploader;
 
+
 class TelcoOperatorAPIController extends ControllerAPI
 {
     protected $viewTelcoRoles = ['super admin'];
@@ -60,15 +61,15 @@ class TelcoOperatorAPIController extends ControllerAPI
             $logo_validation = $this->generate_validation_image('telco_logo', $logo, 'orbit.upload.telco.logo');
 
             $validation_data = [
-                'name'                    => $name,
-                'country_id'              => $countryId,
+                'pulsa_operator_name'     => $name,
+                'pulsa_operator_country'  => $countryId,
                 'identification_prefix_numbers' => $identificationPrefixNumbers,
                 'status'                  => $status,
             ];
 
             $validation_error = [
-                'name'                    => 'required',
-                'country_id'              => 'required',
+                'pulsa_operator_name'     => 'required',
+                'pulsa_operator_country'  => 'required',
                 'identification_prefix_numbers' => 'required',
                 'status'                  => 'required|in:active,inactive',
             ];
@@ -204,16 +205,16 @@ class TelcoOperatorAPIController extends ControllerAPI
 
             $validation_data = [
                 'telco_operator_id'       => $telcoOperatorId,
-                'name'                    => $name,
-                'country_id'              => $countryId,
+                'pulsa_operator_name'     => $name,
+                'pulsa_operator_country'  => $countryId,
                 'identification_prefix_numbers' => $identificationPrefixNumbers,
                 'status'                  => $status,
             ];
 
             $validation_error = [
                 'telco_operator_id'       => 'required',
-                'name'                    => 'required',
-                'country_id'              => 'required',
+                'pulsa_operator_name'     => 'required',
+                'pulsa_operator_country'  => 'required',
                 'identification_prefix_numbers' => 'required',
                 'status'                  => 'required|in:active,inactive',
             ];
