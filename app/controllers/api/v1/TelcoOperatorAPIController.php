@@ -382,7 +382,7 @@ class TelcoOperatorAPIController extends ControllerAPI
             // Filter by status
             OrbitInput::get('status', function($status) use ($telcos)
             {
-                $telcos->where('telco_operators.status', 'status');
+                $telcos->where('telco_operators.status', $status);
             });
 
             $_telcos = clone $telcos;
