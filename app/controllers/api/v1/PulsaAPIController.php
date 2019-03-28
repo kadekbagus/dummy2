@@ -86,7 +86,12 @@ class PulsaAPIController extends ControllerAPI
                     'price'                 => 'required',
                 ),
                 array(
-                    'orbit.empty.telcooperator' => 'telco operator not found'
+                    'pulsa_code.required'                => 'Pulsa Product Name M-Cash field is required',
+                    'pulsa_display_name.required'        => 'Pulsa Product Name field is required',
+                    'value.required'                     => 'Facial Value field is required',
+                    'price.required'                     => 'Selling Price field is required',
+                    'telco_operator_id.required'         => 'Pulsa Operator field is required',
+                    'orbit.empty.telcooperator' => 'Pulsa Operator not found'
                 )
             );
 
@@ -213,10 +218,29 @@ class PulsaAPIController extends ControllerAPI
             $validator = Validator::make(
                 array(
                     'pulsa_item_id'         => $pulsa_item_id,
+                    'telco_operator_id'     => $telco_operator_id,
+                    'pulsa_code'            => $pulsa_code,
+                    'pulsa_display_name'    => $pulsa_display_name,
+                    'value'                 => $value,
+                    'price'                 => $price,
                 ),
                 array(
                     'pulsa_item_id'         => 'required',
+                    'telco_operator_id'     => 'required|orbit.empty.telcooperator',
+                    'pulsa_code'            => 'required',
+                    'pulsa_display_name'    => 'required',
+                    'value'                 => 'required',
+                    'price'                 => 'required',
+                ),
+                array(
+                    'pulsa_code.required'          => 'Pulsa Product Name M-Cash field is required',
+                    'pulsa_display_name.required'  => 'Pulsa Product Name field is required',
+                    'value.required'               => 'Facial Value field is required',
+                    'price.required'               => 'Selling Price field is required',
+                    'telco_operator_id.required'   => 'Pulsa Operator field is required',
+                    'orbit.empty.telcooperator'    => 'Pulsa Operator not found'
                 )
+
             );
 
             // Begin database transaction
