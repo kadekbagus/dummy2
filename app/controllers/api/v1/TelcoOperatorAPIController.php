@@ -13,6 +13,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
 use DominoPOS\OrbitUploader\Uploader as OrbitUploader;
 
+
 class TelcoOperatorAPIController extends ControllerAPI
 {
     protected $viewTelcoRoles = ['super admin'];
@@ -54,24 +55,28 @@ class TelcoOperatorAPIController extends ControllerAPI
             $status = OrbitInput::post('status');
             $logo = OrbitInput::files('logo');
 
+            $this->registerCustomValidation();
+
             // generate array validation image
             $logo_validation = $this->generate_validation_image('telco_logo', $logo, 'orbit.upload.telco.logo');
 
             $validation_data = [
-                'name'                    => $name,
-                'country_id'              => $countryId,
+                'pulsa_operator_name'     => $name,
+                'pulsa_operator_country'  => $countryId,
                 'identification_prefix_numbers' => $identificationPrefixNumbers,
                 'status'                  => $status,
             ];
 
             $validation_error = [
-                'name'                    => 'required',
-                'country_id'              => 'required',
+                'pulsa_operator_name'     => 'required|orbit.telco.unique',
+                'pulsa_operator_country'  => 'required',
                 'identification_prefix_numbers' => 'required',
                 'status'                  => 'required|in:active,inactive',
             ];
 
-            $validation_error_message = [];
+            $validation_error_message = [
+                'orbit.telco.unique' => 'A Pulsa Operator is already exist with that name'
+            ];
 
             // add validation image
             if (! empty($logo_validation)) {
@@ -195,26 +200,30 @@ class TelcoOperatorAPIController extends ControllerAPI
             $status = OrbitInput::post('status');
             $logo = OrbitInput::files('logo');
 
+            $this->registerCustomValidation();
+
             // generate array validation image
             $logo_validation = $this->generate_validation_image('telco_logo', $logo, 'orbit.upload.telco.logo');
 
             $validation_data = [
                 'telco_operator_id'       => $telcoOperatorId,
-                'name'                    => $name,
-                'country_id'              => $country_id,
-                'identification_prefix_numbers' => $identification_prefix_numbers,
+                'pulsa_operator_name'     => $name,
+                'pulsa_operator_country'  => $countryId,
+                'identification_prefix_numbers' => $identificationPrefixNumbers,
                 'status'                  => $status,
             ];
 
             $validation_error = [
                 'telco_operator_id'       => 'required',
-                'name'                    => 'required',
-                'country_id'              => 'required',
+                'pulsa_operator_name'     => 'required|orbit.telco.updateunique:' . $telcoOperatorId,
+                'pulsa_operator_country'  => 'required',
                 'identification_prefix_numbers' => 'required',
                 'status'                  => 'required|in:active,inactive',
             ];
 
-            $validation_error_message = [];
+            $validation_error_message = [
+                'orbit.telco.updateunique' => 'A Pulsa Operator is already exist with that name'
+            ];
 
             // add validation image
             if (! empty($logo_validation)) {
@@ -242,8 +251,8 @@ class TelcoOperatorAPIController extends ControllerAPI
                 ->firstOrFail();
 
             $updatedTelco->name = $name;
-            $updatedTelco->country_id = $country_id;
-            $updatedTelco->identification_prefix_numbers = $identification_prefix_numbers;
+            $updatedTelco->country_id = $countryId;
+            $updatedTelco->identification_prefix_numbers = $identificationPrefixNumbers;
             $updatedTelco->status = $status;
 
             $updatedTelco->save();
@@ -335,7 +344,7 @@ class TelcoOperatorAPIController extends ControllerAPI
                     'sort_by' => $sortBy,
                 ),
                 array(
-                    'sort_by' => 'in:name, country_name, status',
+                    'sort_by' => 'in:name,country_name,status',
                 )
             );
 
@@ -400,7 +409,7 @@ class TelcoOperatorAPIController extends ControllerAPI
             }
 
             // Default sort by
-            $sortBy = 'telcos.name';
+            $sortBy = 'telco_operators.name';
             // Default sort mode
             $sortMode = 'asc';
 
@@ -628,6 +637,58 @@ class TelcoOperatorAPIController extends ControllerAPI
         }
 
         return $validation;
+    }
+
+    protected function registerCustomValidation()
+    {
+        Validator::extend('orbit.file.max_size', function ($attribute, $value, $parameters) {
+            $config_size = $parameters[0];
+            $file_size = $value;
+
+            if ($file_size > $config_size) {
+                return false;
+            }
+
+            return true;
+        });
+
+        Validator::extend('orbit.telco.unique', function ($attribute, $value, $parameters) {
+            $name = $value;
+
+            $existingTelco = TelcoOperator::where('name', $name)->first();
+
+            if (is_object($existingTelco)) {
+                return false;
+            }
+
+            return true;
+        });
+
+        Validator::extend('orbit.telco.updateunique', function ($attribute, $value, $parameters) {
+            $name = $value;
+            $id = $parameters[0];
+
+            $existingTelco = TelcoOperator::where('name', $name)
+                ->where('telco_operator_id', '<>', $id)
+                ->first();
+
+            if (is_object($existingTelco)) {
+                return false;
+            }
+
+            return true;
+        });
+
+        // Check the images, we are allowed array of images but not more than
+        Validator::extend('nomore.than', function ($attribute, $value, $parameters) {
+            $max_count = $parameters[0];
+
+            if (is_array($value['name']) && count($value['name']) > $max_count) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
     }
 
 }
