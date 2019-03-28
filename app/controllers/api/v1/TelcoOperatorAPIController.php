@@ -222,7 +222,8 @@ class TelcoOperatorAPIController extends ControllerAPI
             ];
 
             $validation_error_message = [
-                'orbit.telco.updateunique' => 'A Pulsa Operator is already exist with that name'
+                'orbit.telco.updateunique' => 'A Pulsa Operator is already exist with that name',
+                'orbit.telco.updatestatus' => 'Pulsa Operator cannot be inactivated due to an active Pulsa linked to it'
             ];
 
             // add validation image
