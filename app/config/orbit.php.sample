@@ -8055,6 +8055,28 @@ return array(
             // This value should be equals with the one we set on Midtrans Admin Portal/Dashboard.
             'expired_in' => 1440,
         ],
+
+        // MCash
+        'mcash' => [
+            // Set to true for production
+            'is_production' => false,
+            // MCash base uri
+            'base_uri' => [
+                'production' => '',
+                'sandbox' => '202.158.139.80:9000',
+            ],
+            // for generating Auhtorization header with JWT
+            'auth' => [
+                'production' => [
+                    'username' => '',
+                    'key' => ''
+                ],
+                'sandbox' => [
+                    'username' => 'gotomalls',
+                    'key' => '123456'
+                ]
+            ]
+        ],
     ],
 
     // Config related to transaction.
