@@ -215,7 +215,7 @@ class TelcoOperatorAPIController extends ControllerAPI
 
             $validation_error = [
                 'telco_operator_id'       => 'required',
-                'pulsa_operator_name'     => 'required|orbit.telco.updateunique',
+                'pulsa_operator_name'     => 'required|orbit.telco.updateunique:' . $telcoOperatorId,
                 'pulsa_operator_country'  => 'required',
                 'identification_prefix_numbers' => 'required',
                 'status'                  => 'required|in:active,inactive',
@@ -664,7 +664,7 @@ class TelcoOperatorAPIController extends ControllerAPI
             return true;
         });
 
-        Validator::extend('orbit.telco.updateunique ', function ($attribute, $value, $parameters) {
+        Validator::extend('orbit.telco.updateunique', function ($attribute, $value, $parameters) {
             $name = $value;
             $id = $parameters[0];
 
