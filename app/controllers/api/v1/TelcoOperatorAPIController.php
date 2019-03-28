@@ -218,11 +218,12 @@ class TelcoOperatorAPIController extends ControllerAPI
                 'pulsa_operator_name'     => 'required|orbit.telco.updateunique:' . $telcoOperatorId,
                 'pulsa_operator_country'  => 'required',
                 'identification_prefix_numbers' => 'required',
-                'status'                  => 'required|in:active,inactive',
+                'status'                  => 'required|in:active,inactive|orbit.telco.updatestatus:' . $telcoOperatorId,
             ];
 
             $validation_error_message = [
-                'orbit.telco.updateunique' => 'A Pulsa Operator is already exist with that name'
+                'orbit.telco.updateunique' => 'A Pulsa Operator is already exist with that name',
+                'orbit.telco.updatestatus' => 'Pulsa Operator cannot be inactivated due to an active Pulsa linked to it'
             ];
 
             // add validation image
@@ -378,6 +379,12 @@ class TelcoOperatorAPIController extends ControllerAPI
                 ->with(['mediaLogo' => function($q) {
                     $q->select('media_id', 'path', 'media_name_long', 'object_id');
                 }]);
+
+            // Filter by status
+            OrbitInput::get('status', function($status) use ($telcos)
+            {
+                $telcos->where('telco_operators.status', $status);
+            });
 
             $_telcos = clone $telcos;
 
@@ -674,6 +681,24 @@ class TelcoOperatorAPIController extends ControllerAPI
 
             if (is_object($existingTelco)) {
                 return false;
+            }
+
+            return true;
+        });
+
+        // cannot be inactivated when there is an active pulsa linked to this operator
+        Validator::extend('orbit.telco.updatestatus', function ($attribute, $value, $parameters) {
+            $status = $value;
+            $id = $parameters[0];
+
+            if ($status === 'inactive') {
+                $activePulsa = Pulsa::where('status', 'active')
+                    ->where('telco_operator_id', '<>', $id)
+                    ->first();
+
+                if (is_object($activePulsa)) {
+                    return false;
+                }
             }
 
             return true;
