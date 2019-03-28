@@ -379,6 +379,12 @@ class TelcoOperatorAPIController extends ControllerAPI
                     $q->select('media_id', 'path', 'media_name_long', 'object_id');
                 }]);
 
+            // Filter by status
+            OrbitInput::get('status', function($status) use ($telcos)
+            {
+                $telcos->where('telco_operators.status', 'status');
+            });
+
             $_telcos = clone $telcos;
 
             // if not printing / exporting data then do pagination.
