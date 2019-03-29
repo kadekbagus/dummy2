@@ -68,6 +68,16 @@ class PaymentTransactionDetail extends Eloquent
     }
 
     /**
+     * Relation to Pulsa model.
+     *
+     * @return [type] [description]
+     */
+    public function pulsa()
+    {
+        return $this->belongsTo('Pulsa', 'object_id', 'pulsa_item_id');
+    }
+
+    /**
      * Determine if the payment is for Sepulsa Deals.
      *
      * @return [type] [description]

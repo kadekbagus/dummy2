@@ -2,6 +2,7 @@
 
 use Orbit\Helper\MCash\Client as MCashClient;
 use Orbit\Helper\MCash\ConfigSelector;
+use Orbit\Helper\MCash\API\Responses\PurchaseResponse;
 use Config;
 
 /**
@@ -72,11 +73,12 @@ class Purchase
                 ->setEndpoint($this->endpoint)
                 ->request('POST');
 
-            return $response;
     	} catch (OrbitCustomException $e) {
-			return $e->getMessage();
+			$response = $e->getMessage();
         } catch (Exception $e) {
-            return $e->getMessage();
+            $response = $e->getMessage();
         }
+
+        return new PurchaseResponse($response);
     }
 }
