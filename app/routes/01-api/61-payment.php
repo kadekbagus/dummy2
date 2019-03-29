@@ -36,3 +36,15 @@ Route::get('/api/v1/pub/payment/midtrans/verify', function()
 {
     return Orbit\Controller\API\v1\Pub\Payment\PaymentMidtransVerifyAPIController::create()->getPaymentMidtransVerify();
 });
+
+
+/**
+ * pulsa purchased list
+ */
+Route::get('/api/v1/pub/pulsa-purchased/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\Payment\PaymentPulsaPurchasedListAPIController::create()->getPulsaPurchasedList();
+});
+
+Route::get('/app/v1/pub/pulsa-purchased/list', ['as' => 'pub-pulsa-purchased-list', 'uses' => 'IntermediatePubAuthController@Payment\PaymentPulsaPurchasedList_getPulsaPurchasedList']);
+
