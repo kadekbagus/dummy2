@@ -17,6 +17,13 @@ Route::get('/api/v1/pub/pulsa/detail', function()
 
 Route::get('/app/v1/pub/pulsa/detail', ['as' => 'pub-pulsa-detail', 'uses' => 'IntermediatePubAuthController@Pulsa\PulsaDetail_getDetail']);
 
+Route::post('/api/v1/pub/pulsa/availability', function()
+{
+    return Orbit\Controller\API\v1\Pub\Pulsa\PulsaAvailabilityAPIController::create()->postAvailability();
+});
+
+Route::post('/app/v1/pub/pulsa/availability', ['as' => 'pub-pulsa-availability', 'uses' => 'IntermediatePubAuthController@Pulsa\PulsaAvailability_postAvailability']);
+
 /**
  * List of Telco Operators
  */
