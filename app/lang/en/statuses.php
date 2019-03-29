@@ -69,6 +69,8 @@ return array(
             'advert'        => 'There is no advert that matched your search criteria.',
             'partner'       => 'There is no partner that matched your search criteria.',
             'affectedgroupname' => 'There is no affected group name that matched your search criteria.',
+            'telco'         => 'There is no telco operator that matched your search criteria.',
+            'pulsa'         => 'There is no pulsa that matched your search criteria.',
         ),
         'uploaded'  => array(
             'merchant' => array(
