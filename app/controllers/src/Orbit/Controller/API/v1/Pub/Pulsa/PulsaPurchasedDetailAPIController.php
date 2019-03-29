@@ -101,8 +101,8 @@ class PulsaPurchasedDetailAPIController extends PubControllerAPI
                                     {$prefix}payment_transactions.created_at,
                                     convert_tz( {$prefix}payment_transactions.created_at, '+00:00', {$prefix}payment_transactions.timezone_name) as date_tz,
                                     {$prefix}payment_transactions.payment_method,
-                                    CASE WHEN {$prefix}media.path is null THEN {$prefix}media.path ELSE {$prefix}media.path END as localPath,
-                                    CASE WHEN {$prefix}media.cdn_url is null THEN {$prefix}media.cdn_url ELSE {$prefix}media.cdn_url END as cdnPath
+                                    CASE WHEN {$prefix}media.cdn_url is null THEN {$prefix}media.path ELSE {$prefix}media.cdn_url END as telco_logo,
+                                    {$prefix}payment_transactions.extra_data as phone_number
                             "))
 
                             ->leftJoin('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
