@@ -70,8 +70,43 @@ class GetPulsaQueue
                 return;
             }
 
-            // Send request to buy pulsa from MCash
             $pulsa = $payment->details->first()->pulsa;
+
+            // Check if this user is already purchased one before.
+            // If so, then abort purchasing another.
+            $purchasedBefore = PaymentTransaction::join('payment_transaction_details', 'payment_transactions.payment_transaction_id', '=', 'payment_transaction_details.payment_transaction_id')
+                                                    ->where('payment_transaction_details.object_id', $pulsa->pulsa_item_id)
+                                                    ->where('user_id', $payment->user_id)
+                                                    ->whereIn('status', [
+                                                        PaymentTransaction::STATUS_SUCCESS,
+                                                        PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
+                                                        // PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED,
+                                                    ])
+                                                    ->first();
+
+            if (! empty($purchasedBefore)) {
+                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
+                $payment->save();
+
+                DB::connection()->commit();
+
+                Log::info("Pulsa: Customer purchased this Pulsa before, no pulsa will be issued again.");
+
+                $job->delete();
+
+                $activity->setActivityNameLong('Transaction is Successful - Failed Getting Pulsa (Already Purchased Before)')
+                        ->setModuleName('Midtrans Transaction')
+                        ->setObject($payment)
+                        // ->setCoupon($coupon) // set to pulsa later, coz need to add it to activity class
+                        ->setNotes("Pulsa")
+                        ->setLocation($mall)
+                        ->responseOK()
+                        ->save();
+
+                return;
+            }
+
+            // Send request to buy pulsa from MCash
             $pulsaPurchase = Purchase::create()->doPurchase($pulsa->pulsa_code, $payment->phone, $paymentId);
 
             // Test only, set status response manually.
@@ -95,6 +130,11 @@ class GetPulsaQueue
                         ->save();
             }
             else if ($pulsaPurchase->isNotAvailable()) {
+                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
+                $payment->save();
+
+                DB::connection()->commit();
+
                 Log::info("Pulsa: Pulsa {$pulsa->pulsa_code} is NOT AVAILABLE.");
 
                 $activity->setActivityNameLong('Transaction is Successful - Failed Getting Pulsa')

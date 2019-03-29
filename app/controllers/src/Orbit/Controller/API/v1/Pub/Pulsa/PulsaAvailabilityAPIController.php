@@ -175,7 +175,7 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
                 ->whereIn('payment_transactions.status', [
                     PaymentTransaction::STATUS_SUCCESS,
                     PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
-                    PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED,
+                    // PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED,
                 ])
                 ->get();
 
