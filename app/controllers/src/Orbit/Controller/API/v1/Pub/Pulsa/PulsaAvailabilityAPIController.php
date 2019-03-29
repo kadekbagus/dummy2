@@ -55,7 +55,7 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
 
             $pulsa_id = OrbitInput::post('pulsa_id');
             $quantity = OrbitInput::post('quantity', 1);
-            // $limitTimeCfg = Config::get('orbit.coupon_reserved_limit_time', 10);
+            $limitTimeCfg = Config::get('orbit.coupon_reserved_limit_time', 10);
 
             $this->registerCustomValidation();
 
@@ -83,7 +83,8 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
 
             // $pulsa = Pulsa::findOrFail($pulsa_id);
             $pulsa = new \stdClass;
-            $pulsa->is_available = true;
+            $pulsa->available = true;
+            $pulsa->limit_time = Carbon::now()->addMinutes($limitTimeCfg);
 
             $this->response->data = $pulsa;
 
@@ -160,9 +161,9 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
          */
         Validator::extend('orbit.allowed.quantity', function ($attribute, $requestedQuantity, $parameters) use ($user) {
 
-            $pulsaId = OrbitInput::post('object_id');
+            // $pulsaId = OrbitInput::post('pulsa_id');
 
-            $pulsa = \App::make('orbit.instance.pulsa');
+            // $pulsa = \App::make('orbit.instance.pulsa');
 
             // Globally issued coupon count regardless of the Customer.
             $issuedPulsa = PaymentTransaction::select(

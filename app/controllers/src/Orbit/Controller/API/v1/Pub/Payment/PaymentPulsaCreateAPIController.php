@@ -258,7 +258,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
 
             $pulsaId = OrbitInput::post('object_id');
 
-            $pulsa = \App::make('orbit.instance.pulsa');
+            // $pulsa = \App::make('orbit.instance.pulsa');
 
             // Globally issued coupon count regardless of the Customer.
             $issuedPulsa = PaymentTransaction::select(
