@@ -11785,6 +11785,224 @@ class UploadAPIController extends ControllerAPI
         return $output;
     }
 
+        /**
+     * Upload logo for Telco Operator.
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `telco_operator_id`           (required) - ID of the telco
+     * @param file|array `images`                      (required) - Images of the logo
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadTelcoLogo()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadtelcologo.before.auth', array($this));
+
+            // Require authentication
+            if (! $this->calledFrom('telco.new, telco.update')) {
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadtelcologo.after.auth', array($this));
+
+                // Try to check access control list, does this parent allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadtelcologo.before.authz', array($this, $user));
+
+                $role = $user->role;
+                $validRoles = ['super admin', 'mall admin', 'mall owner'];
+                if (! in_array( strtolower($role->role_name), $validRoles)) {
+                    $message = 'Your role are not allowed to access this resource.';
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postuploadtelcologo.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $telco_operator_id = OrbitInput::post('telco_operator_id');
+            $logo = OrbitInput::files('logo');
+            $messages = array(
+                'nomore.than.one' => Lang::get('validation.max.array', array(
+                    'max' => 1
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'telco_operator_id' => $telco_operator_id,
+                    'logo'       => $logo,
+                ),
+                array(
+                    'telco_operator_id' => 'required|orbit.empty.telco',
+                    'logo'       => 'required|nomore.than.one',
+                )
+            );
+
+            Event::fire('orbit.upload.postuploadtelcologo.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            if (! $this->calledFrom('telco.new, telco.update')) {
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadtelcologo.after.validation', array($this, $validator));
+
+            // We already had telco instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $telco = App::make('orbit.empty.telco_operator_id');
+
+            // Callback to rename the file, we will format it as follow
+            // [telco_operator_id]-[telco]
+            $renameFile = function($uploader, &$file, $dir) use ($telco)
+            {
+                $telco_operator_id = $telco->telco_operator_id;
+                $slug = Str::slug($telco->name);
+                $file['new']->name = sprintf('%s-%s-%s', $telco_operator_id, $slug, time());
+            };
+
+            // Load the orbit configuration for telco upload logo
+            $uploadLogoConfig = Config::get('orbit.upload.telco.logo');
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadLogoConfig);
+            $config->setConfig('before_saving', $renameFile);
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadtelcologo.before.save', array($this, $telco, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($logo);
+
+            // Delete old telco logo
+            $pastMedia = Media::where('object_id', $telco->telco_operator_id)
+                              ->where('object_name', 'telco_operator')
+                              ->where('media_name_id', 'telco_operator_logo');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            $oldPath = array();
+            foreach ($oldMediaFiles as $oldMedia) {
+                //get old path before delete
+                $oldPath[$oldMedia->media_id]['path'] = $oldMedia->path;
+                $oldPath[$oldMedia->media_id]['cdn_url'] = $oldMedia->cdn_url;
+                $oldPath[$oldMedia->media_id]['cdn_bucket_name'] = $oldMedia->cdn_bucket_name;
+
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            $isUpdate = false;
+            if (count($oldMediaFiles) > 0) {
+                $isUpdate = true;
+                $pastMedia->delete();
+            }
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $telco->telco_operator_id,
+                'name'          => 'telco_operator',
+                'media_name_id' => 'telco_operator_logo',
+                'modified_by'   => 1
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            Event::fire('orbit.upload.postuploadtelcologo.after.save', array($this, $telco, $uploader));
+
+            $extras = new \stdClass();
+            $extras->isUpdate = $isUpdate;
+            $extras->oldPath = $oldPath;
+            $extras->mediaNameId = 'telco_operator_logo';
+            $mediaList['extras'] = $extras;
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.telco.logo');
+
+            // Commit the changes
+            if (! $this->calledFrom('telco.new, telco.update')) {
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadtelcologo.after.commit', array($this, $telco, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadtelcologo.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('telco.new, telco.update')) {
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadtelcologo.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('telco.new, telco.update')) {
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadtelcologo.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            if (! $this->calledFrom('telco.new, telco.update')) {
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadtelcologo.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = [$e->getMessage(), $e->getFile(), $e->getLine()];
+            $this->response->data = null;
+
+            // Rollback the changes
+            if (! $this->calledFrom('telco.new, telco.update')) {
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadtelcologo.before.render', array($this, $output));
+
+        return $output;
+    }
+
     protected function registerCustomValidation()
     {
         if ($this->calledFrom('default')) {
@@ -11998,6 +12216,20 @@ class UploadAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.partner_id', $partner);
+
+            return TRUE;
+        });
+
+        Validator::extend('orbit.empty.telco', function ($attribute, $value, $parameters){
+            $telco = TelcoOperator::where('status', 'active')
+                        ->where('telco_operator_id', $value)
+                        ->first();
+
+            if (empty($telco)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.telco_operator_id', $telco);
 
             return TRUE;
         });
