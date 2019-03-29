@@ -81,13 +81,15 @@ class PaymentPulsaPurchasedListAPIController extends PubControllerAPI
                                                 'payment_transactions.phone',
                                                 'payment_transactions.payment_method',
                                                 'payment_transactions.created_at',
-                                                'payment_transaction_details.object_id',
+                                                'payment_transaction_details.object_name',
+                                                'payment_transaction_details.price',
+                                                'payment_transaction_details.quantity',
                                                 'pulsa.pulsa_display_name',
                                                 'pulsa.pulsa_code',
                                                 'pulsa.description',
-                                                'pulsa.value',
-                                                'pulsa.price',
-                                                'telco_operators.name',
+                                                'pulsa.value as pulsa_value',
+                                                'pulsa.price as pulsa_price',
+                                                'telco_operators.name as operator_name',
                                                 DB::raw($telcoLogo)
                                                 )
                                         ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
