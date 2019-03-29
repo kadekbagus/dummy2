@@ -131,7 +131,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
             $payment_new->status = PaymentTransaction::STATUS_STARTING;
             $payment_new->timezone_name = $mallTimeZone;
             $payment_new->post_data = serialize($post_data);
-            $payment_new->extra_data = $pulsa_phone,
+            $payment_new->extra_data = $pulsa_phone;
 
             $payment_new->save();
 
