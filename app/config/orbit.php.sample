@@ -7194,6 +7194,33 @@ return array(
                 'object_type' => 'Mall',
                 'parameter_name' => 'object_id'
             ),
+            // user clicking pulsa banner in home page
+            '209' => array(
+                'name' => 'click_home_pulsa_link',
+                'name_long' => 'Click Home Pulsa Link',
+                'module_name' => 'Pulsa',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // User arrives at pulsa purchase page (where they input phone number)
+            '210' => array(
+                'name' => 'view_pulsa_purchase_page',
+                'name_long' => 'View Pulsa Purchase Page',
+                'module_name' => 'Pulsa',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // User arrives at pulsa purchase page (where they input phone number)
+            '211' => array(
+                'name' => 'click_buy_pulsa',
+                'name_long' => 'Click Buy Pulsa',
+                'module_name' => 'Pulsa',
+                'type' => 'view',
+                'object_type' => 'Pulsa',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 
