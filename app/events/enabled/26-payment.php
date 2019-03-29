@@ -22,7 +22,9 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
 
         DB::connection()->beginTransaction();
 
-        $payment->cleanUp();
+        if (! $payment->forPulsa()) {
+            $payment->cleanUp();
+        }
 
         DB::connection()->commit();
     }
