@@ -107,7 +107,7 @@ class GetPulsaQueue
             }
 
             // Send request to buy pulsa from MCash
-            $pulsaPurchase = Purchase::create()->doPurchase($pulsa->pulsa_code, $payment->phone, $paymentId);
+            $pulsaPurchase = Purchase::create()->doPurchase($pulsa->pulsa_code, $payment->extra_data, $paymentId);
 
             // Test only, set status response manually.
             // $pulsaPurchase->setStatus(0); // success
