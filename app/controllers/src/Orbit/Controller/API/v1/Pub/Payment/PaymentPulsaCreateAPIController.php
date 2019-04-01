@@ -89,7 +89,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                     'mall_id'    => 'required',
                     'object_type'  => 'required',
                     'object_id'  => 'required|orbit.exists.pulsa',
-                    'quantity'   => 'required|orbit.allowed.quantity',
+                    'quantity'   => 'required',
                 ),
                 array(
                     'orbit.allowed.quantity' => 'REQUESTED_QUANTITY_NOT_AVAILABLE',
@@ -272,6 +272,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                 )
                 ->join('payment_transaction_details', 'payment_transactions.payment_transaction_id', '=', 'payment_transaction_details.payment_transaction_id')
                 ->where('payment_transaction_details.object_type', 'pulsa')
+                // ->where('payment_transaction_details.object_id', $pulsaId)
                 ->whereIn('payment_transactions.status', [
                     PaymentTransaction::STATUS_SUCCESS,
                     PaymentTransaction::STATUS_SUCCESS_NO_COUPON,

@@ -68,7 +68,7 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
                 array(
                     'pulsa_id' => 'required|orbit.exists.pulsa',
                     // 'with_reserved' => 'required',
-                    'quantity' => 'required|orbit.allowed.quantity',
+                    'quantity' => 'required',
                 ),
                 array(
                     'orbit.allowed.quantity' => 'REQUESTED_QUANTITY_NOT_AVAILABLE',
@@ -161,7 +161,7 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
          */
         Validator::extend('orbit.allowed.quantity', function ($attribute, $requestedQuantity, $parameters) use ($user) {
 
-            // $pulsaId = OrbitInput::post('pulsa_id');
+            $pulsaId = OrbitInput::post('pulsa_id');
 
             // $pulsa = \App::make('orbit.instance.pulsa');
 
@@ -173,6 +173,7 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
                 )
                 ->join('payment_transaction_details', 'payment_transactions.payment_transaction_id', '=', 'payment_transaction_details.payment_transaction_id')
                 ->where('payment_transaction_details.object_type', 'pulsa')
+                ->where('payment_transaction_details.object_id', $pulsaId)
                 ->whereIn('payment_transactions.status', [
                     PaymentTransaction::STATUS_SUCCESS,
                     PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
