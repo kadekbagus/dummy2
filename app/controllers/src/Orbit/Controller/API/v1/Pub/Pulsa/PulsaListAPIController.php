@@ -93,6 +93,7 @@ class PulsaListAPIController extends PubControllerAPI
                             })
                             ->where('countries.name', $country)
                             ->where('telco_operators.status', 'active')
+                            ->where('pulsa.status', 'active')
                             ->orderBy('value');
 
             // Cache the result of database calls
