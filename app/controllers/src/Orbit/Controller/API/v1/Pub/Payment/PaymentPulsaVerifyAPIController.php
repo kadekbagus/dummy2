@@ -50,7 +50,7 @@ class PaymentPulsaVerifyAPIController extends PubControllerAPI
             }
 
             // validate payment data
-            $payment = PaymentTransaction::select('payment_transaction_id', 'external_payment_transaction_id', 'amount', 'status', 'payment_method', 'currency', 'user_email');
+            $payment = PaymentTransaction::select('payment_transaction_id', 'external_payment_transaction_id', 'extra_data', 'amount', 'status', 'payment_method', 'currency', 'user_email');
 
             // Don't check for related User unless front-end explicitly requesting it.
             // Useful for request like Midtrans' payment notification which doesn't have any

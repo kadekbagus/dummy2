@@ -71,43 +71,11 @@ class GetPulsaQueue
             }
 
             $pulsa = $payment->details->first()->pulsa;
-
-            // Check if this user is already purchased one before.
-            // If so, then abort purchasing another.
-            // $purchasedBefore = PaymentTransaction::join('payment_transaction_details', 'payment_transactions.payment_transaction_id', '=', 'payment_transaction_details.payment_transaction_id')
-            //                                         ->where('payment_transaction_details.object_id', $pulsa->pulsa_item_id)
-            //                                         ->where('user_id', $payment->user_id)
-            //                                         ->whereIn('status', [
-            //                                             PaymentTransaction::STATUS_SUCCESS,
-            //                                             PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
-            //                                             // PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED,
-            //                                         ])
-            //                                         ->whereNotIn('payment_transactions.payment_transaction_id', [$payment->payment_transaction_id])
-            //                                         ->first();
-
-            // if (! empty($purchasedBefore)) {
-            //     $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
-            //     $payment->save();
-
-            //     DB::connection()->commit();
-
-            //     Log::info("Pulsa: Customer purchased this Pulsa before (trxID = {$purchasedBefore->payment_transaction_id}), no pulsa will be issued again.");
-
-            //     $job->delete();
-
-            //     $activity->setActivityNameLong('Transaction is Successful - Failed Getting Pulsa (Already Purchased Before)')
-            //             ->setModuleName('Midtrans Transaction')
-            //             ->setObject($payment)
-            //             // ->setCoupon($coupon) // set to pulsa later, coz need to add it to activity class
-            //             ->setNotes("Pulsa")
-            //             ->setLocation($mall)
-            //             ->responseOK()
-            //             ->save();
-            //     return;
-            // }
+            $phoneNumber = $payment->extra_data;
+            $pulsaName = $pulsa->pulsa_display_name;
 
             // Send request to buy pulsa from MCash
-            $pulsaPurchase = Purchase::create()->doPurchase($pulsa->pulsa_code, $payment->extra_data, $paymentId);
+            $pulsaPurchase = Purchase::create()->doPurchase($pulsa->pulsa_code, $phoneNumber, $paymentId);
 
             // Test only, set status response manually.
             // $pulsaPurchase->setStatus(0); // success
@@ -123,8 +91,8 @@ class GetPulsaQueue
                 $activity->setActivityNameLong('Transaction is Successful')
                         ->setModuleName('Midtrans Transaction')
                         ->setObject($payment)
-                        // ->setCoupon($coupon) // set to pulsa later, coz need to add it to activity class
-                        ->setNotes("Pulsa")
+                        ->setObjectDisplayName($pulsaName)
+                        ->setNotes($phoneNumber)
                         ->setLocation($mall)
                         ->responseOK()
                         ->save();
@@ -140,29 +108,14 @@ class GetPulsaQueue
                 $activity->setActivityNameLong('Transaction is Successful - Failed Getting Pulsa')
                         ->setModuleName('Midtrans Transaction')
                         ->setObject($payment)
-                        // ->setCoupon($coupon) // set to pulsa later, coz need to add it to activity class
-                        ->setNotes("Pulsa")
-                        ->setLocation($mall)
-                        ->responseOK()
-                        ->save();
-            }
-            else if ($pulsaPurchase->isPending()) {
-                Log::info("Pulsa: Pulsa purchase is PENDING for payment {$paymentId}.");
-
-                // Notify Customer, even if pulsa is pending from MCash?
-                $payment->user->notify(new ReceiptNotification($payment));
-
-                $activity->setActivityNameLong('Transaction is Successful - Pending Getting Pulsa from MCash')
-                        ->setModuleName('Midtrans Transaction')
-                        ->setObject($payment)
-                        // ->setCoupon($coupon) // set to pulsa later, coz need to add it to activity class
-                        ->setNotes("Pulsa")
+                        ->setObjectDisplayName($pulsaName)
+                        ->setNotes($phoneNumber)
                         ->setLocation($mall)
                         ->responseOK()
                         ->save();
             }
             else {
-                $payment->status = PaymentTransaction::STATUS_FAILED;
+                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
                 Log::info("Pulsa: Pulsa purchase is FAILED for payment {$paymentId}. Unknown status from MCash.");
             }
 
@@ -190,10 +143,13 @@ class GetPulsaQueue
                 // Notify customer that coupon is not available.
                 $payment->user->notify(new CustomerPulsaNotAvailableNotification($payment));
 
+                $notes = $phoneNumber . ' ---- ' . $e->getMessage();
+
                 $activity->setActivityNameLong('Transaction is Success - Failed Getting Pulsa')
                          ->setModuleName('Midtrans Transaction')
                          ->setObject($payment)
-                         ->setNotes($e->getMessage())
+                         ->setObjectDisplayName($pulsaName)
+                         ->setNotes($notes)
                          ->setLocation($mall)
                          ->responseFailed()
                          ->save();
