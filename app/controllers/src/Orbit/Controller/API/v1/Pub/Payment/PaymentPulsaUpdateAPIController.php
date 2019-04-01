@@ -207,6 +207,8 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
 
                 $payment_update->save();
 
+                $pulsaName = $payment_update->details->first()->pulsa->pulsa_display_name;
+
                 // Commit the changes ASAP so if there are any other requests that trigger this controller
                 // they will use the updated payment data/status.
                 // Try not doing any expensive operation above.
@@ -219,6 +221,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                     $activity->setActivityNameLong('Transaction is Failed')
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment_update)
+                            ->setObjectDisplayName($pulsaName)
                             ->setNotes('Transaction is failed from Midtrans/Customer.')
                             ->setLocation($mall)
                             ->responseFailed()
@@ -228,6 +231,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                     $activity->setActivityNameLong('Transaction is Expired')
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment_update)
+                            ->setObjectDisplayName($pulsaName)
                             ->setNotes('Transaction is expired from Midtrans.')
                             ->setLocation($mall)
                             ->responseFailed()
@@ -236,8 +240,9 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                 else if ($payment_update->status === PaymentTransaction::STATUS_SUCCESS_NO_COUPON) {
                     $activity->setActivityNameLong('Transaction is Success - Getting Pulsa')
                             ->setModuleName('Midtrans Transaction')
-                            ->setNotes($payment_update->details->first()->pulsa->pulsa_display_name)
                             ->setObject($payment_update)
+                            ->setObjectDisplayName($pulsaName)
+                            ->setNotes($pulsaName)
                             ->setLocation($mall)
                             ->responseOK()
                             ->save();
@@ -246,6 +251,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                     $activity->setActivityNameLong('Transaction is Success - Failed Getting Pulsa')
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment_update)
+                            ->setObjectDisplayName($pulsaName)
                             ->setNotes('Failed to get pulsa. Can not get buy pulsa for this transaction.')
                             ->setLocation($mall)
                             ->responseFailed()
@@ -276,7 +282,8 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                     $activity->setActivityNameLong('Transaction is Pending')
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment_update)
-                            ->setNotes($payment_update->details->first()->pulsa->pulsa_display_name)
+                            ->setObjectDisplayName($pulsaName)
+                            ->setNotes($pulsaName)
                             ->setLocation($mall)
                             ->responseOK()
                             ->save();
@@ -296,7 +303,8 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                     $activity->setActivityNameLong('Transaction Canceled')
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment_update)
-                            ->setNotes($payment_update->details->first()->pulsa->pulsa_display_name)
+                            ->setObjectDisplayName($pulsaName)
+                            ->setNotes($pulsaName)
                             ->setLocation($mall)
                             ->responseOK()
                             ->save();
