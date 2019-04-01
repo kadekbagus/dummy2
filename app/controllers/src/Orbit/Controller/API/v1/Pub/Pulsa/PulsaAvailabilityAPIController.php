@@ -55,7 +55,7 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
 
             $pulsa_id = OrbitInput::post('pulsa_id');
             $quantity = OrbitInput::post('quantity', 1);
-            // $limitTimeCfg = Config::get('orbit.coupon_reserved_limit_time', 10);
+            $limitTimeCfg = Config::get('orbit.coupon_reserved_limit_time', 10);
 
             $this->registerCustomValidation();
 
@@ -68,7 +68,7 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
                 array(
                     'pulsa_id' => 'required|orbit.exists.pulsa',
                     // 'with_reserved' => 'required',
-                    'quantity' => 'required|orbit.allowed.quantity',
+                    'quantity' => 'required',
                 ),
                 array(
                     'orbit.allowed.quantity' => 'REQUESTED_QUANTITY_NOT_AVAILABLE',
@@ -83,7 +83,8 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
 
             // $pulsa = Pulsa::findOrFail($pulsa_id);
             $pulsa = new \stdClass;
-            $pulsa->is_available = true;
+            $pulsa->available = true;
+            $pulsa->limit_time = Carbon::now()->addMinutes($limitTimeCfg);
 
             $this->response->data = $pulsa;
 
@@ -144,7 +145,7 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
         // Check if pulsa is exists.
         Validator::extend('orbit.exists.pulsa', function ($attribute, $value, $parameters) {
             $prefix = DB::getTablePrefix();
-            $pulsa = Pulsa::where('pulsa_item_id', $value)->first();
+            $pulsa = Pulsa::where('pulsa_item_id', $value)->where('status', 'active')->first();
 
             if (empty($pulsa)) {
                 return false;
@@ -160,9 +161,9 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
          */
         Validator::extend('orbit.allowed.quantity', function ($attribute, $requestedQuantity, $parameters) use ($user) {
 
-            $pulsaId = OrbitInput::post('object_id');
+            $pulsaId = OrbitInput::post('pulsa_id');
 
-            $pulsa = \App::make('orbit.instance.pulsa');
+            // $pulsa = \App::make('orbit.instance.pulsa');
 
             // Globally issued coupon count regardless of the Customer.
             $issuedPulsa = PaymentTransaction::select(
@@ -172,6 +173,7 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
                 )
                 ->join('payment_transaction_details', 'payment_transactions.payment_transaction_id', '=', 'payment_transaction_details.payment_transaction_id')
                 ->where('payment_transaction_details.object_type', 'pulsa')
+                ->where('payment_transaction_details.object_id', $pulsaId)
                 ->whereIn('payment_transactions.status', [
                     PaymentTransaction::STATUS_SUCCESS,
                     PaymentTransaction::STATUS_SUCCESS_NO_COUPON,

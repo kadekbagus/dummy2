@@ -50,6 +50,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
             $last_name = OrbitInput::post('last_name');
             $email = OrbitInput::post('email');
             $phone = OrbitInput::post('phone');
+            $pulsa_phone = OrbitInput::post('pulsa_phone');
             $country_id = OrbitInput::post('country_id');
             $quantity = OrbitInput::post('quantity');
             $amount = OrbitInput::post('amount');
@@ -69,6 +70,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                     'last_name'  => $last_name,
                     'email'      => $email,
                     'phone'      => $phone,
+                    'pulsa_phone'      => $pulsa_phone,
                     'amount'     => $amount,
                     'post_data'  => $post_data,
                     'mall_id'    => $mall_id,
@@ -81,16 +83,17 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                     'last_name'  => 'required',
                     'email'      => 'required',
                     'phone'      => 'required',
+                    'pulsa_phone'      => 'required',
                     'amount'     => 'required',
                     'post_data'  => 'required',
                     'mall_id'    => 'required',
                     'object_type'  => 'required',
                     'object_id'  => 'required|orbit.exists.pulsa',
-                    'quantity'   => 'required|orbit.allowed.quantity',
+                    'quantity'   => 'required',
                 ),
                 array(
                     'orbit.allowed.quantity' => 'REQUESTED_QUANTITY_NOT_AVAILABLE',
-                    'orbit.exists.coupon' => 'Pulsa does not exists.',
+                    'orbit.exists.pulsa' => 'Pulsa does not exists.',
                 )
             );
 
@@ -128,6 +131,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
             $payment_new->status = PaymentTransaction::STATUS_STARTING;
             $payment_new->timezone_name = $mallTimeZone;
             $payment_new->post_data = serialize($post_data);
+            $payment_new->extra_data = $pulsa_phone;
 
             $payment_new->save();
 
@@ -240,7 +244,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
         // Check if pulsa is exists.
         Validator::extend('orbit.exists.pulsa', function ($attribute, $value, $parameters) {
             $prefix = DB::getTablePrefix();
-            $pulsa = Pulsa::where('pulsa_item_id', $value)->first();
+            $pulsa = Pulsa::where('pulsa_item_id', $value)->where('status', 'active')->first();
 
             if (empty($pulsa)) {
                 return false;
@@ -258,7 +262,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
 
             $pulsaId = OrbitInput::post('object_id');
 
-            $pulsa = \App::make('orbit.instance.pulsa');
+            // $pulsa = \App::make('orbit.instance.pulsa');
 
             // Globally issued coupon count regardless of the Customer.
             $issuedPulsa = PaymentTransaction::select(
@@ -268,6 +272,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                 )
                 ->join('payment_transaction_details', 'payment_transactions.payment_transaction_id', '=', 'payment_transaction_details.payment_transaction_id')
                 ->where('payment_transaction_details.object_type', 'pulsa')
+                // ->where('payment_transaction_details.object_id', $pulsaId)
                 ->whereIn('payment_transactions.status', [
                     PaymentTransaction::STATUS_SUCCESS,
                     PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
