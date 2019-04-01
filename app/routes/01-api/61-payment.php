@@ -48,3 +48,13 @@ Route::get('/api/v1/pub/pulsa-purchased/list', function()
 
 Route::get('/app/v1/pub/pulsa-purchased/list', ['as' => 'pub-pulsa-purchased-list', 'uses' => 'IntermediatePubAuthController@Payment\PaymentPulsaPurchasedList_getPulsaPurchasedList']);
 
+
+/**
+ * pulsa purchased transaction detail
+ */
+Route::get('/api/v1/pub/pulsa-purchased/detail', function()
+{
+    return Orbit\Controller\API\v1\Pub\Pulsa\PulsaPurchasedDetailAPIController::create()->getPulsaPurchasedDetail();
+});
+
+Route::get('/app/v1/pub/pulsa-purchased/detail', ['as' => 'pub-pulsa-purchased-detail', 'uses' => 'IntermediatePubAuthController@Pulsa\PulsaPurchasedDetail_getPulsaPurchasedDetail']);
