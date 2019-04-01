@@ -7221,6 +7221,43 @@ return array(
                 'object_type' => 'Pulsa',
                 'parameter_name' => 'object_id'
             ),
+
+            // View transaction detail of successful
+            '212' => array(
+                'name' => 'view_transaction_page_payment_successful',
+                'name_long' => 'View Transaction Page Payment Success',
+                'module_name' => 'Pulsa',
+                'type' => 'view',
+                'object_type' => 'Pulsa',
+                'parameter_name' => 'object_id'
+            ),
+            // View transaction detail of waiting payment
+            '213' => array(
+                'name' => 'view_transaction_page_payment_waiting',
+                'name_long' => 'View Transaction Page Payment Waiting',
+                'module_name' => 'Pulsa',
+                'type' => 'view',
+                'object_type' => 'Pulsa',
+                'parameter_name' => 'object_id'
+            ),
+            // View transaction detail of failed
+            '214' => array(
+                'name' => 'view_transaction_page_payment_failed',
+                'name_long' => 'View Transaction Page Payment Failed',
+                'module_name' => 'Pulsa',
+                'type' => 'view',
+                'object_type' => 'Pulsa',
+                'parameter_name' => 'object_id'
+            ),
+            // View transaction detail of canceled
+            '215' => array(
+                'name' => 'view_transaction_page_payment_canceled',
+                'name_long' => 'View Transaction Page Payment Canceled',
+                'module_name' => 'Pulsa',
+                'type' => 'view',
+                'object_type' => 'Pulsa',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 
