@@ -124,7 +124,7 @@ class PulsaPurchasedDetailAPIController extends PubControllerAPI
                             ->where('payment_transactions.user_id', $user->user_id)
                             ->where('payment_transaction_details.object_type', 'pulsa')
                             ->where('payment_transactions.payment_method', '!=', 'normal')
-                            ->where('pulsa.status', 'active')
+                            //->where('pulsa.status', 'active')
 
                             // payment_transaction_id is value of payment_transaction_id or external_payment_transaction_id
                             ->where(function($query) use($payment_transaction_id) {
