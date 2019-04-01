@@ -82,6 +82,7 @@ class GetPulsaQueue
                                                         PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
                                                         // PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED,
                                                     ])
+                                                    ->whereNotIn('payment_transactions.payment_transaction_id', [$payment->payment_transaction_id])
                                                     ->first();
 
             if (! empty($purchasedBefore)) {
@@ -90,7 +91,7 @@ class GetPulsaQueue
 
                 DB::connection()->commit();
 
-                Log::info("Pulsa: Customer purchased this Pulsa before, no pulsa will be issued again.");
+                Log::info("Pulsa: Customer purchased this Pulsa before (trxID = {$purchasedBefore->payment_transaction_id}), no pulsa will be issued again.");
 
                 $job->delete();
 
@@ -107,7 +108,7 @@ class GetPulsaQueue
             }
 
             // Send request to buy pulsa from MCash
-            $pulsaPurchase = Purchase::create()->doPurchase($pulsa->pulsa_code, $payment->phone, $paymentId);
+            $pulsaPurchase = Purchase::create()->doPurchase($pulsa->pulsa_code, $payment->extra_data, $paymentId);
 
             // Test only, set status response manually.
             // $pulsaPurchase->setStatus(0); // success

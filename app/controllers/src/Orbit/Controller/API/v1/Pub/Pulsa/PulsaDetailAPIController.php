@@ -51,22 +51,22 @@ class PulsaDetailAPIController extends PubControllerAPI
             $pulsaId = OrbitInput::get('pulsa_item_id');
             // $no_total_records = OrbitInput::get('no_total_records', null);
 
-            if (empty($country) || $country == '0') {
-                // return empty result if country filter is not around
-                $data = new \stdClass;
-                $data->records = [];
-                $data->returned_records = 0;
-                $data->total_records = 0;
-                $data->records_operator = [];
-                $data->total_records_operator = 0;
+            // if (empty($country) || $country == '0') {
+            //     // return empty result if country filter is not around
+            //     $data = new \stdClass;
+            //     $data->records = [];
+            //     $data->returned_records = 0;
+            //     $data->total_records = 0;
+            //     $data->records_operator = [];
+            //     $data->total_records_operator = 0;
 
-                $this->response->data = null;
-                $this->response->code = 0;
-                $this->response->status = 'success';
-                $this->response->message = 'Request Ok';
+            //     $this->response->data = null;
+            //     $this->response->code = 0;
+            //     $this->response->status = 'success';
+            //     $this->response->message = 'Request Ok';
 
-                return $this->render($httpCode);
-            }
+            //     return $this->render($httpCode);
+            // }
 
             $prefix = DB::getTablePrefix();
             $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
@@ -92,7 +92,7 @@ class PulsaDetailAPIController extends PubControllerAPI
                                 $join->on('telco_operators.telco_operator_id', '=', 'media.object_id')
                                      ->on('media.media_name_long', '=', DB::raw("'telco_operator_logo_orig'"));
                             })
-                            ->where('countries.name', $country)
+                            // ->where('countries.name', $country)
                             ->where('telco_operators.status', 'active')
                             ->where('pulsa.pulsa_item_id', $pulsaId)
                             ->first();
