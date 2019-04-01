@@ -17,7 +17,7 @@ use Exception;
  *
  * @author Budi <budi@dominopos.com>
  */
-class CouponNotAvailableNotification extends AdminNotification
+class PulsaNotAvailableNotification extends AdminNotification
 {
     use HasPayment;
 
