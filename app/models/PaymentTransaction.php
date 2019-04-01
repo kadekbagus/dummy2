@@ -202,6 +202,18 @@ class PaymentTransaction extends Eloquent
     }
 
     /**
+     * Determine if the payment is for Pulsa.
+     *
+     * @author Budi <budi@dominopos.com>
+     *
+     * @return [type] [description]
+     */
+    public function forPulsa()
+    {
+        return $this->details->count() > 0 && ! empty($this->details->first()->pulsa);
+    }
+
+    /**
      * Determine if the coupon related to this payment is issued.
      *
      * @return [type] [description]

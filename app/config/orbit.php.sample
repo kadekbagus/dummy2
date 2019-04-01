@@ -816,6 +816,12 @@ return array(
             'max_record'    => 100,
         ),
 
+        // Telco
+        'telco' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
         // mall location
         'mall_location' => array(
             'per_page'      => 50,
@@ -4793,6 +4799,79 @@ return array(
             ),
         ),
 
+        // -------------------------------------------------------------------//
+        // Telco Related Uploads
+        // -------------------------------------------------------------------//
+        'telco'  => array(
+            'logo'  => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 9000000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/telco/logo',
+
+                // Default HTML element name
+                'name'          => 'logo',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => FALSE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 200,
+                        'height'    => 200
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+        ),
+
 
         // -------------------------------------------------------------------//
         // Wallet Operator Related Uploads
@@ -7115,6 +7194,70 @@ return array(
                 'object_type' => 'Mall',
                 'parameter_name' => 'object_id'
             ),
+            // user clicking pulsa banner in home page
+            '209' => array(
+                'name' => 'click_home_pulsa_link',
+                'name_long' => 'Click Home Pulsa Link',
+                'module_name' => 'Pulsa',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // User arrives at pulsa purchase page (where they input phone number)
+            '210' => array(
+                'name' => 'view_pulsa_purchase_page',
+                'name_long' => 'View Pulsa Purchase Page',
+                'module_name' => 'Pulsa',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // User arrives at pulsa purchase page (where they input phone number)
+            '211' => array(
+                'name' => 'click_buy_pulsa',
+                'name_long' => 'Click Buy Pulsa',
+                'module_name' => 'Pulsa',
+                'type' => 'view',
+                'object_type' => 'Pulsa',
+                'parameter_name' => 'object_id'
+            ),
+
+            // View transaction detail of successful
+            '212' => array(
+                'name' => 'view_transaction_page_payment_successful',
+                'name_long' => 'View Transaction Page Payment Success',
+                'module_name' => 'Pulsa',
+                'type' => 'view',
+                'object_type' => 'Pulsa',
+                'parameter_name' => 'object_id'
+            ),
+            // View transaction detail of waiting payment
+            '213' => array(
+                'name' => 'view_transaction_page_payment_waiting',
+                'name_long' => 'View Transaction Page Payment Waiting',
+                'module_name' => 'Pulsa',
+                'type' => 'view',
+                'object_type' => 'Pulsa',
+                'parameter_name' => 'object_id'
+            ),
+            // View transaction detail of failed
+            '214' => array(
+                'name' => 'view_transaction_page_payment_failed',
+                'name_long' => 'View Transaction Page Payment Failed',
+                'module_name' => 'Pulsa',
+                'type' => 'view',
+                'object_type' => 'Pulsa',
+                'parameter_name' => 'object_id'
+            ),
+            // View transaction detail of canceled
+            '215' => array(
+                'name' => 'view_transaction_page_payment_canceled',
+                'name_long' => 'View Transaction Page Payment Canceled',
+                'module_name' => 'Pulsa',
+                'type' => 'view',
+                'object_type' => 'Pulsa',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 
@@ -7975,6 +8118,28 @@ return array(
             // The expiration limit since the payment created (in minutes). Default to 1 day or 1440 minutes.
             // This value should be equals with the one we set on Midtrans Admin Portal/Dashboard.
             'expired_in' => 1440,
+        ],
+
+        // MCash
+        'mcash' => [
+            // Set to true for production
+            'is_production' => false,
+            // MCash base uri
+            'base_uri' => [
+                'production' => '',
+                'sandbox' => '202.158.139.80:9000',
+            ],
+            // for generating Auhtorization header with JWT
+            'auth' => [
+                'production' => [
+                    'username' => '',
+                    'key' => ''
+                ],
+                'sandbox' => [
+                    'username' => 'gotomalls',
+                    'key' => '123456'
+                ]
+            ]
         ],
     ],
 
