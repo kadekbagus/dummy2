@@ -26,8 +26,8 @@ use Orbit\Helper\Midtrans\API\TransactionCancel;
 
 use Orbit\Notifications\Payment\SuspiciousPaymentNotification;
 use Orbit\Notifications\Payment\DeniedPaymentNotification;
-use Orbit\Notifications\Payment\PendingPaymentNotification;
-use Orbit\Notifications\Payment\CanceledPaymentNotification;
+use Orbit\Notifications\Pulsa\PendingPaymentNotification;
+use Orbit\Notifications\Pulsa\CanceledPaymentNotification;
 use Mall;
 
 /**
