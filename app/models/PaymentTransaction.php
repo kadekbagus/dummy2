@@ -194,7 +194,7 @@ class PaymentTransaction extends Eloquent
      */
     public function forSepulsa()
     {
-        if (! empty($this->details)) {
+        if ($this->details->count() > 0 && ! empty($this->details->first()->coupon)) {
             return $this->details->first()->coupon->promotion_type === Coupon::TYPE_SEPULSA;
         }
 
@@ -232,7 +232,7 @@ class PaymentTransaction extends Eloquent
      */
     public function forHotDeals()
     {
-        if (! empty($this->details)) {
+        if ($this->details->count() > 0 && ! empty($this->details->first()->coupon)) {
             return $this->details->first()->coupon->promotion_type === Coupon::TYPE_HOT_DEALS;
         }
 

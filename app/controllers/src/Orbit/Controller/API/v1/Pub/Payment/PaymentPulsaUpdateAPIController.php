@@ -290,11 +290,9 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
 
                     // Notify customer for pending payment (to complete the payment).
                     // Send email to address that being used on checkout (can be different with user's email)
-                    if ($payment_update->paidWith(['bank_transfer', 'echannel'])) {
-                        $paymentUser = new User;
-                        $paymentUser->email = $payment_update->user_email;
-                        $paymentUser->notify(new PendingPaymentNotification($payment_update), 30);
-                    }
+                    $paymentUser = new User;
+                    $paymentUser->email = $payment_update->user_email;
+                    $paymentUser->notify(new PendingPaymentNotification($payment_update), 30);
                 }
 
                 // Send notification if the purchase was canceled.
