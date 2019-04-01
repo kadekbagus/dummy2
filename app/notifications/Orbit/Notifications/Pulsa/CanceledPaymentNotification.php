@@ -7,7 +7,7 @@ use Log;
 use Queue;
 use Exception;
 
-use Orbit\Helper\Notifications\Payment\CanceledPaymentNotification as Base;
+use Orbit\Notifications\Payment\CanceledPaymentNotification as Base;
 
 /**
  * Email notification for Canceled Payment (Pulsa).
