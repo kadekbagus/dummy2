@@ -15,7 +15,7 @@ use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
 use Orbit\Helper\Util\CdnUrlGenerator;
 use Carbon\Carbon;
 
-use Orbit\Helper\Notifications\Payment\PendingPaymentNotification;
+use Orbit\Helper\Notifications\Payment\PendingPaymentNotification as Base;
 
 /**
  * Base Pending Payment Notification class.
