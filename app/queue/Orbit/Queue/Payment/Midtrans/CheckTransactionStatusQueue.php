@@ -39,7 +39,7 @@ class CheckTransactionStatusQueue
 
             DB::connection()->beginTransaction();
 
-            $payment = PaymentTransaction::onWriteConnection()->with(['details.coupon', 'midtrans', 'issued_coupons', 'user'])->find($data['transactionId']);
+            $payment = PaymentTransaction::onWriteConnection()->with(['details.coupon', 'details.pulsa', 'midtrans', 'issued_coupons', 'user'])->find($data['transactionId']);
             $mallId = isset($data['mall_id']) ? $data['mall_id'] : null;
             $mall = Mall::where('merchant_id', $mallId)->first();
 
@@ -60,7 +60,9 @@ class CheckTransactionStatusQueue
             else if ($payment->expired() || $payment->failed() || $payment->denied() || $payment->canceled()) {
                 Log::info("Midtrans::CheckTransactionStatusQueue: Transaction ID {$data['transactionId']} status is {$payment->status}.");
 
-                $payment->cleanUp();
+                if (! $payment->forPulsa()) {
+                    $payment->cleanUp();
+                }
 
                 DB::connection()->commit();
 
