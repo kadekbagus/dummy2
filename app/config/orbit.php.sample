@@ -8118,6 +8118,8 @@ return array(
             // The expiration limit since the payment created (in minutes). Default to 1 day or 1440 minutes.
             // This value should be equals with the one we set on Midtrans Admin Portal/Dashboard.
             'expired_in' => 1440,
+
+            'gopay_expired_in' => 60,
         ],
 
         // MCash
