@@ -194,11 +194,23 @@ class PaymentTransaction extends Eloquent
      */
     public function forSepulsa()
     {
-        if (! empty($this->details)) {
+        if ($this->details->count() > 0 && ! empty($this->details->first()->coupon)) {
             return $this->details->first()->coupon->promotion_type === Coupon::TYPE_SEPULSA;
         }
 
         return false;
+    }
+
+    /**
+     * Determine if the payment is for Pulsa.
+     *
+     * @author Budi <budi@dominopos.com>
+     *
+     * @return [type] [description]
+     */
+    public function forPulsa()
+    {
+        return $this->details->count() > 0 && ! empty($this->details->first()->pulsa);
     }
 
     /**
@@ -220,7 +232,7 @@ class PaymentTransaction extends Eloquent
      */
     public function forHotDeals()
     {
-        if (! empty($this->details)) {
+        if ($this->details->count() > 0 && ! empty($this->details->first()->coupon)) {
             return $this->details->first()->coupon->promotion_type === Coupon::TYPE_HOT_DEALS;
         }
 
