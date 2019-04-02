@@ -62,13 +62,11 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
             $validator = Validator::make(
                 array(
                     'pulsa_id' => $pulsa_id,
-                    // 'with_reserved' => $with_reserved,
                     'quantity' => $quantity,
                 ),
                 array(
                     'pulsa_id' => 'required|orbit.exists.pulsa',
-                    // 'with_reserved' => 'required',
-                    'quantity' => 'required',
+                    'quantity' => 'required|orbit.allowed.quantity',
                 ),
                 array(
                     'orbit.allowed.quantity' => 'REQUESTED_QUANTITY_NOT_AVAILABLE',
@@ -81,7 +79,6 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // $pulsa = Pulsa::findOrFail($pulsa_id);
             $pulsa = new \stdClass;
             $pulsa->available = true;
             $pulsa->limit_time = Carbon::now()->addMinutes($limitTimeCfg);
@@ -163,7 +160,11 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
 
             $pulsaId = OrbitInput::post('pulsa_id');
 
-            // $pulsa = \App::make('orbit.instance.pulsa');
+            $pulsa = Pulsa::where('pulsa_item_id', $pulsaId)->first();
+
+            if (! empty($pulsa) && $pulsa->quantity === 0) {
+                return true;
+            }
 
             // Globally issued coupon count regardless of the Customer.
             $issuedPulsa = PaymentTransaction::select(
@@ -177,18 +178,10 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
                 ->whereIn('payment_transactions.status', [
                     PaymentTransaction::STATUS_SUCCESS,
                     PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
-                    // PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED,
                 ])
-                ->get();
+                ->count();
 
-            $issuedPulsaForUser = false;
-            foreach($issuedPulsa as $issuedPulsaItem) {
-                if ($issuedPulsaItem->user_id === $user->user_id) {
-                    $issuedPulsaForUser = true;
-                }
-            }
-
-            return $requestedQuantity <= $issuedPulsa && ! $issuedPulsaForUser;
+            return (int) $pulsa->quantity > $issuedPulsa;
         });
     }
 }
