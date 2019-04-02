@@ -167,7 +167,7 @@
           <tr>
             <td colspan="2" class="invoice-body" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:80px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-pending-payment.body.greeting', ['customerName' => $customerName]) }}
+                {{ trans('email-pending-payment.body.greeting_pulsa', ['customerName' => $customerName]) }}
               </p>
               <br>
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
@@ -179,8 +179,8 @@
                 <br>
                 <strong>{{{ trans('email-pending-payment.body.transaction_labels.email') }}}</strong> {{ $customerEmail }}
                 <br>
-                <strong>{{{ trans('email-pending-payment.body.transaction_labels.pulsa_phone_number') }}}</strong> {{ $pulsaPhoneNumber }}
                 <br>
+                <strong>{{{ trans('email-pending-payment.body.transaction_labels.pulsa_phone_number') }}}</strong> {{ $pulsaPhoneNumber }}
                 <br>
                 <strong>{{{ trans('email-pending-payment.body.transaction_labels.pulsa_name') }}}</strong> {{ $transaction['items'][0]['name'] }}
                 <br>
@@ -193,7 +193,7 @@
               </p>
               <br>
 
-              @include('emails.pending-payment.payment-info', compact('paymentInfo', 'paymentExpiration', 'myWalletUrl', 'cancelUrl'))
+              @include('emails.pending-payment.payment-info-pulsa', compact('paymentInfo', 'paymentExpiration', 'myWalletUrl', 'cancelUrl'))
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
