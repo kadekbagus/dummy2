@@ -8141,7 +8141,11 @@ return array(
                     'username' => 'gotomalls',
                     'key' => '123456'
                 ]
-            ]
+            ],
+
+            // Interval/cooldown before customer can purchase
+            // same pulsa code with same phone number. In minutes.
+            'interval_before_next_purchase' => 60,
         ],
     ],
 
