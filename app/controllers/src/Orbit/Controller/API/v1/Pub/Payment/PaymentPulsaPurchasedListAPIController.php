@@ -80,6 +80,7 @@ class PaymentPulsaPurchasedListAPIController extends PubControllerAPI
                                                 'payment_transactions.status',
                                                 'payment_transactions.phone',
                                                 'payment_transactions.payment_method',
+                                                'payment_transactions.extra_data',
                                                 'payment_transactions.created_at',
                                                 'payment_transaction_details.object_name',
                                                 'payment_transaction_details.price',
