@@ -2,9 +2,10 @@
 
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Orbit\Notifications\Payment\BeforeExpiredPaymentNotification;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
+use Orbit\Notifications\Payment\BeforeExpiredPaymentNotification;
+use Orbit\Notifications\Pulsa\ReminderPaymentNotification as PulsaReminderPaymentNotification;
 
 /**
  * @author Budi <budi@dominopos.com>
@@ -61,7 +62,7 @@ class SendEmailBeforePaymentExpiredCommand extends Command {
      */
     public function processTransactions($transactionIds = [], $withinDays)
     {
-        $payments = PaymentTransaction::with(['details', 'user', 'midtrans'])
+        $payments = PaymentTransaction::with(['details.pulsa', 'user', 'midtrans'])
                                         ->where('status', PaymentTransaction::STATUS_PENDING)
                                         // Limit the date so command will not process old pending transactions...
                                         ->where(DB::raw("DATE(created_at)"), '>=', Carbon::now()->subDays($withinDays)->format('Y-m-d'))
@@ -80,7 +81,13 @@ class SendEmailBeforePaymentExpiredCommand extends Command {
             foreach($payments as $payment) {
                 try {
                     $number++;
-                    $payment->user->notify(new BeforeExpiredPaymentNotification($payment));
+                    if ($payment->forPulsa()) {
+                        $payment->user->notify(new PulsaReminderPaymentNotification($payment));
+                    }
+                    else {
+                        $payment->user->notify(new BeforeExpiredPaymentNotification($payment));
+                    }
+
                     $this->info("#{$number} Sending reminder for Transaction: {$payment->payment_transaction_id}... OK");
                 } catch (Exception $e) {
                     $this->error("#{$number} Sending reminder for Transaction: {$payment->payment_transaction_id}... FAIL");

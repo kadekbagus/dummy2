@@ -120,18 +120,18 @@ class PaymentPulsaPurchasedListAPIController extends PubControllerAPI
             $listpulsa = $pulsa->get();
             $count = RecordCounter::create($_pulsa)->count();
 
-            // if (empty($skip)) {
-            //     $activityNotes = sprintf('Page viewed: Landing Page Coupon Wallet List Page');
-            //     $activity->setUser($user)
-            //         ->setActivityName('view_landing_page_coupon_wallet_list')
-            //         ->setActivityNameLong('View GoToMalls Coupon Wallet List')
-            //         ->setObject(NULL)
-            //         ->setLocation($mall)
-            //         ->setModuleName('Coupon')
-            //         ->setNotes($activityNotes)
-            //         ->responseOK()
-            //         ->save();
-            // }
+            if (empty($skip)) {
+                $activityNotes = sprintf('Page viewed: Landing Page Pulsa Wallet List Page');
+                $activity->setUser($user)
+                    ->setActivityName('view_landing_page_pulsa_wallet_list')
+                    ->setActivityNameLong('View GoToMalls Pulsa Wallet List')
+                    ->setObject(NULL)
+                    ->setLocation($mall)
+                    ->setModuleName('Pulsa')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
