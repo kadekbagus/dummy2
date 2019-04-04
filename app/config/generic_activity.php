@@ -1,4 +1,7 @@
 <?php
+//TODO: activity keeps growing, maybe it is
+//better to move it into dedicated table in database and have functionality to
+//add new type of activity in portal
 return array(
     'parameter_name' => 'act',
     'activity_list' => array(
@@ -2119,6 +2122,89 @@ return array(
             'module_name' => 'Partner',
             'type' => 'click',
             'object_type' => 'Partner',
+            'parameter_name' => 'object_id'
+        ),
+
+        //--------------begin pulsa transaction detail activity--------------
+        // Go to my wallet from pulsa transaction detail.
+        '231' => array(
+            'name' => 'click_go_to_my_wallet_from_pulsa_transaction_detail',
+            'name_long' => 'Click Go to My Wallet from Pulsa Transaction Detail',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id'
+        ),
+        // Back to purchase list from pulsa transaction detail.
+        '232' => array(
+            'name' => 'click_back_to_purchase_list_from_pulsa_transaction_detail',
+            'name_long' => 'Click Back to Purchase List from Pulsa Transaction Detail',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id'
+        ),
+        // Back to coupon detail from transaction detail.
+        '233' => array(
+            'name' => 'click_back_to_coupon_detail_from_pulsa_transaction_detail',
+            'name_long' => 'Click Back to Coupon Detail from Pulsa Transaction Detail',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id'
+        ),
+        // Go to purchase history from pulsa transaction detail.
+        '234' => array(
+            'name' => 'click_go_to_purchase_history_from_pulsa_transaction_detail',
+            'name_long' => 'Click Go to Purchase History from Pulsa Transaction Detail',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id'
+        ),
+        // View pulsa transaction detail of successful
+        '235' => array(
+            'name' => 'view_pulsa_transaction_page_payment_successful',
+            'name_long' => 'View Pulsa Transaction Page Payment Success',
+            'module_name' => 'Pulsa',
+            'type' => 'view',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id'
+        ),
+        // View pulsa transaction detail of waiting payment
+        '236' => array(
+            'name' => 'view_pulsa_transaction_page_payment_waiting',
+            'name_long' => 'View Pulsa Transaction Page Payment Waiting',
+            'module_name' => 'Pulsa',
+            'type' => 'view',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id'
+        ),
+        // View pulsa transaction detail of failed
+        '237' => array(
+            'name' => 'view_pulsa_transaction_page_payment_failed',
+            'name_long' => 'View Pulsa Transaction Page Payment Failed',
+            'module_name' => 'Pulsa',
+            'type' => 'view',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id'
+        ),
+        // View pulsa transaction detail of successful payment but failed to get pulsa
+        '238' => array(
+            'name' => 'view_pulsa_transaction_page_payment_successful_pulsa_failed',
+            'name_long' => 'View Pulsa Transaction Page Payment Success Pulsa Failed',
+            'module_name' => 'Pulsa',
+            'type' => 'view',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id'
+        ),
+        // View pulsa transaction detail of expired
+        '239' => array(
+            'name' => 'view_pulsa_transaction_page_payment_expired',
+            'name_long' => 'View Pulsa Transaction Page Payment Expired',
+            'module_name' => 'Pulsa',
+            'type' => 'view',
+            'object_type' => 'Pulsa',
             'parameter_name' => 'object_id'
         ),
     ),
