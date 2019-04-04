@@ -69,7 +69,7 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
                 array(
                     'pulsa_id' => 'required|orbit.exists.pulsa',
                     'quantity' => 'required|orbit.allowed.quantity',
-                    'phone_number' => 'required|orbit.limit.purchase',
+                    'phone_number' => 'required|min:10|orbit.limit.purchase',
                 ),
                 array(
                     'orbit.exists.pulsa' => 'Requested Pulsa does not exist.',
