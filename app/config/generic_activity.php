@@ -2207,5 +2207,23 @@ return array(
             'object_type' => 'Pulsa',
             'parameter_name' => 'object_id'
         ),
+        // pulsa payment transaction canceled
+        '240' => array(
+            'name' => 'view_pulsa_transaction_page_payment_canceled',
+            'name_long' => 'View Pulsa Transaction Page Payment Canceled',
+            'module_name' => 'Pulsa',
+            'type' => 'view',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id'
+        ),
+        // click cancel payment from transaction detail page
+        '241' => array(
+            'name' => 'click_cancel_payment_pulsa',
+            'name_long' => 'Click Cancel Payment Pulsa',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id'
+        ),
     ),
 );
