@@ -81,7 +81,7 @@ class CustomerPulsaNotAvailableNotification extends CustomerNotification impleme
             Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                $subject = 'Coupon not Available';
+                $subject = trans('email-coupon-not-available.subject_pulsa');
 
                 $mail->subject($subject);
                 $mail->from($emailConfig['email'], $emailConfig['name']);
@@ -89,11 +89,10 @@ class CustomerPulsaNotAvailableNotification extends CustomerNotification impleme
             });
 
         } catch (Exception $e) {
-            Log::info('CouponNotAvailable: email exception. File: ' . $e->getFile() . ', Lines:' . $e->getLine() . ', Message: ' . $e->getMessage());
-            Log::info('CouponNotAvailable: email data: ' . serialize($data));
+            Log::info('PulsaNotAvailable: email exception. File: ' . $e->getFile() . ', Lines:' . $e->getLine() . ', Message: ' . $e->getMessage());
+            Log::info('PulsaNotAvailable: email data: ' . serialize($data));
         }
 
         $job->delete();
     }
-
 }
