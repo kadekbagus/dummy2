@@ -84,11 +84,13 @@ class PulsaListAPIController extends PubControllerAPI
                                 DB::raw("{$prefix}telco_operators.name as operator_name"),
                                 'telco_operators.country_id',
                                 'telco_operators.identification_prefix_numbers as operator_prefixes',
-                                DB::raw($telcoLogo),
+                                DB::raw($telcoLogo)
+                                /*,
                                 DB::raw("count({$prefix}payment_transactions.payment_transaction_id) as sold_quantity")
+                                */
                             )
-                            ->join('payment_transaction_details', 'pulsa.pulsa_item_id', '=', 'payment_transaction_details.object_id')
-                            ->join('payment_transactions', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
+                            //->join('payment_transaction_details', 'pulsa.pulsa_item_id', '=', 'payment_transaction_details.object_id')
+                            //->join('payment_transactions', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                             ->join('telco_operators', 'pulsa.telco_operator_id', '=', 'telco_operators.telco_operator_id')
                             ->join('countries', 'telco_operators.country_id', '=', 'countries.country_id')
                             ->leftJoin('media', function($join) use ($prefix) {
@@ -98,10 +100,10 @@ class PulsaListAPIController extends PubControllerAPI
                             ->where('countries.name', $country)
                             ->where('telco_operators.status', 'active')
                             ->where('pulsa.status', 'active')
-                            ->whereIn('payment_transactions.status', [
-                                PaymentTransaction::STATUS_SUCCESS,
-                                PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
-                            ])
+                            // ->whereIn('payment_transactions.status', [
+                            //     PaymentTransaction::STATUS_SUCCESS,
+                            //     PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
+                            // ])
                             ->orderBy('telco_operators.telco_operator_id')
                             ->orderBy('pulsa.value')
                             ->groupBy('pulsa_item_id');
