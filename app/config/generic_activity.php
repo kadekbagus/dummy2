@@ -2135,35 +2135,26 @@ return array(
             'object_type' => 'Pulsa',
             'parameter_name' => 'object_id'
         ),
-        // Back to purchase list from pulsa transaction detail.
+        // Back to purchase history from pulsa transaction detail.
         '232' => array(
-            'name' => 'click_back_to_purchase_list_from_pulsa_transaction_detail',
-            'name_long' => 'Click Back to Purchase List from Pulsa Transaction Detail',
+            'name' => 'click_back_to_purchase_history_from_pulsa_transaction_detail',
+            'name_long' => 'Click Back to Purchase History from Pulsa Transaction Detail',
             'module_name' => 'Pulsa',
             'type' => 'click',
             'object_type' => 'Pulsa',
             'parameter_name' => 'object_id'
         ),
-        // Back to coupon detail from transaction detail.
+        // Back to buy pulsa from pulsa transaction detail.
         '233' => array(
-            'name' => 'click_back_to_coupon_detail_from_pulsa_transaction_detail',
-            'name_long' => 'Click Back to Coupon Detail from Pulsa Transaction Detail',
-            'module_name' => 'Pulsa',
-            'type' => 'click',
-            'object_type' => 'Pulsa',
-            'parameter_name' => 'object_id'
-        ),
-        // Go to purchase history from pulsa transaction detail.
-        '234' => array(
-            'name' => 'click_go_to_purchase_history_from_pulsa_transaction_detail',
-            'name_long' => 'Click Go to Purchase History from Pulsa Transaction Detail',
+            'name' => 'click_back_to_buy_pulsa_from_pulsa_transaction_detail',
+            'name_long' => 'Click Back to Buy Pulsa from Pulsa Transaction Detail',
             'module_name' => 'Pulsa',
             'type' => 'click',
             'object_type' => 'Pulsa',
             'parameter_name' => 'object_id'
         ),
         // View pulsa transaction detail of successful
-        '235' => array(
+        '234' => array(
             'name' => 'view_pulsa_transaction_page_payment_successful',
             'name_long' => 'View Pulsa Transaction Page Payment Success',
             'module_name' => 'Pulsa',
@@ -2172,7 +2163,7 @@ return array(
             'parameter_name' => 'object_id'
         ),
         // View pulsa transaction detail of waiting payment
-        '236' => array(
+        '235' => array(
             'name' => 'view_pulsa_transaction_page_payment_waiting',
             'name_long' => 'View Pulsa Transaction Page Payment Waiting',
             'module_name' => 'Pulsa',
@@ -2181,7 +2172,7 @@ return array(
             'parameter_name' => 'object_id'
         ),
         // View pulsa transaction detail of failed
-        '237' => array(
+        '236' => array(
             'name' => 'view_pulsa_transaction_page_payment_failed',
             'name_long' => 'View Pulsa Transaction Page Payment Failed',
             'module_name' => 'Pulsa',
@@ -2190,7 +2181,7 @@ return array(
             'parameter_name' => 'object_id'
         ),
         // View pulsa transaction detail of successful payment but failed to get pulsa
-        '238' => array(
+        '237' => array(
             'name' => 'view_pulsa_transaction_page_payment_successful_pulsa_failed',
             'name_long' => 'View Pulsa Transaction Page Payment Success Pulsa Failed',
             'module_name' => 'Pulsa',
@@ -2199,7 +2190,7 @@ return array(
             'parameter_name' => 'object_id'
         ),
         // View pulsa transaction detail of expired
-        '239' => array(
+        '238' => array(
             'name' => 'view_pulsa_transaction_page_payment_expired',
             'name_long' => 'View Pulsa Transaction Page Payment Expired',
             'module_name' => 'Pulsa',
@@ -2208,7 +2199,7 @@ return array(
             'parameter_name' => 'object_id'
         ),
         // pulsa payment transaction canceled
-        '240' => array(
+        '239' => array(
             'name' => 'view_pulsa_transaction_page_payment_canceled',
             'name_long' => 'View Pulsa Transaction Page Payment Canceled',
             'module_name' => 'Pulsa',
@@ -2217,7 +2208,7 @@ return array(
             'parameter_name' => 'object_id'
         ),
         // click cancel payment from transaction detail page
-        '241' => array(
+        '240' => array(
             'name' => 'click_cancel_payment_pulsa',
             'name_long' => 'Click Cancel Payment Pulsa',
             'module_name' => 'Pulsa',
