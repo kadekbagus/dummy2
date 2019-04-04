@@ -1985,5 +1985,141 @@ return array(
             'object_type' => 'Pulsa',
             'parameter_name' => 'object_id'
         ),
+
+        // click partner photo
+        '216' => array(
+            'name' => 'click_partner_photo',
+            'name_long' => 'Click Partner Photo',
+            'module_name' => 'Partner',
+            'type' => 'click',
+            'object_type' => 'Partner',
+            'parameter_name' => 'object_id'
+        ),
+        // click partner program
+        '217' => array(
+            'name' => 'click_partner_program',
+            'name_long' => 'Click Partner Program',
+            'module_name' => 'Partner',
+            'type' => 'click',
+            'object_type' => 'Partner',
+            'parameter_name' => 'object_id'
+        ),
+        // click partner video thumbnail
+        '218' => array(
+            'name' => 'click_partner_video_thumbnail',
+            'name_long' => 'Click Partner Video Thumbnail',
+            'module_name' => 'Partner',
+            'type' => 'click',
+            'object_type' => 'Partner',
+            'parameter_name' => 'object_id'
+        ),
+        // click partner play video
+        '219' => array(
+            'name' => 'click_partner_play_video',
+            'name_long' => 'Click Partner Play Video',
+            'module_name' => 'Partner',
+            'type' => 'click',
+            'object_type' => 'Partner',
+            'parameter_name' => 'object_id'
+        ),
+        // click partner promotion
+        '220' => array(
+            'name' => 'click_partner_promotion',
+            'name_long' => 'Click Partner Promotion',
+            'module_name' => 'Partner',
+            'type' => 'click',
+            'object_type' => 'Partner',
+            'parameter_name' => 'object_id'
+        ),
+        // click partner promotion see all
+        '221' => array(
+            'name' => 'click_partner_promotion_see_all',
+            'name_long' => 'Click Partner Promotion See All',
+            'module_name' => 'Partner',
+            'type' => 'click',
+            'object_type' => 'Partner',
+            'parameter_name' => 'object_id'
+        ),
+        // click partner event
+        '222' => array(
+            'name' => 'click_partner_event',
+            'name_long' => 'Click Partner Event',
+            'module_name' => 'Partner',
+            'type' => 'click',
+            'object_type' => 'Partner',
+            'parameter_name' => 'object_id'
+        ),
+        // click partner event see all
+        '223' => array(
+            'name' => 'click_partner_event_see_all',
+            'name_long' => 'Click Partner Event See All',
+            'module_name' => 'Partner',
+            'type' => 'click',
+            'object_type' => 'Partner',
+            'parameter_name' => 'object_id'
+        ),
+        // click partner coupon
+        '224' => array(
+            'name' => 'click_partner_coupon',
+            'name_long' => 'Click Partner Coupon',
+            'module_name' => 'Partner',
+            'type' => 'click',
+            'object_type' => 'Partner',
+            'parameter_name' => 'object_id'
+        ),
+        // click partner coupon see all
+        '225' => array(
+            'name' => 'click_partner_coupon_see_all',
+            'name_long' => 'Click Partner Coupon See All',
+            'module_name' => 'Partner',
+            'type' => 'click',
+            'object_type' => 'Partner',
+            'parameter_name' => 'object_id'
+        ),
+        // click partner article
+        '226' => array(
+            'name' => 'click_partner_article',
+            'name_long' => 'Click Partner Article',
+            'module_name' => 'Partner',
+            'type' => 'click',
+            'object_type' => 'Partner',
+            'parameter_name' => 'object_id'
+        ),
+        // click partner article see all
+        '227' => array(
+            'name' => 'click_partner_article_see_all',
+            'name_long' => 'Click Partner Article See All',
+            'module_name' => 'Partner',
+            'type' => 'click',
+            'object_type' => 'Partner',
+            'parameter_name' => 'object_id'
+        ),
+        // click partner social media button
+        '227' => array(
+            'name' => 'click_partner_social_media_btn',
+            'name_long' => 'Click Partner Social Media Button',
+            'module_name' => 'Partner',
+            'type' => 'click',
+            'object_type' => 'Partner',
+            'parameter_name' => 'object_id'
+        ),
+        // view partner detail
+        '229' => array(
+            'name' => 'view_partner_detail',
+            'name_long' => 'View Partner Detail',
+            'module_name' => 'Partner',
+            'type' => 'view',
+            'object_type' => 'Partner',
+            'parameter_name' => 'object_id'
+        ),
+        // click partner banner
+        '230' => array(
+            'name' => 'click_partner_banner',
+            'name_long' => 'Click Partner Banner',
+            'module_name' => 'Partner',
+            'type' => 'click',
+            'object_type' => 'Partner',
+            'parameter_name' => 'object_id'
+        ),
     ),
 );
