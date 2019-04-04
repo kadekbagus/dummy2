@@ -98,27 +98,13 @@ class GetPulsaQueue
                         ->save();
             }
             else if ($pulsaPurchase->isNotAvailable()) {
-                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
-                $payment->save();
-
-                DB::connection()->commit();
-
-                Log::info("Pulsa: Pulsa {$pulsa->pulsa_code} is NOT AVAILABLE.");
-
-                $activity->setActivityNameLong('Transaction is Successful - Failed Getting Pulsa')
-                        ->setModuleName('Midtrans Transaction')
-                        ->setObject($payment)
-                        ->setObjectDisplayName($pulsaName)
-                        ->setNotes($phoneNumber)
-                        ->setLocation($mall)
-                        ->responseOK()
-                        ->save();
+                throw new Exception("Pulsa NOT AVAILABLE FROM MCASH.");
             }
             else {
-                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
                 Log::info("Pulsa: Pulsa purchase is FAILED for payment {$paymentId}. Unknown status from MCash.");
                 Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
                 Log::info("Purchase response: " . serialize($pulsaPurchase));
+                throw new Exception("Pulsa purchase is FAILED, unknown status from MCASH.");
             }
 
             $payment->save();
