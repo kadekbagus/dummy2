@@ -172,7 +172,7 @@
               <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-pending-payment.body.payment-info-line-1', compact('paymentExpiration')) }}
+                {{ trans('email-before-transaction-expired.body.payment-info-line-1-pulsa', compact('paymentExpiration')) }}
               </p>
               <br>
 
