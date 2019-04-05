@@ -69,12 +69,13 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
                 array(
                     'pulsa_id' => 'required|orbit.exists.pulsa',
                     'quantity' => 'required|orbit.allowed.quantity',
-                    'phone_number' => 'required|min:10|orbit.limit.purchase',
+                    'phone_number' => 'required|min:10|orbit.limit.pending|orbit.limit.purchase',
                 ),
                 array(
                     'orbit.exists.pulsa' => 'Requested Pulsa does not exist.',
                     'orbit.allowed.quantity' => 'REQUESTED_QUANTITY_NOT_AVAILABLE',
                     'orbit.limit.purchase' => 'PURCHASE_TIME_LIMITED',
+                    'orbit.limit.pending' => ''
                 )
             );
 
@@ -146,14 +147,14 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
 
         // Check if pulsa is exists.
         Validator::extend('orbit.exists.pulsa', function ($attribute, $value, $parameters) {
-            $prefix = DB::getTablePrefix();
             $pulsa = Pulsa::where('pulsa_item_id', $value)->where('status', 'active')->first();
 
             if (empty($pulsa)) {
                 return false;
             }
 
-            \App::instance('orbit.instance.pulsa', $pulsa);
+            // Why it doesn't
+            // \App::instance('orbit.exists.pulsa', $pulsa);
 
             return true;
         });
@@ -161,11 +162,7 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
         /**
          * Check if pulsa still available.
          */
-        Validator::extend('orbit.allowed.quantity', function ($attribute, $requestedQuantity, $parameters) use ($user) {
-
-            $pulsaId = OrbitInput::post('pulsa_id');
-
-            $pulsa = Pulsa::where('pulsa_item_id', $pulsaId)->first();
+        Validator::extend('orbit.allowed.quantity', function ($attribute, $requestedQuantity, $parameters) {
 
             if (! empty($pulsa) && $pulsa->quantity === 0) {
                 return true;
@@ -178,18 +175,44 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
                     'payment_transactions.user_id'
                 )
                 ->join('payment_transaction_details', 'payment_transactions.payment_transaction_id', '=', 'payment_transaction_details.payment_transaction_id')
+                ->join('pulsa', 'payment_transaction_details.object_id', '=', 'pulsa.pulsa_item_id')
                 ->where('payment_transaction_details.object_type', 'pulsa')
                 ->where('payment_transaction_details.object_id', $pulsaId)
                 ->whereIn('payment_transactions.status', [
                     PaymentTransaction::STATUS_SUCCESS,
                     PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
+                    PaymentTransaction::STATUS_PENDING,
                 ])
                 ->count();
 
             return (int) $pulsa->quantity > $issuedPulsa;
         });
 
-        Validator::extend('orbit.limit.purchase', function($attribute, $phoneNumber, $parameters) use ($user) {
+        Validator::extend('orbit.limit.pending', function($attribute, $phoneNumber, $parameters) {
+
+            $pulsaId = OrbitInput::post('pulsa_id');
+            $pulsa = Pulsa::where('pulsa_item_id', $pulsaId)->first();
+
+            if (empty($pulsa)) {
+                return false;
+            }
+
+            $pendingPurchase = PaymentTransaction::select('payment_transactions.payment_transaction_id')
+                                ->join('payment_transaction_details', 'payment_transactions.payment_transaction_id', '=', 'payment_transaction_details.payment_transaction_id')
+                                ->join('pulsa', 'payment_transaction_details.object_id', '=', 'pulsa.pulsa_item_id')
+                                ->where('payment_transaction_details.object_type', 'pulsa')
+                                ->where('pulsa.pulsa_code', $pulsa->pulsa_code)
+                                ->where('payment_transactions.extra_data', $phoneNumber)
+                                ->whereIn('payment_transactions.status', [
+                                    PaymentTransaction::STATUS_PENDING,
+                                ])
+                                ->count();
+
+            return $pendingPurchase === 0;
+        });
+
+        Validator::extend('orbit.limit.purchase', function($attribute, $phoneNumber, $parameters) {
+
             $pulsaId = OrbitInput::post('pulsa_id');
             $pulsa = Pulsa::where('pulsa_item_id', $pulsaId)->first();
             if (empty($pulsa)) {
