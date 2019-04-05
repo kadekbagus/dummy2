@@ -164,6 +164,9 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
          */
         Validator::extend('orbit.allowed.quantity', function ($attribute, $requestedQuantity, $parameters) {
 
+            $pulsaId = OrbitInput::post('pulsa_id');
+            $pulsa = Pulsa::where('pulsa_item_id', $pulsaId)->first();
+
             if (! empty($pulsa) && $pulsa->quantity === 0) {
                 return true;
             }
