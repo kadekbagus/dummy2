@@ -12,11 +12,18 @@ return [
                         <br>
                         Your coupon(s) is still waiting for you. The payment limit will expire <span style="color:#f43d3c">today</span>!',
 
+        'greeting_pulsa' => 'Dear, :customerName
+                        <br>
+                        Your Pulsa is still waiting for you. The payment limit will expire <span style="color:#f43d3c">today</span>!',
+
         'transaction_labels' => [
             'transaction_id' => 'Transaction ID: ',
             'transaction_date' => 'Transaction Date: ',
             'coupon_name' => 'Coupon Name: ',
             'coupon_price' => 'Coupon Price: ',
+            'pulsa_phone_number' => 'Phone Number',
+            'pulsa_name' => 'Pulsa',
+            'pulsa_price' => 'Price',
             'coupon_quantity' => 'Quantity: ',
             'customer_name' => 'Customer Name: ',
             'email' => 'Email: ',

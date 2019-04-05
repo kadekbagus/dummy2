@@ -10,6 +10,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \DB;
 use Pulsa;
+use PaymentTransaction;
 use Orbit\Controller\API\v1\Pub\Partner\PartnerHelper;
 use Validator;
 use Orbit\Helper\Util\PaginationNumber;
@@ -83,8 +84,21 @@ class PulsaListAPIController extends PubControllerAPI
                                 DB::raw("{$prefix}telco_operators.name as operator_name"),
                                 'telco_operators.country_id',
                                 'telco_operators.identification_prefix_numbers as operator_prefixes',
-                                DB::raw($telcoLogo)
+                                DB::raw($telcoLogo),
+                                DB::raw("count({$prefix}payment_transactions.payment_transaction_id) as sold_quantity")
                             )
+                            ->leftJoin('payment_transaction_details', 'pulsa.pulsa_item_id', '=', 'payment_transaction_details.object_id')
+                            ->leftJoin('payment_transactions', function($join) use ($prefix) {
+                                $success = PaymentTransaction::STATUS_SUCCESS;
+                                $pending = PaymentTransaction::STATUS_PENDING;
+                                $successNoCoupon = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
+                                $join->on('payment_transaction_details.payment_transaction_id', '=', DB::raw("
+                                    {$prefix}payment_transactions.payment_transaction_id AND (
+                                        {$prefix}payment_transactions.status = '{$success}'
+                                        OR {$prefix}payment_transactions.status = '{$pending}'
+                                        OR {$prefix}payment_transactions.status = '{$successNoCoupon}')
+                                    "));
+                            })
                             ->join('telco_operators', 'pulsa.telco_operator_id', '=', 'telco_operators.telco_operator_id')
                             ->join('countries', 'telco_operators.country_id', '=', 'countries.country_id')
                             ->leftJoin('media', function($join) use ($prefix) {
@@ -94,7 +108,9 @@ class PulsaListAPIController extends PubControllerAPI
                             ->where('countries.name', $country)
                             ->where('telco_operators.status', 'active')
                             ->where('pulsa.status', 'active')
-                            ->orderBy('value');
+                            ->orderBy('telco_operators.telco_operator_id')
+                            ->orderBy('pulsa.value')
+                            ->groupBy('pulsa_item_id');
 
             // Cache the result of database calls
             OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($pulsa);

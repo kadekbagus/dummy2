@@ -55,6 +55,7 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
 
             $pulsa_id = OrbitInput::post('pulsa_id');
             $quantity = OrbitInput::post('quantity', 1);
+            $phone_number = OrbitInput::post('phone_number');
             $limitTimeCfg = Config::get('orbit.coupon_reserved_limit_time', 10);
 
             $this->registerCustomValidation();
@@ -62,16 +63,18 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
             $validator = Validator::make(
                 array(
                     'pulsa_id' => $pulsa_id,
-                    // 'with_reserved' => $with_reserved,
                     'quantity' => $quantity,
+                    'phone_number' => $phone_number,
                 ),
                 array(
                     'pulsa_id' => 'required|orbit.exists.pulsa',
-                    // 'with_reserved' => 'required',
-                    'quantity' => 'required',
+                    'quantity' => 'required|orbit.allowed.quantity',
+                    'phone_number' => 'required|min:10|orbit.limit.purchase',
                 ),
                 array(
+                    'orbit.exists.pulsa' => 'Requested Pulsa does not exist.',
                     'orbit.allowed.quantity' => 'REQUESTED_QUANTITY_NOT_AVAILABLE',
+                    'orbit.limit.purchase' => 'PURCHASE_TIME_LIMITED',
                 )
             );
 
@@ -81,7 +84,6 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // $pulsa = Pulsa::findOrFail($pulsa_id);
             $pulsa = new \stdClass;
             $pulsa->available = true;
             $pulsa->limit_time = Carbon::now()->addMinutes($limitTimeCfg);
@@ -163,7 +165,11 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
 
             $pulsaId = OrbitInput::post('pulsa_id');
 
-            // $pulsa = \App::make('orbit.instance.pulsa');
+            $pulsa = Pulsa::where('pulsa_item_id', $pulsaId)->first();
+
+            if (! empty($pulsa) && $pulsa->quantity === 0) {
+                return true;
+            }
 
             // Globally issued coupon count regardless of the Customer.
             $issuedPulsa = PaymentTransaction::select(
@@ -177,18 +183,36 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
                 ->whereIn('payment_transactions.status', [
                     PaymentTransaction::STATUS_SUCCESS,
                     PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
-                    // PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED,
                 ])
-                ->get();
+                ->count();
 
-            $issuedPulsaForUser = false;
-            foreach($issuedPulsa as $issuedPulsaItem) {
-                if ($issuedPulsaItem->user_id === $user->user_id) {
-                    $issuedPulsaForUser = true;
-                }
+            return (int) $pulsa->quantity > $issuedPulsa;
+        });
+
+        Validator::extend('orbit.limit.purchase', function($attribute, $phoneNumber, $parameters) use ($user) {
+            $pulsaId = OrbitInput::post('pulsa_id');
+            $pulsa = Pulsa::where('pulsa_item_id', $pulsaId)->first();
+            if (empty($pulsa)) {
+                return false;
             }
 
-            return $requestedQuantity <= $issuedPulsa && ! $issuedPulsaForUser;
+            $interval = Config::get('orbit.partners_api.mcash.interval_before_next_purchase', 60);
+            $lastTime = Carbon::now('UTC')->subMinutes($interval)->format('Y-m-d H:i:s');
+
+            $samePurchase = PaymentTransaction::select('payment_transactions.payment_transaction_id')
+                            ->join('payment_transaction_details', 'payment_transactions.payment_transaction_id', '=', 'payment_transaction_details.payment_transaction_id')
+                            ->join('pulsa', 'payment_transaction_details.object_id', '=', 'pulsa.pulsa_item_id')
+                            ->where('payment_transaction_details.object_type', 'pulsa')
+                            ->where('pulsa.pulsa_code', $pulsa->pulsa_code)
+                            ->where('payment_transactions.extra_data', $phoneNumber)
+                            ->where('payment_transactions.updated_at', '>', $lastTime)
+                            ->whereIn('payment_transactions.status', [
+                                PaymentTransaction::STATUS_SUCCESS,
+                                PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
+                            ])
+                            ->count();
+
+            return $samePurchase === 0;
         });
     }
 }
