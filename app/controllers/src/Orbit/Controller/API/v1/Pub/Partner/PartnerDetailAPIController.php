@@ -88,7 +88,7 @@ class PartnerDetailAPIController extends PubControllerAPI
 
             $logo = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as logo_url";
             $image = "CONCAT({$this->quote($urlPrefix)}, image_media.path) as image_url";
-            $photos = "CONCAT({$this->quote($urlPrefix)}, image_media.path) as photo_url";
+            $photos = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as photo_url";
             if ($usingCdn) {
                 $logo = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as logo_url";
 

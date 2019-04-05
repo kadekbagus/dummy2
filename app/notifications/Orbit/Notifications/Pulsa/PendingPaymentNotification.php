@@ -52,6 +52,7 @@ class PendingPaymentNotification extends Base
     {
         return array_merge(parent::getEmailData(), [
             'pulsaPhoneNumber' => $this->payment->extra_data,
+            'cancelUrl' => $this->getCancelUrl() . "&type=pulsa",
         ]);
     }
 

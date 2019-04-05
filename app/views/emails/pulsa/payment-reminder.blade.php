@@ -4,7 +4,7 @@
     <meta charset="utf-8"> <!-- utf-8 works for most cases -->
     <meta name="viewport" content="width=device-width"> <!-- Forcing initial-scale shouldn't be necessary -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Use the latest (edge) version of IE rendering engine -->
-    <title>Waiting for Payment | Gotomalls.com</title>
+    <title>Complete Your Payment | Gotomalls.com</title>
     <!-- Web Font / @font-face : BEGIN -->
     <!-- NOTE: If web fonts are not required, lines 10 - 27 can be safely removed. -->
     <!-- All other clients get the webfont reference; some will render the font and others will silently fail to the fallbacks. More on that here: http://stylecampaign.com/blog/2015/02/webfont-support-in-email/ -->
@@ -158,7 +158,7 @@
               <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/themes/default/images/logo-en.png?t=1523326836" alt="Logo" class="logo" style="-ms-interpolation-mode:bicubic;width:80%;">
             </th>
             <th class="text-right" style="font-family:'Roboto', 'Arial', sans-serif;text-align:right;padding-bottom:30px;">
-              <span class="text-red invoice-title" style="color:#f43d3c;font-size:28px;font-weight:bold;">{{{ trans('email-pending-payment.header.invoice') }}}</span>
+              <span class="text-red invoice-title" style="color:#f43d3c;font-size:28px;font-weight:bold;">{{{ trans('email-before-transaction-expired.header.invoice') }}}</span>
             </th>
           </tr>
         </thead>
@@ -167,37 +167,43 @@
           <tr>
             <td colspan="2" class="invoice-body" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:80px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-pending-payment.body.greeting_pulsa', ['customerName' => $customerName]) }}
+                {{ trans('email-before-transaction-expired.body.greeting_pulsa', ['customerName' => $customerName]) }}
               </p>
               <br>
+
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                <strong>{{{ trans('email-pending-payment.body.transaction_labels.transaction_id') }}}</strong> {{ $transaction['id'] }}
+                {{ trans('email-pending-payment.body.payment-info-line-1', compact('paymentExpiration')) }}
+              </p>
+              <br>
+
+              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
+                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.transaction_id') }}}</strong> {{ $transaction['id'] }}
                 <br>
-                <strong>{{{ trans('email-pending-payment.body.transaction_labels.transaction_date') }}}</strong> {{ $transaction['date'] }}
+                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.transaction_date') }}}</strong> {{ $transaction['date'] }}
                 <br>
-                <strong>{{{ trans('email-pending-payment.body.transaction_labels.customer_name') }}}</strong> {{ $customerName }}
+                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.customer_name') }}}</strong> {{ $customerName }}
                 <br>
-                <strong>{{{ trans('email-pending-payment.body.transaction_labels.email') }}}</strong> {{ $customerEmail }}
+                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.email') }}}</strong> {{ $customerEmail }}
                 <br>
                 <br>
-                <strong>{{{ trans('email-pending-payment.body.transaction_labels.pulsa_phone_number') }}}</strong> {{ $pulsaPhoneNumber }}
+                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.pulsa_phone_number') }}}</strong> {{ $pulsaPhoneNumber }}
                 <br>
-                <strong>{{{ trans('email-pending-payment.body.transaction_labels.pulsa_name') }}}</strong> {{ $transaction['items'][0]['name'] }}
+                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.pulsa_name') }}}</strong> {{ $transaction['items'][0]['name'] }}
                 <br>
-                <strong>{{{ trans('email-pending-payment.body.transaction_labels.pulsa_price') }}}</strong> {{ $transaction['items'][0]['price'] }}
+                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.pulsa_price') }}}</strong> {{ $transaction['items'][0]['price'] }}
                 <br>
-                <strong>{{{ trans('email-pending-payment.body.transaction_labels.coupon_quantity') }}}</strong> {{ $transaction['items'][0]['quantity'] }}
+                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.coupon_quantity') }}}</strong> {{ $transaction['items'][0]['quantity'] }}
                 <br>
-                <strong>{{{ trans('email-pending-payment.body.transaction_labels.total_amount') }}}</strong> {{ $transaction['total'] }}
+                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.total_amount') }}}</strong> {{ $transaction['total'] }}
                 <br>
               </p>
               <br>
 
-              @include('emails.pending-payment.payment-info-pulsa', compact('paymentInfo', 'paymentExpiration', 'myWalletUrl', 'cancelUrl'))
+              @include('emails.pending-payment.payment-info', compact('paymentInfo', 'paymentExpiration', 'myPurchasesUrl', 'cancelUrl', 'hideExpiration'))
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{ trans('email-pending-payment.body.payment-info-line-3') }}
+                {{ trans('email-before-transaction-expired.body.payment-info-line-3') }}
               </p>
             </td>
           </tr>
