@@ -14,7 +14,7 @@ return [
 
         'greeting_pulsa' => 'Dear, :customerName
                         <br>
-                        Thank you for purchasing Pulsa in Gotomalls.com. Below are the instructions to complete your payment.',
+                        Thank you for purchasing Pulsa in Gotomalls.com.',
 
         'transaction_labels' => [
             'transaction_id' => 'Transaction ID: ',
