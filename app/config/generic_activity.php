@@ -2216,5 +2216,14 @@ return array(
             'object_type' => 'Pulsa',
             'parameter_name' => 'object_id'
         ),
+        // click nominal pulsa
+        '241' => array(
+            'name' => 'click_nominal_pulsa',
+            'name_long' => 'Click Nominal Pulsa',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id'
+        ),
     ),
 );
