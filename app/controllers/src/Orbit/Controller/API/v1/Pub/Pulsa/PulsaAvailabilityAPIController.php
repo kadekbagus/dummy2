@@ -75,7 +75,7 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
                     'orbit.exists.pulsa' => 'Requested Pulsa does not exist.',
                     'orbit.allowed.quantity' => 'REQUESTED_QUANTITY_NOT_AVAILABLE',
                     'orbit.limit.purchase' => 'PURCHASE_TIME_LIMITED',
-                    'orbit.limit.pending' => ''
+                    'orbit.limit.pending' => 'FINISH_PENDING_FIRST',
                 )
             );
 
@@ -184,7 +184,6 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
                 ->whereIn('payment_transactions.status', [
                     PaymentTransaction::STATUS_SUCCESS,
                     PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
-                    PaymentTransaction::STATUS_PENDING,
                 ])
                 ->count();
 
