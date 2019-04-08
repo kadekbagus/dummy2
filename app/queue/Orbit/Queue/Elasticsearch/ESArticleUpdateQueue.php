@@ -68,6 +68,7 @@ class ESArticleUpdateQueue
                             ->with('mediaContent')
                             ->with('video')
                             ->with('cities')
+                            ->with('objectPartner')
                             ->first();
 
         if (! is_object($article)) {
@@ -183,6 +184,17 @@ class ESArticleUpdateQueue
                 $linkToMedias[] = $linkToMedia;
             }
 
+            // Partners
+            $linkToPartners = array();
+            foreach ($article->object_partner as $partner) {
+                $linkToPartner = array(
+                    "partner_id" => $partner->partner_id,
+                    "name" => $partner->partner_name,
+                );
+
+                $linkToPartners[] = $linkToPartner;
+            }
+
             $body = [
                 'article_id' => $article->article_id,
                 'title' => $article->title,
@@ -201,6 +213,7 @@ class ESArticleUpdateQueue
                 'link_to_malls' => $linkToMalls,
                 'link_to_brands' => $linkToMerchants,
                 'link_to_categories' => $linkToCategories,
+                'link_to_partners' => $linkToPartners,
                 'media' => $linkToMedias
             ];
 

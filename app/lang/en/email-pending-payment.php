@@ -12,11 +12,18 @@ return [
                         <br>
                         Thank you for purchasing Coupon in Gotomalls.com. Below are the instructions to complete your payment.',
 
+        'greeting_pulsa' => 'Dear, :customerName
+                        <br>
+                        Thank you for purchasing Pulsa in Gotomalls.com.',
+
         'transaction_labels' => [
             'transaction_id' => 'Transaction ID: ',
             'transaction_date' => 'Transaction Date: ',
             'coupon_name' => 'Coupon Name: ',
             'coupon_price' => 'Coupon Price: ',
+            'pulsa_name' => 'Pulsa',
+            'pulsa_phone_number' => 'Phone Number',
+            'pulsa_price' => 'Price',
             'coupon_quantity' => 'Quantity: ',
             'customer_name' => 'Customer Name: ',
             'email' => 'Email: ',

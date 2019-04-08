@@ -441,6 +441,8 @@ class StoreDetailAPIController extends PubControllerAPI
             $store->media_other_photos = $validOtherPhotos;
 
             if (is_object($mall)) {
+                // change store's mall_name to mall's name
+                $store->mall_name = $mall->name;
                 $activityNotes = sprintf('Page viewed: View mall store detail page');
                 $activity->setUser($user)
                     ->setActivityName('view_mall_store_detail')

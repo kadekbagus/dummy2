@@ -88,21 +88,77 @@ class PartnerDetailAPIController extends PubControllerAPI
 
             $logo = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as logo_url";
             $image = "CONCAT({$this->quote($urlPrefix)}, image_media.path) as image_url";
+            $photos = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as photo_url";
             if ($usingCdn) {
                 $logo = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as logo_url";
 
                 $image = "CASE WHEN (image_media.cdn_url is null or image_media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, image_media.path) ELSE image_media.cdn_url END as image_url";
+
+                // photos and custom photos
+                $photos = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as photo_url";
             }
 
             $partner = Partner::select(
                     'partners.partner_name',
                     'partners.partner_id',
                     'deeplinks.deeplink_url',
+                    'partners.meta_title',
+                    'partners.meta_description',
+                    'partners.working_hours',
+                    'partners.custom_photo_section_title',
+                    'partners.button_color',
+                    'partners.video_id_1',
+                    'partners.video_id_2',
+                    'partners.video_id_3',
+                    'partners.video_id_4',
+                    'partners.video_id_5',
+                    'partners.video_id_6',
+                    'partners.phone',
+                    'partners.address',
+                    'partners.city',
+                    'partners.province',
+                    'partners.url',
                     DB::raw("{$logo}"),
                     DB::raw("{$image}"),
                     DB::Raw("
                         CASE WHEN ({$prefix}partner_translations.description = '' or {$prefix}partner_translations.description is null) THEN default_translation.description ELSE {$prefix}partner_translations.description END as description
-                    ")
+                    "),
+                    DB::Raw("
+                        CASE WHEN ({$prefix}partner_translations.meta_title = '' or {$prefix}partner_translations.meta_title is null) THEN default_translation.meta_title ELSE {$prefix}partner_translations.meta_title END as meta_title
+                    "),
+                    DB::Raw("
+                        CASE WHEN ({$prefix}partner_translations.meta_description = '' or {$prefix}partner_translations.meta_description is null) THEN default_translation.meta_description ELSE {$prefix}partner_translations.meta_description END as meta_description
+                    "),
+                    DB::raw("(SELECT social_media_uri FROM {$prefix}object_social_media
+                                LEFT JOIN {$prefix}social_media on {$prefix}social_media.social_media_id = {$prefix}object_social_media.social_media_id
+                              WHERE {$prefix}object_social_media.object_type = 'partner'
+                              AND {$prefix}object_social_media.object_id = {$this->quote($partnerId)}
+                              AND {$prefix}social_media.social_media_code = 'facebook'
+                     ) AS facebook_url"),
+                    DB::raw("(SELECT social_media_uri FROM {$prefix}object_social_media
+                                LEFT JOIN {$prefix}social_media on {$prefix}social_media.social_media_id = {$prefix}object_social_media.social_media_id
+                              WHERE {$prefix}object_social_media.object_type = 'partner'
+                              AND {$prefix}object_social_media.object_id = {$this->quote($partnerId)}
+                              AND {$prefix}social_media.social_media_code = 'twitter'
+                     ) AS twitter_url"),
+                    DB::raw("(SELECT social_media_uri FROM {$prefix}object_social_media
+                                LEFT JOIN {$prefix}social_media on {$prefix}social_media.social_media_id = {$prefix}object_social_media.social_media_id
+                              WHERE {$prefix}object_social_media.object_type = 'partner'
+                              AND {$prefix}object_social_media.object_id = {$this->quote($partnerId)}
+                              AND {$prefix}social_media.social_media_code = 'instagram'
+                     ) AS instagram_url"),
+                    DB::raw("(SELECT social_media_uri FROM {$prefix}object_social_media
+                                LEFT JOIN {$prefix}social_media on {$prefix}social_media.social_media_id = {$prefix}object_social_media.social_media_id
+                              WHERE {$prefix}object_social_media.object_type = 'partner'
+                              AND {$prefix}object_social_media.object_id = {$this->quote($partnerId)}
+                              AND {$prefix}social_media.social_media_code = 'youtube'
+                     ) AS youtube_url"),
+                    DB::raw("(SELECT social_media_uri FROM {$prefix}object_social_media
+                                LEFT JOIN {$prefix}social_media on {$prefix}social_media.social_media_id = {$prefix}object_social_media.social_media_id
+                              WHERE {$prefix}object_social_media.object_type = 'partner'
+                              AND {$prefix}object_social_media.object_id = {$this->quote($partnerId)}
+                              AND {$prefix}social_media.social_media_code = 'line'
+                     ) AS line_url")
                 )
                 ->leftJoin('media', function ($q) {
                     $q->on('media.object_id', '=', 'partners.partner_id');
@@ -130,6 +186,20 @@ class PartnerDetailAPIController extends PubControllerAPI
                     $q->on('deeplinks.object_type', '=', DB::raw("'partner'"));
                     $q->on('deeplinks.status', '=', DB::raw("'active'"));
                 })
+                ->with([
+                    'banners' => function($q) use ($photos) {
+                        $q->select('link_url', 'is_outbound', 'partner_id', 'partner_banner_id')
+                            ->with(['media' => function($q2) use ($photos) {
+                                $q2->select(DB::raw("{$photos}"), 'object_id', 'media_name_long');
+                            }]);
+                    },
+                    'mediaPhotos' => function($q) use ($photos) {
+                        $q->select(DB::raw("{$photos}"), 'object_id', 'media_name_long');
+                    },
+                    'mediaCustomPhotos' => function($q) use ($photos) {
+                        $q->select(DB::raw("{$photos}"), 'object_id', 'media_name_long');
+                    }
+                ])
                 ->where('partners.status', 'active')
                 ->where('partners.partner_id', $partnerId)
                 ->groupBy('partners.partner_id')
