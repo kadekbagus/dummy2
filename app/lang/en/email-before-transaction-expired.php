@@ -33,6 +33,8 @@ return [
 
         'payment-info-line-1' => 'Please perform the payment transfer to the following bank account before <br><span style="color:#f43d3c;"><strong>:paymentExpiration</strong></span> to complete your transaction.',
 
+        'payment-info-line-1' => 'Please perform the payment using your GOJEK App <br><span style="color:#f43d3c;"><strong>:paymentExpiration</strong></span> to complete your transaction.',
+
         'payment-info' => [
             'biller_code' => 'Company Code: ',
             'bill_key' => 'Payment Code: ',
@@ -44,7 +46,7 @@ return [
         ],
 
         'payment-info-line-2' => 'You can follow payment instructions below to complete the transaction.',
-        'payment-info-line-3' => 'If you canceled the purchase, then ignore this email.',
+        'payment-info-line-3' => 'If you completed/canceled the purchase, then ignore this email.',
 
         'btn_payment_instruction' => 'Payment Instructions',
         'btn_my_wallet' => 'Go to My Wallet',
