@@ -81,31 +81,39 @@ class PulsaPurchasedDetailAPIController extends PubControllerAPI
             $valid_language = $pulsaValidator->getValidLanguage();
 
             $prefix = DB::getTablePrefix();
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
 
-            $pulsa = PaymentTransaction::select(DB::raw("
-                                    {$prefix}payment_transactions.payment_transaction_id,
-                                    {$prefix}payment_transactions.external_payment_transaction_id,
-                                    {$prefix}payment_transactions.user_name,
-                                    {$prefix}payment_transactions.user_email,
-                                    {$prefix}payment_transactions.currency,
-                                    {$prefix}payment_transactions.amount,
-                                    {$prefix}pulsa.price,
-                                    FORMAT({$prefix}payment_transactions.amount / {$prefix}pulsa.price, 0) as qty,
-                                    {$prefix}payment_transactions.status,
-                                    {$prefix}payment_midtrans.payment_midtrans_info,
-                                    {$prefix}pulsa.pulsa_item_id as item_id,
-                                    {$prefix}telco_operators.name as telco_name,
-                                    {$prefix}telco_operators.telco_operator_id,
-                                    'pulsa' as item_type,
-                                    {$prefix}pulsa.pulsa_display_name AS display_name,
-                                    {$prefix}payment_transactions.created_at,
-                                    convert_tz( {$prefix}payment_transactions.created_at, '+00:00', {$prefix}payment_transactions.timezone_name) as date_tz,
-                                    {$prefix}payment_transactions.payment_method,
-                                    CASE WHEN {$prefix}media.cdn_url is null THEN {$prefix}media.path ELSE {$prefix}media.cdn_url END as telco_logo,
-                                    {$prefix}payment_transactions.extra_data as phone_number
-                            "))
+            $telcoLogo = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as telco_logo";
+            if ($usingCdn) {
+                $telcoLogo = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as telco_logo";
+            }
 
-                            ->leftJoin('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
+            $pulsa = PaymentTransaction::select(
+                            'payment_transactions.payment_transaction_id',
+                            'payment_transactions.external_payment_transaction_id',
+                            'payment_transactions.user_name',
+                            'payment_transactions.user_email',
+                            'payment_transactions.currency',
+                            'payment_transactions.amount',
+                            'pulsa.price',
+                            'payment_transaction_details.quantity as qty',
+                            'payment_transactions.status',
+                            'payment_midtrans.payment_midtrans_info',
+                            'pulsa.pulsa_item_id as item_id',
+                            'telco_operators.name as telco_name',
+                            'telco_operators.telco_operator_id',
+                            DB::raw("'pulsa' as item_type"),
+                            'pulsa.pulsa_display_name AS display_name',
+                            'payment_transactions.created_at',
+                            DB::raw("convert_tz({$prefix}payment_transactions.created_at, '+00:00', {$prefix}payment_transactions.timezone_name) as date_tz"),
+                            'payment_transactions.payment_method',
+                            DB::raw($telcoLogo),
+                            'payment_transactions.extra_data as phone_number'
+                        )
+
+                            ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                             ->leftJoin('payment_midtrans', 'payment_midtrans.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                             ->join('pulsa', 'pulsa.pulsa_item_id', '=', 'payment_transaction_details.object_id')
                             ->join('telco_operators', 'telco_operators.telco_operator_id', '=', 'pulsa.telco_operator_id')
@@ -116,7 +124,7 @@ class PulsaPurchasedDetailAPIController extends PubControllerAPI
                             ->where('payment_transactions.user_id', $user->user_id)
                             ->where('payment_transaction_details.object_type', 'pulsa')
                             ->where('payment_transactions.payment_method', '!=', 'normal')
-                            ->where('pulsa.status', 'active')
+                            //->where('pulsa.status', 'active')
 
                             // payment_transaction_id is value of payment_transaction_id or external_payment_transaction_id
                             ->where(function($query) use($payment_transaction_id) {
@@ -187,9 +195,9 @@ class PulsaPurchasedDetailAPIController extends PubControllerAPI
 
         return $output;
     }
-    //
-    // protected function quote($arg)
-    // {
-    //     return DB::connection()->getPdo()->quote($arg);
-    // }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
+    }
 }

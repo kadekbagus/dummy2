@@ -89,11 +89,11 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                     'mall_id'    => 'required',
                     'object_type'  => 'required',
                     'object_id'  => 'required|orbit.exists.pulsa',
-                    'quantity'   => 'required|orbit.allowed.quantity',
+                    'quantity'   => 'required',
                 ),
                 array(
                     'orbit.allowed.quantity' => 'REQUESTED_QUANTITY_NOT_AVAILABLE',
-                    'orbit.exists.coupon' => 'Pulsa does not exists.',
+                    'orbit.exists.pulsa' => 'Pulsa does not exists.',
                 )
             );
 
@@ -244,7 +244,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
         // Check if pulsa is exists.
         Validator::extend('orbit.exists.pulsa', function ($attribute, $value, $parameters) {
             $prefix = DB::getTablePrefix();
-            $pulsa = Pulsa::where('pulsa_item_id', $value)->first();
+            $pulsa = Pulsa::where('pulsa_item_id', $value)->where('status', 'active')->first();
 
             if (empty($pulsa)) {
                 return false;
@@ -272,6 +272,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                 )
                 ->join('payment_transaction_details', 'payment_transactions.payment_transaction_id', '=', 'payment_transaction_details.payment_transaction_id')
                 ->where('payment_transaction_details.object_type', 'pulsa')
+                // ->where('payment_transaction_details.object_id', $pulsaId)
                 ->whereIn('payment_transactions.status', [
                     PaymentTransaction::STATUS_SUCCESS,
                     PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
