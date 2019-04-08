@@ -80,7 +80,7 @@ class PulsaAPIController extends ControllerAPI
                 ),
                 array(
                     'telco_operator_id'     => 'required|orbit.empty.telcooperator',
-                    'pulsa_code'            => 'required',
+                    'pulsa_code'            => 'required|orbit.exist.pulsa',
                     'pulsa_display_name'    => 'required',
                     'value'                 => 'required',
                     'price'                 => 'required',
@@ -91,7 +91,8 @@ class PulsaAPIController extends ControllerAPI
                     'value.required'                     => 'Facial Value field is required',
                     'price.required'                     => 'Selling Price field is required',
                     'telco_operator_id.required'         => 'Pulsa Operator field is required',
-                    'orbit.empty.telcooperator' => 'Pulsa Operator not found'
+                    'orbit.empty.telcooperator'          => 'Pulsa Operator not found',
+                    'orbit.exist.pulsa'                  => 'Pulsa Product Name M-Cash must be unique'
                 )
             );
 
@@ -227,7 +228,7 @@ class PulsaAPIController extends ControllerAPI
                 array(
                     'pulsa_item_id'         => 'required',
                     'telco_operator_id'     => 'required|orbit.empty.telcooperator',
-                    'pulsa_code'            => 'required',
+                    'pulsa_code'            => 'required|pulsa_code_exists_but_me:'.$pulsa_item_id,
                     'pulsa_display_name'    => 'required',
                     'value'                 => 'required',
                     'price'                 => 'required',
@@ -238,7 +239,8 @@ class PulsaAPIController extends ControllerAPI
                     'value.required'               => 'Facial Value field is required',
                     'price.required'               => 'Selling Price field is required',
                     'telco_operator_id.required'   => 'Pulsa Operator field is required',
-                    'orbit.empty.telcooperator'    => 'Pulsa Operator not found'
+                    'orbit.empty.telcooperator'    => 'Pulsa Operator not found',
+                    'pulsa_code_exists_but_me'     => 'Pulsa Product Name M-Cash must be unique',
                 )
 
             );
@@ -651,6 +653,34 @@ class PulsaAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.telcooperator', $telco);
+
+            return TRUE;
+        });
+
+        Validator::extend('orbit.exist.pulsa', function ($attribute, $value, $parameters) {
+            $pulsa = Pulsa::where('pulsa_code', $value)->first();
+
+            if (! empty($pulsa)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.exist.pulsa', $pulsa);
+
+            return TRUE;
+        });
+
+        Validator::extend('pulsa_code_exists_but_me', function ($attribute, $value, $parameters) {
+            $pulsa_item_id = trim($parameters[0]);
+
+            $pulsa = Pulsa::where('pulsa_code', $value)
+                        ->where('pulsa_item_id', '!=', $pulsa_item_id)
+                        ->first();
+
+            if (! empty($pulsa)) {
+                return FALSE;
+            }
+
+            App::instance('pulsa_code_exists_but_me', $pulsa);
 
             return TRUE;
         });
