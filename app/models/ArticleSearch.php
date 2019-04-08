@@ -151,6 +151,11 @@ class ArticleSearch extends Search
                 $keyId = 'promotion_id';
                 break;
 
+            case 'partner':
+                $linkPath = 'partners';
+                $keyId = 'partner_id';
+                break;
+
             default:
                 // Dont add any query
                 break;

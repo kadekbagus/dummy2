@@ -11,3 +11,9 @@ Route::post('/app/v1/pub/payment/stripe/create', ['as' => 'pub-payment-stripe-cr
 Route::post('/app/v1/pub/payment/stripe/update', ['as' => 'pub-payment-stripe-update', 'uses' => 'IntermediatePubAuthController@Payment\PaymentStripeUpdate_postPaymentStripeUpdate']);
 
 Route::get('/app/v1/pub/payment/stripe/verify', ['as' => 'pub-payment-stripe-verify', 'uses' => 'IntermediatePubAuthController@Payment\PaymentStripeVerify_getPaymentStripeVerify']);
+
+Route::post('/app/v1/pub/payment/pulsa/create', ['as' => 'pub-payment-pulsa-create', 'uses' => 'IntermediatePubAuthController@Payment\PaymentPulsaCreate_postPaymentPulsaCreate']);
+
+Route::post('/app/v1/pub/payment/pulsa/update', ['as' => 'pub-payment-pulsa-update', 'uses' => 'IntermediatePubAuthController@Payment\PaymentPulsaUpdate_postPaymentPulsaUpdate']);
+
+Route::get('/app/v1/pub/payment/pulsa/verify', ['as' => 'pub-payment-pulsa-verify', 'uses' => 'IntermediatePubAuthController@Payment\PaymentPulsaVerify_getPaymentPulsaVerify']);

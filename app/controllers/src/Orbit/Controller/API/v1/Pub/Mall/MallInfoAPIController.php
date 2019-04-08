@@ -21,6 +21,7 @@ use Elasticsearch\ClientBuilder;
 use Orbit\Helper\Util\CdnUrlGenerator;
 use Orbit\Helper\Util\FollowStatusChecker;
 use \Orbit\Helper\Exception\OrbitCustomException;
+use DB;
 
 class MallInfoAPIController extends PubControllerAPI
 {
@@ -49,6 +50,10 @@ class MallInfoAPIController extends PubControllerAPI
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $host = Config::get('orbit.elasticsearch');
             $mallId = OrbitInput::get('mall_id', null);
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $prefix = DB::getTablePrefix();
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
 
             $mall = null;
             if (! empty($mallId)) {
@@ -197,7 +202,48 @@ class MallInfoAPIController extends PubControllerAPI
                 $mallIds[] = $areadata['id'];
             }
 
-            $mallData = Mall::with(['mediaPhotos', 'mediaOtherPhotos'])->where('merchant_id', '=', $mallId)->first();
+            $image = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as cdn_url";
+            if ($usingCdn) {
+                $image = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as cdn_url";
+            }
+
+            $mallData = Mall::with(['mediaPhotos' => function ($q) use ($image) {
+                        $q->select(
+                                DB::raw("{$image}"),
+                                'media.cdn_bucket_name',
+                                'media.media_id',
+                                'media.media_name_id',
+                                'media.media_name_long',
+                                'media.object_id',
+                                'media.file_name',
+                                'media.file_extension',
+                                'media.file_size',
+                                'media.mime_type',
+                                'media.path',
+                                'media.metadata',
+                                'media.modified_by',
+                                'media.created_at',
+                                'media.updated_at'
+                            );
+                    }, 'mediaOtherPhotos' => function ($q) use ($image) {
+                        $q->select(
+                                DB::raw("{$image}"),
+                                'media.cdn_bucket_name',
+                                'media.media_id',
+                                'media.media_name_id',
+                                'media.media_name_long',
+                                'media.object_id',
+                                'media.file_name',
+                                'media.file_extension',
+                                'media.file_size',
+                                'media.mime_type',
+                                'media.path',
+                                'media.metadata',
+                                'media.modified_by',
+                                'media.created_at',
+                                'media.updated_at'
+                            );
+                    }])->where('merchant_id', '=', $mallId)->first();
 
             // ---- START RATING ----
             $reviewCounter = \Orbit\Helper\MongoDB\Review\ReviewCounter::create(Config::get('database.mongodb'))
@@ -216,8 +262,8 @@ class MallInfoAPIController extends PubControllerAPI
                 $itemMall['video_id_5'] = $mallData->video_id_5;
                 $itemMall['video_id_6'] = $mallData->video_id_6;
                 $itemMall['other_photo_section_title'] = $mallData->other_photo_section_title;
-                $itemMall['mall_photos'] = $mallData->media_photos;
-                $itemMall['mall_other_photos'] = $mallData->media_other_photos;
+                $itemMall['mall_photos'] = $mallData->mediaPhotos;
+                $itemMall['mall_other_photos'] = $mallData->mediaOtherPhotos;
             }
             // ---- END OF RATING ----
 
@@ -314,5 +360,10 @@ class MallInfoAPIController extends PubControllerAPI
                                     ->getFollowStatus();
 
         return $follow;
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }

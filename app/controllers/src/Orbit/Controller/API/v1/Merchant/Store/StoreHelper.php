@@ -397,14 +397,16 @@ class StoreHelper
                 $operations[] = ['delete', $existing_translation];
             } else {
                 foreach ($translations as $field => $value) {
-                    if (!in_array($field, $valid_fields, TRUE)) {
-                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.key'));
-                    }
-                    if ($value !== null && !is_string($value)) {
-                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.value'));
-                    }
-                    if ($field=='description' && $value == '') {
-                        OrbitShopAPI::throwInvalidArgument('Description field is required');
+                    if ($language->status == 'active') {
+                        if (!in_array($field, $valid_fields, TRUE)) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.key'));
+                        }
+                        if ($value !== null && !is_string($value)) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.value'));
+                        }
+                        if ($field=='description' && $value == '') {
+                            OrbitShopAPI::throwInvalidArgument('Description field is required');
+                        }
                     }
                 }
                 if (empty($existing_translation)) {

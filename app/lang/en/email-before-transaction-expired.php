@@ -12,11 +12,18 @@ return [
                         <br>
                         Your coupon(s) is still waiting for you. The payment limit will expire <span style="color:#f43d3c">today</span>!',
 
+        'greeting_pulsa' => 'Dear, :customerName
+                        <br>
+                        Your Pulsa is still waiting for you. The payment limit will expire <span style="color:#f43d3c">today</span>!',
+
         'transaction_labels' => [
             'transaction_id' => 'Transaction ID: ',
             'transaction_date' => 'Transaction Date: ',
             'coupon_name' => 'Coupon Name: ',
             'coupon_price' => 'Coupon Price: ',
+            'pulsa_phone_number' => 'Phone Number',
+            'pulsa_name' => 'Pulsa',
+            'pulsa_price' => 'Price',
             'coupon_quantity' => 'Quantity: ',
             'customer_name' => 'Customer Name: ',
             'email' => 'Email: ',
@@ -25,6 +32,8 @@ return [
         ],
 
         'payment-info-line-1' => 'Please perform the payment transfer to the following bank account before <br><span style="color:#f43d3c;"><strong>:paymentExpiration</strong></span> to complete your transaction.',
+
+        'payment-info-line-1' => 'Please perform the payment using your GOJEK App <br><span style="color:#f43d3c;"><strong>:paymentExpiration</strong></span> to complete your transaction.',
 
         'payment-info' => [
             'biller_code' => 'Company Code: ',
@@ -37,7 +46,7 @@ return [
         ],
 
         'payment-info-line-2' => 'You can follow payment instructions below to complete the transaction.',
-        'payment-info-line-3' => 'If you canceled the purchase, then ignore this email.',
+        'payment-info-line-3' => 'If you completed/canceled the purchase, then ignore this email.',
 
         'btn_payment_instruction' => 'Payment Instructions',
         'btn_my_wallet' => 'Go to My Wallet',

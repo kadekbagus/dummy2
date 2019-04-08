@@ -177,6 +177,10 @@ class UserMallNotificationQueue
                                               ->request('PUT');
 
             // update notification
+            $mallObjectNotification = $mongoClient->setEndPoint('mall-object-notifications/' . $mallObjectNotificationId)
+                                                    ->request('GET')
+                                                    ->data;
+
             $notificationIds = $mallObjectNotification->notification_ids;
             if (! empty($notificationIds)) {
                 foreach ($notificationIds as $key => $value) {
@@ -200,22 +204,20 @@ class UserMallNotificationQueue
 
             // send as inApps notification
             if (! empty($userIds)) {
-                foreach ($userIds as $userId) {
-                    $bodyInApps = [
-                        'user_id'       => $userId,
-                        'token'         => null,
-                        'notifications' => $notificationMall,
-                        'send_status'   => 'sent',
-                        'is_viewed'     => false,
-                        'is_read'       => false,
-                        'created_at'    => $dateTime,
-                        'image_url'     => $imageUrl
-                    ];
+                $bodyInApps = [
+                    'user_ids'       => $userIds,
+                    'token'         => null,
+                    'notifications' => $notificationMall,
+                    'send_status'   => 'sent',
+                    'is_viewed'     => false,
+                    'is_read'       => false,
+                    'created_at'    => $dateTime,
+                    'image_url'     => $imageUrl
+                ];
 
-                    $inApps = $mongoClient->setFormParam($bodyInApps)
-                                          ->setEndPoint('user-notifications')
-                                          ->request('POST');
-                }
+                $inApps = $mongoClient->setFormParam($bodyInApps)
+                                      ->setEndPoint('user-notifications')
+                                      ->request('POST');
             }
 
             // Safely delete the object
