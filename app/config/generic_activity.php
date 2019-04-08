@@ -2216,11 +2216,10 @@ return array(
             'object_type' => 'Pulsa',
             'parameter_name' => 'object_id'
         ),
-
-        // click pulsa nominal when in pulsa buy form
+        // click nominal pulsa
         '241' => array(
-            'name' => 'click_pulsa_nominal',
-            'name_long' => 'Click Pulsa Nominal',
+            'name' => 'click_nominal_pulsa',
+            'name_long' => 'Click Nominal Pulsa',
             'module_name' => 'Pulsa',
             'type' => 'click',
             'object_type' => 'Pulsa',

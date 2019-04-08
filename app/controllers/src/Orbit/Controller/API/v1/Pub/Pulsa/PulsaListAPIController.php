@@ -113,7 +113,7 @@ class PulsaListAPIController extends PubControllerAPI
                             ->groupBy('pulsa_item_id');
 
             // Cache the result of database calls
-            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($pulsa);
+            // OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($pulsa);
 
             $listOfRec = $pulsa->get();
             $totalRec = $pulsa->count();
