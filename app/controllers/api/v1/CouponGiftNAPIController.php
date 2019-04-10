@@ -143,6 +143,7 @@ class CouponGiftNAPIController extends ControllerAPI
             $maxQuantityPerPurchase = OrbitInput::post('max_quantity_per_purchase', NULL);
             $maxQuantityPerUser = OrbitInput::post('max_quantity_per_user', NULL);
             $shortlinks = OrbitInput::post('shortlinks');
+            $price_to_gtm = OrbitInput::post('price_to_gtm');
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -175,6 +176,7 @@ class CouponGiftNAPIController extends ControllerAPI
                 'how_to_buy_and_redeem'   => $how_to_buy_and_redeem,
                 'max_quantity_per_purchase' => $maxQuantityPerPurchase,
                 'shortlinks'              => $shortlinks,
+                'price_to_gtm'            => $price_to_gtm,
             ];
             $validator_validation = [
                 'promotion_name'          => 'required|max:255',
@@ -198,6 +200,7 @@ class CouponGiftNAPIController extends ControllerAPI
                 'how_to_buy_and_redeem'   => 'required',
                 'max_quantity_per_purchase' => 'required|numeric',
                 'shortlinks'              => 'required',
+                'price_to_gtm'            => 'required',
             ];
             $validator_message = [
                 'rule_value.required'     => 'The amount to obtain is required',
@@ -317,6 +320,8 @@ class CouponGiftNAPIController extends ControllerAPI
             $newcoupon->price_old = $price_value;
             $newcoupon->max_quantity_per_purchase = $maxQuantityPerPurchase;
             $newcoupon->max_quantity_per_user = $maxQuantityPerUser;
+            $newcoupon->price_to_gtm = $price_to_gtm;
+            $newcoupon->how_to_buy_and_redeem = $how_to_buy_and_redeem;
 
             $newcoupon->is_unique_redeem = 'N';
             if ($rule_type === 'unique_coupon_per_user') {
@@ -2024,20 +2029,20 @@ class CouponGiftNAPIController extends ControllerAPI
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = $this->viewPulsaRoles;
+            $validRoles = $this->couponViewRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
 
-            $pulsaItemId = OrbitInput::get('pulsa_item_id');
+            $promotion_id = OrbitInput::get('promotion_id');
 
             $validator = Validator::make(
                 array(
-                    'pulsa_item_id' => $pulsaItemId,
+                    'promotion_id' => $promotion_id,
                 ),
                 array(
-                    'pulsa_item_id' => 'required',
+                    'promotion_id' => 'required',
                 )
             );
 
@@ -2047,17 +2052,40 @@ class CouponGiftNAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $prefix = DB::getTablePrefix();
-            $pulsa = Pulsa::select('pulsa.*',
-                                   DB::raw("(SELECT COUNT(DISTINCT {$prefix}payment_transactions.payment_transaction_id)
-                                            FROM {$prefix}payment_transactions
-                                            LEFT JOIN {$prefix}payment_transaction_details ON {$prefix}payment_transaction_details.payment_transaction_id = {$prefix}payment_transactions.payment_transaction_id
-                                            WHERE {$prefix}payment_transactions.status = 'success' AND {$prefix}payment_transaction_details.object_id = {$this->quote($pulsaItemId)}) as sold"))
-                                ->with('telcoOperator')
-                                ->where('pulsa_item_id', $pulsaItemId)
+            $table_prefix = DB::getTablePrefix();
+            $coupon = Coupon::allowedForPMPUser($user, 'coupon')
+                                ->select('promotions.promotion_id',
+                                         'promotions.promotion_name',
+                                         'promotions.description',
+                                         'promotions.how_to_buy_and_redeem',
+                                         'promotions.begin_date',
+                                         'promotions.end_date',
+                                         'promotions.price_to_gtm',
+                                         'promotions.price_old as price_value',
+                                         'promotions.price_selling',
+                                         'promotions.maximum_issued_coupon',
+                                         'promotions.max_quantity_per_purchase',
+                                         'promotions.max_quantity_per_user',
+                                         'promotions.is_exclusive',
+                                         DB::raw("(SELECT GROUP_CONCAT(IF({$table_prefix}merchants.object_type = 'tenant', CONCAT({$table_prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$table_prefix}merchants.name)) separator ', ') from {$table_prefix}promotion_retailer
+                                                    inner join {$table_prefix}merchants on {$table_prefix}merchants.merchant_id = {$table_prefix}promotion_retailer.retailer_id
+                                                    inner join {$table_prefix}merchants pm on {$table_prefix}merchants.parent_id = pm.merchant_id
+                                                    where {$table_prefix}promotion_retailer.promotion_id = {$table_prefix}promotions.promotion_id) as campaign_location_names"),
+                                         DB::raw("(SELECT GROUP_CONCAT(url separator '\n')
+                                                    FROM {$table_prefix}issued_coupons ic
+                                                    WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id
+                                                        ) as shortlinks"),
+                                         DB::raw("IF({$table_prefix}promotions.is_all_gender = 'Y', 'A', {$table_prefix}promotions.is_all_gender) as gender"),
+                                         'promotions.coupon_validity_in_date',
+                                         'promotions.status'
+                                  )
+                                ->with('translations.media', 'keywords', 'product_tags', 'campaignObjectPartners')
+                                ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                                ->where('promotions.promotion_id', $promotion_id)
+                                ->where('promotions.promotion_type', Coupon::TYPE_GIFTNCOUPON)
                                 ->firstOrFail();
 
-            $this->response->data = $pulsa;
+            $this->response->data = $coupon;
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
