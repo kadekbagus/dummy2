@@ -40,16 +40,16 @@ class CouponGiftNAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.coupon.postnewgiftncoupon.before.auth', array($this));
+            Event::fire('orbit.coupon.postnewcoupon.before.auth', array($this));
 
             $this->checkAuth();
 
-            Event::fire('orbit.coupon.postnewgiftncoupon.after.auth', array($this));
+            Event::fire('orbit.coupon.postnewcoupon.after.auth', array($this));
 
             // Try to check access control list, does this user allowed to
             // perform this action
             $user = $this->api->user;
-            Event::fire('orbit.coupon.postnewgiftncoupon.before.authz', array($this, $user));
+            Event::fire('orbit.coupon.postnewcoupon.before.authz', array($this, $user));
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
@@ -59,7 +59,7 @@ class CouponGiftNAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            Event::fire('orbit.coupon.postnewgiftncoupon.after.authz', array($this, $user));
+            Event::fire('orbit.coupon.postnewcoupon.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
@@ -224,8 +224,7 @@ class CouponGiftNAPIController extends ControllerAPI
                 $validator_message
             );
 
-
-            Event::fire('orbit.coupon.postnewgiftncoupon.before.validation', array($this, $validator));
+            Event::fire('orbit.coupon.postnewcoupon.before.validation', array($this, $validator));
 
             // Begin database transaction
             $this->beginTransaction();
@@ -276,7 +275,7 @@ class CouponGiftNAPIController extends ControllerAPI
                 $maximumRedeem = count($arrayShortlinks);
             }
 
-            Event::fire('orbit.coupon.postnewgiftncoupon.after.validation', array($this, $validator));
+            Event::fire('orbit.coupon.postnewcoupon.after.validation', array($this, $validator));
 
             // A means all gender
             if ($gender === 'A') {
@@ -330,7 +329,7 @@ class CouponGiftNAPIController extends ControllerAPI
                 $newcoupon->max_quantity_per_user = 1;
             }
 
-            Event::fire('orbit.coupon.postnewgiftncoupon.before.save', array($this, $newcoupon));
+            Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
 
             $newcoupon->save();
 
@@ -545,7 +544,7 @@ class CouponGiftNAPIController extends ControllerAPI
             $newcoupon->partners = $objectPartners;
 
 
-            Event::fire('orbit.coupon.postnewgiftncoupon.after.save', array($this, $newcoupon));
+            Event::fire('orbit.coupon.postnewcoupon.after.save', array($this, $newcoupon));
 
             OrbitInput::post('translations', function($translation_json_string) use ($newcoupon, $mallid, $is3rdPartyPromotion) {
                 $isThirdParty = $is3rdPartyPromotion === 'Y' ? TRUE : FALSE;
@@ -641,9 +640,9 @@ class CouponGiftNAPIController extends ControllerAPI
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.coupon.postnewgiftncoupon.after.commit', array($this, $newcoupon));
+            Event::fire('orbit.coupon.postnewcoupon.after.commit', array($this, $newcoupon));
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.coupon.postnewgiftncoupon.access.forbidden', array($this, $e));
+            Event::fire('orbit.coupon.postnewcoupon.access.forbidden', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -661,7 +660,7 @@ class CouponGiftNAPIController extends ControllerAPI
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.coupon.postnewgiftncoupon.invalid.arguments', array($this, $e));
+            Event::fire('orbit.coupon.postnewcoupon.invalid.arguments', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -679,7 +678,7 @@ class CouponGiftNAPIController extends ControllerAPI
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (QueryException $e) {
-            Event::fire('orbit.coupon.postnewgiftncoupon.query.error', array($this, $e));
+            Event::fire('orbit.coupon.postnewcoupon.query.error', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -703,7 +702,7 @@ class CouponGiftNAPIController extends ControllerAPI
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (\Orbit\Helper\Exception\OrbitCustomException $e) {
-            Event::fire('orbit.coupon.postnewgiftncoupon.custom.exception', array($this, $e));
+            Event::fire('orbit.coupon.postnewcoupon.custom.exception', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -722,7 +721,7 @@ class CouponGiftNAPIController extends ControllerAPI
                     ->responseFailed();
 
         } catch (Exception $e) {
-            Event::fire('orbit.coupon.postnewgiftncoupon.general.exception', array($this, $e));
+            Event::fire('orbit.coupon.postnewcoupon.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
@@ -1047,48 +1046,6 @@ class CouponGiftNAPIController extends ControllerAPI
 
             $updatedcoupon->setUpdatedAt($updatedcoupon->freshTimestamp());
             $updatedcoupon->save();
-
-
-            // Update coupon sepulsa additional
-            $updatedCouponSepulsa = CouponSepulsa::where('promotion_id', $promotion_id)->first();
-
-            OrbitInput::post('external_id', function($external_id) use ($updatedCouponSepulsa) {
-                $updatedCouponSepulsa->external_id = $external_id;
-            });
-
-            OrbitInput::post('price_from_sepulsa', function($price_from_sepulsa) use ($updatedCouponSepulsa) {
-                $updatedCouponSepulsa->price_from_sepulsa = $price_from_sepulsa;
-            });
-
-            OrbitInput::post('price_value', function($price_value) use ($updatedCouponSepulsa) {
-                $updatedCouponSepulsa->price_value = $price_value;
-            });
-
-            OrbitInput::post('coupon_image_url', function($coupon_image_url) use ($updatedCouponSepulsa) {
-                $updatedCouponSepulsa->coupon_image_url = $coupon_image_url;
-            });
-
-            OrbitInput::post('token', function($token) use ($updatedCouponSepulsa) {
-                $updatedCouponSepulsa->token = $token;
-            });
-
-            OrbitInput::post('how_to_buy_and_redeem', function($how_to_buy_and_redeem) use ($updatedCouponSepulsa) {
-                $updatedCouponSepulsa->how_to_buy_and_redeem = $how_to_buy_and_redeem;
-            });
-
-            OrbitInput::post('terms_and_conditions', function($terms_and_conditions) use ($updatedCouponSepulsa) {
-                $updatedCouponSepulsa->terms_and_conditions = $terms_and_conditions;
-            });
-
-            OrbitInput::post('voucher_benefit', function($voucher_benefit) use ($updatedCouponSepulsa) {
-                $updatedCouponSepulsa->voucher_benefit = $voucher_benefit;
-            });
-
-            $updatedCouponSepulsa->setUpdatedAt($updatedCouponSepulsa->freshTimestamp());
-            $updatedCouponSepulsa->save();
-
-            $updatedcoupon->coupon_sepulsa = $updatedCouponSepulsa;
-
 
             // save CouponRule.
             $couponrule = CouponRule::where('promotion_id', '=', $promotion_id)->first();
@@ -1641,10 +1598,10 @@ class CouponGiftNAPIController extends ControllerAPI
                     THEN 5 ELSE {$table_prefix}campaign_status.order END) END AS campaign_status_order,
                     {$table_prefix}campaign_status.order
                     "),
-                    DB::raw("(select GROUP_CONCAT(IF({$table_prefix}merchants.object_type = 'tenant', CONCAT({$table_prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$table_prefix}merchants.name)) separator ', ') from {$table_prefix}promotion_retailer
-                                    inner join {$table_prefix}merchants on {$table_prefix}merchants.merchant_id = {$table_prefix}promotion_retailer.retailer_id
-                                    inner join {$table_prefix}merchants pm on {$table_prefix}merchants.parent_id = pm.merchant_id
-                                    where {$table_prefix}promotion_retailer.promotion_id = {$table_prefix}promotions.promotion_id) as campaign_location_names"),
+                    // DB::raw("(select GROUP_CONCAT(IF({$table_prefix}merchants.object_type = 'tenant', CONCAT({$table_prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$table_prefix}merchants.name)) separator ', ') from {$table_prefix}promotion_retailer
+                    //                 inner join {$table_prefix}merchants on {$table_prefix}merchants.merchant_id = {$table_prefix}promotion_retailer.retailer_id
+                    //                 inner join {$table_prefix}merchants pm on {$table_prefix}merchants.parent_id = pm.merchant_id
+                    //                 where {$table_prefix}promotion_retailer.promotion_id = {$table_prefix}promotions.promotion_id) as campaign_location_names"),
                     //DB::raw("CASE {$table_prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END as 'is_auto_issue_on_signup'"),
                     DB::raw("CASE WHEN {$table_prefix}promotions.end_date IS NOT NULL THEN
                         CASE WHEN
@@ -1660,12 +1617,12 @@ class CouponGiftNAPIController extends ControllerAPI
                         END
                     ELSE
                         {$table_prefix}promotions.status
-                    END as 'coupon_status'"),
-                    DB::raw("COUNT(DISTINCT {$table_prefix}promotion_retailer.promotion_retailer_id) as total_location"),
-                    DB::raw("(SELECT GROUP_CONCAT(url separator '\n')
-                        FROM {$table_prefix}issued_coupons ic
-                        WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id
-                            ) as shortlinks"),
+                    END as 'status'"),
+                    // DB::raw("COUNT(DISTINCT {$table_prefix}promotion_retailer.promotion_retailer_id) as total_location"),
+                    // DB::raw("(SELECT GROUP_CONCAT(url separator '\n')
+                    //     FROM {$table_prefix}issued_coupons ic
+                    //     WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id
+                    //         ) as shortlinks"),
                     DB::raw("IF({$table_prefix}promotions.is_all_gender = 'Y', 'A', {$table_prefix}promotions.is_all_gender) as gender"),
                     DB::raw("{$table_prefix}promotions.max_quantity_per_purchase as max_qty_per_purchase"),
                     DB::raw("{$table_prefix}promotions.max_quantity_per_user as max_qty_per_user")
@@ -1684,7 +1641,7 @@ class CouponGiftNAPIController extends ControllerAPI
                 if ($role->role_name === 'Campaign Admin' ) {
                     $coupons->where('languages.name', '=', DB::raw("(select ca.mobile_default_language from {$table_prefix}campaign_account ca where ca.user_id = {$this->quote($user->user_id)})"));
                 } else {
-                    //$coupons->where('languages.name', '=', DB::raw("ca.mobile_default_language"));
+                    $coupons->where('languages.name', '=', DB::raw("ca.mobile_default_language"));
                 }
             }
 
