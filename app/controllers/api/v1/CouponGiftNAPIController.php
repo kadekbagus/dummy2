@@ -1588,7 +1588,7 @@ class CouponGiftNAPIController extends ControllerAPI
                 //->with('couponRule')
                 ->select(
                     DB::raw("{$table_prefix}promotions.promotion_id,
-                             {$table_prefix}promotions.promotion_name,
+                             {$table_prefix}coupon_translations.promotion_name AS promotion_name,
                              {$table_prefix}promotions.promotion_type,
                              {$table_prefix}promotions.description,
                              {$table_prefix}promotions.begin_date,
