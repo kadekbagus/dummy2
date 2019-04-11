@@ -1573,6 +1573,15 @@ class CouponGiftNAPIController extends ControllerAPI
 
             $filterName = OrbitInput::get('promotion_name_like', '');
 
+            $mediaJoin = "";
+            $mediaOptimize = " AND (object_name = 'coupon_translation') ";
+            $mediaObjectIds = (array) OrbitInput::get('promotion_id', []);
+            if (! empty ($mediaObjectIds)) {
+                $mediaObjectIds = "'" . implode("', '", $mediaObjectIds) . "'";
+                $mediaJoin = " LEFT JOIN {$table_prefix}coupon_translations mont ON mont.coupon_translation_id = {$table_prefix}media.object_id ";
+                $mediaOptimize = " AND object_name = 'coupon_translation' AND mont.promotion_id IN ({$mediaObjectIds}) ";
+            }
+
             // Builder object
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::allowedForPMPUser($user, 'coupon')
@@ -1584,6 +1593,7 @@ class CouponGiftNAPIController extends ControllerAPI
                              {$table_prefix}promotions.description,
                              {$table_prefix}promotions.begin_date,
                              {$table_prefix}promotions.end_date,
+                             media.path as image_path,
                     {$table_prefix}promotions.promotion_id as campaign_id, 'coupon' as campaign_type, {$table_prefix}coupon_translations.promotion_name AS display_name,
                     CASE WHEN {$table_prefix}campaign_status.campaign_status_name = 'expired' THEN {$table_prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$table_prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                                                                 FROM {$table_prefix}merchants om
@@ -1631,7 +1641,12 @@ class CouponGiftNAPIController extends ControllerAPI
                 ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
-                //->joinPromotionRules()
+                ->leftJoin(DB::raw("(
+                        SELECT {$table_prefix}media.* FROM {$table_prefix}media
+                        {$mediaJoin}
+                        WHERE media_name_long = 'coupon_translation_image_resized_default'
+                        {$mediaOptimize} ) as media
+                    "), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
                 ->groupBy('promotions.promotion_id')
                 ->where('promotion_type', 'gift_n_coupon');
 
