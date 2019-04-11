@@ -167,7 +167,7 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
             $pulsaId = OrbitInput::post('pulsa_id');
             $pulsa = Pulsa::where('pulsa_item_id', $pulsaId)->first();
 
-            if (! empty($pulsa) && $pulsa->quantity === 0) {
+            if (! empty($pulsa) && (int) $pulsa->quantity === 0) {
                 return true;
             }
 
