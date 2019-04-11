@@ -339,7 +339,7 @@ class PaymentTransaction extends Eloquent
                 }
             }
         }
-        else if ($this->forHotDeals()) {
+        else if ($this->forHotDeals() || $this->forGiftNCoupon()) {
             Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Reverting reserved hot deals coupon status.');
 
             foreach($issuedCoupons as $issuedCoupon) {
