@@ -153,7 +153,7 @@ class CouponBuyAPIController extends PubControllerAPI
                         $issuedCoupon->issued_date   = date('Y-m-d H:i:s');
                         $issuedCoupon->status        = IssuedCoupon::STATUS_RESERVED;
                         $issuedCoupon->record_exists = 'Y';
-                    } elseif ($coupon->promotion_type === Coupon::TYPE_HOT_DEALS) {
+                    } elseif ($coupon->promotion_type === Coupon::TYPE_HOT_DEALS || $coupon->promotion_type === Coupon::TYPE_GIFTNCOUPON) {
                         $issuedCoupon = IssuedCoupon::where('promotion_id', $coupon_id)
                                                         ->available()
                                                         ->first();
