@@ -1,6 +1,6 @@
 <?php
 /**
- * An API controller for managing Coupon sepulsa.
+ * An API controller for managing Coupon GiftN.
  */
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -12,13 +12,9 @@ use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
 use \Orbit\Helper\Exception\OrbitCustomException;
-use Orbit\Helper\Payment\Payment as PaymentClient;
 
-use Orbit\Helper\Sepulsa\API\VoucherList;
-use Orbit\Helper\Sepulsa\API\VoucherDetail;
-use Orbit\Helper\Sepulsa\Client as SepulsaClient;
 
-class CouponSepulsaAPIController extends ControllerAPI
+class CouponGiftNAPIController extends ControllerAPI
 {
      /**
      * Flag to return the query builder.
@@ -33,62 +29,8 @@ class CouponSepulsaAPIController extends ControllerAPI
 
     protected $pmpAccountDefaultLanguage = NULL;
 
-    /**
-     * POST - Create New Coupon for sepulsa
-     *
-     * @author Firmansyah <firmansyah@dominopos.com>
-     *
-     * List of API Parameters
-     * ----------------------
-     * @param integer    `merchant_id`                       (required) - Mall ID
-     * @param string     `promotion_name`                    (required) - Coupon name
-     * @param string     `promotion_type`                    (required) - Coupon type. Valid value: mall, tenant.
-     * @param string     `status`                            (required) - Status. Valid value: active, inactive, pending, blocked, deleted.
-     * @param string     `description`                       (optional) - Description
-     * @param string     `long_description`                  (optional) - Long description
-     * @param datetime   `begin_date`                        (optional) - Begin date. Example: 2014-12-30 00:00:00
-     * @param datetime   `end_date`                          (optional) - End date. Example: 2014-12-31 23:59:59
-     * @param string     `is_permanent`                      (optional) - Is permanent. Valid value: Y, N.
-     * @param string     `is_all_employee`                   (optional) - Is all cs coupon redeem. Valid value: Y, N.
-     * @param string     `is_all_retailer`                   (optional) - Is all retailer coupon redeem. Valid value: Y, N.
-     * @param file       `image`                             (optional) - Coupon image
-     * @param string     `maximum_issued_coupon_type`        (optional) - Maximum issued coupon type. Valid value: period, days.
-     * @param integer    `maximum_issued_coupon`             (optional) - Maximum issued coupon
-     * @param datetime   `coupon_validity_in_date`           (optional) - Coupon validity in date
-     * @param string     `coupon_notification`               (optional) - Coupon notification. Valid value: Y, N.
-     * @param string     `rule_type`                         (optional) - Rule type. Valid value: cart_discount_by_value, cart_discount_by_percentage, new_product_price, product_discount_by_value, product_discount_by_percentage.
-     * @param decimal    `rule_value`                        (optional) - Rule value
-     * @param string     `rule_object_type`                  (optional) - Rule object type. Valid value: .
-     * @param integer    `rule_object_id1`                   (optional) - Rule object ID1 ( or ).
-     * @param integer    `rule_object_id2`                   (optional) - Rule object ID2 ().
-     * @param integer    `rule_object_id3`                   (optional) - Rule object ID3 ().
-     * @param integer    `rule_object_id4`                   (optional) - Rule object ID4 ().
-     * @param integer    `rule_object_id5`                   (optional) - Rule object ID5 ().
-     * @param string     `discount_object_type`              (optional) - Discount object type. Valid value: .
-     * @param integer    `discount_object_id1`               (optional) - Discount object ID1 ( or ).
-     * @param integer    `discount_object_id2`               (optional) - Discount object ID2 ().
-     * @param integer    `discount_object_id3`               (optional) - Discount object ID3 ().
-     * @param integer    `discount_object_id4`               (optional) - Discount object ID4 ().
-     * @param integer    `discount_object_id5`               (optional) - Discount object ID5 ().
-     * @param decimal    `discount_value`                    (optional) - Discount value
-     * @param string     `is_cumulative_with_coupons`        (optional) - Cumulative with other coupons. Valid value: Y, N.
-     * @param string     `is_cumulative_with_promotions`     (optional) - Cumulative with other promotions. Valid value: Y, N.
-     * @param decimal    `coupon_redeem_rule_value`          (optional) - Coupon redeem rule value
-     * @param array      `retailer_ids`                      (optional) - Tenant IDs
-     * @param array      `employee_user_ids`                 (optional) - User IDs of Employee
-     * @param array      `id_language_default`               (required) - ID language default
-     * @param string     `is_all_gender`                     (optional) - Is all gender. Valid value: Y, N.
-     * @param string     `is_all_age`                        (optional) - Is all retailer age group. Valid value: Y, N.
-     * @param string     `gender_ids`                        (optional) - for Male, Female. Unknown. Valid value: M, F, U.
-     * @param string     `age_range_ids`                     (optional) - Age Range IDs
-     * @param string     `translations`                      (optional) - For Translations
-     *
-     * FOR SEPULSA FORM
-     *
-     *
-     * @return Illuminate\Support\Facades\Response
-     */
-    public function postNewCoupon()
+
+    public function postNewGiftNCoupon()
     {
         $activity = Activity::portal()
                             ->setActivityType('create');
@@ -123,7 +65,7 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             $merchant_id = OrbitInput::post('current_mall');
             $promotion_name = OrbitInput::post('promotion_name');
-            $promotion_type = OrbitInput::post('promotion_type', 'coupon_sepulsa');
+            $promotion_type = OrbitInput::post('promotion_type', 'gift_n_coupon');
             $campaignStatus = OrbitInput::post('campaign_status');
             $description = OrbitInput::post('description');
             $long_description = OrbitInput::post('long_description');
@@ -189,7 +131,6 @@ class CouponSepulsaAPIController extends ControllerAPI
             $amountCommission = OrbitInput::post('amount_commission', 0);
             $fixedAmountCommission = OrbitInput::post('fixed_amount_commission', 0);
 
-            // $promotion_id = OrbitInput::post('promotion_id');
             $external_id = OrbitInput::post('external_id');
             $price_from_sepulsa = OrbitInput::post('price_from_sepulsa');
             $price_value = OrbitInput::post('price_value');
@@ -201,6 +142,8 @@ class CouponSepulsaAPIController extends ControllerAPI
             $token = OrbitInput::post('token');
             $maxQuantityPerPurchase = OrbitInput::post('max_quantity_per_purchase', NULL);
             $maxQuantityPerUser = OrbitInput::post('max_quantity_per_user', NULL);
+            $shortlinks = OrbitInput::post('shortlinks');
+            $price_to_gtm = OrbitInput::post('price_to_gtm');
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -228,19 +171,16 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'is_visible'              => $isVisible,
                 'is_3rd_party_promotion'  => $is3rdPartyPromotion,
                 'maximum_issued_coupon'   => $maximum_issued_coupon,
-                'external_id'             => $external_id,
-                'price_from_sepulsa'      => $price_from_sepulsa,
                 'price_value'             => $price_value,
                 'price_selling'           => $price_selling,
                 'how_to_buy_and_redeem'   => $how_to_buy_and_redeem,
-                'terms_and_conditions'    => $terms_and_conditions,
-                'token'                   => $token,
-                'voucher_benefit'         => $voucher_benefit,
                 'max_quantity_per_purchase' => $maxQuantityPerPurchase,
+                'shortlinks'              => $shortlinks,
+                'price_to_gtm'            => $price_to_gtm,
             ];
             $validator_validation = [
                 'promotion_name'          => 'required|max:255',
-                'promotion_type'          => 'required|in:sepulsa',
+                'promotion_type'          => 'required|in:gift_n_coupon',
                 'begin_date'              => 'required|date_format:Y-m-d H:i:s',
                 'end_date'                => 'required|date_format:Y-m-d H:i:s',
                 'rule_type'               => 'orbit.empty.coupon_rule_type',
@@ -255,15 +195,12 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'is_visible'              => 'required|in:Y,N',
                 'is_3rd_party_promotion'  => 'required|in:Y,N',
                 'maximum_issued_coupon'   => 'required',
-                'external_id'             => 'required',
-                'price_from_sepulsa'      => 'required',
                 'price_value'             => 'required',
                 'price_selling'           => 'required',
                 'how_to_buy_and_redeem'   => 'required',
-                'terms_and_conditions'    => 'required',
-                'token'                   => 'required',
-                'voucher_benefit'         => 'required',
                 'max_quantity_per_purchase' => 'required|numeric',
+                'shortlinks'              => 'required',
+                'price_to_gtm'            => 'required',
             ];
             $validator_message = [
                 'rule_value.required'     => 'The amount to obtain is required',
@@ -287,7 +224,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                 $validator_message
             );
 
-
             Event::fire('orbit.coupon.postnewcoupon.before.validation', array($this, $validator));
 
             // Begin database transaction
@@ -302,10 +238,42 @@ class CouponSepulsaAPIController extends ControllerAPI
             // Check the end date should be less than validity in date
             $int_before_end_date = strtotime(date('Y-m-d', strtotime($end_date)));
             $int_validity_date = strtotime($coupon_validity_in_date);
-            // if ($int_validity_date <= $int_before_end_date) {
-            //     $errorMessage = 'The validity redeem date should be greater than the end date.';
-            //     OrbitShopAPI::throwInvalidArgument($errorMessage);
-            // }
+
+
+            $arrayShortlinks = [];
+            // validate coupon codes
+            if (! empty($shortlinks)) {
+                $dupes = array();
+                // trim and explode coupon codes to array
+                $arrayShortlinks = array_map('trim', explode("\n", $shortlinks));
+                // delete empty array and reorder it
+                $arrayShortlinks = array_values(array_filter($arrayShortlinks));
+                // find the dupes
+                foreach(array_count_values($arrayShortlinks) as $val => $frequency) {
+                    if ($frequency > 1) $dupes[] = $val;
+                }
+
+                if (! empty($dupes)) {
+                    $stringDupes = implode(',', $dupes);
+                    $errorMessage = 'The coupon codes you supplied have duplicates: %s';
+                    OrbitShopAPI::throwInvalidArgument(sprintf($errorMessage, $stringDupes));
+                }
+            }
+
+            // maximum redeem validation
+            if (! empty($maximumRedeem)) {
+                if ($maximumRedeem > count($arrayShortlinks)) {
+                    $errorMessage = 'The total maximum redeemed coupon can not be more than amount of coupon code';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                if ($maximumRedeem < 1) {
+                    $errorMessage = 'Minimum amount of maximum redeemed coupon is 1';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            } else {
+                $maximumRedeem = count($arrayShortlinks);
+            }
 
             Event::fire('orbit.coupon.postnewcoupon.after.validation', array($this, $validator));
 
@@ -351,6 +319,8 @@ class CouponSepulsaAPIController extends ControllerAPI
             $newcoupon->price_old = $price_value;
             $newcoupon->max_quantity_per_purchase = $maxQuantityPerPurchase;
             $newcoupon->max_quantity_per_user = $maxQuantityPerUser;
+            $newcoupon->price_to_gtm = $price_to_gtm;
+            $newcoupon->how_to_buy_and_redeem = $how_to_buy_and_redeem;
 
             $newcoupon->is_unique_redeem = 'N';
             if ($rule_type === 'unique_coupon_per_user') {
@@ -362,6 +332,8 @@ class CouponSepulsaAPIController extends ControllerAPI
             Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
 
             $newcoupon->save();
+
+            Event::fire('orbit.coupon.postnewcoupon.after.save', array($this, $newcoupon));
 
             // Return campaign_status_name
             $newcoupon->campaign_status = $idStatus->campaign_status_name;
@@ -572,21 +544,6 @@ class CouponSepulsaAPIController extends ControllerAPI
             $newcoupon->partners = $objectPartners;
 
 
-            // Save coupon sepulsa
-            $couponSepulsa = new CouponSepulsa();
-            $couponSepulsa->promotion_id = $newcoupon->promotion_id;
-            $couponSepulsa->external_id = $external_id;
-            $couponSepulsa->price_from_sepulsa = $price_from_sepulsa;
-            $couponSepulsa->price_value = $price_value;
-            $couponSepulsa->coupon_image_url = $coupon_image_url;
-            $couponSepulsa->token = $token;
-            $couponSepulsa->how_to_buy_and_redeem = $how_to_buy_and_redeem;
-            $couponSepulsa->terms_and_conditions = $terms_and_conditions;
-            $couponSepulsa->voucher_benefit = $voucher_benefit;
-            $couponSepulsa->save();
-            $newcoupon->coupon_sepulsa = $couponSepulsa;
-
-
             Event::fire('orbit.coupon.postnewcoupon.after.save', array($this, $newcoupon));
 
             OrbitInput::post('translations', function($translation_json_string) use ($newcoupon, $mallid, $is3rdPartyPromotion) {
@@ -599,6 +556,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                                                   ->where('promotion_id', $newcoupon->promotion_id)
                                                   ->first();
 
+            $couponMediaTranslations = [];
             if (! empty($couponTranslation)) {
                 $couponImageType = ['coupon_translation_image_orig', 'coupon_translation_image_resized_default', 'coupon_translation_image_cropped_default'];
 
@@ -666,8 +624,8 @@ class CouponSepulsaAPIController extends ControllerAPI
             // $this->response->data->translation_default = $coupon_translation_default;
 
             // issue coupon if coupon code is supplied
-            if (! empty($arrayCouponCode)) {
-                IssuedCoupon::bulkIssue($arrayCouponCode, $newcoupon->promotion_id, $newcoupon->coupon_validity_in_date, $user);
+            if (! empty($arrayShortlinks)) {
+                IssuedCoupon::bulkIssueGiftN($arrayShortlinks, $newcoupon->promotion_id, $newcoupon->coupon_validity_in_date, $user);
             }
 
             // Commit the changes
@@ -787,61 +745,7 @@ class CouponSepulsaAPIController extends ControllerAPI
         return $this->render($httpCode);
     }
 
-    /**
-     * POST - Update Coupon
-     *
-     * @author <Tian> <tian@dominopos.com>
-     * @author <Firmansyah> <firmansyah@dominopos.com>
-     *
-     * List of API Parameters
-     * ----------------------
-     * @param integer    `promotion_id`                      (required) - Coupon ID
-     * @param integer    `merchant_id`                       (optional) - Mall ID
-     * @param string     `promotion_name`                    (optional) - Coupon name
-     * @param string     `promotion_type`                    (optional) - Coupon type. Valid value: mall, tenant.
-     * @param string     `status`                            (optional) - Status. Valid value: active, inactive, pending, blocked, deleted.
-     * @param string     `description`                       (optional) - Description
-     * @param string     `long_description`                  (optional) - Long description
-     * @param datetime   `begin_date`                        (optional) - Begin date. Example: 2014-12-30 00:00:00
-     * @param datetime   `end_date`                          (optional) - End date. Example: 2014-12-31 23:59:59
-     * @param string     `is_permanent`                      (optional) - Is permanent. Valid value: Y, N.
-     * @param string     `is_all_employee`                   (optional) - Is all cs coupon redeem. Valid value: Y, N.
-     * @param string     `is_all_retailer`                   (optional) - Is all retailer coupon redeem. Valid value: Y, N.* @param file       `images`                            (optional) - Coupon image
-     * @param integer    `maximum_issued_coupon_type`        (optional) - Maximum issued coupon type. Valid value: period, days.
-     * @param integer    `maximum_issued_coupon`             (optional) - Maximum issued coupon
-     * @param integer    `coupon_validity_in_date`           (optional) - Coupon validity in date
-     * @param string     `coupon_notification`               (optional) - Coupon notification. Valid value: Y, N.
-     * @param string     `rule_type`                         (optional) - Rule type. Valid value: cart_discount_by_value, cart_discount_by_percentage, new_product_price, product_discount_by_value, product_discount_by_percentage.
-     * @param decimal    `rule_value`                        (optional) - Rule value
-     * @param string     `rule_object_type`                  (optional) - Rule object type. Valid value: .
-     * @param integer    `rule_object_id1`                   (optional) - Rule object ID1 ( or ).
-     * @param integer    `rule_object_id2`                   (optional) - Rule object ID2 ().
-     * @param integer    `rule_object_id3`                   (optional) - Rule object ID3 ().
-     * @param integer    `rule_object_id4`                   (optional) - Rule object ID4 ().
-     * @param integer    `rule_object_id5`                   (optional) - Rule object ID5 ().
-     * @param string     `discount_object_type`              (optional) - Discount object type. Valid value: , .
-     * @param integer    `discount_object_id1`               (optional) - Discount object ID1 ( or ).
-     * @param integer    `discount_object_id2`               (optional) - Discount object ID2 ().
-     * @param integer    `discount_object_id3`               (optional) - Discount object ID3 ().
-     * @param integer    `discount_object_id4`               (optional) - Discount object ID4 ().
-     * @param integer    `discount_object_id5`               (optional) - Discount object ID5 ().
-     * @param decimal    `discount_value`                    (optional) - Discount value
-     * @param string     `is_cumulative_with_coupons`        (optional) - Cumulative with other coupons. Valid value: Y, N.
-     * @param string     `is_cumulative_with_promotions`     (optional) - Cumulative with other promotions. Valid value: Y, N.
-     * @param decimal    `coupon_redeem_rule_value`          (optional) - Coupon redeem rule value
-     * @param array      `retailer_ids`                      (optional) - Retailer IDs
-     * @param string     `no_retailer`                       (optional) - Flag to delete all retailer links. Valid value: Y.
-     * @param string     `no_employee`                       (optional) - Flag to delete all cs links. Valid value: Y.
-     * @param array      `id_language_default`               (required) - ID language default
-     * @param string     `is_all_gender`                     (optional) - Is all gender. Valid value: Y, N.
-     * @param string     `is_all_age`                        (optional) - Is all retailer age group. Valid value: Y, N.
-     * @param string     `gender_ids`                        (optional) - for Male, Female. Unknown. Valid value: M, F, U.
-     * @param string     `age_range_ids`                     (optional) - Age Range IDs
-     * @param string     `translations`                      (optional) - For translations
-     *
-     * @return Illuminate\Support\Facades\Response
-     */
-    public function postUpdateCoupon()
+    public function postUpdateGiftNCoupon()
     {
         $activity = Activity::portal()
                            ->setActivityType('update');
@@ -926,7 +830,6 @@ class CouponSepulsaAPIController extends ControllerAPI
             $coupon_image_url = OrbitInput::post('coupon_image_url');
             $how_to_buy_and_redeem = OrbitInput::post('how_to_buy_and_redeem');
             $terms_and_conditions = OrbitInput::post('terms_and_conditions');
-            // $token = OrbitInput::post('token');
 
             $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
             $status = 'inactive';
@@ -1143,48 +1046,6 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             $updatedcoupon->setUpdatedAt($updatedcoupon->freshTimestamp());
             $updatedcoupon->save();
-
-
-            // Update coupon sepulsa additional
-            $updatedCouponSepulsa = CouponSepulsa::where('promotion_id', $promotion_id)->first();
-
-            OrbitInput::post('external_id', function($external_id) use ($updatedCouponSepulsa) {
-                $updatedCouponSepulsa->external_id = $external_id;
-            });
-
-            OrbitInput::post('price_from_sepulsa', function($price_from_sepulsa) use ($updatedCouponSepulsa) {
-                $updatedCouponSepulsa->price_from_sepulsa = $price_from_sepulsa;
-            });
-
-            OrbitInput::post('price_value', function($price_value) use ($updatedCouponSepulsa) {
-                $updatedCouponSepulsa->price_value = $price_value;
-            });
-
-            OrbitInput::post('coupon_image_url', function($coupon_image_url) use ($updatedCouponSepulsa) {
-                $updatedCouponSepulsa->coupon_image_url = $coupon_image_url;
-            });
-
-            OrbitInput::post('token', function($token) use ($updatedCouponSepulsa) {
-                $updatedCouponSepulsa->token = $token;
-            });
-
-            OrbitInput::post('how_to_buy_and_redeem', function($how_to_buy_and_redeem) use ($updatedCouponSepulsa) {
-                $updatedCouponSepulsa->how_to_buy_and_redeem = $how_to_buy_and_redeem;
-            });
-
-            OrbitInput::post('terms_and_conditions', function($terms_and_conditions) use ($updatedCouponSepulsa) {
-                $updatedCouponSepulsa->terms_and_conditions = $terms_and_conditions;
-            });
-
-            OrbitInput::post('voucher_benefit', function($voucher_benefit) use ($updatedCouponSepulsa) {
-                $updatedCouponSepulsa->voucher_benefit = $voucher_benefit;
-            });
-
-            $updatedCouponSepulsa->setUpdatedAt($updatedCouponSepulsa->freshTimestamp());
-            $updatedCouponSepulsa->save();
-
-            $updatedcoupon->coupon_sepulsa = $updatedCouponSepulsa;
-
 
             // save CouponRule.
             $couponrule = CouponRule::where('promotion_id', '=', $promotion_id)->first();
@@ -1586,7 +1447,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (\Orbit\Helper\Exception\OrbitCustomException $e) {
-            Event::fire('orbit.coupon.postnewcoupon.custom.exception', array($this, $e));
+            Event::fire('orbit.coupon.postupdatecoupon.custom.exception', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -1631,38 +1492,7 @@ class CouponSepulsaAPIController extends ControllerAPI
 
     }
 
-
-    /**
-     * GET - Search Coupon
-     *
-     * @author Tian <tian@dominopos.com>
-     * @author Irianto <irianto@dominopos.com>
-     *
-     * List of API Parameters
-     * ----------------------
-     * @param string   `with`                  (optional) - Valid value: mall, tenants.
-     * @param string   `sortby`                (optional) - Column order by. Valid value: registered_date, promotion_name, promotion_type, description, begin_date, end_date, status.
-     * @param string   `sortmode`              (optional) - ASC or DESC
-     * @param integer  `take`                  (optional) - Limit
-     * @param integer  `skip`                  (optional) - Limit offset
-     * @param integer  `promotion_id`          (optional) - Coupon ID
-     * @param integer  `merchant_id`           (optional) - Merchant ID
-     * @param string   `promotion_name`        (optional) - Coupon name
-     * @param string   `promotion_name_like`   (optional) - Coupon name like
-     * @param string   `description`           (optional) - Description
-     * @param string   `description_like`      (optional) - Description like
-     * @param string   `long_description`      (optional) - Long description
-     * @param string   `long_description_like` (optional) - Long description like
-     * @param datetime `begin_date`            (optional) - Begin date. Example: 2014-12-30 00:00:00
-     * @param datetime `end_date`              (optional) - End date. Example: 2014-12-31 23:59:59
-     * @param string   `is_permanent`          (optional) - Is permanent. Valid value: Y, N.
-     * @param string   `coupon_notification`   (optional) - Coupon notification. Valid value: Y, N.
-     * @param string   `status`                (optional) - Status. Valid value: active, inactive, pending, blocked, deleted.
-     * @param integer  `retailer_name`           (optional) - Retailer name
-     *
-     * @return Illuminate\Support\Facades\Response
-     */
-    public function getSearchCoupon()
+    public function getSearchGiftNCoupon()
     {
         try {
             $httpCode = 200;
@@ -1743,75 +1573,28 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             $filterName = OrbitInput::get('promotion_name_like', '');
 
+            $mediaJoin = "";
+            $mediaOptimize = " AND (object_name = 'coupon_translation') ";
+            $mediaObjectIds = (array) OrbitInput::get('promotion_id', []);
+            if (! empty ($mediaObjectIds)) {
+                $mediaObjectIds = "'" . implode("', '", $mediaObjectIds) . "'";
+                $mediaJoin = " LEFT JOIN {$table_prefix}coupon_translations mont ON mont.coupon_translation_id = {$table_prefix}media.object_id ";
+                $mediaOptimize = " AND object_name = 'coupon_translation' AND mont.promotion_id IN ({$mediaObjectIds}) ";
+            }
+
             // Builder object
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::allowedForPMPUser($user, 'coupon')
-                ->with('couponRule')
+                //->with('couponRule')
                 ->select(
                     DB::raw("{$table_prefix}promotions.promotion_id,
-                             {$table_prefix}promotions.merchant_id,
-                             {$table_prefix}promotions.promotion_name,
+                             {$table_prefix}coupon_translations.promotion_name AS promotion_name,
                              {$table_prefix}promotions.promotion_type,
                              {$table_prefix}promotions.description,
-                             {$table_prefix}promotions.long_description,
                              {$table_prefix}promotions.begin_date,
                              {$table_prefix}promotions.end_date,
-                             {$table_prefix}promotions.sticky_order,
-                             {$table_prefix}promotions.is_permanent,
-                             {$table_prefix}promotions.status,
-                             {$table_prefix}promotions.campaign_status_id,
-                             {$table_prefix}promotions.image,
-                             {$table_prefix}promotions.is_coupon,
-                             {$table_prefix}promotions.maximum_issued_coupon_type,
-                             {$table_prefix}promotions.location_id,
-                             {$table_prefix}promotions.location_type,
-                             {$table_prefix}promotions.is_all_retailer,
-                             {$table_prefix}promotions.is_all_retailer_redeem,
-                             {$table_prefix}promotions.is_all_employee_redeem,
-                             {$table_prefix}promotions.is_all_employee,
-                             {$table_prefix}promotions.is_redeemed_at_cs,
-                             {$table_prefix}promotions.maximum_issued_coupon,
-                             {$table_prefix}promotions.coupon_validity_in_days,
-                             {$table_prefix}promotions.coupon_validity_in_date,
-                             {$table_prefix}promotions.coupon_notification,
-                             {$table_prefix}promotions.created_by,
-                             {$table_prefix}promotions.modified_by,
-                             {$table_prefix}promotions.created_at,
-                             {$table_prefix}promotions.updated_at,
-                             {$table_prefix}promotions.is_all_gender,
-                             {$table_prefix}promotions.is_all_age,
-                             {$table_prefix}promotions.is_popup,
-                             {$table_prefix}promotions.is_exclusive,
-                             {$table_prefix}promotions.promotion_value,
-                             {$table_prefix}promotions.currency,
-                             {$table_prefix}promotions.offer_type,
-                             {$table_prefix}promotions.offer_value,
-                             {$table_prefix}promotions.original_price,
-                             {$table_prefix}promotions.redemption_method,
-                             {$table_prefix}promotions.redemption_verification_code,
-                             {$table_prefix}promotions.short_description,
-                             {$table_prefix}promotions.is_visible,
-                             {$table_prefix}promotions.is_3rd_party_field_complete,
-                             {$table_prefix}promotions.is_3rd_party_promotion,
-                             {$table_prefix}promotions.third_party_name,
-                             {$table_prefix}promotions.is_unique_redeem,
-                             {$table_prefix}promotions.issuance_expiry_in_days,
-                             {$table_prefix}promotions.available,
-                             {$table_prefix}promotions.maximum_issuance,
-                             {$table_prefix}promotions.maximum_redeem,
-                             {$table_prefix}promotions.transaction_amount_commission,
-                             {$table_prefix}promotions.fixed_amount_commission,
-                             {$table_prefix}promotions.is_payable_by_wallet,
-                             {$table_prefix}promotions.is_payable_by_normal,
-                             {$table_prefix}promotions.is_sponsored,
-                             {$table_prefix}promotions.price_old,
-                             {$table_prefix}promotions.merchant_commision,
-                             {$table_prefix}promotions.price_selling,
-                             {$table_prefix}promotions.max_quantity_per_purchase,
-                             {$table_prefix}promotions.max_quantity_per_user,
-                             {$table_prefix}promotions.price_to_gtm,
-                             {$table_prefix}promotions.how_to_buy_and_redeem as how_to_buy_and_redeem_coupon,
-                        {$table_prefix}promotions.promotion_id as campaign_id, 'coupon' as campaign_type, {$table_prefix}coupon_translations.promotion_name AS display_name,
+                             media.path as image_path,
+                    {$table_prefix}promotions.promotion_id as campaign_id, 'coupon' as campaign_type, {$table_prefix}coupon_translations.promotion_name AS display_name,
                     CASE WHEN {$table_prefix}campaign_status.campaign_status_name = 'expired' THEN {$table_prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$table_prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                                                                 FROM {$table_prefix}merchants om
                                                                                 LEFT JOIN {$table_prefix}timezones ot on ot.timezone_id = om.timezone_id
@@ -1825,20 +1608,11 @@ class CouponSepulsaAPIController extends ControllerAPI
                     THEN 5 ELSE {$table_prefix}campaign_status.order END) END AS campaign_status_order,
                     {$table_prefix}campaign_status.order
                     "),
-                    'coupon_sepulsa.external_id',
-                    'coupon_sepulsa.price_from_sepulsa',
-                    'coupon_sepulsa.price_value',
-                    'coupon_sepulsa.coupon_image_url as image_path',
-                    'coupon_sepulsa.coupon_image_url as coupon_image_url',
-                    'coupon_sepulsa.how_to_buy_and_redeem',
-                    'coupon_sepulsa.terms_and_conditions',
-                    'coupon_sepulsa.token',
-                    'coupon_sepulsa.voucher_benefit',
-                    DB::raw("(select GROUP_CONCAT(IF({$table_prefix}merchants.object_type = 'tenant', CONCAT({$table_prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$table_prefix}merchants.name)) separator ', ') from {$table_prefix}promotion_retailer
-                                    inner join {$table_prefix}merchants on {$table_prefix}merchants.merchant_id = {$table_prefix}promotion_retailer.retailer_id
-                                    inner join {$table_prefix}merchants pm on {$table_prefix}merchants.parent_id = pm.merchant_id
-                                    where {$table_prefix}promotion_retailer.promotion_id = {$table_prefix}promotions.promotion_id) as campaign_location_names"),
-                    DB::raw("CASE {$table_prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END as 'is_auto_issue_on_signup'"),
+                    // DB::raw("(select GROUP_CONCAT(IF({$table_prefix}merchants.object_type = 'tenant', CONCAT({$table_prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$table_prefix}merchants.name)) separator ', ') from {$table_prefix}promotion_retailer
+                    //                 inner join {$table_prefix}merchants on {$table_prefix}merchants.merchant_id = {$table_prefix}promotion_retailer.retailer_id
+                    //                 inner join {$table_prefix}merchants pm on {$table_prefix}merchants.parent_id = pm.merchant_id
+                    //                 where {$table_prefix}promotion_retailer.promotion_id = {$table_prefix}promotions.promotion_id) as campaign_location_names"),
+                    //DB::raw("CASE {$table_prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END as 'is_auto_issue_on_signup'"),
                     DB::raw("CASE WHEN {$table_prefix}promotions.end_date IS NOT NULL THEN
                         CASE WHEN
                             DATE_FORMAT({$table_prefix}promotions.end_date, '%Y-%m-%d %H:%i:%s') = '0000-00-00 00:00:00' THEN {$table_prefix}promotions.status
@@ -1853,12 +1627,12 @@ class CouponSepulsaAPIController extends ControllerAPI
                         END
                     ELSE
                         {$table_prefix}promotions.status
-                    END as 'coupon_status'"),
-                    DB::raw("COUNT(DISTINCT {$table_prefix}promotion_retailer.promotion_retailer_id) as total_location"),
-                    DB::raw("(SELECT GROUP_CONCAT(issued_coupon_code separator '\n')
-                        FROM {$table_prefix}issued_coupons ic
-                        WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id
-                            ) as coupon_codes"),
+                    END as 'status'"),
+                    // DB::raw("COUNT(DISTINCT {$table_prefix}promotion_retailer.promotion_retailer_id) as total_location"),
+                    // DB::raw("(SELECT GROUP_CONCAT(url separator '\n')
+                    //     FROM {$table_prefix}issued_coupons ic
+                    //     WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id
+                    //         ) as shortlinks"),
                     DB::raw("IF({$table_prefix}promotions.is_all_gender = 'Y', 'A', {$table_prefix}promotions.is_all_gender) as gender"),
                     DB::raw("{$table_prefix}promotions.max_quantity_per_purchase as max_qty_per_purchase"),
                     DB::raw("{$table_prefix}promotions.max_quantity_per_user as max_qty_per_user")
@@ -1867,11 +1641,15 @@ class CouponSepulsaAPIController extends ControllerAPI
                 ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
-                ->join('coupon_sepulsa', 'coupon_sepulsa.promotion_id', '=', 'promotions.promotion_id')
-
-                ->joinPromotionRules()
+                ->leftJoin(DB::raw("(
+                        SELECT {$table_prefix}media.* FROM {$table_prefix}media
+                        {$mediaJoin}
+                        WHERE media_name_long = 'coupon_translation_image_resized_default'
+                        {$mediaOptimize} ) as media
+                    "), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
                 ->groupBy('promotions.promotion_id')
-                ->where('promotion_type', 'sepulsa');
+                ->where('promotion_type', 'gift_n_coupon');
+
 
             if($filterName === '') {
                 // handle role campaign admin cause not join with campaign account
@@ -2209,155 +1987,34 @@ class CouponSepulsaAPIController extends ControllerAPI
         return $output;
     }
 
-
-
-    /**
-     * GET - Campaign List From Sepulsa API
-     *
-     * @author Firmansyah <firmansyah@dominopos.com>
-     *
-     * List of API Parameters
-     * ----------------------
-     * API : https://bonabo.sepulsa.co.id/api/v1/partner/voucher/list
-     *
-     * @param q optional  string   Search query.
-     * @param rp optional numeric  Record per page.
-     * @param f optional  json     Filter.
-     * @param token optional    string   Token reserve.
-     * @param campid optional string   Filter by campaign id.
-     * @param title optional  string   Filter by campaign title.
-     * @param title optional  string   Filter by voucher title.
-     * @param vid optional    string   Filter by voucher id.
-     *
-     *
-     * @return Illuminate\Support\Facades\Response
-     */
-    public function getVoucherSepulsaList()
+    public function getDetailGiftNCoupon()
     {
+        $user = NULL;
         try {
             $httpCode = 200;
 
             $this->checkAuth();
 
+            // Try to check access control list, does this user allowed to
+            // perform this action
             $user = $this->api->user;
 
+            // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = $this->couponModifiyRoles;
+            $validRoles = $this->couponViewRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
-                $message = 'You have to log in to continue';
+                $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
 
-            $this->config = ! empty($config) ? $config : Config::get('orbit.partners_api.sepulsa');
-            $this->client = SepulsaClient::create($this->config);
-
-            $listOfCoupons = VoucherList::create($this->config)->getList();
-
-            $totalCoupon = count($listOfCoupons);
-
-            $data = new stdclass();
-            $data->total_records = $totalCoupon;
-            $data->returned_records = $totalCoupon;
-            $data->records = $listOfCoupons;
-
-            if ($totalCoupon === 0) {
-                $data->records = NULL;
-                $this->response->message = Lang::get('statuses.orbit.nodata.coupon');
-            }
-
-            $this->response->data = $data;
-        } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.coupon.getsearchcouponbyissueretailer.access.forbidden', array($this, $e));
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-            $httpCode = 403;
-        } catch (InvalidArgsException $e) {
-            Event::fire('orbit.coupon.getsearchcouponbyissueretailer.invalid.arguments', array($this, $e));
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $result['total_records'] = 0;
-            $result['returned_records'] = 0;
-            $result['records'] = null;
-
-            $this->response->data = $result;
-            $httpCode = 403;
-        } catch (QueryException $e) {
-            Event::fire('orbit.coupon.getsearchcouponbyissueretailer.query.error', array($this, $e));
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-
-            // Only shows full query error when we are in debug mode
-            if (Config::get('app.debug')) {
-                $this->response->message = $e->getMessage();
-            } else {
-                $this->response->message = Lang::get('validation.orbit.queryerror');
-            }
-            $this->response->data = null;
-            $httpCode = 500;
-        } catch (Exception $e) {
-            Event::fire('orbit.coupon.getsearchcouponbyissueretailer.general.exception', array($this, $e));
-
-            $this->response->code = $this->getNonZeroCode($e->getCode());
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-        }
-
-        $output = $this->render($httpCode);
-        Event::fire('orbit.coupon.getsearchcouponbyissueretailer.before.render', array($this, &$output));
-
-        return $output;
-    }
-
-    /**
-     * GET - Campaign Detail From Sepulsa API
-     *
-     * @author Firmansyah <firmansyah@dominopos.com>
-     *
-     * List of API Parameters
-     * ----------------------
-     * @param token  number   Campaign ID.
-     *
-     * @return Illuminate\Support\Facades\Response
-     */
-    public function getVoucherSepulsaDetail()
-    {
-        try {
-            $httpCode = 200;
-
-            $this->checkAuth();
-
-            $user = $this->api->user;
-
-            $role = $user->role;
-            $validRoles = $this->couponModifiyRoles;
-            if (! in_array( strtolower($role->role_name), $validRoles)) {
-                $message = 'You have to log in to continue';
-                ACL::throwAccessForbidden($message);
-            }
-
-            $this->config = ! empty($config) ? $config : Config::get('orbit.partners_api.sepulsa');
-            $this->client = SepulsaClient::create($this->config);
-
-            $this->registerCustomValidation();
-
-            $token = OrbitInput::get('token');
+            $promotion_id = OrbitInput::get('promotion_id');
 
             $validator = Validator::make(
                 array(
-                    'token' => $token,
+                    'promotion_id' => $promotion_id,
                 ),
                 array(
-                    'token' => 'orbit.unique.token',
-                ),
-                array(
-                    'orbit.unique.token' => 'Token already used for another coupon',
+                    'promotion_id' => 'required',
                 )
             );
 
@@ -2367,117 +2024,40 @@ class CouponSepulsaAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $listOfCoupons = VoucherDetail::create($this->config)->getDetail($token)->result;
+            $table_prefix = DB::getTablePrefix();
+            $coupon = Coupon::allowedForPMPUser($user, 'coupon')
+                                ->select('promotions.promotion_id',
+                                         'promotions.promotion_name',
+                                         'promotions.description',
+                                         'promotions.how_to_buy_and_redeem',
+                                         'promotions.begin_date',
+                                         'promotions.end_date',
+                                         'promotions.price_to_gtm',
+                                         'promotions.price_old as price_value',
+                                         'promotions.price_selling',
+                                         'promotions.maximum_issued_coupon',
+                                         'promotions.max_quantity_per_purchase',
+                                         'promotions.max_quantity_per_user',
+                                         'promotions.is_exclusive',
+                                         DB::raw("(SELECT GROUP_CONCAT(IF({$table_prefix}merchants.object_type = 'tenant', CONCAT({$table_prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$table_prefix}merchants.name)) separator ', ') from {$table_prefix}promotion_retailer
+                                                    inner join {$table_prefix}merchants on {$table_prefix}merchants.merchant_id = {$table_prefix}promotion_retailer.retailer_id
+                                                    inner join {$table_prefix}merchants pm on {$table_prefix}merchants.parent_id = pm.merchant_id
+                                                    where {$table_prefix}promotion_retailer.promotion_id = {$table_prefix}promotions.promotion_id) as campaign_location_names"),
+                                         DB::raw("(SELECT GROUP_CONCAT(url separator '\n')
+                                                    FROM {$table_prefix}issued_coupons ic
+                                                    WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id
+                                                        ) as shortlinks"),
+                                         DB::raw("IF({$table_prefix}promotions.is_all_gender = 'Y', 'A', {$table_prefix}promotions.is_all_gender) as gender"),
+                                         'promotions.coupon_validity_in_date',
+                                         'promotions.status'
+                                  )
+                                ->with('translations.media', 'keywords', 'product_tags', 'campaignObjectPartners')
+                                ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                                ->where('promotions.promotion_id', $promotion_id)
+                                ->where('promotions.promotion_type', Coupon::TYPE_GIFTNCOUPON)
+                                ->firstOrFail();
 
-            $totalCoupon = count($listOfCoupons);
-
-            $data = new stdclass();
-            $data->total_records = $totalCoupon;
-            $data->returned_records = $totalCoupon;
-            $data->records = $listOfCoupons;
-
-            if ($totalCoupon === 0) {
-                $data->records = NULL;
-                $this->response->message = Lang::get('statuses.orbit.nodata.coupon');
-            }
-
-            $this->response->data = $data;
-        } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.coupon.getsearchcouponbyissueretailer.access.forbidden', array($this, $e));
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-            $httpCode = 403;
-        } catch (InvalidArgsException $e) {
-            Event::fire('orbit.coupon.getsearchcouponbyissueretailer.invalid.arguments', array($this, $e));
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-            $httpCode = 403;
-        } catch (QueryException $e) {
-            Event::fire('orbit.coupon.getsearchcouponbyissueretailer.query.error', array($this, $e));
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-
-            // Only shows full query error when we are in debug mode
-            if (Config::get('app.debug')) {
-                $this->response->message = $e->getMessage();
-            } else {
-                $this->response->message = Lang::get('validation.orbit.queryerror');
-            }
-            $this->response->data = null;
-            $httpCode = 500;
-        } catch (Exception $e) {
-            Event::fire('orbit.coupon.getsearchcouponbyissueretailer.general.exception', array($this, $e));
-
-            $this->response->code = $this->getNonZeroCode($e->getCode());
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-        }
-
-        $output = $this->render($httpCode);
-        Event::fire('orbit.coupon.getsearchcouponbyissueretailer.before.render', array($this, &$output));
-
-        return $output;
-    }
-
-    public function getAvailableSepulsaTokenList()
-    {
-        try {
-            $httpCode = 200;
-
-            $this->checkAuth();
-
-            $user = $this->api->user;
-
-            $role = $user->role;
-            $validRoles = $this->couponModifiyRoles;
-            if (! in_array( strtolower($role->role_name), $validRoles)) {
-                $message = 'You have to log in to continue';
-                ACL::throwAccessForbidden($message);
-            }
-
-            $this->config = ! empty($config) ? $config : Config::get('orbit.partners_api.sepulsa');
-            $this->client = SepulsaClient::create($this->config);
-
-            $takeSepulsa = OrbitInput::get('take_sepulsa', 100);
-            $pageSepulsa = OrbitInput::get('page_sepulsa', 1);
-            $take = OrbitInput::get('take');
-            $skip = OrbitInput::get('skip');
-
-            $sepulsaResponse = VoucherList::create($this->config)->getList('', $takeSepulsa, [], $pageSepulsa);
-            $sepulsaVouchers = isset($sepulsaResponse->result->data) ? $sepulsaResponse->result->data : null;
-
-            $availableToken = [];
-            if (! empty($sepulsaVouchers)) {
-                foreach ($sepulsaVouchers as $key => $value) {
-                    $checkToken = CouponSepulsa::where('token', '=', $value->token)->first();
-                    if (! $checkToken) {
-                        $availableToken[] = $value;
-                    }
-                }
-            }
-
-            $totalToken = count($availableToken);
-            $returnedRecord = (!empty($take) && !empty($skip)) ? array_slice($availableToken, $skip, $take) : $availableToken;
-
-            $data = new stdclass();
-            $data->total_records = $totalToken;
-            $data->returned_records = count($returnedRecord);
-            $data->records = $returnedRecord;
-
-            if (empty($availableToken)) {
-                $data->records = NULL;
-                $this->response->message = Lang::get('statuses.orbit.nodata.coupon');
-            } else {
-                $this->response->data = $data;
-            }
+            $this->response->data = $coupon;
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
@@ -2494,6 +2074,7 @@ class CouponSepulsaAPIController extends ControllerAPI
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
+
             // Only shows full query error when we are in debug mode
             if (Config::get('app.debug')) {
                 $this->response->message = $e->getMessage();
@@ -2506,12 +2087,12 @@ class CouponSepulsaAPIController extends ControllerAPI
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = $e->getLine();
         }
 
-        $output = $this->render($httpCode);
-        return $output;
+        return $this->render($httpCode);
     }
+
 
     protected function registerCustomValidation()
     {
