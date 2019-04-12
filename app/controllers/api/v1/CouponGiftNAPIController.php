@@ -144,6 +144,11 @@ class CouponGiftNAPIController extends ControllerAPI
             $maxQuantityPerUser = OrbitInput::post('max_quantity_per_user', NULL);
             $shortlinks = OrbitInput::post('shortlinks');
             $price_to_gtm = OrbitInput::post('price_to_gtm');
+            $status = OrbitInput::post('status');
+
+            if ($status === 'active') {
+                $campaignStatus === 'ongoing';
+            }
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -640,7 +645,7 @@ class CouponGiftNAPIController extends ControllerAPI
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.coupon.postnewcoupon.after.commit', array($this, $newcoupon));
+            Event::fire('orbit.coupon.postnewgiftncoupon.after.commit', array($this, $newcoupon));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.coupon.postnewcoupon.access.forbidden', array($this, $e));
 
@@ -830,12 +835,18 @@ class CouponGiftNAPIController extends ControllerAPI
             $coupon_image_url = OrbitInput::post('coupon_image_url');
             $how_to_buy_and_redeem = OrbitInput::post('how_to_buy_and_redeem');
             $terms_and_conditions = OrbitInput::post('terms_and_conditions');
+            $status = OrbitInput::post('status');
+            if ($status === 'active') {
+                $campaignStatus = 'ongoing';
+            } else {
+                $campaignStatus = 'not started';
+            }
 
             $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
-            $status = 'inactive';
-            if ($campaignStatus === 'ongoing') {
-                $status = 'active';
-            }
+            // $status = 'inactive';
+            // if ($campaignStatus === 'ongoing') {
+            //     $status = 'active';
+            // }
 
             $data = array(
                 'promotion_id'            => $promotion_id,
@@ -971,6 +982,11 @@ class CouponGiftNAPIController extends ControllerAPI
             });
 
             OrbitInput::post('campaign_status', function($campaignStatus) use ($updatedcoupon, $idStatus, $status) {
+                $updatedcoupon->status = $status;
+                $updatedcoupon->campaign_status_id = $idStatus->campaign_status_id;
+            });
+
+            OrbitInput::post('status', function($campaignStatus) use ($updatedcoupon, $idStatus, $status) {
                 $updatedcoupon->status = $status;
                 $updatedcoupon->campaign_status_id = $idStatus->campaign_status_id;
             });
