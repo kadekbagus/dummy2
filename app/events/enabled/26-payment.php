@@ -49,7 +49,7 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
         if ($payment->forSepulsa()) {
             $paymentUser->notify(new SepulsaCouponNotAvailableNotification($payment));
         }
-        else if ($payment->forHotDeals()) {
+        else if ($payment->forHotDeals() || $payment->forGiftNCoupon()) {
             $paymentUser->notify(new HotDealsCouponNotAvailableNotification($payment));
         }
     }
@@ -79,7 +79,10 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
 
             // Determine which coupon we will issue...
             $queue = 'Orbit\\Queue\\Coupon\\HotDeals\\GetCouponQueue';
-            if ($payment->forSepulsa()) {
+            if ($payment->forGiftNCoupon()) {
+                $queue = 'Orbit\\Queue\\Coupon\\GiftNCoupon\\GetCouponQueue';
+            }
+            else if ($payment->forSepulsa()) {
                 $queue = 'Orbit\\Queue\\Coupon\\Sepulsa\\GetCouponQueue';
             }
 
@@ -92,8 +95,13 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
             // Otherwise, issue the coupon right away!
             Log::info("PaidCoupon: Issuing coupon directly for PaymentID {$paymentId} ...");
 
+            $queue = 'Orbit\\Queue\\Coupon\\HotDeals\\GetCouponQueue';
+            if ($payment->forGiftNCoupon()) {
+                $queue = 'Orbit\\Queue\\Coupon\\GiftNCoupon\\GetCouponQueue';
+            }
+
             Queue::connection('sync')->push(
-                'Orbit\\Queue\\Coupon\\HotDeals\\GetCouponQueue',
+                $queue,
                 $queueData
             );
         }
