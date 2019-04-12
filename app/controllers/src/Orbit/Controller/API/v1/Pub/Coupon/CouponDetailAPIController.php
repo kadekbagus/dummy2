@@ -140,7 +140,7 @@ class CouponDetailAPIController extends PubControllerAPI
                                         FROM {$prefix}media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
                                         AND m.object_id = default_translation.coupon_translation_id
-                                        AND {$prefix}default_translation.merchant_language_id = {$this->quote($valid_language->language_id)}
+                                        AND default_translation.merchant_language_id = {$this->quote($valid_language->language_id)}
                                         LIMIT 1
                                         )
                                     ELSE
