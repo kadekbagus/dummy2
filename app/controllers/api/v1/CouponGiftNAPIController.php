@@ -154,10 +154,10 @@ class CouponGiftNAPIController extends ControllerAPI
                 $campaignStatus = 'not started';
             }
 
-            $status = 'inactive';
-            if ($campaignStatus === 'ongoing') {
-                $status = 'active';
-            }
+            // $status = 'inactive';
+            // if ($campaignStatus === 'ongoing') {
+            //     $status = 'active';
+            // }
 
             $validator_value = [
                 'promotion_name'          => $promotion_name,
