@@ -202,7 +202,6 @@ class CouponGiftNAPIController extends ControllerAPI
                 'maximum_issued_coupon'   => 'required',
                 'price_value'             => 'required',
                 'price_selling'           => 'required',
-                'how_to_buy_and_redeem'   => 'required',
                 'max_quantity_per_purchase' => 'required|numeric',
                 'shortlinks'              => 'required',
                 'price_to_gtm'            => 'required',
