@@ -144,15 +144,20 @@ class CouponGiftNAPIController extends ControllerAPI
             $maxQuantityPerUser = OrbitInput::post('max_quantity_per_user', NULL);
             $shortlinks = OrbitInput::post('shortlinks');
             $price_to_gtm = OrbitInput::post('price_to_gtm');
+            $status = OrbitInput::post('status');
+
+            if ($status === 'active') {
+                $campaignStatus === 'ongoing';
+            }
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
             }
 
-            $status = 'inactive';
-            if ($campaignStatus === 'ongoing') {
-                $status = 'active';
-            }
+            // $status = 'inactive';
+            // if ($campaignStatus === 'ongoing') {
+            //     $status = 'active';
+            // }
 
             $validator_value = [
                 'promotion_name'          => $promotion_name,
@@ -197,7 +202,6 @@ class CouponGiftNAPIController extends ControllerAPI
                 'maximum_issued_coupon'   => 'required',
                 'price_value'             => 'required',
                 'price_selling'           => 'required',
-                'how_to_buy_and_redeem'   => 'required',
                 'max_quantity_per_purchase' => 'required|numeric',
                 'shortlinks'              => 'required',
                 'price_to_gtm'            => 'required',
@@ -210,6 +214,14 @@ class CouponGiftNAPIController extends ControllerAPI
                 'discount_value.numeric'  => 'The coupon value must be a number',
                 'discount_value.min'      => 'The coupon value must be greater than zero',
                 'is_popup.in'             => 'is popup must Y or N',
+                'promotion_name.required' => 'Coupon name is required',
+                'begin_date.required'     => 'Start Date is required',
+                'end_date.required'       => 'End Date is required',
+                'price_to_gtm.required'   => 'GIFT-N Price to GTM is required',
+                'price_value.required'    => 'Coupon Facial Value is required',
+                'price_selling.required'  => 'Selling Price to User is required',
+                'shortlinks.required'     => 'Shortlink is required',
+                'coupon_validity_in_date.required'     => 'Validity Redeem Date is required',
             ];
 
             if (! empty($is_exclusive) && ! empty($partner_ids)) {
@@ -640,7 +652,7 @@ class CouponGiftNAPIController extends ControllerAPI
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.coupon.postnewcoupon.after.commit', array($this, $newcoupon));
+            Event::fire('orbit.coupon.postnewgiftncoupon.after.commit', array($this, $newcoupon));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.coupon.postnewcoupon.access.forbidden', array($this, $e));
 
@@ -830,12 +842,18 @@ class CouponGiftNAPIController extends ControllerAPI
             $coupon_image_url = OrbitInput::post('coupon_image_url');
             $how_to_buy_and_redeem = OrbitInput::post('how_to_buy_and_redeem');
             $terms_and_conditions = OrbitInput::post('terms_and_conditions');
+            $status = OrbitInput::post('status');
+            if ($status === 'active') {
+                $campaignStatus = 'ongoing';
+            } else {
+                $campaignStatus = 'not started';
+            }
 
             $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
-            $status = 'inactive';
-            if ($campaignStatus === 'ongoing') {
-                $status = 'active';
-            }
+            // $status = 'inactive';
+            // if ($campaignStatus === 'ongoing') {
+            //     $status = 'active';
+            // }
 
             $data = array(
                 'promotion_id'            => $promotion_id,
@@ -886,6 +904,7 @@ class CouponGiftNAPIController extends ControllerAPI
                     'orbit.update.coupon'       => 'Cannot update campaign with status ' . $campaignStatus,
                     'orbit.empty.exclusive_partner' => 'Partner is not exclusive / inactive',
                     'orbit.check.issued_coupon' => 'There is one or more coupon unredeemed',
+                    'promotion_id.required'     => 'GTM Coupon ID is required',
                 )
             );
 
@@ -971,6 +990,11 @@ class CouponGiftNAPIController extends ControllerAPI
             });
 
             OrbitInput::post('campaign_status', function($campaignStatus) use ($updatedcoupon, $idStatus, $status) {
+                $updatedcoupon->status = $status;
+                $updatedcoupon->campaign_status_id = $idStatus->campaign_status_id;
+            });
+
+            OrbitInput::post('status', function($campaignStatus) use ($updatedcoupon, $idStatus, $status) {
                 $updatedcoupon->status = $status;
                 $updatedcoupon->campaign_status_id = $idStatus->campaign_status_id;
             });
@@ -1588,7 +1612,7 @@ class CouponGiftNAPIController extends ControllerAPI
                 //->with('couponRule')
                 ->select(
                     DB::raw("{$table_prefix}promotions.promotion_id,
-                             {$table_prefix}promotions.promotion_name,
+                             {$table_prefix}coupon_translations.promotion_name AS promotion_name,
                              {$table_prefix}promotions.promotion_type,
                              {$table_prefix}promotions.description,
                              {$table_prefix}promotions.begin_date,
