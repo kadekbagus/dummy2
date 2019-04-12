@@ -215,6 +215,14 @@ class CouponGiftNAPIController extends ControllerAPI
                 'discount_value.numeric'  => 'The coupon value must be a number',
                 'discount_value.min'      => 'The coupon value must be greater than zero',
                 'is_popup.in'             => 'is popup must Y or N',
+                'promotion_name.required' => 'Coupon name is required',
+                'begin_date.required'     => 'Start Date is required',
+                'end_date.required'       => 'End Date is required',
+                'price_to_gtm.required'   => 'GIFT-N Price to GTM is required',
+                'price_value.required'    => 'Coupon Facial Value is required',
+                'price_selling.required'  => 'Selling Price to User is required',
+                'shortlinks.required'     => 'Shortlink is required',
+                'coupon_validity_in_date.required'     => 'Validity Redeem Date is required',
             ];
 
             if (! empty($is_exclusive) && ! empty($partner_ids)) {
@@ -897,6 +905,7 @@ class CouponGiftNAPIController extends ControllerAPI
                     'orbit.update.coupon'       => 'Cannot update campaign with status ' . $campaignStatus,
                     'orbit.empty.exclusive_partner' => 'Partner is not exclusive / inactive',
                     'orbit.check.issued_coupon' => 'There is one or more coupon unredeemed',
+                    'promotion_id.required'     => 'GTM Coupon ID is required',
                 )
             );
 
