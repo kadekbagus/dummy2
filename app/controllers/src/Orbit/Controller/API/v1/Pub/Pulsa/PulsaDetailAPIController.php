@@ -98,7 +98,7 @@ class PulsaDetailAPIController extends PubControllerAPI
                             ->first();
 
             // Cache the result of database calls
-            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($pulsa);
+            // OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($pulsa);
 
             $this->response->data = $pulsa;
             $this->response->code = 0;
