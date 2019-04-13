@@ -166,7 +166,7 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
 
             $coupon->redeem_codes = null;
             if ($coupon->coupon_type === 'gift_n_coupon') {
-                $issuedCoupon = PaymentTransaction::select('issued_coupons.issued_coupon_code')
+                $coupon->redeem_codes = PaymentTransaction::select('issued_coupons.issued_coupon_code')
                     ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                     ->join('issued_coupons', function ($join) {
                         $join->on('issued_coupons.promotion_id', '=', 'payment_transaction_details.object_id');
@@ -177,8 +177,8 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
                         $query->where('payment_transactions.payment_transaction_id', '=', $payment_transaction_id)
                               ->orWhere('payment_transactions.external_payment_transaction_id', '=', $payment_transaction_id);
                       })
-                    ->get();
-                $coupon->redeem_codes = $issuedCoupon->issued_coupon_code;
+                    ->get()
+                    ->lists('issued_coupon_code');
             }
 
             // Fallback to IDR by default?
