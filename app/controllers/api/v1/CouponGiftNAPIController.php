@@ -147,7 +147,7 @@ class CouponGiftNAPIController extends ControllerAPI
             $status = OrbitInput::post('status');
 
             if ($status === 'active') {
-                $campaignStatus === 'ongoing';
+                $campaignStatus = 'ongoing';
             }
             else {
                 $campaignStatus = 'not started';
@@ -702,7 +702,7 @@ class CouponGiftNAPIController extends ControllerAPI
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
+            $this->response->message = $e->getMessage() . $e->getFile() . $e->getLine();
             $this->response->data = null;
 
             // Rollback the changes
