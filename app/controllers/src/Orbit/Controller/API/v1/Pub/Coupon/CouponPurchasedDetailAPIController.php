@@ -177,7 +177,7 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
                       })
                     ->where('issued_coupons.status', '=', 'issued')
                     ->get()
-                    ->lists('issued_coupon_code');
+                    ->lists('url');
             }
 
             // Fallback to IDR by default?
