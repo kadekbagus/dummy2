@@ -168,7 +168,7 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
             if ($coupon->coupon_type === 'gift_n_coupon') {
                 $coupon->redeem_codes = PaymentTransaction::select('issued_coupons.url')
                     ->join('issued_coupons', function ($q) {
-                        $q->on('issued_coupons.merchant_id', '=', 'payment_transactions.payment_transaction_id');
+                        $q->on('issued_coupons.transaction_id', '=', 'payment_transactions.payment_transaction_id');
                     })
                     // payment_transaction_id is value of payment_transaction_id or external_payment_transaction_id
                     ->where(function($query) use($payment_transaction_id) {
