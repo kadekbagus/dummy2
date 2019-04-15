@@ -345,8 +345,6 @@ class CouponGiftNAPIController extends ControllerAPI
 
             $newcoupon->save();
 
-            Event::fire('orbit.coupon.postnewcoupon.after.save', array($this, $newcoupon));
-
             // Return campaign_status_name
             $newcoupon->campaign_status = $idStatus->campaign_status_name;
 
@@ -562,33 +560,6 @@ class CouponGiftNAPIController extends ControllerAPI
                 $isThirdParty = $is3rdPartyPromotion === 'Y' ? TRUE : FALSE;
                 $this->validateAndSaveTranslations($newcoupon, $translation_json_string, 'create', $isThirdParty);
             });
-
-            // Save manual image
-            $couponTranslation = CouponTranslation::where('merchant_language_id', $id_language_default)
-                                                  ->where('promotion_id', $newcoupon->promotion_id)
-                                                  ->first();
-
-            $couponMediaTranslations = [];
-            if (! empty($couponTranslation)) {
-                $couponImageType = ['coupon_translation_image_orig', 'coupon_translation_image_resized_default', 'coupon_translation_image_cropped_default'];
-
-                foreach ($couponImageType as $key => $val) {
-                    $couponMedia = new Media();
-                    $couponMedia->media_name_id = 'coupon_translation_image';
-                    $couponMedia->media_name_long = $val;
-                    $couponMedia->object_id = $couponTranslation->coupon_translation_id;
-                    $couponMedia->object_name = 'coupon_translation';
-                    $couponMedia->path = $coupon_image_url;
-                    $couponMedia->realpath = $coupon_image_url;
-                    $couponMedia->cdn_url = $coupon_image_url;
-                    $couponMedia->save();
-                    $couponMediaTranslations[] = $couponMedia;
-                }
-
-            }
-
-            $newcoupon->media = $couponMediaTranslations;
-
 
             // Default language for pmp_account is required
             $malls = implode("','", $mallid);
