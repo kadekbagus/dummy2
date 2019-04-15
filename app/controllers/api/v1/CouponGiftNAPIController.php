@@ -194,7 +194,7 @@ class CouponGiftNAPIController extends ControllerAPI
                 'is_popup'                => 'in:Y,N',
                 'is_visible'              => 'required|in:Y,N',
                 'is_3rd_party_promotion'  => 'required|in:Y,N',
-                'maximum_issued_coupon'   => 'required',
+                'maximum_issued_coupon'   => '',
                 'price_value'             => 'required',
                 'price_selling'           => 'required',
                 'max_quantity_per_purchase' => 'required|numeric',
@@ -292,6 +292,7 @@ class CouponGiftNAPIController extends ControllerAPI
 
             // save Coupon.
             $idStatus = CampaignStatus::select('campaign_status_id','campaign_status_name')->where('campaign_status_name', $campaignStatus)->first();
+            $maximum_issued_coupon = count($arrayShortlinks);
 
             $newcoupon = new Coupon();
             $newcoupon->merchant_id = $merchant_id;
