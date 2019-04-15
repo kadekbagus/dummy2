@@ -81,7 +81,12 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             $paymentDenied = false;
             $shouldUpdate = false;
 
-            $payment_update = PaymentTransaction::with(['details.coupon', 'midtrans', 'issued_coupons', 'user'])->findOrFail($payment_transaction_id);
+            $payment_update = PaymentTransaction::with(['details.coupon', 'details.pulsa', 'midtrans', 'issued_coupons', 'user'])->findOrFail($payment_transaction_id);
+
+            if ($payment_update->forPulsa()) {
+                $this->commit();
+                return (new PaymentPulsaUpdateAPIController())->postPaymentPulsaUpdate();
+            }
 
             $oldStatus = $payment_update->status;
 
@@ -207,7 +212,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                     if (isset($failed)) {
                         $payment_update->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
                     }
-                    else if ($payment_update->paidWith(['bank_transfer', 'echannel']) || $payment_update->forSepulsa()) {
+                    else if ($payment_update->paidWith(['bank_transfer', 'echannel', 'gopay']) || $payment_update->forSepulsa()) {
                         $payment_update->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
                     }
                 }
@@ -290,7 +295,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
                     // Notify customer for pending payment (to complete the payment).
                     // Send email to address that being used on checkout (can be different with user's email)
-                    if ($payment_update->paidWith(['bank_transfer', 'echannel'])) {
+                    if ($payment_update->paidWith(['bank_transfer', 'echannel', 'gopay'])) {
                         $paymentUser = new User;
                         $paymentUser->email = $payment_update->user_email;
                         $paymentUser->notify(new PendingPaymentNotification($payment_update), 30);

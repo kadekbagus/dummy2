@@ -442,3 +442,35 @@ Route::post('/api/v1/pub/coupon-discount-code', function()
 });
 
 Route::post('/app/v1/pub/coupon-discount-code', ['as' => 'pub-coupon-discount-code', 'uses' => 'IntermediatePubAuthController@Coupon\CouponDiscountCode_postCouponDiscountCode']);
+
+/**
+ * Create new coupon giftn
+ */
+Route::post('/api/v1/coupon-giftn/new', function()
+{
+    return CouponGiftNAPIController::create()->postNewGiftNCoupon();
+});
+
+/**
+ * Update coupon giftn
+ */
+Route::post('/api/v1/coupon-giftn/update', function()
+{
+    return CouponGiftNAPIController::create()->postUpdateGiftNCoupon();
+});
+
+/**
+ * List/Search coupon giftn
+ */
+Route::get('/api/v1/coupon-giftn/search', function()
+{
+    return CouponGiftNAPIController::create()->getSearchGiftNCoupon();
+});
+
+/**
+ * detail coupon giftn
+ */
+Route::get('/api/v1/coupon-giftn/detail', function()
+{
+    return CouponGiftNAPIController::create()->getDetailGiftNCoupon();
+});

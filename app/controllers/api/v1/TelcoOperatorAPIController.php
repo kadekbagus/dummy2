@@ -693,7 +693,7 @@ class TelcoOperatorAPIController extends ControllerAPI
 
             if ($status === 'inactive') {
                 $activePulsa = Pulsa::where('status', 'active')
-                    ->where('telco_operator_id', '<>', $id)
+                    ->where('telco_operator_id', '=', $id)
                     ->first();
 
                 if (is_object($activePulsa)) {

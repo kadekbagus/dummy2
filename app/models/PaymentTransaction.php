@@ -214,6 +214,20 @@ class PaymentTransaction extends Eloquent
     }
 
     /**
+     * Determine if the payment is for Pulsa.
+     *
+     * @author Budi <budi@dominopos.com>
+     *
+     * @return [type] [description]
+     */
+    public function forGiftNCoupon()
+    {
+        return $this->details->count() > 0
+               && ! empty($this->details->first()->coupon)
+               && $this->details->first()->coupon->promotion_type === Coupon::TYPE_GIFTNCOUPON;
+    }
+
+    /**
      * Determine if the coupon related to this payment is issued.
      *
      * @return [type] [description]
@@ -325,7 +339,7 @@ class PaymentTransaction extends Eloquent
                 }
             }
         }
-        else if ($this->forHotDeals()) {
+        else if ($this->forHotDeals() || $this->forGiftNCoupon()) {
             Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Reverting reserved hot deals coupon status.');
 
             foreach($issuedCoupons as $issuedCoupon) {

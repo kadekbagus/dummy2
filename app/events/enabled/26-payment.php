@@ -49,7 +49,7 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
         if ($payment->forSepulsa()) {
             $paymentUser->notify(new SepulsaCouponNotAvailableNotification($payment));
         }
-        else if ($payment->forHotDeals()) {
+        else if ($payment->forHotDeals() || $payment->forGiftNCoupon()) {
             $paymentUser->notify(new HotDealsCouponNotAvailableNotification($payment));
         }
     }
@@ -72,14 +72,17 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
                 $queueData
             );
         }
-        else if ($payment->forSepulsa() || $payment->paidWith(['bank_transfer', 'echannel'])) {
+        else if ($payment->forSepulsa() || $payment->paidWith(['bank_transfer', 'echannel', 'gopay'])) {
             $delay = Config::get('orbit.transaction.delay_before_issuing_coupon', 75);
 
             Log::info("PaidCoupon: Issuing coupon for PaymentID {$paymentId} after {$delay} seconds...");
 
             // Determine which coupon we will issue...
             $queue = 'Orbit\\Queue\\Coupon\\HotDeals\\GetCouponQueue';
-            if ($payment->forSepulsa()) {
+            if ($payment->forGiftNCoupon()) {
+                $queue = 'Orbit\\Queue\\Coupon\\GiftNCoupon\\GetCouponQueue';
+            }
+            else if ($payment->forSepulsa()) {
                 $queue = 'Orbit\\Queue\\Coupon\\Sepulsa\\GetCouponQueue';
             }
 
@@ -92,8 +95,13 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
             // Otherwise, issue the coupon right away!
             Log::info("PaidCoupon: Issuing coupon directly for PaymentID {$paymentId} ...");
 
+            $queue = 'Orbit\\Queue\\Coupon\\HotDeals\\GetCouponQueue';
+            if ($payment->forGiftNCoupon()) {
+                $queue = 'Orbit\\Queue\\Coupon\\GiftNCoupon\\GetCouponQueue';
+            }
+
             Queue::connection('sync')->push(
-                'Orbit\\Queue\\Coupon\\HotDeals\\GetCouponQueue',
+                $queue,
                 $queueData
             );
         }
