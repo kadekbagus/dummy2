@@ -166,17 +166,16 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
 
             $coupon->redeem_codes = null;
             if ($coupon->coupon_type === 'gift_n_coupon') {
-                $coupon->redeem_codes = PaymentTransaction::select('issued_coupons.issued_coupon_code')
-                    ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
-                    ->join('issued_coupons', function ($join) {
-                        $join->on('issued_coupons.promotion_id', '=', 'payment_transaction_details.object_id');
-                        $join->where('issued_coupons.status', '!=', 'deleted');
+                $coupon->redeem_codes = PaymentTransaction::select('issued_coupons.url')
+                    ->join('issued_coupons', function ($q) {
+                        $q->on('issued_coupons.merchant_id', '=', 'payment_transactions.payment_transaction_id');
                     })
                     // payment_transaction_id is value of payment_transaction_id or external_payment_transaction_id
                     ->where(function($query) use($payment_transaction_id) {
                         $query->where('payment_transactions.payment_transaction_id', '=', $payment_transaction_id)
                               ->orWhere('payment_transactions.external_payment_transaction_id', '=', $payment_transaction_id);
                       })
+                    ->where('issued_coupons.status', '=', 'issued')
                     ->get()
                     ->lists('issued_coupon_code');
             }
