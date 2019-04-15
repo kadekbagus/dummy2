@@ -1947,7 +1947,7 @@ return array(
             'name' => 'click_buy_pulsa',
             'name_long' => 'Click Buy Pulsa',
             'module_name' => 'Pulsa',
-            'type' => 'view',
+            'type' => 'click',
             'object_type' => 'Pulsa',
             'parameter_name' => 'object_id'
         ),

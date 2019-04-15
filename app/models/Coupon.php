@@ -36,6 +36,7 @@ class Coupon extends Eloquent
     const TYPE_NORMAL = 'mall';
     const TYPE_SEPULSA = 'sepulsa';
     const TYPE_HOT_DEALS = 'hot_deals';
+    const TYPE_GIFTNCOUPON = 'gift_n_coupon';
 
     protected $table = 'promotions';
 

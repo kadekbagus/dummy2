@@ -570,8 +570,6 @@ class CouponListNewAPIController extends PubControllerAPI
                                 ->where('issued_coupons.user_id', '=', $user->user_id)
                                 ->where('issued_coupons.status', '=', 'issued')
                                 ->whereIn('promotion_id', $promotionIds)
-                                ->orderBy('created_at', 'desc')
-                                ->groupBy('promotion_id')
                                 ->get()
                                 ->lists('promotion_id');
 

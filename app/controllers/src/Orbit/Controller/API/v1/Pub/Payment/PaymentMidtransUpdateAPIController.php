@@ -81,7 +81,12 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             $paymentDenied = false;
             $shouldUpdate = false;
 
-            $payment_update = PaymentTransaction::with(['details.coupon', 'midtrans', 'issued_coupons', 'user'])->findOrFail($payment_transaction_id);
+            $payment_update = PaymentTransaction::with(['details.coupon', 'details.pulsa', 'midtrans', 'issued_coupons', 'user'])->findOrFail($payment_transaction_id);
+
+            if ($payment_update->forPulsa()) {
+                $this->commit();
+                return (new PaymentPulsaUpdateAPIController())->postPaymentPulsaUpdate();
+            }
 
             $oldStatus = $payment_update->status;
 
