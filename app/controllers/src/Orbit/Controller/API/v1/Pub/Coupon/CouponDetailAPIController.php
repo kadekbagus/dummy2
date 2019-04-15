@@ -131,17 +131,25 @@ class CouponDetailAPIController extends PubControllerAPI
                                     CASE WHEN (SELECT {$image}
                                         FROM {$prefix}media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
-                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id) is null
+                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id
+                                        AND {$prefix}coupon_translations.merchant_language_id = {$this->quote($valid_language->language_id)}
+                                        LIMIT 1
+                                        ) is null
                                     THEN
                                         (SELECT {$image}
                                         FROM {$prefix}media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
-                                        AND m.object_id = default_translation.coupon_translation_id)
+                                        AND m.object_id = default_translation.coupon_translation_id
+                                        AND default_translation.merchant_language_id = {$this->quote($valid_language->language_id)}
+                                        LIMIT 1
+                                        )
                                     ELSE
                                         (SELECT {$image}
                                         FROM {$prefix}media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
-                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id)
+                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id
+                                        AND {$prefix}coupon_translations.merchant_language_id = {$this->quote($valid_language->language_id)}
+                                        LIMIT 1)
                                     END AS original_media_path
                                 "),
                             'promotions.end_date',
@@ -158,7 +166,20 @@ class CouponDetailAPIController extends PubControllerAPI
                             'promotions.max_quantity_per_purchase',
                             'promotions.max_quantity_per_user',
                             'promotions.currency',
-                            'coupon_sepulsa.how_to_buy_and_redeem',
+                            DB::raw("
+                                CASE WHEN ({$prefix}promotions.promotion_type = 'sepulsa') THEN
+                                    {$prefix}coupon_sepulsa.how_to_buy_and_redeem
+                                ELSE
+                                    CASE WHEN (
+                                        {$prefix}coupon_translations.how_to_buy_and_redeem = '' OR
+                                        {$prefix}coupon_translations.how_to_buy_and_redeem is null
+                                    ) THEN
+                                        default_translation.how_to_buy_and_redeem
+                                    ELSE
+                                        {$prefix}coupon_translations.how_to_buy_and_redeem
+                                    END
+                                END as how_to_buy_and_redeem
+                            "),
                             'coupon_sepulsa.terms_and_conditions',
                             'issued_coupons.url as redeem_url',
                             DB::raw('payment.payment_midtrans_info'),
