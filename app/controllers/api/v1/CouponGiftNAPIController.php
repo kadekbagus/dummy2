@@ -149,15 +149,9 @@ class CouponGiftNAPIController extends ControllerAPI
             if ($status === 'active') {
                 $campaignStatus === 'ongoing';
             }
-
-            if (empty($campaignStatus)) {
+            else {
                 $campaignStatus = 'not started';
             }
-
-            // $status = 'inactive';
-            // if ($campaignStatus === 'ongoing') {
-            //     $status = 'active';
-            // }
 
             $validator_value = [
                 'promotion_name'          => $promotion_name,
@@ -814,6 +808,7 @@ class CouponGiftNAPIController extends ControllerAPI
             $how_to_buy_and_redeem = OrbitInput::post('how_to_buy_and_redeem');
             $terms_and_conditions = OrbitInput::post('terms_and_conditions');
             $status = OrbitInput::post('status');
+
             if ($status === 'active') {
                 $campaignStatus = 'ongoing';
             } else {
