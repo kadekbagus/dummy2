@@ -176,33 +176,33 @@
               <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                <strong>{{{ trans('email-receipt.body.transaction_labels.transaction_id') }}}</strong> {{ $transaction['id'] }}
+                <strong>{{{ trans('email-receipt.body.transaction_labels.transaction_id') }}}:</strong> {{ $transaction['id'] }}
                 <br>
-                <strong>{{{ trans('email-receipt.body.transaction_labels.transaction_date') }}}</strong> {{ $transaction['date'] }}
+                <strong>{{{ trans('email-receipt.body.transaction_labels.transaction_date') }}}:</strong> {{ $transaction['date'] }}
                 <br>
-                <strong>{{{ trans('email-receipt.body.transaction_labels.customer_name') }}}</strong> {{ $customerName }}
+                <strong>{{{ trans('email-receipt.body.transaction_labels.customer_name') }}}:</strong> {{ $customerName }}
                 <br>
-                <strong>{{{ trans('email-receipt.body.transaction_labels.phone') }}}</strong> {{ $customerPhone }}
+                <strong>{{{ trans('email-receipt.body.transaction_labels.phone') }}}:</strong> {{ $customerPhone }}
                 <br>
-                <strong>{{{ trans('email-receipt.body.transaction_labels.email') }}}</strong> {{ $customerEmail }}
+                <strong>{{{ trans('email-receipt.body.transaction_labels.email') }}}:</strong> {{ $customerEmail }}
                 <br>
                 <br>
               </p>
 
               <div style="border: 1px solid #bbb; padding: 15px 10px; text-align: center;border-radius: 5px;">
-                <div style="display: inline-block; width: auto; height: auto; max-width: 120px; max-height: 120px;">
+                <div style="display: inline-block; width: auto; height: auto; max-width: 120px; max-height: 120px;vertical-align: top;">
                   <img src="{{{ $couponImage }}}" alt="coupon_image" style="width: 100%; height: 100%;">
                 </div>
 
                 <div style="display: inline-block;margin-left: 10px;text-align: left;">
                   <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                    <strong>{{{ trans('email-receipt.body.transaction_labels.coupon_name') }}}</strong> {{ $transaction['items'][0]['name'] }}
+                    <strong>{{{ trans('email-receipt.body.transaction_labels.coupon_name') }}}:</strong> {{ $transaction['items'][0]['name'] }}
                     <br>
-                    <strong>{{{ trans('email-receipt.body.transaction_labels.coupon_price') }}}</strong> {{ $transaction['items'][0]['price'] }}
+                    <strong>{{{ trans('email-receipt.body.transaction_labels.coupon_price') }}}:</strong> {{ $transaction['items'][0]['price'] }}
                     <br>
-                    <strong>{{{ trans('email-receipt.body.transaction_labels.coupon_quantity') }}}</strong> {{ $transaction['items'][0]['quantity'] }}
+                    <strong>{{{ trans('email-receipt.body.transaction_labels.coupon_quantity') }}}:</strong> {{ $transaction['items'][0]['quantity'] }}
                     <br>
-                    <strong>{{{ trans('email-receipt.body.transaction_labels.total_amount') }}}</strong> {{ $transaction['items'][0]['total'] }}
+                    <strong>{{{ trans('email-receipt.body.transaction_labels.total_amount') }}}:</strong> {{ $transaction['items'][0]['total'] }}
                     <br>
                     <br>
                   </p>

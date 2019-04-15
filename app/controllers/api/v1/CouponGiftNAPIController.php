@@ -147,17 +147,11 @@ class CouponGiftNAPIController extends ControllerAPI
             $status = OrbitInput::post('status');
 
             if ($status === 'active') {
-                $campaignStatus === 'ongoing';
+                $campaignStatus = 'ongoing';
             }
-
-            if (empty($campaignStatus)) {
+            else {
                 $campaignStatus = 'not started';
             }
-
-            // $status = 'inactive';
-            // if ($campaignStatus === 'ongoing') {
-            //     $status = 'active';
-            // }
 
             $validator_value = [
                 'promotion_name'          => $promotion_name,
@@ -708,7 +702,7 @@ class CouponGiftNAPIController extends ControllerAPI
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
+            $this->response->message = $e->getMessage() . $e->getFile() . $e->getLine();
             $this->response->data = null;
 
             // Rollback the changes
@@ -814,6 +808,7 @@ class CouponGiftNAPIController extends ControllerAPI
             $how_to_buy_and_redeem = OrbitInput::post('how_to_buy_and_redeem');
             $terms_and_conditions = OrbitInput::post('terms_and_conditions');
             $status = OrbitInput::post('status');
+
             if ($status === 'active') {
                 $campaignStatus = 'ongoing';
             } else {
