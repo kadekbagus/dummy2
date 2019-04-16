@@ -105,7 +105,7 @@ class CouponGiftNAPIController extends ControllerAPI
             $keywords = (array) $keywords;
             $productTags = OrbitInput::post('product_tags');
             $productTags = (array) $productTags;
-            $linkToTenantIds = OrbitInput::post('link_to_tenant_ids');
+            $linkToTenantIds = OrbitInput::post('link_to_tenant_ids', []);
             $linkToTenantIds = (array) $linkToTenantIds;
 
             $partner_ids = OrbitInput::post('partner_ids');
@@ -176,6 +176,7 @@ class CouponGiftNAPIController extends ControllerAPI
                 'max_quantity_per_purchase' => $maxQuantityPerPurchase,
                 'shortlinks'              => $shortlinks,
                 'price_to_gtm'            => $price_to_gtm,
+                'link_to_tenant_ids'      => $linkToTenantIds,
             ];
             $validator_validation = [
                 'promotion_name'          => 'required|max:255',
@@ -193,12 +194,13 @@ class CouponGiftNAPIController extends ControllerAPI
                 'is_popup'                => 'in:Y,N',
                 'is_visible'              => 'required|in:Y,N',
                 'is_3rd_party_promotion'  => 'required|in:Y,N',
-                'maximum_issued_coupon'   => 'required',
+                'maximum_issued_coupon'   => '',
                 'price_value'             => 'required',
                 'price_selling'           => 'required',
                 'max_quantity_per_purchase' => 'required|numeric',
                 'shortlinks'              => 'required',
                 'price_to_gtm'            => 'required',
+                'link_to_tenant_ids'      => 'required',
             ];
             $validator_message = [
                 'rule_value.required'     => 'The amount to obtain is required',
@@ -290,6 +292,7 @@ class CouponGiftNAPIController extends ControllerAPI
 
             // save Coupon.
             $idStatus = CampaignStatus::select('campaign_status_id','campaign_status_name')->where('campaign_status_name', $campaignStatus)->first();
+            $maximum_issued_coupon = count($arrayShortlinks);
 
             $newcoupon = new Coupon();
             $newcoupon->merchant_id = $merchant_id;
