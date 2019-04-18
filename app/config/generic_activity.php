@@ -2225,5 +2225,23 @@ return array(
             'object_type' => 'Pulsa',
             'parameter_name' => 'object_id'
         ),
+        // Click button redeem for Gift N coupon trx detail page.
+        '242' => (
+            'name' => 'click_redeem_gift_n_button',
+            'name_long' => 'Click Redeem GiftN Button',
+            'module_name' => 'Coupon',
+            'type' => 'click',
+            'object_type' => 'Coupon',
+            'parameter_name' => 'object_id'
+        ),
+        // Click redeem url for Gift N coupon trx detail page.
+        '243' => (
+            'name' => 'click_redeem_gift_n_url',
+            'name_long' => 'Click Redeem GiftN URL',
+            'module_name' => 'Coupon',
+            'type' => 'click',
+            'object_type' => 'Coupon',
+            'parameter_name' => 'object_id'
+        ),
     ),
 );
