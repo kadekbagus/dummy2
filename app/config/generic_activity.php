@@ -2226,7 +2226,7 @@ return array(
             'parameter_name' => 'object_id'
         ),
         // Click button redeem for Gift N coupon trx detail page.
-        '242' => (
+        '242' => array(
             'name' => 'click_redeem_gift_n_button',
             'name_long' => 'Click Redeem GiftN Button',
             'module_name' => 'Coupon',
@@ -2235,7 +2235,7 @@ return array(
             'parameter_name' => 'object_id'
         ),
         // Click redeem url for Gift N coupon trx detail page.
-        '243' => (
+        '243' => array(
             'name' => 'click_redeem_gift_n_url',
             'name_long' => 'Click Redeem GiftN URL',
             'module_name' => 'Coupon',
