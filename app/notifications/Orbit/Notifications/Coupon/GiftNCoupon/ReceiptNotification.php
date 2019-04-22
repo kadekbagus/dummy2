@@ -46,7 +46,7 @@ class ReceiptNotification extends BaseReceiptNotification
         return array_merge(parent::getEmailData(), [
             'couponImage' => $this->getCouponImage(),
             'redeemUrls' => $this->getRedeemUrls(),
-            'myPurchasesUrl' => $this->getMyPurchasesUrl(),
+            'myPurchasesUrl' => $this->getMyPurchasesUrl() . '/coupons',
         ]);
     }
 
