@@ -22,6 +22,7 @@ use Carbon\Carbon as Carbon;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use Event;
 use News;
+use Queue;
 
 class RatingUpdateAPIController extends PubControllerAPI
 {
@@ -77,7 +78,7 @@ class RatingUpdateAPIController extends PubControllerAPI
                 array(
                     'review'    => 'max:1000',
                     'rating'    => 'required',
-                    'rating_id' => 'required',
+                    'rating_id' => 'required', //TODO validate image limitation (might be in landing page).
                 )
             );
 
@@ -112,6 +113,11 @@ class RatingUpdateAPIController extends PubControllerAPI
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
             $dateTime = $date->toDateTimeString();
 
+            // cdn
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
             // check if object_id is promotional event, no nedd to check location_id
             $isPromotionalEvent = 'N';
             if ($oldRating->data->object_type === 'news') {
@@ -143,6 +149,56 @@ class RatingUpdateAPIController extends PubControllerAPI
                     'city'            => $location->city,
                     'country_id'      => $location->country_id
                 ];
+            }
+
+            // upload image
+            $uploadMedias = Event::fire('orbit.rating.postnewmedia', array($this, $body));
+
+            $newImages = [];
+
+            if (count($uploadMedias[0]) > 0) {
+                // Get old images...
+                $getReview = $mongoClient->setEndPoint("reviews/$ratingId")->request('GET');
+
+                $key = 0;
+                foreach ($getReview->data->images as $key => $images) {
+                    foreach ($images as $keyVar => $image) {
+                        $newImages[$key][$keyVar]['media_id'] = $image->media_id;
+                        $newImages[$key][$keyVar]['variant_name'] = $image->variant_name;
+                        $newImages[$key][$keyVar]['url'] = $image->url;
+                        $newImages[$key][$keyVar]['cdn_url'] = $image->cdn_url;
+                        $newImages[$key][$keyVar]['metadata'] = $image->metadata;
+                        $newImages[$key][$keyVar]['approval_status'] = $image->approval_status;
+                        $newImages[$key][$keyVar]['rejection_message'] = $image->rejection_message;
+                    }
+                }
+
+                // And then append them with new images...
+                foreach ($uploadMedias[0] as $medias) {
+                    $key++;
+                    foreach ($medias->variants as $keyVar => $variant) {
+                        $newImages[$key][$keyVar]['media_id'] = $variant->media_id;
+                        $newImages[$key][$keyVar]['variant_name'] = $variant->media_name_long;
+                        $newImages[$key][$keyVar]['url'] = $urlPrefix . $variant->path;
+                        $newImages[$key][$keyVar]['cdn_url'] = '';
+                        $newImages[$key][$keyVar]['metadata'] = $variant->metadata;
+                        $newImages[$key][$keyVar]['approval_status'] = 'pending';
+                        $newImages[$key][$keyVar]['rejection_message'] = '';
+                    }
+                }
+            }
+
+            if (! empty($newImages)) {
+                $body['images'] = $newImages;
+                $body['is_image_reviewing'] = 'n';
+
+                //send email to admin
+                Queue::push('Orbit\\Queue\\ReviewImageNeedApprovalMailQueue', [
+                    'subject' => 'There is a review with image(s) that needs your approval',
+                    'object_id' => $objectId,
+                    'user_email' => $user->user_email,
+                    'user_fullname' => $user->user_firstname .' '. $user->user_lastname,
+                ]);
             }
 
             $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body + $bodyLocation);
