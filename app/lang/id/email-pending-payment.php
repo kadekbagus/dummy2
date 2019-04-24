@@ -14,7 +14,7 @@ return [
 
         'greeting_pulsa' => 'Yth, :customerName
                         <br>
-                        Terima kasih telah membeli Pulsa di Gotomalls.com.',
+                        Terima kasih telah membeli Pulsa di Gotomalls.com. Silakan lakukan pembayaran menggunakan aplikasi GOJEK di HP Anda. Berikut ini detail transaksi Anda.',
 
         'transaction_labels' => [
             'transaction_id' => 'No. Transaksi: ',
