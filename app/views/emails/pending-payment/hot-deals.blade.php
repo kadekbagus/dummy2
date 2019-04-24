@@ -217,7 +217,7 @@
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <strong>{{{ trans('email-pending-payment.body.transaction_labels.transaction_id') }}}</strong> {{ $transaction['id'] }}
                 <br>
-                <strong>{{{ trans('email-pending-payment.body.transaction_labels.transaction_date') }}}</strong> {{ $transaction['date'] }}
+                <strong>{{{ trans('email-pending-payment.body.transaction_labels.transaction_date') }}}</strong> {{ $transactionDateTime }}
                 <br>
                 <strong>{{{ trans('email-pending-payment.body.transaction_labels.customer_name') }}}</strong> {{ $customerName }}
                 <br>

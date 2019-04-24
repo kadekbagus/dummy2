@@ -229,7 +229,7 @@
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.transaction_id') }}}</strong> {{ $transaction['id'] }}
                 <br>
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.transaction_date') }}}</strong> {{ $transaction['date'] }}
+                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.transaction_date') }}}</strong> {{ $transactionDateTime }}
                 <br>
                 <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.customer_name') }}}</strong> {{ $customerName }}
                 <br>
