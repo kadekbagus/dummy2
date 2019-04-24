@@ -97,7 +97,7 @@ trait HasPaymentTrait
     public function getPaymentExpirationDate()
     {
         $expiredIn = Config::get('orbit.partners_api.midtrans.expired_in', 1440);
-        if ($this->payment->forPulsa()) {
+        if ($this->payment->paidWith(['gopay'])) {
             $expiredIn = Config::get('orbit.partners_api.midtrans.gopay_expired_in', $expiredIn);
         }
 

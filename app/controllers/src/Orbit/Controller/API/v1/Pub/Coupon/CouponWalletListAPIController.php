@@ -276,6 +276,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                                 $q->on('timezones.timezone_id', '=', DB::raw("CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.timezone_id ELSE malls.timezone_id END"));
                             })
                             ->where('issued_coupons.user_id', $user->user_id)
+                            ->where('promotion_type', '<>', 'gift_n_coupon')
                             ->whereIn("campaign_status.campaign_status_name", array('ongoing', 'expired'));
 
 
