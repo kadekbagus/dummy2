@@ -219,12 +219,11 @@
                 </tfoot>
               </table>
               <br>
-              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{{ trans('email-receipt.body.redeem') }}}
-              </p>
               <br>
               <p class="text-center" style="font-family:'Roboto', 'Arial', sans-serif;margin:0;text-align:center;">
-                <a href="{{{ $redeemUrl }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;font-size:16px;display:inline-block;padding:10px 20px;text-decoration:none;">{{{ trans('email-receipt.buttons.redeem') }}}</a>
+                <a href="{{{ $myWalletUrl }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;font-size:16px;display:inline-block;padding:10px 20px;text-decoration:none;">
+                  {{{ trans('email-receipt.buttons.my_purchases') }}}
+                </a>
               </p>
               <br>
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
@@ -254,9 +253,9 @@
               <table class="no-border customer" width="100%" style="line-height:1.7em;font-size:14px;color:#222;width:100%;border:0;margin-top:30px;border-spacing:0 !important;border-collapse:collapse !important;table-layout:fixed !important;margin:0 auto !important;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
                 <thead>
                   <tr>
-                    <th class="text-left first" width="25%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-left:15px;padding-left:0;">{{{ trans('email-receipt.table_customer_info.header.customer') }}}</th>
-                    <th class="text-left" width="25%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-left:15px;">{{{ trans('email-receipt.table_customer_info.header.email') }}}</th>
-                    <th class="text-left" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-left:15px;">{{{ trans('email-receipt.table_customer_info.header.phone') }}}</th>
+                    <th class="text-left first" width="25%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-left:15px;padding-left:0;">{{{ trans('email-receipt.table_customer_info.header.customer', [], '', 'id') }}}</th>
+                    <th class="text-left" width="25%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-left:15px;">{{{ trans('email-receipt.table_customer_info.header.email', [], '', 'id') }}}</th>
+                    <th class="text-left" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-left:15px;">{{{ trans('email-receipt.table_customer_info.header.phone', [], '', 'id') }}}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -296,12 +295,11 @@
                 </tfoot>
               </table>
               <br>
-              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{{ trans('email-receipt.body.redeem', [], '', 'id') }}}
-              </p>
               <br>
               <p class="text-center" style="font-family:'Roboto', 'Arial', sans-serif;margin:0;text-align:center;">
-                <a href="{{{ $redeemUrl }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;font-size:16px;display:inline-block;padding:10px 20px;text-decoration:none;">{{{ trans('email-receipt.buttons.redeem', [], '', 'id') }}}</a>
+                <a href="{{{ $myWalletUrl }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;font-size:16px;display:inline-block;padding:10px 20px;text-decoration:none;">
+                  {{{ trans('email-receipt.buttons.my_purchases', [], '', 'id') }}}
+                </a>
               </p>
               <br>
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
