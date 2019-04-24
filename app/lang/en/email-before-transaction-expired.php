@@ -33,7 +33,7 @@ return [
 
         'payment-info-line-1' => 'Please perform the payment transfer to the following bank account before <br><span style="color:#f43d3c;"><strong>:paymentExpiration</strong></span> to complete your transaction.',
 
-        'payment-info-line-1' => 'Please perform the payment using your GOJEK App <br><span style="color:#f43d3c;"><strong>:paymentExpiration</strong></span> to complete your transaction.',
+        'payment-info-line-1-gopay' => 'Please perform the payment using your GOJEK App <br><span style="color:#f43d3c;"><strong>:paymentExpiration</strong></span> to complete your transaction.',
 
         'payment-info' => [
             'biller_code' => 'Company Code: ',

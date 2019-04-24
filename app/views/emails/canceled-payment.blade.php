@@ -201,6 +201,50 @@
               </p>
             </td>
           </tr>
+
+          <tr>
+              <td colspan="2">
+                  <hr>
+              </td>
+          </tr>
+
+          <tr>
+            <td colspan="2" class="invoice-body" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:80px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
+              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
+                {{ trans('email-canceled-payment.body.greeting', ['customerName' => $customerName], '', 'id') }}
+              </p>
+              <br>
+              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.transaction_id', [], '', 'id') }}}</strong> {{ $transaction['id'] }}
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.transaction_date', [], '', 'id') }}}</strong> {{ $transaction['date'] }}
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.customer_name', [], '', 'id') }}}</strong> {{ $customerName }}
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.email', [], '', 'id') }}}</strong> {{ $customerEmail }}
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.phone', [], '', 'id') }}}</strong> {{ $customerPhone }}
+                <br>
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.coupon_name', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['name'] }}
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.coupon_price', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['price'] }}
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.coupon_quantity', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['quantity'] }}
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.total_amount', [], '', 'id') }}}</strong> {{ $transaction['total'] }}
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.status', [], '', 'id') }}} <span style="color:#f43d3c;">{{ trans('email-canceled-payment.body.transaction_labels.status_canceled', [], '', 'id') }}</span></strong>
+                <br>
+              </p>
+              <br>
+
+              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
+                <br>
+                {{ trans('email-canceled-payment.body.payment-info-line-1', [], '', 'id') }}
+              </p>
+            </td>
+          </tr>
         </tbody>
 
         <tfoot>
