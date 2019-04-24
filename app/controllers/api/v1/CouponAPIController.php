@@ -2180,13 +2180,15 @@ class CouponAPIController extends ControllerAPI
                     $tenant_id = $data->tenant_id;
                     $mall_id = $data->mall_id;
 
+                    $validatorRule = $tenant_id === $mall_id ? 'orbit.empty.merchant' : 'orbit.empty.tenant';
+
                     $validator = Validator::make(
                         array(
                             'retailer_id'   => $tenant_id,
 
                         ),
                         array(
-                            'retailer_id'   => 'orbit.empty.tenant',
+                            'retailer_id'   => $validatorRule,
                         )
                     );
 
