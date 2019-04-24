@@ -1,31 +1,34 @@
 <?php
 
 return [
-    'subject' => 'Transaction Canceled',
+    'subject' => 'Transaksi Dibatalkan',
 
     'header' => [
-        'email-type'       => 'Notice',
+        'email-type'       => 'Pemberitahuan',
     ],
 
     'body' => [
-        'greeting' => 'Dear, :customerName
+        'greeting' => 'Yth, :customerName
                         <br>
-                        We confirm that your transaction has been canceled.  Below are the transaction details:',
+                        Melalui email ini kami memberitahukan bahwa transaksi Anda telah dibatalkan. Berikut ini detail transaksi tersebut.',
 
         'transaction_labels' => [
-            'transaction_id' => 'Transaction ID: ',
-            'transaction_date' => 'Transaction Date: ',
-            'coupon_name' => 'Coupon Name: ',
-            'coupon_price' => 'Coupon Price: ',
-            'coupon_quantity' => 'Quantity: ',
-            'customer_name' => 'Customer Name: ',
+            'transaction_id' => 'No. Transaksi: ',
+            'transaction_date' => 'Tanggal Transaksi: ',
+            'coupon_name' => 'Nama Kupon: ',
+            'coupon_price' => 'Harga Kupon: ',
+            'pulsa_name' => 'Pulsa',
+            'pulsa_phone_number' => 'No. HP Pulsa',
+            'pulsa_price' => 'Harga Pulsa',
+            'coupon_quantity' => 'Jumlah: ',
+            'customer_name' => 'Nama Pelanggan: ',
             'email' => 'Email: ',
-            'phone' => 'Phone: ',
-            'total_amount' => 'Total Amount: ',
+            'phone' => 'Telp Pelanggan: ',
+            'total_amount' => 'Total: ',
             'status' => 'Status: ',
-            'status_canceled' => 'Canceled',
+            'status_canceled' => 'Dibatalkan',
         ],
 
-        'payment-info-line-1' => 'Thank you.',
+        'payment-info-line-1' => 'Terima kasih.',
     ],
 ];
