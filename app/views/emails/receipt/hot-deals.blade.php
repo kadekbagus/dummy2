@@ -242,19 +242,19 @@
           </tr>
 
           <tr>
-            <td class="text-left invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;"><strong>{{{ trans('email-receipt.header.order_number', ['transactionId' => $transaction['id']], '', 'id') }}}</strong></td>
+            <td class="text-left invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;"><strong>{{{ trans('email-receipt.header.order_number', ['transactionId' => $transaction['id']]) }}}</strong></td>
             <td class="text-right invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;text-align:right;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $transaction['date'] }}}</td>
           </tr>
           <tr>
             <td colspan="2" class="invoice-body" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:80px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-receipt.body.greeting', ['customerName' => $customerName, 'itemName' => $transaction['items'][0]['name']], '', 'id') }}
+                {{ trans('email-receipt.body.greeting', ['customerName' => $customerName, 'itemName' => $transaction['items'][0]['name']]) }}
               </p>
               <br>
               <table class="no-border customer" width="100%" style="line-height:1.7em;font-size:14px;color:#222;width:100%;border:0;margin-top:30px;border-spacing:0 !important;border-collapse:collapse !important;table-layout:fixed !important;margin:0 auto !important;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
                 <thead>
                   <tr>
-                    <th class="text-left first" width="25%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-left:15px;padding-left:0;">{{{ trans('email-receipt.table_customer_info.header.customer', [], '', 'id') }}}</th>
+                    <th class="text-left first" width="25%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-left:15px;padding-left:0;">{{{ trans('email-receipt.table_customer_info.header.customer') }}}</th>
                     <th class="text-left" width="25%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-left:15px;">{{{ trans('email-receipt.table_customer_info.header.email') }}}</th>
                     <th class="text-left" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-left:15px;">{{{ trans('email-receipt.table_customer_info.header.phone') }}}</th>
                   </tr>
