@@ -80,15 +80,11 @@ class CreateUserMallCSCommand extends Command {
             $firstName = trim($data['first_name']);
             $lastName = trim($data['last_name']);
             $password = trim($data['password']);
-            $role = 'Mall Customer Service';
+            $roleName = 'Mall Customer Service';
             $mallId = trim($data['mall_id']);
             $csVerificationNumbers = trim($data['cs_verification_numbers']);
 
-            $errorMessage = [
-                'orbit.empty.employee.role' => Lang::get('validation.orbit.empty.employee.role', array(
-                    'role' => $employeeRole
-                ))
-            ];
+            $this->registerCustomValidation();
 
             $validator = Validator::make(
                 array(
@@ -104,10 +100,12 @@ class CreateUserMallCSCommand extends Command {
                     'firstname'               => 'required',
                     'lastname'                => 'required',
                     'password'                => 'required|min:6',
-                    'mall_id'                 => 'required|orbit.exist.mall',
+                    'mall_id'                 => 'required|orbit.empty.mall',
                     'cs_verification_numbers' => 'alpha_num|orbit.exist.verification.numbers:' . $mallId ,
                 ),
                 array(
+                    'orbit.exist.email' => 'Email is already exist',
+                    'orbit.empty.mall' => 'Mall is not found',
                     'orbit.exist.verification.numbers' => 'The verification number already used by other',
                     'alpha_num' => 'The verification number must letter and number.',
                 )
@@ -120,10 +118,10 @@ class CreateUserMallCSCommand extends Command {
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
 
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                throw new Exception($errorMessage, 1);
             }
 
-            $role = Role::where('role_name', $role)->first();
+            $role = Role::where('role_name', $roleName)->first();
             if (! is_object($role)) {
                 throw new Exception("Role is not found.", 1);
             }
@@ -165,31 +163,21 @@ class CreateUserMallCSCommand extends Command {
 
             // User verification numbers
             // check if the role mall admin or mall customer service should have verification number
-            if ( in_array(strtolower($employeeRole), ['mall admin', 'mall customer service']) ) {
-                $newUserVerificationNumber = new UserVerificationNumber();
-                OrbitInput::post('cs_verification_numbers', function($_csVerificationNumbers) use ($newUserVerificationNumber, $newUser, $myRetailerIds) {
-                    $newUserVerificationNumber->user_id = $newUser->user_id;
-                    $newUserVerificationNumber->verification_number = $_csVerificationNumbers;
-                    $newUserVerificationNumber->merchant_id = $myRetailerIds;
-                });
-
-                $newUserVerificationNumber->save();
-                $newUser->setRelation('userVerificationNumber', $newUserVerificationNumber);
-            }
+            $newUserVerificationNumber = new UserVerificationNumber();
+            $newUserVerificationNumber->user_id = $newUser->user_id;
+            $newUserVerificationNumber->verification_number = $csVerificationNumbers;
+            $newUserVerificationNumber->merchant_id = $mallId;
+            $newUserVerificationNumber->save();
+            $newUser->setRelation('userVerificationNumber', $newUserVerificationNumber);
 
             // @Todo: Remove this hardcode
             $mallIds = [$mallId];
-
-            if ($retailerIds) {
-                $newEmployee->retailers()->sync($mallIds);
-            }
-
-            $this->response->data = $newUser;
+            $newEmployee->retailers()->sync($mallIds);
 
             // Commit the changes
             DB::commit();
 
-            $this->info( sprintf('User with email %s successfully created as a %s.', $data['email'], $data['role']) );
+            $this->info( sprintf('User with email %s successfully created as a %s.', $email, $roleName) );
 
         } catch (Exception $e) {
             DB::rollback();
@@ -220,10 +208,8 @@ class CreateUserMallCSCommand extends Command {
         });
 
         // Check the existance of role id
-        Validator::extend('orbit.exist.mall', function ($attribute, $value, $parameters) {
-            $mallId = $parameters[0];
-
-            $checkMall = Mall::excludeDeleted()->where('merchant_id', $mallId)->first();
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
+            $checkMall = Mall::excludeDeleted()->where('merchant_id', $value)->first();
 
             if (! is_object($checkMall)) {
                 return FALSE;
