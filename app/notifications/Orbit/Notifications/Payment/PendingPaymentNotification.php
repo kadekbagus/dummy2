@@ -71,7 +71,7 @@ class PendingPaymentNotification extends CustomerNotification implements EmailNo
             'transaction'       => $this->getTransactionData(),
             'cs'                => $this->getContactData(),
             'paymentExpiration' => $this->getPaymentExpirationDate(),
-            'myWalletUrl'       => Config::get('orbit.transaction.my_purchases_url', 'https://gotomalls.com/my/purchases'),
+            'myWalletUrl'       => $this->getMyPurchasesUrl() . '/coupons',
             'cancelUrl'         => $this->getCancelUrl(),
             'transactionDateTime' => $this->payment->getTransactionDate('d F Y, H:i ') . $this->getLocalTimezoneName($this->payment->timezone_name),
         ];
