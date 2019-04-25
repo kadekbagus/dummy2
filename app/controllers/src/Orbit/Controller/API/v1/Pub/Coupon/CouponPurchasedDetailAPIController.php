@@ -109,7 +109,8 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
                                                     WHERE opr.promotion_id = {$prefix}promotions.promotion_id
                                                     GROUP BY opr.promotion_id
                                                     ORDER BY om.name
-                                                ) as link_to_tenant
+                                                ) as link_to_tenant,
+                                    {$prefix}issued_coupons.expired_date
                             "))
 
                             ->leftJoin('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
