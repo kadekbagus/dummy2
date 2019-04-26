@@ -173,7 +173,7 @@
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <strong>{{{ trans('email-canceled-payment.body.transaction_labels.transaction_id', [], '', 'id') }}}</strong> {{ $transaction['id'] }}
                 <br>
-                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.transaction_date', [], '', 'id') }}}</strong> {{ $transaction['date'] }}
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.transaction_date', [], '', 'id') }}}</strong> {{ $transactionDateTime }}
                 <br>
                 <strong>{{{ trans('email-canceled-payment.body.transaction_labels.customer_name', [], '', 'id') }}}</strong> {{ $customerName }}
                 <br>
@@ -217,7 +217,7 @@
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <strong>{{{ trans('email-canceled-payment.body.transaction_labels.transaction_id') }}}</strong> {{ $transaction['id'] }}
                 <br>
-                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.transaction_date') }}}</strong> {{ $transaction['date'] }}
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.transaction_date') }}}</strong> {{ $transactionDateTime }}
                 <br>
                 <strong>{{{ trans('email-canceled-payment.body.transaction_labels.customer_name') }}}</strong> {{ $customerName }}
                 <br>
