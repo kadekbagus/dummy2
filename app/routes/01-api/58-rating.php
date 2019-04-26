@@ -51,7 +51,7 @@ Route::get('/api/v1/pub/rating/detail', function()
     return Orbit\Controller\API\v1\Pub\Rating\RatingDetailAPIController::create()->getDetail();
 });
 
-Route::get('/app/v1/pub/rating/detail', ['as' => 'pub-review-detail', 'uses' => 'IntermediatePubAuthController@Rating\ReviewDetail_getDetail']);
+Route::get('/app/v1/pub/rating/detail', ['as' => 'pub-review-detail', 'uses' => 'IntermediatePubAuthController@Rating\RatingDetail_getDetail']);
 
 /**
  * List reply of rating and review
