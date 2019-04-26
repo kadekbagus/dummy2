@@ -46,12 +46,12 @@ Route::get('/app/v1/pub/rating/list', ['as' => 'rating-list', 'uses' => 'Interme
 /**
  * Get rating and review detail
  */
-Route::post('/api/v1/pub/rating/detail', function()
+Route::get('/api/v1/pub/rating/detail', function()
 {
     return Orbit\Controller\API\v1\Pub\Rating\RatingDetailAPIController::create()->getDetail();
 });
 
-Route::post('/app/v1/pub/rating/detail', ['as' => 'pub-review-detail', 'uses' => 'IntermediatePubAuthController@Rating\ReviewDetail_getDetail']);
+Route::get('/app/v1/pub/rating/detail', ['as' => 'pub-review-detail', 'uses' => 'IntermediatePubAuthController@Rating\ReviewDetail_getDetail']);
 
 /**
  * List reply of rating and review
