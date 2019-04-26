@@ -194,9 +194,11 @@
                   <img src="{{{ $couponImage }}}" alt="coupon_image" style="width: 100%; height: 100%;">
                 </div>
 
-                <div style="display: inline-block;margin-left: 10px;text-align: left;">
+                <div style="display: inline-block;margin-left: 10px;text-align: left;max-width: 70%;">
                   <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                     <strong>{{{ trans('email-receipt.body.transaction_labels.coupon_name') }}}:</strong> {{ $transaction['items'][0]['name'] }}
+                    <br>
+                    <strong>{{{ trans('email-receipt.body.transaction_labels.coupon_expired_date') }}}:</strong> {{ $couponExpiredDate }}
                     <br>
                     <strong>{{{ trans('email-receipt.body.transaction_labels.coupon_price') }}}:</strong> {{ $transaction['items'][0]['price'] }}
                     <br>
@@ -226,7 +228,7 @@
 
               <br>
               <p class="text-center" style="font-family:'Roboto', 'Arial', sans-serif;margin:0;text-align:center;">
-                <a href="{{{ $myPurchasesUrl }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;border-width:1px;border-style:solid;border-color:#2196F3;background-color:#fff;color:#2196F3;font-weight:bold;font-size:16px;display:inline-block;text-decoration:none;width:30%;padding:10px 0;margin-right:5px;text-align:center;margin-top:10px;">{{{ trans('email-receipt.buttons.my_purchases') }}}</a>
+                <a href="{{{ $myPurchasesUrl }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;border-width:1px;border-style:solid;border-color:#2196F3;background-color:#fff;color:#2196F3;font-weight:bold;font-size:16px;display:inline-block;text-decoration:none;width:30%;padding:10px;margin-right:5px;text-align:center;margin-top:10px;">{{{ trans('email-receipt.buttons.my_purchases') }}}</a>
               </p>
               <br>
 
