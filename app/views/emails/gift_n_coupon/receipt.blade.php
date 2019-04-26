@@ -276,6 +276,8 @@
                   <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                     <strong>{{{ trans('email-receipt.body.transaction_labels.coupon_name') }}}:</strong> {{ $transaction['items'][0]['name'] }}
                     <br>
+                    <strong>{{{ trans('email-receipt.body.transaction_labels.coupon_expired_date') }}}:</strong> {{ $couponExpiredDate }}
+                    <br>
                     <strong>{{{ trans('email-receipt.body.transaction_labels.coupon_price') }}}:</strong> {{ $transaction['items'][0]['price'] }}
                     <br>
                     <strong>{{{ trans('email-receipt.body.transaction_labels.coupon_quantity') }}}:</strong> {{ $transaction['items'][0]['quantity'] }}
