@@ -190,6 +190,8 @@ class CdnUploadNewQueue
             }
 
             Log::info($message);
+        } catch (\Exception $e) {
+            Log::info($e->getMessage());
         }
 
         // Bury the job for later inspection
