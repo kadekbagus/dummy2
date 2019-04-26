@@ -47,6 +47,7 @@ class ReceiptNotification extends BaseReceiptNotification
             'couponImage' => $this->getCouponImage(),
             'redeemUrls' => $this->getRedeemUrls(),
             'myPurchasesUrl' => $this->getMyPurchasesUrl() . '/coupons',
+            'couponExpiredDate' => $this->getCouponExpiredDate(),
         ]);
     }
 
