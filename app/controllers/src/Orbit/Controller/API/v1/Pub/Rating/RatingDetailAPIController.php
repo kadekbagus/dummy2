@@ -1,6 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Rating;
 /**
- * @author firmansyah <firmansyah@dominopos.com>
+ * @author ahmad <ahmad@dominopos.com>
  * @desc Controller for get rating review list
  */
 
@@ -25,6 +25,8 @@ use Country;
 use Tenant;
 use News;
 use Language;
+use Mall;
+use Coupon;
 
 class RatingDetailAPIController extends PubControllerAPI
 {
@@ -34,7 +36,7 @@ class RatingDetailAPIController extends PubControllerAPI
     /**
      * GET - get rating review list
      *
-     * @author Firmansyayh <firmansyah@dominopos.com>
+     * @author ahmad <ahmad@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -46,7 +48,7 @@ class RatingDetailAPIController extends PubControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getRatingList()
+    public function getDetail()
     {
         $httpCode = 200;
 
@@ -60,7 +62,7 @@ class RatingDetailAPIController extends PubControllerAPI
             $validator = Validator::make(
                 array(
                     'review_id'   => $id,
-                    'language'   => $id,
+                    'language'   => $language,
                 ),
                 array(
                     'review_id' => 'required',
@@ -74,32 +76,20 @@ class RatingDetailAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $queryString = [
-                '_id'         => $id,
-            ];
-
+            $mongoConfig = Config::get('database.mongodb');
             $mongoClient = MongoClient::create($mongoConfig);
 
-            $endPoint = "reviews";
-            if (! empty($arrayQuery)) {
-                $endPoint = "reviews?" . $arrayQuery;
-                $mongoClient = $mongoClient->setCustomQuery(TRUE);
-            }
-
-            $response = $mongoClient->setQueryString($queryString)
-                                    ->setEndPoint($endPoint)
+            $endPoint = "reviews/" . $id;
+            $response = $mongoClient->setEndPoint($endPoint)
                                     ->request('GET');
 
-            $review = null;
-
-            $listOfRec = $response->data;
+            $review = $response->data;
 
             $reviewData = null;
             $userData = null;
             $objectData = null;
 
-            if (! empty($listOfRec->records)) {
-                $review = $listOfRec->records[0];
+            if (is_object($review)) {
                 // build review data
                 $reviewData = new stdclass();
                 $reviewData->review = $review->review;
@@ -110,6 +100,11 @@ class RatingDetailAPIController extends PubControllerAPI
 
                 // build user data
                 $userId = $review->user_id;
+
+                $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+                $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+                $prefix = DB::getTablePrefix();
+                $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
 
                 $userImage = "(CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path)) as user_picture";
                 if ($usingCdn) {
@@ -136,9 +131,6 @@ class RatingDetailAPIController extends PubControllerAPI
                 $objectId = $review->object_id;
                 $objectData = new stdclass();
 
-                $prefix = DB::getTablePrefix();
-                $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
-
                 switch ($objectType) {
                     case 'store':
                         $image = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as path";
@@ -157,13 +149,13 @@ class RatingDetailAPIController extends PubControllerAPI
                             ->where('merchants.status', '=', 'active')
                             ->where(DB::raw('oms.status'), '=', 'active')
                             ->where('merchants.name', $review->store_name)
-                            ->where(DB::raw("oms.country"), $review->country_id)
+                            ->where(DB::raw("oms.country_id"), $review->country_id)
                             ->first();
 
                         $objectData->id = $object->merchant_id;
                         $objectData->name = $object->name;
                         $objectData->type = 'store';
-                        $objectData->image = $object->mediaLogo->path;
+                        $objectData->image = isset($object->mediaLogo[0]) ? $object->mediaLogo[0]->path : null;
 
                         break;
                     
@@ -220,9 +212,9 @@ class RatingDetailAPIController extends PubControllerAPI
                             )
                             ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
                             ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
-                            ->leftJoin('news_translations', function ($q) use ($validLanguage) {
+                            ->leftJoin('news_translations', function ($q) {
                                 $q->on('news_translations.news_id', '=', 'news.news_id')
-                                  ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($validLanguage->language_id)}"));
+                                  ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($this->validLanguage->language_id)}"));
                             })
                             ->leftJoin('news_translations as default_translation', function ($q) use ($prefix){
                                 $q->on(DB::raw("default_translation.news_id"), '=', 'news.news_id')
@@ -237,8 +229,14 @@ class RatingDetailAPIController extends PubControllerAPI
                         $objectData->name = $object->news_name;
                         $objectData->type = $objectType;
                         $objectData->image = $object->original_media_path;
+                        break;
 
                     case 'coupon':
+                        $image = "CONCAT({$this->quote($urlPrefix)}, m.path)";
+                        if ($usingCdn) {
+                            $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
+                        }
+
                         $object = Coupon::select(
                                 'promotions.promotion_id as promotion_id',
                                 DB::Raw("
@@ -247,7 +245,7 @@ class RatingDetailAPIController extends PubControllerAPI
                                             FROM {$prefix}media m
                                             WHERE m.media_name_long = 'coupon_translation_image_orig'
                                             AND m.object_id = {$prefix}coupon_translations.coupon_translation_id
-                                            AND {$prefix}coupon_translations.merchant_language_id = {$this->quote($valid_language->language_id)}
+                                            AND {$prefix}coupon_translations.merchant_language_id = {$this->quote($this->validLanguage->language_id)}
                                             LIMIT 1
                                             ) is null
                                         THEN
@@ -255,7 +253,7 @@ class RatingDetailAPIController extends PubControllerAPI
                                             FROM {$prefix}media m
                                             WHERE m.media_name_long = 'coupon_translation_image_orig'
                                             AND m.object_id = default_translation.coupon_translation_id
-                                            AND default_translation.merchant_language_id = {$this->quote($valid_language->language_id)}
+                                            AND default_translation.merchant_language_id = {$this->quote($this->validLanguage->language_id)}
                                             LIMIT 1
                                             )
                                         ELSE
@@ -263,23 +261,17 @@ class RatingDetailAPIController extends PubControllerAPI
                                             FROM {$prefix}media m
                                             WHERE m.media_name_long = 'coupon_translation_image_orig'
                                             AND m.object_id = {$prefix}coupon_translations.coupon_translation_id
-                                            AND {$prefix}coupon_translations.merchant_language_id = {$this->quote($valid_language->language_id)}
+                                            AND {$prefix}coupon_translations.merchant_language_id = {$this->quote($this->validLanguage->language_id)}
                                             LIMIT 1)
                                         END AS original_media_path
-                                    "),
-                                'promotions.end_date',
-                                DB::raw("default_translation.promotion_name as default_name"),
-                                'promotions.promotion_type as coupon_type',
-                                DB::raw("m.country as coupon_country"),
-                                'promotions.promotion_type',
-                                DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id")
+                                    ")
                             )
                             ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                             ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
 
-                            ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
+                            ->leftJoin('coupon_translations', function ($q) {
                                 $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
-                                  ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                                  ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($this->validLanguage->language_id)}"));
                             })
                             ->leftJoin('coupon_translations as default_translation', function ($q) {
                                 $q->on(DB::raw('default_translation.promotion_id'), '=', 'promotions.promotion_id')
@@ -293,6 +285,7 @@ class RatingDetailAPIController extends PubControllerAPI
                         $objectData->name = $object->promotion_name;
                         $objectData->type = 'coupon';
                         $objectData->image = $object->original_media_path;
+                        break;
 
                     case 'mall':
                         $image = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as path";
@@ -314,7 +307,8 @@ class RatingDetailAPIController extends PubControllerAPI
                         $objectData->id = $object->merchant_id;
                         $objectData->name = $object->name;
                         $objectData->type = 'mall';
-                        $objectData->image = $object->mediaLogo->path;
+                        $objectData->image = isset($object->mediaLogo[0]) ? $object->mediaLogo[0]->path : null;
+                        break;
 
                     default:
                         # code...
@@ -365,7 +359,7 @@ class RatingDetailAPIController extends PubControllerAPI
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
+            $this->response->message = $e->getMessage()  . '|' . $e->getLine();
             $this->response->data = null;
             $httpCode = 500;
         }
