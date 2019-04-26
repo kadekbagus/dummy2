@@ -269,7 +269,7 @@ class PaymentTransaction extends Eloquent
      * @param  string $format [description]
      * @return [type]         [description]
      */
-    public function getTransactionDate($format = 'j M Y')
+    public function getTransactionDate($format = 'j M Y, H:i')
     {
         if (! empty($this->timezone_name)) {
             return $this->created_at->timezone($this->timezone_name)->format($format);
