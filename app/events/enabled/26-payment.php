@@ -72,7 +72,7 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
                 $queueData
             );
         }
-        else if ($payment->forSepulsa() || $payment->paidWith(['bank_transfer', 'echannel'])) {
+        else if ($payment->forSepulsa() || $payment->paidWith(['bank_transfer', 'echannel', 'gopay'])) {
             $delay = Config::get('orbit.transaction.delay_before_issuing_coupon', 75);
 
             Log::info("PaidCoupon: Issuing coupon for PaymentID {$paymentId} after {$delay} seconds...");

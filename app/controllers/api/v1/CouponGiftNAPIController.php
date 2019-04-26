@@ -105,7 +105,7 @@ class CouponGiftNAPIController extends ControllerAPI
             $keywords = (array) $keywords;
             $productTags = OrbitInput::post('product_tags');
             $productTags = (array) $productTags;
-            $linkToTenantIds = OrbitInput::post('link_to_tenant_ids');
+            $linkToTenantIds = OrbitInput::post('link_to_tenant_ids', []);
             $linkToTenantIds = (array) $linkToTenantIds;
 
             $partner_ids = OrbitInput::post('partner_ids');
@@ -147,17 +147,11 @@ class CouponGiftNAPIController extends ControllerAPI
             $status = OrbitInput::post('status');
 
             if ($status === 'active') {
-                $campaignStatus === 'ongoing';
+                $campaignStatus = 'ongoing';
             }
-
-            if (empty($campaignStatus)) {
+            else {
                 $campaignStatus = 'not started';
             }
-
-            // $status = 'inactive';
-            // if ($campaignStatus === 'ongoing') {
-            //     $status = 'active';
-            // }
 
             $validator_value = [
                 'promotion_name'          => $promotion_name,
@@ -182,6 +176,7 @@ class CouponGiftNAPIController extends ControllerAPI
                 'max_quantity_per_purchase' => $maxQuantityPerPurchase,
                 'shortlinks'              => $shortlinks,
                 'price_to_gtm'            => $price_to_gtm,
+                'link_to_tenant_ids'      => $linkToTenantIds,
             ];
             $validator_validation = [
                 'promotion_name'          => 'required|max:255',
@@ -199,12 +194,13 @@ class CouponGiftNAPIController extends ControllerAPI
                 'is_popup'                => 'in:Y,N',
                 'is_visible'              => 'required|in:Y,N',
                 'is_3rd_party_promotion'  => 'required|in:Y,N',
-                'maximum_issued_coupon'   => 'required',
+                'maximum_issued_coupon'   => '',
                 'price_value'             => 'required',
                 'price_selling'           => 'required',
                 'max_quantity_per_purchase' => 'required|numeric',
                 'shortlinks'              => 'required',
                 'price_to_gtm'            => 'required',
+                'link_to_tenant_ids'      => 'required',
             ];
             $validator_message = [
                 'rule_value.required'     => 'The amount to obtain is required',
@@ -296,6 +292,7 @@ class CouponGiftNAPIController extends ControllerAPI
 
             // save Coupon.
             $idStatus = CampaignStatus::select('campaign_status_id','campaign_status_name')->where('campaign_status_name', $campaignStatus)->first();
+            $maximum_issued_coupon = count($arrayShortlinks);
 
             $newcoupon = new Coupon();
             $newcoupon->merchant_id = $merchant_id;
@@ -344,8 +341,6 @@ class CouponGiftNAPIController extends ControllerAPI
             Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
 
             $newcoupon->save();
-
-            Event::fire('orbit.coupon.postnewcoupon.after.save', array($this, $newcoupon));
 
             // Return campaign_status_name
             $newcoupon->campaign_status = $idStatus->campaign_status_name;
@@ -563,33 +558,6 @@ class CouponGiftNAPIController extends ControllerAPI
                 $this->validateAndSaveTranslations($newcoupon, $translation_json_string, 'create', $isThirdParty);
             });
 
-            // Save manual image
-            $couponTranslation = CouponTranslation::where('merchant_language_id', $id_language_default)
-                                                  ->where('promotion_id', $newcoupon->promotion_id)
-                                                  ->first();
-
-            $couponMediaTranslations = [];
-            if (! empty($couponTranslation)) {
-                $couponImageType = ['coupon_translation_image_orig', 'coupon_translation_image_resized_default', 'coupon_translation_image_cropped_default'];
-
-                foreach ($couponImageType as $key => $val) {
-                    $couponMedia = new Media();
-                    $couponMedia->media_name_id = 'coupon_translation_image';
-                    $couponMedia->media_name_long = $val;
-                    $couponMedia->object_id = $couponTranslation->coupon_translation_id;
-                    $couponMedia->object_name = 'coupon_translation';
-                    $couponMedia->path = $coupon_image_url;
-                    $couponMedia->realpath = $coupon_image_url;
-                    $couponMedia->cdn_url = $coupon_image_url;
-                    $couponMedia->save();
-                    $couponMediaTranslations[] = $couponMedia;
-                }
-
-            }
-
-            $newcoupon->media = $couponMediaTranslations;
-
-
             // Default language for pmp_account is required
             $malls = implode("','", $mallid);
             $prefix = DB::getTablePrefix();
@@ -737,7 +705,7 @@ class CouponGiftNAPIController extends ControllerAPI
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
+            $this->response->message = $e->getMessage() . $e->getFile() . $e->getLine();
             $this->response->data = null;
 
             // Rollback the changes
@@ -843,6 +811,7 @@ class CouponGiftNAPIController extends ControllerAPI
             $how_to_buy_and_redeem = OrbitInput::post('how_to_buy_and_redeem');
             $terms_and_conditions = OrbitInput::post('terms_and_conditions');
             $status = OrbitInput::post('status');
+
             if ($status === 'active') {
                 $campaignStatus = 'ongoing';
             } else {
