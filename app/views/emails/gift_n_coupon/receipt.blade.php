@@ -166,7 +166,7 @@
         <tbody>
           <tr>
             <td class="text-left invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;"><strong>{{{ trans('email-receipt.header.order_number', ['transactionId' => $transaction['id']], '', 'id') }}}</strong></td>
-            <td class="text-right invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;text-align:right;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $transaction['date'] }}}</td>
+            <td class="text-right invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;text-align:right;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $transactionDateTime }}}</td>
           </tr>
           <tr>
             <td colspan="2" class="invoice-body" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
@@ -178,7 +178,7 @@
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <strong>{{{ trans('email-receipt.body.transaction_labels.transaction_id', [], '', 'id') }}}:</strong> {{ $transaction['id'] }}
                 <br>
-                <strong>{{{ trans('email-receipt.body.transaction_labels.transaction_date', [], '', 'id') }}}:</strong> {{ $transaction['date'] }}
+                <strong>{{{ trans('email-receipt.body.transaction_labels.transaction_date', [], '', 'id') }}}:</strong> {{ $transactionDateTime }}
                 <br>
                 <strong>{{{ trans('email-receipt.body.transaction_labels.customer_name', [], '', 'id') }}}:</strong> {{ $customerName }}
                 <br>
@@ -244,7 +244,7 @@
 
           <tr>
             <td class="text-left invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;"><strong>{{{ trans('email-receipt.header.order_number', ['transactionId' => $transaction['id']]) }}}</strong></td>
-            <td class="text-right invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;text-align:right;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $transaction['date'] }}}</td>
+            <td class="text-right invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;text-align:right;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $transactionDateTime }}}</td>
           </tr>
           <tr>
             <td colspan="2" class="invoice-body" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:80px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
@@ -256,7 +256,7 @@
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <strong>{{{ trans('email-receipt.body.transaction_labels.transaction_id') }}}:</strong> {{ $transaction['id'] }}
                 <br>
-                <strong>{{{ trans('email-receipt.body.transaction_labels.transaction_date') }}}:</strong> {{ $transaction['date'] }}
+                <strong>{{{ trans('email-receipt.body.transaction_labels.transaction_date') }}}:</strong> {{ $transactionDateTime }}
                 <br>
                 <strong>{{{ trans('email-receipt.body.transaction_labels.customer_name') }}}:</strong> {{ $customerName }}
                 <br>
