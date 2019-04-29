@@ -73,6 +73,7 @@ class PendingPaymentNotification extends CustomerNotification implements EmailNo
             'paymentExpiration' => $this->getPaymentExpirationDate(),
             'myWalletUrl'       => $this->getMyPurchasesUrl() . '/coupons',
             'cancelUrl'         => $this->getCancelUrl(),
+            'transactionDateTime' => $this->payment->getTransactionDate('d F Y, H:i ') . $this->getLocalTimezoneName($this->payment->timezone_name),
         ];
     }
 

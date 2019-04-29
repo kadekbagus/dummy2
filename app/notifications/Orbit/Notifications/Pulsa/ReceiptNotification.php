@@ -28,4 +28,11 @@ class ReceiptNotification extends BaseReceiptNotification
         // Set to notify via email and InApp
         return ['email'];
     }
+
+    public function getEmailData()
+    {
+        return array_merge(parent::getEmailData(), [
+            'myWalletUrl' => $this->getMyPurchasesUrl() . '/pulsa',
+        ]);
+    }
 }
