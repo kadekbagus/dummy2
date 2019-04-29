@@ -517,7 +517,7 @@ class MediaAPIController extends ControllerAPI
 
             // TODO: Should be moved somewhere to keep this api clean.
             $filterLinkMerchant = OrbitInput::get('filter_link_merchant', null);
-            if (! empty($filterLinkMerchant) && ! empty($objectId)) {
+            if (! empty($filterLinkMerchant) && empty($objectId)) {
                 $user->load($filterLinkMerchant);
                 $linkToMerchant = $user->{$filterLinkMerchant}->first();
                 if (! empty($linkToMerchant)) {
