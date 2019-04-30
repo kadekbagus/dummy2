@@ -20,21 +20,21 @@ abstract class Notification {
 
     /**
      * The notifiable instance.
-     * 
+     *
      * @var null
      */
     protected $notifiable = null;
 
     /**
      * Indicate if we should add notification job to Queue.
-     * 
+     *
      * @var boolean
      */
     protected $shouldQueue = false;
 
     /**
      * The delay before we make the notification ready to be sent.
-     * 
+     *
      * @var integer
      */
     protected $notificationDelay = 3;
@@ -44,6 +44,19 @@ abstract class Notification {
         'inApp' => 'sendInApp',
     ];
 
+    /**
+     * Local/Indonesia Timezone mapping.
+     *
+     * @var [type]
+     */
+    protected $timezoneMapping = [
+        'asia/jakarta' => 'WIB',
+        'asia/makassar' => 'WITA',
+        'asia/jayapura' => 'WIT',
+        'utc' => 'UTC',
+        '' => 'UTC',
+    ];
+
     function __construct($notifable = null)
     {
         $this->setNotifiable($notifiable);
@@ -51,7 +64,7 @@ abstract class Notification {
 
     /**
      * Set the notifiable instance/object.
-     * 
+     *
      * @param [type] $notifiable [description]
      */
     public function setNotifiable($notifiable)
@@ -63,7 +76,7 @@ abstract class Notification {
 
     /**
      * Get the notification methods for the notification.
-     * 
+     *
      * @return [type] [description]
      */
     protected function notificationMethods() {
@@ -74,7 +87,7 @@ abstract class Notification {
      * Get the queue name that will be used.
      *
      * @todo  should return array so each notification method can use its own queue name.
-     * 
+     *
      * @return string queue name.
      */
     protected function getQueueName()
@@ -85,13 +98,13 @@ abstract class Notification {
 
     /**
      * Send to email.
-     * 
+     *
      * @return [type] [description]
      */
     protected function sendEmail($customDelay = 0)
     {
         if ($this->shouldQueue) {
-            
+
             // Override the delay if needed.
             $this->notificationDelay = $customDelay === 0 ? $this->notificationDelay : $customDelay;
 
@@ -110,7 +123,7 @@ abstract class Notification {
 
     /**
      * Send to in-app notification.
-     * 
+     *
      * @return [type] [description]
      */
     protected function sendInApp($customDelay = 0)
@@ -135,7 +148,7 @@ abstract class Notification {
 
     /**
      * Send the notification.
-     * 
+     *
      * @param  integer $customDelay [description]
      * @return [type]         [description]
      */
@@ -152,4 +165,17 @@ abstract class Notification {
         }
     }
 
+    /**
+     * Get local area/region time representation, e.g. WIB/WITA/WIT.
+     *
+     * @param  [type] $payment [description]
+     * @return [type]          [description]
+     */
+    protected function getLocalTimezoneName($timezone = 'UTC')
+    {
+        $timezone = strtolower($timezone);
+        return isset($this->timezoneMapping[$timezone]) ?
+               $this->timezoneMapping[$timezone] :
+               '';
+    }
 }
