@@ -2243,5 +2243,14 @@ return array(
             'object_type' => 'Coupon',
             'parameter_name' => 'object_id'
         ),
+        // Click Announcement
+        '244' => array(
+            'name' => 'click_announcement',
+            'name_long' => 'Click Announcement',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null
+        ),
     ),
 );
