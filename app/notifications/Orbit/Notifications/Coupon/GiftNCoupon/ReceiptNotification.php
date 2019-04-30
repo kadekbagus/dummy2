@@ -47,6 +47,7 @@ class ReceiptNotification extends BaseReceiptNotification
             'couponImage' => $this->getCouponImage(),
             'redeemUrls' => $this->getRedeemUrls(),
             'myPurchasesUrl' => $this->getMyPurchasesUrl() . '/coupons',
+            'couponExpiredDate' => $this->getCouponExpiredDate(),
         ]);
     }
 
@@ -67,9 +68,7 @@ class ReceiptNotification extends BaseReceiptNotification
      */
     private function getCouponImage()
     {
-        // Default fallback image.
-        $couponImage = 'https://www.gotomalls.com/images/campaign-default.png';
-
+        $couponImage = '';
         $couponId = $this->payment->details->first()->object_id;
         $prefix = DB::getTablePrefix();
         $coupon = Coupon::select(DB::raw("{$prefix}promotions.promotion_id,
@@ -106,6 +105,11 @@ class ReceiptNotification extends BaseReceiptNotification
             $cdnConfig = Config::get('orbit.cdn');
             $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
             $couponImage = $imgUrl->getImageUrl($attachmentPath, $cdnUrl);
+        }
+
+        // Default fallback image.
+        if (empty($couponImage)) {
+            $couponImage = 'https://www.gotomalls.com/themes/default/images/campaign-default.png';
         }
 
         return $couponImage;
