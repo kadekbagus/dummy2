@@ -110,8 +110,6 @@ class RatingDetailAPIController extends PubControllerAPI
             $reviewData->is_image_reviewing = isset($review->is_image_reviewing) ? $review->is_image_reviewing : null;
 
             // build user data
-            $userId = $review->user_id;
-
             $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
             $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
             $prefix = DB::getTablePrefix();
@@ -127,12 +125,13 @@ class RatingDetailAPIController extends PubControllerAPI
                             ->on('media.media_name_long', '=', DB::raw("'user_profile_picture_orig'"));
                     })
                 ->join('roles', 'roles.role_id', '=', 'users.user_role_id')
-                ->where('users.user_id', $userId)
+                ->where('users.user_id', $review->user_id)
                 ->first();
 
             $roleOfficial = ['Merchant Review Admin', 'Master Review Admin'];
 
             $userData = new stdClass();
+            $userData->user_id = $reviewUser->user_id;
             $userData->user_name = $reviewUser->user_name;
             $userData->user_picture = $reviewUser->user_picture;
             $userData->is_official_user = in_array($reviewUser->role_name, $roleOfficial) ? 'y' : 'n';
