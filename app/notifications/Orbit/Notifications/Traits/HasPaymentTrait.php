@@ -1,6 +1,7 @@
 <?php namespace Orbit\Notifications\Traits;
 
 use Config;
+use Carbon\Carbon;
 
 /**
  * A trait that indicate that the using object/model
@@ -97,7 +98,7 @@ trait HasPaymentTrait
     public function getPaymentExpirationDate()
     {
         $expiredIn = Config::get('orbit.partners_api.midtrans.expired_in', 1440);
-        if ($this->payment->forPulsa()) {
+        if ($this->payment->paidWith(['gopay'])) {
             $expiredIn = Config::get('orbit.partners_api.midtrans.gopay_expired_in', $expiredIn);
         }
 
@@ -132,5 +133,19 @@ trait HasPaymentTrait
     public function getMyPurchasesUrl()
     {
         return Config::get('orbit.transaction.my_purchases_url', 'https://gotomalls.com/my/purchases');
+    }
+
+    /**
+     * Get Coupon expiration date.
+     *
+     * @return [type] [description]
+     */
+    protected function getCouponExpiredDate($format = 'j M Y')
+    {
+        if ($this->payment->issued_coupons->count() > 0) {
+            return Carbon::parse($this->payment->issued_coupons->first()->expired_date)->format($format);
+        }
+
+        return '-';
     }
 }

@@ -109,7 +109,8 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
                                                     WHERE opr.promotion_id = {$prefix}promotions.promotion_id
                                                     GROUP BY opr.promotion_id
                                                     ORDER BY om.name
-                                                ) as link_to_tenant
+                                                ) as link_to_tenant,
+                                    {$prefix}issued_coupons.expired_date
                             "))
 
                             ->leftJoin('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
@@ -162,6 +163,22 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
 
             if (!$coupon) {
                 OrbitShopAPI::throwInvalidArgument('purchased detail not found');
+            }
+
+            $coupon->redeem_codes = null;
+            if ($coupon->coupon_type === 'gift_n_coupon') {
+                $coupon->redeem_codes = PaymentTransaction::select('issued_coupons.url')
+                    ->join('issued_coupons', function ($q) {
+                        $q->on('issued_coupons.transaction_id', '=', 'payment_transactions.payment_transaction_id');
+                    })
+                    // payment_transaction_id is value of payment_transaction_id or external_payment_transaction_id
+                    ->where(function($query) use($payment_transaction_id) {
+                        $query->where('payment_transactions.payment_transaction_id', '=', $payment_transaction_id)
+                              ->orWhere('payment_transactions.external_payment_transaction_id', '=', $payment_transaction_id);
+                      })
+                    ->where('issued_coupons.status', '=', 'issued')
+                    ->get()
+                    ->lists('url');
             }
 
             // Fallback to IDR by default?

@@ -361,17 +361,20 @@ class CouponLocationAPIController extends PubControllerAPI
                                     CASE WHEN (SELECT {$image}
                                         FROM orb_media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
-                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id) is null
+                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id
+                                        AND {$prefix}coupon_translations.merchant_language_id = {$this->quote($valid_language->language_id)} LIMIT 1) is null
                                     THEN
                                         (SELECT {$image}
                                         FROM orb_media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
-                                        AND m.object_id = default_translation.coupon_translation_id)
+                                        AND m.object_id = default_translation.coupon_translation_id
+                                        AND default_translation.merchant_language_id = {$this->quote($valid_language->language_id)} LIMIT 1)
                                     ELSE
                                         (SELECT {$image}
                                         FROM orb_media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
-                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id)
+                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id
+                                        AND {$prefix}coupon_translations.merchant_language_id = {$this->quote($valid_language->language_id)} LIMIT 1)
                                     END AS original_media_path
                                 "),
                                 DB::raw("default_translation.promotion_name as default_name")

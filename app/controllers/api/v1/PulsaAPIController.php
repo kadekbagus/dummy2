@@ -69,6 +69,7 @@ class PulsaAPIController extends ControllerAPI
             $price = OrbitInput::post('price');
             $quantity = OrbitInput::post('quantity', 0);
             $status = OrbitInput::post('status');
+            $vendor_price = OrbitInput::post('vendor_price');
 
             $validator = Validator::make(
                 array(
@@ -114,6 +115,7 @@ class PulsaAPIController extends ControllerAPI
             $newPulsa->price = $price;
             $newPulsa->quantity = $quantity;
             $newPulsa->status = $status;
+            $newPulsa->vendor_price = $vendor_price;
             $newPulsa->save();
 
             // Commit the changes
@@ -285,6 +287,10 @@ class PulsaAPIController extends ControllerAPI
                 $updatedPulsa->status = $status;
             });
 
+            OrbitInput::post('vendor_price', function($vendor_price) use ($updatedPulsa) {
+                $updatedPulsa->vendor_price = $vendor_price;
+            });
+
             $updatedPulsa->save();
             // Commit the changes
             $this->commit();
@@ -398,7 +404,7 @@ class PulsaAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $pulsa = Pulsa::select('pulsa.pulsa_item_id', 'pulsa.pulsa_code', 'pulsa.pulsa_display_name', 'telco_operators.name', 'pulsa.value', 'pulsa.price', 'pulsa.quantity', 'pulsa.status')
+            $pulsa = Pulsa::select('pulsa.pulsa_item_id', 'pulsa.pulsa_code', 'pulsa.pulsa_display_name', 'telco_operators.name', 'pulsa.value', 'pulsa.price', 'pulsa.quantity', 'pulsa.status', 'pulsa.vendor_price')
                           ->leftJoin('telco_operators', 'telco_operators.telco_operator_id', '=', 'pulsa.telco_operator_id');
 
             // Filter pulsa by pulsa item id

@@ -54,6 +54,7 @@ class PendingPaymentNotification extends Base
             'pulsaPhoneNumber' => $this->payment->extra_data,
             'cancelUrl' => $this->getCancelUrl() . "&type=pulsa",
             'myWalletUrl' => $this->getMyPurchasesUrl() . '/pulsa',
+            'transactionDateTime' => $this->payment->getTransactionDate('d F Y, H:i ') . " {$this->getLocalTimezoneName($this->payment->timezone_name)}",
         ]);
     }
 

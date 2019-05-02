@@ -28,7 +28,7 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
 
         DB::connection()->commit();
     }
-    else if ($payment->status === PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED) {
+    else if ($payment->status === PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED || $payment->status === PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED) {
         // This might be occurred because there are 2 transactions with same coupon and user.
         // Only the first transaction which pending/paid should get the coupon.
         Log::info("PaidCoupon: Payment {$paymentId} success but can not issue coupon...");
@@ -72,7 +72,7 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
                 $queueData
             );
         }
-        else if ($payment->forSepulsa() || $payment->paidWith(['bank_transfer', 'echannel'])) {
+        else if ($payment->forSepulsa() || $payment->paidWith(['bank_transfer', 'echannel', 'gopay'])) {
             $delay = Config::get('orbit.transaction.delay_before_issuing_coupon', 75);
 
             Log::info("PaidCoupon: Issuing coupon for PaymentID {$paymentId} after {$delay} seconds...");

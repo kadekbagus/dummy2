@@ -2180,13 +2180,15 @@ class CouponAPIController extends ControllerAPI
                     $tenant_id = $data->tenant_id;
                     $mall_id = $data->mall_id;
 
+                    $validatorRule = $tenant_id === $mall_id ? 'orbit.empty.merchant' : 'orbit.empty.tenant';
+
                     $validator = Validator::make(
                         array(
                             'retailer_id'   => $tenant_id,
 
                         ),
                         array(
-                            'retailer_id'   => 'orbit.empty.tenant',
+                            'retailer_id'   => $validatorRule,
                         )
                     );
 
@@ -3686,27 +3688,40 @@ class CouponAPIController extends ControllerAPI
 
             $coupon = Coupon::where('promotion_id', $issuedCoupon->promotion_id)->first();
 
-            $baseStore = BaseStore::select('base_stores.base_store_id', 'base_stores.merchant_id', 'base_stores.phone', 'base_stores.base_merchant_id', 'base_merchants.name as store_name', 'merchants.country_id', 'timezones.timezone_name', 'merchants.name as mall_name')
-                                  ->join('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
-                                  ->join('merchants', 'merchants.merchant_id', '=', 'base_stores.merchant_id')
-                                  ->leftJoin('timezones', 'timezones.timezone_id', '=', 'merchants.timezone_id')
-                                  ->where('base_stores.base_store_id', $storeId)
-                                  ->where('base_stores.merchant_id', $mall_id)
-                                  ->first();
+            if ($mall_id !== $storeId) {
+                $redeemPlace = BaseStore::select('base_stores.base_store_id', 'base_stores.merchant_id', 'base_stores.phone', 'base_stores.base_merchant_id', 'base_merchants.name as store_name', 'merchants.country_id', 'timezones.timezone_name', 'merchants.name as mall_name')
+                      ->join('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
+                      ->join('merchants', 'merchants.merchant_id', '=', 'base_stores.merchant_id')
+                      ->leftJoin('timezones', 'timezones.timezone_id', '=', 'merchants.timezone_id')
+                      ->where('base_stores.base_store_id', $storeId)
+                      ->where('base_stores.merchant_id', $mall_id)
+                      ->first();
+            } else {
+                // redeem at mall cs
+                $redeemPlace = Mall::leftJoin('timezones', 'timezones.timezone_id', '=', 'merchants.timezone_id')
+                    ->excludeDeleted()
+                    ->where('merchant_id', $mall_id)
+                    ->first();
+
+                $redeemPlace->base_merchant_id = null;
+                $redeemPlace->store_name = 'Mall CS';
+                $redeemPlace->base_store_id = null;
+                $redeemPlace->mall_name = $redeemPlace->name;
+            }
 
             $body = [
                 'user_email'             => $user->user_email,
                 'user_name'              => $user->user_firstname . ' ' . $user->user_lastname,
                 'user_id'                => $user->user_id,
-                'country_id'             => $baseStore->country_id,
+                'country_id'             => $redeemPlace->country_id,
                 'payment_type'           => $paymentType,
-                'merchant_id'            => $baseStore->base_merchant_id,
-                'merchant_name'          => $baseStore->store_name,
-                'store_id'               => $baseStore->base_store_id,
-                'store_name'             => $baseStore->store_name,
-                'timezone_name'          => $baseStore->timezone_name,
-                'building_id'            => $baseStore->merchant_id,
-                'building_name'          => $baseStore->mall_name,
+                'merchant_id'            => $redeemPlace->base_merchant_id,
+                'merchant_name'          => $redeemPlace->store_name,
+                'store_id'               => $redeemPlace->base_store_id,
+                'store_name'             => $redeemPlace->store_name,
+                'timezone_name'          => $redeemPlace->timezone_name,
+                'building_id'            => $redeemPlace->merchant_id,
+                'building_name'          => $redeemPlace->mall_name,
                 'object_id'              => $issuedCoupon->promotion_id,
                 'object_type'            => 'coupon',
                 'object_name'            => $coupon->promotion_name,
@@ -3854,12 +3869,12 @@ class CouponAPIController extends ControllerAPI
                 if ($coupon->promotion_type === Coupon::TYPE_HOT_DEALS) {
                     $redeemLocationInfo = $issuedCoupon->payment->details->first()->normal_paypro_detail;
 
-                    $redeemLocationInfo->merchant_id            = $baseStore->base_merchant_id;
-                    $redeemLocationInfo->merchant_name          = $baseStore->store_name;
-                    $redeemLocationInfo->store_id               = $baseStore->base_store_id;
-                    $redeemLocationInfo->store_name             = $baseStore->store_name;
-                    $redeemLocationInfo->building_id            = $baseStore->merchant_id;
-                    $redeemLocationInfo->building_name          = $baseStore->mall_name;
+                    $redeemLocationInfo->merchant_id            = $redeemPlace->base_merchant_id;
+                    $redeemLocationInfo->merchant_name          = $redeemPlace->store_name;
+                    $redeemLocationInfo->store_id               = $redeemPlace->base_store_id;
+                    $redeemLocationInfo->store_name             = $redeemPlace->store_name;
+                    $redeemLocationInfo->building_id            = $redeemPlace->merchant_id;
+                    $redeemLocationInfo->building_name          = $redeemPlace->mall_name;
 
                     $redeemLocationInfo->save();
                 }
