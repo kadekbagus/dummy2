@@ -315,3 +315,6 @@ Artisan::add(new CopyStoreDataCommand);
 
 // List all base stores.
 Artisan::add(new GetListBaseStoreCommand);
+
+// Create mall cs employee with verification code
+Artisan::add(new CreateUserMallCSCommand);

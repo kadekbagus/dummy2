@@ -14,16 +14,16 @@ return [
 
         'greeting_pulsa' => 'Dear, :customerName
                         <br>
-                        Thank you for purchasing Pulsa in Gotomalls.com.',
+                        Thank you for purchasing Pulsa in Gotomalls.com. Please perform the payment using your GOJEK App (GoPay). Below are your transaction details. ',
 
         'transaction_labels' => [
             'transaction_id' => 'Transaction ID: ',
             'transaction_date' => 'Transaction Date: ',
             'coupon_name' => 'Coupon Name: ',
             'coupon_price' => 'Coupon Price: ',
-            'pulsa_name' => 'Pulsa',
-            'pulsa_phone_number' => 'Phone Number',
-            'pulsa_price' => 'Price',
+            'pulsa_name' => 'Pulsa: ',
+            'pulsa_phone_number' => 'Phone Number: ',
+            'pulsa_price' => 'Price: ',
             'coupon_quantity' => 'Quantity: ',
             'customer_name' => 'Customer Name: ',
             'email' => 'Email: ',

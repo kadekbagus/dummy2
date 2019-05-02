@@ -121,7 +121,12 @@ class CheckTransactionStatusQueue
                 $transactionStatus = $transaction->mapToInternalStatus();
                 if ($transaction->isSuccess()) {
                     if ($payment->forSepulsa() || $payment->paidWith(['bank_transfer', 'echannel', 'gopay'])) {
-                        $transactionStatus = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
+                        if ($payment->forPulsa()) {
+                            $transactionStatus = PaymentTransaction::STATUS_SUCCESS_NO_PULSA;
+                        }
+                        else {
+                            $transactionStatus = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
+                        }
                     }
                 }
 
