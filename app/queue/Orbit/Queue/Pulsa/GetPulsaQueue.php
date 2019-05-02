@@ -106,7 +106,7 @@ class GetPulsaQueue
                 Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
                 Log::info("Purchase response: " . serialize($pulsaPurchase));
 
-                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_PULSA;
+                $payment->status = PaymentTransaction::STATUS_SUCCESS;
             }
             else if ($pulsaPurchase->isNotAvailable()) {
                 Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
