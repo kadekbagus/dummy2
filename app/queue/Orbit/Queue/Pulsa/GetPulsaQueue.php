@@ -116,7 +116,7 @@ class GetPulsaQueue
 
             // Mark as failed if we get any exception.
             if (! empty($payment)) {
-                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
+                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED;
                 $payment->save();
 
                 DB::connection()->commit();

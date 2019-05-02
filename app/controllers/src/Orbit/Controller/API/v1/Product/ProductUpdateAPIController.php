@@ -88,7 +88,7 @@ class ProductUpdateAPIController extends ControllerAPI
                     'country_id'        => 'required',
                     'short_description' => 'required',
                     'categories'        => 'required|array',
-                    'brand_ids'         => 'required|array',
+                    'brand_ids'         => 'array',
                     'marketplaces'      => 'required|orbit.empty.marketplaces',
                 ),
                 array(
@@ -96,7 +96,6 @@ class ProductUpdateAPIController extends ControllerAPI
                     'country_id.required'           => 'Country field is required',
                     'short_description.required'    => 'Product Description is required',
                     'categories.required'           => 'Product Category is required',
-                    'brand_ids.required'            => 'Link to Brand is required',
                     'orbit.empty.marketplaces'      => 'Link to Affiliates is required',
                 )
             );

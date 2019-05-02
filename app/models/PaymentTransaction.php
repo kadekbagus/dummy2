@@ -43,6 +43,16 @@ class PaymentTransaction extends Eloquent
     const STATUS_SUCCESS_NO_COUPON_FAILED = 'success_no_coupon_failed';
 
     /**
+     * Status when preparing pulsa..
+     */
+    const STATUS_SUCCESS_NO_PULSA = 'success_no_pulsa';
+
+    /**
+     * Status when failed getting pulsa from provider.
+     */
+    const STATUS_SUCCESS_NO_PULSA_FAILED = 'success_no_pulsa_failed';
+
+    /**
      * Payment - Coupon Sepulsa relation.
      *
      * @return [type] [description]
@@ -120,6 +130,8 @@ class PaymentTransaction extends Eloquent
             self::STATUS_SUCCESS,
             self::STATUS_SUCCESS_NO_COUPON,
             self::STATUS_SUCCESS_NO_COUPON_FAILED,
+            self::STATUS_SUCCESS_NO_PULSA,
+            self::STATUS_SUCCESS_NO_PULSA_FAILED,
         ]);
     }
 
@@ -269,7 +281,7 @@ class PaymentTransaction extends Eloquent
      * @param  string $format [description]
      * @return [type]         [description]
      */
-    public function getTransactionDate($format = 'j M Y')
+    public function getTransactionDate($format = 'j M Y, H:i')
     {
         if (! empty($this->timezone_name)) {
             return $this->created_at->timezone($this->timezone_name)->format($format);
