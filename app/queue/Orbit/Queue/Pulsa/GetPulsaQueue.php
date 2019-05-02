@@ -21,6 +21,7 @@ use Orbit\Helper\MCash\API\Purchase;
 use Orbit\Notifications\Pulsa\ReceiptNotification;
 use Orbit\Notifications\Pulsa\PulsaNotAvailableNotification;
 use Orbit\Notifications\Pulsa\CustomerPulsaNotAvailableNotification;
+use Orbit\Notifications\Pulsa\PulsaPendingNotification;
 
 
 /**
@@ -97,6 +98,13 @@ class GetPulsaQueue
                         ->responseOK()
                         ->save();
             }
+            else if ($pulsaPurchase->isPending()) {
+                Log::info("Pulsa: Pulsa purchase is PENDING for payment {$paymentId}.");
+                Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
+                Log::info("Purchase response: " . serialize($pulsaPurchase));
+
+                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_PULSA;
+            }
             else if ($pulsaPurchase->isNotAvailable()) {
                 throw new Exception("Pulsa NOT AVAILABLE FROM MCASH.");
             }
@@ -112,11 +120,20 @@ class GetPulsaQueue
             // Commit the changes ASAP.
             DB::connection()->commit();
 
+            // Send notification to admin if pulsa purchase is pending.
+            if ($pulsaPurchase->isPending()) {
+                foreach($adminEmails as $email) {
+                    $admin              = new User;
+                    $admin->email       = $email;
+                    $admin->notify(new PulsaPendingNotification($payment, 'Pending Payment'));
+                }
+            }
+
         } catch (Exception $e) {
 
             // Mark as failed if we get any exception.
             if (! empty($payment)) {
-                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED;
+                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
                 $payment->save();
 
                 DB::connection()->commit();
