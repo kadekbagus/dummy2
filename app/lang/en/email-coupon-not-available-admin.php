@@ -8,7 +8,7 @@ return [
     'header' => [
         'invoice'       => 'Notice',
         'order_number'  => 'Transaction ID: :transactionId',
-        'title'         => 'Immediate Refund!'
+        'title'         => 'Immediate Refund!',
         'title_pulsa_pending' => 'Pending MCash Pulsa',
     ],
 
