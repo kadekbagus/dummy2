@@ -97,6 +97,9 @@ class GetPulsaQueue
                         ->setLocation($mall)
                         ->responseOK()
                         ->save();
+
+                Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
+                Log::info("Purchase response: " . serialize($pulsaPurchase));
             }
             else if ($pulsaPurchase->isPending()) {
                 Log::info("Pulsa: Pulsa purchase is PENDING for payment {$paymentId}.");
@@ -106,6 +109,9 @@ class GetPulsaQueue
                 $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_PULSA;
             }
             else if ($pulsaPurchase->isNotAvailable()) {
+                Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
+                Log::info("Purchase response: " . serialize($pulsaPurchase));
+
                 throw new Exception("Pulsa NOT AVAILABLE FROM MCASH.");
             }
             else {
