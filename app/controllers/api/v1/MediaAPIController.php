@@ -673,7 +673,7 @@ class MediaAPIController extends ControllerAPI
         $filterLinkedObjectId = \Input::get('media_relation', null);
         if (! empty($filterLinkedObjectId) && empty($objectId)) {
             $user->load($filterLinkedObjectId);
-            $linkToObject = $user->{$filterLinkedObjectId}->first();
+            $linkToObject = $user->{$filterLinkedObjectId};
             if (! empty($linkToObject)) {
                 $objectId = $linkToObject->merchant_id !== 0 ? $linkToObject->merchant_id : null;
             }
