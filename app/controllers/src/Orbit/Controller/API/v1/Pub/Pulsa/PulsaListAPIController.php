@@ -92,11 +92,13 @@ class PulsaListAPIController extends PubControllerAPI
                                 $success = PaymentTransaction::STATUS_SUCCESS;
                                 $pending = PaymentTransaction::STATUS_PENDING;
                                 $successNoCoupon = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
+                                $successNoPulsa = PaymentTransaction::STATUS_SUCCESS_NO_PULSA;
                                 $join->on('payment_transaction_details.payment_transaction_id', '=', DB::raw("
                                     {$prefix}payment_transactions.payment_transaction_id AND (
                                         {$prefix}payment_transactions.status = '{$success}'
                                         OR {$prefix}payment_transactions.status = '{$pending}'
-                                        OR {$prefix}payment_transactions.status = '{$successNoCoupon}')
+                                        OR {$prefix}payment_transactions.status = '{$successNoCoupon}'
+                                        OR {$prefix}payment_transactions.status = '{$successNoPulsa}')
                                     "));
                             })
                             ->join('telco_operators', 'pulsa.telco_operator_id', '=', 'telco_operators.telco_operator_id')
