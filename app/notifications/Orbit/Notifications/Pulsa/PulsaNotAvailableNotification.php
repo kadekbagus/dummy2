@@ -83,7 +83,7 @@ class PulsaNotAvailableNotification extends AdminNotification
             Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                $subject = '[Admin] Can not Purchase Pulsa';
+                $subject = trans('email-coupon-not-available-admin.subject_pulsa');
 
                 $mail->subject($subject);
                 $mail->from($emailConfig['email'], $emailConfig['name']);
