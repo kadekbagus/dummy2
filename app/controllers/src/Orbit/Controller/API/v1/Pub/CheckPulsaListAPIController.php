@@ -1,6 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub;
 /**
- * API to get 
+ * API to get pulsa vendor price
  * @author ahmad <ahmad@dominopos.com>
  */
 
@@ -9,6 +9,7 @@ use Config;
 use Illuminate\Support\Facades\Response;
 use \DB;
 use Pulsa;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
 
 class CheckPulsaListAPIController extends PubControllerAPI
 {
