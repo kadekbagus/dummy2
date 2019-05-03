@@ -25,7 +25,7 @@ return [
             'email' => 'Email',
             'phone' => 'No. Telp Pelanggan',
             'coupon_name' => 'Nama Kupon',
-            'coupon_expired_date' => 'Valid sampai tanggal',
+            'coupon_expired_date' => 'Valid Sampai Tanggal',
             'coupon_price' => 'Harga Kupon',
             'coupon_quantity' => 'Jumlah',
             'total_amount' => 'Total',
