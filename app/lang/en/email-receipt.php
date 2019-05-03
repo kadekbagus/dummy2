@@ -19,6 +19,14 @@ return [
                         Thank you for purchasing Coupon(s) in Gotomalls.com. Your payment has been verified by our system. Below are the details of your transaction
         ',
 
+        'greeting_pulsa_pending' => 'Dear, :customerName
+                        <br>
+                        Thank you, your purchase is successful and we are preparing your pulsa.
+                        If within 1 hour your pulsa is not being received, please contact our Customer Service at
+                        <a style="color:#f43d3c;text-decoration:none;" href="tel::csPhone">:csPhone</a> or email at
+                        <a style="color:#f43d3c;text-decoration:none;" href="mailto::csEmail">:csEmail</a>.
+        ',
+
         'transaction_labels' => [
             'transaction_id' => 'Transaction ID',
             'transaction_date' => 'Transaction Date',
