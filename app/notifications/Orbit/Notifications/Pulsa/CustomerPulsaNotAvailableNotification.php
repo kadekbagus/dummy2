@@ -65,6 +65,7 @@ class CustomerPulsaNotAvailableNotification extends CustomerNotification impleme
             'customerPhone'     => $this->getCustomerPhone(),
             'transaction'       => $this->getTransactionData(),
             'cs'                => $this->getContactData(),
+            'transactionDateTime' => $this->payment->getTransactionDate('d F Y, H:i ') . " {$this->getLocalTimezoneName($this->payment->timezone_name)}",
         ];
     }
 

@@ -66,6 +66,7 @@ class PulsaNotAvailableNotification extends AdminNotification
             'customerName'      => $this->getCustomerName(),
             'customerPhone'     => $this->getCustomerPhone(),
             'transaction'       => $this->getTransactionData(),
+            'transactionDateTime' => $this->payment->getTransactionDate('d F Y, H:i ') . " {$this->getLocalTimezoneName($this->payment->timezone_name)}",
         ];
     }
 
@@ -82,7 +83,7 @@ class PulsaNotAvailableNotification extends AdminNotification
             Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                $subject = '[Admin] Can not Purchase Pulsa';
+                $subject = trans('email-coupon-not-available-admin.subject_pulsa');
 
                 $mail->subject($subject);
                 $mail->from($emailConfig['email'], $emailConfig['name']);

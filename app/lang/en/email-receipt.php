@@ -26,6 +26,7 @@ return [
             'email' => 'Email',
             'phone' => 'Customer Phone Number',
             'coupon_name' => 'Coupon Name',
+            'coupon_expired_date' => 'Validity Redeem Date',
             'coupon_price' => 'Coupon Price',
             'coupon_quantity' => 'Quantity',
             'total_amount' => 'Total Amount',

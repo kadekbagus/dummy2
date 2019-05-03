@@ -4,7 +4,7 @@
     <meta charset="utf-8"> <!-- utf-8 works for most cases -->
     <meta name="viewport" content="width=device-width"> <!-- Forcing initial-scale shouldn't be necessary -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Use the latest (edge) version of IE rendering engine -->
-    <title>Unable to Get the Pulsa</title>
+    <title>Pending while Purchasing Pulsa</title>
     <!-- Web Font / @font-face : BEGIN -->
     <!-- NOTE: If web fonts are not required, lines 10 - 27 can be safely removed. -->
     <!-- All other clients get the webfont reference; some will render the font and others will silently fail to the fallbacks. More on that here: http://stylecampaign.com/blog/2015/02/webfont-support-in-email/ -->
@@ -167,13 +167,15 @@
             <td class="invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
                 {{{ $transactionDateTime }}}
                 <br>
-                <span style="font-size:24px;font-weight:bold;">{{{ trans('email-coupon-not-available-admin.header.title') }}}</span>
+                <span style="font-size:24px;font-weight:bold;">
+                    {{{ trans('email-coupon-not-available-admin.header.title_pulsa_pending') }}}
+                </span>
             </td>
           </tr>
           <tr>
             <td colspan="2" class="invoice-body" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:80px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-coupon-not-available-admin.body.greeting') }}
+                {{ trans('email-coupon-not-available-admin.body.greeting_pulsa') }}
               </p>
               <br>
               <table class="no-border customer" width="100%" style="line-height:1.7em;font-size:14px;color:#222;width:100%;border:0;margin-top:30px;border-spacing:0 !important;border-collapse:collapse !important;table-layout:fixed !important;margin:0 auto !important;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
@@ -225,7 +227,8 @@
               <br>
               <br>
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-coupon-not-available-admin.body.help', ['total' => $transaction['total']]) }}
+                {{-- {{ trans('email-coupon-not-available-admin.body.help', ['total' => $transaction['total']]) }} --}}
+                <br>
                 <br>
                 {{{ trans('email-coupon-not-available-admin.body.thank_you') }}}
               </p>
