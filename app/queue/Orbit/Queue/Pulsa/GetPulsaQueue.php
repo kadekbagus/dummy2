@@ -66,6 +66,8 @@ class GetPulsaQueue
 
                 Log::info("Pulsa: Payment {$paymentId} was denied/canceled. We should not issue any pulsa.");
 
+                DB::connection()->commit();
+                
                 $job->delete();
 
                 return;
