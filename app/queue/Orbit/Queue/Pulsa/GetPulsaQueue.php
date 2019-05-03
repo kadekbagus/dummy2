@@ -66,6 +66,8 @@ class GetPulsaQueue
 
                 Log::info("Pulsa: Payment {$paymentId} was denied/canceled. We should not issue any pulsa.");
 
+                DB::connection()->commit();
+
                 $job->delete();
 
                 return;
@@ -106,7 +108,7 @@ class GetPulsaQueue
                 Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
                 Log::info("Purchase response: " . serialize($pulsaPurchase));
 
-                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_PULSA;
+                $payment->status = PaymentTransaction::STATUS_SUCCESS;
             }
             else if ($pulsaPurchase->isNotAvailable()) {
                 Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
@@ -139,7 +141,7 @@ class GetPulsaQueue
 
             // Mark as failed if we get any exception.
             if (! empty($payment)) {
-                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
+                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED;
                 $payment->save();
 
                 DB::connection()->commit();
