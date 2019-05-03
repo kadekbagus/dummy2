@@ -22,6 +22,7 @@ use Orbit\Notifications\Pulsa\ReceiptNotification;
 use Orbit\Notifications\Pulsa\PulsaNotAvailableNotification;
 use Orbit\Notifications\Pulsa\CustomerPulsaNotAvailableNotification;
 use Orbit\Notifications\Pulsa\PulsaPendingNotification;
+use Orbit\Notifications\Pulsa\CustomerPulsaPendingNotification;
 
 
 /**
@@ -55,7 +56,7 @@ class GetPulsaQueue
 
             $paymentId = $data['paymentId'];
 
-            Log::info("Pulsa: Getting pulsa PaymentID: {$paymentId}");
+            Log::info("Pulsa: Getting pulsa for PaymentID: {$paymentId}");
 
             $payment = PaymentTransaction::with(['details.pulsa', 'user', 'midtrans'])->findOrFail($paymentId);
 
@@ -65,6 +66,8 @@ class GetPulsaQueue
             if ($payment->denied() || $payment->failed() || $payment->expired() || $payment->canceled()) {
 
                 Log::info("Pulsa: Payment {$paymentId} was denied/canceled. We should not issue any pulsa.");
+
+                DB::connection()->commit();
 
                 $job->delete();
 
@@ -102,11 +105,22 @@ class GetPulsaQueue
                 Log::info("Purchase response: " . serialize($pulsaPurchase));
             }
             else if ($pulsaPurchase->isPending()) {
-                Log::info("Pulsa: Pulsa purchase is PENDING for payment {$paymentId}.");
+                $payment->status = PaymentTransaction::STATUS_SUCCESS_PULSA_PENDING;
+
+                $payment->user->notify(new CustomerPulsaPendingNotification($payment));
+
+                $activity->setActivityNameLong('Transaction is Successful - MCash Pulsa Pending')
+                        ->setModuleName('Midtrans Transaction')
+                        ->setObject($payment)
+                        ->setObjectDisplayName($pulsaName)
+                        ->setNotes($phoneNumber)
+                        ->setLocation($mall)
+                        ->responseOK()
+                        ->save();
+
+                Log::info("Pulsa: MCash Pulsa purchase is PENDING for payment {$paymentId}.");
                 Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
                 Log::info("Purchase response: " . serialize($pulsaPurchase));
-
-                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_PULSA;
             }
             else if ($pulsaPurchase->isNotAvailable()) {
                 Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
@@ -139,7 +153,7 @@ class GetPulsaQueue
 
             // Mark as failed if we get any exception.
             if (! empty($payment)) {
-                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
+                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED;
                 $payment->save();
 
                 DB::connection()->commit();
