@@ -445,7 +445,9 @@ class PulsaAPIController extends ControllerAPI
             // Filter pulsa by value
             OrbitInput::get('value', function($value) use ($pulsa)
             {
-                $pulsa->where('pulsa.value', $value);
+                if ($value !== '') {
+                    $pulsa->where('pulsa.value', $value);
+                }
             });
 
             // Filter pulsa by price
@@ -463,7 +465,9 @@ class PulsaAPIController extends ControllerAPI
             // Filter pulsa by status
             OrbitInput::get('status', function($status) use ($pulsa)
             {
-                $pulsa->where('pulsa.status', $status);
+                if ($status !== '') {
+                    $pulsa->where('pulsa.status', $status);
+                }
             });
 
             $_pulsa = clone $pulsa;
