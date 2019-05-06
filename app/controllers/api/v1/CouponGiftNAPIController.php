@@ -1750,7 +1750,8 @@ class CouponGiftNAPIController extends ControllerAPI
 
             // Filter coupons by status
             OrbitInput::get('status', function ($statuses) use ($coupons, $table_prefix) {
-                $coupons->having('status', '=', $statuses);
+                $arrayStatus = implode("','", (array)$statuses);
+                $coupons->havingRaw("(status in('{$arrayStatus}'))");
             });
 
             // Filter coupon by retailer id
