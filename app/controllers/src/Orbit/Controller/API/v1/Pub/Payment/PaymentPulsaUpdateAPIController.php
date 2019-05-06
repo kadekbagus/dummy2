@@ -146,6 +146,10 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
             }
             else {
                 Log::info("Pulsa: Payment {$payment_transaction_id} is good. Nothing to do.");
+                // Commit the changes ASAP so if there are any other requests that trigger this controller
+                // they will use the updated payment data/status.
+                // Try not doing any expensive operation above.
+                $this->commit();
             }
 
             // If old status is not final, then we should update...

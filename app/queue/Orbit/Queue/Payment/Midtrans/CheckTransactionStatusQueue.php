@@ -53,6 +53,8 @@ class CheckTransactionStatusQueue
             if ($payment->completed()) {
                 Log::info('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' completed. Nothing to do.');
 
+                DB::connection()->commit();
+                
                 $job->delete();
 
                 return;
