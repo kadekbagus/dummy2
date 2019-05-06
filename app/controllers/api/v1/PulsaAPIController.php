@@ -432,6 +432,16 @@ class PulsaAPIController extends ControllerAPI
                 $pulsa->where('pulsa.pulsa_display_name', 'like', "%{$pulsa_display_name}%");
             });
 
+            // Filter pulsa by telco_operators name
+            OrbitInput::get('name', function ($name) use ($pulsa) {
+                $pulsa->where('telco_operators.name', $name);
+            });
+
+            // Filter pulsa by telco_operators name
+            OrbitInput::get('name_like', function ($name_like) use ($pulsa) {
+                $pulsa->where('telco_operators.name', 'like', "%{$name_like}%");
+            });
+
             // Filter pulsa by value
             OrbitInput::get('value', function($value) use ($pulsa)
             {
