@@ -10,6 +10,16 @@ Route::get('/api/v1/pub/pulsa/list', function()
 
 Route::get('/app/v1/pub/pulsa/list', ['as' => 'pub-pulsa-list', 'uses' => 'IntermediatePubAuthController@Pulsa\PulsaList_getList']);
 
+/**
+ * List of Pulsa
+ */
+Route::get('/api/v1/pub/pulsa/check', function()
+{
+    return Orbit\Controller\API\v1\Pub\CheckPulsaListAPIController::create()->getList();
+});
+
+Route::get('/app/v1/pub/pulsa/check', ['as' => 'pub-pulsa-check', 'uses' => 'IntermediatePubAuthController@CheckPulsaList_getList']);
+
 Route::get('/api/v1/pub/pulsa/detail', function()
 {
     return Orbit\Controller\API\v1\Pub\Pulsa\PulsaDetailAPIController::create()->getDetail();

@@ -21,6 +21,7 @@ use Orbit\Helper\MCash\API\Purchase;
 use Orbit\Notifications\Pulsa\ReceiptNotification;
 use Orbit\Notifications\Pulsa\PulsaNotAvailableNotification;
 use Orbit\Notifications\Pulsa\CustomerPulsaNotAvailableNotification;
+use Orbit\Notifications\Pulsa\PulsaPendingNotification;
 
 
 /**
@@ -65,6 +66,8 @@ class GetPulsaQueue
 
                 Log::info("Pulsa: Payment {$paymentId} was denied/canceled. We should not issue any pulsa.");
 
+                DB::connection()->commit();
+
                 $job->delete();
 
                 return;
@@ -96,8 +99,21 @@ class GetPulsaQueue
                         ->setLocation($mall)
                         ->responseOK()
                         ->save();
+
+                Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
+                Log::info("Purchase response: " . serialize($pulsaPurchase));
+            }
+            else if ($pulsaPurchase->isPending()) {
+                Log::info("Pulsa: Pulsa purchase is PENDING for payment {$paymentId}.");
+                Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
+                Log::info("Purchase response: " . serialize($pulsaPurchase));
+
+                $payment->status = PaymentTransaction::STATUS_SUCCESS;
             }
             else if ($pulsaPurchase->isNotAvailable()) {
+                Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
+                Log::info("Purchase response: " . serialize($pulsaPurchase));
+
                 throw new Exception("Pulsa NOT AVAILABLE FROM MCASH.");
             }
             else {
@@ -111,6 +127,15 @@ class GetPulsaQueue
 
             // Commit the changes ASAP.
             DB::connection()->commit();
+
+            // Send notification to admin if pulsa purchase is pending.
+            if ($pulsaPurchase->isPending()) {
+                foreach($adminEmails as $email) {
+                    $admin              = new User;
+                    $admin->email       = $email;
+                    $admin->notify(new PulsaPendingNotification($payment, 'Pending Payment'));
+                }
+            }
 
         } catch (Exception $e) {
 
