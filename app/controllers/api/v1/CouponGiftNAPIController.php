@@ -1740,7 +1740,7 @@ class CouponGiftNAPIController extends ControllerAPI
                 $coupons->whereIn('promotions.coupon_notification', $couponNotification);
             });
 
-            // Filter coupons by status
+            // Filter coupons by campaign status
             OrbitInput::get('campaign_status', function ($statuses) use ($coupons, $table_prefix) {
                 $coupons->whereIn(DB::raw("CASE WHEN {$table_prefix}campaign_status.campaign_status_name = 'expired' THEN {$table_prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$table_prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$table_prefix}merchants om
                                                                 LEFT JOIN {$table_prefix}timezones ot on ot.timezone_id = om.timezone_id
@@ -1748,6 +1748,10 @@ class CouponGiftNAPIController extends ControllerAPI
                     THEN 'expired' ELSE {$table_prefix}campaign_status.campaign_status_name END) END"), $statuses);
             });
 
+            // Filter coupons by status
+            OrbitInput::get('status', function ($statuses) use ($coupons, $table_prefix) {
+                $coupons->having('status', '=', $statuses);
+            });
 
             // Filter coupon by retailer id
             OrbitInput::get('retailer_id', function ($retailerIds) use ($coupons) {
