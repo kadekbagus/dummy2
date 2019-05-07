@@ -432,10 +432,22 @@ class PulsaAPIController extends ControllerAPI
                 $pulsa->where('pulsa.pulsa_display_name', 'like', "%{$pulsa_display_name}%");
             });
 
+            // Filter pulsa by telco_operators name
+            OrbitInput::get('name', function ($name) use ($pulsa) {
+                $pulsa->where('telco_operators.name', $name);
+            });
+
+            // Filter pulsa by telco_operators name
+            OrbitInput::get('name_like', function ($name_like) use ($pulsa) {
+                $pulsa->where('telco_operators.name', 'like', "%{$name_like}%");
+            });
+
             // Filter pulsa by value
             OrbitInput::get('value', function($value) use ($pulsa)
             {
-                $pulsa->where('pulsa.value', $value);
+                if ($value !== '') {
+                    $pulsa->where('pulsa.value', $value);
+                }
             });
 
             // Filter pulsa by price
@@ -453,7 +465,9 @@ class PulsaAPIController extends ControllerAPI
             // Filter pulsa by status
             OrbitInput::get('status', function($status) use ($pulsa)
             {
-                $pulsa->where('pulsa.status', $status);
+                if ($status !== '') {
+                    $pulsa->where('pulsa.status', $status);
+                }
             });
 
             $_pulsa = clone $pulsa;
