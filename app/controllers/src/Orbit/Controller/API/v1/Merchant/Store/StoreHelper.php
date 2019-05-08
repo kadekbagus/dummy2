@@ -369,7 +369,7 @@ class StoreHelper
          * value null it means set to null (use main language content instead).
          */
 
-        $valid_fields = ['description', 'custom_title'];
+        $valid_fields = ['description', 'custom_title', 'meta_description'];
         $operations = [];
 
         $data = @json_decode($translations_json_string);
@@ -424,6 +424,7 @@ class StoreHelper
                 $newBaseStoreTranslation->base_store_id = $baseStore->base_store_id;
                 $newBaseStoreTranslation->language_id = $operation[1];
                 $newBaseStoreTranslation->description = $operation[2]->description;
+                $newBaseStoreTranslation->meta_description = $operation[2]->meta_description;
                 $newBaseStoreTranslation->custom_title = isset($operation[2]->custom_title) ? $operation[2]->custom_title : null;
                 $newBaseStoreTranslation->save();
                 $baseStoreTranslations[] = $newBaseStoreTranslation;

@@ -3375,7 +3375,7 @@ class TenantAPIController extends ControllerAPI
          * value null it means set to null (use main language content instead).
          */
 
-        $valid_fields = ['description'];
+        $valid_fields = ['description', 'meta_description'];
         $user = $this->api->user;
         $operations = [];
 
