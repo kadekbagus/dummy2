@@ -15,6 +15,7 @@ class CheckPulsaListAPIController extends PubControllerAPI
 {
     public function getList()
     {
+        $httpCode = 200;
         try {
             $country = OrbitInput::get('country', 0);
 
@@ -40,6 +41,7 @@ class CheckPulsaListAPIController extends PubControllerAPI
                                 'pulsa.pulsa_code',
                                 'pulsa.vendor_price'
                             )
+                            ->join('telco_operators', 'pulsa.telco_operator_id', '=', 'telco_operators.telco_operator_id')
                             ->join('countries', 'telco_operators.country_id', '=', 'countries.country_id')
                             ->where('countries.name', $country)
                             ->where('pulsa.status', 'active')
@@ -58,6 +60,8 @@ class CheckPulsaListAPIController extends PubControllerAPI
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Request Ok';
+
+            return $this->render($httpCode);
 
         } catch (\Exception $e) {
             return;
