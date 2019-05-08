@@ -110,7 +110,7 @@ class StoreDetailAPIController extends PubControllerAPI
                                 'merchants.disable_ads',
                                 'merchants.disable_ymal',
                                 DB::raw('oms.country_id'),
-                                DB::Raw("CASE WHEN (
+                                DB::raw("CASE WHEN (
                                                 select mt.description
                                                 from {$prefix}merchant_translations mt
                                                 where mt.merchant_id = {$prefix}merchants.merchant_id
@@ -130,7 +130,7 @@ class StoreDetailAPIController extends PubControllerAPI
                                             )
                                         END as description
                                     "),
-                                DB::Raw("CASE WHEN (
+                                DB::raw("CASE WHEN (
                                                 select cpt.custom_title
                                                 from {$prefix}merchant_translations cpt
                                                 where cpt.merchant_id = {$prefix}merchants.merchant_id
@@ -150,6 +150,70 @@ class StoreDetailAPIController extends PubControllerAPI
                                             )
                                         END as custom_page_title
                                     "),
+                                // new translation queries
+                                DB::raw("CASE WHEN (
+                                                select bst_description.meta_description
+                                                from {$prefix}merchants m_description
+                                                join {$prefix}base_store_translations bst_description on m_description.merchant_id = bst_description.base_store_id
+                                                where m_description.merchant_id = {$this->quote($merchantId)}
+                                                    and bst_description.language_id = {$this->quote($valid_language->language_id)}
+                                            ) is null or (
+                                                select bst_description.meta_description
+                                                from {$prefix}merchants m_description
+                                                join {$prefix}base_store_translations bst_description on m_description.merchant_id = bst_description.base_store_id
+                                                where m_description.merchant_id = {$this->quote($merchantId)}
+                                                    and bst_description.language_id = {$this->quote($valid_language->language_id)}
+                                            ) = ''
+                                            THEN (
+                                                select bst_description.meta_description
+                                                from {$prefix}merchants m_description
+                                                join {$prefix}base_store_translations bst_description on m_description.merchant_id = bst_description.base_store_id
+                                                where m_description.merchant_id = {$this->quote($merchantId)}
+                                                    and bst_description.language_id = {$prefix}languages.language_id
+                                            )
+                                            ELSE (
+                                                select bst_description.meta_description
+                                                from {$prefix}merchants m_description
+                                                join {$prefix}base_store_translations bst_description on m_description.merchant_id = bst_description.base_store_id
+                                                where m_description.merchant_id = {$this->quote($merchantId)}
+                                                    and bst_description.language_id = {$this->quote($valid_language->language_id)}
+                                            )
+                                        END as meta_description
+                                    "),
+                                DB::raw("CASE WHEN (
+                                                select bmt_description.meta_description
+                                                from {$prefix}merchants m_description
+                                                join {$prefix}base_stores bs_description on m_description.merchant_id = bs_description.base_store_id
+                                                join {$prefix}base_merchant_translations bmt_description on bs_description.base_merchant_id = bmt_description.base_merchant_id
+                                                where m_description.merchant_id = {$this->quote($merchantId)}
+                                                    and bmt_description.language_id = {$this->quote($valid_language->language_id)}
+                                            ) is null or (
+                                                select bmt_description.meta_description
+                                                from {$prefix}merchants m_description
+                                                join {$prefix}base_stores bs_description on m_description.merchant_id = bs_description.base_store_id
+                                                join {$prefix}base_merchant_translations bmt_description on bs_description.base_merchant_id = bmt_description.base_merchant_id
+                                                where m_description.merchant_id = {$this->quote($merchantId)}
+                                                    and bmt_description.language_id = {$this->quote($valid_language->language_id)}
+                                            ) = ''
+                                            THEN (
+                                                select bmt_description.meta_description
+                                                from {$prefix}merchants m_description
+                                                join {$prefix}base_stores bs_description on m_description.merchant_id = bs_description.base_store_id
+                                                join {$prefix}base_merchant_translations bmt_description on bs_description.base_merchant_id = bmt_description.base_merchant_id
+                                                where m_description.merchant_id = {$this->quote($merchantId)}
+                                                    and bmt_description.language_id = {$prefix}languages.language_id
+                                            )
+                                            ELSE (
+                                                select bmt_description.meta_description
+                                                from {$prefix}merchants m_description
+                                                join {$prefix}base_stores bs_description on m_description.merchant_id = bs_description.base_store_id
+                                                join {$prefix}base_merchant_translations bmt_description on bs_description.base_merchant_id = bmt_description.base_merchant_id
+                                                where m_description.merchant_id = {$this->quote($merchantId)}
+                                                    and bmt_description.language_id = {$this->quote($valid_language->language_id)}
+                                            )
+                                        END as brand_meta_description
+                                    "),
+                                // end new translation queries
                                 'merchants.url',
                                 'merchants.facebook_url',
                                 'merchants.instagram_url',
@@ -440,6 +504,18 @@ class StoreDetailAPIController extends PubControllerAPI
             $store->media_photos = $validPhotos;
             $store->media_other_photos = $validOtherPhotos;
 
+            if (empty($mallId)) {
+                // In brand detail page, use brand meta_desc if not empty.
+                if (! empty($store->brand_meta_description)) {
+                    $store->meta_description = $store->brand_meta_description;
+                }
+            }
+            else {
+                if (empty($store->meta_description)) {
+                    $store->meta_description = $store->brand_meta_description;
+                }
+            }
+
             if (is_object($mall)) {
                 // change store's mall_name to mall's name
                 $store->mall_name = $mall->name;
@@ -602,6 +678,78 @@ class StoreDetailAPIController extends PubControllerAPI
                        ->where('merchants.merchant_id', $brandId)
                        ->groupBy('categories.category_id')
                        ->get()->lists('category_id');
+    }
+
+
+    private function getSelectDescriptionQuery($mallId = null, $prefix, $valid_language)
+    {
+        if (! empty($mallId)) {
+            return DB::raw("CASE WHEN (
+                        select mt.description
+                        from {$prefix}merchant_translations mt
+                        where mt.merchant_id = {$prefix}merchants.merchant_id
+                            and mt.merchant_language_id = {$this->quote($valid_language->language_id)}
+                    ) = ''
+                    THEN (
+                        select mt.description
+                        from {$prefix}merchant_translations mt
+                        where mt.merchant_id = {$prefix}merchants.merchant_id
+                            and mt.merchant_language_id = {$prefix}languages.language_id
+                    )
+                    ELSE (
+                        select mt.description
+                        from {$prefix}merchant_translations mt
+                        where mt.merchant_id = {$prefix}merchants.merchant_id
+                            and mt.merchant_language_id = {$this->quote($valid_language->language_id)}
+                    )
+                END as description
+            ");
+        }
+
+        return DB::raw("CASE WHEN (
+                    select mt.description
+                    from {$prefix}merchant_translations mt
+                    where mt.merchant_id = {$prefix}merchants.merchant_id
+                        and mt.merchant_language_id = {$this->quote($valid_language->language_id)}
+                ) = ''
+                THEN (
+                    select mt.description
+                    from {$prefix}merchant_translations mt
+                    where mt.merchant_id = {$prefix}merchants.merchant_id
+                        and mt.merchant_language_id = {$prefix}languages.language_id
+                )
+                ELSE (
+                    select mt.description
+                    from {$prefix}merchant_translations mt
+                    where mt.merchant_id = {$prefix}merchants.merchant_id
+                        and mt.merchant_language_id = {$this->quote($valid_language->language_id)}
+                )
+            END as description
+        ");
+    }
+
+    private function getSelectCustomTitleQuery($mallId = null, $prefix, $valid_language)
+    {
+        return DB::raw("CASE WHEN (
+                    select cpt.custom_title
+                    from {$prefix}merchant_translations cpt
+                    where cpt.merchant_id = {$prefix}merchants.merchant_id
+                        and cpt.merchant_language_id = {$this->quote($valid_language->language_id)}
+                ) = ''
+                THEN (
+                    select cpt.custom_title
+                    from {$prefix}merchant_translations cpt
+                    where cpt.merchant_id = {$prefix}merchants.merchant_id
+                        and cpt.merchant_language_id = {$prefix}languages.language_id
+                )
+                ELSE (
+                    select cpt.custom_title
+                    from {$prefix}merchant_translations cpt
+                    where cpt.merchant_id = {$prefix}merchants.merchant_id
+                        and cpt.merchant_language_id = {$this->quote($valid_language->language_id)}
+                )
+            END as custom_page_title
+        ");
     }
 
 }

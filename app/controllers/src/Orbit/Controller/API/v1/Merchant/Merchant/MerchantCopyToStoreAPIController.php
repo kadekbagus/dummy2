@@ -130,6 +130,7 @@ class MerchantCopyToStoreAPIController extends ControllerAPI
                                             'language_id' => $base_translation->language_id,
                                             'description' => $base_translation->description,
                                             'custom_title' => $base_translation->custom_title,
+                                            'meta_description' => $base_translation->meta_description,
                                            "created_at" => date("Y-m-d H:i:s"),
                                            "updated_at" => date("Y-m-d H:i:s") ];
                     }
