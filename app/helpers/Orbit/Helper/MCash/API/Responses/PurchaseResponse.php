@@ -31,17 +31,23 @@ class PurchaseResponse
      */
     public function isSuccess()
     {
-        return ! empty($this->data) && $this->data->status === 0;
+        return ! empty($this->data) && $this->data->status === 0 && ! isset($this->data->pending);
     }
 
     /**
-     * Pending?
+     * Determine if mcash purchase is Pending.
+     * Since Mcash don't explain clearly about flag/indicator of pending transaction,
+     * the only thing we can do is by guessing their API response.
+     *
+     * At the moment, from their API response, we will:
+     *     - check if status is 0
+     *     - and check if property 'pending' is exist
      *
      * @return boolean [description]
      */
     public function isPending()
     {
-        return ! empty($this->data) && $this->data->status != 0;
+        return ! empty($this->data) && $this->data->status === 0 && isset($this->data->pending);
     }
 
     public function isNotAvailable()

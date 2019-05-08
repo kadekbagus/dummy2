@@ -2243,5 +2243,23 @@ return array(
             'object_type' => 'Coupon',
             'parameter_name' => 'object_id'
         ),
+        // Click How To/Guide of Gift'N Coupon
+        '244' => array(
+            'name' => 'click_howto_gift_n',
+            'name_long' => 'Click How To Gift N Coupon',
+            'module_name' => 'Coupon',
+            'type' => 'click',
+            'object_type' => 'Coupon',
+            'parameter_name' => 'object_id'
+        ),
+        // Click Announcement
+        '245' => array(
+            'name' => 'click_announcement',
+            'name_long' => 'Click Announcement',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null
+        ),
     ),
 );
