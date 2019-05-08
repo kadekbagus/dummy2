@@ -98,6 +98,7 @@ class RatingDetailAPIController extends PubControllerAPI
             $reviewData->review = $review->review;
             $reviewData->rating = $review->rating;
             $reviewData->created_at = $review->created_at;
+            $reviewData->updated_at = $review->updated_at;
             $reviewData->images = isset($review->images) ? $review->images : null;
             $reviewData->total_reply = isset($review->total_reply) ? $review->total_reply : 0;
             $reviewData->store_id = isset($review->store_id) ? $review->store_id : null;
@@ -107,6 +108,7 @@ class RatingDetailAPIController extends PubControllerAPI
             $reviewData->country_id = isset($review->country_id) ? $review->country_id : null;
             $reviewData->city = isset($review->city) ? $review->city : null;
             $reviewData->approval_status = isset($review->approval_status) ? $review->approval_status : null;
+            $reviewData->status = isset($review->status) ? $review->status : null;
             $reviewData->is_image_reviewing = isset($review->is_image_reviewing) ? $review->is_image_reviewing : null;
 
             // build user data
