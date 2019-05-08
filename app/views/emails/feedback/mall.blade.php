@@ -180,12 +180,22 @@
                 <br>
                 <strong>{{{ trans('email-feedback-mall.body.feedback_labels.mall') }}}</strong> {{ $feedback['mall'] }}
                 <br>
-                @if (! empty($feedback['store']))
-                    <strong>{{{ trans('email-feedback-mall.body.feedback_labels.report') }}}</strong> {{ str_replace('{store}', "<strong style=\"color:#f43d3c\">{$feedback['store']}</strong>", $feedback['report']) }}
-                @else
-                    <strong>{{{ trans('email-feedback-mall.body.feedback_labels.report') }}}</strong> {{ $feedback['report'] }}
-                @endif
                 <br>
+                <strong>List of reported issues:</strong>
+                <ol>
+                    @foreach($feedback['report'] as $report)
+                        <li>{{ $report }}</li>
+                    @endforeach
+                </ol>
+
+                @if (! empty($feedback['report_message']))
+                    <br>
+                    <strong>Additional message/notes from User:</strong>
+                    <p>
+                        {{ $feedback['report_message'] }}
+                    </p>
+                    <br>
+                @endif
               </p>
             </td>
           </tr>

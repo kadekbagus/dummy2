@@ -118,6 +118,8 @@ class ReviewRatingImageApprovalAPIController extends ControllerAPI
                 'images' => $newImages,
                 'status' => 'active',
                 'is_image_reviewing' => $is_image_reviewing,
+                'approval_by' => $user->user_id,
+
             ];
 
             $updateReview = $mongoClient->setFormParam($updateDataReview)
