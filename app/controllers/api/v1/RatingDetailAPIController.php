@@ -91,12 +91,24 @@ class RatingDetailAPIController extends ControllerAPI
             // Get object being reviewed.
             $objectId = $rating->data->object_id;
             $objectType = $rating->data->object_type;
-            $mediaNameLong = '';
+            $image = "CONCAT({$this->quote($urlPrefix)}, m.path)";
+            if ($usingCdn) {
+                $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
+            }
+            $mediaModel = Media::select('path', 'cdn_url')
+                ->where('object_id', $objectId)
+                ->where('object_name', $objectType)
+                ->where('media_name_long', $mediaNameLong);
 
             switch(strtolower($objectType)) {
                 case 'coupon':
                     $object = Coupon::select('promotion_name as object_name')->where('promotion_id', '=', $objectId)->first();
                     $mediaNameLong = 'coupon_translation_image_orig';
+                    $media = Media::select('path', 'cdn_url')
+                        ->where('object_id', $objectId)
+                        ->where('object_name', $objectType)
+                        ->where('media_name_long', $mediaNameLong)->first();
+                        -
                     break;
                 case 'store':
                     $object = Tenant::select('name as object_name')->where('merchant_id', '=', $objectId)->first();
