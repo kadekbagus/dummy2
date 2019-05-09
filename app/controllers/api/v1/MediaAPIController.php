@@ -109,7 +109,7 @@ class MediaAPIController extends ControllerAPI
 
             // TODO: Should be moved somewhere to keep this api clean.
             // Try guessing object id from current User.
-            $objectId = $this->getObjectId($objectId);
+            $objectId = $this->getObjectId($objectId, $user);
 
             // get object name based on media_name_id
             $objectName = Config::get('orbit.upload.media.image.media_names.' . $mediaNameId);
@@ -520,7 +520,7 @@ class MediaAPIController extends ControllerAPI
             $medias = new Media();
 
             // TODO: Should be moved somewhere to keep this api clean.
-            $objectId = $this->getObjectId($objectId);
+            $objectId = $this->getObjectId($objectId, $user);
 
             if (! empty($objectId)) {
                 $medias = $medias->where('object_id', $objectId);
@@ -665,13 +665,20 @@ class MediaAPIController extends ControllerAPI
      * @param  [type] $objectId           [description]
      * @return [type]                     [description]
      */
-    private function getObjectId($objectId = null)
+    private function getObjectId($objectId = null, $user = null)
     {
-        $user = $this->api->user;
+        // Available relation...
+        $validRelations = ['userMerchantReview'];
 
         // TODO: Should be moved somewhere to keep this api clean.
         $filterLinkedObjectId = \Input::get('media_relation', null);
         if (! empty($filterLinkedObjectId) && empty($objectId)) {
+
+            // Validate user - object - media relation.
+            if (! in_array($filterLinkedObjectId, $validRelations)) {
+                throw new Exception("Invalid user relation.", 500);
+            }
+
             $user->load($filterLinkedObjectId);
             $linkToObject = $user->{$filterLinkedObjectId};
             if (! empty($linkToObject)) {
