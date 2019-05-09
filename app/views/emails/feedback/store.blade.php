@@ -182,7 +182,22 @@
                 <br>
                 <strong>{{{ trans('email-feedback-store.body.feedback_labels.mall') }}}</strong> {{ $feedback['mall'] }}
                 <br>
-                <strong>{{{ trans('email-feedback-store.body.feedback_labels.report') }}}</strong> {{ $feedback['report'] }}
+                <br>
+                <strong>List of reported issues:</strong>
+                <ol>
+                    @foreach($feedback['report'] as $report)
+                        <li>{{ $report }}</li>
+                    @endforeach
+                </ol>
+
+                @if (! empty($feedback['report_message']))
+                    <br>
+                    <strong>Additional message/notes from User:</strong>
+                    <p>
+                        {{ $feedback['report_message'] }}
+                    </p>
+                    <br>
+                @endif
                 <br>
               </p>
             </td>
