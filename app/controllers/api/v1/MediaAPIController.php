@@ -107,6 +107,10 @@ class MediaAPIController extends ControllerAPI
                 $images = $images['images'];
             }
 
+            // TODO: Should be moved somewhere to keep this api clean.
+            // Try guessing object id from current User.
+            $objectId = $this->getObjectId($objectId);
+
             // get object name based on media_name_id
             $objectName = Config::get('orbit.upload.media.image.media_names.' . $mediaNameId);
 
@@ -515,6 +519,9 @@ class MediaAPIController extends ControllerAPI
 
             $medias = new Media();
 
+            // TODO: Should be moved somewhere to keep this api clean.
+            $objectId = $this->getObjectId($objectId);
+
             if (! empty($objectId)) {
                 $medias = $medias->where('object_id', $objectId);
             }
@@ -642,5 +649,36 @@ class MediaAPIController extends ControllerAPI
         $this->inputName = $inputName;
 
         return $this;
+    }
+
+    /**
+     * So we need to determine object_id that is being linked or will be linked to a media.
+     * Normally, it should be passed by api client in the request, but when it is not,
+     * we can try guessing the objectId by checking the link between user and some of its relations.
+     *
+     * At the moment, we can guess by checking relationship between user and UserMerchantReview.
+     *
+     * We will return null if no object linked to current User.
+     * Or will return objectId being passed by api client.
+     *
+     * @param  [type] $filterLinkedObjectId [description]
+     * @param  [type] $objectId           [description]
+     * @return [type]                     [description]
+     */
+    private function getObjectId($objectId = null)
+    {
+        $user = $this->api->user;
+
+        // TODO: Should be moved somewhere to keep this api clean.
+        $filterLinkedObjectId = \Input::get('media_relation', null);
+        if (! empty($filterLinkedObjectId) && empty($objectId)) {
+            $user->load($filterLinkedObjectId);
+            $linkToObject = $user->{$filterLinkedObjectId};
+            if (! empty($linkToObject)) {
+                $objectId = $linkToObject->merchant_id !== 0 ? $linkToObject->merchant_id : null;
+            }
+        }
+
+        return $objectId;
     }
 }

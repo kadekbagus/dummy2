@@ -50,7 +50,8 @@ class FeedbackNewAPIController extends PubControllerAPI
             $feedback = [];
             $feedback['store'] = OrbitInput::post('store');
             $feedback['mall'] = OrbitInput::post('mall');
-            $feedback['report'] = OrbitInput::post('report');
+            $feedback['report'] = OrbitInput::post('report', []);
+            $feedback['report_message'] = OrbitInput::post('report_message');
             $feedback['is_mall'] = OrbitInput::post('is_mall', 'Y');
             $feedback['user'] = $user->user_id;
             $feedback['mall_id'] = OrbitInput::post('mall_id');
@@ -60,7 +61,7 @@ class FeedbackNewAPIController extends PubControllerAPI
                 [
                     'mall_id'   => 'required|orbit.exists.mall',
                     'mall'      => 'required',
-                    'report'    => 'required',
+                    'report'    => 'required|array',
                     'is_mall'   => 'required',
                     'user'      => "required|orbit.request.throttle:{$feedback['mall_id']}",
                 ],

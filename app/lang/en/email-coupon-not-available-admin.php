@@ -2,7 +2,7 @@
 
 return [
     'subject' => 'Coupon Not Available',
-    'subject_pulsa' => '[Admin] Can not Purchase Pulsa',
+    'subject_pulsa' => '[Admin] Cannot Purchase Pulsa',
     'subject_pulsa_pending' => '[Admin] Purchase Pulsa PENDING',
 
     'header' => [

@@ -2098,7 +2098,7 @@ return array(
             'parameter_name' => 'object_id'
         ),
         // click partner social media button
-        '227' => array(
+        '228' => array(
             'name' => 'click_partner_social_media_btn',
             'name_long' => 'Click Partner Social Media Button',
             'module_name' => 'Partner',
