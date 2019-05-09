@@ -88,8 +88,8 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
             // List of status which considered as final (should not be changed again except some conditions met).
             $finalStatus = [
                 PaymentTransaction::STATUS_SUCCESS,
-                PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
-                PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED,
+                PaymentTransaction::STATUS_SUCCESS_NO_PULSA,
+                PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED,
                 PaymentTransaction::STATUS_EXPIRED,
                 PaymentTransaction::STATUS_FAILED,
                 PaymentTransaction::STATUS_DENIED,
@@ -100,7 +100,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
             // Assume status as success if it is success_no_coupon/success_no_coupon_failed,
             // because Midtrans and landing_page don't send those status. (They only know 'success')
             $tmpOldStatus = $oldStatus;
-            if (in_array($oldStatus, [PaymentTransaction::STATUS_SUCCESS_NO_COUPON, PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED])) {
+            if (in_array($oldStatus, [PaymentTransaction::STATUS_SUCCESS_NO_PULSA, PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED])) {
                 $tmpOldStatus = PaymentTransaction::STATUS_SUCCESS;
             }
 
@@ -146,6 +146,10 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
             }
             else {
                 Log::info("Pulsa: Payment {$payment_transaction_id} is good. Nothing to do.");
+                // Commit the changes ASAP so if there are any other requests that trigger this controller
+                // they will use the updated payment data/status.
+                // Try not doing any expensive operation above.
+                $this->commit();
             }
 
             // If old status is not final, then we should update...
@@ -198,10 +202,10 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                 // then we assume the status as success_no_coupon (so frontend will show preparing voucher page).
                 if ($status === PaymentTransaction::STATUS_SUCCESS) {
                     if (isset($failed)) {
-                        $payment_update->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
+                        $payment_update->status = PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED;
                     }
                     else if ($payment_update->paidWith(['bank_transfer', 'echannel']) || $payment_update->forPulsa()) {
-                        $payment_update->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
+                        $payment_update->status = PaymentTransaction::STATUS_SUCCESS_NO_PULSA;
                     }
                 }
 
@@ -237,7 +241,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                             ->responseFailed()
                             ->save();
                 }
-                else if ($payment_update->status === PaymentTransaction::STATUS_SUCCESS_NO_COUPON) {
+                else if ($payment_update->status === PaymentTransaction::STATUS_SUCCESS_NO_PULSA) {
                     $activity->setActivityNameLong('Transaction is Success - Getting Pulsa')
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment_update)
@@ -247,7 +251,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                             ->responseOK()
                             ->save();
                 }
-                else if ($payment_update->status === PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED) {
+                else if ($payment_update->status === PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED) {
                     $activity->setActivityNameLong('Transaction is Success - Failed Getting Pulsa')
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment_update)
