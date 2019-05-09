@@ -15,7 +15,6 @@ use DominoPOS\OrbitUploader\Uploader as OrbitUploader;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\OneSignal\OneSignal;
 use Orbit\Helper\MongoDB\Client as MongoClient;
-
 use Orbit\Helper\Util\PaginationNumber;
 
 class RatingDetailAPIController extends ControllerAPI
@@ -50,7 +49,7 @@ class RatingDetailAPIController extends ControllerAPI
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
-            
+
             $withReplies = OrbitInput::get('with_replies', 1);
             $ratingId = OrbitInput::get('rating_id');
             $validator = Validator::make(
@@ -68,6 +67,7 @@ class RatingDetailAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $prefix = DB::getTablePrefix();
             $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
             $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
             $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
@@ -116,15 +116,37 @@ class RatingDetailAPIController extends ControllerAPI
                 $rating->data->object_picture = '';
 
                 // @todo should use eager loading.
-                $media = Media::where('object_id', 'like', '%' . $objectId . '%')
+                $image = "CONCAT({$this->quote($urlPrefix)}, m.path)";
+                if ($usingCdn) {
+                    $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
+                }
+                $media = Media::select(
+                        DB::Raw("
+                            CASE WHEN (SELECT {$image}
+                                FROM orb_media m
+                                WHERE m.media_name_long = '$mediaNameLong'
+                                AND m.object_id = {$prefix}news_translations.news_translation_id) is null
+                            THEN
+                                (SELECT {$image}
+                                FROM orb_media m
+                                WHERE m.media_name_long = 'news_translation_image_orig'
+                                AND m.object_id = default_translation.news_translation_id)
+                            ELSE
+                                (SELECT {$image}
+                                FROM orb_media m
+                                WHERE m.media_name_long = 'news_translation_image_orig'
+                                AND m.object_id = {$prefix}news_translations.news_translation_id)
+                            END AS original_media_path
+                        ")
+                    )
+                    ->where('object_id', $objectId)
+                    ->where('object_name', $objectType)
                     ->where('media_name_long', $mediaNameLong)->first();
-                
-                if (! empty($media)) {
-                    $rating->data->object_picture = $urlPrefix . $media->path;
 
-                    if ($usingCdn && ! empty($media->cdn_url)) {
-                        $rating->data->object_picture = $media->cdn_url;
-                    }
+                $rating->data->cool = 'not cool';
+                if (! empty($media)) {
+                    $rating->data->object_picture = $media->original_media_path;
+                    $rating->data->cool= 'cool';
                 }
             }
 
@@ -210,7 +232,7 @@ class RatingDetailAPIController extends ControllerAPI
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
-            
+
             $ratingId = OrbitInput::get('rating_id');
             $validator = Validator::make(
                 array(
@@ -287,7 +309,7 @@ class RatingDetailAPIController extends ControllerAPI
 
     /**
      * Get replies of a review.
-     * 
+     *
      * @return [type] [description]
      */
     private function getReplies($ratingId, $mongoClient = null)
@@ -323,9 +345,9 @@ class RatingDetailAPIController extends ControllerAPI
                 // ])
                 ->whereIn('user_id', $usersWhoReplied)->get();
 
-            
+
             foreach($usersList as $user) {
-                $users[$user->user_id]['name'] = $user->user_firstname . ' ' . 
+                $users[$user->user_id]['name'] = $user->user_firstname . ' ' .
                     $user->user_lastname;
 
                 // $media = $user->media->first();
@@ -342,7 +364,7 @@ class RatingDetailAPIController extends ControllerAPI
         }
 
         foreach($replies->data->replies as $reply) {
-            $reply->user_name = isset($users[$reply->user_id]) ? 
+            $reply->user_name = isset($users[$reply->user_id]) ?
                 $users[$reply->user_id]['name'] : '';
 
             $reply->user_name_replied = isset($users[$reply->user_id_replied]) ?
@@ -353,5 +375,10 @@ class RatingDetailAPIController extends ControllerAPI
         }
 
         return $replies;
+    }
+
+    private function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }
