@@ -131,7 +131,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
             $payment_new->status = PaymentTransaction::STATUS_STARTING;
             $payment_new->timezone_name = $mallTimeZone;
             $payment_new->post_data = serialize($post_data);
-            $payment_new->extra_data = $pulsa_phone;
+            $payment_new->extra_data = $this->cleanPhone($pulsa_phone);
 
             $payment_new->save();
 
@@ -290,5 +290,20 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
 
             return $requestedQuantity <= $issuedPulsa && ! $issuedPulsaForUser;
         });
+    }
+
+    /**
+     * Clean characters other than number 0-9.
+     * Also replace '62' with '0'.
+     *
+     * @param  string $phoneNumber [description]
+     * @return [type]              [description]
+     */
+    private function cleanPhone($phoneNumber = '')
+    {
+        $phoneNumber = preg_replace('/[^0-9]/', '', $phoneNumber);
+        $phoneNumber = preg_replace('/^[6][2]/', '0', $phoneNumber);
+
+        return $phoneNumber;
     }
 }
