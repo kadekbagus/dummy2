@@ -21,6 +21,66 @@ class RatingDetailAPIController extends ControllerAPI
 {
     protected $viewRoles = ['merchant review admin', 'master review admin'];
 
+    private function getLanguageId($name)
+    {
+        $lang = Language::select('language_id')->where('name', $name)->first();
+        return $lang->language_id;
+    }
+
+    private function getMediaUrl($media, $useCdn, $urlPrefix)
+    {
+        if (empty($media)) {
+            return null;
+        }
+        if ($useCdn) {
+            if (! empty($media->cdn_url)) {
+                return $media->cdn_url;
+            } else {
+                return $urlPrefix . $media->path;
+            }
+        } else {
+            return $urlPrefix . $media->path;
+        }
+    }
+
+    private function getReviewedObject($objectName, $media, $useCdn, $urlPrefix)
+    {
+        return (object) [
+            'object_name' => $objectName,
+            'object_picture' => $this->getMediaUrl($media, $useCdn, $urlPrefix),
+        ];
+    }
+
+    private function getCoupon($objectId, $langId, $useCdn, $urlPrefix)
+    {
+        $coupon = Coupon::where('promotion_id', '=', $objectId)->first();
+        $translation = $coupon->translations()->where('language_id', $langId)->first();
+        $media = $translation->media_orig()->first();
+        return $this->getReviewedObject($coupon->promotion_name, $media, $useCdn, $urlPrefix);
+    }
+
+    private function getStore($objectId, $langId, $useCdn, $urlPrefix)
+    {
+        $store = Tenant::where('merchant_id', '=', $objectId)->first();
+        $media = $store->mediaOrig()->first();
+        return $this->getReviewedObject($store->name, $media, $useCdn, $urlPrefix);
+    }
+
+    private function getMall($objectId, $langId, $useCdn, $urlPrefix)
+    {
+        $mall = Mall::where('merchant_id', '=', $objectId)->first();
+        $media = $mall->mediaOrig()->first();
+        return $this->getReviewedObject($mall->name, $media, $useCdn, $urlPrefix);
+    }
+
+    private function getEvent($objectId, $langId, $useCdn, $urlPrefix)
+    {
+        $event = News::where('news_id', '=', $objectId)->first();
+        $translation = $event->translations()->where('language_id', $langId)->first();
+        $media = $translation->media_orig()->first();
+        return $this->getReviewedObject($event->news_name, $media, $useCdn, $urlPrefix);
+    }
+
     /**
      * GET - Rating detail
      * @author budi <budi@dominopos.com>
@@ -91,75 +151,25 @@ class RatingDetailAPIController extends ControllerAPI
             // Get object being reviewed.
             $objectId = $rating->data->object_id;
             $objectType = $rating->data->object_type;
-            $image = "CONCAT({$this->quote($urlPrefix)}, m.path)";
-            if ($usingCdn) {
-                $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
-            }
-            $mediaModel = Media::select('path', 'cdn_url')
-                ->where('object_id', $objectId)
-                ->where('object_name', $objectType)
-                ->where('media_name_long', $mediaNameLong);
-
+            $langId = $this->getLanguageId('id');
+            $object = null;
             switch(strtolower($objectType)) {
                 case 'coupon':
-                    $object = Coupon::select('promotion_name as object_name')->where('promotion_id', '=', $objectId)->first();
-                    $mediaNameLong = 'coupon_translation_image_orig';
-                    $media = Media::select('path', 'cdn_url')
-                        ->where('object_id', $objectId)
-                        ->where('object_name', $objectType)
-                        ->where('media_name_long', $mediaNameLong)->first();
-                        -
+                    $object = $this->getCoupon($objectId, $langId, $usingCdn, $urlPrefix);
                     break;
                 case 'store':
-                    $object = Tenant::select('name as object_name')->where('merchant_id', '=', $objectId)->first();
-                    $mediaNameLong = 'retailer_image_orig';
+                    $object = $this->getStore($objectId, $langId, $usingCdn, $urlPrefix);
                     break;
                 case 'mall':
-                    $object = Mall::select('name as object_name')->where('merchant_id', '=', $objectId)->first();
-                    $mediaNameLong = 'mall_logo_orig';
+                    $object = $this->getMall($objectId, $langId, $usingCdn, $urlPrefix);
                     break;
                 default:
-                    $object = News::select('news_name as object_name')->where('news_id', '=', $objectId)->first();
-                    $mediaNameLong = 'news_translation_image_orig';
+                    $object = $this->getEvent($objectId, $langId, $usingCdn, $urlPrefix);
             }
 
             if (! empty($object)) {
                 $rating->data->object_name = $object->object_name;
-                $rating->data->object_picture = '';
-
-                // @todo should use eager loading.
-                $image = "CONCAT({$this->quote($urlPrefix)}, m.path)";
-                if ($usingCdn) {
-                    $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
-                }
-                $media = Media::select(
-                        DB::Raw("
-                            CASE WHEN (SELECT {$image}
-                                FROM orb_media m
-                                WHERE m.media_name_long = '$mediaNameLong'
-                                AND m.object_id = {$prefix}news_translations.news_translation_id) is null
-                            THEN
-                                (SELECT {$image}
-                                FROM orb_media m
-                                WHERE m.media_name_long = 'news_translation_image_orig'
-                                AND m.object_id = default_translation.news_translation_id)
-                            ELSE
-                                (SELECT {$image}
-                                FROM orb_media m
-                                WHERE m.media_name_long = 'news_translation_image_orig'
-                                AND m.object_id = {$prefix}news_translations.news_translation_id)
-                            END AS original_media_path
-                        ")
-                    )
-                    ->where('object_id', $objectId)
-                    ->where('object_name', $objectType)
-                    ->where('media_name_long', $mediaNameLong)->first();
-
-                $rating->data->cool = 'not cool';
-                if (! empty($media)) {
-                    $rating->data->object_picture = $media->original_media_path;
-                    $rating->data->cool= 'cool';
-                }
+                $rating->data->object_picture = $object->object_picture;
             }
 
             $replies = null;
