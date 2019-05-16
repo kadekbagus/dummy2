@@ -98,12 +98,20 @@ class RatingDetailAPIController extends PubControllerAPI
             $reviewData->review = $review->review;
             $reviewData->rating = $review->rating;
             $reviewData->created_at = $review->created_at;
+            $reviewData->updated_at = $review->updated_at;
             $reviewData->images = isset($review->images) ? $review->images : null;
             $reviewData->total_reply = isset($review->total_reply) ? $review->total_reply : 0;
+            $reviewData->store_id = isset($review->store_id) ? $review->store_id : null;
+            $reviewData->store_name = isset($review->store_name) ? $review->store_name : null;
+            $reviewData->location_id = isset($review->location_id) ? $review->location_id : null;
+            $reviewData->mall_name = isset($review->mall_name) ? $review->mall_name : null;
+            $reviewData->country_id = isset($review->country_id) ? $review->country_id : null;
+            $reviewData->city = isset($review->city) ? $review->city : null;
+            $reviewData->approval_status = isset($review->approval_status) ? $review->approval_status : null;
+            $reviewData->status = isset($review->status) ? $review->status : null;
+            $reviewData->is_image_reviewing = isset($review->is_image_reviewing) ? $review->is_image_reviewing : null;
 
             // build user data
-            $userId = $review->user_id;
-
             $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
             $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
             $prefix = DB::getTablePrefix();
@@ -119,12 +127,13 @@ class RatingDetailAPIController extends PubControllerAPI
                             ->on('media.media_name_long', '=', DB::raw("'user_profile_picture_orig'"));
                     })
                 ->join('roles', 'roles.role_id', '=', 'users.user_role_id')
-                ->where('users.user_id', $userId)
+                ->where('users.user_id', $review->user_id)
                 ->first();
 
             $roleOfficial = ['Merchant Review Admin', 'Master Review Admin'];
 
             $userData = new stdClass();
+            $userData->user_id = $reviewUser->user_id;
             $userData->user_name = $reviewUser->user_name;
             $userData->user_picture = $reviewUser->user_picture;
             $userData->is_official_user = in_array($reviewUser->role_name, $roleOfficial) ? 'y' : 'n';
