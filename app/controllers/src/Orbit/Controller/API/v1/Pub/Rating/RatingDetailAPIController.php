@@ -95,7 +95,7 @@ class RatingDetailAPIController extends PubControllerAPI
 
             // build review data
             $reviewData = new stdclass();
-            $reviewData->review = $review->review;
+            $reviewData->review = isset($review->review) ? $review->review : null;
             $reviewData->rating = $review->rating;
             $reviewData->created_at = $review->created_at;
             $reviewData->updated_at = $review->updated_at;
@@ -184,9 +184,9 @@ class RatingDetailAPIController extends PubControllerAPI
                     $objectData->image = isset($object->mediaLogo[0]) ? $object->mediaLogo[0]->path : null;
 
                     break;
-                
-                case 'news': 
-                case 'promotion': 
+
+                case 'news':
+                case 'promotion':
                     $image = "CONCAT({$this->quote($urlPrefix)}, m.path)";
                     if ($usingCdn) {
                         $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
@@ -340,7 +340,7 @@ class RatingDetailAPIController extends PubControllerAPI
                     # code...
                     break;
             }
-            
+
             $objectData->ratingAverage = $ratingAverage;
             $objectData->ratingCounter = $ratingCounter;
 
