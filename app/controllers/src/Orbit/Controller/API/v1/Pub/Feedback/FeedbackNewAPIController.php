@@ -9,6 +9,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Config;
 use Cache;
 use Validator;
+use Str;
 use \Exception;
 use Activity;
 use User;
@@ -54,6 +55,7 @@ class FeedbackNewAPIController extends PubControllerAPI
             $feedback['is_mall'] = OrbitInput::post('is_mall', 'Y');
             $feedback['user'] = $user->user_id;
             $feedback['mall_id'] = OrbitInput::post('mall_id');
+            $storeName = Str::slug($feedback['store']);
 
             $validator = Validator::make(
                 $feedback,
@@ -62,7 +64,7 @@ class FeedbackNewAPIController extends PubControllerAPI
                     'mall'      => 'required',
                     'report'    => 'required',
                     'is_mall'   => 'required',
-                    'user'      => "required|orbit.request.throttle:{$feedback['mall_id']}",
+                    'user'      => "required|orbit.request.throttle:{$feedback['mall_id']},{$storeName}",
                 ],
                 [
                     'orbit.exists.mall' => 'Invalid mall ID.',
@@ -138,9 +140,15 @@ class FeedbackNewAPIController extends PubControllerAPI
 
             // Assume mall is valid and not empty because it passed orbit.exists.mall
             $mallId = $parameters[0];
+            $storeName = isset($parameters[1]) ? $parameters[1] : null;
 
-            $cacheKeyPrefix = 'feedback_time_mall_'; // Can be set in config if needed.
-            $cacheKey = sprintf("{$cacheKeyPrefix}_%s_%s", $mallId, $value);
+            $cacheKeyPrefix = 'feedback_time_mall__%s_%s'; // Can be set in config if needed.
+            $cacheKey = sprintf($cacheKeyPrefix, $mallId, $value);
+            if (! empty($storeName)) {
+                $cacheKeyPrefix .= '_%s';
+                $cacheKey = sprintf($cacheKeyPrefix, $mallId, $value, $storeName);
+            }
+
             $now = Carbon::now();
             $lastRequest = Cache::get($cacheKey, $now);
 
