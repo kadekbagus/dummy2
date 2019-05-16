@@ -118,8 +118,12 @@ class PartnerDetailAPIController extends PubControllerAPI
                     'partners.city',
                     'partners.province',
                     'partners.url',
+                    'partners.button_text_color as text_color',
                     DB::raw("{$logo}"),
                     DB::raw("{$image}"),
+                    DB::Raw("
+                        CASE WHEN ({$prefix}partner_translations.partner_button_label = '' or {$prefix}partner_translations.partner_button_label is null) THEN default_translation.partner_button_label ELSE {$prefix}partner_translations.partner_button_label END as button_label
+                    "),
                     DB::Raw("
                         CASE WHEN ({$prefix}partner_translations.description = '' or {$prefix}partner_translations.description is null) THEN default_translation.description ELSE {$prefix}partner_translations.description END as description
                     "),
