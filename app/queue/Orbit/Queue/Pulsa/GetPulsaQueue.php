@@ -34,6 +34,12 @@ use Orbit\Notifications\Pulsa\PulsaPendingNotification;
 class GetPulsaQueue
 {
     /**
+     * Delay before we trigger another MCash Purchase (in minutes).
+     * @var integer
+     */
+    protected $retryDelay = 3;
+
+    /**
      * Issue hot deals coupon.
      *
      * @param  Illuminate\Queue\Jobs\Job | Orbit\FakeJob $job  the job
@@ -45,6 +51,9 @@ class GetPulsaQueue
         $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
         $mallId = isset($data['mall_id']) ? $data['mall_id'] : null;
         $mall = Mall::where('merchant_id', $mallId)->first();
+        if (! isset($data['retry'])) {
+            $data['retry'] = 0;
+        }
 
         $activity = Activity::mobileci()
                             ->setActivityType('transaction')
@@ -81,7 +90,7 @@ class GetPulsaQueue
             $pulsaPurchase = Purchase::create()->doPurchase($pulsa->pulsa_code, $phoneNumber, $paymentId);
 
             // Test only, set status response manually.
-            // $pulsaPurchase->setStatus(0); // success
+            // $pulsaPurchase->setStatus(609);
 
             if ($pulsaPurchase->isSuccess()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
@@ -110,11 +119,24 @@ class GetPulsaQueue
 
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
             }
-            else if ($pulsaPurchase->isNotAvailable()) {
+            else if ($pulsaPurchase->shouldRetry($data['retry'])) {
+                $data['retry']++;
+
+                Log::info("Retry #{$data['retry']} for Pulsa Purchase will be run in {$this->retryDelay} minutes...");
                 Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
                 Log::info("Purchase response: " . serialize($pulsaPurchase));
 
-                throw new Exception("Pulsa NOT AVAILABLE FROM MCASH.");
+                $this->retryDelay = $this->retryDelay * 60; // seconds
+                Queue::later(
+                    $this->retryDelay,
+                    'Orbit\\Queue\\Pulsa\\GetPulsaQueue',
+                    $data
+                );
+            }
+            else if ($pulsaPurchase->maxRetryReached($data['retry'])) {
+                Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
+                Log::info("Purchase response: " . serialize($pulsaPurchase));
+                throw new Exception("Pulsa purchase is FAILED, MAX RETRY REACHED ({$data['retry']}).");
             }
             else {
                 Log::info("Pulsa: Pulsa purchase is FAILED for payment {$paymentId}. Unknown status from MCash.");
@@ -166,18 +188,6 @@ class GetPulsaQueue
                          ->setLocation($mall)
                          ->responseFailed()
                          ->save();
-
-                 // Activity::mobileci()
-                 //         ->setUser($payment->user)
-                 //         ->setActivityType('click')
-                 //         ->setActivityName('coupon_added_to_wallet')
-                 //         ->setActivityNameLong('Coupon Added to Wallet Failed')
-                 //         ->setModuleName('Coupon')
-                 //         ->setObject($payment->details->first()->coupon)
-                 //         ->setNotes($e->getMessage())
-                 //         ->setLocation($mall)
-                 //         ->responseFailed()
-                 //         ->save();
             }
             else {
                 DB::connection()->rollBack();
