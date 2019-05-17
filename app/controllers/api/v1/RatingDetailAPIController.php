@@ -69,7 +69,9 @@ class RatingDetailAPIController extends ControllerAPI
     private function getMall($objectId, $langId, $useCdn, $urlPrefix)
     {
         $mall = Mall::where('merchant_id', '=', $objectId)->first();
-        $media = $mall->mediaOrig()->first();
+        $media = $mall->mediaOrig()
+            ->where('media_name_long', 'mall_logo_orig')
+            ->first();
         return $this->getReviewedObject($mall->name, $media, $useCdn, $urlPrefix);
     }
 
