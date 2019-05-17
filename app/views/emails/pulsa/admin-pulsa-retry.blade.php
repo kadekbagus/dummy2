@@ -164,7 +164,7 @@
         </thead>
         <tbody>
           <tr>
-            <td class="invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
+            <td class="invoice-info" colspan="2" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
                 {{{ $transactionDateTime }}}
                 <br>
                 <span style="font-size:24px;font-weight:bold;">
@@ -228,11 +228,10 @@
               <br>
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 @if (isset($reason) && ! empty($reason))
-                    {{{ trans('email-coupon-not-available-admin.body.pulsa_fail_info', ['reason' => $reason]) }}}
+                    {{ trans('email-coupon-not-available-admin.body.pulsa_fail_info', ['reason' => $reason]) }}
                 @endif
                 <br>
                 <br>
-                {{{ trans('email-coupon-not-available-admin.body.thank_you') }}}
               </p>
             </td>
           </tr>
