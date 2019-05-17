@@ -13,6 +13,19 @@ class PurchaseResponse
 
     protected $data = null;
 
+    /**
+     * List of status considered as retry-able.
+     *
+     * @var [type]
+     */
+    protected $retryStatus = [609, 413];
+
+    /**
+     * Maximum number of retry we would do if the first time was failed.
+     * @var integer
+     */
+    protected $maxRetry = 10;
+
     function __construct($object = null)
     {
         if (is_object($object)) {
@@ -53,6 +66,31 @@ class PurchaseResponse
     public function isNotAvailable()
     {
         return ! empty($this->data) && $this->data->status === 413;
+    }
+
+    /**
+     * Determine if we should retry the purchase when we get specific
+     * response code from MCash.
+     *
+     * @param  [type] $retry [description]
+     * @return [type]        [description]
+     */
+    public function shouldRetry($retry = 1)
+    {
+        return ! empty($this->data)
+               && in_array($this->data->status, $this->retryStatus)
+               && $retry < $this->maxRetry;
+    }
+
+    /**
+     * Determine if we has reached the maximum number of retry allowed.
+     *
+     * @param  integer $retry [description]
+     * @return [type]         [description]
+     */
+    public function maxRetryReached($retry = 1)
+    {
+        return $retry === $this->maxRetry;
     }
 
     /**
