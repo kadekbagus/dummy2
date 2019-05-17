@@ -23,7 +23,7 @@ use Orbit\Notifications\Pulsa\PulsaNotAvailableNotification;
 use Orbit\Notifications\Pulsa\CustomerPulsaNotAvailableNotification;
 use Orbit\Notifications\Pulsa\PulsaPendingNotification;
 use Orbit\Notifications\Pulsa\CustomerPulsaPendingNotification;
-
+use Orbit\Notifications\Pulsa\PulsaRetryNotification;
 
 /**
  * A job to get/issue Hot Deals Coupon after payment completed.
@@ -138,12 +138,20 @@ class GetPulsaQueue
                 Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
                 Log::info("Purchase response: " . serialize($pulsaPurchase));
 
+                // Retry purchase in a few minutes...
                 $this->retryDelay = $this->retryDelay * 60; // seconds
                 Queue::later(
                     $this->retryDelay,
                     'Orbit\\Queue\\Pulsa\\GetPulsaQueue',
                     $data
                 );
+
+                // Send notification each time we do retry...
+                foreach($adminEmails as $email) {
+                    $admin              = new User;
+                    $admin->email       = $email;
+                    $admin->notify(new PulsaRetryNotification($payment, $pulsaPurchase->getMessage()));
+                }
             }
             else if ($pulsaPurchase->maxRetryReached($data['retry'])) {
                 Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
