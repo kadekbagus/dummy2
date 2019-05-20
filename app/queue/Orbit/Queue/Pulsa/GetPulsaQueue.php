@@ -72,9 +72,10 @@ class GetPulsaQueue
             $activity->setUser($payment->user);
 
             // Dont issue coupon if after some delay the payment was canceled.
-            if ($payment->denied() || $payment->failed() || $payment->expired() || $payment->canceled()) {
+            if ($payment->denied() || $payment->failed() || $payment->expired() || $payment->canceled()
+                || $payment->status === PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED) {
 
-                Log::info("Pulsa: Payment {$paymentId} was denied/canceled. We should not issue any pulsa.");
+                Log::info("Pulsa: Payment {$paymentId} was denied/canceled/failed. We should not issue any pulsa.");
 
                 DB::connection()->commit();
 
