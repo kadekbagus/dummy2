@@ -130,6 +130,7 @@ class PartnerAPIController extends ControllerAPI
             $video_id_5 = OrbitInput::post('video_id_5');
             $video_id_6 = OrbitInput::post('video_id_6');
             $banners = OrbitInput::post('banners', '');
+            $partner_button_label = OrbitInput::post('partner_button_label', '');
 
             $affected_group_name_id = OrbitInput::post('affected_group_name_id');
 
@@ -262,6 +263,7 @@ class PartnerAPIController extends ControllerAPI
             $newPartner->video_id_4 = $video_id_4;
             $newPartner->video_id_5 = $video_id_5;
             $newPartner->video_id_6 = $video_id_6;
+            $newPartner->partner_button_label = $partner_button_label;
 
             if (strtoupper($is_exclusive) === 'Y') {
                 $newPartner->pop_up_content = $pop_up_content;
@@ -556,6 +558,7 @@ class PartnerAPIController extends ControllerAPI
             $translations = OrbitInput::post('translations');
             $supported_languages = OrbitInput::post('supported_languages', []);
             $mobile_default_language = OrbitInput::post('mobile_default_language');
+            $partner_button_label = OrbitInput::post('partner_button_label');
 
             if (is_array($affected_group_name_id)) {
                 $affected_group_name_validation = $this->generate_validation_affected_group_name($affected_group_name_id);
@@ -833,6 +836,10 @@ class PartnerAPIController extends ControllerAPI
 
             OrbitInput::post('mobile_default_language', function($mobile_default_language) use ($updatedpartner) {
                 $updatedpartner->mobile_default_language = $this->defaultLanguage;
+            });
+
+            OrbitInput::post('partner_button_label', function($partner_button_label) use ($updatedpartner) {
+                $updatedpartner->partner_button_label = $partner_button_label;
             });
 
             OrbitInput::post('supported_languages', function($supported_languages) use ($updatedpartner, $partner_id) {
@@ -1232,6 +1239,7 @@ class PartnerAPIController extends ControllerAPI
                             'partners.video_id_4',
                             'partners.video_id_5',
                             'partners.video_id_6',
+                            'partners.partner_button_label',
                             DB::raw("
                             CASE WHEN (
                                     SELECT COUNT(object_partner_id)
@@ -1905,7 +1913,7 @@ class PartnerAPIController extends ControllerAPI
          * value null it means set to null (use main language content instead).
          */
 
-        $valid_fields = ['description', 'pop_up_content', 'meta_title', 'meta_description'];
+        $valid_fields = ['description', 'pop_up_content', 'meta_title', 'meta_description', 'partner_button_label'];
         $user = $this->api->user;
         $operations = [];
 
