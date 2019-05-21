@@ -38,7 +38,8 @@
             "Orbit\\Controller\\": "app/controllers/src",
             "Orbit\\Helper\\": "app/helpers",
             "Orbit\\Mailchimp\\": "vendor/dominopos/orbit-mailchimp/",
-            "Orbit\\Notifications\\": "app/notifications/"
+            "Orbit\\Notifications\\": "app/notifications/",
+            "Orbit\\Activities\\": "app/activities"
         },
         "psr-4" : {
             "Orbit\\Models\\": "app/models/",
