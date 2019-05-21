@@ -18,7 +18,7 @@ class UserActivation
     private function updateUserVariable($user, $gamificationVar)
     {
         $userVar = UserVariable::where('variable_id', $gamificationVar->variable_id)
-            ->where('user_id', $user->user_id);
+            ->where('user_id', $user->user_id)->limit(1)->get();
 
         if (! $userVar) {
             $userVar = new UserVariable();
@@ -53,7 +53,9 @@ class UserActivation
      */
     public function __invoke($user, $varName)
     {
-        $gamificationVar = Variable::where('variable_slug', $varName)->limit(1);
+        $gamificationVar = Variable::where('variable_slug', $varName)
+            ->limit(1)
+            ->get();
         DB::transaction(function() use ($user, $gamificationVar) {
             $this->updateUserVariable($user, $gamificationVar);
             $this->updateUserGameEvent($user, $gamificationVar);
