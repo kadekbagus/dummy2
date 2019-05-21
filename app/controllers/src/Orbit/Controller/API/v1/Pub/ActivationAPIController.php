@@ -27,6 +27,7 @@ use Mall;
 use Hash;
 use \Orbit\Helper\Exception\OrbitCustomException;
 use Carbon\Carbon;
+use Event;
 
 class ActivationAPIController extends IntermediateBaseController
 {

@@ -30,6 +30,11 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         array (
             'Psr\\Http\\Message\\' => 17,
         ),
+        'O' => 
+        array (
+            'Orbit\\Models\\' => 13,
+            'Orbit\\Events\\' => 13,
+        ),
         'M' => 
         array (
             'Monolog\\' => 8,
@@ -72,6 +77,14 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'Psr\\Http\\Message\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/http-message/src',
+        ),
+        'Orbit\\Models\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/app/models',
+        ),
+        'Orbit\\Events\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/app/events',
         ),
         'Monolog\\' => 
         array (
@@ -234,10 +247,6 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
             array (
                 0 => __DIR__ . '/../..' . '/app/notifications',
             ),
-            'Orbit\\Models\\Gamification\\' => 
-            array (
-                0 => __DIR__ . '/../..' . '/app/models/Gamification',
-            ),
             'Orbit\\Mailchimp\\' => 
             array (
                 0 => __DIR__ . '/..' . '/dominopos/orbit-mailchimp',
@@ -245,10 +254,6 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
             'Orbit\\Helper\\' => 
             array (
                 0 => __DIR__ . '/../..' . '/app/helpers',
-            ),
-            'Orbit\\Events\\Listeners\\' => 
-            array (
-                0 => __DIR__ . '/../..' . '/app/events/Listeners',
             ),
             'Orbit\\Database\\' => 
             array (

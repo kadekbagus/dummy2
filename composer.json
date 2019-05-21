@@ -38,9 +38,11 @@
             "Orbit\\Controller\\": "app/controllers/src",
             "Orbit\\Helper\\": "app/helpers",
             "Orbit\\Mailchimp\\": "vendor/dominopos/orbit-mailchimp/",
-            "Orbit\\Notifications\\": "app/notifications/",
-            "Orbit\\Events\\Listeners\\": "app/events/",
-            "Orbit\\Models\\Gamification\\": "app/models/"
+            "Orbit\\Notifications\\": "app/notifications/"
+        },
+        "psr-4" : {
+            "Orbit\\Models\\": "app/models/",
+            "Orbit\\Events\\" : "app/events/"
         },
         "classmap": [
             "app/commands",

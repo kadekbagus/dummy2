@@ -15,4 +15,4 @@ use Orbit\Events\Listeners\Gamification\UserActivation;
  */
 
 // successfully activate account
-Event::listen('orbit.user.activation.success', UserActivation::class);
+Event::listen('orbit.user.activation.success', new UserActivation());
