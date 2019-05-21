@@ -51,9 +51,9 @@ class UserActivation
      *
      * @var User $user, activated user
      */
-    public function __invoke($user)
+    public function __invoke($user, $varName)
     {
-        $gamificationVar = Variable::where('variable_slug')->limit(1);
+        $gamificationVar = Variable::where('variable_slug', $varName)->limit(1);
         DB::transaction(function() use ($user, $gamificationVar) {
             $this->updateUserVariable($user, $gamificationVar);
             $this->updateUserGameEvent($user, $gamificationVar);
