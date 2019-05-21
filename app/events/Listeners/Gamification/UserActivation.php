@@ -3,9 +3,9 @@ namespace Orbit\Events\Listeners\Gamification;
 
 use DB;
 use User;
-use Orbit\Gamification\UserVariable;
-use Orbit\Gamification\Variable;
-use Orbit\Gamification\UserGameEvent;
+use Orbit\Models\Gamification\UserVariable;
+use Orbit\Models\Gamification\Variable;
+use Orbit\Models\Gamification\UserGameEvent;
 
 /**
  * Event listener for orbit.user.activation.success
