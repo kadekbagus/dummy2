@@ -5,7 +5,7 @@
  * @author zamroni<zamroni@dominopos.com>
  */
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
-use Orbit\Events\Listeners\Gamifications\UserActivation;
+use Orbit\Events\Listeners\Gamification\UserActivation;
 
 /**
  * Listen on:    `orbit.user.activation.success`

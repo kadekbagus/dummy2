@@ -39,8 +39,8 @@
             "Orbit\\Helper\\": "app/helpers",
             "Orbit\\Mailchimp\\": "vendor/dominopos/orbit-mailchimp/",
             "Orbit\\Notifications\\": "app/notifications/",
-            "Orbit\\Events\\Listeners\\": "app/events/Listeners/",
-            "Orbit\\Models\\Gamification\\": "app/models/Gamification/"
+            "Orbit\\Events\\Listeners\\": "app/events/",
+            "Orbit\\Models\\Gamification\\": "app/models/"
         },
         "classmap": [
             "app/commands",
