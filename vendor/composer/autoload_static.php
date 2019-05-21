@@ -30,6 +30,11 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         array (
             'Psr\\Http\\Message\\' => 17,
         ),
+        'O' => 
+        array (
+            'Orbit\\Models\\' => 13,
+            'Orbit\\Events\\' => 13,
+        ),
         'M' => 
         array (
             'Monolog\\' => 8,
@@ -72,6 +77,14 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'Psr\\Http\\Message\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/http-message/src',
+        ),
+        'Orbit\\Models\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/app/models',
+        ),
+        'Orbit\\Events\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/app/events',
         ),
         'Monolog\\' => 
         array (
@@ -515,7 +528,9 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'AlterTablePartnerAddButtonTextColorField' => __DIR__ . '/../..' . '/app/database/migrations/2019_03_20_073618_alter_table_partner_add_button_text_color_field.php',
         'AlterTablePartnerBannersChangeColumnName' => __DIR__ . '/../..' . '/app/database/migrations/2019_03_19_025515_alter_table_partner_banners_change_column_name.php',
         'AlterTablePartnerSetFieldAddressAndPhoneToNullable' => __DIR__ . '/../..' . '/app/database/migrations/2019_03_20_095517_alter_table_partner_set_field_address_and_phone_to_nullable.php',
+        'AlterTablePartnerTranslationsAddColumnPartnerButtonLabel' => __DIR__ . '/../..' . '/app/database/migrations/2019_05_07_055014_alter_table_partner_translations_add_column_partner_button_label.php',
         'AlterTablePartnerTranslationsAddNewColumns' => __DIR__ . '/../..' . '/app/database/migrations/2019_03_18_041809_alter_table_partner_translations_add_new_columns.php',
+        'AlterTablePartnersAddColumnPartnerButtonLabel' => __DIR__ . '/../..' . '/app/database/migrations/2019_05_07_053122_alter_table_partners_add_column_partner_button_label.php',
         'AlterTablePartnersAddFieldIsExclusivePopUpContentToken' => __DIR__ . '/../..' . '/app/database/migrations/2017_02_16_030055_alter_table_partners_add_field_is_exclusive_pop_up_content_token.php',
         'AlterTablePartnersAddFieldIsVisible' => __DIR__ . '/../..' . '/app/database/migrations/2016_12_06_021401_alter_table_partners_add_field_is_visible.php',
         'AlterTablePartnersAddNewFields' => __DIR__ . '/../..' . '/app/database/migrations/2019_03_18_033518_alter_table_partners_add_new_fields.php',
@@ -550,11 +565,13 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'AlterTablePromotionsAddFieldsMaxQuantities' => __DIR__ . '/../..' . '/app/database/migrations/2018_11_13_022854_alter_table_promotions_add_fields_max_quantities.php',
         'AlterTablePromotionsAddHotDeals' => __DIR__ . '/../..' . '/app/database/migrations/2018_05_16_065332_alter_table_promotions_add_hot_deals.php',
         'AlterTablePromotionsAddMaximumIssuanceMaximumRedeemAvailable' => __DIR__ . '/../..' . '/app/database/migrations/2017_06_12_043615_alter_table_promotions_add_maximum_issuance_maximum_redeem_available.php',
+        'AlterTablePromotionsAddNewColumn' => __DIR__ . '/../..' . '/app/database/migrations/2019_04_10_065436_alter_table_promotions_add_new_column.php',
         'AlterTablePromotionsAddNewColumnsForGrab' => __DIR__ . '/../..' . '/app/database/migrations/2017_04_07_063228_alter_table_promotions_add_new_columns_for_grab.php',
         'AlterTablePromotionsAddStickyOrderColumn' => __DIR__ . '/../..' . '/app/database/migrations/2016_10_17_023925_alter_table_promotions_add_sticky_order_column.php',
         'AlterTablePromotionsChangeNameField3rdPartyName' => __DIR__ . '/../..' . '/app/database/migrations/2017_04_11_073931_alter_table_promotions_change_name_field_3rd_party_name.php',
         'AlterTablePromotionsPriceValueToMerchantCommision' => __DIR__ . '/../..' . '/app/database/migrations/2018_05_23_023455_alter_table_promotions_price_value_to_merchant_commision.php',
         'AlterTablePulsaAddColumnStatus' => __DIR__ . '/../..' . '/app/database/migrations/2019_03_27_083243_alter_table_pulsa_add_column_status.php',
+        'AlterTablePulsaAddColumnVendorPrice' => __DIR__ . '/../..' . '/app/database/migrations/2019_04_30_020022_alter_table_pulsa_add_column_vendor_price.php',
         'AlterTableRewardDetailsTranslationsAddColumnLanguageIdAndStatus' => __DIR__ . '/../..' . '/app/database/migrations/2017_03_30_020051_alter_table_reward_details_translations_add_column_language_id_and_status.php',
         'AlterTableSessionsSessionId64Char' => __DIR__ . '/../..' . '/app/database/migrations/2016_04_04_140529_alter_table_sessions_session_id_64_char.php',
         'AlterTableSyncsAddStatusColumnAndCompositeKeys' => __DIR__ . '/../..' . '/app/database/migrations/2016_11_02_100821_alter_table_syncs_add_status_column_and_composite_keys.php',
@@ -654,6 +671,7 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'CouponCheckReserved' => __DIR__ . '/../..' . '/app/commands/CouponCheckReserved.php',
         'CouponEmployee' => __DIR__ . '/../..' . '/app/models/CouponEmployee.php',
         'CouponExportAPIController' => __DIR__ . '/../..' . '/app/controllers/api/v1/CouponExportAPIController.php',
+        'CouponGiftNAPIController' => __DIR__ . '/../..' . '/app/controllers/api/v1/CouponGiftNAPIController.php',
         'CouponPaymentProvider' => __DIR__ . '/../..' . '/app/models/CouponPaymentProvider.php',
         'CouponReportAPIController' => __DIR__ . '/../..' . '/app/controllers/api/v1/CouponReportAPIController.php',
         'CouponRetailer' => __DIR__ . '/../..' . '/app/models/CouponRetailer.php',
@@ -809,6 +827,7 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'CreateTableWidgetGroupNames' => __DIR__ . '/../..' . '/app/database/migrations/2016_01_26_221359_create_table_widget_group_names.php',
         'CreateTableWidgetTemplates' => __DIR__ . '/../..' . '/app/database/migrations/2016_02_25_083635_create_table_widget_templates.php',
         'CreateUserCommand' => __DIR__ . '/../..' . '/app/commands/CreateUserCommand.php',
+        'CreateUserMallCSCommand' => __DIR__ . '/../..' . '/app/commands/CreateUserMallCSCommand.php',
         'CreateUserMerchantReviewCommand' => __DIR__ . '/../..' . '/app/commands/CreateUserMerchantReviewCommand.php',
         'CreateUserMerchantTransactionCommand' => __DIR__ . '/../..' . '/app/commands/CreateUserMerchantTransactionCommand.php',
         'CreateUserSponsorTable' => __DIR__ . '/../..' . '/app/database/migrations/2017_11_27_065600_create_user_sponsor_table.php',
@@ -1032,7 +1051,6 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'Orbit\\Controller\\API\\v1\\Article\\ArticleHelper' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Article/ArticleHelper.php',
         'Orbit\\Controller\\API\\v1\\Article\\ArticleListAPIController' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Article/ArticleListAPIController.php',
         'Orbit\\Controller\\API\\v1\\Article\\ArticleNewAPIController' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Article/ArticleNewAPIController.php',
-        'Orbit\\Controller\\API\\v1\\Article\\ArticleSuggestionAPIController' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Article/ArticleSuggestionAPIController.php',
         'Orbit\\Controller\\API\\v1\\Article\\ArticleUpdateAPIController' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Article/ArticleUpdateAPIController.php',
         'Orbit\\Controller\\API\\v1\\Article\\CityListAPIController' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Article/CityListAPIController.php',
         'Orbit\\Controller\\API\\v1\\Article\\CountryListAPIController' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Article/CountryListAPIController.php',
@@ -1098,6 +1116,7 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'Orbit\\Controller\\API\\v1\\Pub\\CampaignShareEmailAPIController' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Pub/CampaignShareEmailAPIController.php',
         'Orbit\\Controller\\API\\v1\\Pub\\CampaignSliderAPIController' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Pub/CampaignSliderAPIController.php',
         'Orbit\\Controller\\API\\v1\\Pub\\CategoryAPIController' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Pub/CategoryAPIController.php',
+        'Orbit\\Controller\\API\\v1\\Pub\\CheckPulsaListAPIController' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Pub/CheckPulsaListAPIController.php',
         'Orbit\\Controller\\API\\v1\\Pub\\Coupon\\CouponAddToEmailAPIController' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Pub/Coupon/CouponAddToEmailAPIController.php',
         'Orbit\\Controller\\API\\v1\\Pub\\Coupon\\CouponAddToWalletAPIController' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Pub/Coupon/CouponAddToWalletAPIController.php',
         'Orbit\\Controller\\API\\v1\\Pub\\Coupon\\CouponAlsoLikeListAPIController' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Pub/Coupon/CouponAlsoLikeListAPIController.php',
@@ -1204,6 +1223,7 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'Orbit\\Controller\\API\\v1\\Pub\\Pulsa\\PulsaPurchasedDetailAPIController' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Pub/Pulsa/PulsaPurchasedDetailAPIController.php',
         'Orbit\\Controller\\API\\v1\\Pub\\Pulsa\\PulsaValidator' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Pub/Pulsa/PulsaValidator.php',
         'Orbit\\Controller\\API\\v1\\Pub\\Pulsa\\TelcoOperatorListAPIController' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Pub/Pulsa/TelcoOperatorListAPIController.php',
+        'Orbit\\Controller\\API\\v1\\Pub\\Rating\\RatingDetailAPIController' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Pub/Rating/RatingDetailAPIController.php',
         'Orbit\\Controller\\API\\v1\\Pub\\Rating\\RatingListAPIController' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Pub/Rating/RatingListAPIController.php',
         'Orbit\\Controller\\API\\v1\\Pub\\Rating\\RatingNewAPIController' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Pub/Rating/RatingNewAPIController.php',
         'Orbit\\Controller\\API\\v1\\Pub\\Rating\\RatingReplyUpdateAPIController' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Pub/Rating/RatingReplyUpdateAPIController.php',
@@ -1262,7 +1282,6 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'Orbit\\Helper\\Asset\\Stylesheet' => __DIR__ . '/../..' . '/app/helpers/Orbit/Helper/Asset/Stylesheet.php',
         'Orbit\\Helper\\Database\\Cache' => __DIR__ . '/../..' . '/app/helpers/Orbit/Helper/Database/Cache.php',
         'Orbit\\Helper\\Elasticsearch\\ElasticsearchErrorChecker' => __DIR__ . '/../..' . '/app/helpers/Orbit/Helper/Elasticsearch/ElasticsearchErrorChecker.php',
-        'Orbit\\Helper\\Elasticsearch\\ElasticsearchInterface' => __DIR__ . '/../..' . '/app/helpers/Orbit/Helper/Elasticsearch/ElasticsearchInterface.php',
         'Orbit\\Helper\\Elasticsearch\\IndexNameBuilder' => __DIR__ . '/../..' . '/app/helpers/Orbit/Helper/Elasticsearch/IndexNameBuilder.php',
         'Orbit\\Helper\\Elasticsearch\\Search' => __DIR__ . '/../..' . '/app/helpers/Orbit/Helper/Elasticsearch/Search.php',
         'Orbit\\Helper\\Email\\MXEmailChecker' => __DIR__ . '/../..' . '/app/helpers/Orbit/Helper/Email/MXEmailChecker.php',
@@ -1343,6 +1362,9 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'Orbit\\Helper\\Util\\SimpleCache' => __DIR__ . '/../..' . '/app/helpers/Orbit/Helper/Util/SimpleCache.php',
         'Orbit\\Helper\\Util\\UserAgent' => __DIR__ . '/../..' . '/app/helpers/Orbit/Helper/Util/UserAgent.php',
         'Orbit\\JWT' => __DIR__ . '/../..' . '/app/helpers/Orbit/JWT.php',
+        'Orbit\\Models\\Gamification\\UserGameEvent' => __DIR__ . '/../..' . '/app/models/Gamification/UserGameEvent.php',
+        'Orbit\\Models\\Gamification\\UserVariable' => __DIR__ . '/../..' . '/app/models/Gamification/UserVariable.php',
+        'Orbit\\Models\\Gamification\\Variable' => __DIR__ . '/../..' . '/app/models/Gamification/Variable.php',
         'Orbit\\OS\\Shutdown' => __DIR__ . '/../..' . '/app/helpers/Orbit/OS/Shutdown.php',
         'Orbit\\RoutingServiceProvider' => __DIR__ . '/../..' . '/app/helpers/Orbit/RoutingServiceProvider.php',
         'Orbit\\Setting' => __DIR__ . '/../..' . '/app/helpers/Orbit/Setting.php',
