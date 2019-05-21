@@ -6,6 +6,7 @@ use User;
 use Orbit\Models\Gamification\UserVariable;
 use Orbit\Models\Gamification\Variable;
 use Orbit\Models\Gamification\UserGameEvent;
+use DateTime;
 
 /**
  * Event listener for orbit.user.activation.success
@@ -27,6 +28,9 @@ class UserActivation
         $userVar->value = $userVar->value + 1;
         $userVar->total_points = $userVar->total_points + $gamificationVar->point;
         $userVar->save();
+
+        $user->total_game_points = $user->total_game_points + $gamificationVar->point;
+        $user->save();
         return $userVar;
     }
 
@@ -36,6 +40,8 @@ class UserActivation
         $userGameEv->variable_id = $gamificationVar->variable_id;
         $userGameEv->user_id = $user->user_id;
         $userGameEv->point = $gamificationVar->point;
+        $userGameEv->created_at = new DateTime();
+        $userGameEv->updated_at = new DateTime();
         $userGameEv->save();
         return $userVar;
     }
