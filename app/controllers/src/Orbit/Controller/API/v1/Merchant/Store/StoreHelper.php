@@ -424,7 +424,7 @@ class StoreHelper
                 $newBaseStoreTranslation->base_store_id = $baseStore->base_store_id;
                 $newBaseStoreTranslation->language_id = $operation[1];
                 $newBaseStoreTranslation->description = $operation[2]->description;
-                $newBaseStoreTranslation->meta_description = $operation[2]->meta_description;
+                $newBaseStoreTranslation->meta_description = isset($operation[2]->meta_description) ? $operation[2]->meta_description : null;
                 $newBaseStoreTranslation->custom_title = isset($operation[2]->custom_title) ? $operation[2]->custom_title : null;
                 $newBaseStoreTranslation->save();
                 $baseStoreTranslations[] = $newBaseStoreTranslation;
