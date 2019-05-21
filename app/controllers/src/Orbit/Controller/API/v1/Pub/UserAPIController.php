@@ -1,4 +1,4 @@
-<?php namespace Orbit\Controller\API\v1\Pub;
+7<?php namespace Orbit\Controller\API\v1\Pub;
 
 use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -100,6 +100,14 @@ class UserAPIController extends PubControllerAPI
 
             OrbitInput::post('gender', function($gender) use ($updateUserDetail) {
                 $updateUserDetail->gender = $gender;
+            });
+
+            OrbitInput::post('about', function($about) use ($updateUserDetail) {
+                $updateUserDetail->about = $about;
+            });
+
+            OrbitInput::post('location', function($location) use ($updateUserDetail) {
+                $updateUserDetail->location = $location;
             });
 
             $updateUserDetail->save();
