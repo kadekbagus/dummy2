@@ -9,6 +9,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Config;
 use Cache;
 use Validator;
+use Str;
 use \Exception;
 use Activity;
 use User;
@@ -21,6 +22,8 @@ use Orbit\Notifications\Feedback\StoreFeedbackNotification;
 
 class FeedbackNewAPIController extends PubControllerAPI
 {
+    private $lastFeedback = null;
+
     /**
      * POST - New feedback report for Mall/Store.
      *
@@ -55,6 +58,7 @@ class FeedbackNewAPIController extends PubControllerAPI
             $feedback['is_mall'] = OrbitInput::post('is_mall', 'Y');
             $feedback['user'] = $user->user_id;
             $feedback['mall_id'] = OrbitInput::post('mall_id');
+            $storeName = Str::slug($feedback['store']);
 
             $validator = Validator::make(
                 $feedback,
@@ -63,7 +67,7 @@ class FeedbackNewAPIController extends PubControllerAPI
                     'mall'      => 'required',
                     'report'    => 'required|array',
                     'is_mall'   => 'required',
-                    'user'      => "required|orbit.request.throttle:{$feedback['mall_id']}",
+                    'user'      => "required|orbit.request.throttle:{$feedback['mall_id']},{$storeName}",
                 ],
                 [
                     'orbit.exists.mall' => 'Invalid mall ID.',
@@ -73,6 +77,11 @@ class FeedbackNewAPIController extends PubControllerAPI
 
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
+
+                if ($errorMessage === 'WAIT_BEFORE_MAKING_NEW_FEEDBACK') {
+                    $errorMessage .= '|' . $this->lastFeedback;
+                }
+
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
@@ -139,9 +148,15 @@ class FeedbackNewAPIController extends PubControllerAPI
 
             // Assume mall is valid and not empty because it passed orbit.exists.mall
             $mallId = $parameters[0];
+            $storeName = isset($parameters[1]) ? $parameters[1] : null;
 
-            $cacheKeyPrefix = 'feedback_time_mall_'; // Can be set in config if needed.
-            $cacheKey = sprintf("{$cacheKeyPrefix}_%s_%s", $mallId, $value);
+            $cacheKeyPrefix = 'feedback_time_mall__%s_%s'; // Can be set in config if needed.
+            $cacheKey = sprintf($cacheKeyPrefix, $mallId, $value);
+            if (! empty($storeName)) {
+                $cacheKeyPrefix .= '_%s';
+                $cacheKey = sprintf($cacheKeyPrefix, $mallId, $value, $storeName);
+            }
+
             $now = Carbon::now();
             $lastRequest = Cache::get($cacheKey, $now);
 
@@ -154,9 +169,13 @@ class FeedbackNewAPIController extends PubControllerAPI
             // If we can do feedback, then store current time
             // as the last valid feedback.
             $availableIn = Config::get('orbit.feedback.limit', 10);
+            $diffInMinutes = $lastRequest->diffInMinutes($now);
             $canDoFeedback = $lastRequest->addMinutes($availableIn)->lte($now) || $first;
             if ($canDoFeedback) {
                 Cache::put($cacheKey, $now->format('Y-m-d H:i:s'), $availableIn);
+            }
+            else {
+                $this->lastFeedback = $diffInMinutes;
             }
 
             return $canDoFeedback;
