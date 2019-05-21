@@ -170,13 +170,14 @@ class ActivationAPIController extends IntermediateBaseController
             if (is_object($location)) {
                 $activity->setLocation($location);
             }
-
             $activity->setUser($user)
                      ->setActivityName('activation_ok')
                      ->setActivityNameLong($activityNameLong)
                      ->setModuleName('Application')
                      ->responseOK()
                      ->save();
+
+            Event::fire('orbit.user.activation.success', $user);
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
