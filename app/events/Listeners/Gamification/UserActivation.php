@@ -45,7 +45,7 @@ class UserActivation
         $userGameEv->created_at = new DateTime();
         $userGameEv->updated_at = new DateTime();
         $userGameEv->save();
-        return $userVar;
+        return $userGameEv;
     }
 
     /**
