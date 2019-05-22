@@ -208,6 +208,14 @@ class UserStoreNotificationQueue
 
             // send as inApps notification
             if (! empty($storeObjectNotification->notification->user_ids)) {
+                if (isset($storeObjectNotification->notification) && isset($storeObjectNotification->notification->notification_tokens)) {
+                    unset($storeObjectNotification->notification->notification_tokens);
+                }
+
+                if (isset($storeObjectNotification->notification) && isset($storeObjectNotification->notification->user_ids)) {
+                    unset($storeObjectNotification->notification->user_ids);
+                }
+
                 $bodyInApps = [
                     'user_ids'       => $storeObjectNotification->notification->user_ids,
                     'token'         => null,
