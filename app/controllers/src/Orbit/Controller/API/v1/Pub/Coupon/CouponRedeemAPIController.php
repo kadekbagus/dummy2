@@ -37,6 +37,7 @@ use \Exception;
 use \UserVerificationNumber;
 use Orbit\Helper\Payment\Payment as PaymentClient;
 use Event;
+use Log;
 
 class CouponRedeemAPIController extends PubControllerAPI
 {
@@ -245,13 +246,17 @@ class CouponRedeemAPIController extends PubControllerAPI
 
             $paymentConfig = Config::get('orbit.payment_server');
             $paymentClient = PaymentClient::create($paymentConfig)->setFormParam($body);
+            Log::info('normal coupon redeem before payment');
             $response = $paymentClient->setEndPoint('api/v1/pay')
                                     ->request('POST');
+
 
             if ($response->status !== 'success') {
                 $errorMessage = 'Transaction Failed';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            Log::info('normal coupon redeem after payment');
 
             $mall = App::make('orbit.empty.merchant');
 
