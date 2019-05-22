@@ -73,6 +73,5 @@ class PointRewarder
             $this->updateUserVariable($user, $gamificationVar);
             $this->updateUserGameEvent($user, $gamificationVar);
         });
-
     }
 }
