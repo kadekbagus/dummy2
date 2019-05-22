@@ -177,7 +177,7 @@ class GetPulsaQueue
                     'country_id' => $payment->country_id,
                 ];
 
-                Event::queue('orbit.purchase.pulsa.success', [$payment->user, $rewardObject]);
+                Event::fire('orbit.purchase.pulsa.success', [$payment->user, $rewardObject]);
             }
 
         } catch (Exception $e) {
