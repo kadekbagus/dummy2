@@ -43,6 +43,10 @@ Event::listen('orbit.rating.postrating.without.image', new PointRewarder('review
  */
 
 Event::listen('orbit.rating.postrating.after.commit', function($ctrl, $body, $user) {
+    if (isset($body['country']) && !isset($body['country_id'])) {
+        $body['country_id'] = $body['country'];
+    }
+
     if (isset($body['images'])) {
         Event::fire('orbit.rating.postrating.with.image', [$user, $body]);
     } else {
