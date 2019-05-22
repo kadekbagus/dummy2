@@ -178,7 +178,7 @@ class ActivationAPIController extends IntermediateBaseController
                      ->responseOK()
                      ->save();
 
-            Event::fire('orbit.user.activation.success', [$user, 'sign_up']);
+            Event::fire('orbit.user.activation.success', $user);
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();

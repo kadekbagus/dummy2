@@ -9,12 +9,23 @@ use Orbit\Models\Gamification\UserGameEvent;
 use DateTime;
 
 /**
- * Event listener for orbit.user.activation.success
+ * Helper class that reward user with game points
  *
  * @author zamroni <zamroni@dominopos.com>
  */
-class UserActivation
+class PointRewarder
 {
+    /**
+     * gamification variable name
+     * @var string
+     */
+    private $varName;
+
+    public function __construct($varName)
+    {
+        $this->varName = $varName;
+    }
+
     private function updateUserVariable($user, $gamificationVar)
     {
         $userVar = UserVariable::where('variable_id', $gamificationVar->variable_id)
@@ -49,13 +60,13 @@ class UserActivation
     }
 
     /**
-     * called by event dispatcher when orbit.user.activation.success is fired
+     * called when user is rewarded with point
      *
      * @var User $user, activated user
      */
-    public function __invoke($user, $varName)
+    public function __invoke(User $user)
     {
-        $gamificationVar = Variable::where('variable_slug', $varName)
+        $gamificationVar = Variable::where('variable_slug', $this->varName)
             ->limit(1)
             ->first();
         DB::transaction(function() use ($user, $gamificationVar) {
