@@ -18,6 +18,7 @@ use BaseStore;
 use BaseMerchant;
 use DB;
 use Orbit\Models\Gamification\UserGameEvent;
+use Event;
 
 class FollowAPIController extends PubControllerAPI
 {
@@ -140,7 +141,7 @@ class FollowAPIController extends PubControllerAPI
                                 'country_id' => $country_id,
                                 'city' => $city,
                             ];
-                            Event::fire('orbit.follow.postfollow.after.commit', array($user, $rewardData));
+                            Event::fire('orbit.follow.postfollow.success', array($user, $rewardData));
                         }
 
                     } else {
@@ -305,7 +306,7 @@ class FollowAPIController extends PubControllerAPI
                                 'object_name' => $baseMerchantName,
                                 'country_id' => $baseMerchantCountry,
                             ];
-                            Event::fire('orbit.follow.postfollow.after.commit', array($user, $rewardData));
+                            Event::fire('orbit.follow.postfollow.success', array($user, $rewardData));
                         }
                     }
 
