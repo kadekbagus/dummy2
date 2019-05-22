@@ -91,7 +91,7 @@ class GetPulsaQueue
             $pulsaPurchase = Purchase::create()->doPurchase($pulsa->pulsa_code, $phoneNumber, $paymentId);
 
             // Test only, set status response manually.
-            // $pulsaPurchase->setStatus(609);
+            $pulsaPurchase->setStatus(0);
 
             if ($pulsaPurchase->isSuccess()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
@@ -166,6 +166,18 @@ class GetPulsaQueue
                     $admin->email       = $email;
                     $admin->notify(new PulsaPendingNotification($payment, 'Pending Payment'));
                 }
+            }
+
+            // Increase point when the transaction is success.
+            if (in_array($payment->status, [PaymentTransaction::STATUS_SUCCESS])) {
+                $rewardObject = (object) [
+                    'object_id' => $pulsa->pulsa_item_id,
+                    'object_type' => 'pulsa',
+                    'object_name' => $pulsa->pulsa_display_name,
+                    'country_id' => $payment->country_id,
+                ];
+
+                Event::fire('orbit.purchase.pulsa.success', [$payment->user, $rewardObject]);
             }
 
         } catch (Exception $e) {

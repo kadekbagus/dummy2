@@ -49,3 +49,5 @@ Event::listen('orbit.rating.postrating.after.commit', function($ctrl, $body, $us
         Event::fire('orbit.rating.postrating.without.image', [$user, $body]);
     }
 });
+
+Event::listen('orbit.purchase.pulsa.success', new PointRewarder('purchase'));
