@@ -16,3 +16,47 @@ use Orbit\Events\Listeners\Gamification\PointRewarder;
 
 // successfully activate account
 Event::listen('orbit.user.activation.success', new PointRewarder('sign_up'));
+
+/**
+ * Listen on:    `orbit.rating.postrating.with.image`
+ * Purpose:      Handle event when user successfully post review without image
+ *
+ * @param User $user - Instance of activated user
+ * @param object $data - additional data about object being reviewed
+ */
+Event::listen('orbit.rating.postrating.with.image', new PointRewarder('review'));
+
+/**
+ * Listen on:    `orbit.rating.postrating.without.image`
+ * Purpose:      Handle event when user successfully post review without image
+ *
+ * @param User $user - Instance of activated user
+ * @param object $data - additional data about object being reviewed
+ */
+Event::listen('orbit.rating.postrating.without.image', new PointRewarder('review_image'));
+
+/**
+ * Listen on:    `'orbit.rating.postrating.after.commit'`
+ * Purpose:      Handle event when user successfully post review
+ *
+ * @param User $user - Instance of activated user
+ */
+
+Event::listen('orbit.rating.postrating.after.commit', function($ctrl, $body, $user) {
+    $data = (object) [
+        'object_id' => $body['object_id'],
+        'object_name' => $body['object_name'],
+        'object_type' => $body['object_type'],
+    ];
+    if (isset($body['country'])) {
+        $data['country'] = $body['country'];
+    }
+    if (isset($body['city'])) {
+        $data['city'] = $body['city'];
+    }
+    if (isset($body['images'])) {
+        Event::fire('orbit.rating.postrating.with.image', [$user, $data]);
+    } else {
+        Event::fire('orbit.rating.postrating.without.image', [$user, $data]);
+    }
+});

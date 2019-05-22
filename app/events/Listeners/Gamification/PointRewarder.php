@@ -47,14 +47,42 @@ class PointRewarder
         return $userVar;
     }
 
-    private function updateUserGameEvent($user, $gamificationVar)
+    private function prepareAdditionalData($userGameEv, $data)
+    {
+        if (isset($data->object_id)) {
+            $userGameEv->object_id = $data->object_id;
+        }
+
+        if (isset($data->object_type)) {
+            $userGameEv->object_type = $data->object_type;
+        }
+
+        if (isset($data->object_name)) {
+            $userGameEv->object_name = $data->object_name;
+        }
+
+        if (isset($data->country)) {
+            $userGameEv->country = $data->country;
+        }
+
+        if (isset($data->city)) {
+            $userGameEv->city = $data->city;
+        }
+
+        return $userGameEv;
+    }
+
+    private function updateUserGameEvent($user, $gamificationVar, $data)
     {
         $userGameEv = new UserGameEvent();
         $userGameEv->variable_id = $gamificationVar->variable_id;
         $userGameEv->user_id = $user->user_id;
         $userGameEv->point = $gamificationVar->point;
-        $userGameEv->created_at = new DateTime();
-        $userGameEv->updated_at = new DateTime();
+
+        if (! empty($data)) {
+            $this->prepareAdditionalData($userGameEv, $data);
+        }
+
         $userGameEv->save();
         return $userGameEv;
     }
@@ -63,15 +91,16 @@ class PointRewarder
      * called when user is rewarded with point
      *
      * @var User $user, activated user
+     * @var object $data, additional data (if any)
      */
-    public function __invoke(User $user)
+    public function __invoke(User $user, $data = null)
     {
         $gamificationVar = Variable::where('variable_slug', $this->varName)
             ->limit(1)
             ->first();
-        DB::transaction(function() use ($user, $gamificationVar) {
+        DB::transaction(function() use ($user, $gamificationVar, $data) {
             $this->updateUserVariable($user, $gamificationVar);
-            $this->updateUserGameEvent($user, $gamificationVar);
+            $this->updateUserGameEvent($user, $gamificationVar, $data);
         });
     }
 }
