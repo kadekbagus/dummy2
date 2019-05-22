@@ -17,6 +17,7 @@ use Tenant;
 use BaseStore;
 use BaseMerchant;
 use DB;
+use Orbit\Models\Gamification\UserGameEvent;
 
 class FollowAPIController extends PubControllerAPI
 {
@@ -123,6 +124,25 @@ class FollowAPIController extends PubControllerAPI
                                                 ->setEndPoint('user-follows')
                                                 ->request('POST');
 
+                        // gamification
+                        $pointRewarded = UserGameEvent::where('user_id', '=', $user->user_id)
+                                                      ->where('object_id', '=', $object_id)
+                                                      ->where('object_type', '=', $object_type)
+                                                      ->where('city', '=', $city)
+                                                      ->where('country', '=', $country_id)
+                                                      ->first();
+                        // check if user already get point
+                        if (!$pointRewarded) {
+                            $rewardData = (object) [
+                                'object_id' => $object_id,
+                                'object_type' => $object_type,
+                                'object_name' => $mall->name,
+                                'country_id' => $country_id,
+                                'city' => $city,
+                            ];
+                            Event::fire('orbit.follow.postfollow.after.commit', array($user, $rewardData));
+                        }
+
                     } else {
                         // unfollow
                         $id = $existingData->data->records[0]->_id;
@@ -134,6 +154,10 @@ class FollowAPIController extends PubControllerAPI
                 case "store":
                     if ($action === 'follow')
                     {
+                        $baseMerchantId = null;
+                        $baseMerchantName = null;
+                        $baseMerchantCountry = null;
+
                         if (!empty($mall_id)) {
                             // mall level
 
@@ -146,6 +170,10 @@ class FollowAPIController extends PubControllerAPI
                                                 ->where('merchants.parent_id',  $mall_id)
                                                 ->excludeDeleted('merchants')
                                                 ->first();
+
+                            $baseMerchantId = $storeInfo->base_merchant_id;
+                            $baseMerchantName = $storeInfo->name;
+                            $baseMerchantCountry = $storeInfo->country_id;
 
                             if (! empty($storeInfo)) {
                                 $stores = Tenant::select('name', 'merchant_id as store_id')
@@ -188,6 +216,10 @@ class FollowAPIController extends PubControllerAPI
                                               ->leftJoin('merchants', 'merchants.merchant_id', '=', 'base_stores.merchant_id')
                                               ->where('base_stores.base_store_id', '=', $object_id)
                                               ->first();
+
+                            $baseMerchantId = $baseStore->base_merchant_id;
+                            $baseMerchantName = $baseStore->name;
+                            $baseMerchantCountry = $baseStore->country_id;
 
                             if (is_object($baseStore)) {
                                 $stores = Tenant::select('merchants.merchant_id as store_id',
@@ -260,6 +292,21 @@ class FollowAPIController extends PubControllerAPI
 
                         }
 
+                        // gamification
+                        $pointRewarded = UserGameEvent::where('user_id', '=', $user->user_id)
+                                                      ->where('object_id', '=', $baseMerchantId)
+                                                      ->where('object_type', '=', 'base_merchant')
+                                                      ->first();
+                        // check if user already get point
+                        if (!$pointRewarded) {
+                            $rewardData = (object) [
+                                'object_id' => $baseMerchantId,
+                                'object_type' => 'base_merchant',
+                                'object_name' => $baseMerchantName,
+                                'country_id' => $baseMerchantCountry,
+                            ];
+                            Event::fire('orbit.follow.postfollow.after.commit', array($user, $rewardData));
+                        }
                     }
 
                     if ($action === 'unfollow')
