@@ -57,3 +57,5 @@ Event::listen('orbit.rating.postrating.after.commit', function($ctrl, $body, $us
 Event::listen('orbit.purchase.pulsa.success', new PointRewarder('purchase'));
 
 Event::listen('orbit.purchase.coupon.success', new PointRewarder('purchase'));
+
+Event::listen('orbit.redeem.coupon.success', new PointRewarder('purchase'));
