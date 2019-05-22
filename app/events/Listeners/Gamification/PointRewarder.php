@@ -62,7 +62,7 @@ class PointRewarder
             $userGameEv->object_name = $data->object_name;
         }
 
-        if (isset($data->country_id)) {
+        if (isset($data->country_id) && ! empty($data->country_id)) {
             $userGameEv->country_id = $data->country_id;
         }
 
