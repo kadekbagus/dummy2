@@ -30,6 +30,11 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         array (
             'Psr\\Http\\Message\\' => 17,
         ),
+        'O' => 
+        array (
+            'Orbit\\Models\\' => 13,
+            'Orbit\\Events\\' => 13,
+        ),
         'M' => 
         array (
             'Monolog\\' => 8,
@@ -72,6 +77,14 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'Psr\\Http\\Message\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/http-message/src',
+        ),
+        'Orbit\\Models\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/app/models',
+        ),
+        'Orbit\\Events\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/app/events',
         ),
         'Monolog\\' => 
         array (
@@ -234,10 +247,6 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
             array (
                 0 => __DIR__ . '/../..' . '/app/notifications',
             ),
-            'Orbit\\Models\\Gamification\\' => 
-            array (
-                0 => __DIR__ . '/../..' . '/app/models/Gamification',
-            ),
             'Orbit\\Mailchimp\\' => 
             array (
                 0 => __DIR__ . '/..' . '/dominopos/orbit-mailchimp',
@@ -245,10 +254,6 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
             'Orbit\\Helper\\' => 
             array (
                 0 => __DIR__ . '/../..' . '/app/helpers',
-            ),
-            'Orbit\\Events\\Listeners\\' => 
-            array (
-                0 => __DIR__ . '/../..' . '/app/events/Listeners',
             ),
             'Orbit\\Database\\' => 
             array (
@@ -574,8 +579,10 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'AlterTableTokensAddIndexTokenValueAndStatus' => __DIR__ . '/../..' . '/app/database/migrations/2017_07_06_034951_alter_table_tokens_add_index_token_value_and_status.php',
         'AlterTableUserAcquisitionAddColumnSignupviaSocialidSocialurl' => __DIR__ . '/../..' . '/app/database/migrations/2015_12_21_045145_alter_table_user_acquisition_add_column_signupvia_socialid_socialurl.php',
         'AlterTableUserAcquisitionsDropUniqueIndex' => __DIR__ . '/../..' . '/app/database/migrations/2016_03_11_110000_alter_table_user_acquisitions_drop_unique_index.php',
+        'AlterTableUserDetailAddAboutAndLocation' => __DIR__ . '/../..' . '/app/database/migrations/2019_05_21_043553_alter_table_user_detail_add_about_and_location.php',
         'AlterTableUserMerchantFieldUserIdNullable' => __DIR__ . '/../..' . '/app/database/migrations/2016_03_22_064317_alter_table_user_merchant_field_user_id_nullable.php',
         'AlterTableUseracquisitionRemoveSocialurlColumn' => __DIR__ . '/../..' . '/app/database/migrations/2015_12_22_025018_alter_table_useracquisition_remove_socialurl_column.php',
+        'AlterTableUsersAddColumnTotalGamePoints' => __DIR__ . '/../..' . '/app/database/migrations/2019_05_21_022220_alter_table_users_add_column_total_game_points.php',
         'AlterTableVendorGtmCitiesAddFieldVendorCountry' => __DIR__ . '/../..' . '/app/database/migrations/2017_01_31_032330_alter_table_vendor_gtm_cities_add_field_vendor_country.php',
         'AlterTableVendorGtmCitiesAddVendorTypeColumn' => __DIR__ . '/../..' . '/app/database/migrations/2017_03_10_022512_alter_table_vendor_gtm_cities_add_vendor_type_column.php',
         'AlterTableWidgetsAddFieldWidgetGroupNameId' => __DIR__ . '/../..' . '/app/database/migrations/2016_08_23_071151_alter_table_widgets_add_field_widget_group_name_id.php',
@@ -806,6 +813,7 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'CreateTableTotalObjectPageViews' => __DIR__ . '/../..' . '/app/database/migrations/2017_05_15_024113_create_table_total_object_page_views.php',
         'CreateTableUserAnswer' => __DIR__ . '/../..' . '/app/database/migrations/2016_07_11_061909_create_table_user_answer.php',
         'CreateTableUserCampaign' => __DIR__ . '/../..' . '/app/database/migrations/2016_03_16_084422_create_table_user_campaign.php',
+        'CreateTableUserGameEvents' => __DIR__ . '/../..' . '/app/database/migrations/2019_05_21_040748_create_table_user_game_events.php',
         'CreateTableUserGuests' => __DIR__ . '/../..' . '/app/database/migrations/2016_04_05_103609_create_table_user_guests.php',
         'CreateTableUserMerchant' => __DIR__ . '/../..' . '/app/database/migrations/2016_03_16_083656_create_table_user_merchant.php',
         'CreateTableUserMerchantReviews' => __DIR__ . '/../..' . '/app/database/migrations/2017_12_27_015743_create_table_user_merchant_reviews.php',
@@ -814,6 +822,8 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'CreateTableUserSignin' => __DIR__ . '/../..' . '/app/database/migrations/2015_12_21_044542_create_table_user_signin.php',
         'CreateTableUserSponsorAllowedNotification' => __DIR__ . '/../..' . '/app/database/migrations/2018_01_02_085642_create_table_user_sponsor_allowed_notification.php',
         'CreateTableUserSponsorAllowedNotificationCities' => __DIR__ . '/../..' . '/app/database/migrations/2018_01_02_085656_create_table_user_sponsor_allowed_notification_cities.php',
+        'CreateTableUserVariables' => __DIR__ . '/../..' . '/app/database/migrations/2019_05_21_040938_create_table_user_variables.php',
+        'CreateTableVariables' => __DIR__ . '/../..' . '/app/database/migrations/2019_05_21_030337_create_table_variables.php',
         'CreateTableVendorGtmCategories' => __DIR__ . '/../..' . '/app/database/migrations/2017_04_07_063614_create_table_vendor_gtm_categories.php',
         'CreateTableVendorGtmCities' => __DIR__ . '/../..' . '/app/database/migrations/2017_01_26_065919_create_table_vendor_gtm_cities.php',
         'CreateTableVendorGtmCountries' => __DIR__ . '/../..' . '/app/database/migrations/2017_01_26_065915_create_table_vendor_gtm_countries.php',

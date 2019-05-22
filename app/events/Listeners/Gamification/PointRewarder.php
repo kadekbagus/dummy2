@@ -3,21 +3,35 @@ namespace Orbit\Events\Listeners\Gamification;
 
 use DB;
 use User;
-use Orbit\Gamification\UserVariable;
-use Orbit\Gamification\Variable;
-use Orbit\Gamification\UserGameEvent;
+use Orbit\Models\Gamification\UserVariable;
+use Orbit\Models\Gamification\Variable;
+use Orbit\Models\Gamification\UserGameEvent;
+use DateTime;
 
 /**
- * Event listener for orbit.user.activation.success
+ * Helper class that reward user with game points
  *
  * @author zamroni <zamroni@dominopos.com>
  */
-class UserActivation
+class PointRewarder
 {
+    /**
+     * gamification variable name
+     * @var string
+     */
+    private $varName;
+
+    public function __construct($varName)
+    {
+        $this->varName = $varName;
+    }
+
     private function updateUserVariable($user, $gamificationVar)
     {
         $userVar = UserVariable::where('variable_id', $gamificationVar->variable_id)
-            ->where('user_id', $user->user_id);
+            ->where('user_id', $user->user_id)
+            ->limit(1)
+            ->first();
 
         if (! $userVar) {
             $userVar = new UserVariable();
@@ -27,6 +41,9 @@ class UserActivation
         $userVar->value = $userVar->value + 1;
         $userVar->total_points = $userVar->total_points + $gamificationVar->point;
         $userVar->save();
+
+        $user->total_game_points = $user->total_game_points + $gamificationVar->point;
+        $user->save();
         return $userVar;
     }
 
@@ -36,22 +53,25 @@ class UserActivation
         $userGameEv->variable_id = $gamificationVar->variable_id;
         $userGameEv->user_id = $user->user_id;
         $userGameEv->point = $gamificationVar->point;
+        $userGameEv->created_at = new DateTime();
+        $userGameEv->updated_at = new DateTime();
         $userGameEv->save();
-        return $userVar;
+        return $userGameEv;
     }
 
     /**
-     * called by event dispatcher when orbit.user.activation.success is fired
+     * called when user is rewarded with point
      *
      * @var User $user, activated user
      */
-    public function __invoke($user)
+    public function __invoke(User $user)
     {
-        $gamificationVar = Variable::where('variable_slug')->limit(1);
+        $gamificationVar = Variable::where('variable_slug', $this->varName)
+            ->limit(1)
+            ->first();
         DB::transaction(function() use ($user, $gamificationVar) {
             $this->updateUserVariable($user, $gamificationVar);
             $this->updateUserGameEvent($user, $gamificationVar);
         });
-
     }
 }

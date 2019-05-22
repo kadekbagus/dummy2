@@ -5,7 +5,7 @@
  * @author zamroni<zamroni@dominopos.com>
  */
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
-use Orbit\Events\Listeners\Gamification\UserActivation;
+use Orbit\Events\Listeners\Gamification\PointRewarder;
 
 /**
  * Listen on:    `orbit.user.activation.success`
@@ -15,4 +15,4 @@ use Orbit\Events\Listeners\Gamification\UserActivation;
  */
 
 // successfully activate account
-Event::listen('orbit.user.activation.success', UserActivation::class);
+Event::listen('orbit.user.activation.success', new PointRewarder('sign_up'));
