@@ -81,14 +81,16 @@ Event::listen('orbit.purchase.coupon.success', new PointRewarder('purchase'));
 Event::listen('orbit.redeem.coupon.success', new PointRewarder('purchase'));
 
 /**
- * Listen on:    `orbit.redeem.coupon.success`
+ * Listen on:    `orbit.coupon.postissuedcoupon.after.commit`
  * Purpose:      Add user game point when user successfully redeem normal coupon
  *
+ * @param $ctrl - CouponAPIController instance
+ * @param object $issuedCoupon - issued coupon
  * @param User $user - Instance of activated user
  * @param mixed $data - additional related data about coupon
  */
-Event::listen('orbit.coupon.postissuedcoupon.after.commit', function($ctrl, $issuedCoupon, $user, $body) {
-    Event::fire('orbit.redeem.coupon.success', [$user, $body]);
+Event::listen('orbit.coupon.postissuedcoupon.after.commit', function($ctrl, $issuedCoupon, $user, $data) {
+    Event::fire('orbit.redeem.coupon.success', [$user, $data]);
 });
 
 /**
