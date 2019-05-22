@@ -91,7 +91,7 @@ class GetPulsaQueue
             $pulsaPurchase = Purchase::create()->doPurchase($pulsa->pulsa_code, $phoneNumber, $paymentId);
 
             // Test only, set status response manually.
-            $pulsaPurchase->setStatus(0);
+            // $pulsaPurchase->setStatus(0);
 
             if ($pulsaPurchase->isSuccess()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
