@@ -79,3 +79,12 @@ Event::listen('orbit.purchase.coupon.success', new PointRewarder('purchase'));
  * @param mixed $data - additional related data about coupon
  */
 Event::listen('orbit.redeem.coupon.success', new PointRewarder('purchase'));
+
+/**
+ * Listen on:    `orbit.follow.postfollow.success`
+ * Purpose:      Add user game point when user successfully follow store or mall
+ *
+ * @param User $user - Instance of activated user
+ * @param mixed $data - additional related data about store or mall
+ */
+Event::listen('orbit.follow.postfollow.success', new PointRewarder('follow'));
