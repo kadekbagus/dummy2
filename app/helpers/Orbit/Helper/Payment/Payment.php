@@ -177,7 +177,7 @@ class Payment
 
             return json_decode($response->getBody()->getContents());
         } catch (\GuzzleHttp\Exception\ConnectException $e) {
-            throw new OrbitCustomException('cURL connection failed', Client::CURL_CONNECT_ERROR_CODE, NULL);
+            throw new OrbitCustomException('cURL connection failed', Payment::CURL_CONNECT_ERROR_CODE, NULL);
         }
     }
 }
