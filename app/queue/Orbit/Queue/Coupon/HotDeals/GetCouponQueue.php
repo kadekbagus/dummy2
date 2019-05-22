@@ -133,6 +133,15 @@ class GetCouponQueue
                         ->responseOK()
                         ->save();
 
+                $rewardObject = (object) [
+                    'object_id' => $coupon->promotion_id,
+                    'object_type' => 'coupon',
+                    'object_name' => $coupon->promotion_name,
+                    'country_id' => $payment->country_id,
+                ];
+
+                Event::fire('orbit.purchase.coupon.success', [$payment->user, $rewardObject]);
+
             }
             else {
                 // Commit the changes ASAP.
