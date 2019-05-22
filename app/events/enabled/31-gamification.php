@@ -14,8 +14,6 @@ use Orbit\Events\Listeners\Gamification\PointRewarder;
  *
  * @param User $user - Instance of activated user
  */
-
-// successfully activate account
 Event::listen('orbit.user.activation.success', new PointRewarder('sign_up'));
 
 /**
