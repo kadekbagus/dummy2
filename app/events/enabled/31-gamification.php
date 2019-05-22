@@ -2,24 +2,23 @@
 /**
  * Event listener for Gamification related events.
  *
- * @author zamroni<zamroni@dominopos.com>
+ * @author Zamroni <zamroni@dominopos.com>
+ * @author Budi <budi@dominopos.com>
  */
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Events\Listeners\Gamification\PointRewarder;
 
 /**
  * Listen on:    `orbit.user.activation.success`
- * Purpose:      Handle user activation event
+ * Purpose:      add user game point when user successfully activated/verify account
  *
  * @param User $user - Instance of activated user
  */
-
-// successfully activate account
 Event::listen('orbit.user.activation.success', new PointRewarder('sign_up'));
 
 /**
  * Listen on:    `orbit.rating.postrating.without.image`
- * Purpose:      Handle event when user successfully post review without image
+ * Purpose:      add user game point when user successfully post review without image
  *
  * @param User $user - Instance of activated user
  * @param object $data - additional data about object being reviewed
@@ -28,7 +27,7 @@ Event::listen('orbit.rating.postrating.without.image', new PointRewarder('review
 
 /**
  * Listen on:    `orbit.rating.postrating.with.image`
- * Purpose:      Handle event when user successfully post review with image
+ * Purpose:      add user game point when user successfully post review with image
  *
  * @param User $user - Instance of activated user
  * @param object $data - additional data about object being reviewed
@@ -37,7 +36,7 @@ Event::listen('orbit.rating.postrating.with.image', new PointRewarder('review_im
 
 /**
  * Listen on:    `'orbit.rating.postrating.after.commit'`
- * Purpose:      Handle event when user successfully post review
+ * Purpose:      add user game point when user successfully post review
  *
  * @param User $user - Instance of activated user
  */
@@ -54,8 +53,29 @@ Event::listen('orbit.rating.postrating.after.commit', function($ctrl, $body, $us
     }
 });
 
+/**
+ * Listen on:    `orbit.purchase.pulsa.success`
+ * Purpose:      Add user game point when user successfully purchase pulsa
+ *
+ * @param User $user - Instance of activated user
+ * @param mixed $data - additional related data about pulsa
+ */
 Event::listen('orbit.purchase.pulsa.success', new PointRewarder('purchase'));
 
+/**
+ * Listen on:    `orbit.purchase.coupon.success`
+ * Purpose:      Add user game point when user successfully purchase coupon
+ *
+ * @param User $user - Instance of activated user
+ * @param mixed $data - additional related data about coupon
+ */
 Event::listen('orbit.purchase.coupon.success', new PointRewarder('purchase'));
 
+/**
+ * Listen on:    `orbit.redeem.coupon.success`
+ * Purpose:      Add user game point when user successfully redeem normal coupon
+ *
+ * @param User $user - Instance of activated user
+ * @param mixed $data - additional related data about coupon
+ */
 Event::listen('orbit.redeem.coupon.success', new PointRewarder('purchase'));
