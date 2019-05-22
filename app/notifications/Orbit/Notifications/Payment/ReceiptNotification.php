@@ -227,6 +227,14 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
     public function toWeb($job, $data)
     {
         try {
+            // remove notification_tokens and user_ids field
+            if (isset($data->notifications) && isset($data->notifications->notification_tokens)) {
+                unset($data->notifications->notification_tokens);
+            }
+            if (isset($data->notifications) && isset($data->notifications->user_ids)) {
+                unset($data->notifications->user_ids);
+            }
+
             $mongoClient = MongoClient::create(Config::get('database.mongodb'));
             $inApps = $mongoClient->setFormParam($data)
                                   ->setEndPoint('user-notifications')
