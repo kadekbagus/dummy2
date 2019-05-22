@@ -7,6 +7,7 @@ use Orbit\Models\Gamification\UserVariable;
 use Orbit\Models\Gamification\Variable;
 use Orbit\Models\Gamification\UserGameEvent;
 use DateTime;
+use Log;
 
 /**
  * Helper class that reward user with game points
@@ -49,23 +50,23 @@ class PointRewarder
 
     private function prepareAdditionalData($userGameEv, $data)
     {
-        if (isset($data->object_id)) {
+        if (isset($data->object_id) && ! empty($data->object_id)) {
             $userGameEv->object_id = $data->object_id;
         }
 
-        if (isset($data->object_type)) {
+        if (isset($data->object_type) && ! empty($data->object_type)) {
             $userGameEv->object_type = $data->object_type;
         }
 
-        if (isset($data->object_name)) {
+        if (isset($data->object_name) && ! empty($data->object_name)) {
             $userGameEv->object_name = $data->object_name;
         }
 
-        if (isset($data->country)) {
-            $userGameEv->country = $data->country;
+        if (isset($data->country) && ! empty($data->country)) {
+            $userGameEv->country_id = $data->country;
         }
 
-        if (isset($data->city)) {
+        if (isset($data->city) && ! empty($data->city)) {
             $userGameEv->city = $data->city;
         }
 
@@ -80,7 +81,10 @@ class PointRewarder
         $userGameEv->point = $gamificationVar->point;
 
         if (! empty($data)) {
-            $this->prepareAdditionalData($userGameEv, $data);
+            if (is_array($data)) {
+                $data = (object) $data;
+            }
+            $userGameEv = $this->prepareAdditionalData($userGameEv, $data);
         }
 
         $userGameEv->save();

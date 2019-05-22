@@ -43,20 +43,9 @@ Event::listen('orbit.rating.postrating.without.image', new PointRewarder('review
  */
 
 Event::listen('orbit.rating.postrating.after.commit', function($ctrl, $body, $user) {
-    $data = (object) [
-        'object_id' => $body['object_id'],
-        'object_name' => $body['object_name'],
-        'object_type' => $body['object_type'],
-    ];
-    if (isset($body['country'])) {
-        $data['country'] = $body['country'];
-    }
-    if (isset($body['city'])) {
-        $data['city'] = $body['city'];
-    }
     if (isset($body['images'])) {
-        Event::fire('orbit.rating.postrating.with.image', [$user, $data]);
+        Event::fire('orbit.rating.postrating.with.image', [$user, $body]);
     } else {
-        Event::fire('orbit.rating.postrating.without.image', [$user, $data]);
+        Event::fire('orbit.rating.postrating.without.image', [$user, $body]);
     }
 });
