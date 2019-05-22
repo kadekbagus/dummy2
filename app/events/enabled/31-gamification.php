@@ -18,22 +18,22 @@ use Orbit\Events\Listeners\Gamification\PointRewarder;
 Event::listen('orbit.user.activation.success', new PointRewarder('sign_up'));
 
 /**
- * Listen on:    `orbit.rating.postrating.with.image`
- * Purpose:      Handle event when user successfully post review without image
- *
- * @param User $user - Instance of activated user
- * @param object $data - additional data about object being reviewed
- */
-Event::listen('orbit.rating.postrating.with.image', new PointRewarder('review'));
-
-/**
  * Listen on:    `orbit.rating.postrating.without.image`
  * Purpose:      Handle event when user successfully post review without image
  *
  * @param User $user - Instance of activated user
  * @param object $data - additional data about object being reviewed
  */
-Event::listen('orbit.rating.postrating.without.image', new PointRewarder('review_image'));
+Event::listen('orbit.rating.postrating.without.image', new PointRewarder('review'));
+
+/**
+ * Listen on:    `orbit.rating.postrating.with.image`
+ * Purpose:      Handle event when user successfully post review with image
+ *
+ * @param User $user - Instance of activated user
+ * @param object $data - additional data about object being reviewed
+ */
+Event::listen('orbit.rating.postrating.with.image', new PointRewarder('review_image'));
 
 /**
  * Listen on:    `'orbit.rating.postrating.after.commit'`
