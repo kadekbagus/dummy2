@@ -37,7 +37,7 @@ Event::listen('orbit.rating.postrating.success', new PointRewarder('review'));
  */
 Event::listen(
     'orbit.rating.postrating.approve.image',
-    new OneTimeReward(new PointRewarder('review_image'))
+    new OneTimeReward(new PointRewarder('review_image'), 'review_image')
 );
 
 /**
