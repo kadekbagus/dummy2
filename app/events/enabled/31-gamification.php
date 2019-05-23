@@ -7,6 +7,7 @@
  */
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Events\Listeners\Gamification\PointRewarder;
+use Orbit\Events\Listeners\Gamification\OneTimeReward;
 
 /**
  * Listen on:    `orbit.user.activation.success`
@@ -27,12 +28,17 @@ Event::listen('orbit.rating.postrating.success', new PointRewarder('review'));
 
 /**
  * Listen on:    `orbit.rating.postrating.approve.image`
- * Purpose:      add user game point when user review images approved
+ * Purpose:      add user game point when user review images approved, reward
+ *              is given for first time one or more image approved.
+ *              For additional images, next approval will not give user game point
  *
  * @param User $user - Instance of activated user
  * @param object $data - additional data about object being reviewed
  */
-Event::listen('orbit.rating.postrating.approve.image', new PointRewarder('review_image'));
+Event::listen(
+    'orbit.rating.postrating.approve.image',
+    new OneTimeReward(new PointRewarder('review_image'))
+);
 
 /**
  * Listen on:    `'orbit.rating.postrating.after.commit'`
