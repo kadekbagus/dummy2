@@ -31,7 +31,7 @@ class OneTimeReward implements PointRewarderInterface
 
     /**
      * called when user is rewarded with point
-     * here we will reward user with point if gameification variable
+     * here we will reward user with point if gamification variable
      * for particular object is not yet given
      *
      * @var User $user, activated user
@@ -42,10 +42,12 @@ class OneTimeReward implements PointRewarderInterface
         if (is_array($data)) {
             $data = (object) $data;
         }
+
         //assignment is required for PHP < 7 to call __invoke() of a class
         $giveReward = $this->pointRewarder;
 
         if (empty($data) || !(isset($data->object_id) && isset($data->object_type))) {
+            //no related data given, just give reward
             $giveReward($user, $data);
         }
 
@@ -57,6 +59,8 @@ class OneTimeReward implements PointRewarderInterface
             ->first();
 
         if (! $rewardHistory) {
+            //no history for particular variable for object given to this user
+            //so reward them
             $giveReward($user, $data);
         }
     }
