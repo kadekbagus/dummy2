@@ -14,7 +14,7 @@ use Log;
  *
  * @author zamroni <zamroni@dominopos.com>
  */
-class PointRewarder
+class PointRewarder implements PointRewarderInterface
 {
     /**
      * gamification variable name
