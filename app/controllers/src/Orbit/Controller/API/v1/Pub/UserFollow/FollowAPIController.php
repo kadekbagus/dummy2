@@ -130,7 +130,7 @@ class FollowAPIController extends PubControllerAPI
                                                       ->where('object_id', '=', $object_id)
                                                       ->where('object_type', '=', $object_type)
                                                       ->where('city', '=', $city)
-                                                      ->where('country', '=', $country_id)
+                                                      ->where('country_id', '=', $country_id)
                                                       ->first();
                         // check if user already get point
                         if (!$pointRewarded) {
