@@ -93,7 +93,7 @@ class ProfileAPIController extends PubControllerAPI
                 'join_date' => $beingViewedUser->created_at->format('Y-m-d H:i:s'),
                 'about' => $beingViewedUser->userdetail->about,
                 'rank' => 0,
-                'total_points' => $beingViewedUser->total_game_points,
+                'total_points' => (int) $beingViewedUser->total_game_points,
                 'number_of_purchases' => 0,
                 'total_reviews' => 0,
                 'total_photos' => 0,
@@ -101,7 +101,7 @@ class ProfileAPIController extends PubControllerAPI
             ];
 
             if ($beingViewedUser->purchases->count() > 0) {
-                $profile->number_of_purchases = $beingViewedUser->purchases->first()->number_of_purchases;
+                $profile->number_of_purchases = (int) $beingViewedUser->purchases->first()->number_of_purchases;
             }
 
             // Get user rank.
