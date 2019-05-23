@@ -7,6 +7,7 @@
  */
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Events\Listeners\Gamification\PointRewarder;
+use Orbit\Events\Listeners\Gamification\OneTimeReward;
 
 /**
  * Listen on:    `orbit.user.activation.success`
@@ -17,22 +18,27 @@ use Orbit\Events\Listeners\Gamification\PointRewarder;
 Event::listen('orbit.user.activation.success', new PointRewarder('sign_up'));
 
 /**
- * Listen on:    `orbit.rating.postrating.without.image`
- * Purpose:      add user game point when user successfully post review without image
+ * Listen on:    `'orbit.rating.postrating.success'`
+ * Purpose:      add user game point when user successfully post review
  *
  * @param User $user - Instance of activated user
  * @param object $data - additional data about object being reviewed
  */
-Event::listen('orbit.rating.postrating.without.image', new PointRewarder('review'));
+Event::listen('orbit.rating.postrating.success', new PointRewarder('review'));
 
 /**
- * Listen on:    `orbit.rating.postrating.with.image`
- * Purpose:      add user game point when user successfully post review with image
+ * Listen on:    `orbit.rating.postrating.approve.image`
+ * Purpose:      add user game point when user review images approved, reward
+ *              is given for first time one or more image approved.
+ *              For additional images, next approval will not give user game point
  *
  * @param User $user - Instance of activated user
  * @param object $data - additional data about object being reviewed
  */
-Event::listen('orbit.rating.postrating.with.image', new PointRewarder('review_image'));
+Event::listen(
+    'orbit.rating.postrating.approve.image',
+    new OneTimeReward(new PointRewarder('review_image'), 'review_image')
+);
 
 /**
  * Listen on:    `'orbit.rating.postrating.after.commit'`
@@ -46,11 +52,7 @@ Event::listen('orbit.rating.postrating.after.commit', function($ctrl, $body, $us
         $body['country_id'] = $body['country'];
     }
 
-    if (isset($body['images'])) {
-        Event::fire('orbit.rating.postrating.with.image', [$user, $body]);
-    } else {
-        Event::fire('orbit.rating.postrating.without.image', [$user, $body]);
-    }
+    Event::fire('orbit.rating.postrating.success', [$user, $body]);
 });
 
 /**
@@ -79,6 +81,19 @@ Event::listen('orbit.purchase.coupon.success', new PointRewarder('purchase'));
  * @param mixed $data - additional related data about coupon
  */
 Event::listen('orbit.redeem.coupon.success', new PointRewarder('purchase'));
+
+/**
+ * Listen on:    `orbit.coupon.postissuedcoupon.after.commit`
+ * Purpose:      Add user game point when user successfully redeem normal coupon
+ *
+ * @param $ctrl - CouponAPIController instance
+ * @param object $issuedCoupon - issued coupon
+ * @param User $user - Instance of activated user
+ * @param mixed $data - additional related data about coupon
+ */
+Event::listen('orbit.coupon.postissuedcoupon.after.commit', function($ctrl, $issuedCoupon, $user, $data) {
+    Event::fire('orbit.redeem.coupon.success', [$user, $data]);
+});
 
 /**
  * Listen on:    `orbit.follow.postfollow.success`

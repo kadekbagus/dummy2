@@ -253,14 +253,6 @@ class NotificationNewAPIController extends ControllerAPI
 
                 // send as inApps notification
                 if (! empty($userIds)) {
-                    if (isset($notif->data->notification_tokens)) {
-                        unset($notif->data->notification_tokens);
-                    }
-
-                    if (isset($notif->data->user_ids)) {
-                        unset($notif->data->user_ids);
-                    }
-
                     foreach ($userIds as $userId) {
                         $bodyInApps = [
                             'user_id'       => $userId,

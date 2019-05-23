@@ -14,7 +14,7 @@ use Log;
  *
  * @author zamroni <zamroni@dominopos.com>
  */
-class PointRewarder
+class PointRewarder implements PointRewarderInterface
 {
     /**
      * gamification variable name
@@ -31,7 +31,6 @@ class PointRewarder
     {
         $userVar = UserVariable::where('variable_id', $gamificationVar->variable_id)
             ->where('user_id', $user->user_id)
-            ->limit(1)
             ->first();
 
         if (! $userVar) {
@@ -99,9 +98,7 @@ class PointRewarder
      */
     public function __invoke(User $user, $data = null)
     {
-        $gamificationVar = Variable::where('variable_slug', $this->varName)
-            ->limit(1)
-            ->first();
+        $gamificationVar = Variable::where('variable_slug', $this->varName)->first();
         DB::transaction(function() use ($user, $gamificationVar, $data) {
             $this->updateUserVariable($user, $gamificationVar);
             $this->updateUserGameEvent($user, $gamificationVar, $data);

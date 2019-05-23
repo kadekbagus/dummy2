@@ -252,6 +252,7 @@ class CouponRedeemAPIController extends PubControllerAPI
                 $errorMessage = 'Transaction Failed';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+            $this->response->payment = 'success payment';
 
             $mall = App::make('orbit.empty.merchant');
 
