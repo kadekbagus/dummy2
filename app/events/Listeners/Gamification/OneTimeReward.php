@@ -27,6 +27,7 @@ class OneTimeReward implements PointRewarderInterface
     public function __construct(PointRewarderInterface $pointRewarder, $varName)
     {
         $this->pointRewarder = $pointRewarder;
+        $this->varName = $varName;
     }
 
     /**

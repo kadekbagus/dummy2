@@ -19,6 +19,7 @@ use Mall;
 use App;
 use Lang;
 use User;
+use UserDetail;
 use Activity;
 use Orbit\Helper\Util\CdnUrlGenerator;
 
@@ -39,9 +40,7 @@ class UserCIAPIController extends BaseAPIController
             $user = $this->api->user;
 
             // Get user detail for provide the phone data
-            $userDetail = User::with('userdetail')
-                               ->excludeDeleted()
-                               ->find($user->user_id);
+            $userDetail = UserDetail::where('user_id', $user->user_id)->first();
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
@@ -74,8 +73,10 @@ class UserCIAPIController extends BaseAPIController
             $data->lastname = $user->user_lastname;
             $data->role = $role->role_name;
             $data->image = $image;
-            $data->phone = $userDetail->userdetail->phone;
-            $data->gender = $userDetail->userdetail->gender;
+            $data->phone = ! empty($userDetail) ? $userDetail->phone : null;
+            $data->gender = ! empty($userDetail) ? $userDetail->gender : null;
+            $data->location = ! empty($userDetail) ? $userDetail->location : null;
+            $data->about = ! empty($userDetail) ? $userDetail->about : null;
 
             $this->response->data = $data;
             $this->response->code = 0;

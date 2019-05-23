@@ -226,6 +226,8 @@ class ActivationAPIController extends IntermediateBaseController
         $this->user = $user;
         $this->socialFrom = $from;
 
+        Event::fire('orbit.user.activation.success', $user);
+
         return $this;
     }
 

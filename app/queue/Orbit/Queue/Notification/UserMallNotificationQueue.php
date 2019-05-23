@@ -204,14 +204,6 @@ class UserMallNotificationQueue
 
             // send as inApps notification
             if (! empty($userIds)) {
-                if (isset($notificationMall->notification_tokens)) {
-                    unset($notificationMall->notification_tokens);
-                }
-
-                if (isset($notificationMall->user_ids)) {
-                    unset($notificationMall->user_ids);
-                }
-
                 $bodyInApps = [
                     'user_ids'       => $userIds,
                     'token'         => null,
