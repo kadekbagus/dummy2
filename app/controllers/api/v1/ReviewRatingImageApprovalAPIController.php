@@ -137,7 +137,7 @@ class ReviewRatingImageApprovalAPIController extends ControllerAPI
                 $subject = 'Your review image(s) has been rejected';
             }
 
-            Queue::push('Orbit\\Queue\\ReviewImageApprovalMailQueue', [
+            $queueParam = [
                 'subject' => $subject,
                 'reject_reason' => $rejectedMessage,
                 'approval_type' => $approvalType,
@@ -150,12 +150,15 @@ class ReviewRatingImageApprovalAPIController extends ControllerAPI
                 'url_detail' => $urlDetail,
                 'store_name' => isset($getReview->data->store_name) ? $getReview->data->store_name : '',
                 'mall_name' => isset($getReview->data->mall_name) ? $getReview->data->mall_name : '',
-            ]);
+            ];
+            Queue::push('Orbit\\Queue\\ReviewImageApprovalMailQueue', $queueParam);
 
             $this->response->data = $getReview->data;
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Request Ok';
+
+            Event::fire('orbit.rating.postrating.approve.image', [$userReview, $queueParam]);
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.mall.getsearchmallcountry.access.forbidden', array($this, $e));
 
