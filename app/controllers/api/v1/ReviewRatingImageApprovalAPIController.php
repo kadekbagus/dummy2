@@ -158,7 +158,12 @@ class ReviewRatingImageApprovalAPIController extends ControllerAPI
             $this->response->status = 'success';
             $this->response->message = 'Request Ok';
 
-            Event::fire('orbit.rating.postrating.approve.image', [$userReview, $queueParam]);
+            if ($approvalType === 'approved') {
+                Event::fire('orbit.rating.postrating.approve.image', [$userReview, $queueParam]);
+            } elseif ($approvalType === 'rejected') {
+                Event::fire('orbit.rating.postrating.reject.image', [$userReview, $queueParam]);
+            }
+
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.mall.getsearchmallcountry.access.forbidden', array($this, $e));
 

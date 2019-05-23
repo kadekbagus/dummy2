@@ -76,6 +76,8 @@ class UserCIAPIController extends BaseAPIController
             $data->image = $image;
             $data->phone = $userDetail->userdetail->phone;
             $data->gender = $userDetail->userdetail->gender;
+            $data->location = $userDetail->userdetail->location;
+            $data->about = $userDetail->userdetail->about;
 
             $this->response->data = $data;
             $this->response->code = 0;
