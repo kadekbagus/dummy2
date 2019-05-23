@@ -12,6 +12,12 @@ class ProfileHelper
 {
     private $mongoClient = null;
 
+    function __construct()
+    {
+        $mongoConfig = Config::get('database.mongodb');
+        $this->mongoClient = MongoClient::create($mongoConfig);
+    }
+
     /**
      * Get total of user related content.
      *
@@ -26,14 +32,52 @@ class ProfileHelper
             'following' => 0,
         ];
 
-        $mongoConfig = Config::get('database.mongodb');
-        $this->mongoClient = MongoClient::create($mongoConfig);
-
         $profileTotal->reviews = $this->getTotalReview($userId);
         $profileTotal->photos = $this->getTotalPhotos($userId);
         $profileTotal->following = $this->getTotalFollowing($userId);
 
         return $profileTotal;
+    }
+
+    /**
+     * Get user's reviews.
+     *
+     * @param  [type] $userId [description]
+     * @return [type]         [description]
+     */
+    public function getReviews($userId = null)
+    {
+        $endPoint = "reviews";
+        return $this->mongoClient->setQueryString(['user_id' => $userId])->setEndPoint($endPoint)->request('GET');
+    }
+
+    public function getPhotos($userId = null)
+    {
+        $reviews = $this->getReviews($userId);
+        $photos = [
+            'records' => [],
+            'total_records' => 0,
+        ];
+
+        if (isset($reviews->data) && ! empty($reviews->data)) {
+            foreach($reviews->data->records as $review) {
+                if (isset($review->images)) {
+                    foreach($review->images as $image) {
+                        if ($image[0]->approval_status === 'approved') {
+                            $photos['total_records']++;
+                            $photos['records'][] = [
+                                'desktop_thumb' => ! empty($image[1]->cdn_url) ? $image[1]->cdn_url : $image[1]->url,
+                                'mobile_thumb' => ! empty($image[2]->cdn_url) ? $image[2]->cdn_url : $image[2]->url,
+                                'desktop_medium' => ! empty($image[3]->cdn_url) ? $image[3]->cdn_url : $image[3]->url,
+                                'mobile_medium' => ! empty($image[4]->cdn_url) ? $image[4]->cdn_url : $image[4]->url,
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
+        return $photos;
     }
 
     /**
@@ -58,22 +102,21 @@ class ProfileHelper
     /**
      * Get total photos per User.
      *
+     * @todo  should calculate the count in mongo.
      * @param  [type] $userId [description]
      * @return [type]         [description]
      */
     private function getTotalPhotos($userId = null)
     {
-        $endPoint = "reviews/{$userId}/list";
-        $response = $this->mongoClient->setEndPoint($endPoint)->request('GET');
+        $reviews = $this->getReviews($userId);
         $totalPhotos = 0;
 
-        if (isset($response->data) && ! empty($response->data)) {
-            foreach($response->data->records as $review) {
+        if (isset($reviews->data) && ! empty($reviews->data)) {
+            foreach($reviews->data->records as $review) {
                 if (isset($review->images)) {
                     foreach($review->images as $image) {
                         if ($image[0]->approval_status === 'approved') {
                             $totalPhotos++;
-                            break;
                         }
                     }
                 }

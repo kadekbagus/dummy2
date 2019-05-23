@@ -21,9 +21,3 @@ Route::post('/api/v1/pub/edit-account', function()
 });
 
 Route::post('/app/v1/pub/edit-account', ['as' => 'pub-edit-account', 'uses' => 'IntermediatePubAuthController@User_postEditAccount']);
-
-Route::get('/api/v1/pub/user-profile', function()
-{
-    return Orbit\Controller\API\v1\Pub\UserProfile\ProfileAPIController::create()->getUserProfile();
-});
-Route::get('/app/v1/pub/user-profile', ['as' => 'pub-user-profile', 'uses' => 'IntermediatePubAuthController@UserProfile\Profile_getUserProfile']);
