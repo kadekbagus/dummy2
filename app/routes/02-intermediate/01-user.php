@@ -119,3 +119,8 @@ Route::get('/app/v1/pub/user-profile', ['as' => 'pub-user-profile', 'uses' => 'I
  * Get user photos.
  */
 Route::get('/app/v1/pub/user-profile/photos', ['as' => 'pub-user-photos', 'uses' => 'IntermediatePubAuthController@UserProfile\Photos_getUserPhotos']);
+
+/**
+ * Get list of user review list
+ */
+Route::get('/app/v1/pub/user-profile/review', ['as' => 'pub-user-profile-review', 'uses' => 'IntermediatePubAuthController@UserProfile\ProfileReviewList_getReviewList']);
