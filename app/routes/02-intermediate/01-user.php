@@ -109,3 +109,8 @@ Route::get('/app/v1/pmp-employee/list', 'IntermediateAuthController@Employee_get
  * Get list of user reward
  */
 Route::get('/app/v1/pub/user-reward', ['as' => 'pub-user-reward', 'uses' => 'IntermediatePubAuthController@UserReward_getUserReward']);
+
+/**
+ * Get list of user review list
+ */
+Route::get('/app/v1/pub/user-profile/review', ['as' => 'pub-user-profile-review', 'uses' => 'IntermediatePubAuthController@UserProfile\ProfileReviewList_getReviewList']);
