@@ -92,6 +92,7 @@ Event::listen('orbit.redeem.coupon.success', new PointRewarder('purchase'));
  * @param mixed $data - additional related data about coupon
  */
 Event::listen('orbit.coupon.postissuedcoupon.after.commit', function($ctrl, $issuedCoupon, $user, $data) {
+    Log::info('orbit.coupon.postissuedcoupon.after.commit');
     Event::fire('orbit.redeem.coupon.success', [$user, $data]);
 });
 
