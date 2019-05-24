@@ -210,8 +210,7 @@ class ProfileReviewListAPIController extends PubControllerAPI
                                                     WHERE {$prefix}media.media_name_long = 'news_translation_image_orig'
                                                     AND {$prefix}media.object_id = {$prefix}news_translations.news_translation_id)
                                                 END AS cdn_url
-                                            "),
-                                            DB::raw("default_translation.news_name as display_name")
+                                            ")
                                         )
                                         ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
                                         ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
@@ -227,8 +226,11 @@ class ProfileReviewListAPIController extends PubControllerAPI
                                         ->where('news.object_type', '=', 'promotion')
                                         ->first();
 
-                            $getName = $promotion->display_name;
+                            $getName = $promotion->news_name;
                             $getImage = $promotion->cdn_url;
+                            if (isset($rating->store_name) && isset($rating->mall_name)) {
+                                $getLocation = $rating->store_name.' at '.$rating->mall_name;
+                            }
 
                             break;
 
@@ -252,8 +254,7 @@ class ProfileReviewListAPIController extends PubControllerAPI
                                                     WHERE {$prefix}media.media_name_long = 'news_translation_image_orig'
                                                     AND {$prefix}media.object_id = {$prefix}news_translations.news_translation_id)
                                                 END AS cdn_url
-                                            "),
-                                            DB::raw("default_translation.news_name as display_name")
+                                            ")
                                         )
                                         ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
                                         ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
@@ -269,8 +270,11 @@ class ProfileReviewListAPIController extends PubControllerAPI
                                         ->where('news.object_type', '=', 'news')
                                         ->first();
 
-                            $getName = $news->display_name;
+                            $getName = $news->news_name;
                             $getImage = $news->cdn_url;
+                            if (isset($rating->store_name) && isset($rating->mall_name)) {
+                                $getLocation = $rating->store_name.' at '.$rating->mall_name;
+                            }
 
                             break;
 
@@ -301,8 +305,7 @@ class ProfileReviewListAPIController extends PubControllerAPI
                                                             AND {$prefix}coupon_translations.merchant_language_id = {$this->quote($valid_language->language_id)}
                                                             LIMIT 1)
                                                         END AS cdn_url
-                                                    "),
-                                                DB::raw("default_translation.promotion_name as display_name")
+                                                    ")
                                             )
                                             ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                                             ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
@@ -317,9 +320,11 @@ class ProfileReviewListAPIController extends PubControllerAPI
                                             ->where('promotions.promotion_id', $rating->object_id)
                                             ->first();
 
-                            $getName = $coupon->display_name;
+                            $getName = $coupon->promotion_name;
                             $getImage = $coupon->cdn_url;
-
+                            if (isset($rating->store_name) && isset($rating->mall_name)) {
+                                $getLocation = $rating->store_name.' at '.$rating->mall_name;
+                            }
                             break;
                     }
 
