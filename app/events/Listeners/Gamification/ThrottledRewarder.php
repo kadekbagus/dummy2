@@ -24,7 +24,7 @@ class ThrottledRewarder extends DecoratorRewarder
      * @param int       $delayTime     time to delay to give same reward
      *                  for same user for same object (default 5 minute)
      */
-    public function __construct(PointRewarderInterface $pointRewarder, $delayTime = 5 * 60)
+    public function __construct(PointRewarderInterface $pointRewarder, $delayTime = 300)
     {
         parent::__construct($pointRewarder);
         $this->delayTime = $delayTime;
