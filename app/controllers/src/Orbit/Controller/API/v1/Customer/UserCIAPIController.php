@@ -40,7 +40,11 @@ class UserCIAPIController extends BaseAPIController
             $user = $this->api->user;
 
             // Get user detail for provide the phone data
-            $userDetail = UserDetail::select('phone', 'gender', 'location AS user_loc', 'about')
+            // note that we need to alias location as user_loc because
+            // otherwise UserDetail::getLocationAttribute() will be called
+            // when we use $userdetail->location
+            $userDetail = UserDetail
+                ::select('phone', 'gender', 'location AS user_loc', 'about')
                 ->where('user_id', $user->user_id)
                 ->first();
 
