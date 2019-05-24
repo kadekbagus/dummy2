@@ -264,9 +264,10 @@ class CouponRedeemAPIController extends PubControllerAPI
 
             $isAvailable->save();
 
-            Event::fire('orbit.redeem.coupon.success', [$user, $body]);
             // Commit the changes
             $this->commit();
+
+            //Event::fire('orbit.redeem.coupon.success', [$user, $body]);
 
             $this->response->message = 'Coupon has been successfully redeemed.';
             $this->response->data = $isAvailable->issued_coupon_code;
