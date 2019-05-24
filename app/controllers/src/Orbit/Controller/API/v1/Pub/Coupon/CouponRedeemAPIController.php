@@ -264,6 +264,7 @@ class CouponRedeemAPIController extends PubControllerAPI
 
             $isAvailable->save();
 
+            Event::fire('orbit.redeem.coupon.success', [$user, $body]);
             // Commit the changes
             $this->commit();
 
@@ -283,8 +284,6 @@ class CouponRedeemAPIController extends PubControllerAPI
                     ->setLocation($mall)
                     ->setModuleName('Coupon')
                     ->responseOK();
-
-            Event::fire('orbit.redeem.coupon.success', [$user, $body]);
 
         } catch (Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException $e) {
 

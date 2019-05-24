@@ -111,6 +111,16 @@ Route::get('/app/v1/pmp-employee/list', 'IntermediateAuthController@Employee_get
 Route::get('/app/v1/pub/user-reward', ['as' => 'pub-user-reward', 'uses' => 'IntermediatePubAuthController@UserReward_getUserReward']);
 
 /**
+ * Get user profile.
+ */
+Route::get('/app/v1/pub/user-profile', ['as' => 'pub-user-profile', 'uses' => 'IntermediatePubAuthController@UserProfile\Profile_getUserProfile']);
+
+/**
+ * Get user photos.
+ */
+Route::get('/app/v1/pub/user-profile/photos', ['as' => 'pub-user-photos', 'uses' => 'IntermediatePubAuthController@UserProfile\Photos_getUserPhotos']);
+
+/**
  * Get list of user review list
  */
 Route::get('/app/v1/pub/user-profile/review', ['as' => 'pub-user-profile-review', 'uses' => 'IntermediatePubAuthController@UserProfile\ProfileReviewList_getReviewList']);

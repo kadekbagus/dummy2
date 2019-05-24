@@ -24,6 +24,8 @@ use Cache;
 
 /**
  * Handler for user profile, both for himself or other user profile.
+ *
+ * @author Budi <budi@dominopos.com>
  */
 class ProfileAPIController extends PubControllerAPI
 {
