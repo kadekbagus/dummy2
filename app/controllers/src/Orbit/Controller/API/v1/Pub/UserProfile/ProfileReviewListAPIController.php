@@ -174,7 +174,6 @@ class ProfileReviewListAPIController extends PubControllerAPI
 
                         case 'store':
                             $store = Tenant::select(DB::raw("{$prefix}merchants.name as display_name"),
-                                                    DB::raw("CONCAT({$prefix}merchants.name,' at ', parent.name) as location"),
                                                     DB::raw("{$image} AS cdn_url"))
                                             ->leftJoin('media', function ($q) {
                                                                 $q->on('media.object_id', '=', 'merchants.merchant_id')
@@ -186,7 +185,9 @@ class ProfileReviewListAPIController extends PubControllerAPI
 
                             $getName = $store->display_name;
                             $getImage = $store->cdn_url;
-                            $getLocation = $store->location;
+                            if (isset($rating->store_name) && isset($rating->mall_name)) {
+                                $getLocation = $rating->store_name.' at '.$rating->mall_name;
+                            }
 
                             break;
 
