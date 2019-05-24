@@ -27,6 +27,15 @@ class PointRewarder implements PointRewarderInterface
         $this->varName = $varName;
     }
 
+    /**
+     * get current gamification variable name
+     * @return string current variable name
+     */
+    public function variableName()
+    {
+        return $this->varName;
+    }
+
     private function updateUserVariable($user, $gamificationVar)
     {
         $userVar = UserVariable::where('variable_id', $gamificationVar->variable_id)
