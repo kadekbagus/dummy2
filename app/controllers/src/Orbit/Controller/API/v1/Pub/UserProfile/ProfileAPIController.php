@@ -13,9 +13,7 @@ use OrbitShop\API\v1\Exception\InvalidArgsException;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\PubControllerAPI;
-use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Util\CdnUrlGenerator;
-use Orbit\Models\Gamification\UserVariable;
 use PaymentTransaction;
 use Queue;
 use User;
@@ -26,6 +24,8 @@ use Cache;
 
 /**
  * Handler for user profile, both for himself or other user profile.
+ *
+ * @author Budi <budi@dominopos.com>
  */
 class ProfileAPIController extends PubControllerAPI
 {
@@ -55,6 +55,9 @@ class ProfileAPIController extends PubControllerAPI
             $prefix = DB::getTablePrefix();
             $profile = null;
 
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+
             // Get from cache...
             if ($fromCache === 'Y') {
                 $profile = Cache::get("up_{$beingViewedUserId}", null);
@@ -77,6 +80,9 @@ class ProfileAPIController extends PubControllerAPI
                     ->where('status', PaymentTransaction::STATUS_SUCCESS)
                     ->groupBy('user_id');
                 },
+                'profilePicture' => function($profilePicture) {
+                    $profilePicture->where('media_name_long', 'user_profile_picture_resized_default');
+                },
             ])
             ->where('user_id', $beingViewedUserId)
             ->first();
@@ -86,6 +92,15 @@ class ProfileAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $picture = '';
+            if ($beingViewedUser->profilePicture->count() > 0) {
+                $profilePicture = $beingViewedUser->profilePicture->first();
+                $localPath = $profilePicture->path;
+                $cdnPath = $profilePicture->cdn_url;
+
+                $picture = $imgUrl->getImageUrl($localPath, $cdnPath);
+            }
+
             $profile = (object) [
                 'user_id' => $beingViewedUser->user_id,
                 'name' => $beingViewedUser->user_firstname . ' ' . $beingViewedUser->user_lastname,
@@ -93,15 +108,16 @@ class ProfileAPIController extends PubControllerAPI
                 'join_date' => $beingViewedUser->created_at->format('Y-m-d H:i:s'),
                 'about' => $beingViewedUser->userdetail->about,
                 'rank' => 0,
-                'total_points' => $beingViewedUser->total_game_points,
+                'total_points' => (int) $beingViewedUser->total_game_points,
                 'number_of_purchases' => 0,
                 'total_reviews' => 0,
                 'total_photos' => 0,
                 'total_following' => 0,
+                'picture' => $picture,
             ];
 
             if ($beingViewedUser->purchases->count() > 0) {
-                $profile->number_of_purchases = $beingViewedUser->purchases->first()->number_of_purchases;
+                $profile->number_of_purchases = (int) $beingViewedUser->purchases->first()->number_of_purchases;
             }
 
             // Get user rank.
