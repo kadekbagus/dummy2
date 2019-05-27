@@ -46,15 +46,16 @@ class ThrottledRewarder extends DecoratorRewarder
         Log::info('Begin throttle reward userId:' . $user->user_id, $data);
         //assignment is required for PHP < 7 to call __invoke() of a class
         $giveReward = $this->pointRewarder;
-        $name = $this->varName();
-        Log::info('throttle reward get varname userId:' . $user->user_id, [$name]);
 
-        $gamificationVar = Variable::where('variable_slug', $name)->first();
-        $rewardHistory = UserGameEvent::where('variable_id', $gamificationVar->variable_id)
+        $gamificationVar = Variable::where('variable_slug', $this->varName())->first();
+        if (! $gamificationVar) {
+            Log::info('Throttle reward gamification var null userId:' . $user->user_id, $data);
+            $rewardHistory = UserGameEvent::where('variable_id', $gamificationVar->variable_id)
             ->where('user_id', $user->user_id)
             ->where('object_id', $data->object_id)
             ->where('object_type', $data->object_type)
             ->first();
+        }
 
         if (! $rewardHistory) {
             //no history for reward for same user for same object, so just give it

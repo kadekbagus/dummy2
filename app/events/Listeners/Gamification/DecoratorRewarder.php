@@ -28,7 +28,6 @@ abstract class DecoratorRewarder implements PointRewarderInterface
      */
     public function varName()
     {
-        Log::info('DecoratorRewarder variableName', [$this->pointRewarder]);
         return $this->pointRewarder->varName();
     }
 
