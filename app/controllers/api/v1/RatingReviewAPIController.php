@@ -515,10 +515,18 @@ class RatingReviewAPIController extends ControllerAPI
             // Send notification to Customer.
             (new RatingReviewRejectedNotification($getReview->data))->send();
 
+            $reviewer = User::where('users.user_id', $getReview->data->user_id)->first();
+            $body = [
+                'object_id' => $getReview->data->object_id,
+                'object_type' => $getReview->data->object_type,
+            ];
+
             $this->response->data = $getReview->data;
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Request Ok';
+
+            Event::fire('orbit.rating.postrating.reject', [$reviewer, $body]);
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';

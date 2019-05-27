@@ -2,7 +2,11 @@
 namespace Orbit\Events\Listeners\Gamification;
 
 use User;
+use Orbit\Models\Gamification\UserVariable;
+use Orbit\Models\Gamification\Variable;
+use Orbit\Models\Gamification\UserGameEvent;
 use DateTime;
+use DateInterval;
 
 /**
  * helper class that throttle speed when we reward user with game points

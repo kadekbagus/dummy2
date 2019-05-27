@@ -28,6 +28,15 @@ Event::listen('orbit.user.activation.success', new PointRewarder('sign_up'));
 Event::listen('orbit.rating.postrating.success', new PointRewarder('review'));
 
 /**
+ * Listen on:    `'orbit.rating.postrating.reject'`
+ * Purpose:      remove user game point when user review is rejected
+ *
+ * @param User $user - Instance of activated user
+ * @param object $data - additional data about object being reviewed
+ */
+Event::listen('orbit.rating.postrating.reject', new PointRewarder('reject_review'));
+
+/**
  * Listen on:    `orbit.rating.postrating.approve.image`
  * Purpose:      add user game point when user review images approved, reward
  *              is given for first time one or more image approved.
