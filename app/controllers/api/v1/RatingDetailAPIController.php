@@ -15,12 +15,73 @@ use DominoPOS\OrbitUploader\Uploader as OrbitUploader;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\OneSignal\OneSignal;
 use Orbit\Helper\MongoDB\Client as MongoClient;
-
 use Orbit\Helper\Util\PaginationNumber;
 
 class RatingDetailAPIController extends ControllerAPI
 {
     protected $viewRoles = ['merchant review admin', 'master review admin'];
+
+    private function getLanguageId($name)
+    {
+        $lang = Language::select('language_id')->where('name', $name)->first();
+        return $lang->language_id;
+    }
+
+    private function getMediaUrl($media, $useCdn, $urlPrefix)
+    {
+        if (empty($media)) {
+            return null;
+        }
+        if ($useCdn) {
+            if (! empty($media->cdn_url)) {
+                return $media->cdn_url;
+            } else {
+                return $urlPrefix . $media->path;
+            }
+        } else {
+            return $urlPrefix . $media->path;
+        }
+    }
+
+    private function getReviewedObject($objectName, $media, $useCdn, $urlPrefix)
+    {
+        return (object) [
+            'object_name' => $objectName,
+            'object_picture' => $this->getMediaUrl($media, $useCdn, $urlPrefix),
+        ];
+    }
+
+    private function getCoupon($objectId, $langId, $useCdn, $urlPrefix)
+    {
+        $coupon = Coupon::where('promotion_id', '=', $objectId)->first();
+        $translation = $coupon->translations()->where('language_id', $langId)->first();
+        $media = $translation->media_orig()->first();
+        return $this->getReviewedObject($coupon->promotion_name, $media, $useCdn, $urlPrefix);
+    }
+
+    private function getStore($objectId, $langId, $useCdn, $urlPrefix)
+    {
+        $store = Tenant::where('merchant_id', '=', $objectId)->first();
+        $media = $store->mediaOrig()->first();
+        return $this->getReviewedObject($store->name, $media, $useCdn, $urlPrefix);
+    }
+
+    private function getMall($objectId, $langId, $useCdn, $urlPrefix)
+    {
+        $mall = Mall::where('merchant_id', '=', $objectId)->first();
+        $media = $mall->mediaOrig()
+            ->where('media_name_long', 'mall_logo_orig')
+            ->first();
+        return $this->getReviewedObject($mall->name, $media, $useCdn, $urlPrefix);
+    }
+
+    private function getEvent($objectId, $langId, $useCdn, $urlPrefix)
+    {
+        $event = News::where('news_id', '=', $objectId)->first();
+        $translation = $event->translations()->where('language_id', $langId)->first();
+        $media = $translation->media_orig()->first();
+        return $this->getReviewedObject($event->news_name, $media, $useCdn, $urlPrefix);
+    }
 
     /**
      * GET - Rating detail
@@ -50,7 +111,7 @@ class RatingDetailAPIController extends ControllerAPI
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
-            
+
             $withReplies = OrbitInput::get('with_replies', 1);
             $ratingId = OrbitInput::get('rating_id');
             $validator = Validator::make(
@@ -68,6 +129,7 @@ class RatingDetailAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $prefix = DB::getTablePrefix();
             $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
             $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
             $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
@@ -91,41 +153,25 @@ class RatingDetailAPIController extends ControllerAPI
             // Get object being reviewed.
             $objectId = $rating->data->object_id;
             $objectType = $rating->data->object_type;
-            $mediaNameLong = '';
-
+            $langId = $this->getLanguageId('id');
+            $object = null;
             switch(strtolower($objectType)) {
                 case 'coupon':
-                    $object = Coupon::select('promotion_name as object_name')->where('promotion_id', '=', $objectId)->first();
-                    $mediaNameLong = 'coupon_translation_image_orig';
+                    $object = $this->getCoupon($objectId, $langId, $usingCdn, $urlPrefix);
                     break;
                 case 'store':
-                    $object = Tenant::select('name as object_name')->where('merchant_id', '=', $objectId)->first();
-                    $mediaNameLong = 'retailer_image_orig';
+                    $object = $this->getStore($objectId, $langId, $usingCdn, $urlPrefix);
                     break;
                 case 'mall':
-                    $object = Mall::select('name as object_name')->where('merchant_id', '=', $objectId)->first();
-                    $mediaNameLong = 'mall_logo_orig';
+                    $object = $this->getMall($objectId, $langId, $usingCdn, $urlPrefix);
                     break;
                 default:
-                    $object = News::select('news_name as object_name')->where('news_id', '=', $objectId)->first();
-                    $mediaNameLong = 'news_translation_image_orig';
+                    $object = $this->getEvent($objectId, $langId, $usingCdn, $urlPrefix);
             }
 
             if (! empty($object)) {
                 $rating->data->object_name = $object->object_name;
-                $rating->data->object_picture = '';
-
-                // @todo should use eager loading.
-                $media = Media::where('object_id', 'like', '%' . $objectId . '%')
-                    ->where('media_name_long', $mediaNameLong)->first();
-                
-                if (! empty($media)) {
-                    $rating->data->object_picture = $urlPrefix . $media->path;
-
-                    if ($usingCdn && ! empty($media->cdn_url)) {
-                        $rating->data->object_picture = $media->cdn_url;
-                    }
-                }
+                $rating->data->object_picture = $object->object_picture;
             }
 
             $replies = null;
@@ -210,7 +256,7 @@ class RatingDetailAPIController extends ControllerAPI
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
-            
+
             $ratingId = OrbitInput::get('rating_id');
             $validator = Validator::make(
                 array(
@@ -287,7 +333,7 @@ class RatingDetailAPIController extends ControllerAPI
 
     /**
      * Get replies of a review.
-     * 
+     *
      * @return [type] [description]
      */
     private function getReplies($ratingId, $mongoClient = null)
@@ -323,9 +369,9 @@ class RatingDetailAPIController extends ControllerAPI
                 // ])
                 ->whereIn('user_id', $usersWhoReplied)->get();
 
-            
+
             foreach($usersList as $user) {
-                $users[$user->user_id]['name'] = $user->user_firstname . ' ' . 
+                $users[$user->user_id]['name'] = $user->user_firstname . ' ' .
                     $user->user_lastname;
 
                 // $media = $user->media->first();
@@ -342,7 +388,7 @@ class RatingDetailAPIController extends ControllerAPI
         }
 
         foreach($replies->data->replies as $reply) {
-            $reply->user_name = isset($users[$reply->user_id]) ? 
+            $reply->user_name = isset($users[$reply->user_id]) ?
                 $users[$reply->user_id]['name'] : '';
 
             $reply->user_name_replied = isset($users[$reply->user_id_replied]) ?
@@ -353,5 +399,10 @@ class RatingDetailAPIController extends ControllerAPI
         }
 
         return $replies;
+    }
+
+    private function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }

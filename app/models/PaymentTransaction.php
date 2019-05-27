@@ -53,6 +53,11 @@ class PaymentTransaction extends Eloquent
     const STATUS_SUCCESS_NO_PULSA_FAILED = 'success_no_pulsa_failed';
 
     /**
+     * Status when getting pending status from Pulsa provider.
+     */
+    const STATUS_SUCCESS_PULSA_PENDING = 'success_pulsa_pending';
+
+    /**
      * Payment - Coupon Sepulsa relation.
      *
      * @return [type] [description]
@@ -132,6 +137,7 @@ class PaymentTransaction extends Eloquent
             self::STATUS_SUCCESS_NO_COUPON_FAILED,
             self::STATUS_SUCCESS_NO_PULSA,
             self::STATUS_SUCCESS_NO_PULSA_FAILED,
+            self::STATUS_SUCCESS_PULSA_PENDING,
         ]);
     }
 
