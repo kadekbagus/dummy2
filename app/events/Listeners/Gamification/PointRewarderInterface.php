@@ -14,7 +14,7 @@ interface PointRewarderInterface
      * get current gamification variable name
      * @return string current variable name
      */
-    public function variableName();
+    public function varName();
 
     /**
      * called when user is rewarded with point

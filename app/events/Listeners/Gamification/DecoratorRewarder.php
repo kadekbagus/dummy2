@@ -2,6 +2,7 @@
 namespace Orbit\Events\Listeners\Gamification;
 
 use User;
+use Log;
 
 /**
  * decorator class that reward user one time only for particular object
@@ -25,9 +26,9 @@ abstract class DecoratorRewarder implements PointRewarderInterface
      * get current gamification variable name
      * @return string current variable name
      */
-    public function variableName()
+    public function varName()
     {
-        return $this->pointRewarder->variableName();
+        return $this->pointRewarder->varName();
     }
 
     /**

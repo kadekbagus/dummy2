@@ -6,8 +6,6 @@ use User;
 use Orbit\Models\Gamification\UserVariable;
 use Orbit\Models\Gamification\Variable;
 use Orbit\Models\Gamification\UserGameEvent;
-use DateTime;
-use Log;
 
 /**
  * Helper class that reward user with game points
@@ -20,20 +18,20 @@ class PointRewarder implements PointRewarderInterface
      * gamification variable name
      * @var string
      */
-    private $varName;
+    private $internalVarName;
 
-    public function __construct($varName)
+    public function __construct($inVarName)
     {
-        $this->varName = $varName;
+        $this->internalVarName = $inVarName;
     }
 
     /**
      * get current gamification variable name
      * @return string current variable name
      */
-    public function variableName()
+    public function varName()
     {
-        return $this->varName;
+        return $this->internalVarName;
     }
 
     private function updateUserVariable($user, $gamificationVar)
@@ -107,10 +105,16 @@ class PointRewarder implements PointRewarderInterface
      */
     public function __invoke(User $user, $data = null)
     {
-        $gamificationVar = Variable::where('variable_slug', $this->variableName())->first();
-        DB::transaction(function() use ($user, $gamificationVar, $data) {
-            $this->updateUserVariable($user, $gamificationVar);
-            $this->updateUserGameEvent($user, $gamificationVar, $data);
-        });
+        //sometime $user instance does not contains total_game_points field
+        //here we query database to make sure that we have total_game_points field
+        $usr = User::findOrFail($user->user_id);
+        $gamificationVar = Variable::where('variable_slug', $this->varName())->first();
+
+        if ($gamificationVar) {
+            DB::transaction(function() use ($usr, $gamificationVar, $data) {
+                $this->updateUserVariable($usr, $gamificationVar);
+                $this->updateUserGameEvent($usr, $gamificationVar, $data);
+            });
+        }
     }
 }
