@@ -109,9 +109,7 @@ class PointRewarder implements PointRewarderInterface
     {
         $gamificationVar = Variable::where('variable_slug', $this->varName())->first();
 
-        if (! $gamificationVar) {
-            Log::info('Gamefication variable ' . $this->varName() . ' not defined');
-        } else {
+        if ($gamificationVar) {
             DB::transaction(function() use ($user, $gamificationVar, $data) {
                 $this->updateUserVariable($user, $gamificationVar);
                 $this->updateUserGameEvent($user, $gamificationVar, $data);

@@ -43,7 +43,6 @@ class ThrottledRewarder extends DecoratorRewarder
      */
     public function __invoke(User $user, $data = null)
     {
-        Log::info('Begin throttle reward userId:' . $user->user_id, $data);
         //assignment is required for PHP < 7 to call __invoke() of a class
         $giveReward = $this->pointRewarder;
 
@@ -51,7 +50,6 @@ class ThrottledRewarder extends DecoratorRewarder
         $rewardHistory = null;
 
         if (! $gamificationVar) {
-            Log::info('Throttle reward gamification var null userId:' . $user->user_id, $data);
             $rewardHistory = UserGameEvent::where('variable_id', $gamificationVar->variable_id)
             ->where('user_id', $user->user_id)
             ->where('object_id', $data->object_id)
@@ -61,7 +59,6 @@ class ThrottledRewarder extends DecoratorRewarder
 
         if (! $rewardHistory) {
             //no history for reward for same user for same object, so just give it
-            Log::info('Throttle reward  give first reward userId:' . $user->user_id, $data);
             $giveReward($user, $data);
         } else {
             $now = new DateTime();
@@ -70,7 +67,6 @@ class ThrottledRewarder extends DecoratorRewarder
             $interval = $now->diff($newTime);
             if ($interval->invert) {
                 //exceed delay time, so reward user
-                Log::info('Throttle reward give reward exceed userId:' . $user->user_id, $data);
                 $giveReward($user, $data);
             }
         }
