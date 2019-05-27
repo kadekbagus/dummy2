@@ -1,9 +1,12 @@
 <?php namespace Orbit\Controller\API\v1\Pub\UserProfile;
 
 use Orbit\Helper\MongoDB\Client as MongoClient;
+use Orbit\Helper\Util\CdnUrlGenerator;
 use Config;
 use User;
+use PaymentTransaction;
 use DB;
+use Cache;
 
 /**
  * Profile helper functions.
@@ -11,6 +14,14 @@ use DB;
 class ProfileHelper
 {
     private $mongoClient = null;
+
+    private $reviews = null;
+
+    private $userId = null;
+
+    private $lastPoint = null;
+
+    private $rank = 0;
 
     function __construct()
     {
@@ -39,6 +50,11 @@ class ProfileHelper
         return $profileTotal;
     }
 
+    public function reset()
+    {
+        $this->reviews = null;
+    }
+
     /**
      * Get user's reviews.
      *
@@ -48,7 +64,11 @@ class ProfileHelper
     public function getReviews($userId = null)
     {
         $endPoint = "reviews";
-        return $this->mongoClient->setQueryString(['user_id' => $userId])->setEndPoint($endPoint)->request('GET');
+        if ($this->reviews === null) {
+            $this->reviews = $this->mongoClient->setQueryString(['user_id' => $userId])->setEndPoint($endPoint)->request('GET');
+        }
+
+        return $this->reviews;
     }
 
     public function getPhotos($userId = null)
@@ -120,7 +140,7 @@ class ProfileHelper
 
         if (isset($reviews->data) && ! empty($reviews->data)) {
             foreach($reviews->data->records as $review) {
-                if (isset($review->images)) {
+                if (isset($review->images) && (is_array($review->images) || is_object($review->images))) {
                     foreach($review->images as $image) {
                         if ($image[0]->approval_status === 'approved') {
                             $totalPhotos++;
@@ -175,41 +195,213 @@ class ProfileHelper
      * @param  [type] $userId [description]
      * @return [type]         [description]
      */
-    public function getUserRank($userId = null)
+    public function getUserRank($userId = null, $totalGamePoints = 0, $leaderboardData = null)
     {
-        $userRank = (object) [
-            'real_rank' => 0,
-            'grouped_rank' => 0,
-            'loop' => 0,
-        ];
+        $userRank = 0;
 
-        $lastPoint = 0;
-        $lastRank = 0;
-        $skip = 0;
-        $take = 5000;
-        $found = false;
+        /* Dont use cache at the moment.
+        Cache::get("ur_{$userId}", null);
 
-        while(! $found) {
-            $userRank->loop++;
-            $usersRanking = DB::table('users')->select('user_id', 'total_game_points')->orderBy('total_game_points', 'desc')->skip($skip)->take($take)->get();
+        if (! empty($userRank)) {
+            return unserialize($userRank);
+        }
+        */
 
-            foreach($usersRanking as $rank) {
-                $userRank->real_rank++;
-
-                if ($rank->total_game_points !== $lastPoint) {
-                    $lastPoint = $rank->total_game_points;
-                    $userRank->grouped_rank++;
-                }
-
-                if ($rank->user_id === $userId) {
-                    $found = true;
-                    break;
-                }
-            }
-
-            $skip = $take;
+        if (empty($leaderboardData)) {
+            $leaderboardData = $this->getTopRankUsers();
         }
 
+        $userRank = 0;
+        $lastPoint = null;
+        $inTopRank = false;
+        foreach($leaderboardData as $index => $data) {
+            if ($lastPoint !== $data['total_game_points']) {
+                $lastPoint = $data['total_game_points'];
+                $userRank++;
+            }
+
+            if ($data['user_id'] === $userId) {
+                $inTopRank = true;
+                break;
+            }
+        }
+
+        if (! $inTopRank) {
+            $minMaxPoint = User::select(DB::raw("min(total_game_points) as minimumPoint, max(total_game_points) as maximumPoint"))
+                            ->where('status', 'active')
+                            ->first();
+
+            $deltaPoint = $minMaxPoint->maximumPoint - $minMaxPoint->minimumPoint;
+            if ($deltaPoint === 0) {
+                return 0;
+            }
+
+            $userRank = 100 - round($totalGamePoints / $deltaPoint * 100, 2);
+        }
+
+        // Cache::put("ur_{$userId}", $userRank, 60);
+
         return $userRank;
+    }
+
+    /**
+     * Get user profile.
+     *
+     * @param  [type] $userId [description]
+     * @return [type]         [description]
+     */
+    public function getUserProfile($userId = null, $leaderboardData = [])
+    {
+        $userProfile = null;
+        $user = User::select(
+                    'user_id',
+                    DB::raw("CONCAT(user_firstname, ' ', user_lastname) as name"),
+                    'total_game_points',
+                    'created_at'
+                )
+                ->with([
+                    'userdetail' => function($userDetail) {
+                        $userDetail->select('user_id', 'user_detail_id', 'about', DB::raw('location as profile_location'));
+                    },
+                    'purchases' => function($purchases) {
+                        $purchases->select(
+                            DB::raw("count(payment_transaction_id) as number_of_purchases"),
+                            'payment_transaction_id',
+                            'user_id'
+                        )
+                        ->where('status', PaymentTransaction::STATUS_SUCCESS)
+                        ->groupBy('user_id');
+                    },
+                    'profilePicture' => function($profilePicture) {
+                        $profilePicture->where('media_name_long', 'user_profile_picture_resized_default');
+                    },
+                ])
+                ->where('user_id', $userId)
+                ->first();
+
+        if (! empty($user)) {
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+
+            $picture = '';
+            if ($user->profilePicture->count() > 0) {
+                $profilePicture = $user->profilePicture->first();
+                $localPath = $profilePicture->path;
+                $cdnPath = $profilePicture->cdn_url;
+
+                $picture = $imgUrl->getImageUrl($localPath, $cdnPath);
+            }
+
+            $numberOfPurchases = 0;
+            if ($user->purchases->count() > 0) {
+                $numberOfPurchases = (int) $user->purchases->first()->number_of_purchases;
+            }
+
+            $userProfile = (object) [
+                'user_id' => $userId,
+                'name' => $user->name,
+                'location' => $user->userdetail->profile_location,
+                'join_date' => $user->created_at->format('Y-m-d H:i:s'),
+                'about' => $user->userdetail->about,
+                'rank' => 0,
+                'total_points' => (int) $user->total_game_points,
+                'total_game_points' => (int) $user->total_game_points,
+                'number_of_purchases' => $numberOfPurchases,
+                'total_reviews' => 0,
+                'total_photos' => 0,
+                'total_following' => 0,
+                'total_purchases' => $numberOfPurchases,
+                'picture' => $picture,
+            ];
+
+            // Get user rank.
+            $userProfile->rank = $this->getUserRank($userId, $user->total_game_points, $leaderboardData);
+
+            // Get user-related-content total value..
+            $profileTotal = $this->getTotalContent($userId);
+            $userProfile->total_reviews = $profileTotal->reviews;
+            $userProfile->total_photos = $profileTotal->photos;
+            $userProfile->total_following = $profileTotal->following;
+        }
+
+        return $userProfile;
+    }
+
+    /**
+     * Top Rank Limit.
+     *
+     * @param  integer $topRankLimit [description]
+     * @return [type]                [description]
+     */
+    public function getTopRankUsers($topRankLimit = 50)
+    {
+        /* Dont use cache at the moment.
+        $topRankUsers = Cache::get('leaderboard', null);
+
+        if (! empty($topRankUsers)) {
+            return unserialize($topRankUsers);
+        }
+        */
+        $topRankUsers = User::select('user_id', DB::raw("CONCAT(user_firstname, ' ', user_lastname) as name"), 'total_game_points')
+                ->with([
+                    'purchases' => function($purchases) {
+                        $purchases->select(
+                            'user_id',
+                            DB::raw("count(payment_transaction_id) as number_of_purchases")
+                        )
+                        ->where('status', PaymentTransaction::STATUS_SUCCESS)
+                        ->groupBy('user_id');
+                    },
+                    'profilePicture' => function($profilePicture) {
+                        $profilePicture->where('media_name_long', 'user_profile_picture_resized_default');
+                    },
+                ])
+                ->join('roles', 'users.user_role_id', '=', 'roles.role_id')
+                ->where('user_email', 'not like', 'guest_%')
+                ->where('roles.role_name', 'Consumer')
+                ->where('status', 'active')
+                ->orderBy('total_game_points', 'desc')
+                ->limit($topRankLimit)
+                ->get();
+
+        $cdnConfig = Config::get('orbit.cdn');
+        $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+
+        $topRankUsers->each(function($topRankUser) use ($imgUrl) {
+            $this->reset();
+            $profileTotal = $this->getTotalContent($topRankUser->user_id);
+            $topRankUser->total_reviews = $profileTotal->reviews;
+            $topRankUser->total_photos = $profileTotal->photos;
+            $topRankUser->total_following = $profileTotal->following;
+            $topRankUser->total_purchases = 0;
+            $topRankUser->rank = 0;
+
+            if ($topRankUser->purchases->count() > 0) {
+                $topRankUser->total_purchases = $topRankUser->purchases->first()->number_of_purchases;
+            }
+
+            unset($topRankUser->purchases);
+
+            // picture
+            $topRankUser->picture = '';
+            if ($topRankUser->profilePicture->count() > 0) {
+                $profilePicture = $topRankUser->profilePicture->first();
+                $localPath = $profilePicture->path;
+                $cdnPath = $profilePicture->cdn_url;
+
+                $topRankUser->picture = $imgUrl->getImageUrl($localPath, $cdnPath);
+            }
+
+            unset($topRankUser->profilePicture);
+
+            if ($topRankUser->total_game_points !== $this->lastPoint) {
+                $this->lastPoint = $topRankUser->total_game_points;
+                $this->rank++;
+            }
+
+            $topRankUser->rank = $this->rank;
+        });
+
+        return $topRankUsers->toArray();
     }
 }

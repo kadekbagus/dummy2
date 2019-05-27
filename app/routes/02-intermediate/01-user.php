@@ -124,3 +124,8 @@ Route::get('/app/v1/pub/user-profile/photos', ['as' => 'pub-user-photos', 'uses'
  * Get list of user review list
  */
 Route::get('/app/v1/pub/user-profile/review', ['as' => 'pub-user-profile-review', 'uses' => 'IntermediatePubAuthController@UserProfile\ProfileReviewList_getReviewList']);
+
+/**
+ * Get leaderboard data.
+ */
+Route::get('/app/v1/pub/leaderboard', ['as' => 'pub-leaderboard', 'uses' => 'IntermediatePubAuthController@Leaderboard_getLeaderboardData']);
