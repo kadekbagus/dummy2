@@ -130,3 +130,7 @@ Route::get('/app/v1/pub/user-profile/review', ['as' => 'pub-user-profile-review'
  */
 Route::get('/app/v1/pub/user-profile/follow', ['as' => 'pub-user-profile-follow', 'uses' => 'IntermediatePubAuthController@UserProfile\ProfileFollowList_getFollowList']);
 
+/**
+ * Get leaderboard data.
+ */
+Route::get('/app/v1/pub/leaderboard', ['as' => 'pub-leaderboard', 'uses' => 'IntermediatePubAuthController@Leaderboard_getLeaderboardData']);

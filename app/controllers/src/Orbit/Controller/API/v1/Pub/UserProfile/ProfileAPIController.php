@@ -55,9 +55,6 @@ class ProfileAPIController extends PubControllerAPI
             $prefix = DB::getTablePrefix();
             $profile = null;
 
-            $cdnConfig = Config::get('orbit.cdn');
-            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
-
             // Get from cache...
             if ($fromCache === 'Y') {
                 $profile = Cache::get("up_{$beingViewedUserId}", null);
@@ -67,70 +64,18 @@ class ProfileAPIController extends PubControllerAPI
                 }
             }
 
-            $beingViewedUser = User::with([
-                'userdetail' => function($userDetail) {
-                    $userDetail->select('user_id', 'user_detail_id', 'about', DB::raw('location as profile_location'));
-                },
-                'purchases' => function($purchases) {
-                    $purchases->select(
-                        DB::raw("count(payment_transaction_id) as number_of_purchases"),
-                        'payment_transaction_id',
-                        'user_id'
-                    )
-                    ->where('status', PaymentTransaction::STATUS_SUCCESS)
-                    ->groupBy('user_id');
-                },
-                'profilePicture' => function($profilePicture) {
-                    $profilePicture->where('media_name_long', 'user_profile_picture_resized_default');
-                },
-            ])
-            ->where('user_id', $beingViewedUserId)
-            ->first();
+            $profile = $profileHelper->getUserProfile($beingViewedUserId);
 
-            if (empty($beingViewedUser)) {
+            if (empty($profile)) {
                 $errorMessage = 'USER_NOT_FOUND';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $picture = '';
-            if ($beingViewedUser->profilePicture->count() > 0) {
-                $profilePicture = $beingViewedUser->profilePicture->first();
-                $localPath = $profilePicture->path;
-                $cdnPath = $profilePicture->cdn_url;
-
-                $picture = $imgUrl->getImageUrl($localPath, $cdnPath);
-            }
-
-            $profile = (object) [
-                'user_id' => $beingViewedUser->user_id,
-                'name' => $beingViewedUser->user_firstname . ' ' . $beingViewedUser->user_lastname,
-                'location' => $beingViewedUser->userdetail->profile_location,
-                'join_date' => $beingViewedUser->created_at->format('Y-m-d H:i:s'),
-                'about' => $beingViewedUser->userdetail->about,
-                'rank' => 0,
-                'total_points' => (int) $beingViewedUser->total_game_points,
-                'number_of_purchases' => 0,
-                'total_reviews' => 0,
-                'total_photos' => 0,
-                'total_following' => 0,
-                'picture' => $picture,
-            ];
-
-            if ($beingViewedUser->purchases->count() > 0) {
-                $profile->number_of_purchases = (int) $beingViewedUser->purchases->first()->number_of_purchases;
-            }
-
-            // Get user rank.
-            $profile->rank = $profileHelper->getUserRank($beingViewedUserId)->grouped_rank;
-
-            // Get user-related-content total value..
-            $profileTotal = $profileHelper->getTotalContent($beingViewedUserId);
-            $profile->total_reviews = $profileTotal->reviews;
-            $profile->total_photos = $profileTotal->photos;
-            $profile->total_following = $profileTotal->following;
-
             // Store in cache
-            Cache::put("up_{$beingViewedUserId}", serialize($profile), 60);
+            // Cache::put("up_{$beingViewedUserId}", serialize($profile), 60);
+
+            unset($profile->total_game_points);
+            unset($profile->total_purchases);
 
             $this->response->data = $profile;
 
