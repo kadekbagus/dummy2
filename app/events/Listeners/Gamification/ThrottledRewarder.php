@@ -7,6 +7,7 @@ use Orbit\Models\Gamification\Variable;
 use Orbit\Models\Gamification\UserGameEvent;
 use DateTime;
 use DateInterval;
+use Log;
 
 /**
  * helper class that throttle speed when we reward user with game points
@@ -42,6 +43,7 @@ class ThrottledRewarder extends DecoratorRewarder
      */
     public function __invoke(User $user, $data = null)
     {
+        Log::info('Begin throttle reward userId:' . $user->user_id, $data);
         //assignment is required for PHP < 7 to call __invoke() of a class
         $giveReward = $this->pointRewarder;
 
@@ -54,6 +56,7 @@ class ThrottledRewarder extends DecoratorRewarder
 
         if (! $rewardHistory) {
             //no history for reward for same user for same object, so just give it
+            Log::info('Throttle reward  give first reward userId:' . $user->user_id, $data);
             $giveReward($user, $data);
         } else {
             $now = new DateTime();
@@ -62,6 +65,7 @@ class ThrottledRewarder extends DecoratorRewarder
             $interval = $now->diff($newTime);
             if ($interval->invert) {
                 //exceed delay time, so reward user
+                Log::info('Throttle reward give reward exceed userId:' . $user->user_id, $data);
                 $giveReward($user, $data);
             }
         }
