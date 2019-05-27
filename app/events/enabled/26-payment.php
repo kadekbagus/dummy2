@@ -64,6 +64,9 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
         // If we should delay the issuance...
         // TODO: maybe add new status to indicate that the coupon is in the process of issuing?
         if ($payment->forPulsa()) {
+            // Otherwise, issue the coupon right away!
+            Log::info("Pulsa: Issuing coupon directly for PaymentID {$paymentId} ...");
+
             Queue::connection('sync')->push(
                 'Orbit\\Queue\\Pulsa\\GetPulsaQueue',
                 $queueData

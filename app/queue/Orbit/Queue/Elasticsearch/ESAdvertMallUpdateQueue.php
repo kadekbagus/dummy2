@@ -100,14 +100,9 @@ class ESAdvertMallUpdateQueue
         try {
 
             foreach($advertData as $adverts) {
-                $mall = Mall::select(DB::raw("{$prefix}merchants.*, med.*, social_media_code, social_media_uri"))
-                    ->with('country', 'mediaMapOrig')
+
+                $mall = Mall::with('country', 'mediaMapOrig')
                     ->leftJoin(DB::raw("(select * from {$prefix}media where media_name_long = 'mall_logo_orig') as med"), DB::raw("med.object_id"), '=', 'merchants.merchant_id')
-                    ->leftJoin('merchant_social_media','merchant_social_media.merchant_id','=','merchants.merchant_id')
-                    ->leftJoin('social_media', function($q){
-                            $q->on('social_media.social_media_id', '=', 'merchant_social_media.social_media_id')
-                              ->on('social_media.social_media_name', '=', DB::raw('"facebook"'));
-                      })
                     ->where('merchants.status', '!=', 'deleted')
                     ->where('merchants.merchant_id', $mallId)
                     ->first();
@@ -235,18 +230,10 @@ class ESAdvertMallUpdateQueue
                                             ->where('object_type', 'mall')
                                             ->sum('total_view');
 
-                // fb_url
-                $fb_url = '';
-                if (! empty($mall->social_media_code) && ! empty($mall->social_media_uri)) {
-                    $fb_url = 'https://www.facebook.com/' . $mall->social_media_uri;
-                }
-
                 $esBody = [
                     'merchant_id'     => $mallId,
                     'name'            => $mall->name,
                     'description'     => $mall->description,
-                    'website_url'     => $mall->url,
-                    'fb_url'          => $fb_url,
                     'address_line'    => trim(implode("\n", [$mall->address_line1, $mall->address_line2, $mall->address_line2])),
                     'city'            => $mall->city,
                     'province'        => $mall->province,
