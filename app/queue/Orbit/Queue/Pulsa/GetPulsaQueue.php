@@ -105,7 +105,7 @@ class GetPulsaQueue
                 // Notify Customer.
                 $payment->user->notify(new ReceiptNotification($payment));
 
-                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Successful', 'ec' => 'Pulsa', 'el' => $paymentDetail->object_name])->request();
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Successful', 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
 
                 $activity->setActivityNameLong('Transaction is Successful')
                         ->setModuleName('Midtrans Transaction')
@@ -200,8 +200,10 @@ class GetPulsaQueue
                 $notes = $phoneNumber . ' ---- ' . $e->getMessage();
 
                 $paymentDetail = $payment->details->first();
+                $pulsa = isset($paymentDetail->pulsa) ? $paymentDetail->pulsa : null;
+                $pulsaName = ! empty($pulsa) ? $pulsa->pulsa_display_name : '-';
 
-                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Failed', 'ec' => 'Pulsa', 'el' => $paymentDetail->object_name])->request();
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Failed', 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
 
                 $activity->setActivityNameLong('Transaction is Success - Failed Getting Pulsa')
                          ->setModuleName('Midtrans Transaction')
