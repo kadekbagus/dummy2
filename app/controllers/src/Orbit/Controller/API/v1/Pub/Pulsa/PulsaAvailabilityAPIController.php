@@ -185,6 +185,7 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
                     PaymentTransaction::STATUS_SUCCESS,
                     PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
                     PaymentTransaction::STATUS_SUCCESS_NO_PULSA,
+                    PaymentTransaction::STATUS_SUCCESS_PULSA_PENDING,
                 ])
                 ->count();
 
@@ -236,6 +237,7 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
                                 PaymentTransaction::STATUS_SUCCESS,
                                 PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
                                 PaymentTransaction::STATUS_SUCCESS_NO_PULSA,
+                                PaymentTransaction::STATUS_SUCCESS_PULSA_PENDING,
                             ])
                             ->count();
 

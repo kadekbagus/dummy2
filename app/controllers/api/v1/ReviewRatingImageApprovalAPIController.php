@@ -146,7 +146,7 @@ class ReviewRatingImageApprovalAPIController extends ControllerAPI
                 'email' => $userReview->user_email,
                 'object_id' => $getReview->data->object_id,
                 'object_type' => $getReview->data->object_type,
-                'review' => $getReview->data->review,
+                'review' => isset($getReview->data->review) ? $getReview->data->review : null,
                 'url_detail' => $urlDetail,
                 'store_name' => isset($getReview->data->store_name) ? $getReview->data->store_name : '',
                 'mall_name' => isset($getReview->data->mall_name) ? $getReview->data->mall_name : '',

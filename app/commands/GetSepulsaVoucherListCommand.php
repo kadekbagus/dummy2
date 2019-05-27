@@ -8,7 +8,6 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use Orbit\FakeJob;
-use Orbit\Queue\SepulsaVoucherListMail;
 use Orbit\Helper\Sepulsa\API\VoucherList;
 
 class GetSepulsaVoucherListCommand extends Command {
