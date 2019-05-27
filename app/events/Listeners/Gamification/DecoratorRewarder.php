@@ -25,9 +25,10 @@ abstract class DecoratorRewarder implements PointRewarderInterface
      * get current gamification variable name
      * @return string current variable name
      */
-    public function variableName()
+    public function varName()
     {
-        return $this->pointRewarder->variableName();
+        Log::info('DecoratorRewarder variableName', $this->pointRewarder);
+        return $this->pointRewarder->varName();
     }
 
     /**
