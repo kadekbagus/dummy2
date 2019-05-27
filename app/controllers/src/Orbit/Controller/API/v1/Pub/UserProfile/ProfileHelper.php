@@ -4,6 +4,8 @@ use Orbit\Helper\MongoDB\Client as MongoClient;
 use Config;
 use User;
 use DB;
+use Validator;
+use Language;
 
 /**
  * Profile helper functions.
@@ -11,6 +13,13 @@ use DB;
 class ProfileHelper
 {
     private $mongoClient = null;
+    protected $valid_language = NULL;
+
+    public static function create()
+    {
+        return new static();
+    }
+
 
     function __construct()
     {
@@ -211,5 +220,28 @@ class ProfileHelper
         }
 
         return $userRank;
+    }
+
+    public function registerCustomValidation() {
+        // Check language is exists
+        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
+            $lang_name = $value;
+
+            $language = Language::where('status', '=', 'active')
+                            ->where('name', $lang_name)
+                            ->first();
+
+            if (empty($language)) {
+                return FALSE;
+            }
+
+            $this->valid_language = $language;
+            return TRUE;
+        });
+    }
+
+    public function getValidLanguage()
+    {
+        return $this->valid_language;
     }
 }

@@ -10,26 +10,8 @@ use Orbit\Models\Gamification\UserGameEvent;
  *
  * @author zamroni <zamroni@dominopos.com>
  */
-class OneTimeReward implements PointRewarderInterface
+class OneTimeReward extends DecoratorRewarder
 {
-    /**
-     * variable name
-     * @var string
-     */
-    private $varName;
-
-    /**
-     * game point rewarder
-     * @var PointRewarderInterface
-     */
-    private $pointRewarder;
-
-    public function __construct(PointRewarderInterface $pointRewarder, $varName)
-    {
-        $this->pointRewarder = $pointRewarder;
-        $this->varName = $varName;
-    }
-
     /**
      * called when user is rewarded with point
      * here we will reward user with point if gamification variable
@@ -52,7 +34,7 @@ class OneTimeReward implements PointRewarderInterface
             $giveReward($user, $data);
         }
 
-        $gamificationVar = Variable::where('variable_slug', $this->varName)->first();
+        $gamificationVar = Variable::where('variable_slug', $this->variableName())->first();
         $rewardHistory = UserGameEvent::where('variable_id', $gamificationVar->variable_id)
             ->where('user_id', $user->user_id)
             ->where('object_id', $data->object_id)

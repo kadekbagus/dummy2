@@ -37,6 +37,7 @@ use \Exception;
 use \UserVerificationNumber;
 use Orbit\Helper\Payment\Payment as PaymentClient;
 use Event;
+use Log;
 
 class CouponRedeemAPIController extends PubControllerAPI
 {
@@ -284,8 +285,8 @@ class CouponRedeemAPIController extends PubControllerAPI
                     ->setModuleName('Coupon')
                     ->responseOK();
 
+            Log::info('orbit.redeem.coupon.success coupon redeem');
             Event::fire('orbit.redeem.coupon.success', [$user, $body]);
-
         } catch (Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException $e) {
 
             $this->response->code = $e->getCode();
