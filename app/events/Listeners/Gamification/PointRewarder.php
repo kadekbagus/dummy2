@@ -107,7 +107,7 @@ class PointRewarder implements PointRewarderInterface
      */
     public function __invoke(User $user, $data = null)
     {
-        $gamificationVar = Variable::where('variable_slug', $this->varName)->first();
+        $gamificationVar = Variable::where('variable_slug', $this->variableName())->first();
         DB::transaction(function() use ($user, $gamificationVar, $data) {
             $this->updateUserVariable($user, $gamificationVar);
             $this->updateUserGameEvent($user, $gamificationVar, $data);
