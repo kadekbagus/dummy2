@@ -69,7 +69,7 @@ class ProfileAPIController extends PubControllerAPI
 
             $beingViewedUser = User::with([
                 'userdetail' => function($userDetail) {
-                    $userDetail->select('user_id', 'user_detail_id', 'about', 'location');
+                    $userDetail->select('user_id', 'user_detail_id', 'about', DB::raw('location as profile_location'));
                 },
                 'purchases' => function($purchases) {
                     $purchases->select(
@@ -104,7 +104,7 @@ class ProfileAPIController extends PubControllerAPI
             $profile = (object) [
                 'user_id' => $beingViewedUser->user_id,
                 'name' => $beingViewedUser->user_firstname . ' ' . $beingViewedUser->user_lastname,
-                'location' => $beingViewedUser->userdetail->location,
+                'location' => $beingViewedUser->userdetail->profile_location,
                 'join_date' => $beingViewedUser->created_at->format('Y-m-d H:i:s'),
                 'about' => $beingViewedUser->userdetail->about,
                 'rank' => 0,
