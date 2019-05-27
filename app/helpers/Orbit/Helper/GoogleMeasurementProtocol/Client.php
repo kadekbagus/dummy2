@@ -72,6 +72,9 @@ class Client
     {
         $this->queryString = $queryString + $this->queryString;
 
+        // remove empty keys
+        $this->queryString = array_filter($this->queryString);
+
         return $this;
     }
 
