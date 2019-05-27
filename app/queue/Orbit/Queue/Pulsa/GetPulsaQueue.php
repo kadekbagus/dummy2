@@ -25,6 +25,8 @@ use Orbit\Notifications\Pulsa\PulsaPendingNotification;
 use Orbit\Notifications\Pulsa\CustomerPulsaPendingNotification;
 use Orbit\Notifications\Pulsa\PulsaRetryNotification;
 
+use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
+
 /**
  * A job to get/issue Hot Deals Coupon after payment completed.
  * At this point, we assume the payment was completed (paid) so anything wrong
