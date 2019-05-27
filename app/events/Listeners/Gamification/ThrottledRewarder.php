@@ -49,7 +49,7 @@ class ThrottledRewarder extends DecoratorRewarder
         $varName = $this->variableName();
         Log::info('throttle reward get varname userId:' . $user->user_id, $varName);
 
-        $gamificationVar = Variable::where('variable_slug', $this->variableName())->first();
+        $gamificationVar = Variable::where('variable_slug', $varName)->first();
         $rewardHistory = UserGameEvent::where('variable_id', $gamificationVar->variable_id)
             ->where('user_id', $user->user_id)
             ->where('object_id', $data->object_id)
