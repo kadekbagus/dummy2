@@ -16,7 +16,7 @@ use Orbit\Events\Listeners\Gamification\ThrottledRewarder;
  *
  * @param User $user - Instance of activated user
  */
-Event::listen('orbit.user.activation.success', new PointRewarder('sign_up'));
+Event::listen('orbit.user.activation.success', new OneTimeReward(new PointRewarder('sign_up')));
 
 /**
  * Listen on:    `'orbit.rating.postrating.success'`
