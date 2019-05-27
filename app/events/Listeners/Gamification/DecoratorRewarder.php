@@ -2,6 +2,7 @@
 namespace Orbit\Events\Listeners\Gamification;
 
 use User;
+use Log;
 
 /**
  * decorator class that reward user one time only for particular object
