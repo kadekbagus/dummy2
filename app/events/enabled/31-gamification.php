@@ -8,6 +8,7 @@
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Events\Listeners\Gamification\PointRewarder;
 use Orbit\Events\Listeners\Gamification\OneTimeReward;
+use Orbit\Events\Listeners\Gamification\ThrottledRewarder;
 
 /**
  * Listen on:    `orbit.user.activation.success`
@@ -27,6 +28,15 @@ Event::listen('orbit.user.activation.success', new PointRewarder('sign_up'));
 Event::listen('orbit.rating.postrating.success', new PointRewarder('review'));
 
 /**
+ * Listen on:    `'orbit.rating.postrating.reject'`
+ * Purpose:      remove user game point when user review is rejected
+ *
+ * @param User $user - Instance of activated user
+ * @param object $data - additional data about object being reviewed
+ */
+Event::listen('orbit.rating.postrating.reject', new PointRewarder('reject_review'));
+
+/**
  * Listen on:    `orbit.rating.postrating.approve.image`
  * Purpose:      add user game point when user review images approved, reward
  *              is given for first time one or more image approved.
@@ -37,7 +47,7 @@ Event::listen('orbit.rating.postrating.success', new PointRewarder('review'));
  */
 Event::listen(
     'orbit.rating.postrating.approve.image',
-    new OneTimeReward(new PointRewarder('review_image'), 'review_image')
+    new OneTimeReward(new PointRewarder('review_image'))
 );
 
 /**
@@ -80,7 +90,7 @@ Event::listen('orbit.purchase.coupon.success', new PointRewarder('purchase'));
  * @param User $user - Instance of activated user
  * @param mixed $data - additional related data about coupon
  */
-Event::listen('orbit.redeem.coupon.success', new PointRewarder('purchase'));
+Event::listen('orbit.redeem.coupon.success', new ThrottledRewarder(new PointRewarder('purchase')));
 
 /**
  * Listen on:    `orbit.coupon.postissuedcoupon.after.commit`

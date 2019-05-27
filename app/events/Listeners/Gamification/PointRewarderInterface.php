@@ -10,6 +10,11 @@ use User;
  */
 interface PointRewarderInterface
 {
+    /**
+     * get current gamification variable name
+     * @return string current variable name
+     */
+    public function varName();
 
     /**
      * called when user is rewarded with point
