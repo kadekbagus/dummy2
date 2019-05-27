@@ -126,8 +126,7 @@ class GetPulsaQueue
 
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
 
-                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Pending', 'ec' => 'Pulsa', 'el' => $paymentDetail->object_name])->request();
-
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Successful', 'ec' => 'Pulsa', 'el' => $paymentDetail->object_name])->request();
             }
             else if ($pulsaPurchase->shouldRetry($data['retry'])) {
                 $data['retry']++;
