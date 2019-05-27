@@ -107,12 +107,15 @@ class PointRewarder implements PointRewarderInterface
      */
     public function __invoke(User $user, $data = null)
     {
+        //sometime $user instance does not contains total_game_points field
+        //here we query database to make sure that we have total_game_points field
+        $usr = User::where('user_id', $user->user_id);
         $gamificationVar = Variable::where('variable_slug', $this->varName())->first();
 
         if ($gamificationVar) {
-            DB::transaction(function() use ($user, $gamificationVar, $data) {
-                $this->updateUserVariable($user, $gamificationVar);
-                $this->updateUserGameEvent($user, $gamificationVar, $data);
+            DB::transaction(function() use ($sr, $gamificationVar, $data) {
+                $this->updateUserVariable($sr, $gamificationVar);
+                $this->updateUserGameEvent($sr, $gamificationVar, $data);
             });
         }
     }
