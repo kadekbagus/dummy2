@@ -90,3 +90,13 @@ Route::post('/api/v1/pub/sharer/email/landingpage', function()
 });
 
 Route::post('/app/v1/pub/sharer/email/landingpage', ['as' => 'pub-share-email-landingpage', 'uses' => 'IntermediatePubAuthController@LandingPageShareEmail_postLandingPageShareEmail']);
+
+/**
+ * share landing page via AddThis
+ */
+Route::post('/api/v1/pub/share', function()
+{
+    return Orbit\Controller\API\v1\Pub\ShareAPIController::create()->postShare();
+});
+
+Route::post('/app/v1/pub/share', ['as' => 'pub-share', 'uses' => 'IntermediatePubAuthController@Share_postShare']);

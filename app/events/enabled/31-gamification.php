@@ -156,3 +156,18 @@ Event::listen(
     //reward active user only
     new ActivatedUserRewarder(new PointRewarder('follow'))
 );
+
+/**
+ * Listen on:    `orbit.share.post.success`
+ * Purpose:      add user game point when user share via AddThis
+ *
+ * @param User $user - Instance of activated user
+ * @param mixed $data - additional related data about share
+ */
+Event::listen(
+    'orbit.share.post.success',
+    //reward active user only
+    new ActivatedUserRewarder(
+        new PointRewarder('share')
+    )
+);
