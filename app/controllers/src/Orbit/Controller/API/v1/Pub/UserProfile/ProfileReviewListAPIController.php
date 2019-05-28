@@ -65,7 +65,7 @@ class ProfileReviewListAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $mongoConfig = Config::get('database.mongodb');
             $mallId = OrbitInput::get('mall_id', null);
-            $userId = OrbitInput::get('user_id');
+            $userId = OrbitInput::get('user_id', null);
             $language = OrbitInput::get('language', 'id');
             $session = SessionPreparer::prepareSession();
 
@@ -74,11 +74,12 @@ class ProfileReviewListAPIController extends PubControllerAPI
 
             $validator = Validator::make(
                 array(
-
                     'language' => $language,
+                    'user_id' => $userId,
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
+                    'user_id' => 'required',
                 )
             );
 
@@ -91,11 +92,11 @@ class ProfileReviewListAPIController extends PubControllerAPI
             $valid_language = $profileHelper->getValidLanguage();
 
             // should always check the role
-            $role = $user->role->role_name;
-            if (strtolower($role) !== 'consumer') {
-                $message = 'You must login to access this.';
-                ACL::throwAccessForbidden($message);
-            }
+            // $role = $user->role->role_name;
+            // if (strtolower($role) !== 'consumer') {
+            //     $message = 'You must login to access this.';
+            //     ACL::throwAccessForbidden($message);
+            // }
 
             $prefix = DB::getTablePrefix();
 
@@ -104,16 +105,16 @@ class ProfileReviewListAPIController extends PubControllerAPI
                 'skip'        => $skip,
                 'sortBy'      => 'updated_at',
                 'sortMode'    => 'desc',
-                'user_id'     => $user->user_id
+                'user_id'     => $userId
             ];
 
             $prefix = DB::getTablePrefix();
 
-            if (isset($userId)) {
-                $queryString['user_id'] = $userId;
-            } else {
-                $queryString['user_id'] = $user->user_id;
-            }
+            // if (isset($userId)) {
+            //     $queryString['user_id'] = $userId;
+            // } else {
+            //     $queryString['user_id'] = $user->user_id;
+            // }
 
             $mongoClient = MongoClient::create($mongoConfig);
 

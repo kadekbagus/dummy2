@@ -52,24 +52,26 @@ class ProfileFollowListAPIController extends PubControllerAPI
             $user = $this->getUser();
 
             // should always check the role
-            $role = $user->role->role_name;
-            if (strtolower($role) !== 'consumer') {
-                $message = 'You have to login to continue';
-                OrbitShopAPI::throwInvalidArgument($message);
-            }
+            // $role = $user->role->role_name;
+            // if (strtolower($role) !== 'consumer') {
+            //     $message = 'You have to login to continue';
+            //     OrbitShopAPI::throwInvalidArgument($message);
+            // }
 
             $objectType = OrbitInput::get('object_type', null);
             $mongoConfig = Config::get('database.mongodb');
             $take = PaginationNumber::parseTakeFromGet('news');
             $skip = PaginationNumber::parseSkipFromGet();
-            $userId = OrbitInput::get('user_id', $user->user_id);
+            $userId = OrbitInput::get('user_id', null);
 
             $validator = Validator::make(
                 array(
-                    'object_type' => $objectType
+                    'object_type' => $objectType,
+                    'user_id' => $userId,
                 ),
                 array(
-                    'object_type' => 'required|in:mall,store'
+                    'object_type' => 'required|in:mall,store',
+                    'user_id' => 'required',
                 )
             );
 
