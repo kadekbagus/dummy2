@@ -17,6 +17,8 @@ class ProfileHelper
 {
     private $mongoClient = null;
 
+    private $reviews = null;
+
     protected $valid_language = NULL;
 
     private $userId = null;
