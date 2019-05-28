@@ -220,13 +220,15 @@ class ProfileHelper
             $leaderboardData = $this->getTopRankUsers();
         }
 
+        $realRank = 0;
         $userRank = 0;
         $lastPoint = null;
         $inTopRank = false;
         foreach($leaderboardData as $index => $data) {
+            $realRank++;
             if ($lastPoint !== $data['total_game_points']) {
                 $lastPoint = $data['total_game_points'];
-                $userRank++;
+                $userRank = $realRank;
             }
 
             if ($data['user_id'] === $userId) {
@@ -237,7 +239,10 @@ class ProfileHelper
 
         if (! $inTopRank) {
             $minMaxPoint = User::select(DB::raw("min(total_game_points) as minimumPoint, max(total_game_points) as maximumPoint"))
+                            ->join('roles', 'users.user_role_id', '=', 'roles.role_id')
                             ->where('status', 'active')
+                            ->where('roles.role_name', 'Consumer')
+                            ->where('user_email', 'not like', 'guest_%')
                             ->first();
 
             $deltaPoint = $minMaxPoint->maximumPoint - $minMaxPoint->minimumPoint;
@@ -247,8 +252,6 @@ class ProfileHelper
 
             $userRank = 100 - round($totalGamePoints / $deltaPoint * 100, 2);
         }
-
-        // Cache::put("ur_{$userId}", $userRank, 60);
 
         return $userRank;
     }
@@ -266,7 +269,7 @@ class ProfileHelper
                     'user_id',
                     DB::raw("CONCAT(user_firstname, ' ', user_lastname) as name"),
                     'total_game_points',
-                    'created_at'
+                    'users.created_at'
                 )
                 ->with([
                     'userdetail' => function($userDetail) {
@@ -285,6 +288,9 @@ class ProfileHelper
                         $profilePicture->where('media_name_long', 'user_profile_picture_resized_default');
                     },
                 ])
+                ->join('roles', 'users.user_role_id', '=', 'roles.role_id')
+                ->where('roles.role_name', 'Consumer')
+                ->where('status', 'active')
                 ->where('user_id', $userId)
                 ->first();
 
