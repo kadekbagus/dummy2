@@ -36,12 +36,9 @@ use \App;
 use \Exception;
 use \UserVerificationNumber;
 use Orbit\Helper\Payment\Payment as PaymentClient;
-<<<<<<< HEAD
 use Event;
 use Log;
-=======
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
->>>>>>> release-4.16.3
 
 class CouponRedeemAPIController extends PubControllerAPI
 {
