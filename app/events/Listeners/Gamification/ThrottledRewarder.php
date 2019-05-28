@@ -13,6 +13,8 @@ use Log;
  * helper class that throttle speed when we reward user with game points
  * for same variable for same object
  *
+ * TODO: rename class as TimeLimitRewarder to explain its purpose more clear
+ *
  * @author zamroni <zamroni@dominopos.com>
  */
 class ThrottledRewarder extends DecoratorRewarder
