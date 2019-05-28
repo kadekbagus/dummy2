@@ -25,6 +25,8 @@ class ProfileHelper
 
     private $rank = 0;
 
+    private $realRank = 0;
+
     function __construct()
     {
         $mongoConfig = Config::get('database.mongodb');
@@ -375,6 +377,7 @@ class ProfileHelper
         $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
 
         $topRankUsers->each(function($topRankUser) use ($imgUrl) {
+            $this->realRank++;
             $this->reset();
             $profileTotal = $this->getTotalContent($topRankUser->user_id);
             $topRankUser->total_reviews = $profileTotal->reviews;
@@ -403,7 +406,7 @@ class ProfileHelper
 
             if ($topRankUser->total_game_points !== $this->lastPoint) {
                 $this->lastPoint = $topRankUser->total_game_points;
-                $this->rank++;
+                $this->rank = $this->realRank;
             }
 
             $topRankUser->rank = $this->rank;
