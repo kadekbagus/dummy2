@@ -92,7 +92,7 @@ class ProfileHelper
 
         if (isset($reviews->data) && ! empty($reviews->data)) {
             foreach($reviews->data->records as $review) {
-                if (isset($review->images)) {
+                if (isset($review->images) && (is_array($review->images) || is_object($review->images))) {
                     foreach($review->images as $image) {
                         if ($image[0]->approval_status === 'approved') {
                             $photos['total_records']++;
@@ -100,10 +100,10 @@ class ProfileHelper
                                 'review_id' => $review->_id,
                                 'object_id' => $review->object_id,
                                 'object_type' => $review->object_type,
-                                'store_id' => $review->store_id,
-                                'store_name' => $review->store_name,
-                                'mall_id' => $review->location_id,
-                                'mall_name' => $review->mall_name,
+                                'store_id' => isset($review->store_id) ? $review->store_id : '',
+                                'store_name' => isset($review->store_name) ? $review->store_name : '',
+                                'mall_id' => isset($review->location_id) ? $review->location_id : '',
+                                'mall_name' => isset($review->mall_name) ? $review->mall_name : '',
                                 'desktop_thumb' => ! empty($image[1]->cdn_url) ? $image[1]->cdn_url : $image[1]->url,
                                 'mobile_thumb' => ! empty($image[2]->cdn_url) ? $image[2]->cdn_url : $image[2]->url,
                                 'desktop_medium' => ! empty($image[3]->cdn_url) ? $image[3]->cdn_url : $image[3]->url,
