@@ -195,11 +195,6 @@ class ProfileHelper
     /**
      * Get rank for given user.
      *
-     * At the moment we will throttle data fetching per $take number,
-     *
-     * Downside is, if user is in the pretty far last order,
-     * it will costs more DB request to reach the rank.
-     *
      * @todo  find a better way to calculate the rank.
      * @param  [type] $userId [description]
      * @return [type]         [description]
@@ -250,7 +245,8 @@ class ProfileHelper
                 return 0;
             }
 
-            $userRank = 100 - round($totalGamePoints / $deltaPoint * 100, 2);
+            $totalGamePoints = $totalGamePoints === 0 ? 1 : $totalGamePoints;
+            $userRank = 100 - round($totalGamePoints / $deltaPoint * 100, 2) . "%";
         }
 
         return $userRank;

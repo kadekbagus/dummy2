@@ -69,7 +69,7 @@ class LeaderboardAPIController extends PubControllerAPI
                     if ($data['user_id'] === $user->user_id) {
                         $leaderboardData[$index]['highlight'] = true;
                         $inTopRank = true;
-                        Cache::put("ur_{$user->user_id}", serialize($data['rank']), 60);
+                        // Cache::put("ur_{$user->user_id}", serialize($data['rank']), 60);
                         break;
                     }
                 }
@@ -83,9 +83,8 @@ class LeaderboardAPIController extends PubControllerAPI
                         return $profile;
                     });
 
-
                     // Put in cache
-                    Cache::put("ur_{$user->user_id}", serialize($userProfile->rank), 60);
+                    // Cache::put("ur_{$user->user_id}", serialize($userProfile->rank), 60);
 
                     unset($userProfile->total_points);
                     unset($userProfile->number_of_purchases);
