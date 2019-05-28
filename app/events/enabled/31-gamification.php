@@ -154,7 +154,9 @@ Event::listen('orbit.coupon.postissuedcoupon.after.commit', function($ctrl, $iss
 Event::listen(
     'orbit.follow.postfollow.success',
     //reward active user only
-    new ActivatedUserRewarder(new PointRewarder('follow'))
+    new ActivatedUserRewarder(
+        new OneTimeReward(new PointRewarder('follow'))
+    )
 );
 
 /**
@@ -168,6 +170,6 @@ Event::listen(
     'orbit.share.post.success',
     //reward active user only
     new ActivatedUserRewarder(
-        new PointRewarder('share')
+        new OneTimeReward(new PointRewarder('share'))
     )
 );
