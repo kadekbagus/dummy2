@@ -245,7 +245,7 @@ class ProfileHelper
                 return 0;
             }
 
-            $totalGamePoints = $totalGamePoints === 0 ? 1 : $totalGamePoints;
+            $totalGamePoints = (int) $totalGamePoints === 0 ? 1 : $totalGamePoints;
             $userRank = 100 - round($totalGamePoints / $deltaPoint * 100, 2) . "%";
         }
 
