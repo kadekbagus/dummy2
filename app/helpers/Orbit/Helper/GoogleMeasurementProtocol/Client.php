@@ -27,6 +27,13 @@ class Client
     protected $queryString = '';
 
     /**
+     * @var array userAgent
+     * User agent. Needs to be rewritten because of "Bot Filtering" options
+     * in Google Analytics.
+     */
+    protected $userAgent = '';
+
+    /**
      * @var Guzzle\Client
      */
     protected $client;
@@ -51,6 +58,7 @@ class Client
         $this->queryString['v'] = '1';
         $this->queryString['t'] = 'event';
         $this->queryString['cid'] = '555'; // default cid (anonymous)
+        $this->userAgent = 'Mozilla/5.0 (Linux; Android 4.0.4; Galaxy Nexus Build/IMM76B) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.133 Mobile Safari/535.19';
     }
 
     /**
@@ -99,6 +107,7 @@ class Client
 
             $options = [];
             $options['query'] = $this->queryString;
+            $options['headers']['User-Agent'] = $this->userAgent;
 
             // $options['verify'] = false;
 

@@ -327,14 +327,13 @@ class ProfileHelper
                 'picture' => $picture,
             ];
 
+            // Get user-related-content total value..
+            $userProfile->total_reviews = $this->getTotalReview($userId);
+            $userProfile->total_photos = $this->getTotalPhotos($userId);
+            $userProfile->total_following = $this->getTotalFollowing($userId);
+
             // Get user rank.
             $userProfile->rank = $this->getUserRank($userId, $user->total_game_points, $leaderboardData);
-
-            // Get user-related-content total value..
-            $profileTotal = $this->getTotalContent($userId);
-            $userProfile->total_reviews = $profileTotal->reviews;
-            $userProfile->total_photos = $profileTotal->photos;
-            $userProfile->total_following = $profileTotal->following;
         }
 
         return $userProfile;
