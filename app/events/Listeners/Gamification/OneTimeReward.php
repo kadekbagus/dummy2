@@ -35,11 +35,14 @@ class OneTimeReward extends DecoratorRewarder
         }
 
         $gamificationVar = Variable::where('variable_slug', $this->varName())->first();
-        $rewardHistory = UserGameEvent::where('variable_id', $gamificationVar->variable_id)
+        $rewardHistory = null;
+        if ($gamificationVar) {
+            $rewardHistory = UserGameEvent::where('variable_id', $gamificationVar->variable_id)
             ->where('user_id', $user->user_id)
             ->where('object_id', $data->object_id)
             ->where('object_type', $data->object_type)
             ->first();
+        }
 
         if (! $rewardHistory) {
             //no history for particular variable for object given to this user
