@@ -63,7 +63,7 @@ class LeaderboardAPIController extends PubControllerAPI
             // Loop thru leaderboard data, and see if current user
             // in in top 50. Only calculate if user logged in.
             $leaderboardData = $profileHelper->getTopRankUsers();
-            if ($role === 'consumer') {
+            if ($role === 'consumer' && $user->status === 'active') {
                 $inTopRank = false;
                 foreach($leaderboardData as $index => $data) {
                     if ($data['user_id'] === $user->user_id) {
