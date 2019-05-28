@@ -18,14 +18,6 @@ return [
                         <br>
                         Terima kasih telah melakukan pembelian :itemName di Gotomalls.com. Pembayaran Anda telah diverifikasi oleh sistem kami. Berikut ini detail pembelian Anda.',
 
-        'greeting_pulsa_pending' => 'Yth, :customerName
-                        <br>
-                        Terima kasih, pembelian Anda berhasil dan kami sedang menyiapkan pulsa Anda.
-                        Jika dalam 1 jam pulsa Anda tidak diterima, silakan hubungi Customer Service kami di
-                        <a style="color:#f43d3c;text-decoration:none;" href="tel::csPhone">:csPhone</a> atau surel di
-                        <a style="color:#f43d3c;text-decoration:none;" href="mailto::csEmail">:csEmail</a>.
-        ',
-
         'transaction_labels' => [
             'transaction_id' => 'No. Transaksi',
             'transaction_date' => 'Tanggal Transaksi',

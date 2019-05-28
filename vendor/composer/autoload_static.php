@@ -1349,6 +1349,7 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'Orbit\\Text' => __DIR__ . '/../..' . '/app/helpers/Orbit/Text.php',
         'Orbit\\UrlGenerator' => __DIR__ . '/../..' . '/app/helpers/Orbit/UrlGenerator.php',
         'POS\\Product' => __DIR__ . '/../..' . '/app/models/POS/Product.php',
+        'PPRoleTableSeeder' => __DIR__ . '/../..' . '/app/database/seeds/PPRoleTableSeeder.php',
         'Page' => __DIR__ . '/../..' . '/app/models/Page.php',
         'Partner' => __DIR__ . '/../..' . '/app/models/Partner.php',
         'PartnerAPIController' => __DIR__ . '/../..' . '/app/controllers/api/v1/PartnerAPIController.php',
