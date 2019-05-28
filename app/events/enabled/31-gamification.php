@@ -9,6 +9,7 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Events\Listeners\Gamification\PointRewarder;
 use Orbit\Events\Listeners\Gamification\OneTimeReward;
 use Orbit\Events\Listeners\Gamification\ThrottledRewarder;
+use Orbit\Events\Listeners\Gamification\ActivatedUserRewarder;
 
 /**
  * Listen on:    `orbit.user.activation.success`
@@ -16,7 +17,13 @@ use Orbit\Events\Listeners\Gamification\ThrottledRewarder;
  *
  * @param User $user - Instance of activated user
  */
-Event::listen('orbit.user.activation.success', new OneTimeReward(new PointRewarder('sign_up')));
+Event::listen(
+    'orbit.user.activation.success',
+    //reward active user only
+    new ActivatedUserRewarder(
+        new OneTimeReward(new PointRewarder('sign_up'))
+    )
+);
 
 /**
  * Listen on:    `'orbit.rating.postrating.success'`
@@ -25,7 +32,13 @@ Event::listen('orbit.user.activation.success', new OneTimeReward(new PointReward
  * @param User $user - Instance of activated user
  * @param object $data - additional data about object being reviewed
  */
-Event::listen('orbit.rating.postrating.success', new PointRewarder('review'));
+Event::listen(
+    'orbit.rating.postrating.success',
+    //reward active user only
+    new ActivatedUserRewarder(
+        new PointRewarder('review')
+    )
+);
 
 /**
  * Listen on:    `'orbit.rating.postrating.reject'`
@@ -34,7 +47,13 @@ Event::listen('orbit.rating.postrating.success', new PointRewarder('review'));
  * @param User $user - Instance of activated user
  * @param object $data - additional data about object being reviewed
  */
-Event::listen('orbit.rating.postrating.reject', new PointRewarder('reject_review'));
+Event::listen(
+    'orbit.rating.postrating.reject',
+    //reward active user only
+    new ActivatedUserRewarder(
+        new PointRewarder('reject_review')
+    )
+);
 
 /**
  * Listen on:    `orbit.rating.postrating.approve.image`
@@ -47,7 +66,10 @@ Event::listen('orbit.rating.postrating.reject', new PointRewarder('reject_review
  */
 Event::listen(
     'orbit.rating.postrating.approve.image',
-    new OneTimeReward(new PointRewarder('review_image'))
+    //reward active user only
+    new ActivatedUserRewarder(
+        new OneTimeReward(new PointRewarder('review_image'))
+    )
 );
 
 /**
@@ -72,7 +94,11 @@ Event::listen('orbit.rating.postrating.after.commit', function($ctrl, $body, $us
  * @param User $user - Instance of activated user
  * @param mixed $data - additional related data about pulsa
  */
-Event::listen('orbit.purchase.pulsa.success', new PointRewarder('purchase'));
+Event::listen(
+    'orbit.purchase.pulsa.success',
+    //reward active user only
+    new ActivatedUserRewarder(new PointRewarder('purchase'))
+);
 
 /**
  * Listen on:    `orbit.purchase.coupon.success`
@@ -81,7 +107,11 @@ Event::listen('orbit.purchase.pulsa.success', new PointRewarder('purchase'));
  * @param User $user - Instance of activated user
  * @param mixed $data - additional related data about coupon
  */
-Event::listen('orbit.purchase.coupon.success', new PointRewarder('purchase'));
+Event::listen(
+    'orbit.purchase.coupon.success',
+    //reward active user only
+    new ActivatedUserRewarder(new PointRewarder('purchase'))
+);
 
 /**
  * Listen on:    `orbit.redeem.coupon.success`
@@ -90,7 +120,15 @@ Event::listen('orbit.purchase.coupon.success', new PointRewarder('purchase'));
  * @param User $user - Instance of activated user
  * @param mixed $data - additional related data about coupon
  */
-Event::listen('orbit.redeem.coupon.success', new ThrottledRewarder(new PointRewarder('purchase')));
+Event::listen(
+    'orbit.redeem.coupon.success',
+    //reward active user only
+    new ActivatedUserRewarder(
+        new ThrottledRewarder(
+            new PointRewarder('purchase')
+        )
+    )
+);
 
 /**
  * Listen on:    `orbit.coupon.postissuedcoupon.after.commit`
@@ -113,4 +151,8 @@ Event::listen('orbit.coupon.postissuedcoupon.after.commit', function($ctrl, $iss
  * @param User $user - Instance of activated user
  * @param mixed $data - additional related data about store or mall
  */
-Event::listen('orbit.follow.postfollow.success', new PointRewarder('follow'));
+Event::listen(
+    'orbit.follow.postfollow.success',
+    //reward active user only
+    new ActivatedUserRewarder(new PointRewarder('follow'))
+);
