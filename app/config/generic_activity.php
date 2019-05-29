@@ -2261,5 +2261,77 @@ return array(
             'object_type' => null,
             'parameter_name' => null
         ),
+        // View Leaderboard Page
+        '246' => array(
+            'name' => 'view_leaderboard_page',
+            'name_long' => 'View Leaderboard Page',
+            'module_name' => 'Application',
+            'type' => 'view',
+            'object_type' => null,
+            'parameter_name' => null
+        ),
+        // Click Ranking
+        '247' => array(
+            'name' => 'click_ranking',
+            'name_long' => 'Click Ranking',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null
+        ),
+        // Click User Profile
+        '248' => array(
+            'name' => 'click_user_profile',
+            'name_long' => 'Click User Profile',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'User',
+            'parameter_name' => 'object_id'
+        ),
+        // View User Profile Page
+        '249' => array(
+            'name' => 'view_user_profile_page',
+            'name_long' => 'View User Profile Page',
+            'module_name' => 'Application',
+            'type' => 'view',
+            'object_type' => 'User',
+            'parameter_name' => 'object_id'
+        ),
+        // Click User Reviews Menu
+        '250' => array(
+            'name' => 'click_user_reviews_menu',
+            'name_long' => 'Click User Reviews Menu',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'User',
+            'parameter_name' => 'object_id'
+        ),
+        // Click User Photos Menu
+        '251' => array(
+            'name' => 'click_user_photos_menu',
+            'name_long' => 'Click User Photos Menu',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'User',
+            'parameter_name' => 'object_id'
+        ),
+        // Click User Following Menu
+        '252' => array(
+            'name' => 'click_user_following_menu',
+            'name_long' => 'Click User Following Menu',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'User',
+            'parameter_name' => 'object_id'
+        ),
+        // Click User Photo
+        '253' => array(
+            'name' => 'click_user_photo',
+            'name_long' => 'Click User Photo',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'User',
+            'parameter_name' => 'object_id'
+        ),
     ),
 );
