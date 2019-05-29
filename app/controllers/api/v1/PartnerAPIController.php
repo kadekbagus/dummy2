@@ -87,7 +87,7 @@ class PartnerAPIController extends ControllerAPI
             $partner_name = OrbitInput::post('partner_name');
             $description = OrbitInput::post('description');
             $address = OrbitInput::post('address');
-            $city = OrbitInput::post('city', '');
+            $city = OrbitInput::post('city');
             $province = OrbitInput::post('province');
             $postal_code = OrbitInput::post('postal_code');
             $country_id = OrbitInput::post('country_id');
@@ -147,6 +147,7 @@ class PartnerAPIController extends ControllerAPI
                 'start_date'              => $start_date,
                 'end_date'                => $end_date,
                 'status'                  => $status,
+                'city'                    => $city,
                 'country_id'              => $country_id,
                 'contact_firstname'       => $contact_firstname,
                 'contact_lastname'        => $contact_lastname,
@@ -162,6 +163,7 @@ class PartnerAPIController extends ControllerAPI
                 'start_date'              => 'date|orbit.empty.hour_format',
                 'end_date'                => 'date|orbit.empty.hour_format',
                 'status'                  => 'required|in:active,inactive',
+                'city'                    => 'required',
                 'country_id'              => 'required',
                 'contact_firstname'       => 'required',
                 'contact_lastname'        => 'required',
@@ -537,7 +539,7 @@ class PartnerAPIController extends ControllerAPI
             $end_date = OrbitInput::post('end_date');
             $status = OrbitInput::post('status');
             $address = OrbitInput::post('address');
-            $city = OrbitInput::post('city', '');
+            $city = OrbitInput::post('city');
             $country_id = OrbitInput::post('country_id');
             $phone = OrbitInput::post('phone');
             $contact_firstname = OrbitInput::post('contact_firstname');
@@ -572,6 +574,7 @@ class PartnerAPIController extends ControllerAPI
                 'start_date'              => $start_date,
                 'end_date'                => $end_date,
                 'status'                  => $status,
+                'city'                    => $city,
                 'country_id'              => $country_id,
                 'contact_firstname'       => $contact_firstname,
                 'contact_lastname'        => $contact_lastname,
@@ -588,6 +591,7 @@ class PartnerAPIController extends ControllerAPI
                 'start_date'              => 'date|orbit.empty.hour_format',
                 'end_date'                => 'date|orbit.empty.hour_format',
                 'status'                  => 'required|in:active,inactive|orbit.exists.partner_linked_to_active_campaign:' . $partner_id,
+                'city'                    => 'required',
                 'country_id'              => 'required',
                 'contact_firstname'       => 'required',
                 'contact_lastname'        => 'required',

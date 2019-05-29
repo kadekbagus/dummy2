@@ -13,6 +13,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
 use \Orbit\Helper\Exception\OrbitCustomException;
 use Orbit\Helper\Payment\Payment as PaymentClient;
+use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
 
 class CouponAPIController extends ControllerAPI
 {
@@ -3934,6 +3935,9 @@ class CouponAPIController extends ControllerAPI
                     $activityNotes = Coupon::TYPE_HOT_DEALS;
                 }
 
+                // send google analytics event
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Redeem Coupon Successful', 'ec' => 'Coupon', 'el' => $issuedcoupon->coupon->promotion_name])->request();
+
                 $activity->setUser($user)
                         ->setActivityName('redeem_coupon')
                         ->setActivityNameLong('Coupon Redemption (Successful)')
@@ -3962,6 +3966,9 @@ class CouponAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
 
+            // send google analytics event
+            GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Redeem Coupon Failed', 'ec' => 'Coupon', 'el' => $issuedcoupon->coupon->promotion_name])->request();
+
             // Deletion failed Activity log
             if ($paymentProvider === '0') {
                 $activity->setUser($user)
@@ -3986,6 +3993,9 @@ class CouponAPIController extends ControllerAPI
 
             // Rollback the changes
             $this->rollBack();
+
+            // send google analytics event
+            GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Redeem Coupon Failed', 'ec' => 'Coupon', 'el' => $issuedcoupon->coupon->promotion_name])->request();
 
             // Deletion failed Activity log
             if ($paymentProvider === '0') {
@@ -4018,6 +4028,9 @@ class CouponAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
 
+            // send google analytics event
+            GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Redeem Coupon Failed', 'ec' => 'Coupon', 'el' => $issuedcoupon->coupon->promotion_name])->request();
+
             // Deletion failed Activity log
             if ($paymentProvider === '0') {
                 $activity->setUser($user)
@@ -4041,6 +4054,9 @@ class CouponAPIController extends ControllerAPI
 
             // Rollback the changes
             $this->rollBack();
+
+            // send google analytics event
+            GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Redeem Coupon Failed', 'ec' => 'Coupon', 'el' => $issuedcoupon->coupon->promotion_name])->request();
 
             // Deletion failed Activity log
             if ($paymentProvider === '0') {

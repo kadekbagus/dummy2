@@ -33,7 +33,6 @@ use \Carbon\Carbon as Carbon;
 use Orbit\Controller\API\v1\Pub\Store\StoreListAPIController;
 use Elasticsearch\ClientBuilder;
 use Orbit\Helper\Elasticsearch\IndexNameBuilder;
-use BaseStore;
 
 class StoreAlsoLikeListAPIController extends PubControllerAPI
 {
@@ -188,19 +187,6 @@ class StoreAlsoLikeListAPIController extends PubControllerAPI
         $_GET['from_homepage'] = 'y';   // prevent activity recording
         $_GET['excluded_ids'] = (array)$params['except_id'];
         $_GET['store_id'] = $params['store_id'];
-
-        // for store detail filter the same store
-        if (!empty($params['mall_id']) && !empty($params['store_id'])) {
-            $_baseStore = BaseStore::select('base_merchant_id')->where('base_store_id', '=', $params['store_id'])->first();
-            if ($_baseStore) {
-                $_baseStores = BaseStore::where('base_merchant_id', '=', $_baseStore->base_merchant_id)->where('status', '=', 'active')->get();
-                if (count($_baseStores)) {
-                    foreach($_baseStores as $value) {
-                        $_GET['excluded_ids'][] = $value->base_store_id;
-                    }
-                }
-            }
-        }
 
         if ($params['sort_by'] === 'location') {
             unset($_GET['cities']);
