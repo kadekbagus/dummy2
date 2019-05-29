@@ -204,7 +204,7 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
             $imageUrl = $imgUrl->getImageUrl($attachmentPath, $cdnUrl);
 
             $bodyInApps = [
-                'user_id'       => $userId,
+                'user_ids'      => [$userId],
                 'token'         => null,
                 'notifications' => $notificationData,
                 'send_status'   => 'sent',
