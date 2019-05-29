@@ -91,8 +91,12 @@ class GetPulsaQueue
             $phoneNumber = $payment->extra_data;
             $pulsaName = $pulsa->pulsa_display_name;
 
+            // If we are retrying purchase, then add something at the end
+            // of paymentId to make it unique.
+            $uniqueId = $data['retry'] > 0 ? "-{$data['retry']}" : '';
+
             // Send request to buy pulsa from MCash
-            $pulsaPurchase = Purchase::create()->doPurchase($pulsa->pulsa_code, $phoneNumber, $paymentId);
+            $pulsaPurchase = Purchase::create()->doPurchase($pulsa->pulsa_code, $phoneNumber, sprintf('%s%s', $paymentId, $uniqueId));
 
             // Test only, set status response manually.
             // $pulsaPurchase->setStatus(609);
