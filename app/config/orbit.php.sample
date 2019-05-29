@@ -6160,6 +6160,16 @@ return array(
             // same pulsa code with same phone number. In minutes.
             'interval_before_next_purchase' => 60,
         ],
+
+        // Google Measurement Protocol
+        'google_measurement' => [
+            // Set to true for production
+            'is_enabled' => false,
+            // MCash base uri
+            'base_uri' => 'www.google-analytics.com',
+            // tracking ID (eg: UA-XXXXX-1)
+            'tid' => '',
+        ],
     ],
 
     // Config related to transaction.
