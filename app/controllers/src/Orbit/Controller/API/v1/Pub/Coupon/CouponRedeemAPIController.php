@@ -36,6 +36,8 @@ use \App;
 use \Exception;
 use \UserVerificationNumber;
 use Orbit\Helper\Payment\Payment as PaymentClient;
+use Event;
+use Log;
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
 
 class CouponRedeemAPIController extends PubControllerAPI
@@ -252,6 +254,7 @@ class CouponRedeemAPIController extends PubControllerAPI
                 $errorMessage = 'Transaction Failed';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+            $this->response->payment = 'success payment';
 
             $mall = App::make('orbit.empty.merchant');
 
@@ -286,6 +289,8 @@ class CouponRedeemAPIController extends PubControllerAPI
                     ->setModuleName('Coupon')
                     ->responseOK();
 
+            Log::info('orbit.redeem.coupon.success coupon redeem');
+            Event::fire('orbit.redeem.coupon.success', [$user, $body]);
         } catch (Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException $e) {
             GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Redeem Coupon Failed', 'ec' => 'Coupon', 'el' => isset($coupon->promotion_name) ? $coupon->promotion_name : 'Unknown Coupon'])->request();
 

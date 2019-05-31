@@ -231,3 +231,19 @@ Route::get('/api/v1/pub/user-reward', function()
 {
     return Orbit\Controller\API\v1\Pub\UserRewardAPIController::create()->getUserReward();
 });
+
+/**
+ * Route for list of user reward / promotion event
+ */
+Route::get('/api/v1/pub/user-profile/review', function()
+{
+    return Orbit\Controller\API\v1\Pub\UserProfile\ProfileReviewListAPIController::create()->getReviewList();
+});
+
+/**
+ * Route for list of user reward / promotion event
+ */
+Route::get('/api/v1/pub/user-profile/follow', function()
+{
+    return Orbit\Controller\API\v1\Pub\UserProfile\ProfileFollowListAPIController::create()->getFollowList();
+});
