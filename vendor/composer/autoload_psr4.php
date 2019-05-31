@@ -8,6 +8,8 @@ $baseDir = dirname($vendorDir);
 return array(
     'React\\Promise\\' => array($vendorDir . '/react/promise/src'),
     'Psr\\Http\\Message\\' => array($vendorDir . '/psr/http-message/src'),
+    'Orbit\\Models\\' => array($baseDir . '/app/models'),
+    'Orbit\\Events\\' => array($baseDir . '/app/events'),
     'Monolog\\' => array($vendorDir . '/monolog/monolog/src/Monolog'),
     'JmesPath\\' => array($vendorDir . '/mtdowling/jmespath.php/src'),
     'Intervention\\Image\\' => array($vendorDir . '/intervention/image/src/Intervention/Image'),

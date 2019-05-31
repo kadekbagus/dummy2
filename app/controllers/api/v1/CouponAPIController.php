@@ -3953,7 +3953,7 @@ class CouponAPIController extends ControllerAPI
                 $activity->save();
             }
 
-            Event::fire('orbit.coupon.postissuedcoupon.after.commit', array($this, $issuedcoupon));
+            Event::fire('orbit.coupon.postissuedcoupon.after.commit', array($this, $issuedcoupon, $user, $body));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.coupon.redeemcoupon.access.forbidden', array($this, $e));
 

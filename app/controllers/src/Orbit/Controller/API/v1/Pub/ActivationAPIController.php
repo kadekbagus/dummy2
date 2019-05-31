@@ -27,6 +27,7 @@ use Mall;
 use Hash;
 use \Orbit\Helper\Exception\OrbitCustomException;
 use Carbon\Carbon;
+use Event;
 
 class ActivationAPIController extends IntermediateBaseController
 {
@@ -170,13 +171,14 @@ class ActivationAPIController extends IntermediateBaseController
             if (is_object($location)) {
                 $activity->setLocation($location);
             }
-
             $activity->setUser($user)
                      ->setActivityName('activation_ok')
                      ->setActivityNameLong($activityNameLong)
                      ->setModuleName('Application')
                      ->responseOK()
                      ->save();
+
+            Event::fire('orbit.user.activation.success', $user);
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
@@ -223,7 +225,6 @@ class ActivationAPIController extends IntermediateBaseController
         $this->saveAsAuto = TRUE;
         $this->user = $user;
         $this->socialFrom = $from;
-
         return $this;
     }
 
