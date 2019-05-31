@@ -163,6 +163,17 @@ class ArticleDetailAPIController extends PubControllerAPI
                                                         AND {$prefix}media.object_id = {$prefix}news_translations.news_translation_id)
                                                     END AS original_media_path
                                                 "),
+                                                DB::raw("
+                                                    CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                                                            THEN {$prefix}campaign_status.campaign_status_name
+                                                            ELSE (CASE WHEN {$prefix}news.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                                                                                        FROM {$prefix}news_merchant onm
+                                                                                                            LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                                                                                            LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                                                                            LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                                                                                        WHERE onm.news_id = {$prefix}news.news_id)
+                                                    THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status
+                                                "),
                                                 'news.object_type',
                                                 'news.end_date',
                                                 'news.is_exclusive',
@@ -185,12 +196,18 @@ class ArticleDetailAPIController extends PubControllerAPI
                                             })
                                             ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                                             ->where('article_link_to_objects.object_type', 'news')
-                                            ->where('article_id',$articleId)
+                                            ->where('article_id', $articleId)
                                             ->groupBy('news.news_id')
                                             ->orderBy('news.news_name', 'asc')
                                             ->get();
 
-            $article['object_news'] = $objectNews;
+            $linkedNewss = [];
+            foreach ($objectNews as $linkedNews) {
+                if ($linkedNews->campaign_status == 'ongoing') {
+                    $linkedNewss[] = $linkedNews;
+                }
+            }
+            $article['object_news'] = $linkedNewss;
 
 
             $objectPromotion = ArticleLinkToObject::select(
@@ -213,6 +230,17 @@ class ArticleDetailAPIController extends PubControllerAPI
                                                         AND {$prefix}media.object_id = {$prefix}news_translations.news_translation_id)
                                                     END AS original_media_path
                                                 "),
+                                                DB::raw("
+                                                    CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                                                            THEN {$prefix}campaign_status.campaign_status_name
+                                                            ELSE (CASE WHEN {$prefix}news.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                                                                                        FROM {$prefix}news_merchant onm
+                                                                                                            LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                                                                                            LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                                                                            LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                                                                                        WHERE onm.news_id = {$prefix}news.news_id)
+                                                    THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status
+                                                "),
                                                 'news.object_type',
                                                 'news.end_date',
                                                 'news.is_exclusive',
@@ -234,12 +262,18 @@ class ArticleDetailAPIController extends PubControllerAPI
                                             })
                                             ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                                             ->where('article_link_to_objects.object_type', 'promotion')
-                                            ->where('article_id',$articleId)
+                                            ->where('article_id', $articleId)
                                             ->groupBy('news.news_id')
                                             ->orderBy('news.news_name', 'asc')
                                             ->get();
 
-            $article['object_promotion'] = $objectPromotion;
+            $linkedPromotions = [];
+            foreach ($objectPromotion as $linkedPromotion) {
+                if ($linkedPromotion->campaign_status == 'ongoing') {
+                    $linkedPromotions[] = $linkedPromotion;
+                }
+            }
+            $article['object_promotion'] = $linkedPromotions;
 
 
             $objectCoupon = ArticleLinkToObject::select(
@@ -262,6 +296,18 @@ class ArticleDetailAPIController extends PubControllerAPI
                                                         AND {$prefix}media.object_id = {$prefix}coupon_translations.coupon_translation_id)
                                                     END AS original_media_path
                                                 "),
+                                                // query for get status active based on timezone
+                                                DB::raw("
+                                                    CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                                                            THEN {$prefix}campaign_status.campaign_status_name
+                                                            ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                                                                                        FROM {$prefix}promotion_retailer opr
+                                                                                                            LEFT JOIN {$prefix}merchants om ON om.merchant_id = opr.retailer_id
+                                                                                                            LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                                                                            LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                                                                                        WHERE opr.promotion_id = {$prefix}promotions.promotion_id)
+                                                    THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status
+                                                "),
                                                 'promotions.end_date',
                                                 DB::raw("default_translation.promotion_name as default_name")
                                             )
@@ -279,12 +325,19 @@ class ArticleDetailAPIController extends PubControllerAPI
                                             })
                                             ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                                             ->where('article_link_to_objects.object_type', 'coupon')
-                                            ->where('article_id',$articleId)
+                                            ->where('article_id', $articleId)
                                             ->groupBy('promotions.promotion_id')
                                             ->orderBy('promotions.promotion_name', 'asc')
                                             ->get();
 
-            $article['object_coupon'] = $objectCoupon;
+            $linkedCoupons = [];
+            foreach ($objectCoupon as $linkedCoupon) {
+                if ($linkedCoupon->campaign_status == 'ongoing') {
+                    $linkedCoupons[] = $linkedCoupon;
+                }
+            }
+
+            $article['object_coupon'] = $linkedCoupons;
 
 
             $objectMall = ArticleLinkToObject::select(
@@ -396,6 +449,7 @@ class ArticleDetailAPIController extends PubControllerAPI
 
             $cities = ArticleCity::select('mall_cities.mall_city_id', 'mall_cities.city')
                                             ->join('mall_cities', 'mall_cities.mall_city_id', '=', 'article_cities.mall_city_id')
+                                            ->groupBy('mall_cities.mall_city_id')
                                             ->get();
 
             $article['cities'] = $cities;

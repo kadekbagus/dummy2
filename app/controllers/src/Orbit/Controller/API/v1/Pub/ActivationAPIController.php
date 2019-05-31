@@ -225,7 +225,6 @@ class ActivationAPIController extends IntermediateBaseController
         $this->saveAsAuto = TRUE;
         $this->user = $user;
         $this->socialFrom = $from;
-
         return $this;
     }
 

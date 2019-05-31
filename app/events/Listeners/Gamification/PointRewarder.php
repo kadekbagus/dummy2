@@ -6,32 +6,38 @@ use User;
 use Orbit\Models\Gamification\UserVariable;
 use Orbit\Models\Gamification\Variable;
 use Orbit\Models\Gamification\UserGameEvent;
-use DateTime;
-use Log;
 
 /**
  * Helper class that reward user with game points
  *
  * @author zamroni <zamroni@dominopos.com>
  */
-class PointRewarder
+class PointRewarder implements PointRewarderInterface
 {
     /**
      * gamification variable name
      * @var string
      */
-    private $varName;
+    private $internalVarName;
 
-    public function __construct($varName)
+    public function __construct($inVarName)
     {
-        $this->varName = $varName;
+        $this->internalVarName = $inVarName;
+    }
+
+    /**
+     * get current gamification variable name
+     * @return string current variable name
+     */
+    public function varName()
+    {
+        return $this->internalVarName;
     }
 
     private function updateUserVariable($user, $gamificationVar)
     {
         $userVar = UserVariable::where('variable_id', $gamificationVar->variable_id)
             ->where('user_id', $user->user_id)
-            ->limit(1)
             ->first();
 
         if (! $userVar) {
@@ -99,12 +105,16 @@ class PointRewarder
      */
     public function __invoke(User $user, $data = null)
     {
-        $gamificationVar = Variable::where('variable_slug', $this->varName)
-            ->limit(1)
-            ->first();
-        DB::transaction(function() use ($user, $gamificationVar, $data) {
-            $this->updateUserVariable($user, $gamificationVar);
-            $this->updateUserGameEvent($user, $gamificationVar, $data);
-        });
+        //sometime $user instance does not contains total_game_points field
+        //here we query database to make sure that we have total_game_points field
+        $usr = User::findOrFail($user->user_id);
+        $gamificationVar = Variable::where('variable_slug', $this->varName())->first();
+
+        if ($gamificationVar) {
+            DB::transaction(function() use ($usr, $gamificationVar, $data) {
+                $this->updateUserVariable($usr, $gamificationVar);
+                $this->updateUserGameEvent($usr, $gamificationVar, $data);
+            });
+        }
     }
 }
