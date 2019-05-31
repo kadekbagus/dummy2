@@ -40,7 +40,7 @@ class GetPulsaQueue
      * Delay before we trigger another MCash Purchase (in minutes).
      * @var integer
      */
-    protected $retryDelay = 0.3;
+    protected $retryDelay = 3;
 
     /**
      * Maximum number of retry we would do if the first time was failed.
