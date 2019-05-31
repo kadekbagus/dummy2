@@ -40,7 +40,13 @@ class GetPulsaQueue
      * Delay before we trigger another MCash Purchase (in minutes).
      * @var integer
      */
-    protected $retryDelay = 3;
+    protected $retryDelay = 0.3;
+
+    /**
+     * Maximum number of retry we would do if the first time was failed.
+     * @var integer
+     */
+    protected $maxRetry = 10;
 
     /**
      * Issue hot deals coupon.
@@ -54,6 +60,7 @@ class GetPulsaQueue
         $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
         $mallId = isset($data['mall_id']) ? $data['mall_id'] : null;
         $mall = Mall::where('merchant_id', $mallId)->first();
+        $shouldRetry = false;
         if (! isset($data['retry'])) {
             $data['retry'] = 0;
         }
@@ -111,6 +118,48 @@ class GetPulsaQueue
 
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Successful', 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
 
+                Log::info("Pulsa: PulsaPurchase Data" . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
+                Log::info("Pulsa: PulsaPurchase Response: " . serialize($pulsaPurchase));
+            }
+            else if ($pulsaPurchase->isPending()) {
+                Log::info("Pulsa: Pulsa purchase is PENDING for payment {$paymentId}.");
+                Log::info("Pulsa: PulsaPurchase Data " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
+                Log::info("Pulsa: PulsaPurchase Response " . serialize($pulsaPurchase));
+
+                $payment->status = PaymentTransaction::STATUS_SUCCESS;
+
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Successful', 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
+            }
+            else if ($pulsaPurchase->shouldRetry($data['retry'], $this->maxRetry)) {
+                $shouldRetry = true;
+
+                Log::info("Pulsa: Purchase failed and will be retried in a moment.");
+                Log::info("Pulsa: PulsaPurchase Data " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
+                Log::info("Pulsa: PulsaPurchase Response: " . serialize($pulsaPurchase));
+
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Retry ' . $data['retry'], 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
+
+                throw new Exception("Pulsa will be retried.", 1);
+            }
+            else if ($data['retry'] === $this->maxRetry) {
+                Log::info("Pulsa: PulsaPurchase Data" . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
+                Log::info("Pulsa: PulsaPurchase Response: " . serialize($pulsaPurchase));
+                throw new Exception("Pulsa purchase is FAILED, MAX RETRY REACHED ({$data['retry']}).");
+            }
+            else {
+                Log::info("Pulsa: Pulsa purchase is FAILED for payment {$paymentId}. Unknown status from MCash.");
+                Log::info("Pulsa: PulsaPurchase Data: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
+                Log::info("Pulsa: PulsaPurchase Response: " . serialize($pulsaPurchase));
+                $shouldRetry = true;
+                throw new Exception("Pulsa purchase is FAILED, unknown status from MCASH (STATUS CODE: {$pulsaPurchase->getCode()}).");
+            }
+
+            $payment->save();
+
+            // Commit the changes ASAP.
+            DB::connection()->commit();
+
+            if ($pulsaPurchase->isSuccess()) {
                 $activity->setActivityNameLong('Transaction is Successful')
                         ->setModuleName('Midtrans Transaction')
                         ->setObject($payment)
@@ -119,59 +168,7 @@ class GetPulsaQueue
                         ->setLocation($mall)
                         ->responseOK()
                         ->save();
-
-                Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
-                Log::info("Purchase response: " . serialize($pulsaPurchase));
             }
-            else if ($pulsaPurchase->isPending()) {
-                Log::info("Pulsa: Pulsa purchase is PENDING for payment {$paymentId}.");
-                Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
-                Log::info("Purchase response: " . serialize($pulsaPurchase));
-
-                $payment->status = PaymentTransaction::STATUS_SUCCESS;
-
-                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Successful', 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
-            }
-            else if ($pulsaPurchase->shouldRetry($data['retry'])) {
-                $data['retry']++;
-
-                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Retry ' . $data['retry'], 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
-
-                Log::info("Retry #{$data['retry']} for Pulsa Purchase will be run in {$this->retryDelay} minutes...");
-                Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
-                Log::info("Purchase response: " . serialize($pulsaPurchase));
-
-                // Retry purchase in a few minutes...
-                $this->retryDelay = $this->retryDelay * 60; // seconds
-                Queue::later(
-                    $this->retryDelay,
-                    'Orbit\\Queue\\Pulsa\\GetPulsaQueue',
-                    $data
-                );
-
-                // Send notification each time we do retry...
-                foreach($adminEmails as $email) {
-                    $admin              = new User;
-                    $admin->email       = $email;
-                    $admin->notify(new PulsaRetryNotification($payment, $pulsaPurchase->getMessage()));
-                }
-            }
-            else if ($pulsaPurchase->maxRetryReached($data['retry'])) {
-                Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
-                Log::info("Purchase response: " . serialize($pulsaPurchase));
-                throw new Exception("Pulsa purchase is FAILED, MAX RETRY REACHED ({$data['retry']}).");
-            }
-            else {
-                Log::info("Pulsa: Pulsa purchase is FAILED for payment {$paymentId}. Unknown status from MCash.");
-                Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
-                Log::info("Purchase response: " . serialize($pulsaPurchase));
-                throw new Exception("Pulsa purchase is FAILED, unknown status from MCASH.");
-            }
-
-            $payment->save();
-
-            // Commit the changes ASAP.
-            DB::connection()->commit();
 
             // Send notification to admin if pulsa purchase is pending.
             if ($pulsaPurchase->isPending()) {
@@ -186,44 +183,69 @@ class GetPulsaQueue
 
             // Mark as failed if we get any exception.
             if (! empty($payment)) {
-                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED;
-                $payment->save();
 
-                DB::connection()->commit();
+                if ($shouldRetry && $data['retry'] < $this->maxRetry) {
+                    $data['retry']++;
 
-                // Notify admin for this failure.
-                foreach($adminEmails as $email) {
-                    $admin              = new User;
-                    $admin->email       = $email;
-                    $admin->notify(new PulsaNotAvailableNotification($payment, $e->getMessage()));
+                    // Retry purchase in a few minutes...
+                    $retryDelay = $this->retryDelay * 60; // seconds
+                    Queue::later(
+                        $retryDelay,
+                        'Orbit\\Queue\\Pulsa\\GetPulsaQueue',
+                        $data
+                    );
+
+                    Log::info("Pulsa: Retry #{$data['retry']} for Pulsa Purchase will be run in {$this->retryDelay} minutes...");
+
+                    // Send notification each time we do retry...
+                    foreach($adminEmails as $email) {
+                        $admin              = new User;
+                        $admin->email       = $email;
+                        $admin->notify(new PulsaRetryNotification($payment, $pulsaPurchase->getMessage()));
+                    }
+
+                    DB::connection()->rollBack();
                 }
+                else {
+                    $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED;
+                    $payment->save();
 
-                // Notify customer that coupon is not available.
-                $payment->user->notify(new CustomerPulsaNotAvailableNotification($payment));
+                    DB::connection()->commit();
 
-                $notes = $phoneNumber . ' ---- ' . $e->getMessage();
+                    // Notify admin for this failure.
+                    foreach($adminEmails as $email) {
+                        $admin              = new User;
+                        $admin->email       = $email;
+                        $admin->notify(new PulsaNotAvailableNotification($payment, $e->getMessage()));
+                    }
 
-                $paymentDetail = $payment->details->first();
-                $pulsa = isset($paymentDetail->pulsa) ? $paymentDetail->pulsa : null;
-                $pulsaName = ! empty($pulsa) ? $pulsa->pulsa_display_name : '-';
+                    // Notify customer that coupon is not available.
+                    $payment->user->notify(new CustomerPulsaNotAvailableNotification($payment));
 
-                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Failed', 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
+                    $notes = $phoneNumber . ' ---- ' . $e->getMessage();
 
-                $activity->setActivityNameLong('Transaction is Success - Failed Getting Pulsa')
-                         ->setModuleName('Midtrans Transaction')
-                         ->setObject($payment)
-                         ->setObjectDisplayName($pulsaName)
-                         ->setNotes($notes)
-                         ->setLocation($mall)
-                         ->responseFailed()
-                         ->save();
+                    $paymentDetail = $payment->details->first();
+                    $pulsa = isset($paymentDetail->pulsa) ? $paymentDetail->pulsa : null;
+                    $pulsaName = ! empty($pulsa) ? $pulsa->pulsa_display_name : '-';
+
+                    GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Failed', 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
+
+                    $activity->setActivityNameLong('Transaction is Success - Failed Getting Pulsa')
+                             ->setModuleName('Midtrans Transaction')
+                             ->setObject($payment)
+                             ->setObjectDisplayName($pulsaName)
+                             ->setNotes($notes)
+                             ->setLocation($mall)
+                             ->responseFailed()
+                             ->save();
+                }
             }
             else {
                 DB::connection()->rollBack();
             }
 
-            Log::info(sprintf('Pulsa: Get Pulsa exception: %s:%s, %s', $e->getFile(), $e->getLine(), $e->getMessage()));
-            Log::info('Pulsa: ' . serialize($data));
+            Log::info(sprintf('Pulsa: Queue exception: %s:%s, %s', $e->getFile(), $e->getLine(), $e->getMessage()));
+            Log::info('Pulsa: Queue Data ' . serialize($data));
         }
 
         $job->delete();
