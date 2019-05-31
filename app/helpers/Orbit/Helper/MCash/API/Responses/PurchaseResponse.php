@@ -20,12 +20,6 @@ class PurchaseResponse
      */
     protected $retryStatus = [609, 413];
 
-    /**
-     * Maximum number of retry we would do if the first time was failed.
-     * @var integer
-     */
-    protected $maxRetry = 10;
-
     function __construct($object = null)
     {
         if (is_object($object)) {
@@ -75,22 +69,11 @@ class PurchaseResponse
      * @param  [type] $retry [description]
      * @return [type]        [description]
      */
-    public function shouldRetry($retry = 1)
+    public function shouldRetry($retry = 1, $maxRetry = 30)
     {
         return ! empty($this->data)
                && in_array($this->data->status, $this->retryStatus)
-               && $retry < $this->maxRetry;
-    }
-
-    /**
-     * Determine if we has reached the maximum number of retry allowed.
-     *
-     * @param  integer $retry [description]
-     * @return [type]         [description]
-     */
-    public function maxRetryReached($retry = 1)
-    {
-        return $retry === $this->maxRetry;
+               && $retry < $maxRetry;
     }
 
     /**
@@ -102,6 +85,16 @@ class PurchaseResponse
     public function isExpired()
     {
         return stripos($this->message, 'expired') !== false;
+    }
+
+    /**
+     * Get purchase response status.
+     *
+     * @return [type] [description]
+     */
+    public function getCode()
+    {
+        return ! empty($this->data) ? $this->data->status : $this->code;
     }
 
     /**
