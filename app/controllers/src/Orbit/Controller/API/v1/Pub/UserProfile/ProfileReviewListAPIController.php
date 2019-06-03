@@ -98,6 +98,21 @@ class ProfileReviewListAPIController extends PubControllerAPI
             //     ACL::throwAccessForbidden($message);
             // }
 
+            $profile = User::select(
+                            'user_id',
+                            DB::raw("CONCAT(user_firstname, ' ', user_lastname) as name")
+                        )
+                        ->join('roles', 'users.user_role_id', '=', 'roles.role_id')
+                        ->where('roles.role_name', 'Consumer')
+                        ->where('status', 'active')
+                        ->where('user_id', $userId)
+                        ->first();
+
+            if (empty($profile)) {
+                $errorMessage = "USER_NOT_FOUND";
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             $prefix = DB::getTablePrefix();
 
             $queryString = [
@@ -338,6 +353,7 @@ class ProfileReviewListAPIController extends PubControllerAPI
             }
 
             $data = new \stdclass();
+            $data->user_name = $profile->name;
             $data->returned_records = $listOfRec->returned_records;
             $data->total_records = $listOfRec->total_records;
             $data->records = $listOfRec->records;
