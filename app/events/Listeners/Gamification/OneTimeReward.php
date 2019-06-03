@@ -22,16 +22,21 @@ class OneTimeReward extends DecoratorRewarder
      */
     public function __invoke(User $user, $data = null)
     {
+        //assignment is required for PHP < 7 to call __invoke() of a class
+        $giveReward = $this->pointRewarder;
+
         if (is_array($data)) {
             $data = (object) $data;
         }
 
-        //assignment is required for PHP < 7 to call __invoke() of a class
-        $giveReward = $this->pointRewarder;
+        $objectId = null;
+        $objectType = null;
 
-        if (empty($data) || !(isset($data->object_id) && isset($data->object_type))) {
+        if (!empty($data) && (isset($data->object_id) && isset($data->object_type))) {
             //no related data given, just give reward
-            $giveReward($user, $data);
+            //$giveReward($user, $data);
+            $objectId = $data->object_id;
+            $objectType = $data->object_type;
         }
 
         $gamificationVar = Variable::where('variable_slug', $this->varName())->first();
@@ -39,8 +44,8 @@ class OneTimeReward extends DecoratorRewarder
         if ($gamificationVar) {
             $rewardHistory = UserGameEvent::where('variable_id', $gamificationVar->variable_id)
             ->where('user_id', $user->user_id)
-            ->where('object_id', $data->object_id)
-            ->where('object_type', $data->object_type)
+            ->where('object_id', $objectId)
+            ->where('object_type', $objectType)
             ->first();
         }
 
