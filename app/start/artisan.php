@@ -318,3 +318,6 @@ Artisan::add(new GetListBaseStoreCommand);
 
 // Create mall cs employee with verification code
 Artisan::add(new CreateUserMallCSCommand);
+
+// Give signup point to all active user
+Artisan::add(new UserSignUpPointCommand);
