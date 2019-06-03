@@ -53,6 +53,21 @@ class PhotosAPIController extends PubControllerAPI
             $prefix = DB::getTablePrefix();
             $profile = null;
 
+            $profile = User::select(
+                            'user_id',
+                            DB::raw("CONCAT(user_firstname, ' ', user_lastname) as name")
+                        )
+                        ->join('roles', 'users.user_role_id', '=', 'roles.role_id')
+                        ->where('roles.role_name', 'Consumer')
+                        ->where('status', 'active')
+                        ->where('user_id', $beingViewedUserId)
+                        ->first();
+
+            if (empty($profile)) {
+                $errorMessage = "USER_NOT_FOUND";
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             // Get from cache...
             if ($fromCache === 'Y') {
                 $profile = Cache::get("up_{$beingViewedUserId}", null);
@@ -63,6 +78,7 @@ class PhotosAPIController extends PubControllerAPI
             }
 
             $userPhotos = $profileHelper->getPhotos($beingViewedUserId);
+            $userPhotos['user_name'] = $profile->name;
 
             $this->response->data = $userPhotos;
 
