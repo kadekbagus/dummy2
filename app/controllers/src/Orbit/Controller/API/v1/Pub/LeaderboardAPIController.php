@@ -89,7 +89,9 @@ class LeaderboardAPIController extends PubControllerAPI
                     unset($userProfile->total_points);
                     unset($userProfile->number_of_purchases);
 
-                    $leaderboardData[] = $userProfile;
+                    if ($userProfile->status === 'active') {
+                        $leaderboardData[] = $userProfile;
+                    }
                 }
             }
 

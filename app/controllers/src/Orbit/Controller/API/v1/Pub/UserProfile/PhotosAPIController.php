@@ -59,7 +59,7 @@ class PhotosAPIController extends PubControllerAPI
                         )
                         ->join('roles', 'users.user_role_id', '=', 'roles.role_id')
                         ->where('roles.role_name', 'Consumer')
-                        ->where('status', 'active')
+                        ->whereIn('status', ['active', 'pending'])
                         ->where('user_id', $beingViewedUserId)
                         ->first();
 
