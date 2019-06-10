@@ -267,7 +267,8 @@ class ProfileHelper
                     'user_id',
                     DB::raw("CONCAT(user_firstname, ' ', user_lastname) as name"),
                     'total_game_points',
-                    'users.created_at'
+                    'users.created_at',
+                    'users.status'
                 )
                 ->with([
                     'userdetail' => function($userDetail) {
@@ -288,7 +289,7 @@ class ProfileHelper
                 ])
                 ->join('roles', 'users.user_role_id', '=', 'roles.role_id')
                 ->where('roles.role_name', 'Consumer')
-                ->where('status', 'active')
+                ->whereIn('status', ['active', 'pending'])
                 ->where('user_id', $userId)
                 ->first();
 
@@ -325,6 +326,7 @@ class ProfileHelper
                 'total_following' => 0,
                 'total_purchases' => $numberOfPurchases,
                 'picture' => $picture,
+                'status' => $user->status,
             ];
 
             // Get user-related-content total value..
