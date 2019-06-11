@@ -350,6 +350,7 @@ class ProfileReviewListAPIController extends PubControllerAPI
                     $rating->display_location = $getLocation;
                     $rating->total_reply = isset($rating->total_reply) ? $rating->total_reply : 0;
                     $rating->images = isset($rating->images) ? $rating->images : null;
+                    $rating->user_name = isset($profile->name) ? $profile->name : null;
                 }
             }
 
