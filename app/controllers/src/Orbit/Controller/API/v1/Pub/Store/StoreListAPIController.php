@@ -339,11 +339,6 @@ class StoreListAPIController extends PubControllerAPI
                 }
             });
 
-            // filter excluded_ids
-            OrbitInput::get('excluded_ids', function ($excludeId) use (&$jsonQuery, $countryFilter, &$countryCityFilterArr) {
-                $jsonQuery['query']['bool']['must_not'][] = array('terms' => ['merchant_id' => $excludeId]);
-            });
-
             if (! empty($countryCityFilterArr)) {
                 $jsonQuery['query']['bool']['filter'][] = $countryCityFilterArr;
             }

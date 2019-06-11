@@ -102,6 +102,14 @@ class UserAPIController extends PubControllerAPI
                 $updateUserDetail->gender = $gender;
             });
 
+            OrbitInput::post('about', function($about) use ($updateUserDetail) {
+                $updateUserDetail->about = $about;
+            });
+
+            OrbitInput::post('location', function($location) use ($updateUserDetail) {
+                $updateUserDetail->location = $location;
+            });
+
             $updateUserDetail->save();
 
             // Update session fullname and email

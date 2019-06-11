@@ -90,7 +90,6 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                 PaymentTransaction::STATUS_SUCCESS,
                 PaymentTransaction::STATUS_SUCCESS_NO_PULSA,
                 PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED,
-                PaymentTransaction::STATUS_SUCCESS_PULSA_PENDING,
                 PaymentTransaction::STATUS_EXPIRED,
                 PaymentTransaction::STATUS_FAILED,
                 PaymentTransaction::STATUS_DENIED,
@@ -101,7 +100,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
             // Assume status as success if it is success_no_coupon/success_no_coupon_failed,
             // because Midtrans and landing_page don't send those status. (They only know 'success')
             $tmpOldStatus = $oldStatus;
-            if (in_array($oldStatus, [PaymentTransaction::STATUS_SUCCESS_NO_PULSA, PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED, PaymentTransaction::STATUS_SUCCESS_PULSA_PENDING])) {
+            if (in_array($oldStatus, [PaymentTransaction::STATUS_SUCCESS_NO_PULSA, PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED])) {
                 $tmpOldStatus = PaymentTransaction::STATUS_SUCCESS;
             }
 

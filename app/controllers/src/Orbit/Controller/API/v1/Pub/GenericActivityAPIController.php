@@ -116,6 +116,7 @@ class GenericActivityAPIController extends PubControllerAPI
                             'paymentprovider' => 'PaymentProvider',
                             'paymenttransaction' => 'PaymentTransaction',
                             'partner' => 'Partner',
+                            'user'      => 'User',
                         ];
 
                         $className = array_key_exists(strtolower($objectString), $mapObjectType) ? $mapObjectType[strtolower($objectString)] : null;

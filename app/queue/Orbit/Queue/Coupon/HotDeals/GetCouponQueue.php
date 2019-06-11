@@ -20,6 +20,7 @@ use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
 use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification;
 use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
 
+use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
 
 /**
  * A job to get/issue Hot Deals Coupon after payment completed.
@@ -111,6 +112,8 @@ class GetCouponQueue
                 // Notify Customer.
                 $payment->user->notify(new ReceiptNotification($payment));
 
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Coupon Successful', 'ec' => 'Coupon', 'el' => $coupon->promotion_name])->request();
+
                 // Log Activity
                 $activity->setActivityNameLong('Transaction is Successful')
                         ->setModuleName('Midtrans Transaction')
@@ -132,6 +135,15 @@ class GetCouponQueue
                         ->setLocation($mall)
                         ->responseOK()
                         ->save();
+
+                $rewardObject = (object) [
+                    'object_id' => $coupon->promotion_id,
+                    'object_type' => 'coupon',
+                    'object_name' => $coupon->promotion_name,
+                    'country_id' => $payment->country_id,
+                ];
+
+                Event::fire('orbit.purchase.coupon.success', [$payment->user, $rewardObject]);
 
             }
             else {
@@ -159,6 +171,9 @@ class GetCouponQueue
 
                 // Notify customer that coupon is not available.
                 $payment->user->notify(new HotDealsCouponNotAvailableNotification($payment));
+
+                $objectName = $payment->details->first()->object_name;
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Coupon Failed', 'ec' => 'Coupon', 'el' => $objectName])->request();
 
                 $activity->setActivityNameLong('Transaction is Success - Failed Getting Coupon')
                          ->setModuleName('Midtrans Transaction')

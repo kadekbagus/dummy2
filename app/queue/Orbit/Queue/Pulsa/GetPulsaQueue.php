@@ -25,6 +25,8 @@ use Orbit\Notifications\Pulsa\PulsaPendingNotification;
 use Orbit\Notifications\Pulsa\CustomerPulsaPendingNotification;
 use Orbit\Notifications\Pulsa\PulsaRetryNotification;
 
+use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
+
 /**
  * A job to get/issue Hot Deals Coupon after payment completed.
  * At this point, we assume the payment was completed (paid) so anything wrong
@@ -84,7 +86,8 @@ class GetPulsaQueue
                 return;
             }
 
-            $pulsa = $payment->details->first()->pulsa;
+            $paymentDetail = $payment->details->first();
+            $pulsa = $paymentDetail->pulsa;
             $phoneNumber = $payment->extra_data;
             $pulsaName = $pulsa->pulsa_display_name;
 
@@ -92,7 +95,7 @@ class GetPulsaQueue
             $pulsaPurchase = Purchase::create()->doPurchase($pulsa->pulsa_code, $phoneNumber, $paymentId);
 
             // Test only, set status response manually.
-            // $pulsaPurchase->setStatus(609);
+            // $pulsaPurchase->setStatus(0);
 
             if ($pulsaPurchase->isSuccess()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
@@ -101,6 +104,8 @@ class GetPulsaQueue
 
                 // Notify Customer.
                 $payment->user->notify(new ReceiptNotification($payment));
+
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Successful', 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
 
                 $activity->setActivityNameLong('Transaction is Successful')
                         ->setModuleName('Midtrans Transaction')
@@ -115,25 +120,18 @@ class GetPulsaQueue
                 Log::info("Purchase response: " . serialize($pulsaPurchase));
             }
             else if ($pulsaPurchase->isPending()) {
-                $payment->status = PaymentTransaction::STATUS_SUCCESS_PULSA_PENDING;
-
-                $payment->user->notify(new CustomerPulsaPendingNotification($payment));
-
-                $activity->setActivityNameLong('Transaction is Successful - MCash Pulsa Pending')
-                        ->setModuleName('Midtrans Transaction')
-                        ->setObject($payment)
-                        ->setObjectDisplayName($pulsaName)
-                        ->setNotes($phoneNumber)
-                        ->setLocation($mall)
-                        ->responseOK()
-                        ->save();
-
-                Log::info("Pulsa: MCash Pulsa purchase is PENDING for payment {$paymentId}.");
+                Log::info("Pulsa: Pulsa purchase is PENDING for payment {$paymentId}.");
                 Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
                 Log::info("Purchase response: " . serialize($pulsaPurchase));
+
+                $payment->status = PaymentTransaction::STATUS_SUCCESS;
+
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Successful', 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
             }
             else if ($pulsaPurchase->shouldRetry($data['retry'])) {
                 $data['retry']++;
+
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Retry ' . $data['retry'], 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
 
                 Log::info("Retry #{$data['retry']} for Pulsa Purchase will be run in {$this->retryDelay} minutes...");
                 Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
@@ -180,6 +178,18 @@ class GetPulsaQueue
                 }
             }
 
+            // Increase point when the transaction is success.
+            if (in_array($payment->status, [PaymentTransaction::STATUS_SUCCESS])) {
+                $rewardObject = (object) [
+                    'object_id' => $pulsa->pulsa_item_id,
+                    'object_type' => 'pulsa',
+                    'object_name' => $pulsa->pulsa_display_name,
+                    'country_id' => $payment->country_id,
+                ];
+
+                Event::fire('orbit.purchase.pulsa.success', [$payment->user, $rewardObject]);
+            }
+
         } catch (Exception $e) {
 
             // Mark as failed if we get any exception.
@@ -200,6 +210,12 @@ class GetPulsaQueue
                 $payment->user->notify(new CustomerPulsaNotAvailableNotification($payment));
 
                 $notes = $phoneNumber . ' ---- ' . $e->getMessage();
+
+                $paymentDetail = $payment->details->first();
+                $pulsa = isset($paymentDetail->pulsa) ? $paymentDetail->pulsa : null;
+                $pulsaName = ! empty($pulsa) ? $pulsa->pulsa_display_name : '-';
+
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Failed', 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
 
                 $activity->setActivityNameLong('Transaction is Success - Failed Getting Pulsa')
                          ->setModuleName('Midtrans Transaction')
