@@ -76,7 +76,7 @@ class ProfileHelper
     {
         $endPoint = "reviews";
         if ($this->reviews === null) {
-            $this->reviews = $this->mongoClient->setQueryString(['user_id' => $userId])->setEndPoint($endPoint)->request('GET');
+            $this->reviews = $this->mongoClient->setQueryString(['user_id' => $userId, 'status' => 'active'])->setEndPoint($endPoint)->request('GET');
         }
 
         return $this->reviews;
@@ -127,7 +127,7 @@ class ProfileHelper
     private function getTotalReview($userId = null)
     {
         $endPoint = "reviews/{$userId}/count";
-        $response = $this->mongoClient->setEndPoint($endPoint)->request('GET');
+        $response = $this->mongoClient->setQueryString(['status' => 'active'])->setEndPoint($endPoint)->request('GET');
         $totalRecords = 0;
 
         if (isset($response->data) && ! empty($response->data)) {
