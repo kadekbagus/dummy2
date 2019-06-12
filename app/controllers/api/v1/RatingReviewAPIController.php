@@ -456,7 +456,6 @@ class RatingReviewAPIController extends ControllerAPI
                 if ($img[0]->approval_status === 'approved') {
                     return true;
                 }
-                Log::info('hasApprovedImages', [$img[0]]);
             }
         }
         return false;
