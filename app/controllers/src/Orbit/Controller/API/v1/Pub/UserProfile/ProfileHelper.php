@@ -76,7 +76,7 @@ class ProfileHelper
     {
         $endPoint = "reviews";
         if ($this->reviews === null) {
-            $this->reviews = $this->mongoClient->setQueryString(['user_id' => $userId])->setEndPoint($endPoint)->request('GET');
+            $this->reviews = $this->mongoClient->setQueryString(['user_id' => $userId, 'status' => 'active'])->setEndPoint($endPoint)->request('GET');
         }
 
         return $this->reviews;
