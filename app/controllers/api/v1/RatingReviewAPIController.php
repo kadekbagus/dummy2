@@ -452,10 +452,12 @@ class RatingReviewAPIController extends ControllerAPI
     private function hasApprovedImages($review)
     {
         if (! empty($review->images) && is_array($review->images)) {
-            return count(array_filter(function($img) {
-                Log::info('hasApprovedImages', $img);
-                return ($img->approval_status === 'approved');
-            }, $review->images)) > 0;
+            foreach ($review->images as $img) {
+                if ($img[0]->approval_status === 'approved') {
+                    return true;
+                }
+                Log::info('hasApprovedImages', [$img[0]]);
+            }
         }
         return false;
     }
