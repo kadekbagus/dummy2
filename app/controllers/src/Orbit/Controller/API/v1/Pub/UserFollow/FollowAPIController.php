@@ -97,19 +97,28 @@ class FollowAPIController extends PubControllerAPI
                                          ->setEndPoint('user-follows')
                                          ->request('GET');
 
+                    $mall = Mall::excludeDeleted('merchants')
+                                  ->where('merchant_id', '=', $object_id)
+                                  ->first();
+
+                    if (is_object($mall)) {
+                         $city = $mall->city;
+                         $country_id = $mall->country_id;
+                    }
+
+                    $gamificationData = (object) [
+                        'object_id' => $object_id,
+                        'object_type' => $object_type,
+                        'object_name' => $mall->name,
+                        'country_id' => $country_id,
+                        'city' => $city,
+                    ];
+
                     if (count($existingData->data->records) === 0) {
                         // follow
                         $city = null;
                         $country_id = null;
 
-                        $mall = Mall::excludeDeleted('merchants')
-                                     ->where('merchant_id', '=', $object_id)
-                                     ->first();
-
-                        if (is_object($mall)) {
-                            $city = $mall->city;
-                            $country_id = $mall->country_id;
-                        }
 
                         $dataInsert = [
                             'user_id'     => $user->user_id,
@@ -125,30 +134,14 @@ class FollowAPIController extends PubControllerAPI
                                                 ->setEndPoint('user-follows')
                                                 ->request('POST');
 
-                        // gamification
-                        $pointRewarded = UserGameEvent::where('user_id', '=', $user->user_id)
-                                                      ->where('object_id', '=', $object_id)
-                                                      ->where('object_type', '=', $object_type)
-                                                      ->where('city', '=', $city)
-                                                      ->where('country_id', '=', $country_id)
-                                                      ->first();
-                        // check if user already get point
-                        if (!$pointRewarded) {
-                            $rewardData = (object) [
-                                'object_id' => $object_id,
-                                'object_type' => $object_type,
-                                'object_name' => $mall->name,
-                                'country_id' => $country_id,
-                                'city' => $city,
-                            ];
-                            Event::fire('orbit.follow.postfollow.success', array($user, $rewardData));
-                        }
+                        Event::fire('orbit.follow.postfollow.success', array($user, $gamificationData));
 
                     } else {
                         // unfollow
                         $id = $existingData->data->records[0]->_id;
                         $response = $mongoClient->setEndPoint("user-follows/$id")
                                                 ->request('DELETE');
+                        Event::fire('orbit.follow.postunfollow.success', array($user, $gamificationData));
                     }
 
                     break;

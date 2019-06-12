@@ -155,7 +155,22 @@ Event::listen(
     'orbit.follow.postfollow.success',
     //reward active user only
     new ActivatedUserRewarder(
-        new OneTimeReward(new PointRewarder('follow'))
+        new PointRewarder('follow')
+    )
+);
+
+/**
+ * Listen on:    `orbit.follow.postunfollow.success`
+ * Purpose:      Reduce user game point when user successfully unfollow store or mall
+ *
+ * @param User $user - Instance of activated user
+ * @param mixed $data - additional related data about store or mall
+ */
+Event::listen(
+    'orbit.follow.postunfollow.success',
+    //reward active user only
+    new ActivatedUserRewarder(
+        new PointRewarder('unfollow')
     )
 );
 
