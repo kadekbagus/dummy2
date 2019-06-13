@@ -30,6 +30,7 @@ use News;
 use Mall;
 use Coupon;
 use Orbit\Controller\API\v1\Pub\UserProfile\UserProfileHelper;
+use App;
 
 class ProfileReviewListAPIController extends PubControllerAPI
 {
