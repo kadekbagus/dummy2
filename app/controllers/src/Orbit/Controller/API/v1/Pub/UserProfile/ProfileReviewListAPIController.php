@@ -170,6 +170,8 @@ class ProfileReviewListAPIController extends PubControllerAPI
                     $image = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
                 }
 
+                $at = Lang::get('label.conjuction.at');
+
                 foreach ($listOfRec->records as $rating) {
                     $getName = null;
                     $getImage = null;
@@ -203,8 +205,7 @@ class ProfileReviewListAPIController extends PubControllerAPI
                             $getName = $store->display_name;
                             $getImage = $store->cdn_url;
                             if (isset($rating->store_name) && isset($rating->mall_name)) {
-                                $at = Lang::get('label.conjuction.at');
-                                $getLocation = $rating->store_name." $at ".$rating->mall_name;
+                                $getLocation = $rating->store_name . " $at " . $rating->mall_name;
                             }
 
                             break;
@@ -248,7 +249,7 @@ class ProfileReviewListAPIController extends PubControllerAPI
                             $getName = $promotion->news_name;
                             $getImage = $promotion->cdn_url;
                             if (isset($rating->store_name) && isset($rating->mall_name)) {
-                                $getLocation = $rating->store_name.' at '.$rating->mall_name;
+                                $getLocation = $rating->store_name . " $at " . $rating->mall_name;
                             }
 
                             break;
@@ -292,7 +293,7 @@ class ProfileReviewListAPIController extends PubControllerAPI
                             $getName = $news->news_name;
                             $getImage = $news->cdn_url;
                             if (isset($rating->store_name) && isset($rating->mall_name)) {
-                                $getLocation = $rating->store_name.' at '.$rating->mall_name;
+                                $getLocation = $rating->store_name . " $at " . $rating->mall_name;
                             }
 
                             break;
@@ -342,7 +343,7 @@ class ProfileReviewListAPIController extends PubControllerAPI
                             $getName = $coupon->promotion_name;
                             $getImage = $coupon->cdn_url;
                             if (isset($rating->store_name) && isset($rating->mall_name)) {
-                                $getLocation = $rating->store_name.' at '.$rating->mall_name;
+                                $getLocation = $rating->store_name . " $at " . $rating->mall_name;
                             }
                             break;
                     }
