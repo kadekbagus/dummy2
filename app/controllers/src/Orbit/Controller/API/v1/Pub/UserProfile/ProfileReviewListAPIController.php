@@ -68,6 +68,7 @@ class ProfileReviewListAPIController extends PubControllerAPI
             $mallId = OrbitInput::get('mall_id', null);
             $userId = OrbitInput::get('user_id', null);
             $language = OrbitInput::get('language', 'id');
+            App::setLocale($language);
             $session = SessionPreparer::prepareSession();
 
             $profileHelper = ProfileHelper::create();
