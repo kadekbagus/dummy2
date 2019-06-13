@@ -170,7 +170,7 @@ class ProfileReviewListAPIController extends PubControllerAPI
                     $image = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
                 }
 
-                $at = Lang::get('label.conjuction.at');
+                $at = Lang::get('label.conjunction.at');
 
                 foreach ($listOfRec->records as $rating) {
                     $getName = null;
