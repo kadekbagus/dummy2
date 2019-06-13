@@ -15,7 +15,7 @@ use DominoPOS\OrbitUploader\Uploader as OrbitUploader;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\OneSignal\OneSignal;
 use Orbit\Helper\MongoDB\Client as MongoClient;
-
+use Log;
 use Orbit\Notifications\RatingReview\RatingReviewRejectedNotification;
 
 class RatingReviewAPIController extends ControllerAPI
@@ -452,9 +452,11 @@ class RatingReviewAPIController extends ControllerAPI
     private function hasApprovedImages($review)
     {
         if (! empty($review->images) && is_array($review->images)) {
-            return count(array_filter(function($img) {
-                return ($img[0]->approval_status === 'approved');
-            }, $review->images)) > 0;
+            foreach ($review->images as $img) {
+                if ($img[0]->approval_status === 'approved') {
+                    return true;
+                }
+            }
         }
         return false;
     }
