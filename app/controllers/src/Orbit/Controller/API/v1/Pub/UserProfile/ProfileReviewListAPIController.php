@@ -14,6 +14,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \DB;
 use \URL;
+use Lang;
 use Language;
 use User;
 use Validator;
@@ -202,7 +203,8 @@ class ProfileReviewListAPIController extends PubControllerAPI
                             $getName = $store->display_name;
                             $getImage = $store->cdn_url;
                             if (isset($rating->store_name) && isset($rating->mall_name)) {
-                                $getLocation = $rating->store_name.' at '.$rating->mall_name;
+                                $at = Lang::get('label.conjuction.at');
+                                $getLocation = $rating->store_name." $at ".$rating->mall_name;
                             }
 
                             break;
