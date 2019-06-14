@@ -46,10 +46,9 @@ class UserSignUpPointCommand extends Command {
                 $users = User::select('users.user_id','users.username')
                                ->leftJoin('roles', 'roles.role_id', '=', 'users.user_role_id')
                                ->leftJoin('user_game_events', 'user_game_events.user_id', '=', 'users.user_id')
-                               ->leftJoin('variables', 'variables.variable_id', '=', 'user_game_events.variable_id')
                                ->where('users.status', '=', 'active')
                                ->where('roles.role_name', '=', 'Consumer')
-                               ->where('variables.variable_slug', '!=', 'sign_up')
+                               ->whereNull('user_game_events.user_id')
                                ->skip($skip)
                                ->take($take)
                                ->get();
@@ -57,7 +56,7 @@ class UserSignUpPointCommand extends Command {
                 $skip = $take + $skip;
 
                 foreach ($users as $key => $val) {
-                    $user = User::with('role')->where('user_id', '=', $val->user_id)->first();
+                    $user = User::find($val->user_id);
                     Event::fire('orbit.user.activation.success', $user);
                     $this->info(sprintf('username "%s" user_id "%s" has been successfully get signup point', $val->username, $val->user_id));
                 }
