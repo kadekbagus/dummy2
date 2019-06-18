@@ -51,9 +51,9 @@ class ShareAPIController extends PubControllerAPI
                     'object_type'     => $objectType,
                 ],
                 [
-                    'service'     => 'alphanum',
-                    'object_id'     => 'alphanum',
-                    'object_type'     => 'alphanum',
+                    'service'     => 'alpha_num',
+                    'object_id'     => 'alpha_dash',
+                    'object_type'     => 'alpha_num',
                 ]
             );
 

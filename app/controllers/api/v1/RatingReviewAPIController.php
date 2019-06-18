@@ -15,7 +15,7 @@ use DominoPOS\OrbitUploader\Uploader as OrbitUploader;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\OneSignal\OneSignal;
 use Orbit\Helper\MongoDB\Client as MongoClient;
-
+use Log;
 use Orbit\Notifications\RatingReview\RatingReviewRejectedNotification;
 
 class RatingReviewAPIController extends ControllerAPI
@@ -446,6 +446,22 @@ class RatingReviewAPIController extends ControllerAPI
     }
 
     /**
+     * test if review has at least one image that has been approved
+     * @return boolean true if at least one image that has been approved
+     */
+    private function hasApprovedImages($review)
+    {
+        if (! empty($review->images) && is_array($review->images)) {
+            foreach ($review->images as $img) {
+                if ($img[0]->approval_status === 'approved') {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * POST - delete review
      * @author Firmansyah <firmansyah@dominopos.com>
      *
@@ -527,6 +543,11 @@ class RatingReviewAPIController extends ControllerAPI
             $this->response->message = 'Request Ok';
 
             Event::fire('orbit.rating.postrating.reject', [$reviewer, $body]);
+
+            if ($this->hasApprovedImages($getReview->data)) {
+                Event::fire('orbit.rating.postrating.rejectimage', [$reviewer, $body]);
+            }
+
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
