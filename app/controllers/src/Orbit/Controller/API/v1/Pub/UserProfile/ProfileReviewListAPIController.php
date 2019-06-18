@@ -14,6 +14,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \DB;
 use \URL;
+use Lang;
 use Language;
 use User;
 use Validator;
@@ -29,6 +30,7 @@ use News;
 use Mall;
 use Coupon;
 use Orbit\Controller\API\v1\Pub\UserProfile\UserProfileHelper;
+use App;
 
 class ProfileReviewListAPIController extends PubControllerAPI
 {
@@ -67,6 +69,7 @@ class ProfileReviewListAPIController extends PubControllerAPI
             $mallId = OrbitInput::get('mall_id', null);
             $userId = OrbitInput::get('user_id', null);
             $language = OrbitInput::get('language', 'id');
+            App::setLocale($language);
             $session = SessionPreparer::prepareSession();
 
             $profileHelper = ProfileHelper::create();
@@ -97,6 +100,21 @@ class ProfileReviewListAPIController extends PubControllerAPI
             //     $message = 'You must login to access this.';
             //     ACL::throwAccessForbidden($message);
             // }
+
+            $profile = User::select(
+                            'user_id',
+                            DB::raw("CONCAT(user_firstname, ' ', user_lastname) as name")
+                        )
+                        ->join('roles', 'users.user_role_id', '=', 'roles.role_id')
+                        ->where('roles.role_name', 'Consumer')
+                        ->whereIn('status', ['active', 'pending'])
+                        ->where('user_id', $userId)
+                        ->first();
+
+            if (empty($profile)) {
+                $errorMessage = "USER_NOT_FOUND";
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
 
             $prefix = DB::getTablePrefix();
 
@@ -154,6 +172,8 @@ class ProfileReviewListAPIController extends PubControllerAPI
                     $image = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
                 }
 
+                $at = Lang::get('label.conjunction.at');
+
                 foreach ($listOfRec->records as $rating) {
                     $getName = null;
                     $getImage = null;
@@ -187,7 +207,7 @@ class ProfileReviewListAPIController extends PubControllerAPI
                             $getName = $store->display_name;
                             $getImage = $store->cdn_url;
                             if (isset($rating->store_name) && isset($rating->mall_name)) {
-                                $getLocation = $rating->store_name.' at '.$rating->mall_name;
+                                $getLocation = $rating->store_name . " $at " . $rating->mall_name;
                             }
 
                             break;
@@ -231,7 +251,7 @@ class ProfileReviewListAPIController extends PubControllerAPI
                             $getName = $promotion->news_name;
                             $getImage = $promotion->cdn_url;
                             if (isset($rating->store_name) && isset($rating->mall_name)) {
-                                $getLocation = $rating->store_name.' at '.$rating->mall_name;
+                                $getLocation = $rating->store_name . " $at " . $rating->mall_name;
                             }
 
                             break;
@@ -275,7 +295,7 @@ class ProfileReviewListAPIController extends PubControllerAPI
                             $getName = $news->news_name;
                             $getImage = $news->cdn_url;
                             if (isset($rating->store_name) && isset($rating->mall_name)) {
-                                $getLocation = $rating->store_name.' at '.$rating->mall_name;
+                                $getLocation = $rating->store_name . " $at " . $rating->mall_name;
                             }
 
                             break;
@@ -325,7 +345,7 @@ class ProfileReviewListAPIController extends PubControllerAPI
                             $getName = $coupon->promotion_name;
                             $getImage = $coupon->cdn_url;
                             if (isset($rating->store_name) && isset($rating->mall_name)) {
-                                $getLocation = $rating->store_name.' at '.$rating->mall_name;
+                                $getLocation = $rating->store_name . " $at " . $rating->mall_name;
                             }
                             break;
                     }
@@ -334,10 +354,13 @@ class ProfileReviewListAPIController extends PubControllerAPI
                     $rating->display_image = $getImage;
                     $rating->display_location = $getLocation;
                     $rating->total_reply = isset($rating->total_reply) ? $rating->total_reply : 0;
+                    $rating->images = isset($rating->images) ? $rating->images : null;
+                    $rating->user_name = isset($profile->name) ? $profile->name : null;
                 }
             }
 
             $data = new \stdclass();
+            $data->user_name = $profile->name;
             $data->returned_records = $listOfRec->returned_records;
             $data->total_records = $listOfRec->total_records;
             $data->records = $listOfRec->records;

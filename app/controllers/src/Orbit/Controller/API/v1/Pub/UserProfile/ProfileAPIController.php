@@ -31,7 +31,7 @@ class ProfileAPIController extends PubControllerAPI
 {
     public function getUserProfile()
     {
-        $httpCode = 200;
+        $httpCode = 500;
         $this->response->data = null;
         $this->response->code = 0;
         $this->response->status = 'success';
@@ -67,8 +67,10 @@ class ProfileAPIController extends PubControllerAPI
             $profile = $profileHelper->getUserProfile($beingViewedUserId);
 
             if (empty($profile)) {
-                $errorMessage = 'USER_NOT_FOUND';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                $this->response->code = 404;
+                $this->response->message = 'USER_NOT_FOUND';
+                $this->response->status = 'error';
+                return $this->render(404);
             }
 
             // Store in cache
