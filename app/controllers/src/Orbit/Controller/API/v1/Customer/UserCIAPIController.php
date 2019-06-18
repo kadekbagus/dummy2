@@ -44,7 +44,7 @@ class UserCIAPIController extends BaseAPIController
             // otherwise UserDetail::getLocationAttribute() will be called
             // when we use $userdetail->location
             $userDetail = UserDetail
-                ::select('phone', 'gender', 'location AS user_loc', 'about')
+                ::select('phone', 'gender', 'location AS user_loc', 'about', 'birthdate')
                 ->where('user_id', $user->user_id)
                 ->first();
 
@@ -81,9 +81,7 @@ class UserCIAPIController extends BaseAPIController
             $data->image = $image;
             $data->phone = ! empty($userDetail) ? $userDetail->phone : null;
             $data->gender = ! empty($userDetail) ? $userDetail->gender : null;
-            $data->location = ! empty($userDetail) ? $userDetail->user_loc : null;
-            $data->about = ! empty($userDetail) ? $userDetail->about : null;
-            $data->birthdate = $userDetail->userdetail->birthdate;
+            $data->birthdate = ! empty($userDetail) ? $userDetail->birthdate : null;
 
             $this->response->data = $data;
             $this->response->code = 0;
