@@ -2333,5 +2333,14 @@ return array(
             'object_type' => 'User',
             'parameter_name' => 'object_id'
         ),
+        // Click User Setting
+        '254' => array(
+            'name' => 'click_user_setting',
+            'name_long' => 'Click User Setting',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'User',
+            'parameter_name' => 'object_id'
+        ),
     ),
 );
