@@ -43,9 +43,14 @@ class UserSignUpPointCommand extends Command {
             $skip = 0;
 
             $roleId = $this->option('consumer-role-id');
+            $variableId = $this->option('variable-id');
 
             if (empty($roleId)) {
                 throw new Exception("Consumer Role ID is required", 1);
+            }
+
+            if (empty($variableId)) {
+                throw new Exception("Variable ID is required", 1);
             }
 
             do {
@@ -53,7 +58,10 @@ class UserSignUpPointCommand extends Command {
                                ->leftJoin('user_game_events', 'user_game_events.user_id', '=', 'users.user_id')
                                ->where('users.status', '=', 'active')
                                ->where('users.user_role_id', '=', $roleId)
-                               ->whereNull('user_game_events.user_id')
+                               ->where(function($q) use($variableId) {
+                                    $q->where('user_game_events.variable_id', '!=', $variableId);
+                                    $q->orWhereNull('user_game_events.user_id');
+                                })
                                ->skip($skip)
                                ->take($take)
                                ->orderBy('users.user_id', 'asc')
@@ -92,6 +100,7 @@ class UserSignUpPointCommand extends Command {
     {
         return array(
             array('consumer-role-id', null, InputOption::VALUE_REQUIRED, '"Consumer" role_id', null),
+            array('variable-id', null, InputOption::VALUE_REQUIRED, ' variable_id', null),
         );
     }
 
