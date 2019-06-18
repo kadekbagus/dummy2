@@ -42,24 +42,36 @@ class UserSignUpPointCommand extends Command {
             $take = 50;
             $skip = 0;
 
+            $roleId = $this->option('consumer-role-id');
+            $variableId = $this->option('variable-id');
+
+            if (empty($roleId)) {
+                throw new Exception("Consumer Role ID is required", 1);
+            }
+
+            if (empty($variableId)) {
+                throw new Exception("Variable ID is required", 1);
+            }
+
             do {
-                $users = User::select('users.user_id','users.username')
-                               ->leftJoin('roles', 'roles.role_id', '=', 'users.user_role_id')
+                $users = User::select('users.*')
                                ->leftJoin('user_game_events', 'user_game_events.user_id', '=', 'users.user_id')
-                               ->leftJoin('variables', 'variables.variable_id', '=', 'user_game_events.variable_id')
                                ->where('users.status', '=', 'active')
-                               ->where('roles.role_name', '=', 'Consumer')
-                               ->where('variables.variable_slug', '!=', 'sign_up')
+                               ->where('users.user_role_id', '=', $roleId)
+                               ->where(function($q) use($variableId) {
+                                    $q->where('user_game_events.variable_id', '!=', $variableId);
+                                    $q->orWhereNull('user_game_events.user_id');
+                                })
                                ->skip($skip)
                                ->take($take)
+                               ->orderBy('users.user_id', 'asc')
                                ->get();
 
                 $skip = $take + $skip;
 
-                foreach ($users as $key => $val) {
-                    $user = User::with('role')->where('user_id', '=', $val->user_id)->first();
+                foreach ($users as $user) {
                     Event::fire('orbit.user.activation.success', $user);
-                    $this->info(sprintf('username "%s" user_id "%s" has been successfully get signup point', $val->username, $val->user_id));
+                    $this->info(sprintf('username "%s" user_id "%s" has been successfully get signup point', $user->username, $user->user_id));
                 }
             } while (count($users) > 0);
 
@@ -87,7 +99,8 @@ class UserSignUpPointCommand extends Command {
     protected function getOptions()
     {
         return array(
-            array('dry-run', null, InputOption::VALUE_NONE, 'Run in dry-run mode, no data will be sent', null),
+            array('consumer-role-id', null, InputOption::VALUE_REQUIRED, '"Consumer" role_id', null),
+            array('variable-id', null, InputOption::VALUE_REQUIRED, ' variable_id', null),
         );
     }
 
