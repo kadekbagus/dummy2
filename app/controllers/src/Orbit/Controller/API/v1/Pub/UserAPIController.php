@@ -102,6 +102,10 @@ class UserAPIController extends PubControllerAPI
                 $updateUserDetail->gender = $gender;
             });
 
+            OrbitInput::post('birthdate', function($birthdate) use ($updateUserDetail) {
+                $updateUserDetail->birthdate = $birthdate;
+            });
+
             $updateUserDetail->save();
 
             // Update session fullname and email
@@ -151,6 +155,7 @@ class UserAPIController extends PubControllerAPI
             $data->lastname = $updateUser->user_lastname;
             $data->phone = $updateUserDetail->phone;
             $data->gender = $updateUserDetail->gender;
+            $data->birthdate = $updateUserDetail->birthdate;
             $data->image = $image;
 
             $activityNote = sprintf('Update User Account, user Id: %s', $updateUser->user_id);
