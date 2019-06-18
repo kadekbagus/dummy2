@@ -267,6 +267,9 @@ class ProfileHelper
                     $userRank = 0; // means not ranked.
                 }
             }
+            else {
+                $userRank = 0;
+            }
         }
 
         return $userRank;
