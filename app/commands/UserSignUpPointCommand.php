@@ -49,12 +49,14 @@ class UserSignUpPointCommand extends Command {
             }
 
             do {
-                $users = User::leftJoin('user_game_events', 'user_game_events.user_id', '=', 'users.user_id')
+                $users = User::select('users.*')
+                               ->leftJoin('user_game_events', 'user_game_events.user_id', '=', 'users.user_id')
                                ->where('users.status', '=', 'active')
                                ->where('users.user_role_id', '=', $roleId)
                                ->whereNull('user_game_events.user_id')
                                ->skip($skip)
                                ->take($take)
+                               ->orderBy('users.user_id', 'asc')
                                ->get();
 
                 $skip = $take + $skip;
