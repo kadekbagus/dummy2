@@ -2344,8 +2344,8 @@ return array(
         ),
         // Click User Leaderboard
         '255' => array(
-            'name' => 'click_user_leader',
-            'name_long' => 'Click User Leaderboard',
+            'name' => 'click_user_leaderbord',
+            'name_long' => 'Click User Open Leaderboard',
             'module_name' => 'Application',
             'type' => 'click',
             'object_type' => 'User',
