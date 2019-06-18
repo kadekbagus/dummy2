@@ -204,6 +204,7 @@ class ProfileHelper
     public function getUserRank($userId = null, $totalGamePoints = 0, $leaderboardData = null)
     {
         $userRank = 0;
+        $maxRank = 5000;
 
         /* Dont use cache at the moment.
         Cache::get("ur_{$userId}", null);
@@ -235,20 +236,37 @@ class ProfileHelper
         }
 
         if (! $inTopRank) {
-            $minMaxPoint = User::select(DB::raw("min(total_game_points) as minimumPoint, max(total_game_points) as maximumPoint"))
-                            ->join('roles', 'users.user_role_id', '=', 'roles.role_id')
-                            ->where('status', 'active')
-                            ->where('roles.role_name', 'Consumer')
-                            ->where('user_email', 'not like', 'guest_%')
-                            ->first();
+            $tablePrefix = DB::getTablePrefix();
+            DB::statement(DB::raw("SET @rownum = 0;"));
+            DB::statement(DB::raw("SET @lastPoint = '';"));
+            DB::statement(DB::raw("SET @groupedRank = 0;"));
+            $userRankData = DB::select(
+                DB::raw("
+                    SELECT * FROM (
+                        SELECT
+                            @rownum := @rownum + 1 AS rank,
+                            user_id,
+                            total_game_points,
+                            IF (@lastPoint <> total_game_points, @groupedRank := @rownum, @groupedRank) as grouped_rank,
+                            IF (@lastPoint <> total_game_points, @lastPoint := total_game_points, @lastPoint) as lastPoint
+                        FROM {$tablePrefix}users
+                        JOIN {$tablePrefix}roles on {$tablePrefix}users.user_role_id = {$tablePrefix}roles.role_id
+                        where role_name = 'Consumer'
+                        and status = 'active'
+                        and user_email not like 'guest_%'
+                        ORDER BY total_game_points DESC
+                    ) as ranking
+                    where user_id = " . DB::getPdo()->quote($userId) . "
+                ")
+            );
 
-            $deltaPoint = $minMaxPoint->maximumPoint - $minMaxPoint->minimumPoint;
-            if ($deltaPoint === 0) {
-                return 0;
+            if (count($userRankData) === 1) {
+                $userRank = (int) $userRankData[0]->grouped_rank;
+
+                if ($userRank > $maxRank) {
+                    $userRank = 0; // means not ranked.
+                }
             }
-
-            $totalGamePoints = (int) $totalGamePoints === 0 ? 1 : $totalGamePoints;
-            $userRank = 100 - round($totalGamePoints / $deltaPoint * 100, 2) . "%";
         }
 
         return $userRank;
