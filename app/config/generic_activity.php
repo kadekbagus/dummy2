@@ -2351,5 +2351,14 @@ return array(
             'object_type' => 'User',
             'parameter_name' => 'object_id'
         ),
+        // Click User Profile page Load more button
+        '256' => array(
+            'name' => 'click_user_loadmore_button',
+            'name_long' => 'Click User Load More Button',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'User',
+            'parameter_name' => 'object_id'
+        ),
     ),
 );
