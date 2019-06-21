@@ -2387,5 +2387,14 @@ return array(
             'object_type' => 'User',
             'parameter_name' => 'object_id'
         ),
+        // Click User Profile Purchase/Redeem Button
+        '260' => array(
+            'name' => 'click_user_purchase_redeem',
+            'name_long' => 'Click User Profile Purchase/Redeem Button',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'User',
+            'parameter_name' => 'object_id'
+        ),
     ),
 );
