@@ -2396,5 +2396,14 @@ return array(
             'object_type' => 'User',
             'parameter_name' => 'object_id'
         ),
+        // Click User Profile Following Item
+        '261' => array(
+            'name' => 'click_user_following_item',
+            'name_long' => 'Click User Following Item',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'User',
+            'parameter_name' => 'object_id'
+        ),
     ),
 );
