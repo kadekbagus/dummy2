@@ -2378,5 +2378,14 @@ return array(
             'object_type' => 'User',
             'parameter_name' => 'object_id'
         ),
+        // Click User Profile Avatar
+        '259' => array(
+            'name' => 'click_user_avatar',
+            'name_long' => 'Click User Avatar',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'User',
+            'parameter_name' => 'object_id'
+        ),
     ),
 );
