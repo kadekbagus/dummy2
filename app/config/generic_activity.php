@@ -2370,5 +2370,14 @@ return array(
         'object_type' => 'User',
         'parameter_name' => 'object_id'
     ),
-),
+    // Click User Profile Photo Visit Page Button
+    '258' => array(
+        'name' => 'click_user_photo_visit_page',
+        'name_long' => 'Click User Photo Visit Page',
+        'module_name' => 'Application',
+        'type' => 'click',
+        'object_type' => 'User',
+        'parameter_name' => 'object_id'
+    ),
+
 );
