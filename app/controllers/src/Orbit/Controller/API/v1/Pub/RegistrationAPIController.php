@@ -32,6 +32,7 @@ use \Exception;
 use App;
 use Event;
 use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
+use Country;
 
 class RegistrationAPIController extends IntermediateBaseController
 {
@@ -60,6 +61,10 @@ class RegistrationAPIController extends IntermediateBaseController
             $rewardId = OrbitInput::get('reward_id', NULL);
             $rewardType = OrbitInput::get('reward_type', NULL);
             $redirectToUrl = OrbitInput::post('to_url', NULL);
+            $country = OrbitInput::get('country');
+            $countryId = OrbitInput::get('country_id');
+
+            $signUpCountryId = $this->getCountryId($country, $countryId);
 
             $user = User::with('role')
                         ->whereHas('role', function($q) {
@@ -79,7 +84,8 @@ class RegistrationAPIController extends IntermediateBaseController
                 DB::beginTransaction();
             }
 
-            $user = $this->createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $phone, $gender, $birthdate, $this->mallId, FALSE);
+            $user = $this->createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $phone, $gender, $birthdate, $this->mallId, FALSE,
+                                             NULL, NULL, NULL, NULL, 'form', $signUpCountryId);
 
             // let mobileci handle it's own session
             if ($this->appOrigin !== 'mobile_ci') {
@@ -281,7 +287,7 @@ class RegistrationAPIController extends IntermediateBaseController
      * @throws Exception
      */
     public function createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $phone, $gender, $birthdate, $mall_id = NULL,
-        $useTransaction = TRUE, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null, $from = 'form')
+        $useTransaction = TRUE, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null, $from = 'form', $signUpCountryId = null)
     {
         $validation = TRUE;
         if ($from === 'form') {
@@ -313,6 +319,7 @@ class RegistrationAPIController extends IntermediateBaseController
                 $new_user->user_role_id = $customerRole->role_id;
                 $new_user->user_ip = $_SERVER['REMOTE_ADDR'];
                 $new_user->external_user_id = 0;
+                $new_user->sign_up_country_id = $signUpCountryId;
 
                 $new_user->save();
 
@@ -434,5 +441,14 @@ class RegistrationAPIController extends IntermediateBaseController
         $this->appOrigin = $appOrigin;
 
         return $this;
+    }
+
+    public function getCountryId($countryName = null, $countryId = null)
+    {
+        if (!isset($countryId) && isset($countryName)) {
+            $country = Country::where('name', '=', $countryName)->first();
+            $countryId = ($country) ? $country->country_id : null;
+        }
+        return $countryId;
     }
 }
