@@ -2351,5 +2351,59 @@ return array(
             'object_type' => 'User',
             'parameter_name' => 'object_id'
         ),
+        // Click User Profile page Load more button
+        '256' => array(
+            'name' => 'click_user_loadmore_button',
+            'name_long' => 'Click User Load More Button',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'User',
+            'parameter_name' => 'object_id'
+        ),
+        // Click User Profile Reviewed item
+        '257' => array(
+            'name' => 'click_user_reviews_item',
+            'name_long' => 'Click User Review Item',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'User',
+            'parameter_name' => 'object_id'
+        ),
+        // Click User Profile Photo Visit Page Button
+        '258' => array(
+            'name' => 'click_user_photo_visit_page',
+            'name_long' => 'Click User Photo Visit Page',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'User',
+            'parameter_name' => 'object_id'
+        ),
+        // Click User Profile Avatar
+        '259' => array(
+            'name' => 'click_user_avatar',
+            'name_long' => 'Click User Avatar',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'User',
+            'parameter_name' => 'object_id'
+        ),
+        // Click User Profile Purchase/Redeem Button
+        '260' => array(
+            'name' => 'click_user_purchase_redeem',
+            'name_long' => 'Click User Profile Purchase/Redeem Button',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'User',
+            'parameter_name' => 'object_id'
+        ),
+        // Click User Profile Following Item
+        '261' => array(
+            'name' => 'click_user_following_item',
+            'name_long' => 'Click User Following Item',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'User',
+            'parameter_name' => 'object_id'
+        ),
     ),
 );
