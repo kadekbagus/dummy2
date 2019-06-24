@@ -1,7 +1,5 @@
 <?php
 
-namespace Orbit\Models\Gamification;
-
 use Eloquent;
 
 /**
