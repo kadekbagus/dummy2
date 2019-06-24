@@ -17,6 +17,8 @@ use Tenant;
 use BaseStore;
 use BaseMerchant;
 use DB;
+use Orbit\Models\Gamification\UserGameEvent;
+use Event;
 
 class FollowAPIController extends PubControllerAPI
 {
@@ -95,19 +97,28 @@ class FollowAPIController extends PubControllerAPI
                                          ->setEndPoint('user-follows')
                                          ->request('GET');
 
+                    $mall = Mall::excludeDeleted('merchants')
+                                  ->where('merchant_id', '=', $object_id)
+                                  ->first();
+
+                    if (is_object($mall)) {
+                         $city = $mall->city;
+                         $country_id = $mall->country_id;
+                    }
+
+                    $gamificationData = (object) [
+                        'object_id' => $object_id,
+                        'object_type' => $object_type,
+                        'object_name' => $mall->name,
+                        'country_id' => $country_id,
+                        'city' => $city,
+                    ];
+
                     if (count($existingData->data->records) === 0) {
                         // follow
                         $city = null;
                         $country_id = null;
 
-                        $mall = Mall::excludeDeleted('merchants')
-                                     ->where('merchant_id', '=', $object_id)
-                                     ->first();
-
-                        if (is_object($mall)) {
-                            $city = $mall->city;
-                            $country_id = $mall->country_id;
-                        }
 
                         $dataInsert = [
                             'user_id'     => $user->user_id,
@@ -123,17 +134,24 @@ class FollowAPIController extends PubControllerAPI
                                                 ->setEndPoint('user-follows')
                                                 ->request('POST');
 
+                        Event::fire('orbit.follow.postfollow.success', array($user, $gamificationData));
+
                     } else {
                         // unfollow
                         $id = $existingData->data->records[0]->_id;
                         $response = $mongoClient->setEndPoint("user-follows/$id")
                                                 ->request('DELETE');
+                        Event::fire('orbit.follow.postunfollow.success', array($user, $gamificationData));
                     }
 
                     break;
                 case "store":
                     if ($action === 'follow')
                     {
+                        $baseMerchantId = null;
+                        $baseMerchantName = null;
+                        $baseMerchantCountry = null;
+
                         if (!empty($mall_id)) {
                             // mall level
 
@@ -146,6 +164,10 @@ class FollowAPIController extends PubControllerAPI
                                                 ->where('merchants.parent_id',  $mall_id)
                                                 ->excludeDeleted('merchants')
                                                 ->first();
+
+                            $baseMerchantId = $storeInfo->base_merchant_id;
+                            $baseMerchantName = $storeInfo->name;
+                            $baseMerchantCountry = $storeInfo->country_id;
 
                             if (! empty($storeInfo)) {
                                 $stores = Tenant::select('name', 'merchant_id as store_id')
@@ -167,6 +189,14 @@ class FollowAPIController extends PubControllerAPI
                                             'mall_id'          => $mall_id,
                                             'created_at'       => $dateTime
                                         ];
+                                        $gamificationData = (object) [
+                                            'object_id' => $stores->store_id,
+                                            'object_type' => $object_type,
+                                            'object_name' => $baseMerchantName,
+                                            'country_id' => $storeInfo->country_id,
+                                            'city' => $storeInfo->city,
+                                        ];
+                                        Event::fire('orbit.follow.postfollow.success', array($user, $gamificationData));
                                     }
 
                                     // Bulk Insert
@@ -188,6 +218,10 @@ class FollowAPIController extends PubControllerAPI
                                               ->leftJoin('merchants', 'merchants.merchant_id', '=', 'base_stores.merchant_id')
                                               ->where('base_stores.base_store_id', '=', $object_id)
                                               ->first();
+
+                            $baseMerchantId = $baseStore->base_merchant_id;
+                            $baseMerchantName = $baseStore->name;
+                            $baseMerchantCountry = $baseStore->country_id;
 
                             if (is_object($baseStore)) {
                                 $stores = Tenant::select('merchants.merchant_id as store_id',
@@ -240,6 +274,15 @@ class FollowAPIController extends PubControllerAPI
                                         'mall_id'          => $value->mall_id,
                                         'created_at'       => $dateTime
                                     ];
+
+                                    $gamificationData = (object) [
+                                        'object_id' => $value->store_id,
+                                        'object_type' => $object_type,
+                                        'object_name' => $baseMerchantName,
+                                        'country_id' => $value->country_id,
+                                        'city' => $value->city,
+                                    ];
+                                    Event::fire('orbit.follow.postfollow.success', array($user, $gamificationData));
                                 }
                             }
 
@@ -264,8 +307,25 @@ class FollowAPIController extends PubControllerAPI
 
                     if ($action === 'unfollow')
                     {
+                        $baseMerchantId = null;
+                        $baseMerchantName = null;
+                        $baseMerchantCountry = null;
+
                         if (!empty($mall_id)) {
                             // mall level
+                            // User will follow all store in mall,  when store have more than one store in same mall
+                            // Get store name,city and country
+                            $storeInfo = Tenant::select('merchants.merchant_id', 'merchants.name', DB::raw('parent.city as city'), DB::raw('parent.country_id as country_id'), 'base_stores.base_merchant_id')
+                                                ->leftJoin('merchants as parent', DB::raw('parent.merchant_id'), '=', 'merchants.parent_id')
+                                                ->leftJoin('base_stores', 'base_stores.base_store_id', '=', 'merchants.merchant_id')
+                                                ->where('merchants.merchant_id', $object_id)
+                                                ->where('merchants.parent_id',  $mall_id)
+                                                ->excludeDeleted('merchants')
+                                                ->first();
+
+                            $baseMerchantId = $storeInfo->base_merchant_id;
+                            $baseMerchantName = $storeInfo->name;
+                            $baseMerchantCountry = $storeInfo->country_id;
 
                             $stores = array();
                             if (is_array($object_id) && ! empty($object_id)) {
@@ -309,6 +369,13 @@ class FollowAPIController extends PubControllerAPI
 
                                     if (count($existingData->data->records) !== 0) {
                                         $existingIds[] = $existingData->data->records[0]->_id;
+                                        $gamificationData = (object) [
+                                            'object_id' => $store->store_id,
+                                            'object_type' => $object_type,
+                                            'object_name' => $baseMerchantName,
+                                            'country_id' => $baseMerchantCountry,
+                                        ];
+                                        Event::fire('orbit.follow.postunfollow.success', array($user, $gamificationData));
                                     }
                                 }
                             }
@@ -374,6 +441,10 @@ class FollowAPIController extends PubControllerAPI
                                 }
                             }
 
+                            $baseMerchantId = $baseStore->base_merchant_id;
+                            $baseMerchantName = $baseStore->name;
+                            $baseMerchantCountry = $baseStore->country_id;
+
                             if (!empty($stores))
                             {
                                 foreach ($stores as $key => $value)
@@ -394,6 +465,14 @@ class FollowAPIController extends PubControllerAPI
 
                                     if (count($existingData->data->records) !== 0) {
                                         $existingIds[] = $existingData->data->records[0]->_id;
+                                        $gamificationData = (object) [
+                                            'object_id' => $value->store_id,
+                                            'object_type' => $object_type,
+                                            'object_name' => $baseMerchantName,
+                                            'country_id' => $value->country_id,
+                                            'city' => $value->city,
+                                        ];
+                                        Event::fire('orbit.follow.postunfollow.success', array($user, $gamificationData));
                                     }
                                 }
 
@@ -404,8 +483,6 @@ class FollowAPIController extends PubControllerAPI
                                     }
                                 }
                             }
-
-
                         }
                     }
                     break;

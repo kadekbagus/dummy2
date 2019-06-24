@@ -100,6 +100,8 @@ class LoginSocialMediaAPIController extends IntermediateBaseController
                 DB::beginTransaction();
                 Event::fire('orbit.registration.after.createuser', array($loggedInUser->user_id, $rewardId, $rewardType, $language));
                 DB::commit();
+
+                Event::fire('orbit.user.activation.success', [$loggedInUser]);
             }
 
             // promotional event reward event
