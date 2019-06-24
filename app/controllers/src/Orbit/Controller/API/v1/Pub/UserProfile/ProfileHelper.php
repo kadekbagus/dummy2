@@ -245,17 +245,17 @@ class ProfileHelper
                     SELECT * FROM (
                         SELECT
                             @rownum := @rownum + 1 AS rank,
-                            user_id,
+                            {$tablePrefix}users.user_id,
                             {$tablePrefix}extended_users.total_game_points,
-                            IF (@lastPoint <> total_game_points, @groupedRank := @rownum, @groupedRank) as grouped_rank,
-                            IF (@lastPoint <> total_game_points, @lastPoint := total_game_points, @lastPoint) as lastPoint
+                            IF (@lastPoint <> {$tablePrefix}extended_users.total_game_points, @groupedRank := @rownum, @groupedRank) as grouped_rank,
+                            IF (@lastPoint <> {$tablePrefix}extended_users.total_game_points, @lastPoint := {$tablePrefix}extended_users.total_game_points, @lastPoint) as lastPoint
                         FROM {$tablePrefix}users
                         JOIN {$tablePrefix}roles on {$tablePrefix}users.user_role_id = {$tablePrefix}roles.role_id
                         LEFT JOIN {$tablePrefix}extended_users on {$tablePrefix}users.user_id = {$tablePrefix}extended_users.user_id
                         where role_name = 'Consumer'
                         and status = 'active'
                         and user_email not like 'guest_%'
-                        ORDER BY total_game_points DESC
+                        ORDER BY {$tablePrefix}extended_users.total_game_points DESC
                     ) as ranking
                     where user_id = " . DB::getPdo()->quote($userId) . "
                 ")
