@@ -1,7 +1,5 @@
 <?php
 
-use Eloquent;
-
 /**
  * Eloquent model for extended_user table
  *
