@@ -37,6 +37,9 @@ class PointRewarder implements PointRewarderInterface
 
     private function updateUserVariable($user, $gamificationVar)
     {
+        //total_points in user_variables table will stores
+        //accumulative points of all game points received for specific variable
+        //for specific user
         $userVar = UserVariable::where('variable_id', $gamificationVar->variable_id)
             ->where('user_id', $user->user_id)
             ->first();
@@ -50,6 +53,8 @@ class PointRewarder implements PointRewarderInterface
         $userVar->total_points = $userVar->total_points + $gamificationVar->point;
         $userVar->save();
 
+        //total_game_points in extended_users table will contains accumulative
+        //points of all game points received for specific user
         $userExt = UserExtended::where('user_id', $user->user_id)->first();
         if (! $userExt) {
             //if we get here user not yet have record in extended_users table, just
