@@ -310,7 +310,7 @@ class ProfileHelper
                 ->leftJoin('extended_users', 'users.user_id', '=', 'extended_users.user_id')
                 ->where('roles.role_name', 'Consumer')
                 ->whereIn('status', ['active', 'pending'])
-                ->where('user_id', $userId)
+                ->where('users.user_id', $userId)
                 ->first();
 
         if (! empty($user)) {
@@ -376,7 +376,7 @@ class ProfileHelper
             return unserialize($topRankUsers);
         }
         */
-        $topRankUsers = User::select('user_id', DB::raw("CONCAT(user_firstname, ' ', user_lastname) as name"), 'extended_users.total_game_points')
+        $topRankUsers = User::select('users.user_id', DB::raw("CONCAT(user_firstname, ' ', user_lastname) as name"), 'extended_users.total_game_points')
                 ->with([
                     'purchases' => function($purchases) {
                         $purchases->select(
@@ -395,7 +395,7 @@ class ProfileHelper
                 ->where('user_email', 'not like', 'guest_%')
                 ->where('roles.role_name', 'Consumer')
                 ->where('status', 'active')
-                ->orderBy('total_game_points', 'desc')
+                ->orderBy('extended_users.total_game_points', 'desc')
                 ->limit($topRankLimit)
                 ->get();
 
