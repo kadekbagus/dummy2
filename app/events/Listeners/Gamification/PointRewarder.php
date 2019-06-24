@@ -63,6 +63,7 @@ class PointRewarder implements PointRewarderInterface
             $userExt->user_id = $user->user_id;
             $userExt->total_game_points = $gamificationVar->point;
         } else {
+            //user has record in extended_users table, just update point
             $userExt->total_game_points = $userExt->total_game_points + $gamificationVar->point;
         }
         $userExt->save();
