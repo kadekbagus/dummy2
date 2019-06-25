@@ -89,6 +89,10 @@ class LeaderboardAPIController extends PubControllerAPI
                     unset($userProfile->total_points);
                     unset($userProfile->number_of_purchases);
 
+                    if ((int)$userProfile->rank === 0) {
+                        $userProfile->highlight = true;
+                    }
+
                     if ($userProfile->status === 'active') {
                         $leaderboardData[] = $userProfile;
                     }

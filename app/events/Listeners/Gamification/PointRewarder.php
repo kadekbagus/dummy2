@@ -6,6 +6,7 @@ use User;
 use Orbit\Models\Gamification\UserVariable;
 use Orbit\Models\Gamification\Variable;
 use Orbit\Models\Gamification\UserGameEvent;
+use UserExtended;
 
 /**
  * Helper class that reward user with game points
@@ -36,6 +37,9 @@ class PointRewarder implements PointRewarderInterface
 
     private function updateUserVariable($user, $gamificationVar)
     {
+        //total_points in user_variables table will stores
+        //accumulative points of all game points received for specific variable
+        //for specific user
         $userVar = UserVariable::where('variable_id', $gamificationVar->variable_id)
             ->where('user_id', $user->user_id)
             ->first();
@@ -49,8 +53,20 @@ class PointRewarder implements PointRewarderInterface
         $userVar->total_points = $userVar->total_points + $gamificationVar->point;
         $userVar->save();
 
-        $user->total_game_points = $user->total_game_points + $gamificationVar->point;
-        $user->save();
+        //total_game_points in extended_users table will contains accumulative
+        //points of all game points received for specific user
+        $userExt = UserExtended::where('user_id', $user->user_id)->first();
+        if (! $userExt) {
+            //if we get here user not yet have record in extended_users table, just
+            //create new record
+            $userExt = new UserExtended();
+            $userExt->user_id = $user->user_id;
+            $userExt->total_game_points = $gamificationVar->point;
+        } else {
+            //user has record in extended_users table, just update point
+            $userExt->total_game_points = $userExt->total_game_points + $gamificationVar->point;
+        }
+        $userExt->save();
         return $userVar;
     }
 

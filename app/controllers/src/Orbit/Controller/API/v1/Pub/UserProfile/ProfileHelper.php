@@ -245,16 +245,17 @@ class ProfileHelper
                     SELECT * FROM (
                         SELECT
                             @rownum := @rownum + 1 AS rank,
-                            user_id,
-                            total_game_points,
-                            IF (@lastPoint <> total_game_points, @groupedRank := @rownum, @groupedRank) as grouped_rank,
-                            IF (@lastPoint <> total_game_points, @lastPoint := total_game_points, @lastPoint) as lastPoint
+                            {$tablePrefix}users.user_id,
+                            {$tablePrefix}extended_users.total_game_points,
+                            IF (@lastPoint <> {$tablePrefix}extended_users.total_game_points, @groupedRank := @rownum, @groupedRank) as grouped_rank,
+                            IF (@lastPoint <> {$tablePrefix}extended_users.total_game_points, @lastPoint := {$tablePrefix}extended_users.total_game_points, @lastPoint) as lastPoint
                         FROM {$tablePrefix}users
                         JOIN {$tablePrefix}roles on {$tablePrefix}users.user_role_id = {$tablePrefix}roles.role_id
+                        LEFT JOIN {$tablePrefix}extended_users on {$tablePrefix}users.user_id = {$tablePrefix}extended_users.user_id
                         where role_name = 'Consumer'
                         and status = 'active'
                         and user_email not like 'guest_%'
-                        ORDER BY total_game_points DESC
+                        ORDER BY {$tablePrefix}extended_users.total_game_points DESC
                     ) as ranking
                     where user_id = " . DB::getPdo()->quote($userId) . "
                 ")
@@ -266,6 +267,9 @@ class ProfileHelper
                 if ($userRank > $maxRank) {
                     $userRank = 0; // means not ranked.
                 }
+            }
+            else {
+                $userRank = 0;
             }
         }
 
@@ -282,16 +286,13 @@ class ProfileHelper
     {
         $userProfile = null;
         $user = User::select(
-                    'user_id',
+                    'users.user_id',
                     DB::raw("CONCAT(user_firstname, ' ', user_lastname) as name"),
-                    'total_game_points',
                     'users.created_at',
-                    'users.status'
+                    'users.status',
+                    'extended_users.about', 'extended_users.location', 'extended_users.total_game_points'
                 )
                 ->with([
-                    'userdetail' => function($userDetail) {
-                        $userDetail->select('user_id', 'user_detail_id', 'about', DB::raw('location as profile_location'));
-                    },
                     'purchases' => function($purchases) {
                         $purchases->select(
                             DB::raw("count(payment_transaction_id) as number_of_purchases"),
@@ -306,9 +307,10 @@ class ProfileHelper
                     },
                 ])
                 ->join('roles', 'users.user_role_id', '=', 'roles.role_id')
+                ->leftJoin('extended_users', 'users.user_id', '=', 'extended_users.user_id')
                 ->where('roles.role_name', 'Consumer')
                 ->whereIn('status', ['active', 'pending'])
-                ->where('user_id', $userId)
+                ->where('users.user_id', $userId)
                 ->first();
 
         if (! empty($user)) {
@@ -332,9 +334,9 @@ class ProfileHelper
             $userProfile = (object) [
                 'user_id' => $userId,
                 'name' => $user->name,
-                'location' => $user->userdetail->profile_location,
+                'location' => $user->location,
                 'join_date' => $user->created_at->format('Y-m-d H:i:s'),
-                'about' => $user->userdetail->about,
+                'about' => $user->about,
                 'rank' => 0,
                 'total_points' => (int) $user->total_game_points,
                 'total_game_points' => (int) $user->total_game_points,
@@ -374,7 +376,7 @@ class ProfileHelper
             return unserialize($topRankUsers);
         }
         */
-        $topRankUsers = User::select('user_id', DB::raw("CONCAT(user_firstname, ' ', user_lastname) as name"), 'total_game_points')
+        $topRankUsers = User::select('users.user_id', DB::raw("CONCAT(user_firstname, ' ', user_lastname) as name"), 'extended_users.total_game_points')
                 ->with([
                     'purchases' => function($purchases) {
                         $purchases->select(
@@ -389,10 +391,11 @@ class ProfileHelper
                     },
                 ])
                 ->join('roles', 'users.user_role_id', '=', 'roles.role_id')
+                ->leftJoin('extended_users', 'users.user_id', '=', 'extended_users.user_id')
                 ->where('user_email', 'not like', 'guest_%')
                 ->where('roles.role_name', 'Consumer')
                 ->where('status', 'active')
-                ->orderBy('total_game_points', 'desc')
+                ->orderBy('extended_users.total_game_points', 'desc')
                 ->limit($topRankLimit)
                 ->get();
 
