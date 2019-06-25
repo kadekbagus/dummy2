@@ -319,7 +319,6 @@ class RegistrationAPIController extends IntermediateBaseController
                 $new_user->user_role_id = $customerRole->role_id;
                 $new_user->user_ip = $_SERVER['REMOTE_ADDR'];
                 $new_user->external_user_id = 0;
-                $new_user->sign_up_country_id = $signUpCountryId;
 
                 $new_user->save();
 
@@ -335,6 +334,11 @@ class RegistrationAPIController extends IntermediateBaseController
                 if (! empty($birthdate)) {
                     $user_detail->birthdate = date('Y-m-d', strtotime($birthdate));
                 }
+
+                // add signup country_id
+                $extended_user = new ExtendedUser();
+                $extended_user->user_id = $new_user->user_id;
+                $extended_user->sign_up_country_id = $signUpCountryId;
 
                 // Add phone for signup
                 $user_detail->phone = $phone;
