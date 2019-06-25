@@ -44,7 +44,7 @@ class UserCIAPIController extends BaseAPIController
             // otherwise UserDetail::getLocationAttribute() will be called
             // when we use $userdetail->location
             $userDetail = UserDetail
-                ::select('phone', 'gender', 'location AS user_loc', 'about', 'birthdate')
+                ::select('phone', 'gender', 'birthdate')
                 ->where('user_id', $user->user_id)
                 ->first();
 
