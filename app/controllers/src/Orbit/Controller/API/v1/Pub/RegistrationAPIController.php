@@ -33,6 +33,7 @@ use App;
 use Event;
 use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
 use Country;
+use UserExtended;
 
 class RegistrationAPIController extends IntermediateBaseController
 {
@@ -336,7 +337,7 @@ class RegistrationAPIController extends IntermediateBaseController
                 }
 
                 // add signup country_id
-                $extended_user = new ExtendedUser();
+                $extended_user = new UserExtended();
                 $extended_user->user_id = $new_user->user_id;
                 $extended_user->sign_up_country_id = $signUpCountryId;
 
