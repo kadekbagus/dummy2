@@ -340,6 +340,7 @@ class RegistrationAPIController extends IntermediateBaseController
                 $extended_user = new UserExtended();
                 $extended_user->user_id = $new_user->user_id;
                 $extended_user->sign_up_country_id = $signUpCountryId;
+                $extended_user->save();
 
                 // Add phone for signup
                 $user_detail->phone = $phone;
