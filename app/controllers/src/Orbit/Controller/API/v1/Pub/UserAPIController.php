@@ -90,6 +90,11 @@ class UserAPIController extends PubControllerAPI
             $extendedUserDetail = UserExtended::where('user_id', $user->user_id)
                                             ->first();
 
+            if (! is_object($extendedUserDetail)) {
+                $extendedUserDetail = new UserExtended();
+                $extendedUserDetail->user_id = $userId;
+            }
+
             OrbitInput::post('phone', function($phone) use ($updateUserDetail) {
                 $validator = Validator::make(
                     array('phone' => $phone),
