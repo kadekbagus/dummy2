@@ -43,6 +43,7 @@ use Orbit\Helper\Net\SignInRecorder;
 use Orbit\Controller\API\v1\Pub\ActivationAPIController;
 use Event;
 use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
+use Country;
 
 class LoginSocialMediaAPIController extends IntermediateBaseController
 {
@@ -68,6 +69,10 @@ class LoginSocialMediaAPIController extends IntermediateBaseController
             $gender = OrbitInput::post('gender', '');
             $phone = OrbitInput::post('phone', NULL);
             $socialid = OrbitInput::post('socialId', '');
+            $country = OrbitInput::get('country');
+            $countryId = OrbitInput::get('country_id');
+
+            $signUpCountryId = $this->getCountryId($country, $countryId);
 
             if (trim($userEmail) === '') {
                 $errorMessage = Lang::get('validation.required', array('attribute' => 'email'));
@@ -83,7 +88,7 @@ class LoginSocialMediaAPIController extends IntermediateBaseController
             if (! is_object($loggedInUser)) {
                 // register user without password and birthdate
                 $status = 'active';
-                $response = (new Regs())->createCustomerUser($userEmail, NULL, NULL, $firstName, $lastName, $phone, $gender, NULL, NULL, TRUE, NULL, NULL, NULL, $status, ucfirst($type));
+                $response = (new Regs())->createCustomerUser($userEmail, NULL, NULL, $firstName, $lastName, $phone, $gender, NULL, NULL, TRUE, NULL, NULL, NULL, $status, ucfirst($type), $signUpCountryId);
                 if (get_class($response) !== 'User') {
                     throw new Exception($response->message, $response->code);
                 }
@@ -202,4 +207,12 @@ class LoginSocialMediaAPIController extends IntermediateBaseController
         return FALSE;
     }
 
+    public function getCountryId($countryName = null, $countryId = null)
+    {
+        if (!isset($countryId) && isset($countryName)) {
+            $country = Country::where('name', '=', $countryName)->first();
+            $countryId = ($country) ? $country->country_id : null;
+        }
+        return $countryId;
+    }
 }
