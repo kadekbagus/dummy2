@@ -6199,4 +6199,16 @@ return array(
         // Time limit before Customer can send new Feedback for the same mall. (in minutes)
         'limit' => 10,
     ],
+
+    // List of disabled notification.
+    'disabled_notifications' => [
+        'transaction' => [ // context
+            'email' => [ // method
+                // array of signature, e.g.
+                // 'expired-transaction' for expired transaction notification
+            ],
+            'inApp' => [
+            ]
+        ]
+    ],
 );
