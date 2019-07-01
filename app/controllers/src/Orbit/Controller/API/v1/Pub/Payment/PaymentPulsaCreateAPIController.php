@@ -17,6 +17,7 @@ use PaymentTransactionDetailNormalPaypro;
 use PaymentMidtrans;
 use Mall;
 use Activity;
+use Country;
 use Carbon\Carbon as Carbon;
 
 /**
@@ -109,6 +110,14 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
             // Get coupon detail from DB.
             $pulsa = Pulsa::select('pulsa_item_id', 'price')->findOrFail($object_id);
 
+            // Resolve country_id
+            if ($country_id !== '0' || $country_id !== 0) {
+                $country = Country::where('name', $country_id)->first();
+                if (! empty($country)) {
+                    $country_id = $country->country_id;
+                }
+            }
+
             // Get mall timezone
             $mallTimeZone = 'Asia/Jakarta';
             $mall = null;
@@ -116,6 +125,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                 $mall = Mall::where('merchant_id', $mall_id)->first();
                 if (!empty($mall)) {
                     $mallTimeZone = $mall->getTimezone($mall_id);
+                    $country_id = $mall->country_id;
                 }
             }
 
