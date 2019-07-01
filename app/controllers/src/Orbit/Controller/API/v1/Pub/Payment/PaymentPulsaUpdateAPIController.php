@@ -28,6 +28,7 @@ use Orbit\Notifications\Payment\SuspiciousPaymentNotification;
 use Orbit\Notifications\Payment\DeniedPaymentNotification;
 use Orbit\Notifications\Pulsa\PendingPaymentNotification;
 use Orbit\Notifications\Pulsa\CanceledPaymentNotification;
+use Orbit\Notifications\Pulsa\AbortedPaymentNotification;
 use Mall;
 
 /**
@@ -312,6 +313,12 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                             ->save();
 
                     $payment_update->user->notify(new CanceledPaymentNotification($payment_update));
+                }
+
+                // Send notification if the purchase was aborted
+                // Only send if previous status was pending.
+                if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_ABORTED) {
+                    $payment_update->user->notify(new AbortedPaymentNotification($payment_update));
                 }
 
                 // If previous status was success and now is denied, then send notification to admin.

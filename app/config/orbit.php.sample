@@ -6200,6 +6200,8 @@ return array(
         'limit' => 10,
     ],
 
+    'base_landing_page_url' => 'https://www.gotomalls.com',
+
     // List of disabled notification.
     'disabled_notifications' => [
         'transaction' => [ // context
