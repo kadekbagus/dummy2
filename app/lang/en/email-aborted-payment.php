@@ -8,7 +8,7 @@ return [
     ],
 
     'body' => [
-        'greeting' => 'Dear, :customerName
+        'greeting' => '<strong>Hi, :customerName!</strong>
                         <br>
                         We noticed you canceled your payment transaction on Gotomalls.com when purchasing:',
 
@@ -29,9 +29,10 @@ return [
             'status_aborted' => 'Aborted',
         ],
 
-        'payment-info-line-1' => 'Did you find any problems trying to make the purchase?.',
+        'payment-info-line-1' => 'Did you find any problems trying to make the purchase?',
         'payment-info-line-2' => 'Please help us improve Gotomalls.com by replying to this email to tell us what when wrong and why you did not complete the purchase.',
         'payment-info-line-3' => 'We welcome your feedback and our Customer Service Team is always available to help.',
+        'payment-info-line-4' => 'You can make a new purchase of Coupon by clicking button below.',
         'payment-info-line-4-pulsa' => 'You can make a new purchase of Pulsa by clicking button below.',
 
         'regards' => 'Thank you,<br><br>Gotomalls Service Team',

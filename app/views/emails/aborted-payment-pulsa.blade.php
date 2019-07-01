@@ -169,40 +169,24 @@
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 {{ trans('email-aborted-payment.body.greeting', ['customerName' => $customerName], '', 'id') }}
               </p>
-              <br>
+
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{-- <strong>{{{ trans('email-aborted-payment.body.transaction_labels.transaction_id', [], '', 'id') }}}</strong> {{ $transaction['id'] }}
-                <br>
-                <strong>{{{ trans('email-aborted-payment.body.transaction_labels.transaction_date', [], '', 'id') }}}</strong> {{ $transactionDateTime }}
-                <br>
-                <strong>{{{ trans('email-aborted-payment.body.transaction_labels.customer_name', [], '', 'id') }}}</strong> {{ $customerName }}
-                <br>
-                <strong>{{{ trans('email-aborted-payment.body.transaction_labels.email', [], '', 'id') }}}</strong> {{ $customerEmail }}
-                <br> --}}
                 <strong>{{{ trans('email-aborted-payment.body.transaction_labels.pulsa_name', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['name'] }}
                 <br>
                 <strong>{{{ trans('email-aborted-payment.body.transaction_labels.pulsa_phone_number', [], '', 'id') }}}</strong> {{ $pulsaPhoneNumber }}
                 <br>
                 <strong>{{{ trans('email-aborted-payment.body.transaction_labels.transaction_id', [], '', 'id') }}}</strong> {{ $transaction['id'] }}
                 <br>
-                {{-- <strong>{{{ trans('email-aborted-payment.body.transaction_labels.pulsa_price', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['price'] }}
-                <br>
-                <strong>{{{ trans('email-aborted-payment.body.transaction_labels.coupon_quantity', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['quantity'] }}
-                <br> --}}
-                {{-- <strong>{{{ trans('email-aborted-payment.body.transaction_labels.total_amount', [], '', 'id') }}}</strong> {{ $transaction['total'] }}
-                <br> --}}
-                {{-- <strong>{{{ trans('email-aborted-payment.body.transaction_labels.status', [], '', 'id') }}} <span style="color:#f43d3c;">{{ trans('email-aborted-payment.body.transaction_labels.status_aborted', [], '', 'id') }}</span></strong>
-                <br> --}}
               </p>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{ trans('email-aborted-payment.body.payment-info-line-1', ['transactionDateTime' => $transactionDateTime], '', 'id') }}
+                {{ trans('email-aborted-payment.body.payment-info-line-1-pulsa', ['transactionDateTime' => $transactionDateTime], '', 'id') }}
               </p>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{ trans('email-aborted-payment.body.payment-info-line-2', $cs, '', 'id') }}
+                {{ trans('email-aborted-payment.body.payment-info-line-2-pulsa', $cs, '', 'id') }}
               </p>
 
               <p style="text-align: center">
@@ -233,27 +217,13 @@
               </p>
               <br>
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{-- <strong>{{{ trans('email-aborted-payment.body.transaction_labels.transaction_date') }}}</strong> {{ $transactionDateTime }}
-                <br>
-                <strong>{{{ trans('email-aborted-payment.body.transaction_labels.customer_name') }}}</strong> {{ $customerName }}
-                <br>
-                <strong>{{{ trans('email-aborted-payment.body.transaction_labels.email') }}}</strong> {{ $customerEmail }}
-                <br> --}}
                 <br>
                 <strong>{{{ trans('email-aborted-payment.body.transaction_labels.pulsa_name') }}}</strong> {{ $transaction['items'][0]['name'] }}
                 <br>
                 <strong>{{{ trans('email-aborted-payment.body.transaction_labels.pulsa_phone_number') }}}</strong> {{ $pulsaPhoneNumber }}
                 <br>
-                {{-- <strong>{{{ trans('email-aborted-payment.body.transaction_labels.pulsa_price') }}}</strong> {{ $transaction['items'][0]['price'] }}
-                <br> --}}
                 <strong>{{{ trans('email-aborted-payment.body.transaction_labels.transaction_id') }}}</strong> {{ $transaction['id'] }}
                 <br>
-                {{-- <strong>{{{ trans('email-aborted-payment.body.transaction_labels.coupon_quantity') }}}</strong> {{ $transaction['items'][0]['quantity'] }}
-                <br>
-                <strong>{{{ trans('email-aborted-payment.body.transaction_labels.total_amount') }}}</strong> {{ $transaction['total'] }}
-                <br>
-                <strong>{{{ trans('email-aborted-payment.body.transaction_labels.status') }}} <span style="color:#f43d3c;">{{ trans('email-aborted-payment.body.transaction_labels.status_aborted') }}</span></strong>
-                <br> --}}
               </p>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
