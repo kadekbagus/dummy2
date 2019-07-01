@@ -158,7 +158,7 @@
               <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/themes/default/images/logo-en.png?t=1523326836" alt="Logo" class="logo" style="-ms-interpolation-mode:bicubic;width:80%;">
             </th>
             <th class="text-right" style="font-family:'Roboto', 'Arial', sans-serif;text-align:right;padding-bottom:30px;">
-              <span class="text-red invoice-title" style="color:#f43d3c;font-size:28px;font-weight:bold;">{{{ trans('email-aborted-payment.header.email-type', [], '', 'id') }}}</span>
+              <span class="text-red invoice-title" style="color:#f43d3c;font-size:28px;font-weight:bold;">{{{ trans('email-expired-payment.header.email-type', [], '', 'id') }}}</span>
             </th>
           </tr>
         </thead>
@@ -167,38 +167,38 @@
           <tr>
             <td colspan="2" class="invoice-body" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-aborted-payment.body.greeting', ['customerName' => $customerName], '', 'id') }}
+                {{ trans('email-expired-payment.body.greeting', ['customerName' => $customerName], '', 'id') }}
               </p>
               <br>
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                <strong>{{{ trans('email-aborted-payment.body.transaction_labels.pulsa_name', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['name'] }}
+                <strong>{{{ trans('email-expired-payment.body.transaction_labels.pulsa_name', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['name'] }}
                 <br>
-                <strong>{{{ trans('email-aborted-payment.body.transaction_labels.pulsa_phone_number', [], '', 'id') }}}</strong> {{ $pulsaPhoneNumber }}
+                <strong>{{{ trans('email-expired-payment.body.transaction_labels.pulsa_phone_number', [], '', 'id') }}}</strong> {{ $pulsaPhoneNumber }}
                 <br>
-                <strong>{{{ trans('email-aborted-payment.body.transaction_labels.transaction_id', [], '', 'id') }}}</strong> {{ $transaction['id'] }}
+                <strong>{{{ trans('email-expired-payment.body.transaction_labels.transaction_id', [], '', 'id') }}}</strong> {{ $transaction['id'] }}
                 <br>
               </p>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{ trans('email-aborted-payment.body.payment-info-line-1-pulsa', ['transactionDateTime' => $transactionDateTime], '', 'id') }}
+                {{ trans('email-expired-payment.body.payment-info-line-1', ['transactionDateTime' => $transactionDateTime], '', 'id') }}
               </p>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{ trans('email-aborted-payment.body.payment-info-line-2-pulsa', $cs, '', 'id') }}
+                {{ trans('email-expired-payment.body.payment-info-line-2', $cs, '', 'id') }}
               </p>
 
               <p style="text-align: center">
                   <br>
                   <a href="{{{ $buyUrl }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;font-size:16px;display:inline-block;padding:10px 20px;text-decoration:none;">
-                    {{{ trans('email-aborted-payment.body.buttons.buy_pulsa', [], '', 'id') }}}
+                    {{{ trans('email-expired-payment.body.buttons.buy_pulsa', [], '', 'id') }}}
                   </a>
               </p>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{ trans('email-aborted-payment.body.regards', [], '', 'id') }}
+                {{ trans('email-expired-payment.body.regards', [], '', 'id') }}
               </p>
 
             </td>
@@ -213,48 +213,48 @@
           <tr>
             <td colspan="2" class="invoice-body" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:80px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-aborted-payment.body.greeting', ['customerName' => $customerName]) }}
+                {{ trans('email-expired-payment.body.greeting', ['customerName' => $customerName]) }}
               </p>
               <br>
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                <strong>{{{ trans('email-aborted-payment.body.transaction_labels.pulsa_name') }}}</strong> {{ $transaction['items'][0]['name'] }}
+                <strong>{{{ trans('email-expired-payment.body.transaction_labels.pulsa_name') }}}</strong> {{ $transaction['items'][0]['name'] }}
                 <br>
-                <strong>{{{ trans('email-aborted-payment.body.transaction_labels.pulsa_phone_number') }}}</strong> {{ $pulsaPhoneNumber }}
+                <strong>{{{ trans('email-expired-payment.body.transaction_labels.pulsa_phone_number') }}}</strong> {{ $pulsaPhoneNumber }}
                 <br>
-                <strong>{{{ trans('email-aborted-payment.body.transaction_labels.transaction_id') }}}</strong> {{ $transaction['id'] }}
+                <strong>{{{ trans('email-expired-payment.body.transaction_labels.transaction_id') }}}</strong> {{ $transaction['id'] }}
                 <br>
               </p>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{ trans('email-aborted-payment.body.payment-info-line-1') }}
+                {{ trans('email-expired-payment.body.payment-info-line-1') }}
               </p>
               <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-aborted-payment.body.payment-info-line-2') }}
+                {{ trans('email-expired-payment.body.payment-info-line-2') }}
               </p>
               <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-aborted-payment.body.payment-info-line-3') }}
+                {{ trans('email-expired-payment.body.payment-info-line-3') }}
               </p>
               <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-aborted-payment.body.payment-info-line-4-pulsa') }}
+                {{ trans('email-expired-payment.body.payment-info-line-4') }}
               </p>
               <br>
               <p style="text-align: center;">
                   <a href="{{{ $buyUrl }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;font-size:16px;display:inline-block;padding:10px 20px;text-decoration:none;">
-                    {{{ trans('email-aborted-payment.body.buttons.buy_pulsa') }}}
+                    {{{ trans('email-expired-payment.body.buttons.buy_pulsa') }}}
                   </a>
               </p>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
                 <br>
-                {{ trans('email-aborted-payment.body.regards') }}
+                {{ trans('email-expired-payment.body.regards') }}
               </p>
             </td>
           </tr>
