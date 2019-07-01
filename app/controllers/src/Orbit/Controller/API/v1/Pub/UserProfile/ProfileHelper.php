@@ -9,6 +9,7 @@ use DB;
 use Cache;
 use Validator;
 use Language;
+use Role;
 
 /**
  * Profile helper functions.
