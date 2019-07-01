@@ -72,6 +72,7 @@ class AbortedPaymentNotification extends PaymentNotification implements EmailNot
             'cs'                => $this->getContactData(),
             'transactionDateTime' => $this->payment->getTransactionDate('d F Y, H:i ') . " {$this->getLocalTimezoneName($this->payment->timezone_name)}",
             'buyUrl'            => $this->getBuyUrl(),
+            'emailSubject'      => trans('email-aborted-payment.subject'),
         ];
     }
 
