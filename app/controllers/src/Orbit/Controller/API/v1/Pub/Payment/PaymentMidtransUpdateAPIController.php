@@ -28,7 +28,7 @@ use Orbit\Notifications\Payment\SuspiciousPaymentNotification;
 use Orbit\Notifications\Payment\DeniedPaymentNotification;
 use Orbit\Notifications\Payment\PendingPaymentNotification;
 use Orbit\Notifications\Payment\CanceledPaymentNotification;
-// use Orbit\Notifications\Payment\ExpiredPaymentNotification;
+use Orbit\Notifications\Payment\ExpiredPaymentNotification;
 use Orbit\Notifications\Payment\AbortedPaymentNotification;
 use Mall;
 
@@ -320,9 +320,9 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
                 // Send notification if the purchase was expired.
                 // Only send if previous status was pending.
-                // if ($oldStatus === PaymentTransaction::STATUS_PENDING && $status === PaymentTransaction::STATUS_EXPIRED) {
-                //     $payment_update->user->notify(new ExpiredPaymentNotification($payment_update));
-                // }
+                if ($oldStatus === PaymentTransaction::STATUS_PENDING && $status === PaymentTransaction::STATUS_EXPIRED) {
+                    $payment_update->user->notify(new ExpiredPaymentNotification($payment_update));
+                }
 
                 // Send notification if the purchase was aborted.
                 // Only send if previous status was pending.
