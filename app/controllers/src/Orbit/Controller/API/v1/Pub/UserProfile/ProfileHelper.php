@@ -48,15 +48,7 @@ class ProfileHelper
      */
     public function getTotalContent($userId = null)
     {
-        $profileTotal = (object) [
-            'reviews' => 0,
-            'photos' => 0,
-            'following' => 0,
-        ];
-
-        $profileTotal->reviews = $this->getTotalReview($userId);
-        $profileTotal->photos = $this->getTotalPhotos($userId);
-        $profileTotal->following = $this->getTotalFollowing($userId);
+        $profileTotal = $this->mongoClient->setQueryString(['user_id' => $userId, 'status' => 'active'])->setEndPoint('leaderboard/counts')->request('GET');
 
         return $profileTotal;
     }
