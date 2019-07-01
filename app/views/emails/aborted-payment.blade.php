@@ -256,24 +256,35 @@
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{ trans('email-aborted-payment.body.payment-info-line-1', ['transactionDateTime' => $transactionDateTime], '', 'id') }}
+                {{ trans('email-aborted-payment.body.payment-info-line-1') }}
               </p>
+              <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                <br>
-                {{ trans('email-aborted-payment.body.payment-info-line-2', $cs, '', 'id') }}
+                {{ trans('email-aborted-payment.body.payment-info-line-2') }}
               </p>
+              <br>
+
+              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
+                {{ trans('email-aborted-payment.body.payment-info-line-3') }}
+              </p>
+              <br>
+
+              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
+                {{ trans('email-aborted-payment.body.payment-info-line-4') }}
+              </p>
+              <br>
 
               <p style="text-align: center">
                   <br>
                   <a href="{{{ $buyUrl }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;font-size:16px;display:inline-block;padding:10px 20px;text-decoration:none;">
-                    {{{ trans('email-aborted-payment.body.buttons.buy_coupon', [], '', 'id') }}}
+                    {{{ trans('email-aborted-payment.body.buttons.buy_coupon') }}}
                   </a>
               </p>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{ trans('email-aborted-payment.body.regards', [], '', 'id') }}
+                {{ trans('email-aborted-payment.body.regards') }}
               </p>
             </td>
           </tr>
