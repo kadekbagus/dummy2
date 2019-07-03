@@ -12,6 +12,7 @@ use Activity;
 use Validator;
 use User;
 use UserDetail;
+use UserExtended;
 use Lang;
 use Config;
 use stdclass;
@@ -86,6 +87,14 @@ class UserAPIController extends PubControllerAPI
             $updateUserDetail = UserDetail::where('user_id', $user->user_id)
                                             ->first();
 
+            $extendedUserDetail = UserExtended::where('user_id', $user->user_id)
+                                            ->first();
+
+            if (! is_object($extendedUserDetail)) {
+                $extendedUserDetail = new UserExtended();
+                $extendedUserDetail->user_id = $userId;
+            }
+
             OrbitInput::post('phone', function($phone) use ($updateUserDetail) {
                 $validator = Validator::make(
                     array('phone' => $phone),
@@ -102,11 +111,20 @@ class UserAPIController extends PubControllerAPI
                 $updateUserDetail->gender = $gender;
             });
 
+            OrbitInput::post('about', function($about) use ($extendedUserDetail) {
+                $extendedUserDetail->about = $about;
+            });
+
+            OrbitInput::post('location', function($location) use ($extendedUserDetail) {
+                $extendedUserDetail->location = $location;
+            });
+
             OrbitInput::post('birthdate', function($birthdate) use ($updateUserDetail) {
                 $updateUserDetail->birthdate = $birthdate;
             });
 
             $updateUserDetail->save();
+            $extendedUserDetail->save();
 
             // Update session fullname and email
             $sessionData = $session->read(NULL);

@@ -24,6 +24,7 @@ use IssuedCoupon;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Mall;
 use Activity;
+use Country;
 use Carbon\Carbon as Carbon;
 
 class PaymentMidtransCreateAPIController extends PubControllerAPI
@@ -106,6 +107,14 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
             // Get coupon detail from DB.
             $coupon = Coupon::select('price_selling', 'promotion_id', 'promotion_type')->find($object_id);
 
+            // Resolve country_id
+            if ($country_id !== '0' || $country_id !== 0) {
+                $country = Country::where('name', $country_id)->first();
+                if (! empty($country)) {
+                    $country_id = $country->country_id;
+                }
+            }
+
             // Get mall timezone
             $mallTimeZone = 'Asia/Jakarta';
             $mall = null;
@@ -113,6 +122,7 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                 $mall = Mall::where('merchant_id', $mall_id)->first();
                 if (!empty($mall)) {
                     $mallTimeZone = $mall->getTimezone($mall_id);
+                    $country_id = $mall->country_id;
                 }
             }
 
