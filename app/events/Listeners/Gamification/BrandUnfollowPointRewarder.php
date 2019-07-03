@@ -23,6 +23,8 @@ class BrandUnfollowPointRewarder extends BaseBrandPointRewarder
         //unfollow, and number of store === 0 means, user stop following brand
         if ($numberOfStoreOfBrand === 0) {
             //punish user
+            //assignment is required for PHP < 7 to call __invoke() of a class
+            $giveReward = $this->pointRewarder;
             $giveReward($user, $data);
         }
     }
