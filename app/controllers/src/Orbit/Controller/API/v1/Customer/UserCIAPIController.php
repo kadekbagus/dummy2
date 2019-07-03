@@ -82,6 +82,8 @@ class UserCIAPIController extends BaseAPIController
             $data->image = $image;
             $data->phone = ! empty($userDetail) ? $userDetail->phone : null;
             $data->gender = ! empty($userDetail) ? $userDetail->gender : null;
+            $data->location = ! empty($userDetail) ? $userDetail->user_loc : null;
+            $data->about = ! empty($userDetail) ? $userDetail->about : null;
             $data->birthdate = ! empty($userDetail) ? $userDetail->birthdate : null;
 
             $this->response->data = $data;
