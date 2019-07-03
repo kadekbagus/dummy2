@@ -21,9 +21,9 @@ class BrandFollowPointRewarder extends BaseBrandPointRewarder
     {
         $numberOfStoreOfBrand = $this->rewardIfNotStoreOrGetNumberOfStore($user, $data);
 
-        //follow, and number of store === 1 means, user following brand
-        //for this first time
-        if ($numberOfStoreOfBrand === 1) {
+        //follow, and number of store >0 and existing_store_count = 0 means,
+        //user following brand for the first time
+        if (($numberOfStoreOfBrand > 0) && ($data->existing_stores_count === 0)) {
             //user eligible, give reward
             //assignment is required for PHP < 7 to call __invoke() of a class
             $giveReward = $this->pointRewarder;
