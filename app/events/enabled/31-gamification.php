@@ -10,6 +10,8 @@ use Orbit\Events\Listeners\Gamification\PointRewarder;
 use Orbit\Events\Listeners\Gamification\OneTimeReward;
 use Orbit\Events\Listeners\Gamification\ThrottledRewarder;
 use Orbit\Events\Listeners\Gamification\ActivatedUserRewarder;
+use Orbit\Events\Listeners\Gamification\BrandFollowRewarder;
+use Orbit\Events\Listeners\Gamification\BrandUnfollowRewarder;
 
 /**
  * Listen on:    `orbit.user.activation.success`
@@ -171,7 +173,9 @@ Event::listen(
     'orbit.follow.postfollow.success',
     //reward active user only
     new ActivatedUserRewarder(
-        new PointRewarder('follow')
+        new BrandFollowPointRewarder(
+            new PointRewarder('follow')
+        )
     )
 );
 
@@ -186,7 +190,9 @@ Event::listen(
     'orbit.follow.postunfollow.success',
     //reward active user only
     new ActivatedUserRewarder(
-        new PointRewarder('unfollow')
+        new BrandUnfollowPointRewarder (
+            new PointRewarder('unfollow')
+        )
     )
 );
 
