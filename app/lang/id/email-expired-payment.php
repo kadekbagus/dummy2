@@ -1,11 +1,11 @@
 <?php
 
 return [
-    'subject' => 'Gotomalls Expired Payment Transaction',
+    'subject' => 'Kuponmu Ketinggalan, Nih! - GoToMalls.com',
     'subject_pulsa' => 'Pulsamu Ketinggalan, Nih! – GoToMalls.com',
 
     'header' => [
-        'email-type'       => 'Pemberitahuan',
+        'email-type'       => 'Pesanan Kadaluarsa',
     ],
 
     'body' => [
