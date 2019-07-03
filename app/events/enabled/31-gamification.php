@@ -10,8 +10,8 @@ use Orbit\Events\Listeners\Gamification\PointRewarder;
 use Orbit\Events\Listeners\Gamification\OneTimeReward;
 use Orbit\Events\Listeners\Gamification\ThrottledRewarder;
 use Orbit\Events\Listeners\Gamification\ActivatedUserRewarder;
-use Orbit\Events\Listeners\Gamification\BrandFollowRewarder;
-use Orbit\Events\Listeners\Gamification\BrandUnfollowRewarder;
+use Orbit\Events\Listeners\Gamification\BrandFollowPointRewarder;
+use Orbit\Events\Listeners\Gamification\BrandUnfollowPointRewarder;
 
 /**
  * Listen on:    `orbit.user.activation.success`
