@@ -11,7 +11,7 @@ use Config;
  *
  * @author zamroni <zamroni@dominopos.com>
  */
-class BaseBrandPointRewarder extends DecoratorRewarder
+abstract class BaseBrandPointRewarder extends DecoratorRewarder
 {
     protected $mongoClient;
 
