@@ -18,7 +18,7 @@ class BrandUnfollowPointRewarder extends BaseBrandPointRewarder
      */
     public function __invoke(User $user, $data = null)
     {
-        $numberofStoreOfBrand = $this->rewardIfNotStoreOrGetNumberOfStore($user, $data);
+        $numberOfStoreOfBrand = $this->rewardIfNotStoreOrGetNumberOfStore($user, $data);
 
         //unfollow, and number of store === 0 means, user stop following brand
         if ($numberOfStoreOfBrand === 0) {

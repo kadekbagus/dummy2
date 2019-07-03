@@ -19,7 +19,7 @@ class BrandFollowPointRewarder extends BaseBrandPointRewarder
      */
     public function __invoke(User $user, $data = null)
     {
-        $numberofStoreOfBrand = $this->rewardIfNotStoreOrGetNumberOfStore($user, $data);
+        $numberOfStoreOfBrand = $this->rewardIfNotStoreOrGetNumberOfStore($user, $data);
 
         //follow, and number of store === 1 means, user following brand
         //for this first time
