@@ -9,6 +9,7 @@ use DB;
 use Cache;
 use Validator;
 use Language;
+use Role;
 
 /**
  * Profile helper functions.
@@ -48,15 +49,7 @@ class ProfileHelper
      */
     public function getTotalContent($userId = null)
     {
-        $profileTotal = (object) [
-            'reviews' => 0,
-            'photos' => 0,
-            'following' => 0,
-        ];
-
-        $profileTotal->reviews = $this->getTotalReview($userId);
-        $profileTotal->photos = $this->getTotalPhotos($userId);
-        $profileTotal->following = $this->getTotalFollowing($userId);
+        $profileTotal = $this->mongoClient->setQueryString(['user_id' => $userId, 'status' => 'active'])->setEndPoint('leaderboard/counts')->request('GET');
 
         return $profileTotal;
     }
@@ -206,71 +199,35 @@ class ProfileHelper
         $userRank = 0;
         $maxRank = 5000;
 
-        /* Dont use cache at the moment.
-        Cache::get("ur_{$userId}", null);
+        $tablePrefix = DB::getTablePrefix();
 
-        if (! empty($userRank)) {
-            return unserialize($userRank);
-        }
-        */
-
-        if (empty($leaderboardData)) {
-            $leaderboardData = $this->getTopRankUsers();
-        }
-
-        $realRank = 0;
-        $userRank = 0;
-        $lastPoint = null;
-        $inTopRank = false;
-        foreach($leaderboardData as $index => $data) {
-            $realRank++;
-            if ($lastPoint !== $data['total_game_points']) {
-                $lastPoint = $data['total_game_points'];
-                $userRank = $realRank;
-            }
-
-            if ($data['user_id'] === $userId) {
-                $inTopRank = true;
-                break;
-            }
-        }
-
-        if (! $inTopRank) {
-            $tablePrefix = DB::getTablePrefix();
-            DB::statement(DB::raw("SET @rownum = 0;"));
-            DB::statement(DB::raw("SET @lastPoint = '';"));
-            DB::statement(DB::raw("SET @groupedRank = 0;"));
-            $userRankData = DB::select(
-                DB::raw("
-                    SELECT * FROM (
+        $userRankData = DB::select(
+            DB::raw("
+                SELECT
+                    eu.user_id,
+                    total_game_points,
+                    FIND_IN_SET(total_game_points, (
                         SELECT
-                            @rownum := @rownum + 1 AS rank,
-                            {$tablePrefix}users.user_id,
-                            {$tablePrefix}extended_users.total_game_points,
-                            IF (@lastPoint <> {$tablePrefix}extended_users.total_game_points, @groupedRank := @rownum, @groupedRank) as grouped_rank,
-                            IF (@lastPoint <> {$tablePrefix}extended_users.total_game_points, @lastPoint := {$tablePrefix}extended_users.total_game_points, @lastPoint) as lastPoint
-                        FROM {$tablePrefix}users
-                        JOIN {$tablePrefix}roles on {$tablePrefix}users.user_role_id = {$tablePrefix}roles.role_id
-                        LEFT JOIN {$tablePrefix}extended_users on {$tablePrefix}users.user_id = {$tablePrefix}extended_users.user_id
-                        where role_name = 'Consumer'
-                        and status = 'active'
-                        and user_email not like 'guest_%'
-                        ORDER BY {$tablePrefix}extended_users.total_game_points DESC
-                    ) as ranking
-                    where user_id = " . DB::getPdo()->quote($userId) . "
-                ")
-            );
+                            GROUP_CONCAT(DISTINCT total_game_points ORDER BY total_game_points DESC)
+                        FROM
+                            {$tablePrefix}extended_users eu
 
-            if (count($userRankData) === 1) {
-                $userRank = (int) $userRankData[0]->grouped_rank;
+                    )) AS rank
+                FROM
+                    {$tablePrefix}extended_users eu
+                    where eu.user_id = " . DB::getPdo()->quote($userId)
+            )
+        );
 
-                if ($userRank > $maxRank) {
-                    $userRank = 0; // means not ranked.
-                }
+        if (count($userRankData) === 1) {
+            $userRank = (int) $userRankData[0]->rank;
+
+            if ($userRank > $maxRank) {
+                $userRank = 0; // means not ranked.
             }
-            else {
-                $userRank = 0;
-            }
+        }
+        else {
+            $userRank = 0;
         }
 
         return $userRank;
@@ -376,6 +333,10 @@ class ProfileHelper
             return unserialize($topRankUsers);
         }
         */
+        $prefix = DB::getTablePrefix();
+
+        $consumerRole = Role::where('role_name', 'Consumer')->firstOrFail();
+
         $topRankUsers = User::select('users.user_id', DB::raw("CONCAT(user_firstname, ' ', user_lastname) as name"), 'extended_users.total_game_points')
                 ->with([
                     'purchases' => function($purchases) {
@@ -390,10 +351,8 @@ class ProfileHelper
                         $profilePicture->where('media_name_long', 'user_profile_picture_resized_default');
                     },
                 ])
-                ->join('roles', 'users.user_role_id', '=', 'roles.role_id')
                 ->leftJoin('extended_users', 'users.user_id', '=', 'extended_users.user_id')
-                ->where('user_email', 'not like', 'guest_%')
-                ->where('roles.role_name', 'Consumer')
+                ->where('user_role_id', $consumerRole->role_id)
                 ->where('status', 'active')
                 ->orderBy('extended_users.total_game_points', 'desc')
                 ->limit($topRankLimit)
