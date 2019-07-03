@@ -65,7 +65,7 @@ abstract class BaseBrandPointRewarder extends DecoratorRewarder
         return $this->getNumberOfStoreOfBrandFollowed(
             $this->mongoClient,
             $user->user_id,
-            $data->object_id
+            $data->base_merchant_id
         );
     }
 }

@@ -301,10 +301,11 @@ class FollowAPIController extends PubControllerAPI
                         }
 
                         $gamificationData = (object) [
-                            'object_id' => $baseMerchantId,
+                            'object_id' => $object_id,
                             'object_type' => $object_type,
                             'object_name' => $baseMerchantName,
                             'country_id' => $baseMerchantCountry,
+                            'base_merchant_id' => $baseMerchantId,
                         ];
                         Event::fire('orbit.follow.postfollow.success', array($user, $gamificationData));
                     }
@@ -475,10 +476,11 @@ class FollowAPIController extends PubControllerAPI
                         }
 
                         $gamificationData = (object) [
-                            'object_id' => $baseMerchantId,
+                            'object_id' => $object_id,
                             'object_type' => $object_type,
                             'object_name' => $baseMerchantName,
                             'country_id' => $baseMerchantCountry,
+                            'base_merchant_id' => $baseMerchantId,
                         ];
                         Event::fire('orbit.follow.postunfollow.success', array($user, $gamificationData));
                     }
