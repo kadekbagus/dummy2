@@ -36,7 +36,7 @@ abstract class BaseBrandPointRewarder extends DecoratorRewarder
     {
         $queryString = [
             'user_id'     => $userId,
-            'base_merchant_id'   => $objectId,
+            'base_merchant_id'   => $baseMerchantId,
             'object_type' => 'store'
         ];
 
