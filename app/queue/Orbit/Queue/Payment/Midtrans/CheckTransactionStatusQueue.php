@@ -14,6 +14,9 @@ use PaymentTransaction;
 
 use Orbit\Helper\Midtrans\API\TransactionStatus;
 
+use Orbit\Notifications\Payment\ExpiredPaymentNotification;
+use Orbit\Notifications\Pulsa\ExpiredPaymentNotification as PulsaExpiredPaymentNotification;
+
 /**
  * Get transaction status from Midtrans and update our internal payment status if necessary.
  *
@@ -54,7 +57,7 @@ class CheckTransactionStatusQueue
                 Log::info('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' completed. Nothing to do.');
 
                 DB::connection()->commit();
-                
+
                 $job->delete();
 
                 return;
@@ -155,6 +158,13 @@ class CheckTransactionStatusQueue
                             ->setLocation($mall)
                             ->responseFailed()
                             ->save();
+
+                    $paymentDetail = $payment->details->first();
+                    if ($paymentDetail->object_type === 'pulsa') {
+                        $payment->user->notify(new PulsaExpiredPaymentNotification($payment));
+                    } else if ($paymentDetail->object_type === 'coupon') {
+                        $payment->user->notify(new ExpiredPaymentNotification($payment));
+                    }
                 }
 
                 // Fire event to get the coupon if necessary.

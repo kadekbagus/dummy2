@@ -2,6 +2,7 @@
 
 use Config;
 use Carbon\Carbon;
+use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
 
 /**
  * A trait that indicate that the using object/model
@@ -147,5 +148,21 @@ trait HasPaymentTrait
         }
 
         return '-';
+    }
+
+    /**
+     * Get buy url depends on the purchased item's type.
+     * @return [type] [description]
+     */
+    protected function getBuyUrl()
+    {
+        $buyUrl = Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com');
+        $paymentDetail = $this->payment->details->first();
+
+        return $buyUrl . LandingPageUrlGenerator::create(
+            $paymentDetail->object_type,
+            $paymentDetail->object_id,
+            $paymentDetail->object_name
+        )->generateUrl();
     }
 }
