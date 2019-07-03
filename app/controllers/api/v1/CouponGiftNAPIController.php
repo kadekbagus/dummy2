@@ -2041,10 +2041,20 @@ class CouponGiftNAPIController extends ControllerAPI
                                                     inner join {$table_prefix}merchants on {$table_prefix}merchants.merchant_id = {$table_prefix}promotion_retailer.retailer_id
                                                     inner join {$table_prefix}merchants pm on {$table_prefix}merchants.parent_id = pm.merchant_id
                                                     where {$table_prefix}promotion_retailer.promotion_id = {$table_prefix}promotions.promotion_id) as campaign_location_names"),
-                                         DB::raw("(SELECT GROUP_CONCAT(url separator '\n')
+                                         DB::raw("(SELECT COUNT(*)
                                                     FROM {$table_prefix}issued_coupons ic
                                                     WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id
-                                                        ) as shortlinks"),
+                                                        ) as total_shortlinks"),
+                                         DB::raw("CASE WHEN
+                                                        (SELECT COUNT(*) FROM {$table_prefix}issued_coupons ic
+                                                         WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id) > 1
+                                                   THEN
+                                                         (SELECT CONCAT((SELECT url FROM {$table_prefix}issued_coupons WHERE {$table_prefix}issued_coupons.promotion_id = {$table_prefix}promotions.promotion_id ORDER BY issued_coupon_id ASC LIMIT 1), '\n',
+                                                                        (SELECT url FROM {$table_prefix}issued_coupons WHERE {$table_prefix}issued_coupons.promotion_id = {$table_prefix}promotions.promotion_id ORDER BY issued_coupon_id DESC LIMIT 1)))
+                                                   ELSE
+                                                         (SELECT url FROM {$table_prefix}issued_coupons
+                                                         WHERE {$table_prefix}issued_coupons.promotion_id = {$table_prefix}promotions.promotion_id)
+                                                   END as shortlinks"),
                                          DB::raw("IF({$table_prefix}promotions.is_all_gender = 'Y', 'A', {$table_prefix}promotions.is_all_gender) as gender"),
                                          'promotions.coupon_validity_in_date',
                                          'promotions.status'
