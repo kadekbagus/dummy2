@@ -25,6 +25,8 @@ class BrandFollowPointRewarder extends BaseBrandPointRewarder
         //for this first time
         if ($numberOfStoreOfBrand === 1) {
             //user eligible, give reward
+            //assignment is required for PHP < 7 to call __invoke() of a class
+            $giveReward = $this->pointRewarder;
             $giveReward($user, $data);
         }
     }
