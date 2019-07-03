@@ -43,9 +43,10 @@ class UserCIAPIController extends BaseAPIController
             // note that we need to alias location as user_loc because
             // otherwise UserDetail::getLocationAttribute() will be called
             // when we use $userdetail->location
-            $userDetail = UserDetail
-                ::select('phone', 'gender', 'location AS user_loc', 'about', 'birthdate')
-                ->where('user_id', $user->user_id)
+            $userDetail = User::select('phone', 'gender', 'location AS user_loc', 'about', 'birthdate')
+                ->leftJoin('user_details', 'user_details.user_id', '=', 'users.user_id')
+                ->leftJoin('extended_users', 'extended_users.user_id', '=', 'users.user_id')
+                ->where('users.user_id', $user->user_id)
                 ->first();
 
             // @Todo: Use ACL authentication instead
@@ -81,6 +82,8 @@ class UserCIAPIController extends BaseAPIController
             $data->image = $image;
             $data->phone = ! empty($userDetail) ? $userDetail->phone : null;
             $data->gender = ! empty($userDetail) ? $userDetail->gender : null;
+            $data->location = ! empty($userDetail) ? $userDetail->user_loc : null;
+            $data->about = ! empty($userDetail) ? $userDetail->about : null;
             $data->birthdate = ! empty($userDetail) ? $userDetail->birthdate : null;
 
             $this->response->data = $data;
