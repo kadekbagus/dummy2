@@ -158,6 +158,7 @@ class FollowAPIController extends PubControllerAPI
 
                     break;
                 case "store":
+                    $existingIds = array();
                     if ($action === 'follow')
                     {
                         $baseMerchantId = null;
@@ -481,6 +482,7 @@ class FollowAPIController extends PubControllerAPI
                             'object_name' => $baseMerchantName,
                             'country_id' => $baseMerchantCountry,
                             'base_merchant_id' => $baseMerchantId,
+                            'existing_stores_count' => count($existingIds),
                         ];
                         Event::fire('orbit.follow.postunfollow.success', array($user, $gamificationData));
                     }
