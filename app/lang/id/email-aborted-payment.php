@@ -1,11 +1,11 @@
 <?php
 
 return [
-    'subject' => 'Transaksi Dibatalkan',
+    'subject' => 'Kuponmu Ketinggalan, Nih! - Gotomalls.com',
     'subject_pulsa' => 'Pulsamu Ketinggalan, Nih! – GoToMalls.com',
 
     'header' => [
-        'email-type'       => 'Pemberitahuan',
+        'email-type'       => 'Pesanan Dibatalkan',
     ],
 
     'body' => [

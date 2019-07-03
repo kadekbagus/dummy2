@@ -70,7 +70,7 @@ class ExpiredPaymentNotification extends PaymentNotification implements EmailNot
             'cs'                => $this->getContactData(),
             'transactionDateTime' => $this->payment->getTransactionDate('d F Y, H:i ') . " {$this->getLocalTimezoneName($this->payment->timezone_name)}",
             'buyUrl'            => $this->getBuyUrl(),
-            'emailSubject'      => trans('email-expired-payment.subject'),
+            'emailSubject'      => trans('email-expired-payment.subject', [], '', 'id'),
         ];
     }
 
