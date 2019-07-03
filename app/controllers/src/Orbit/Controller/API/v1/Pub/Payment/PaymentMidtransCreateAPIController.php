@@ -26,6 +26,8 @@ use Mall;
 use Activity;
 use Country;
 use Carbon\Carbon as Carbon;
+use Orbit\Helper\Util\CampaignSourceParser;
+use Request;
 
 class PaymentMidtransCreateAPIController extends PubControllerAPI
 {
@@ -126,6 +128,17 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                 }
             }
 
+            // Get utm
+            $referer = NULL;
+            if (isset($_SERVER['HTTP_REFERER']) && ! empty($_SERVER['HTTP_REFERER'])) {
+                $referer = $_SERVER['HTTP_REFERER'];
+            }
+            $current_url = Request::fullUrl();
+            $urlForTracking = [$referer, $current_url];
+            $campaignData = CampaignSourceParser::create()
+                                ->setUrls($urlForTracking)
+                                ->getCampaignSource();
+
             $payment_new = new PaymentTransaction;
             $payment_new->user_email = $email;
             $payment_new->user_name = $user_name;
@@ -138,6 +151,12 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
             $payment_new->status = PaymentTransaction::STATUS_STARTING;
             $payment_new->timezone_name = $mallTimeZone;
             $payment_new->post_data = serialize($post_data);
+
+            $payment_new->utm_source = $campaignData['campaign_source'];
+            $payment_new->utm_medium = $campaignData['campaign_medium'];
+            $payment_new->utm_term = $campaignData['campaign_term'];
+            $payment_new->utm_content = $campaignData['campaign_content'];
+            $payment_new->utm_campaign = $campaignData['campaign_name'];
 
             $payment_new->save();
 
