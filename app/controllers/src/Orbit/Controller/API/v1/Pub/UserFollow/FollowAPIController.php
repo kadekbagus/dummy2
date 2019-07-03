@@ -307,6 +307,7 @@ class FollowAPIController extends PubControllerAPI
                             'object_name' => $baseMerchantName,
                             'country_id' => $baseMerchantCountry,
                             'base_merchant_id' => $baseMerchantId,
+                            'existing_stores_count' => count($existingIds),
                         ];
                         Event::fire('orbit.follow.postfollow.success', array($user, $gamificationData));
                     }
