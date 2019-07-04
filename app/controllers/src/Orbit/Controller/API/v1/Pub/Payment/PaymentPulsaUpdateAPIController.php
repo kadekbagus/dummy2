@@ -53,6 +53,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
             $payment_transaction_id = OrbitInput::post('payment_transaction_id');
             $status = OrbitInput::post('status');
             $mallId = OrbitInput::post('mall_id', null);
+            $fromSnap = OrbitInput::post('from_snap', false);
 
             $paymentHelper = PaymentHelper::create();
             $paymentHelper->registerCustomValidation();
@@ -211,6 +212,15 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                     }
                 }
 
+                // If new status is 'aborted', then keep it as 'starting' after cleaning up
+                // any related (issued) coupons.
+                if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_ABORTED) {
+                    // If not from closing snap window, then keep status to starting.
+                    if (! $fromSnap) {
+                        $payment_update->status = PaymentTransaction::STATUS_STARTING;
+                    }
+                }
+
                 $payment_update->save();
 
                 $pulsaName = $payment_update->details->first()->pulsa->pulsa_display_name;
@@ -319,7 +329,9 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                 // Send notification if the purchase was aborted
                 // Only send if previous status was pending.
                 if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_ABORTED) {
-                    $payment_update->user->notify(new AbortedPaymentNotification($payment_update));
+                    if ($fromSnap) {
+                        $payment_update->user->notify(new AbortedPaymentNotification($payment_update));
+                    }
                 }
 
                 // Send notification if the purchase was aborted
