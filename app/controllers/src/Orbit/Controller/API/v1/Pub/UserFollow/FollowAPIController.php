@@ -186,13 +186,17 @@ class FollowAPIController extends PubControllerAPI
 
                             // User will follow all store in mall,  when store have more than one store in same mall
                             // Get store name,city and country
-                            $storeInfo = Tenant::select('merchants.merchant_id', 'merchants.name', DB::raw('parent.city as city'), DB::raw('parent.country_id as country_id'), 'base_stores.base_merchant_id')
+                            $storeInfoModel = Tenant::select('merchants.merchant_id', 'merchants.name', DB::raw('parent.city as city'), DB::raw('parent.country_id as country_id'), 'base_stores.base_merchant_id')
                                                 ->leftJoin('merchants as parent', DB::raw('parent.merchant_id'), '=', 'merchants.parent_id')
                                                 ->leftJoin('base_stores', 'base_stores.base_store_id', '=', 'merchants.merchant_id')
-                                                ->where('merchants.merchant_id', $object_id)
                                                 ->where('merchants.parent_id',  $mall_id)
-                                                ->excludeDeleted('merchants')
-                                                ->first();
+                                                ->excludeDeleted('merchants');
+                            if (is_array($object_id)) {
+                                $storeInfoModel->whereIn('merchants.merchant_id', $object_id);
+                            } else {
+                                $storeInfoModel->where('merchants.merchant_id', $object_id);
+                            }
+                            $storeInfo = $storeInfoModel->first();
 
                             $baseMerchantId = $storeInfo->base_merchant_id;
                             $baseMerchantName = $storeInfo->name;
