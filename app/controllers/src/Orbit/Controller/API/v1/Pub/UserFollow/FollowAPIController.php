@@ -168,22 +168,6 @@ class FollowAPIController extends PubControllerAPI
                         if (!empty($mall_id)) {
                             // mall level
 
-                            $existingFollowedStoresParams = [
-                                'user_id'          => $user->user_id,
-                                'object_id'        => $value->store_id,
-                                'object_type'      => $object_type,
-                                'city'             => $value->city,
-                                'country_id'       => $value->country_id,
-                                'base_merchant_id' => $baseStore->base_merchant_id,
-                            ];
-
-                            $existingFollowedStores = $mongoClient->setQueryString($existingFollowedStoresParams)
-                                                        ->setEndPoint('user-follows')
-                                                        ->request('GET');
-                            $existingIds = array_map(function($follow) {
-                                return $follow->_id;
-                            }, $existingFollowedStores->data->records);
-
                             // User will follow all store in mall,  when store have more than one store in same mall
                             // Get store name,city and country
                             $storeInfoModel = Tenant::select('merchants.merchant_id', 'merchants.name', DB::raw('parent.city as city'), DB::raw('parent.country_id as country_id'), 'base_stores.base_merchant_id')
@@ -201,6 +185,19 @@ class FollowAPIController extends PubControllerAPI
                             $baseMerchantId = $storeInfo->base_merchant_id;
                             $baseMerchantName = $storeInfo->name;
                             $baseMerchantCountry = $storeInfo->country_id;
+
+                            $existingFollowedStoresParams = [
+                                'user_id'          => $user->user_id,
+                                'object_type'      => $object_type,
+                                'base_merchant_id' => $baseMerchantId,
+                            ];
+
+                            $existingFollowedStores = $mongoClient->setQueryString($existingFollowedStoresParams)
+                                                        ->setEndPoint('user-follows')
+                                                        ->request('GET');
+                            $existingIds = array_map(function($follow) {
+                                return $follow->_id;
+                            }, $existingFollowedStores->data->records);
 
                             if (! empty($storeInfo)) {
                                 $stores = Tenant::select('name', 'merchant_id as store_id')
