@@ -344,7 +344,7 @@ class FollowAPIController extends PubControllerAPI
                                                 ->leftJoin('base_stores', 'base_stores.base_store_id', '=', 'merchants.merchant_id')
                                                 ->where('merchants.parent_id',  $mall_id)
                                                 ->excludeDeleted('merchants');
-                            if (is_array($objectId)) {
+                            if (is_array($object_id)) {
                                 $storeInfoModel->whereIn('merchants.merchant_id', $object_id);
                             } else {
                                 $storeInfoModel->where('merchants.merchant_id', $object_id);
