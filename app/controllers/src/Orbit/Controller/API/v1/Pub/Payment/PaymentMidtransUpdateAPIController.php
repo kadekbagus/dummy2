@@ -28,6 +28,8 @@ use Orbit\Notifications\Payment\SuspiciousPaymentNotification;
 use Orbit\Notifications\Payment\DeniedPaymentNotification;
 use Orbit\Notifications\Payment\PendingPaymentNotification;
 use Orbit\Notifications\Payment\CanceledPaymentNotification;
+use Orbit\Notifications\Payment\ExpiredPaymentNotification;
+use Orbit\Notifications\Payment\AbortedPaymentNotification;
 use Mall;
 
 /**
@@ -51,6 +53,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             $payment_transaction_id = OrbitInput::post('payment_transaction_id');
             $status = OrbitInput::post('status');
             $mallId = OrbitInput::post('mall_id', null);
+            $fromSnap = OrbitInput::post('from_snap', false);
 
             $paymentHelper = PaymentHelper::create();
             $paymentHelper->registerCustomValidation();
@@ -217,6 +220,17 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                     }
                 }
 
+                // If new status is 'aborted', then keep it as 'starting' after cleaning up
+                // any related (issued) coupons.
+                if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_ABORTED) {
+                    $payment_update->cleanUp();
+
+                    // If not from closing snap window, then keep status to starting.
+                    if (! $fromSnap) {
+                        $payment_update->status = PaymentTransaction::STATUS_STARTING;
+                    }
+                }
+
                 $payment_update->save();
 
                 // Commit the changes ASAP so if there are any other requests that trigger this controller
@@ -314,6 +328,20 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                             ->save();
 
                     $payment_update->user->notify(new CanceledPaymentNotification($payment_update));
+                }
+
+                // Send notification if the purchase was expired.
+                // Only send if previous status was pending.
+                if ($oldStatus === PaymentTransaction::STATUS_PENDING && $status === PaymentTransaction::STATUS_EXPIRED) {
+                    $payment_update->user->notify(new ExpiredPaymentNotification($payment_update));
+                }
+
+                // Send notification if the purchase was aborted.
+                // Only send if previous status was pending.
+                if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_ABORTED) {
+                    if ($fromSnap) {
+                        $payment_update->user->notify(new AbortedPaymentNotification($payment_update));
+                    }
                 }
 
                 // If previous status was success and now is denied, then send notification to admin.

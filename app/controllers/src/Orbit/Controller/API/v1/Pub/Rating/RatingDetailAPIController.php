@@ -159,31 +159,71 @@ class RatingDetailAPIController extends PubControllerAPI
 
             switch ($objectType) {
                 case 'store':
-                    $image = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as path";
-                    if ($usingCdn) {
-                        $image = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as path";
-                    }
-
-                    $object = Tenant::select('merchants.*')
-                        ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                        ->with(['mediaLogo' => function ($q) use ($image) {
-                            $q->select(
-                                    DB::raw("{$image}"),
-                                    'media.object_id'
-                                );
-                        }])
-                        ->where('merchants.status', '=', 'active')
-                        ->where(DB::raw('oms.status'), '=', 'active')
-                        ->where('merchants.name', $review->store_name)
-                        ->where(DB::raw("oms.country_id"), $review->country_id)
-                        ->first();
-
-                    $objectData->id = $object->merchant_id;
-                    $objectData->name = $object->name;
+                    $objectData->id = '';
+                    $objectData->name = '';
                     $objectData->type = 'store';
-                    $objectData->image = isset($object->mediaLogo[0]) ? $object->mediaLogo[0]->path : null;
+                    $objectData->image = '';
 
-                    break;
+                    if (empty($reviewData->store_name) && empty($reviewData->store_id)) {
+                        // for some reason (TBD) there are records without store_id, store_name and country_id
+                        // use object_id to query instead
+                        $image = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as path";
+                        if ($usingCdn) {
+                            $image = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as path";
+                        }
+
+                        $object = Tenant::select('merchants.*')
+                            ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                            ->with(['mediaLogo' => function ($q) use ($image) {
+                                $q->select(
+                                        DB::raw("{$image}"),
+                                        'media.object_id'
+                                    );
+                            }])
+                            ->where('merchants.status', '=', 'active')
+                            ->where(DB::raw('oms.status'), '=', 'active')
+                            ->where('merchants.merchant_id', $review->object_id)
+                            ->first();
+
+                        $objectData->id = $object->merchant_id;
+                        $objectData->name = $object->name;
+                        $objectData->type = 'store';
+                        $objectData->image = isset($object->mediaLogo[0]) ? $object->mediaLogo[0]->path : null;
+
+                        break;
+                    } else {
+                        $image = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as path";
+                        if ($usingCdn) {
+                            $image = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as path";
+                        }
+
+                        $object = Tenant::select('merchants.*')
+                            ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                            ->with(['mediaLogo' => function ($q) use ($image) {
+                                $q->select(
+                                        DB::raw("{$image}"),
+                                        'media.object_id'
+                                    );
+                            }])
+                            ->where('merchants.status', '=', 'active')
+                            ->where(DB::raw('oms.status'), '=', 'active');
+
+                        if (empty($reviewData->store_name)) {
+                            $object = $object->where('merchants.merchant_id', $review->store_id);
+                        } elseif (empty($reviewData->store_id)) {
+                            $object = $object->where('merchants.name', $review->store_name);
+                        }
+
+                        $object = $object->where(DB::raw("oms.country_id"), $review->country_id)
+                            ->first();
+
+                        $objectData->id = $object->merchant_id;
+                        $objectData->name = $object->name;
+                        $objectData->type = 'store';
+                        $objectData->image = isset($object->mediaLogo[0]) ? $object->mediaLogo[0]->path : null;
+
+                        break;
+                    }
 
                 case 'news':
                 case 'promotion':
