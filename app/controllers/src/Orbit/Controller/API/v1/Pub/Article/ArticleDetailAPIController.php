@@ -186,13 +186,15 @@ class ArticleDetailAPIController extends PubControllerAPI
                                                   ->on('news.object_type', '=', DB::raw("'news'"))
                                                   ->on('news.status', '=', DB::raw("'active'"));
                                             })
+                                            ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
+                                            ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
                                             ->leftJoin('news_translations', function ($q) use ($valid_language) {
                                                 $q->on('news_translations.news_id', '=', 'news.news_id')
                                                   ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
                                             })
                                             ->leftJoin('news_translations as default_translation', function ($q) use ($prefix){
                                                 $q->on(DB::raw("default_translation.news_id"), '=', 'news.news_id')
-                                                  ->on(DB::raw("default_translation.merchant_language_id"), '=', DB::raw("'KXyS14LOVSgGUMPB'") );
+                                                  ->on(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
                                             })
                                             ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                                             ->where('article_link_to_objects.object_type', 'news')
@@ -252,13 +254,15 @@ class ArticleDetailAPIController extends PubControllerAPI
                                                   ->on('news.object_type', '=', DB::raw("'promotion'"))
                                                   ->on('news.status', '=', DB::raw("'active'"));
                                             })
+                                            ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
+                                            ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
                                             ->leftJoin('news_translations', function ($q) use ($valid_language) {
                                                 $q->on('news_translations.news_id', '=', 'news.news_id')
                                                   ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
                                             })
                                             ->leftJoin('news_translations as default_translation', function ($q) use ($prefix){
                                                 $q->on(DB::raw("default_translation.news_id"), '=', 'news.news_id')
-                                                  ->on(DB::raw("default_translation.merchant_language_id"), '=', DB::raw("'KXyS14LOVSgGUMPB'") );
+                                                  ->on(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
                                             })
                                             ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                                             ->where('article_link_to_objects.object_type', 'promotion')
@@ -315,13 +319,15 @@ class ArticleDetailAPIController extends PubControllerAPI
                                                 $q->on('promotion_id', '=', 'object_id')
                                                   ->on('promotions.status', '=', DB::raw("'active'"));
                                             })
+                                            ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
+                                            ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
                                             ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
                                                 $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                                                   ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
                                             })
                                             ->leftJoin('coupon_translations as default_translation', function ($q) use ($prefix){
                                                 $q->on(DB::raw("default_translation.promotion_id"), '=', 'promotions.promotion_id')
-                                                  ->on(DB::raw("default_translation.merchant_language_id"), '=', DB::raw("'KXyS14LOVSgGUMPB'") );
+                                                  ->on(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
                                             })
                                             ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                                             ->where('article_link_to_objects.object_type', 'coupon')
