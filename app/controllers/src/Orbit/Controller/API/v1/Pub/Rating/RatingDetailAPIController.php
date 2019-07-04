@@ -209,12 +209,12 @@ class RatingDetailAPIController extends PubControllerAPI
                             ->where(DB::raw('oms.status'), '=', 'active');
 
                         if (empty($reviewData->store_name)) {
-                            $object->where('merchants.merchant_id', $review->store_id);
+                            $object = $object->where('merchants.merchant_id', $review->store_id);
                         } elseif (empty($reviewData->store_id)) {
-                            $object->where('merchants.name', $review->store_name);
+                            $object = $object->where('merchants.name', $review->store_name);
                         }
 
-                        $object->where(DB::raw("oms.country_id"), $review->country_id)
+                        $object = $object->where(DB::raw("oms.country_id"), $review->country_id)
                             ->first();
 
                         $objectData->id = $object->merchant_id;
