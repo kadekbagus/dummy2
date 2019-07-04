@@ -57,7 +57,25 @@ abstract class Notification {
         '' => 'UTC',
     ];
 
-    function __construct($notifable = null)
+    /**
+     * Context of each notification.
+     * @var string
+     */
+    protected $context = '';
+
+    /**
+     * Signature for each notification.
+     * @var string
+     */
+    protected $signature = '';
+
+    /**
+     * List of disabled notifications.
+     * @var array
+     */
+    protected $disabledNotifications = [];
+
+    function __construct($notifiable = null)
     {
         $this->setNotifiable($notifiable);
     }
@@ -155,12 +173,20 @@ abstract class Notification {
     public function send($customDelay = 0)
     {
         $notificationMethods = $this->notificationMethods();
+        $this->loadDisabledNotifications();
 
         if (empty($notificationMethods)) {
             throw new NotificationMethodsEmptyException("Please set at least 1 notification method.");
         }
 
         foreach($notificationMethods as $method) {
+            // Check if notification is disabled for current method.
+            // If so, then continue checking for next method.
+            if ($this->notificationIsDisabled($method)) {
+                \Log::info("Notification [{$this->context}.{$this->signature}] is disabled.");
+                continue;
+            }
+
             $this->{$this->notificationMethodsActions[$method]}($customDelay);
         }
     }
@@ -174,8 +200,31 @@ abstract class Notification {
     protected function getLocalTimezoneName($timezone = 'UTC')
     {
         $timezone = strtolower($timezone);
-        return isset($this->timezoneMapping[$timezone]) ?
-               $this->timezoneMapping[$timezone] :
-               '';
+        return isset($this->timezoneMapping[$timezone])
+                    ? $this->timezoneMapping[$timezone]
+                    : '';
+    }
+
+    /**
+     * Load list of disabled notifications from config.
+     *
+     * @return [type] [description]
+     */
+    protected function loadDisabledNotifications() {
+        $this->disabledNotifications = Config::get('orbit.disabled_notifications', []);
+    }
+
+    /**
+     * Determine if current notification is disabled
+     * by checking its existance in the list of disabled notifications config.
+     *
+     * @return [type] [description]
+     */
+    protected function notificationIsDisabled($method = '')
+    {
+        return ! empty($this->signature)
+               && ! empty($this->context)
+               && isset($this->disabledNotifications[$this->context][$method])
+               && in_array($this->signature, $this->disabledNotifications[$this->context][$method]);
     }
 }
