@@ -168,6 +168,22 @@ class FollowAPIController extends PubControllerAPI
                         if (!empty($mall_id)) {
                             // mall level
 
+                            $existingFollowedStoresParams = [
+                                'user_id'          => $user->user_id,
+                                'object_id'        => $value->store_id,
+                                'object_type'      => $object_type,
+                                'city'             => $value->city,
+                                'country_id'       => $value->country_id,
+                                'base_merchant_id' => $baseStore->base_merchant_id,
+                            ];
+
+                            $existingFollowedStores = $mongoClient->setQueryString($existingFollowedStoresParams)
+                                                        ->setEndPoint('user-follows')
+                                                        ->request('GET');
+                            $existingIds = array_map(function($follow) {
+                                return $follow->_id;
+                            }, $existingFollowedStores->data->records);
+
                             // User will follow all store in mall,  when store have more than one store in same mall
                             // Get store name,city and country
                             $storeInfo = Tenant::select('merchants.merchant_id', 'merchants.name', DB::raw('parent.city as city'), DB::raw('parent.country_id as country_id'), 'base_stores.base_merchant_id')
@@ -216,6 +232,7 @@ class FollowAPIController extends PubControllerAPI
                                 }
 
                             }
+
 
                         } else {
                             // gtm level
@@ -322,13 +339,17 @@ class FollowAPIController extends PubControllerAPI
                             // mall level
                             // User will follow all store in mall,  when store have more than one store in same mall
                             // Get store name,city and country
-                            $storeInfo = Tenant::select('merchants.merchant_id', 'merchants.name', DB::raw('parent.city as city'), DB::raw('parent.country_id as country_id'), 'base_stores.base_merchant_id')
+                            $storeInfoModel = Tenant::select('merchants.merchant_id', 'merchants.name', DB::raw('parent.city as city'), DB::raw('parent.country_id as country_id'), 'base_stores.base_merchant_id')
                                                 ->leftJoin('merchants as parent', DB::raw('parent.merchant_id'), '=', 'merchants.parent_id')
                                                 ->leftJoin('base_stores', 'base_stores.base_store_id', '=', 'merchants.merchant_id')
-                                                ->where('merchants.merchant_id', $object_id)
                                                 ->where('merchants.parent_id',  $mall_id)
-                                                ->excludeDeleted('merchants')
-                                                ->first();
+                                                ->excludeDeleted('merchants');
+                            if (is_array($object_id)) {
+                                $storeInfoModel->whereIn('merchants.merchant_id', $object_id);
+                            } else {
+                                $storeInfoModel->where('merchants.merchant_id', $object_id);
+                            }
+                            $storeInfo = $storeInfoModel->first();
 
                             $baseMerchantId = $storeInfo->base_merchant_id;
                             $baseMerchantName = $storeInfo->name;
