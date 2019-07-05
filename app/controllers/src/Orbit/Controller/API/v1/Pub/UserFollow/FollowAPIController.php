@@ -60,6 +60,7 @@ class FollowAPIController extends PubControllerAPI
      */
     private function countAllStoresOfBrandFollowedByUser($mongoClient, $userId, $brandId)
     {
+        //TODO: implement API that does count instead of returning all result
         $existingFollowedStores = $mongoClient->setQueryString([
             'user_id'          => $userId,
             'object_type'      => 'store',
@@ -154,6 +155,12 @@ class FollowAPIController extends PubControllerAPI
         $resp->baseMerchantCountry = $storeInfo->country_id;
         $resp->response = null;
 
+        $resp->totalPreviouslyFollowed = $this->countAllStoresOfBrandFollowedByUser(
+            $mongoClient,
+            $user->user_id,
+            $resp->baseMerchantId
+        );
+
         if (! empty($storeInfo)) {
             $stores = Tenant::select('name', 'merchant_id as store_id')
                                 ->where('name', $storeInfo->name)
@@ -206,6 +213,12 @@ class FollowAPIController extends PubControllerAPI
         $resp->baseMerchantName = $baseStore->name;
         $resp->baseMerchantCountry = $baseStore->country_id;
         $resp->response = null;
+
+        $resp->totalPreviouslyFollowed = $this->countAllStoresOfBrandFollowedByUser(
+            $mongoClient,
+            $user->user_id,
+            $resp->baseMerchantId
+        );
 
         if (is_object($baseStore)) {
             $stores = Tenant::select('merchants.merchant_id as store_id',
@@ -267,6 +280,7 @@ class FollowAPIController extends PubControllerAPI
             $dataInsert = ['bulk_insert' => $dataStoresInsert];
             // delete existing data
             if (!empty($existingIds)) {
+                //TODO : implement API that does bulk delete
                 foreach ($existingIds as $key => $value) {
                     $delete = $mongoClient->setEndPoint("user-follows/$value")
                                             ->request('DELETE');
@@ -281,7 +295,7 @@ class FollowAPIController extends PubControllerAPI
         return $resp;
     }
 
-    private function fireEventStore($eventName, $user, $storeId, $resp, $totalPreviouslyFollowed)
+    private function fireEventStore($eventName, $user, $storeId, $resp)
     {
         $gamificationData = (object) [
             'object_id' => $storeId,
@@ -289,12 +303,12 @@ class FollowAPIController extends PubControllerAPI
             'object_name' => $resp->baseMerchantName,
             'country_id' => $resp->baseMerchantCountry,
             'base_merchant_id' => $resp->baseMerchantId,
-            'existing_stores_count' => $totalPreviouslyFollowed,
+            'existing_stores_count' => $resp->totalPreviouslyFollowed,
         ];
         Event::fire($eventName, array($user, $gamificationData));
     }
 
-    private function followStore($mongoClient, $user, $storeId, $mall_id, $city, $country, $totalPreviouslyFollowed)
+    private function followStore($mongoClient, $user, $storeId, $mall_id, $city, $country)
     {
         if (!empty($mall_id)) {
             $resp = $this->followStoreInMall($mongoClient, $user, $storeId, $mall_id);
@@ -302,7 +316,8 @@ class FollowAPIController extends PubControllerAPI
         } else {
             $resp = $this->followStoreInGtm($mongoClient, $user, $storeId, $city, $country);
         }
-        $this->fireEventStore('orbit.follow.postfollow.success', $user, $storeId, $resp, $totalPreviouslyFollowed);
+
+        $this->fireEventStore('orbit.follow.postfollow.success', $user, $storeId, $resp);
 
         return $resp->response;
     }
@@ -332,6 +347,11 @@ class FollowAPIController extends PubControllerAPI
         $resp->baseMerchantName = $storeInfo->name;
         $resp->baseMerchantCountry = $storeInfo->country_id;
         $resp->response = null;
+        $resp->totalPreviouslyFollowed = $this->countAllStoresOfBrandFollowedByUser(
+            $mongoClient,
+            $user->user_id,
+            $resp->baseMerchantId
+        );
 
         $stores = array();
         if (is_array($storeId) && ! empty($storeId)) {
@@ -443,9 +463,16 @@ class FollowAPIController extends PubControllerAPI
         $resp->baseMerchantId = $baseStore->base_merchant_id;
         $resp->baseMerchantName = $baseStore->name;
         $resp->baseMerchantCountry = $baseStore->country_id;
+        $resp->totalPreviouslyFollowed = $this->countAllStoresOfBrandFollowedByUser(
+            $mongoClient,
+            $user->user_id,
+            $resp->baseMerchantId
+        );
+
 
         if (!empty($stores))
         {
+            $existingIds = [];
             foreach ($stores as $key => $value)
             {
                 $dataStoresSearch = [
@@ -478,26 +505,21 @@ class FollowAPIController extends PubControllerAPI
         return $resp;
     }
 
-    private function unfollowStore($mongoClient, $user, $storeId, $mall_id, $city, $country, $totalPreviouslyFollowed)
+    private function unfollowStore($mongoClient, $user, $storeId, $mall_id, $city, $country)
     {
         if (!empty($mall_id)) {
             $resp = $this->unfollowStoreInMallPage($mongoClient, $user, $storeId, $mall_id);
         } else {
             $resp = $this->unfollowStoreInGtm($mongoClient, $user, $storeId, $city, $country);
         }
-        $this->fireEventStore('orbit.follow.postunfollow.success', $user, $storeId, $resp, $totalPreviouslyFollowed);
+
+        $this->fireEventStore('orbit.follow.postunfollow.success', $user, $storeId, $resp);
 
         return $resp->response;
     }
 
     private function followUnfollowStore($mongoClient, $user, $storeId, $mall_id, $city, $country, $action)
     {
-        $totalPreviouslyFollowed = $this->countAllStoresOfBrandFollowedByUser(
-            $mongoClient,
-            $user,
-            $storeId
-        );
-
         if ($action === 'follow')
         {
             return $this->followStore(
@@ -506,8 +528,7 @@ class FollowAPIController extends PubControllerAPI
                 $storeId,
                 $mall_id,
                 $city,
-                $country,
-                $totalPreviouslyFollowed
+                $country
             );
         } else
         if ($action === 'unfollow')
@@ -518,8 +539,7 @@ class FollowAPIController extends PubControllerAPI
                 $storeId,
                 $mall_id,
                 $city,
-                $country,
-                $totalPreviouslyFollowed
+                $country
             );
         }
     }
