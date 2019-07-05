@@ -102,7 +102,7 @@ class FollowAPIController extends PubControllerAPI
         return $response;
     }
 
-    private function unfollowMall($mongoClient, $user, $mallId, $mall)
+    private function unfollowMall($mongoClient, $user, $mallId, $mall, $existingData)
     {
         $id = $existingData->data->records[0]->_id;
         $response = $mongoClient->setEndPoint("user-follows/$id")
@@ -122,9 +122,9 @@ class FollowAPIController extends PubControllerAPI
         $existingData = $this->getFollow($mongoClient, $user->user_id, $mallId, 'mall');
 
         if (count($existingData->data->records) === 0) {
-            $response = $this->followMall($mongoClient, $user, $mallId, $malll);
+            $response = $this->followMall($mongoClient, $user, $mallId, $mall);
         } else {
-            $response = $this->unfollowMall($mongoClient, $user, $mallId, $mall);
+            $response = $this->unfollowMall($mongoClient, $user, $mallId, $mall, $existingData);
         }
 
         return $response;
@@ -234,7 +234,7 @@ class FollowAPIController extends PubControllerAPI
                 $dataStoresSearch = [
                     'user_id'          => $user->user_id,
                     'object_id'        => $value->store_id,
-                    'object_type'      => $object_type,
+                    'object_type'      => 'store',
                     'city'             => $value->city,
                     'country_id'       => $value->country_id,
                     'base_merchant_id' => $baseStore->base_merchant_id,
@@ -451,7 +451,7 @@ class FollowAPIController extends PubControllerAPI
                 $dataStoresSearch = [
                     'user_id'          => $user->user_id,
                     'object_id'        => $value->store_id,
-                    'object_type'      => $object_type,
+                    'object_type'      => 'store',
                     'city'             => $value->city,
                     'country_id'       => $value->country_id,
                     'base_merchant_id' => $baseStore->base_merchant_id,
@@ -487,7 +487,7 @@ class FollowAPIController extends PubControllerAPI
         }
         $this->fireEventStore('orbit.follow.postunfollow.success', $user, $storeId, $resp, $totalPreviouslyFollowed);
 
-        return $res->response;
+        return $resp->response;
     }
 
     private function followUnfollowStore($mongoClient, $user, $storeId, $mall_id, $city, $country, $action)
@@ -500,7 +500,7 @@ class FollowAPIController extends PubControllerAPI
 
         if ($action === 'follow')
         {
-            $runAction = $this->followStore(
+            return $this->followStore(
                 $mongoClient,
                 $user,
                 $storeId,
