@@ -39,6 +39,7 @@ class CheckPulsaListAPIController extends PubControllerAPI
 
             $pulsa = Pulsa::select(
                                 'pulsa.pulsa_code',
+                                'pulsa.status',
                                 'pulsa.vendor_price'
                             )
                             ->join('telco_operators', 'pulsa.telco_operator_id', '=', 'telco_operators.telco_operator_id')
