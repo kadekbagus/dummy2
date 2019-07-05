@@ -183,7 +183,6 @@ class FollowAPIController extends PubControllerAPI
                         'created_at'       => $dateTime
                     ];
                 }
-
                 // Bulk Insert
                 if(!empty($dataStoresInsert)) {
                     $dataInsert = ['bulk_insert' => $dataStoresInsert];
@@ -219,7 +218,6 @@ class FollowAPIController extends PubControllerAPI
             $user->user_id,
             $resp->baseMerchantId
         );
-
         if (is_object($baseStore)) {
             $stores = Tenant::select('merchants.merchant_id as store_id',
                                         'merchants.name as store_name',
@@ -291,14 +289,14 @@ class FollowAPIController extends PubControllerAPI
                                     ->setEndPoint('user-follows')
                                     ->request('POST');
         }
-
         return $resp;
     }
 
     private function fireEventStore($eventName, $user, $storeId, $resp)
     {
+        $id = is_array($storeId) && !empty($storeId) ? $storeId[0] : $storeId;
         $gamificationData = (object) [
-            'object_id' => $storeId,
+            'object_id' => $id,
             'object_type' => 'store',
             'object_name' => $resp->baseMerchantName,
             'country_id' => $resp->baseMerchantCountry,
@@ -316,7 +314,6 @@ class FollowAPIController extends PubControllerAPI
         } else {
             $resp = $this->followStoreInGtm($mongoClient, $user, $storeId, $city, $country);
         }
-
         $this->fireEventStore('orbit.follow.postfollow.success', $user, $storeId, $resp);
 
         return $resp->response;
