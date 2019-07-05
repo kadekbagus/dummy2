@@ -193,11 +193,27 @@
                 <strong>{{{ trans('email-canceled-payment.body.transaction_labels.status', [], '', 'id') }}} <span style="color:#f43d3c;">{{ trans('email-canceled-payment.body.transaction_labels.status_canceled', [], '', 'id') }}</span></strong>
                 <br>
               </p>
-              <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{ trans('email-canceled-payment.body.payment-info-line-1', [], '', 'id') }}
+                {{ trans('email-canceled-payment.body.payment-info-line-1', ['transactionDateTime' => $transactionDateTime], '', 'id') }}
+              </p>
+
+              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
+                <br>
+                {{ trans('email-canceled-payment.body.payment-info-line-2', $cs, '', 'id') }}
+              </p>
+
+              <p style="text-align: center">
+                  <br>
+                  <a href="{{{ $buyUrl }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;font-size:16px;display:inline-block;padding:10px 20px;text-decoration:none;">
+                    {{{ trans('email-canceled-payment.body.buttons.buy_coupon', [], '', 'id') }}}
+                  </a>
+              </p>
+
+              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
+                <br>
+                {{ trans('email-canceled-payment.body.regards', [], '', 'id') }}
               </p>
             </td>
           </tr>
@@ -237,11 +253,38 @@
                 <strong>{{{ trans('email-canceled-payment.body.transaction_labels.status') }}} <span style="color:#f43d3c;">{{ trans('email-canceled-payment.body.transaction_labels.status_canceled') }}</span></strong>
                 <br>
               </p>
-              <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
                 {{ trans('email-canceled-payment.body.payment-info-line-1') }}
+              </p>
+              <br>
+
+              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
+                {{ trans('email-canceled-payment.body.payment-info-line-2') }}
+              </p>
+              <br>
+
+              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
+                {{ trans('email-canceled-payment.body.payment-info-line-3') }}
+              </p>
+              <br>
+
+              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
+                {{ trans('email-canceled-payment.body.payment-info-line-4') }}
+              </p>
+              <br>
+
+              <p style="text-align: center">
+                  <br>
+                  <a href="{{{ $buyUrl }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;font-size:16px;display:inline-block;padding:10px 20px;text-decoration:none;">
+                    {{{ trans('email-canceled-payment.body.buttons.buy_coupon') }}}
+                  </a>
+              </p>
+
+              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
+                <br>
+                {{ trans('email-canceled-payment.body.regards') }}
               </p>
             </td>
           </tr>
