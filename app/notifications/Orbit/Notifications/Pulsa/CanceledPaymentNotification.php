@@ -43,6 +43,7 @@ class CanceledPaymentNotification extends Base
     {
         return array_merge(parent::getEmailData(), [
             'pulsaPhoneNumber' => $this->payment->extra_data,
+            'emailSubject'      => trans('email-canceled-payment.subject_pulsa', [], '', 'id'),
         ]);
     }
 }

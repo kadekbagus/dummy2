@@ -24,6 +24,12 @@ class CanceledPaymentNotification extends CustomerNotification implements EmailN
 
     protected $shouldQueue = true;
 
+    /**
+     * Signature/ID of this notification.
+     * @var string
+     */
+    protected $signature = 'canceled-transaction';
+
     function __construct($payment = null)
     {
         $this->payment = $payment;
@@ -63,6 +69,8 @@ class CanceledPaymentNotification extends CustomerNotification implements EmailN
             'transaction'       => $this->getTransactionData(),
             'cs'                => $this->getContactData(),
             'transactionDateTime' => $this->payment->getTransactionDate('d F Y, H:i ') . " {$this->getLocalTimezoneName($this->payment->timezone_name)}",
+            'buyUrl'            => $this->getBuyUrl(),
+            'emailSubject'      => trans('email-canceled-payment.subject', [], '', 'id'),
         ];
     }
 
@@ -77,13 +85,14 @@ class CanceledPaymentNotification extends CustomerNotification implements EmailN
     {
         try {
             Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
-                $emailConfig = Config::get('orbit.registration.mobile.sender');
+                $emailConfig = Config::get('orbit.contact_information.customer_service');
 
-                $subject = trans('email-canceled-payment.subject');
+                $subject = $data['emailSubject'];
 
                 $mail->subject($subject);
                 $mail->from($emailConfig['email'], $emailConfig['name']);
                 $mail->to($data['recipientEmail']);
+                $mail->replyTo($emailConfig['email'], $emailConfig['name']);
             });
         } catch (Exception $e) {
             Log::debug('Notification: CanceledPayment email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
