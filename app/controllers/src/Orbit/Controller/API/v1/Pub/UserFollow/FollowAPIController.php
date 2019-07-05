@@ -627,7 +627,7 @@ class FollowAPIController extends PubControllerAPI
 
             $this->response->code = 0;
             $this->response->status = 'success';
-            $this->response->data = $response->data;
+            $this->response->data = empty($response) ? null : $response->data;
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
