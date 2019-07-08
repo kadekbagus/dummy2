@@ -1,17 +1,17 @@
 <?php
 
 return [
-    'subject' => 'Kuponmu Ketinggalan, Nih! - Gotomalls.com',
+    'subject' => 'Kuponmu Ketinggalan, Nih! - GoToMalls.com',
     'subject_pulsa' => 'Pulsamu Ketinggalan, Nih! – GoToMalls.com',
 
     'header' => [
-        'email-type'       => 'Pesanan Dibatalkan',
+        'email-type'       => 'Pesanan Kadaluarsa',
     ],
 
     'body' => [
         'greeting' => '<strong>Hai, :customerName!</strong>
                         <br>
-                        Melalui email ini kami memberitahukan bahwa transaksi Anda telah dibatalkan. Berikut ini detail transaksi tersebut.',
+                        Sepertinya ada yang ketinggalan, nih!',
 
         'transaction_labels' => [
             'transaction_id' => 'No. Transaksi: ',
@@ -27,15 +27,15 @@ return [
             'phone' => 'Telp Pelanggan: ',
             'total_amount' => 'Total: ',
             'status' => 'Status: ',
-            'status_canceled' => 'Dibatalkan',
+            'status_expired' => 'Tidak Dibayar (Expired)',
         ],
 
-        'payment-info-line-1' => 'GoToMalls.com mendeteksi bahwa kamu <strong>membatalkan</strong> transaksi pada tanggal :transactionDateTime.',
+        'payment-info-line-1' => 'GoToMalls.com mendeteksi bahwa kamu <strong>tidak melanjutkan pembayaran</strong> transaksi pada tanggal :transactionDateTime.',
         'payment-info-line-2' => 'Apakah terdapat kendala dalam melakukan transaksi pembelianmu?
 Bantu GoToMalls.com dengan memberikan feedback dan membalas email ini dengan keluhan atau alasanmu tidak menyelesaikan pembelian ini, ya.
 Apabila kamu mengalami kesulitan, silahkan <strong>tanyakan keluhanmu</strong> melalui email <a style="text-decoration: none;color:#f43d3c;" href="mailto::email">:email</a> dan GoToMalls.com akan siap membantu.',
 
-        'payment-info-line-1-pulsa' => 'GoToMalls.com mendeteksi bahwa kamu <strong>membatalkan</strong> transaksi pulsa pada tanggal :transactionDateTime.',
+        'payment-info-line-1-pulsa' => 'GoToMalls.com mendeteksi bahwa kamu <strong>tidak melanjutkan pembayaran</strong> transaksi pulsa pada tanggal :transactionDateTime.',
         'payment-info-line-2-pulsa' => 'Apakah terdapat kendala dalam melakukan transaksi pembelian pulsamu?
 Bantu GoToMalls.com dengan memberikan feedback dan membalas email ini dengan keluhan atau alasanmu tidak menyelesaikan pembelian pulsa ini, ya.
 Apabila kamu mengalami kesulitan dalam pembelian pulsa, silahkan <strong>tanyakan keluhanmu</strong> melalui email <a style="text-decoration: none;color:#f43d3c;" href="mailto::email">:email</a> dan GoToMalls.com akan siap membantu.',

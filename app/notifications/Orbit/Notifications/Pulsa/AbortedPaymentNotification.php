@@ -1,20 +1,13 @@
 <?php namespace Orbit\Notifications\Pulsa;
 
-use DB;
-use Mail;
-use Config;
-use Log;
-use Queue;
-use Exception;
-
-use Orbit\Notifications\Payment\CanceledPaymentNotification as Base;
+use Orbit\Notifications\Payment\AbortedPaymentNotification as Base;
 
 /**
- * Email notification for Canceled Payment (Pulsa).
+ * Email notification for Aborted Payment (Pulsa).
  *
  * @author Budi <budi@dominopos.com>
  */
-class CanceledPaymentNotification extends Base
+class AbortedPaymentNotification extends Base
 {
     function __construct($payment = null)
     {
@@ -30,7 +23,7 @@ class CanceledPaymentNotification extends Base
     public function getEmailTemplates()
     {
         return [
-            'html' => 'emails.canceled-payment-pulsa',
+            'html' => 'emails.aborted-payment-pulsa',
         ];
     }
 
@@ -43,7 +36,7 @@ class CanceledPaymentNotification extends Base
     {
         return array_merge(parent::getEmailData(), [
             'pulsaPhoneNumber' => $this->payment->extra_data,
-            'emailSubject'      => trans('email-canceled-payment.subject_pulsa', [], '', 'id'),
+            'emailSubject' => trans('email-aborted-payment.subject_pulsa', [], '', 'id'),
         ]);
     }
 }

@@ -9,9 +9,9 @@ return [
     ],
 
     'body' => [
-        'greeting' => '<strong>Hai, :customerName!</strong>
+        'greeting' => '<strong>Hai, :customerName !</strong>
                         <br>
-                        Melalui email ini kami memberitahukan bahwa transaksi Anda telah dibatalkan. Berikut ini detail transaksi tersebut.',
+                        Melalui email ini kami memberitahukan bahwa transaksi Anda baru saja dibatalkan. Berikut ini detail transaksi tersebut.',
 
         'transaction_labels' => [
             'transaction_id' => 'No. Transaksi: ',
@@ -27,7 +27,7 @@ return [
             'phone' => 'Telp Pelanggan: ',
             'total_amount' => 'Total: ',
             'status' => 'Status: ',
-            'status_canceled' => 'Dibatalkan',
+            'status_aborted' => 'Dibatalkan',
         ],
 
         'payment-info-line-1' => 'GoToMalls.com mendeteksi bahwa kamu <strong>membatalkan</strong> transaksi pada tanggal :transactionDateTime.',

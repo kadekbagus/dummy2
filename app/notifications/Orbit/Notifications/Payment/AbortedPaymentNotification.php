@@ -7,28 +7,30 @@ use Log;
 use Queue;
 use Exception;
 
-use Orbit\Helper\Notifications\CustomerNotification;
 use Orbit\Helper\Notifications\Contracts\EmailNotificationInterface;
 
+use Orbit\Notifications\Payment\PaymentNotification;
 use Orbit\Notifications\Traits\HasPaymentTrait;
 use Orbit\Notifications\Traits\HasContactTrait;
 
 /**
- * Email notification for Canceled Payment.
+ * Email notification for Aborted Payment.
  *
  * @author Budi <budi@dominopos.com>
  */
-class CanceledPaymentNotification extends CustomerNotification implements EmailNotificationInterface
+class AbortedPaymentNotification extends PaymentNotification implements EmailNotificationInterface
 {
     use HasPaymentTrait, HasContactTrait;
 
     protected $shouldQueue = true;
 
     /**
-     * Signature/ID of this notification.
+     * Signature/ID of this notification. ATM useful for checking
+     * whether this notification is disabled or not in config.
+     *
      * @var string
      */
-    protected $signature = 'canceled-transaction';
+    protected $signature = 'aborted-transaction';
 
     function __construct($payment = null)
     {
@@ -50,7 +52,7 @@ class CanceledPaymentNotification extends CustomerNotification implements EmailN
     public function getEmailTemplates()
     {
         return [
-            'html' => 'emails.canceled-payment',
+            'html' => 'emails.aborted-payment',
         ];
     }
 
@@ -70,7 +72,7 @@ class CanceledPaymentNotification extends CustomerNotification implements EmailN
             'cs'                => $this->getContactData(),
             'transactionDateTime' => $this->payment->getTransactionDate('d F Y, H:i ') . " {$this->getLocalTimezoneName($this->payment->timezone_name)}",
             'buyUrl'            => $this->getBuyUrl(),
-            'emailSubject'      => trans('email-canceled-payment.subject', [], '', 'id'),
+            'emailSubject'      => trans('email-aborted-payment.subject', [], '', 'id'),
         ];
     }
 
@@ -95,7 +97,7 @@ class CanceledPaymentNotification extends CustomerNotification implements EmailN
                 $mail->replyTo($emailConfig['email'], $emailConfig['name']);
             });
         } catch (Exception $e) {
-            Log::debug('Notification: CanceledPayment email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
+            Log::debug('Notification: AbortedPayment email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
         }
 
         $job->delete();

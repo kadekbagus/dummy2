@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'subject' => 'Transaction Canceled',
+    'subject' => 'Gotomalls Expired Payment Transaction',
 
     'header' => [
         'email-type'       => 'Notice',
@@ -10,23 +10,23 @@ return [
     'body' => [
         'greeting' => '<strong>Hi, :customerName!</strong>
                         <br>
-                        We confirm that your transaction has been canceled.  Below are the transaction details:',
+                        We noticed your payment transaction on Gotomalls.com was not completed:',
 
         'transaction_labels' => [
             'transaction_id' => 'Transaction ID: ',
             'transaction_date' => 'Transaction Date: ',
             'coupon_name' => 'Coupon Name: ',
             'coupon_price' => 'Coupon Price: ',
-            'pulsa_name' => 'Pulsa',
-            'pulsa_phone_number' => 'Phone Number',
-            'pulsa_price' => 'Price',
+            'pulsa_name' => 'Pulsa: ',
+            'pulsa_phone_number' => 'Phone Number: ',
+            'pulsa_price' => 'Price: ',
             'coupon_quantity' => 'Quantity: ',
             'customer_name' => 'Customer Name: ',
             'email' => 'Email: ',
             'phone' => 'Phone: ',
             'total_amount' => 'Total Amount: ',
             'status' => 'Status: ',
-            'status_canceled' => 'Canceled',
+            'status_expired' => 'Expired',
         ],
 
         'payment-info-line-1' => 'Did you find any problems trying to make the purchase?',
