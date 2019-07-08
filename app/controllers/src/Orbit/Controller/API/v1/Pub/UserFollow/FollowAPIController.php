@@ -113,7 +113,7 @@ class FollowAPIController extends PubControllerAPI
         return $response;
     }
 
-    private function followUnfollowMall($mongoClient, $user, $mallId, $action)
+    private function followUnfollowMall($mongoClient, $user, $mallId, $mall_id, $city, $country, $action)
     {
         $mall = Mall::excludeDeleted('merchants')
             ->where('merchant_id', '=', $mallId)
@@ -122,10 +122,15 @@ class FollowAPIController extends PubControllerAPI
         // check already follow or not
         $existingData = $this->getFollow($mongoClient, $user->user_id, $mallId, 'mall');
 
+        $response = null;
         if (count($existingData->data->records) === 0) {
-            $response = $this->followMall($mongoClient, $user, $mallId, $mall);
+            if ($action === 'follow') {
+                $response = $this->followMall($mongoClient, $user, $mallId, $mall);
+            }
         } else {
-            $response = $this->unfollowMall($mongoClient, $user, $mallId, $mall, $existingData);
+            if ($action === 'unfollow') {
+                $response = $this->unfollowMall($mongoClient, $user, $mallId, $mall, $existingData);
+            }
         }
 
         return $response;
