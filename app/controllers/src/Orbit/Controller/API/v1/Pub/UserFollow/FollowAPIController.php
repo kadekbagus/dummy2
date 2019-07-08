@@ -113,7 +113,7 @@ class FollowAPIController extends PubControllerAPI
         return $response;
     }
 
-    private function followUnfollowMall($mongoClient, $user, $mallId, $action)
+    private function followUnfollowMall($mongoClient, $user, $mallId, $mall_id, $city, $country, $action)
     {
         $mall = Mall::excludeDeleted('merchants')
             ->where('merchant_id', '=', $mallId)
