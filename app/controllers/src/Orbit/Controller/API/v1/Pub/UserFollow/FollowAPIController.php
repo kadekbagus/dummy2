@@ -122,8 +122,7 @@ class FollowAPIController extends PubControllerAPI
         // check already follow or not
         $existingData = $this->getFollow($mongoClient, $user->user_id, $mallId, 'mall');
 
-        $response = new StdClass();
-        $response->data = null;
+        $response = null;
         if (count($existingData->data->records) === 0) {
             if ($action === 'follow') {
                 $response = $this->followMall($mongoClient, $user, $mallId, $mall);
