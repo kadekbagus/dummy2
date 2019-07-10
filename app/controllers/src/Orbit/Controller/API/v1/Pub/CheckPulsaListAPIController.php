@@ -39,12 +39,12 @@ class CheckPulsaListAPIController extends PubControllerAPI
 
             $pulsa = Pulsa::select(
                                 'pulsa.pulsa_code',
+                                'pulsa.status',
                                 'pulsa.vendor_price'
                             )
                             ->join('telco_operators', 'pulsa.telco_operator_id', '=', 'telco_operators.telco_operator_id')
                             ->join('countries', 'telco_operators.country_id', '=', 'countries.country_id')
                             ->where('countries.name', $country)
-                            ->where('pulsa.status', 'active')
                             ->orderBy('pulsa.pulsa_code');
 
             $listOfRec = $pulsa->get();
