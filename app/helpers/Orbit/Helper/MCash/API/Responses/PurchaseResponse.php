@@ -64,11 +64,7 @@ class PurchaseResponse
      */
     public function isPending()
     {
-        return ! empty($this->data)
-                && $this->data->status === 0
-                && isset($this->data->pending)
-                && isset($this->data->serial_number)
-                && ! empty($this->data->serial_number);
+        return ! empty($this->data) && $this->data->status === 0 && isset($this->data->pending);
     }
 
     public function isNotAvailable()
