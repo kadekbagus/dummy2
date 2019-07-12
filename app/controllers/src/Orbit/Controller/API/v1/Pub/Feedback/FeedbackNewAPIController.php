@@ -42,11 +42,11 @@ class FeedbackNewAPIController extends PubControllerAPI
             $user = $this->getUser();
 
             // should always check the role
-            $role = $user->role->role_name;
-            if (strtolower($role) !== 'consumer') {
-                $message = 'You must login to access this.';
-                ACL::throwAccessForbidden($message);
-            }
+            // $role = $user->role->role_name;
+            // if (strtolower($role) !== 'consumer') {
+            //     $message = 'You must login to access this.';
+            //     ACL::throwAccessForbidden($message);
+            // }
 
             $this->registerCustomValidations();
 
@@ -59,10 +59,12 @@ class FeedbackNewAPIController extends PubControllerAPI
             $feedback['user'] = $user->user_id;
             $feedback['mall_id'] = OrbitInput::post('mall_id');
             $storeName = Str::slug($feedback['store']);
+            $feedback['email'] = OrbitInput::post('email');
 
             $validator = Validator::make(
                 $feedback,
                 [
+                    'email'     => 'required',
                     'mall_id'   => 'required|orbit.exists.mall',
                     'mall'      => 'required',
                     'report'    => 'required|array',
@@ -86,7 +88,6 @@ class FeedbackNewAPIController extends PubControllerAPI
             }
 
             $feedback['user'] = $user->user_firstname . ' ' . $user->user_lastname;
-            $feedback['email'] = $user->user_email;
             $feedback['date'] = Carbon::now()->format('d F Y');
 
             $csEmails = Config::get('orbit.feedback.cs_email', ['cs@gotomalls.com']);

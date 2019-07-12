@@ -2414,5 +2414,14 @@ return array(
             'object_type' => 'Mall',
             'parameter_name' => 'object_id'
         ),
+        // Click How To Banner in Article Detail Page
+        '263' => array(
+            'name' => 'click_how_to_banner',
+            'name_long' => 'Click How To Banner',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null,
+        ),
     ),
 );
