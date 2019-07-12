@@ -2405,5 +2405,14 @@ return array(
             'object_type' => 'User',
             'parameter_name' => 'object_id'
         ),
+        // Click User Profile Following Item
+        '262' => array(
+            'name' => 'click_mall_map',
+            'name_long' => 'Click Mall Map',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'Mall',
+            'parameter_name' => 'object_id'
+        ),
     ),
 );
