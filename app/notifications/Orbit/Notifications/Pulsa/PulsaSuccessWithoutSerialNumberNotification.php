@@ -46,7 +46,7 @@ class PulsaSuccessWithoutSerialNumberNotification extends BaseNotification
             Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                $subject = trans('email-coupon-not-available-admin.subject_pulsa_success_without_sn');
+                $subject = trans('email-pulsa-admin.subject_pulsa_success_without_sn');
 
                 $mail->subject($subject);
                 $mail->from($emailConfig['email'], $emailConfig['name']);
