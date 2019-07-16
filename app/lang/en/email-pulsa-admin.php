@@ -36,7 +36,7 @@ return [
 
         'greeting_pulsa_success_without_sn' => 'Hello, Admin
                          <br>
-                         We got a success Pulsa purchase but <strong>without Serial Number</strong> information in it.
+                         We got a success Pulsa purchase <strong>without Serial Number</strong> information in it.
                          From our experiences, most of time it will ended up as a failed purchase on MCash side.
                          <br>
                          Try contacting MCash Customer Service for more information about the purchase and then take proper action as needed.
