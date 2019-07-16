@@ -38,7 +38,11 @@ class PurchaseResponse
      */
     public function isSuccess()
     {
-        return ! empty($this->data) && $this->data->status === 0 && ! isset($this->data->pending);
+        return ! empty($this->data)
+                && $this->data->status === 0
+                && ! isset($this->data->pending)
+                && isset($this->data->serial_number)
+                && ! empty($this->data->serial_number);
     }
 
     /**
