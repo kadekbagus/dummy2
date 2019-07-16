@@ -212,6 +212,8 @@ class RatingDetailAPIController extends PubControllerAPI
                             $object = $object->where('merchants.merchant_id', $review->store_id);
                         } elseif (empty($reviewData->store_id)) {
                             $object = $object->where('merchants.name', $review->store_name);
+                        } else {
+                            $object = $object->where('merchants.merchant_id', $review->store_id);
                         }
 
                         $object = $object->where(DB::raw("oms.country_id"), $review->country_id)
