@@ -141,15 +141,30 @@ class PurchaseResponse
         $this->data->status = $status;
     }
 
-    public function setData($key, $value)
+    /**
+     * Set response data.
+     *
+     * @param array $data [description]
+     */
+    public function setData($data = [])
     {
-        $this->data->{$key} = $value;
+        foreach($data as $key => $value) {
+            $this->data->{$key} = $value;
+        }
     }
 
-    public function unsetData($key)
+    /**
+     * Unset response data keys.
+     *
+     * @param  array  $keys [description]
+     * @return [type]       [description]
+     */
+    public function unsetData($keys = [])
     {
-        if (isset($this->data->{$key})) {
-            unset($this->data->{$key});
+        foreach($keys as $key) {
+            if (isset($this->data->{$key})) {
+                unset($this->data->{$key});
+            }
         }
     }
 }
