@@ -24,6 +24,7 @@ use Orbit\Notifications\Pulsa\CustomerPulsaNotAvailableNotification;
 use Orbit\Notifications\Pulsa\PulsaPendingNotification;
 use Orbit\Notifications\Pulsa\CustomerPulsaPendingNotification;
 use Orbit\Notifications\Pulsa\PulsaRetryNotification;
+use Orbit\Notifications\Pulsa\PulsaSuccessWithoutSerialNumberNotification;
 
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
 
@@ -94,8 +95,9 @@ class GetPulsaQueue
             // Send request to buy pulsa from MCash
             $pulsaPurchase = Purchase::create()->doPurchase($pulsa->pulsa_code, $phoneNumber, $paymentId);
 
-            // Test only, set status response manually.
-            // $pulsaPurchase->setStatus(0);
+            // Test only, mock purchase as success w/o serial number.
+            // $pulsaPurchase->setData(['status' => 0, 'pending' => 1]);
+            // $pulsaPurchase->unsetData(['serial_number']);
 
             if ($pulsaPurchase->isSuccess()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
@@ -175,6 +177,16 @@ class GetPulsaQueue
                     $admin              = new User;
                     $admin->email       = $email;
                     $admin->notify(new PulsaPendingNotification($payment, 'Pending Payment'));
+                }
+            }
+
+            // Send notification to admin if pulsa purchase is success
+            // but WITHOUT SERIAL NUMBER.
+            if ($pulsaPurchase->isSuccessWithoutSN()) {
+                foreach($adminEmails as $email) {
+                    $admin              = new User;
+                    $admin->email       = $email;
+                    $admin->notify(new PulsaSuccessWithoutSerialNumberNotification($payment, 'Pulsa Success Without Serial Number'));
                 }
             }
 
