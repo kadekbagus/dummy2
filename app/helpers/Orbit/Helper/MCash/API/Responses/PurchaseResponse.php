@@ -44,11 +44,20 @@ class PurchaseResponse
      */
     public function isSuccess()
     {
-        return ! empty($this->data)
-                && $this->data->status === 0
-                && ! isset($this->data->pending)
+        return ! empty($this->data) && $this->data->status === 0 && ! isset($this->data->pending);
+    }
+
+    /**
+     * Determine if purchase is success but without Serial Number (SN),
+     * which most of time will result to a failed purchase from MCash.
+     *
+     * @return boolean [description]
+     */
+    public function isSuccessWithoutSN()
+    {
+        return $this->isSuccess()
                 && isset($this->data->serial_number)
-                && ! empty($this->data->serial_number);
+                && empty($this->data->serial_number);
     }
 
     /**
@@ -130,5 +139,17 @@ class PurchaseResponse
     public function setStatus($status = 0)
     {
         $this->data->status = $status;
+    }
+
+    public function setData($key, $value)
+    {
+        $this->data->{$key} = $value;
+    }
+
+    public function unsetData($key)
+    {
+        if (isset($this->data->{$key})) {
+            unset($this->data->{$key});
+        }
     }
 }
