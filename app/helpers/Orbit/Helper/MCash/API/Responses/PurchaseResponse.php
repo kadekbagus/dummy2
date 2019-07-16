@@ -48,6 +48,19 @@ class PurchaseResponse
     }
 
     /**
+     * Determine if purchase is success but without Serial Number (SN),
+     * which most of time will result to a failed purchase from MCash.
+     *
+     * @return boolean [description]
+     */
+    public function isSuccessWithoutSN()
+    {
+        return $this->isSuccess()
+                && isset($this->data->serial_number)
+                && empty($this->data->serial_number);
+    }
+
+    /**
      * Determine if mcash purchase is Pending.
      * Since Mcash don't explain clearly about flag/indicator of pending transaction,
      * the only thing we can do is by guessing their API response.
@@ -126,5 +139,32 @@ class PurchaseResponse
     public function setStatus($status = 0)
     {
         $this->data->status = $status;
+    }
+
+    /**
+     * Set response data.
+     *
+     * @param array $data [description]
+     */
+    public function setData($data = [])
+    {
+        foreach($data as $key => $value) {
+            $this->data->{$key} = $value;
+        }
+    }
+
+    /**
+     * Unset response data keys.
+     *
+     * @param  array  $keys [description]
+     * @return [type]       [description]
+     */
+    public function unsetData($keys = [])
+    {
+        foreach($keys as $key) {
+            if (isset($this->data->{$key})) {
+                unset($this->data->{$key});
+            }
+        }
     }
 }
