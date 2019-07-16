@@ -18,14 +18,13 @@ return [
                         <br>
                         Kami mohon maaf karena tidak dapat menyediakan Pulsa yang sudah Anda beli.',
 
-        'help' => 'Layanan Pelanggan kami akan menghubungi Anda secepatnya untuk mengurus perihal Pengembalian Dana (Refund).
-        Anda juga dapat menghubungi Layanan Pelanggan kami melalui telepon
+        'help' => 'Layanan Pelanggan kami akan mengembalikan dana Anda secepatnya.
+        Proses pengembalian dana dilakukan maksimal dalam 24 jam.
+        Apabila Anda tidak menerimanya dalam 24 jam, hubungi Layanan Pelanggan kami melalui telepon
         <a style="color:#f43d3c;text-decoration: none;" href="tel::phone">:phone</a>
         atau surel
-        <a style="text-decoration: none;color:#f43d3c;" href="mailto::email">:email</a>
-        perihal Pengembalian Dana (Refund).',
+        <a style="text-decoration: none;color:#f43d3c;" href="mailto::email">:email</a>.',
 
-        'thank_you' => 'Thank you and have a nice day.',
         'thank_you' => 'Terima kasih!',
     ],
 
