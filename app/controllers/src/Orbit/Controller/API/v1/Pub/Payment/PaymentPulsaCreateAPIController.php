@@ -107,8 +107,8 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
             // Begin database transaction
             $this->beginTransaction();
 
-            // Get coupon detail from DB.
-            $pulsa = Pulsa::select('pulsa_item_id', 'price')->findOrFail($object_id);
+            // Get pulsa detail from DB.
+            $pulsa = Pulsa::select('pulsa_item_id', 'price', 'vendor_price')->findOrFail($object_id);
 
             // Resolve country_id
             if ($country_id !== '0' || $country_id !== 0) {
@@ -151,6 +151,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
             $paymentDetail->currency = $currency;
             $paymentDetail->price = $pulsa->price;
             $paymentDetail->quantity = $quantity;
+            $paymentDetail->vendor_price = $pulsa->vendor_price;
 
             OrbitInput::post('object_id', function($object_id) use ($paymentDetail) {
                 $paymentDetail->object_id = $object_id;
