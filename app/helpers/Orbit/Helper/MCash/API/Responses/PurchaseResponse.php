@@ -50,8 +50,9 @@ class PurchaseResponse
     public function isSuccessWithoutSN()
     {
         return $this->isSuccess()
-                && isset($this->data->serial_number)
-                && empty($this->data->serial_number);
+                && isset($this->data->data)
+                && isset($this->data->data->serial_number)
+                && empty($this->data->data->serial_number);
     }
 
     /**
