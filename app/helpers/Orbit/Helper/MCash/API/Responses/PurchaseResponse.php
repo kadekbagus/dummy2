@@ -62,6 +62,16 @@ class PurchaseResponse
     }
 
     /**
+     * Determine if the requested pulsa is out of stock or not.
+     *
+     * @return boolean [description]
+     */
+    public function isOutOfStock()
+    {
+        return ! empty($this->data) && $this->data->status === 618;
+    }
+
+    /**
      * Determine if mcash purchase is Pending.
      * Since Mcash don't explain clearly about flag/indicator of pending transaction,
      * the only thing we can do is by guessing their API response.

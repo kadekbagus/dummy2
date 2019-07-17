@@ -227,7 +227,12 @@
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 {{ trans('email-coupon-not-available-admin.body.help', ['total' => $transaction['total']]) }}
                 <br>
-                {{{ trans('email-coupon-not-available-admin.body.thank_you') }}}
+                <br>
+                @if (isset($reason) && ! empty($reason))
+                    {{ trans('email-coupon-not-available-admin.body.pulsa_fail_info', ['reason' => $reason]) }}
+                @endif
+                <br>
+                <br>
               </p>
             </td>
           </tr>
