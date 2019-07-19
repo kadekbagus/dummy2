@@ -67,6 +67,7 @@ class PulsaNotAvailableNotification extends AdminNotification
             'customerPhone'     => $this->getCustomerPhone(),
             'transaction'       => $this->getTransactionData(),
             'transactionDateTime' => $this->payment->getTransactionDate('d F Y, H:i ') . " {$this->getLocalTimezoneName($this->payment->timezone_name)}",
+            'reason'            => stripos($this->reason, 'out of stock') >= 0 ? $this->reason : '',
         ];
     }
 

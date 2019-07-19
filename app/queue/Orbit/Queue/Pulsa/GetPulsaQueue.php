@@ -159,6 +159,12 @@ class GetPulsaQueue
                 Log::info("Purchase response: " . serialize($pulsaPurchase));
                 throw new Exception("Pulsa purchase is FAILED, MAX RETRY REACHED ({$data['retry']}).");
             }
+            else if ($pulsaPurchase->isOutOfStock()) {
+                Log::info("Pulsa: Pulsa {$pulsa->pulsa_code} -- {$pulsa->pulsa_display_name} is OUT OF STOCK.");
+                Log::info("Pulsa: PulsaPurchase Data" . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
+                Log::info("Pulsa: PulsaPurchase Response: " . serialize($pulsaPurchase));
+                throw new Exception("Pulsa {$pulsa->pulsa_code} -- {$pulsa->pulsa_display_name} is OUT OF STOCK (STATUS: {$pulsaPurchase->getData()->status}).");
+            }
             else {
                 Log::info("Pulsa: Pulsa purchase is FAILED for payment {$paymentId}. Unknown status from MCash.");
                 Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
