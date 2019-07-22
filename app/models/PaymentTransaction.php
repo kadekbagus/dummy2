@@ -401,7 +401,7 @@ class PaymentTransaction extends Eloquent
      */
     public function recordRefund($refundData)
     {
-        Log::info("Pulsa: Refunding payment {$this->payment_transaction_id} ...");
+        Log::info("Payment: Refunding payment {$this->payment_transaction_id} ...");
 
         // List of refund that will be recorded/added to our DB.
         $refundList = [];
