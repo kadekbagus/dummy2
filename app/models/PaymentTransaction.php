@@ -394,7 +394,7 @@ class PaymentTransaction extends Eloquent
     }
 
     /**
-     * Try to refund Customer (on our DB)
+     * Try to record midtrans refund to our DB
      * by creating special child transaction(s) with negative amount.
      *
      * @return [type] [description]
@@ -415,7 +415,7 @@ class PaymentTransaction extends Eloquent
 
             // Check if we already record the refund in our db.
             foreach($this->refunds as $gtmRefund) {
-                if ($gtmRefund->external_transaction_id === $midtransRefund->refund_chargeback_id) {
+                if ((int) $gtmRefund->external_payment_transaction_id === $midtransRefund->refund_chargeback_id) {
                     $recorded = true;
                     break;
                 }
@@ -434,7 +434,7 @@ class PaymentTransaction extends Eloquent
                 Log::info("Payment: Recording new refund... ID: {$midtransRefund->refund_chargeback_id} .. AMOUNT: {$midtransRefund->refund_amount}...");
 
                 $refundedPayment = new PaymentTransaction;
-                $refundedPayment->external_transaction_id = $midtransRefund->refund_chargeback_id;
+                $refundedPayment->external_payment_transaction_id = $midtransRefund->refund_chargeback_id;
                 $refundedPayment->user_email = $this->user_email;
                 $refundedPayment->user_id = $this->user_id;
                 $refundedPayment->amount = $midtransRefund->refund_amount * -1;

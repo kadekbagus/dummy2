@@ -64,7 +64,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                 ),
                 array(
                     'payment_transaction_id'   => 'required|orbit.exist.payment_transaction_id',
-                    'status'                   => 'required|in:pending,success,canceled,failed,expired,denied,suspicious,abort'
+                    'status'                   => 'required|in:pending,success,canceled,failed,expired,denied,suspicious,abort,refund,partial_refund'
                 ),
                 array(
                     'orbit.exists.payment_transaction_id' => 'payment transaction id not found'
