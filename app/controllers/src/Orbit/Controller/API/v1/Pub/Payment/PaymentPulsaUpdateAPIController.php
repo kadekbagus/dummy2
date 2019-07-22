@@ -64,7 +64,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                 ),
                 array(
                     'payment_transaction_id'   => 'required|orbit.exist.payment_transaction_id',
-                    'status'                   => 'required|in:pending,success,canceled,failed,expired,denied,suspicious,abort'
+                    'status'                   => 'required|in:pending,success,canceled,failed,expired,denied,suspicious,abort,refund,partial_refund'
                 ),
                 array(
                     'orbit.exists.payment_transaction_id' => 'payment transaction id not found'
@@ -84,7 +84,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
             $paymentDenied = false;
             $shouldUpdate = false;
 
-            $payment_update = PaymentTransaction::with(['details.pulsa', 'midtrans', 'user'])->findOrFail($payment_transaction_id);
+            $payment_update = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'refunds', 'midtrans', 'user'])->findOrFail($payment_transaction_id);
 
             $oldStatus = $payment_update->status;
 
@@ -124,7 +124,15 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                 }
                 else {
                     Log::info("Pulsa: New status {$status} for payment {$payment_transaction_id} will be set!");
-                    $shouldUpdate = true;
+
+                    // If midtrans trx has refund properties,
+                    // then try creating child transaction(s) with negative amount...
+                    if ($transactionStatus->wasRefunded()) {
+                        $payment_update->recordRefund($transactionStatus->getData());
+                    }
+                    else {
+                        $shouldUpdate = true;
+                    }
                 }
             }
             else if (! in_array($oldStatus, $finalStatus)) {
@@ -359,6 +367,9 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                         $admin->notify(new SuspiciousPaymentNotification($payment_update), 3);
                     }
                 }
+            }
+            else {
+                $this->commit();
             }
 
             $this->response->data = $payment_update;

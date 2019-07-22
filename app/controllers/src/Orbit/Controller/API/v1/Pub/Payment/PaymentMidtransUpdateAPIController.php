@@ -64,7 +64,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 ),
                 array(
                     'payment_transaction_id'   => 'required|orbit.exist.payment_transaction_id',
-                    'status'                   => 'required|in:pending,success,canceled,failed,expired,denied,suspicious,abort'
+                    'status'                   => 'required|in:pending,success,canceled,failed,expired,denied,suspicious,abort,refund,partial_refund'
                 ),
                 array(
                     'orbit.exist.payment_transaction_id' => 'payment transaction id not found'
@@ -84,7 +84,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             $paymentDenied = false;
             $shouldUpdate = false;
 
-            $payment_update = PaymentTransaction::with(['details.coupon', 'details.pulsa', 'midtrans', 'issued_coupons', 'user'])->findOrFail($payment_transaction_id);
+            $payment_update = PaymentTransaction::onWriteConnection()->with(['details.coupon', 'details.pulsa', 'midtrans', 'refunds', 'issued_coupons', 'user'])->findOrFail($payment_transaction_id);
 
             if ($payment_update->forPulsa()) {
                 $this->commit();
@@ -129,7 +129,15 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 }
                 else {
                     Log::info("PaidCoupon: New status {$status} for payment {$payment_transaction_id} will be set!");
-                    $shouldUpdate = true;
+
+                    // If midtrans trx has refund properties,
+                    // then try creating child transaction(s) with negative amount...
+                    if ($transactionStatus->wasRefunded()) {
+                        $payment_update->recordRefund($transactionStatus->getData());
+                    }
+                    else {
+                        $shouldUpdate = true;
+                    }
                 }
             }
             else if (! in_array($oldStatus, $finalStatus)) {
