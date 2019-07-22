@@ -276,9 +276,9 @@ class MallSearch extends Search
      *
      * @return [type] [description]
      */
-    public function sortByName()
+    public function sortByName($sortMode = 'asc')
     {
-        $this->sort(['lowercase_name' => ['order' => 'asc']]);
+        $this->sort(['lowercase_name' => ['order' => $sortMode]]);
     }
 
     /**

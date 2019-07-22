@@ -50,8 +50,19 @@ class PurchaseResponse
     public function isSuccessWithoutSN()
     {
         return $this->isSuccess()
-                && isset($this->data->serial_number)
-                && empty($this->data->serial_number);
+                && isset($this->data->data)
+                && isset($this->data->data->serial_number)
+                && empty($this->data->data->serial_number);
+    }
+
+    /**
+     * Determine if the requested pulsa is out of stock or not.
+     *
+     * @return boolean [description]
+     */
+    public function isOutOfStock()
+    {
+        return ! empty($this->data) && $this->data->status === 618;
     }
 
     /**
