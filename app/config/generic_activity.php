@@ -2423,5 +2423,23 @@ return array(
             'object_type' => null,
             'parameter_name' => null,
         ),
+        // Click Pulsa Pop Up Banner OK
+        '264' => array(
+            'name' => 'click_pulsa_pop_up_ok',
+            'name_long' => 'Click Pulsa Pop Up OK',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'Article',
+            'parameter_name' => 'object_id',
+        ),
+        // Click Pulsa Pop Up Banner Cancel
+        '265' => array(
+            'name' => 'click_pulsa_pop_up_cancel',
+            'name_long' => 'Click Pulsa Pop Up Cancel',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'Article',
+            'parameter_name' => 'object_id',
+        ),
     ),
 );
