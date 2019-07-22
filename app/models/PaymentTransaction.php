@@ -30,6 +30,7 @@ class PaymentTransaction extends Eloquent
     const STATUS_SUSPICIOUS         = 'suspicious';
     const STATUS_CANCELED           = 'canceled';
     const STATUS_ABORTED            = 'abort';
+    const STATUS_REFUND             = 'refund';
 
     /**
      * It means we are in the process of getting coupon/voucher from Sepulsa.
@@ -90,6 +91,16 @@ class PaymentTransaction extends Eloquent
     public function issued_coupons()
     {
         return $this->hasMany('IssuedCoupon', 'transaction_id');
+    }
+
+    /**
+     * Payment Refund.
+     *
+     * @return [type] [description]
+     */
+    public function refunds()
+    {
+        return $this->hasMany('PaymentTransaction', 'parent_id');
     }
 
     /**
@@ -380,5 +391,66 @@ class PaymentTransaction extends Eloquent
         }
 
         return false;
+    }
+
+    /**
+     * Try to record midtrans refund to our DB
+     * by creating special child transaction(s) with negative amount.
+     *
+     * @return [type] [description]
+     */
+    public function recordRefund($refundData)
+    {
+        Log::info("Payment: Refunding payment {$this->payment_transaction_id} ...");
+
+        // List of refund that will be recorded/added to our DB.
+        $refundList = [];
+
+        // Loop thru midtrans refund list and see if we already record it.
+        foreach($refundData->refunds as $midtransRefund) {
+
+            // A flag to indicate if current midtrans refund item in the loop
+            // is already recorded in our DB.
+            $recorded = false;
+
+            // Check if we already record the refund in our db.
+            foreach($this->refunds as $gtmRefund) {
+                if ((int) $gtmRefund->external_payment_transaction_id === $midtransRefund->refund_chargeback_id) {
+                    $recorded = true;
+                    break;
+                }
+            }
+
+            // If not recorded yet, then add it to refundList.
+            if (! $recorded) {
+                $refundList[] = $midtransRefund;
+            }
+        }
+
+        // Store new refund record if needed.
+        if (count($refundList) > 0) {
+            $currentlyRefunded = 0;
+            foreach($refundList as $midtransRefund) {
+                Log::info("Payment: Recording new refund... ID: {$midtransRefund->refund_chargeback_id} .. AMOUNT: {$midtransRefund->refund_amount}...");
+
+                $refundedPayment = new PaymentTransaction;
+                $refundedPayment->external_payment_transaction_id = $midtransRefund->refund_chargeback_id;
+                $refundedPayment->user_email = $this->user_email;
+                $refundedPayment->user_id = $this->user_id;
+                $refundedPayment->amount = $midtransRefund->refund_amount * -1;
+                $refundedPayment->parent_id = $this->payment_transaction_id;
+                $refundedPayment->status = PaymentTransaction::STATUS_REFUND;
+                $refundedPayment->save();
+                $currentlyRefunded += $midtransRefund->refund_amount;
+
+                Log::info("Payment: DONE");
+            }
+
+            Log::info("Payment: CURRENT REFUND AMOUNT: {$currentlyRefunded}");
+            Log::info("Payment: TOTAL REFUND AMOUNT: {$refundData->refund_amount}");
+        }
+        else {
+            Log::info("Payment: All midtrans refund item were recorded. Nothing to do. (TOTAL REFUND: {$refundData->refund_amount})");
+        }
     }
 }
