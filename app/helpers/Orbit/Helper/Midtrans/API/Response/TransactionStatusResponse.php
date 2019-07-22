@@ -99,6 +99,26 @@ class TransactionStatusResponse
     }
 
     /**
+     * Determine if midtrans trx is being refunded.
+     *
+     * @return [type] [description]
+     */
+    public function wasRefunded()
+    {
+        return $this->hasRefund() || in_array($this->data->transaction_status, ['refund', 'partial_refund']);
+    }
+
+    /**
+     * Determine if midtrans trx has refund property in the response.
+     *
+     * @return boolean [description]
+     */
+    public function hasRefund()
+    {
+        return isset($this->data->refund_amount) && isset($this->data->refunds);
+    }
+
+    /**
      * Determine if the the transaction is exists or not.
      *
      * @return boolean [description]
@@ -176,6 +196,9 @@ class TransactionStatusResponse
         }
         else if ($this->isSuspicious()) {
             return PaymentTransaction::STATUS_PENDING;
+        }
+        else if ($this->wasRefunded()) {
+            return PaymentTransaction::STATUS_REFUND;
         }
 
         return PaymentTransaction::STATUS_FAILED;
