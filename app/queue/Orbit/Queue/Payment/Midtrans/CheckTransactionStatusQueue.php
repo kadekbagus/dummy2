@@ -42,7 +42,7 @@ class CheckTransactionStatusQueue
 
             DB::connection()->beginTransaction();
 
-            $payment = PaymentTransaction::onWriteConnection()->with(['details.coupon', 'details.pulsa', 'midtrans', 'issued_coupons', 'user'])->find($data['transactionId']);
+            $payment = PaymentTransaction::onWriteConnection()->with(['details.coupon', 'details.pulsa', 'refunds', 'midtrans', 'issued_coupons', 'user'])->find($data['transactionId']);
             $mallId = isset($data['mall_id']) ? $data['mall_id'] : null;
             $mall = Mall::where('merchant_id', $mallId)->first();
 
@@ -135,7 +135,17 @@ class CheckTransactionStatusQueue
                     }
                 }
 
-                $payment->status = $transactionStatus;
+                // Only update our payment status
+                // if midtrans trx doesnt have refund properties.
+                if (! $transaction->wasRefunded()) {
+                    $payment->status = $transactionStatus;
+                }
+
+                // If midtrans trx contains refund properties,
+                // then try recording it to our DB.
+                if ($transaction->wasRefunded()) {
+                    $payment->recordRefund($transaction->getData());
+                }
 
                 $payment->save();
 
