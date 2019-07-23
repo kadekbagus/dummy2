@@ -420,7 +420,7 @@ class PaymentTransaction extends Eloquent
 
             // Check if we already record the refund in our db.
             foreach($this->refunds as $gtmRefund) {
-                if ((int) $gtmRefund->external_payment_transaction_id === $midtransRefund->refund_key) {
+                if ($gtmRefund->external_payment_transaction_id === $midtransRefund->refund_key) {
                     $recorded = true;
                     break;
                 }
