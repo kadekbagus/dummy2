@@ -118,9 +118,21 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                 $transactionStatus = TransactionStatus::create()->getStatus($payment_transaction_id);
                 $status = $transactionStatus->mapToInternalStatus();
 
+                // If it is a refund request, then try to record it..
+                if (in_array($tmpNewStatus, ['refund', 'partial_refund']) && ! empty($refundData)) {
+                    $refundData = json_decode($refundData, true);
+                    $refundDataObject = new \stdClass;
+                    $refundDataObject->refunds = (object) $refundData['refunds'];
+                    $refundDataObject->refund_amount = $refundData['refund_amount'];
+
+                    $payment_update->recordRefund($refundDataObject);
+
+                    $payment_update->status = PaymentTransaction::STATUS_SUCCESS_REFUND;
+                    $payment_update->save();
+                }
                 // If the new status doesnt match with what midtrans gave us, then
                 // we can ignored this request (dont update).
-                if ($tmpNewStatus !== $status) {
+                else if ($tmpNewStatus !== $status) {
                     Log::info("Pulsa: New status {$tmpNewStatus} for payment {$payment_transaction_id} will be IGNORED since the correct status is {$status}!");
                 }
                 else {
@@ -151,17 +163,6 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                     else {
                         Log::info("Pulsa: Transaction {$payment_transaction_id} found! Payment can not be aborted/canceled.");
                     }
-                }
-                else if (in_array($status, ['refund', 'partial_refund']) && ! empty($refundData)) {
-                    $refundData = json_decode($refundData, true);
-                    $refundDataObject = new \stdClass;
-                    $refundDataObject->refunds = (object) $refundData['refunds'];
-                    $refundDataObject->refund_amount = $refundData['refund_amount'];
-
-                    $payment_update->recordRefund($refundDataObject);
-
-                    $payment_update->status = PaymentTransaction::STATUS_SUCCESS_REFUND;
-                    $payment_update->save();
                 }
                 else {
                     $shouldUpdate = true;
