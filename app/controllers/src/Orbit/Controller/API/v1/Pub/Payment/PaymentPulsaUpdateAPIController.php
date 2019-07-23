@@ -54,6 +54,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
             $status = OrbitInput::post('status');
             $mallId = OrbitInput::post('mall_id', null);
             $fromSnap = OrbitInput::post('from_snap', false);
+            $refundData = OrbitInput::post('refund_data', null);
 
             $paymentHelper = PaymentHelper::create();
             $paymentHelper->registerCustomValidation();
@@ -127,12 +128,12 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
 
                     // If midtrans trx has refund properties,
                     // then try creating child transaction(s) with negative amount...
-                    if ($transactionStatus->wasRefunded()) {
-                        $payment_update->recordRefund($transactionStatus->getData());
-                    }
-                    else {
-                        $shouldUpdate = true;
-                    }
+                    // if ($transactionStatus->wasRefunded()) {
+                    //     $payment_update->recordRefund($transactionStatus->getData());
+                    // }
+                    // else {
+                    $shouldUpdate = true;
+                    // }
                 }
             }
             else if (! in_array($oldStatus, $finalStatus)) {
@@ -150,6 +151,17 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                     else {
                         Log::info("Pulsa: Transaction {$payment_transaction_id} found! Payment can not be aborted/canceled.");
                     }
+                }
+                else if (in_array($status, ['refund', 'partial_refund']) && ! empty($refundData)) {
+                    $refundData = json_decode($refundData, true);
+                    $refundDataObject = new \stdClass;
+                    $refundDataObject->refunds = (object) $refundData['refunds'];
+                    $refundDataObject->refund_amount = $refundData['refund_amount'];
+
+                    $payment_update->recordRefund($refundDataObject);
+
+                    $payment_update->status = PaymentTransaction::STATUS_SUCCESS_REFUND;
+                    $payment_update->save();
                 }
                 else {
                     $shouldUpdate = true;

@@ -54,6 +54,11 @@ class PaymentTransaction extends Eloquent
     const STATUS_SUCCESS_NO_PULSA_FAILED = 'success_no_pulsa_failed';
 
     /**
+     * Indicate that the payment of this transaction was refunded.
+     */
+    const STATUS_SUCCESS_REFUND = 'success_refund';
+
+    /**
      * Payment - Coupon Sepulsa relation.
      *
      * @return [type] [description]
@@ -415,14 +420,14 @@ class PaymentTransaction extends Eloquent
 
             // Check if we already record the refund in our db.
             foreach($this->refunds as $gtmRefund) {
-                if ((int) $gtmRefund->external_payment_transaction_id === $midtransRefund->refund_chargeback_id) {
+                if ((int) $gtmRefund->external_payment_transaction_id === $midtransRefund->refund_key) {
                     $recorded = true;
                     break;
                 }
             }
 
             // If not recorded yet, then add it to refundList.
-            if (! $recorded) {
+            if (! $recorded && isset($midtransRefund->bank_confirmed_at)) {
                 $refundList[] = $midtransRefund;
             }
         }
@@ -431,26 +436,25 @@ class PaymentTransaction extends Eloquent
         if (count($refundList) > 0) {
             $currentlyRefunded = 0;
             foreach($refundList as $midtransRefund) {
-                Log::info("Payment: Recording new refund... ID: {$midtransRefund->refund_chargeback_id} .. AMOUNT: {$midtransRefund->refund_amount}...");
+                Log::info("Payment: Recording new refund... ID: {$midtransRefund->refund_key} .. AMOUNT: {$midtransRefund->refund_amount}...");
 
                 $refundedPayment = new PaymentTransaction;
-                $refundedPayment->external_payment_transaction_id = $midtransRefund->refund_chargeback_id;
+                $refundedPayment->external_payment_transaction_id = $midtransRefund->refund_key;
                 $refundedPayment->user_email = $this->user_email;
                 $refundedPayment->user_id = $this->user_id;
                 $refundedPayment->amount = $midtransRefund->refund_amount * -1;
                 $refundedPayment->parent_id = $this->payment_transaction_id;
                 $refundedPayment->status = PaymentTransaction::STATUS_REFUND;
+                $refundedPayment->provider_response_message = serialize($midtransRefund);
                 $refundedPayment->save();
                 $currentlyRefunded += $midtransRefund->refund_amount;
-
-                Log::info("Payment: DONE");
             }
 
             Log::info("Payment: CURRENT REFUND AMOUNT: {$currentlyRefunded}");
             Log::info("Payment: TOTAL REFUND AMOUNT: {$refundData->refund_amount}");
         }
         else {
-            Log::info("Payment: All midtrans refund item were recorded. Nothing to do. (TOTAL REFUND: {$refundData->refund_amount})");
+            Log::info("Payment: No refund will be recorded.");
         }
     }
 }
