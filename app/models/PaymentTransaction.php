@@ -148,6 +148,7 @@ class PaymentTransaction extends Eloquent
             self::STATUS_SUCCESS_NO_COUPON_FAILED,
             self::STATUS_SUCCESS_NO_PULSA,
             self::STATUS_SUCCESS_NO_PULSA_FAILED,
+            self::STATUS_SUCCESS_REFUND,
         ]);
     }
 
