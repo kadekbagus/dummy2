@@ -247,6 +247,7 @@ class ProfileHelper
                     DB::raw("CONCAT(user_firstname, ' ', user_lastname) as name"),
                     'users.created_at',
                     'users.status',
+                    'user_details.gender',
                     'extended_users.about', 'extended_users.location', 'extended_users.total_game_points'
                 )
                 ->with([
@@ -264,6 +265,7 @@ class ProfileHelper
                     },
                 ])
                 ->join('roles', 'users.user_role_id', '=', 'roles.role_id')
+                ->leftJoin('user_details', 'users.user_id', '=', 'user_details.user_id')
                 ->leftJoin('extended_users', 'users.user_id', '=', 'extended_users.user_id')
                 ->where('roles.role_name', 'Consumer')
                 ->whereIn('status', ['active', 'pending'])
@@ -292,6 +294,7 @@ class ProfileHelper
                 'user_id' => $userId,
                 'name' => $user->name,
                 'location' => $user->location,
+                'gender' => $user->gender,
                 'join_date' => $user->created_at->format('Y-m-d H:i:s'),
                 'about' => $user->about,
                 'rank' => 0,
@@ -307,9 +310,10 @@ class ProfileHelper
             ];
 
             // Get user-related-content total value..
-            $userProfile->total_reviews = $this->getTotalReview($userId);
-            $userProfile->total_photos = $this->getTotalPhotos($userId);
-            $userProfile->total_following = $this->getTotalFollowing($userId);
+            $profileTotal = $this->getTotalContent($userId);
+            $userProfile->total_reviews = $profileTotal->reviews;
+            $userProfile->total_photos = $profileTotal->photos;
+            $userProfile->total_following = $profileTotal->following;
 
             // Get user rank.
             $userProfile->rank = $this->getUserRank($userId, $user->total_game_points, $leaderboardData);
@@ -337,7 +341,12 @@ class ProfileHelper
 
         $consumerRole = Role::where('role_name', 'Consumer')->firstOrFail();
 
-        $topRankUsers = User::select('users.user_id', DB::raw("CONCAT(user_firstname, ' ', user_lastname) as name"), 'extended_users.total_game_points')
+        $topRankUsers = User::select(
+                    'users.user_id',
+                    DB::raw("CONCAT(user_firstname, ' ', user_lastname) as name"),
+                    'extended_users.total_game_points',
+                    'user_details.gender'
+                )
                 ->with([
                     'purchases' => function($purchases) {
                         $purchases->select(
@@ -351,6 +360,7 @@ class ProfileHelper
                         $profilePicture->where('media_name_long', 'user_profile_picture_resized_default');
                     },
                 ])
+                ->leftJoin('user_details', 'users.user_id', '=', 'user_details.user_id')
                 ->leftJoin('extended_users', 'users.user_id', '=', 'extended_users.user_id')
                 ->where('user_role_id', $consumerRole->role_id)
                 ->where('status', 'active')
