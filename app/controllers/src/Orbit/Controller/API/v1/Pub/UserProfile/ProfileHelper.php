@@ -247,8 +247,9 @@ class ProfileHelper
                     DB::raw("CONCAT(user_firstname, ' ', user_lastname) as name"),
                     'users.created_at',
                     'users.status',
+                    'extended_users.about', 'extended_users.location', 'extended_users.total_game_points',
                     'user_details.gender',
-                    'extended_users.about', 'extended_users.location', 'extended_users.total_game_points'
+                    'users.created_at'
                 )
                 ->with([
                     'purchases' => function($purchases) {
@@ -345,7 +346,8 @@ class ProfileHelper
                     'users.user_id',
                     DB::raw("CONCAT(user_firstname, ' ', user_lastname) as name"),
                     'extended_users.total_game_points',
-                    'user_details.gender'
+                    'user_details.gender',
+                    'users.created_at'
                 )
                 ->with([
                     'purchases' => function($purchases) {
