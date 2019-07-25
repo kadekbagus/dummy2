@@ -70,6 +70,7 @@ class PulsaAPIController extends ControllerAPI
             $quantity = OrbitInput::post('quantity', 0);
             $status = OrbitInput::post('status');
             $vendor_price = OrbitInput::post('vendor_price');
+            $displayed = OrbitInput::post('displayed', 'yes');
 
             $validator = Validator::make(
                 array(
@@ -116,6 +117,7 @@ class PulsaAPIController extends ControllerAPI
             $newPulsa->quantity = $quantity;
             $newPulsa->status = $status;
             $newPulsa->vendor_price = $vendor_price;
+            $newPulsa->displayed = $displayed;
             $newPulsa->save();
 
             // Commit the changes
@@ -289,6 +291,10 @@ class PulsaAPIController extends ControllerAPI
 
             OrbitInput::post('vendor_price', function($vendor_price) use ($updatedPulsa) {
                 $updatedPulsa->vendor_price = $vendor_price;
+            });
+
+            OrbitInput::post('displayed', function($displayed) use ($updatedPulsa) {
+                $updatedPulsa->displayed = $displayed;
             });
 
             $updatedPulsa->save();
