@@ -2414,5 +2414,41 @@ return array(
             'object_type' => 'Mall',
             'parameter_name' => 'object_id'
         ),
+        // Click Pulsa Pop Up Banner OK
+        '264' => array(
+            'name' => 'click_pulsa_pop_up_ok',
+            'name_long' => 'Click Pulsa Pop Up OK',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'Article',
+            'parameter_name' => 'object_id',
+        ),
+        // Click Pulsa Pop Up Banner Cancel
+        '265' => array(
+            'name' => 'click_pulsa_pop_up_cancel',
+            'name_long' => 'Click Pulsa Pop Up Cancel',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'Article',
+            'parameter_name' => 'object_id',
+        ),
+        // Click Coupon Pop Up Banner OK
+        '266' => array(
+            'name' => 'click_coupon_pop_up_ok',
+            'name_long' => 'Click Coupon Pop Up OK',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'Tenant',
+            'parameter_name' => 'object_id',
+        ),
+        // Click Coupon Pop Up Banner Cancel
+        '267' => array(
+            'name' => 'click_coupon_pop_up_cancel',
+            'name_long' => 'Click Coupon Pop Up Cancel',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'Tenant',
+            'parameter_name' => 'object_id',
+        ),
     ),
 );

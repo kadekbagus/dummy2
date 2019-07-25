@@ -70,7 +70,7 @@ class GetPulsaQueue
 
             Log::info("Pulsa: Getting pulsa for PaymentID: {$paymentId}");
 
-            $payment = PaymentTransaction::with(['details.pulsa', 'user', 'midtrans'])->findOrFail($paymentId);
+            $payment = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'user', 'midtrans'])->findOrFail($paymentId);
 
             $activity->setUser($payment->user);
 
