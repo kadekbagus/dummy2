@@ -110,7 +110,10 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
             $this->beginTransaction();
 
             // Get pulsa detail from DB.
-            $pulsa = Pulsa::select('pulsa_item_id', 'price', 'vendor_price')->findOrFail($object_id);
+            $pulsa = Pulsa::select('pulsa_item_id', 'price', 'vendor_price')
+                ->where('status', 'active')
+                ->where('displayed', 'yes')
+                ->findOrFail($object_id);
 
             // Resolve country_id
             if ($country_id !== '0' || $country_id !== 0) {
