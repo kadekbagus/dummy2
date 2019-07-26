@@ -19,8 +19,8 @@ return [
                         Kami mohon maaf karena tidak dapat menyediakan Pulsa yang sudah Anda beli.',
 
         'help' => 'Layanan Pelanggan kami akan mengembalikan dana Anda secepatnya.
-        Proses pengembalian dana dilakukan maksimal dalam 24 jam.
-        Apabila Anda tidak menerimanya dalam 24 jam, hubungi Layanan Pelanggan kami melalui telepon
+        Proses pengembalian dana dilakukan maksimal dalam 24 jam selama hari kerja (Senin-Jumat). Saat hari libur atau akhir pekan, pengembalian akan dilakukan di hari kerja berikutnya.
+        Apabila dana tidak diterima dalam jangka waktu tersebut, mohon hubungi Layanan Pelanggan kami melalui telepon
         <a style="color:#f43d3c;text-decoration: none;" href="tel::phone">:phone</a>
         atau surel
         <a style="text-decoration: none;color:#f43d3c;" href="mailto::email">:email</a>.',
