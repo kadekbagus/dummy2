@@ -18,8 +18,7 @@ return [
                         <br>
                         Sorry we could not provide the pulsa you purchased. We apologize for this inconvenience.',
 
-        'help' => 'Our Customer Service will refund your purchase shortly. The refund will be done within 24 hours maximum. If you do not receive your refund after 24 hours contact our Customer Service at <a style="color:#f43d3c;text-decoration: none;" href="tel::phone">:phone</a> or email at <a style="text-decoration: none;color:#f43d3c;" href="mailto::email">:email</a>.
-Thank you and have a nice day.',
+        'help' => 'Our Customer Service will refund your purchase shortly. The refund will be done within 24 hours maximum during business days (Mon-Fri). For holidays and weekends, the refund will be done on the next business day. If you do not receive your refund in this period, please contact our Customer Service at <a style="color:#f43d3c;text-decoration: none;" href="tel::phone">:phone</a> or email at <a style="text-decoration: none;color:#f43d3c;" href="mailto::email">:email</a>.',
 
         'thank_you' => 'Thank you and have a nice day.',
     ],
