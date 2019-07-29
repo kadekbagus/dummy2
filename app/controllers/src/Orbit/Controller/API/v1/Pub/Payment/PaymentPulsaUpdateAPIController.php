@@ -30,6 +30,7 @@ use Orbit\Notifications\Pulsa\PendingPaymentNotification;
 use Orbit\Notifications\Pulsa\CanceledPaymentNotification;
 use Orbit\Notifications\Pulsa\AbortedPaymentNotification;
 use Orbit\Notifications\Pulsa\ExpiredPaymentNotification;
+use Orbit\Notifications\Pulsa\CustomerRefundNotification;
 use Mall;
 
 /**
@@ -84,6 +85,8 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
             $paymentSuspicious = false;
             $paymentDenied = false;
             $shouldUpdate = false;
+            $shouldNotifyRefund = false;
+            $refundReason = '';
 
             $payment_update = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'refunds', 'midtrans', 'user'])->findOrFail($payment_transaction_id);
 
@@ -127,10 +130,16 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                     }
                     $refundDataObject->refund_amount = $refundData['refund_amount'];
 
-                    $payment_update->recordRefund($refundDataObject);
+                    $refundList = $payment_update->recordRefund($refundDataObject);
 
-                    $payment_update->status = PaymentTransaction::STATUS_SUCCESS_REFUND;
-                    $payment_update->save();
+                    if (count($refundList) > 0) {
+                        $payment_update->status = PaymentTransaction::STATUS_SUCCESS_REFUND;
+                        $payment_update->save();
+                        $shouldNotifyRefund = true;
+                        $refundReason = isset($refundDataObject->refunds[0]->reason)
+                            ? $refundDataObject->refunds[0]->reason
+                            : '';
+                    }
                 }
                 else {
                     Log::info("Pulsa: Getting correct status from Midtrans for payment {$payment_transaction_id}...");
@@ -382,6 +391,11 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
             }
             else {
                 $this->commit();
+            }
+
+            // Send refund notification to customer.
+            if ($shouldNotifyRefund) {
+                $payment_update->user->notify(new CustomerRefundNotification($payment_update. $refundReason));
             }
 
             $this->response->data = $payment_update;
