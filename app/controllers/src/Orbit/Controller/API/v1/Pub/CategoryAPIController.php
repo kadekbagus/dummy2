@@ -52,7 +52,7 @@ class CategoryAPIController extends PubControllerAPI
                             ->where('name', $lang)
                             ->first();
 
-            $categories = Category::select('categories.category_id','category_translations.category_name', DB::raw("media.path AS image_path"))
+            $categories = Category::select('categories.category_id','category_translations.category_name', 'categories.icon_name', DB::raw("media.path AS image_path"))
                                 ->join('category_translations', 'category_translations.category_id', '=', 'categories.category_id')
                                 ->leftJoin(DB::raw("(SELECT *
                                                     FROM {$prefix}media
@@ -72,7 +72,8 @@ class CategoryAPIController extends PubControllerAPI
                 $sortByMapping = array(
                     'name'           => 'categories.category_name',
                     'created_date'   => 'categories.created_at',
-                    'category_order' => 'categories.category_order'
+                    'category_order' => 'categories.category_order',
+                    'icon_name'      => 'categories.icon_name'
                 );
 
                 $sort_by = $sortByMapping[$_sortBy];
