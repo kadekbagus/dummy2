@@ -136,8 +136,8 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                         $payment_update->status = PaymentTransaction::STATUS_SUCCESS_REFUND;
                         $payment_update->save();
                         $shouldNotifyRefund = true;
-                        $refundReason = isset($refundDataObject->refunds[0]->reason)
-                            ? $refundDataObject->refunds[0]->reason
+                        $refundReason = isset($refundList[0]) && isset($refundList[0]->reason)
+                            ? $refundList[0]->reason
                             : '';
                     }
                 }
@@ -395,7 +395,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
 
             // Send refund notification to customer.
             if ($shouldNotifyRefund) {
-                $payment_update->user->notify(new CustomerRefundNotification($payment_update. $refundReason));
+                $payment_update->user->notify(new CustomerRefundNotification($payment_update, $refundReason));
             }
 
             $this->response->data = $payment_update;

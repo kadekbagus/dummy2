@@ -173,7 +173,6 @@
                 {{ trans('email-customer-refund.body.greeting_pulsa', ['customerName' => $customerName], '', 'id') }}
               </p>
               <br>
-              <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <strong>{{{ trans('email-customer-refund.body.transaction_labels.transaction_id', [], '', 'id') }}}</strong> {{ $transaction['id'] }}
@@ -196,6 +195,9 @@
                 <br>
                 <br>
                 {{{ trans('email-customer-refund.body.thank_you', [], '', 'id') }}}
+                <br>
+                <br>
+                {{ trans('email-customer-refund.body.cs_name') }}
               </p>
             </td>
           </tr>
@@ -215,7 +217,6 @@
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 {{ trans('email-customer-refund.body.greeting_pulsa', ['customerName' => $customerName]) }}
               </p>
-              <br>
               <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
@@ -239,6 +240,9 @@
                 <br>
                 <br>
                 {{{ trans('email-customer-refund.body.thank_you') }}}
+                <br>
+                <br>
+                {{ trans('email-customer-refund.body.cs_name') }}
               </p>
             </td>
           </tr>

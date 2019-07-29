@@ -446,7 +446,11 @@ class PaymentTransaction extends Eloquent
                 $refundedPayment->amount = $midtransRefund->refund_amount * -1;
                 $refundedPayment->parent_id = $this->payment_transaction_id;
                 $refundedPayment->status = PaymentTransaction::STATUS_REFUND;
-                $refundedPayment->provider_response_message = serialize($midtransRefund);
+                $refundedPayment->provider_response_message = json_encode([
+                    'key' => $midtransRefund->refund_key,
+                    'amount' => $midtransRefund->refund_amount,
+                    'reason' => isset($midtransRefund->reason) ? $midtransRefund->reason : '',
+                ]);
                 $refundedPayment->save();
                 $currentlyRefunded += $midtransRefund->refund_amount;
             }

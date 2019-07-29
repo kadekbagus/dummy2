@@ -30,6 +30,8 @@ Kami telah mengembalikan pembayaran ke GOPAY Kakak, mohon dibantu konfirmasi bil
             'amount' => 'Jumlah: ',
             'reason' => 'Alasan Refund: ',
         ],
+
+        'cs_name' => 'Customer Service Team',
     ],
 
     'table_customer_info' => [
