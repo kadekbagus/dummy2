@@ -457,5 +457,7 @@ class PaymentTransaction extends Eloquent
         else {
             Log::info("Payment: No refund will be recorded.");
         }
+
+        return $refundList;
     }
 }
