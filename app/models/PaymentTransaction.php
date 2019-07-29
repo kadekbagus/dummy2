@@ -30,6 +30,7 @@ class PaymentTransaction extends Eloquent
     const STATUS_SUSPICIOUS         = 'suspicious';
     const STATUS_CANCELED           = 'canceled';
     const STATUS_ABORTED            = 'abort';
+    const STATUS_REFUND             = 'refund';
 
     /**
      * It means we are in the process of getting coupon/voucher from Sepulsa.
@@ -51,6 +52,11 @@ class PaymentTransaction extends Eloquent
      * Status when failed getting pulsa from provider.
      */
     const STATUS_SUCCESS_NO_PULSA_FAILED = 'success_no_pulsa_failed';
+
+    /**
+     * Indicate that the payment of this transaction was refunded.
+     */
+    const STATUS_SUCCESS_REFUND = 'success_refund';
 
     /**
      * Payment - Coupon Sepulsa relation.
@@ -93,6 +99,16 @@ class PaymentTransaction extends Eloquent
     }
 
     /**
+     * Payment Refund.
+     *
+     * @return [type] [description]
+     */
+    public function refunds()
+    {
+        return $this->hasMany('PaymentTransaction', 'parent_id');
+    }
+
+    /**
      * Payment - User relation.
      *
      * @return [type] [description]
@@ -132,6 +148,7 @@ class PaymentTransaction extends Eloquent
             self::STATUS_SUCCESS_NO_COUPON_FAILED,
             self::STATUS_SUCCESS_NO_PULSA,
             self::STATUS_SUCCESS_NO_PULSA_FAILED,
+            self::STATUS_SUCCESS_REFUND,
         ]);
     }
 
@@ -380,5 +397,71 @@ class PaymentTransaction extends Eloquent
         }
 
         return false;
+    }
+
+    /**
+     * Try to record midtrans refund to our DB
+     * by creating special child transaction(s) with negative amount.
+     *
+     * @return [type] [description]
+     */
+    public function recordRefund($refundData)
+    {
+        Log::info("Payment: Refunding payment {$this->payment_transaction_id} ...");
+
+        // List of refund that will be recorded/added to our DB.
+        $refundList = [];
+
+        // Loop thru midtrans refund list and see if we already record it.
+        foreach($refundData->refunds as $midtransRefund) {
+
+            // A flag to indicate if current midtrans refund item in the loop
+            // is already recorded in our DB.
+            $recorded = false;
+
+            // Check if we already record the refund in our db.
+            foreach($this->refunds as $gtmRefund) {
+                if ($gtmRefund->external_payment_transaction_id === $midtransRefund->refund_key) {
+                    $recorded = true;
+                    break;
+                }
+            }
+
+            // If not recorded yet, then add it to refundList.
+            if (! $recorded && isset($midtransRefund->bank_confirmed_at)) {
+                $refundList[] = $midtransRefund;
+            }
+        }
+
+        // Store new refund record if needed.
+        if (count($refundList) > 0) {
+            $currentlyRefunded = 0;
+            foreach($refundList as $midtransRefund) {
+                Log::info("Payment: Recording new refund... ID: {$midtransRefund->refund_key} .. AMOUNT: {$midtransRefund->refund_amount}...");
+
+                $refundedPayment = new PaymentTransaction;
+                $refundedPayment->external_payment_transaction_id = $midtransRefund->refund_key;
+                $refundedPayment->user_email = $this->user_email;
+                $refundedPayment->user_id = $this->user_id;
+                $refundedPayment->amount = $midtransRefund->refund_amount * -1;
+                $refundedPayment->parent_id = $this->payment_transaction_id;
+                $refundedPayment->status = PaymentTransaction::STATUS_REFUND;
+                $refundedPayment->provider_response_message = json_encode([
+                    'key' => $midtransRefund->refund_key,
+                    'amount' => $midtransRefund->refund_amount,
+                    'reason' => isset($midtransRefund->reason) ? $midtransRefund->reason : '',
+                ]);
+                $refundedPayment->save();
+                $currentlyRefunded += $midtransRefund->refund_amount;
+            }
+
+            Log::info("Payment: CURRENT REFUND AMOUNT: {$currentlyRefunded}");
+            Log::info("Payment: TOTAL REFUND AMOUNT: {$refundData->refund_amount}");
+        }
+        else {
+            Log::info("Payment: No refund will be recorded.");
+        }
+
+        return $refundList;
     }
 }

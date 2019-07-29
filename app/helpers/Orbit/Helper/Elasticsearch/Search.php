@@ -296,4 +296,30 @@ class Search
             ]
         ];
     }
+
+    /**
+     * replace any forbidden character
+     *
+     * @param string $str, input string
+     * @return string string without forbidden character
+     */
+    public function escape($str)
+    {
+        $forbiddenCharacter = array(
+            '>',
+            '<',
+            '(',
+            ')',
+            '{',
+            '}',
+            '[',
+            ']',
+            '^',
+            '"',
+            '~',
+            '/',
+            ':'
+        );
+        return str_replace($forbiddenCharacter, '', $str);
+    }
 }
