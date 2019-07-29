@@ -29,6 +29,8 @@ return [
             'amount' => 'Amount: ',
             'reason' => 'Refund Reason: ',
         ],
+
+        'cs_name' => 'Customer Service Team',
     ],
 
     'table_customer_info' => [
