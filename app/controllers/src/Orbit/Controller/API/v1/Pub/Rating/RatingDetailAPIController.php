@@ -121,7 +121,14 @@ class RatingDetailAPIController extends PubControllerAPI
             if ($usingCdn) {
                 $userImage = "(CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END) as user_picture";
             }
-            $reviewUser = User::select('users.user_id', 'roles.role_name', DB::raw("(CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname)) as user_name"), DB::raw($userImage))
+            $reviewUser = User::select('users.user_id',
+                    'roles.role_name',
+                    DB::raw("(CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname)) as user_name"),
+                    DB::raw($userImage),
+                    'users.created_at',
+                    'user_details.gender'
+                )
+                ->leftJoin('user_details', 'users.user_id', '=', 'user_details.user_id')
                 ->leftJoin('media', function ($q) {
                         $q->on('media.object_id', '=', 'users.user_id')
                             ->on('media.media_name_long', '=', DB::raw("'user_profile_picture_orig'"));
@@ -136,6 +143,8 @@ class RatingDetailAPIController extends PubControllerAPI
             $userData->user_id = $reviewUser->user_id;
             $userData->user_name = $reviewUser->user_name;
             $userData->user_picture = $reviewUser->user_picture;
+            $userData->user_gender = $reviewUser->gender;
+            $userData->created_at = $reviewUser->created_at->format('Y-m-d H:i:s');
             $userData->is_official_user = in_array($reviewUser->role_name, $roleOfficial) ? 'y' : 'n';
 
             // build object data
