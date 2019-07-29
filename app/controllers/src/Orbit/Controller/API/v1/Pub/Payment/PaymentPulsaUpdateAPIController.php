@@ -30,6 +30,7 @@ use Orbit\Notifications\Pulsa\PendingPaymentNotification;
 use Orbit\Notifications\Pulsa\CanceledPaymentNotification;
 use Orbit\Notifications\Pulsa\AbortedPaymentNotification;
 use Orbit\Notifications\Pulsa\ExpiredPaymentNotification;
+use Orbit\Notifications\Pulsa\CustomerRefundNotification;
 use Mall;
 
 /**
@@ -54,6 +55,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
             $status = OrbitInput::post('status');
             $mallId = OrbitInput::post('mall_id', null);
             $fromSnap = OrbitInput::post('from_snap', false);
+            $refundData = OrbitInput::post('refund_data', null);
 
             $paymentHelper = PaymentHelper::create();
             $paymentHelper->registerCustomValidation();
@@ -83,6 +85,8 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
             $paymentSuspicious = false;
             $paymentDenied = false;
             $shouldUpdate = false;
+            $shouldNotifyRefund = false;
+            $refundReason = '';
 
             $payment_update = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'refunds', 'midtrans', 'user'])->findOrFail($payment_transaction_id);
 
@@ -98,12 +102,13 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                 PaymentTransaction::STATUS_DENIED,
                 PaymentTransaction::STATUS_CANCELED,
                 PaymentTransaction::STATUS_ABORTED,
+                PaymentTransaction::STATUS_SUCCESS_REFUND,
             ];
 
             // Assume status as success if it is success_no_coupon/success_no_coupon_failed,
             // because Midtrans and landing_page don't send those status. (They only know 'success')
             $tmpOldStatus = $oldStatus;
-            if (in_array($oldStatus, [PaymentTransaction::STATUS_SUCCESS_NO_PULSA, PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED])) {
+            if (in_array($oldStatus, [PaymentTransaction::STATUS_SUCCESS_NO_PULSA, PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED, PaymentTransaction::STATUS_SUCCESS_REFUND])) {
                 $tmpOldStatus = PaymentTransaction::STATUS_SUCCESS;
             }
 
@@ -112,25 +117,41 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
             $tmpNewStatus = $status;
             if (in_array($oldStatus, $finalStatus) && $tmpOldStatus !== $status) {
                 Log::info("Pulsa: Payment {$payment_transaction_id} was marked as FINAL, but there is new request to change status to " . $tmpNewStatus);
-                Log::info("Pulsa: Getting correct status from Midtrans for payment {$payment_transaction_id}...");
 
-                $transactionStatus = TransactionStatus::create()->getStatus($payment_transaction_id);
-                $status = $transactionStatus->mapToInternalStatus();
+                // If it is a refund request, then try to record it..
+                if (in_array($tmpNewStatus, ['refund', 'partial_refund']) && ! empty($refundData)) {
+                    Log::info("Pulsa: It is a refund notification for payment {$payment_transaction_id}...");
 
-                // If the new status doesnt match with what midtrans gave us, then
-                // we can ignored this request (dont update).
-                if ($tmpNewStatus !== $status) {
-                    Log::info("Pulsa: New status {$tmpNewStatus} for payment {$payment_transaction_id} will be IGNORED since the correct status is {$status}!");
+                    $refundData = json_decode($refundData, true);
+                    $refundDataObject = new \stdClass;
+                    $refundDataObject->refunds = [];
+                    foreach($refundData['refunds'] as $refund) {
+                        $refundDataObject->refunds[] = (object) $refund;
+                    }
+                    $refundDataObject->refund_amount = $refundData['refund_amount'];
+
+                    $refundList = $payment_update->recordRefund($refundDataObject);
+
+                    if (count($refundList) > 0) {
+                        $payment_update->status = PaymentTransaction::STATUS_SUCCESS_REFUND;
+                        $payment_update->save();
+                        $shouldNotifyRefund = true;
+                        $refundReason = isset($refundList[0]) && isset($refundList[0]->reason)
+                            ? $refundList[0]->reason
+                            : '';
+                    }
                 }
                 else {
-                    Log::info("Pulsa: New status {$status} for payment {$payment_transaction_id} will be set!");
-
-                    // If midtrans trx has refund properties,
-                    // then try creating child transaction(s) with negative amount...
-                    if ($transactionStatus->wasRefunded()) {
-                        $payment_update->recordRefund($transactionStatus->getData());
+                    Log::info("Pulsa: Getting correct status from Midtrans for payment {$payment_transaction_id}...");
+                    $transactionStatus = TransactionStatus::create()->getStatus($payment_transaction_id);
+                    $status = $transactionStatus->mapToInternalStatus();
+                    // If the new status doesnt match with what midtrans gave us, then
+                    // we can ignored this request (dont update).
+                    if ($tmpNewStatus !== $status) {
+                        Log::info("Pulsa: New status {$tmpNewStatus} for payment {$payment_transaction_id} will be IGNORED since the correct status is {$status}!");
                     }
                     else {
+                        Log::info("Pulsa: New status {$status} for payment {$payment_transaction_id} will be set!");
                         $shouldUpdate = true;
                     }
                 }
@@ -370,6 +391,11 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
             }
             else {
                 $this->commit();
+            }
+
+            // Send refund notification to customer.
+            if ($shouldNotifyRefund) {
+                $payment_update->user->notify(new CustomerRefundNotification($payment_update, $refundReason));
             }
 
             $this->response->data = $payment_update;
