@@ -109,7 +109,7 @@ class PulsaListAPIController extends PubControllerAPI
                             })
                             ->where('countries.name', $country)
                             ->where('telco_operators.status', 'active')
-                            ->where('pulsa.status', 'active')
+                            ->where('displayed', 'yes')
                             ->orderBy('telco_operators.telco_operator_id')
                             ->orderBy('pulsa.value')
                             ->groupBy('pulsa_item_id');
