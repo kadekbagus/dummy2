@@ -20,10 +20,17 @@ trait HasContactTrait
      */
     protected function getContactData()
     {
-        return [
-            'phone' => Config::get('orbit.contact_information.customer_service.phone'),
-            'email' => Config::get('orbit.contact_information.customer_service.email'),
-        ];
+        return Config::get('orbit.contact_information.customer_service');
+    }
+
+    /**
+     * Get email sender information.
+     *
+     * @return [type] [description]
+     */
+    protected function getSenderInfo()
+    {
+        return Config::get('orbit.registration.mobile.sender');
     }
 
 }

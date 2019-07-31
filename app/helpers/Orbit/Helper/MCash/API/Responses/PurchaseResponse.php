@@ -101,9 +101,10 @@ class PurchaseResponse
      */
     public function shouldRetry($retry = 1)
     {
-        return ! empty($this->data)
-               && in_array($this->data->status, $this->retryStatus)
-               && $retry < $this->maxRetry;
+        return $retry < $this->maxRetry
+                && (empty($this->data)
+                    || (! empty($this->data)
+                        && in_array($this->data->status, $this->retryStatus)));
     }
 
     /**
