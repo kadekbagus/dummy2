@@ -10,6 +10,7 @@ use Cache;
 use Validator;
 use Language;
 use Role;
+use UserExtended;
 
 /**
  * Profile helper functions.
@@ -342,6 +343,8 @@ class ProfileHelper
 
         $consumerRole = Role::where('role_name', 'Consumer')->firstOrFail();
 
+        // Disabled because not too performant on huge users table, use user_extended instead of users below
+        /*
         $topRankUsers = User::select(
                     'users.user_id',
                     DB::raw("CONCAT(user_firstname, ' ', user_lastname) as name"),
@@ -366,6 +369,34 @@ class ProfileHelper
                 ->leftJoin('extended_users', 'users.user_id', '=', 'extended_users.user_id')
                 ->where('user_role_id', $consumerRole->role_id)
                 ->where('status', 'active')
+                ->orderBy('extended_users.total_game_points', 'desc')
+                ->limit($topRankLimit)
+                ->get();
+        */
+
+        // Use this for performance boost, but this will not looks good on an extended_user table with smaller record size
+        $topRankUsers = UserExtended::select(
+                    'users.user_id',
+                    DB::raw("CONCAT(user_firstname, ' ', user_lastname) as name"),
+                    'extended_users.total_game_points',
+                    'user_details.gender',
+                    'users.created_at'
+                )
+                ->with([
+                    'purchases' => function($purchases) {
+                        $purchases->select(
+                            'user_id',
+                            DB::raw("count(payment_transaction_id) as number_of_purchases")
+                        )
+                        ->where('status', PaymentTransaction::STATUS_SUCCESS)
+                        ->groupBy('user_id');
+                    },
+                    'profilePicture' => function($profilePicture) {
+                        $profilePicture->where('media_name_long', 'user_profile_picture_resized_default');
+                    },
+                ])
+                ->join('users', 'users.user_id', '=', 'extended_users.user_id')
+                ->join('user_details', 'users.user_id', '=', 'user_details.user_id')
                 ->orderBy('extended_users.total_game_points', 'desc')
                 ->limit($topRankLimit)
                 ->get();
