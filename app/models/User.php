@@ -209,9 +209,9 @@ class User extends Eloquent implements UserInterface
         return $this->hasMany('PaymentTransaction');
     }
 
-    public function promoCodes()
+    public function discountCodes()
     {
-        return $this->hasMany(PromoCode::class);
+        return $this->hasMany(DiscountCode::class);
     }
 
     /**

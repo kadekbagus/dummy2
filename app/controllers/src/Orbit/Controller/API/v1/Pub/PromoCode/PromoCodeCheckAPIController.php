@@ -8,16 +8,17 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \Lang;
 use \Config;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\RepositoryInterface;
+use App;
 
 class PromoCodeCheckAPIController extends PubControllerAPI
 {
-    private $promoCode;
-
-    public function __construct(RepositoryInterface $promoCode)
+    private function renderResponse($code, $status, $msg, $data, $httpCode)
     {
-        parent::__construct();
-        $this->promoCode = $promoCode;
-        $this->promoCode->authorizer($this);
+        $this->response->data = $data;
+        $this->response->code = $code;
+        $this->response->status = $status;
+        $this->response->message = $msg;
+        return $this->render($httpCode);
     }
 
     /**
@@ -35,53 +36,30 @@ class PromoCodeCheckAPIController extends PubControllerAPI
      */
     public function postCheckPromoCode()
     {
-        $httpCode = 200;
         try {
-
-            $eligibleStatus = $this->promoCode->checkAvailabilityAndReserveIfAvail();
-            $this->response->data = $eligibleStatus;
-            $this->response->code = 0;
-            $this->response->status = 'success';
-            $this->response->message = 'OK';
+            $promoCode = App::make(RepositoryInterface::class)->authorizer($this);
+            $eligibleStatus = $promoCode->checkAvailabilityAndReserveIfAvail();
+            return $this->renderResponse(0, 'success', 'OK', $eligibleStatus, 200);
 
         } catch (ACLForbiddenException $e) {
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-            $httpCode = 403;
-
+            $this->renderResponse($e->getCode(), 'error', $e->getMessage(), null, 403);
         } catch (InvalidArgsException $e) {
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
             $result['total_records'] = 0;
             $result['returned_records'] = 0;
             $result['records'] = null;
-
-            $this->response->data = $result;
-            $httpCode = 403;
-
+            return $this->renderResponse($e->getCode(), 'error', $e->getMessage(), $result, 403);
         } catch (QueryException $e) {
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
+
             // Only shows full query error when we are in debug mode
             if (Config::get('app.debug')) {
-                $this->response->message = $e->getMessage();
+                $msg = $e->getMessage();
             } else {
-                $this->response->message = Lang::get('validation.orbit.queryerror');
+                $msg = Lang::get('validation.orbit.queryerror');
             }
-            $this->response->data = null;
-            $httpCode = 500;
+            return $this->renderResponse($e->getCode(), 'error', $msg, null, 500);
 
         } catch (Exception $e) {
-            $this->response->code = $this->getNonZeroCode($e->getCode());
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-            $httpCode = 500;
+            return $this->renderResponse($this->getNonZeroCode($e->getCode()), 'error', $e->getMessage(), null, 500);
         }
-
-        return $this->render($httpCode);
     }
 }

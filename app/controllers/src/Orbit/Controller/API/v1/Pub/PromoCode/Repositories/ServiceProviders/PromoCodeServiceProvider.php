@@ -1,5 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub\PromoCode\Repositories\ServiceProviders;
 
+use Illuminate\Support\ServiceProvider;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\RepositoryInterface;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\RuleInterface;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;

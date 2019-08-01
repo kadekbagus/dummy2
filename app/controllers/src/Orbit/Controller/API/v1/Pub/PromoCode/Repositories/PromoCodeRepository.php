@@ -4,6 +4,7 @@ use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\RepositoryInter
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\RuleInterface;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ValidatorInterface;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
 
 class PromoCodeRepository implements RepositoryInterface
 {
@@ -77,6 +78,7 @@ class PromoCodeRepository implements RepositoryInterface
             'promo_code' => OrbitInput::get('promo_code'),
             'object_id' => OrbitInput::get('object_id'),
             'object_type' => OrbitInput::get('object_type'),
+            'quantity' => OrbitInput::get('qty'),
         ];
 
         $eligbleStatus = $this->promoCodeRule->getEligibleStatus($user, $promoData);
