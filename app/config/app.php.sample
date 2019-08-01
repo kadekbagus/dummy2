@@ -127,7 +127,7 @@ return array(
         Intervention\Image\ImageServiceProvider::class,
 
 		//mall API specific service providers
-        'Orbit\Controller\API\v1\Pub\PromoCode\Repositories\ServiceProviders\PromoCodeServiceProvider',
+        Orbit\Controller\API\v1\Pub\PromoCode\Repositories\ServiceProviders\PromoCodeServiceProvider::class,
     ),
 
     /*
