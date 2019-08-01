@@ -23,7 +23,7 @@ class PromoCodeRepository implements RepositoryInterface
     private $validator;
 
     /**
-     * instance class responsible to validate input data
+     * instance class responsible to mark promo code reserved
      * @var ReservationInterrface
      */
     private $promoCodeReservation;
@@ -32,11 +32,6 @@ class PromoCodeRepository implements RepositoryInterface
      * instance class responsible to check is user is signed in
      */
     private $authorizer;
-
-    /**
-     * response instance
-     */
-    private $response;
 
     public function __construct(
         ValidatorInterface $validator,
