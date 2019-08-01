@@ -20,6 +20,12 @@ class PurchaseResponse
      */
     protected $retryStatus = [609, 413];
 
+    /**
+     * Maximum number of retry we would do if the first time was failed.
+     * @var integer
+     */
+    protected $maxRetry = 10;
+
     function __construct($object = null)
     {
         if (is_object($object)) {
@@ -93,11 +99,23 @@ class PurchaseResponse
      * @param  [type] $retry [description]
      * @return [type]        [description]
      */
-    public function shouldRetry($retry = 1, $maxRetry = 30)
+    public function shouldRetry($retry = 1)
     {
-        return ! empty($this->data)
-               && in_array($this->data->status, $this->retryStatus)
-               && $retry < $maxRetry;
+        return $retry < $this->maxRetry
+                && (empty($this->data)
+                    || (! empty($this->data)
+                        && in_array($this->data->status, $this->retryStatus)));
+    }
+
+    /**
+     * Determine if we has reached the maximum number of retry allowed.
+     *
+     * @param  integer $retry [description]
+     * @return [type]         [description]
+     */
+    public function maxRetryReached($retry = 1)
+    {
+        return $retry === $this->maxRetry;
     }
 
     /**

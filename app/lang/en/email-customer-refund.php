@@ -2,7 +2,7 @@
 
 return [
     'subject' => 'Coupon Not Available',
-    'subject_pulsa' => 'Pulsa Not Available',
+    'subject_pulsa' => 'Payment Refund',
 
     'header' => [
         'invoice'       => 'Notice',
@@ -16,11 +16,21 @@ return [
 
         'greeting_pulsa' => 'Dear, :customerName
                         <br>
-                        Sorry we could not provide the pulsa you purchased. We apologize for this inconvenience.',
+                        We are having a technical problem during your pulsa purchase. Below are the details.',
 
-        'help' => 'Our Customer Service will refund your purchase shortly. The refund will be done within 24 hours maximum during business days (Mon-Fri). For holidays and weekends, the refund will be done on the next business day. If you do not receive your refund in this period, please contact our Customer Service at <a style="color:#f43d3c;text-decoration: none;" href="tel::phone">:phone</a> or email at <a style="text-decoration: none;color:#f43d3c;" href="mailto::email">:email</a>.',
+        'content_1' => 'Your payment was successful, but we cannot get pulsa from the Operator.',
+        'content_2' => 'We are sorry for the inconvenience. We just refunded the payment to your GOPAY account. Please help confirming once you received it.',
 
-        'thank_you' => 'Thank you and have a nice day.',
+        'thank_you' => 'Thank you! Looking forward for your next purchase!',
+
+        'transaction_labels' => [
+            'transaction_id' => 'Transaction ID: ',
+            'phone' => 'Phone: ',
+            'amount' => 'Amount: ',
+            'reason' => 'Refund Reason: ',
+        ],
+
+        'cs_name' => 'Customer Service Team',
     ],
 
     'table_customer_info' => [
