@@ -22,32 +22,32 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
     );
 
     public static $prefixLengthsPsr4 = array (
-        'R' =>
+        'R' => 
         array (
             'React\\Promise\\' => 14,
         ),
-        'P' =>
+        'P' => 
         array (
             'Psr\\Http\\Message\\' => 17,
         ),
-        'O' =>
+        'O' => 
         array (
             'Orbit\\Models\\' => 13,
             'Orbit\\Events\\' => 13,
         ),
-        'M' =>
+        'M' => 
         array (
             'Monolog\\' => 8,
         ),
-        'J' =>
+        'J' => 
         array (
             'JmesPath\\' => 9,
         ),
-        'I' =>
+        'I' => 
         array (
             'Intervention\\Image\\' => 19,
         ),
-        'G' =>
+        'G' => 
         array (
             'GuzzleHttp\\Stream\\' => 18,
             'GuzzleHttp\\Ring\\' => 16,
@@ -55,329 +55,329 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
             'GuzzleHttp\\Promise\\' => 19,
             'GuzzleHttp\\' => 11,
         ),
-        'E' =>
+        'E' => 
         array (
             'Elasticsearch\\' => 14,
         ),
-        'B' =>
+        'B' => 
         array (
             'Barryvdh\\Debugbar\\' => 18,
         ),
-        'A' =>
+        'A' => 
         array (
             'Aws\\' => 4,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'React\\Promise\\' =>
+        'React\\Promise\\' => 
         array (
             0 => __DIR__ . '/..' . '/react/promise/src',
         ),
-        'Psr\\Http\\Message\\' =>
+        'Psr\\Http\\Message\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/http-message/src',
         ),
-        'Orbit\\Models\\' =>
+        'Orbit\\Models\\' => 
         array (
             0 => __DIR__ . '/../..' . '/app/models',
         ),
-        'Orbit\\Events\\' =>
+        'Orbit\\Events\\' => 
         array (
             0 => __DIR__ . '/../..' . '/app/events',
         ),
-        'Monolog\\' =>
+        'Monolog\\' => 
         array (
             0 => __DIR__ . '/..' . '/monolog/monolog/src/Monolog',
         ),
-        'JmesPath\\' =>
+        'JmesPath\\' => 
         array (
             0 => __DIR__ . '/..' . '/mtdowling/jmespath.php/src',
         ),
-        'Intervention\\Image\\' =>
+        'Intervention\\Image\\' => 
         array (
             0 => __DIR__ . '/..' . '/intervention/image/src/Intervention/Image',
         ),
-        'GuzzleHttp\\Stream\\' =>
+        'GuzzleHttp\\Stream\\' => 
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/streams/src',
         ),
-        'GuzzleHttp\\Ring\\' =>
+        'GuzzleHttp\\Ring\\' => 
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/ringphp/src',
         ),
-        'GuzzleHttp\\Psr7\\' =>
+        'GuzzleHttp\\Psr7\\' => 
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/psr7/src',
         ),
-        'GuzzleHttp\\Promise\\' =>
+        'GuzzleHttp\\Promise\\' => 
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/promises/src',
         ),
-        'GuzzleHttp\\' =>
+        'GuzzleHttp\\' => 
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/guzzle/src',
         ),
-        'Elasticsearch\\' =>
+        'Elasticsearch\\' => 
         array (
             0 => __DIR__ . '/..' . '/elasticsearch/elasticsearch/src/Elasticsearch',
         ),
-        'Barryvdh\\Debugbar\\' =>
+        'Barryvdh\\Debugbar\\' => 
         array (
             0 => __DIR__ . '/..' . '/barryvdh/laravel-debugbar/src',
         ),
-        'Aws\\' =>
+        'Aws\\' => 
         array (
             0 => __DIR__ . '/..' . '/aws/aws-sdk-php/src',
         ),
     );
 
     public static $prefixesPsr0 = array (
-        'Z' =>
+        'Z' => 
         array (
-            'Zend\\Permissions\\Acl\\' =>
+            'Zend\\Permissions\\Acl\\' => 
             array (
                 0 => __DIR__ . '/..' . '/zendframework/zend-permissions-acl',
             ),
         ),
-        'W' =>
+        'W' => 
         array (
-            'Whoops' =>
+            'Whoops' => 
             array (
                 0 => __DIR__ . '/..' . '/filp/whoops/src',
             ),
         ),
-        'S' =>
+        'S' => 
         array (
-            'System' =>
+            'System' => 
             array (
                 0 => __DIR__ . '/..' . '/phpseclib/phpseclib/phpseclib',
             ),
-            'Symfony\\Component\\Translation\\' =>
+            'Symfony\\Component\\Translation\\' => 
             array (
                 0 => __DIR__ . '/..' . '/symfony/translation',
             ),
-            'Symfony\\Component\\Security\\Core\\' =>
+            'Symfony\\Component\\Security\\Core\\' => 
             array (
                 0 => __DIR__ . '/..' . '/symfony/security-core',
             ),
-            'Symfony\\Component\\Routing\\' =>
+            'Symfony\\Component\\Routing\\' => 
             array (
                 0 => __DIR__ . '/..' . '/symfony/routing',
             ),
-            'Symfony\\Component\\Process\\' =>
+            'Symfony\\Component\\Process\\' => 
             array (
                 0 => __DIR__ . '/..' . '/symfony/process',
             ),
-            'Symfony\\Component\\HttpKernel\\' =>
+            'Symfony\\Component\\HttpKernel\\' => 
             array (
                 0 => __DIR__ . '/..' . '/symfony/http-kernel',
             ),
-            'Symfony\\Component\\HttpFoundation\\' =>
+            'Symfony\\Component\\HttpFoundation\\' => 
             array (
                 0 => __DIR__ . '/..' . '/symfony/http-foundation',
             ),
-            'Symfony\\Component\\Finder\\' =>
+            'Symfony\\Component\\Finder\\' => 
             array (
                 0 => __DIR__ . '/..' . '/symfony/finder',
             ),
-            'Symfony\\Component\\Filesystem\\' =>
+            'Symfony\\Component\\Filesystem\\' => 
             array (
                 0 => __DIR__ . '/..' . '/symfony/filesystem',
             ),
-            'Symfony\\Component\\EventDispatcher\\' =>
+            'Symfony\\Component\\EventDispatcher\\' => 
             array (
                 0 => __DIR__ . '/..' . '/symfony/event-dispatcher',
             ),
-            'Symfony\\Component\\DomCrawler\\' =>
+            'Symfony\\Component\\DomCrawler\\' => 
             array (
                 0 => __DIR__ . '/..' . '/symfony/dom-crawler',
             ),
-            'Symfony\\Component\\Debug\\' =>
+            'Symfony\\Component\\Debug\\' => 
             array (
                 0 => __DIR__ . '/..' . '/symfony/debug',
             ),
-            'Symfony\\Component\\CssSelector\\' =>
+            'Symfony\\Component\\CssSelector\\' => 
             array (
                 0 => __DIR__ . '/..' . '/symfony/css-selector',
             ),
-            'Symfony\\Component\\Console\\' =>
+            'Symfony\\Component\\Console\\' => 
             array (
                 0 => __DIR__ . '/..' . '/symfony/console',
             ),
-            'Symfony\\Component\\BrowserKit\\' =>
+            'Symfony\\Component\\BrowserKit\\' => 
             array (
                 0 => __DIR__ . '/..' . '/symfony/browser-kit',
             ),
-            'Stack' =>
+            'Stack' => 
             array (
                 0 => __DIR__ . '/..' . '/stack/builder/src',
             ),
         ),
-        'P' =>
+        'P' => 
         array (
-            'Psr\\Log\\' =>
+            'Psr\\Log\\' => 
             array (
                 0 => __DIR__ . '/..' . '/psr/log',
             ),
-            'Predis' =>
+            'Predis' => 
             array (
                 0 => __DIR__ . '/..' . '/predis/predis/lib',
             ),
-            'Pheanstalk' =>
+            'Pheanstalk' => 
             array (
                 0 => __DIR__ . '/..' . '/pda/pheanstalk/classes',
             ),
-            'Patchwork' =>
+            'Patchwork' => 
             array (
                 0 => __DIR__ . '/..' . '/patchwork/utf8/class',
             ),
-            'PHPParser' =>
+            'PHPParser' => 
             array (
                 0 => __DIR__ . '/..' . '/nikic/php-parser/lib',
             ),
         ),
-        'O' =>
+        'O' => 
         array (
-            'Orbit\\Queue\\' =>
+            'Orbit\\Queue\\' => 
             array (
                 0 => __DIR__ . '/../..' . '/app/queue',
             ),
-            'Orbit\\Notifications\\' =>
+            'Orbit\\Notifications\\' => 
             array (
                 0 => __DIR__ . '/../..' . '/app/notifications',
             ),
-            'Orbit\\Mailchimp\\' =>
+            'Orbit\\Mailchimp\\' => 
             array (
                 0 => __DIR__ . '/..' . '/dominopos/orbit-mailchimp',
             ),
-            'Orbit\\Helper\\' =>
+            'Orbit\\Helper\\' => 
             array (
                 0 => __DIR__ . '/../..' . '/app/helpers',
             ),
-            'Orbit\\Database\\' =>
+            'Orbit\\Database\\' => 
             array (
                 0 => __DIR__ . '/..' . '/dominopos/orbit-database',
             ),
-            'Orbit\\Controller\\' =>
+            'Orbit\\Controller\\' => 
             array (
                 0 => __DIR__ . '/../..' . '/app/controllers/src',
             ),
-            'OrbitShop\\API\\' =>
+            'OrbitShop\\API\\' => 
             array (
                 0 => __DIR__ . '/..' . '/dominopos/orbit-shop-api',
             ),
-            'OAuth\\Unit' =>
+            'OAuth\\Unit' => 
             array (
                 0 => __DIR__ . '/..' . '/lusitanian/oauth/tests',
             ),
-            'OAuth' =>
+            'OAuth' => 
             array (
                 0 => __DIR__ . '/..' . '/lusitanian/oauth/src',
             ),
         ),
-        'N' =>
+        'N' => 
         array (
-            'Normalizer' =>
+            'Normalizer' => 
             array (
                 0 => __DIR__ . '/..' . '/patchwork/utf8/class',
             ),
-            'Net' =>
+            'Net' => 
             array (
                 0 => __DIR__ . '/..' . '/phpseclib/phpseclib/phpseclib',
             ),
         ),
-        'M' =>
+        'M' => 
         array (
-            'Math' =>
+            'Math' => 
             array (
                 0 => __DIR__ . '/..' . '/phpseclib/phpseclib/phpseclib',
             ),
         ),
-        'L' =>
+        'L' => 
         array (
-            'Laraeval\\Laraeval' =>
+            'Laraeval\\Laraeval' => 
             array (
                 0 => __DIR__ . '/..' . '/laraeval/laraeval/src',
             ),
         ),
-        'J' =>
+        'J' => 
         array (
-            'Jeremeamia\\SuperClosure' =>
+            'Jeremeamia\\SuperClosure' => 
             array (
                 0 => __DIR__ . '/..' . '/jeremeamia/SuperClosure/src',
             ),
         ),
-        'I' =>
+        'I' => 
         array (
-            'Illuminate' =>
+            'Illuminate' => 
             array (
                 0 => __DIR__ . '/..' . '/laravel/framework/src',
             ),
         ),
-        'F' =>
+        'F' => 
         array (
-            'File' =>
+            'File' => 
             array (
                 0 => __DIR__ . '/..' . '/phpseclib/phpseclib/phpseclib',
             ),
-            'Fideloper\\Proxy' =>
+            'Fideloper\\Proxy' => 
             array (
                 0 => __DIR__ . '/..' . '/fideloper/proxy/src',
             ),
-            'Facebook' =>
+            'Facebook' => 
             array (
                 0 => __DIR__ . '/..' . '/facebook/src',
             ),
         ),
-        'D' =>
+        'D' => 
         array (
-            'DominoPOS\\OrbitUploader\\' =>
+            'DominoPOS\\OrbitUploader\\' => 
             array (
                 0 => __DIR__ . '/..' . '/dominopos/orbit-uploader',
             ),
-            'DominoPOS\\OrbitSession\\' =>
+            'DominoPOS\\OrbitSession\\' => 
             array (
                 0 => __DIR__ . '/..' . '/dominopos/orbit-session',
             ),
-            'DominoPOS\\OrbitAPI\\' =>
+            'DominoPOS\\OrbitAPI\\' => 
             array (
                 0 => __DIR__ . '/..' . '/dominopos/orbit-api',
             ),
-            'DominoPOS\\OrbitACL\\' =>
+            'DominoPOS\\OrbitACL\\' => 
             array (
                 0 => __DIR__ . '/..' . '/dominopos/orbit-acl',
             ),
-            'DebugBar' =>
+            'DebugBar' => 
             array (
                 0 => __DIR__ . '/..' . '/maximebf/debugbar/src',
             ),
         ),
-        'C' =>
+        'C' => 
         array (
-            'Crypt' =>
+            'Crypt' => 
             array (
                 0 => __DIR__ . '/..' . '/phpseclib/phpseclib/phpseclib',
             ),
-            'ClassPreloader' =>
+            'ClassPreloader' => 
             array (
                 0 => __DIR__ . '/..' . '/classpreloader/classpreloader/src',
             ),
-            'Carbon' =>
+            'Carbon' => 
             array (
                 0 => __DIR__ . '/..' . '/nesbot/carbon/src',
             ),
         ),
-        'B' =>
+        'B' => 
         array (
-            'Boris' =>
+            'Boris' => 
             array (
                 0 => __DIR__ . '/..' . '/d11wtq/boris/lib',
             ),
         ),
-        'A' =>
+        'A' => 
         array (
-            'Artdarek\\OAuth' =>
+            'Artdarek\\OAuth' => 
             array (
                 0 => __DIR__ . '/..' . '/artdarek/oauth-4-laravel/src',
             ),
@@ -1232,7 +1232,7 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'Orbit\\Controller\\API\\v1\\Pub\\PromoCode\\Repositories\\PromoCodeReservation' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Pub/PromoCode/Repositories/PromoCodeReservation.php',
         'Orbit\\Controller\\API\\v1\\Pub\\PromoCode\\Repositories\\PromoCodeRule' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Pub/PromoCode/Repositories/PromoCodeRule.php',
         'Orbit\\Controller\\API\\v1\\Pub\\PromoCode\\Repositories\\ServiceProviders\\PromoCodeServiceProvider' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Pub/PromoCode/Repositories/ServiceProviders/PromoCodeServiceProvider.php',
-        'Orbit\\Controller\\API\\v1\\Pub\\PromoCode\\Validators\\PromoCodeValidator' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Pub/PromoCode/Repositories/Validators/PromoCodeValidator.php',
+        'Orbit\\Controller\\API\\v1\\Pub\\PromoCode\\Repositories\\Validators\\PromoCodeValidator' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Pub/PromoCode/Repositories/Validators/PromoCodeValidator.php',
         'Orbit\\Controller\\API\\v1\\Pub\\Promotion\\NumberOfPromotionLocationAPIController' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Pub/Promotion/NumberOfPromotionLocationAPIController.php',
         'Orbit\\Controller\\API\\v1\\Pub\\Promotion\\PromotionAlsoLikeListAPIController' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Pub/Promotion/PromotionAlsoLikeListAPIController.php',
         'Orbit\\Controller\\API\\v1\\Pub\\Promotion\\PromotionCityAPIController' => __DIR__ . '/../..' . '/app/controllers/src/Orbit/Controller/API/v1/Pub/Promotion/PromotionCityAPIController.php',
@@ -1404,87 +1404,6 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'Orbit\\Models\\Gamification\\UserVariable' => __DIR__ . '/../..' . '/app/models/Gamification/UserVariable.php',
         'Orbit\\Models\\Gamification\\Variable' => __DIR__ . '/../..' . '/app/models/Gamification/Variable.php',
         'Orbit\\OS\\Shutdown' => __DIR__ . '/../..' . '/app/helpers/Orbit/OS/Shutdown.php',
-        'Orbit\\Queue\\Activity\\AdditionalActivityQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Activity/AdditionalActivityQueue.php',
-        'Orbit\\Queue\\Activity\\ObjectPageViewActivityQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Activity/ObjectPageViewActivityQueue.php',
-        'Orbit\\Queue\\AdvertUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/AdvertUpdateQueue.php',
-        'Orbit\\Queue\\AdvertiseWithUsMail' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/AdvertiseWithUsMail.php',
-        'Orbit\\Queue\\CampaignMail' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/CampaignMail.php',
-        'Orbit\\Queue\\CampaignShareMail' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/CampaignShareMail.php',
-        'Orbit\\Queue\\CdnUpload\\CdnUploadDeleteQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/CdnUpload/CdnUploadDeleteQueue.php',
-        'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/CdnUpload/CdnUploadNewQueue.php',
-        'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/CdnUpload/CdnUploadUpdateQueue.php',
-        'Orbit\\Queue\\Coupon\\CheckReservedCoupon' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Coupon/CheckReservedCoupon.php',
-        'Orbit\\Queue\\Coupon\\GiftNCoupon\\GetCouponQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Coupon/GiftNCoupon/GetCouponQueue.php',
-        'Orbit\\Queue\\Coupon\\HotDeals\\GetCouponQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Coupon/HotDeals/GetCouponQueue.php',
-        'Orbit\\Queue\\Coupon\\Sepulsa\\GetCouponQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Coupon/Sepulsa/GetCouponQueue.php',
-        'Orbit\\Queue\\Coupon\\Sepulsa\\RetryTakeVoucherQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Coupon/Sepulsa/RetryTakeVoucherQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESActivityUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESActivityUpdateQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESAdvertCouponUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESAdvertCouponUpdateQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESAdvertMallUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESAdvertMallUpdateQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESAdvertNewsUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESAdvertNewsUpdateQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESAdvertPromotionUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESAdvertPromotionUpdateQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESAdvertStoreUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESAdvertStoreUpdateQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESArticleDeleteQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESArticleDeleteQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESArticleUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESArticleUpdateQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESCouponDeleteQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESCouponMallLevelSuggestionUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESCouponMallLevelSuggestionUpdateQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESCouponSuggestDeleteQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESCouponSuggestDeleteQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESCouponSuggestionDeleteQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESCouponSuggestionUpdateQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESCouponUpdateQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESMallCreateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESMallCreateQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESMallDeleteQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESMallDeleteQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESMallSuggestionDeleteQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESMallSuggestionDeleteQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESMallSuggestionUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESMallSuggestionUpdateQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESMallUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESMallUpdateQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESNewsDeleteQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESNewsDeleteQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESNewsMallLevelSuggestionDeleteQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESNewsMallLevelSuggestionDeleteQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESNewsMallLevelSuggestionUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESNewsMallLevelSuggestionUpdateQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESNewsSuggestionDeleteQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESNewsSuggestionDeleteQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESNewsSuggestionUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESNewsSuggestionUpdateQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESNewsUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESNewsUpdateQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESPromotionDeleteQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESPromotionDeleteQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESPromotionMallLevelSuggestionUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESPromotionMallLevelSuggestionUpdateQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESPromotionSuggestionDeleteQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESPromotionSuggestionDeleteQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESPromotionSuggestionUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESPromotionSuggestionUpdateQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESPromotionUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESPromotionUpdateQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESStoreDetailUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESStoreDetailUpdateQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESStoreMallLevelSuggestionUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESStoreMallLevelSuggestionUpdateQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESStoreSuggestionUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESStoreSuggestionUpdateQueue.php',
-        'Orbit\\Queue\\Elasticsearch\\ESStoreUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Elasticsearch/ESStoreUpdateQueue.php',
-        'Orbit\\Queue\\FeedbackMail' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/FeedbackMail.php',
-        'Orbit\\Queue\\FileExport\\BaseMerchantExportQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/FileExport/BaseMerchantExportQueue.php',
-        'Orbit\\Queue\\FileExport\\RewardExportQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/FileExport/RewardExportQueue.php',
-        'Orbit\\Queue\\GTMRequirementFieldUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/GTMRequirementFieldUpdateQueue.php',
-        'Orbit\\Queue\\IssuedCouponMailQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/IssuedCouponMailQueue.php',
-        'Orbit\\Queue\\LandingPageShareMail' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/LandingPageShareMail.php',
-        'Orbit\\Queue\\Mailchimp\\MailchimpSubscriberAddQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Mailchimp/MailchimpSubscriberAddQueue.php',
-        'Orbit\\Queue\\NewPasswordMail' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/NewPasswordMail.php',
-        'Orbit\\Queue\\Notification\\CouponMallNotificationQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Notification/CouponMallNotificationQueue.php',
-        'Orbit\\Queue\\Notification\\CouponStoreNotificationQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Notification/CouponStoreNotificationQueue.php',
-        'Orbit\\Queue\\Notification\\NewsMallNotificationQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Notification/NewsMallNotificationQueue.php',
-        'Orbit\\Queue\\Notification\\NewsStoreNotificationQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Notification/NewsStoreNotificationQueue.php',
-        'Orbit\\Queue\\Notification\\PromotionalEventMallNotificationQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Notification/PromotionalEventMallNotificationQueue.php',
-        'Orbit\\Queue\\Notification\\PromotionalEventStoreNotificationQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Notification/PromotionalEventStoreNotificationQueue.php',
-        'Orbit\\Queue\\Notification\\StoreSynchronizationMallNotificationQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Notification/StoreSynchronizationMallNotificationQueue.php',
-        'Orbit\\Queue\\Notification\\UserMallNotificationQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Notification/UserMallNotificationQueue.php',
-        'Orbit\\Queue\\Notification\\UserStoreNotificationQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Notification/UserStoreNotificationQueue.php',
-        'Orbit\\Queue\\Notifier\\LuckyDrawNumberNotifier' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Notifier/LuckyDrawNumberNotifier.php',
-        'Orbit\\Queue\\Notifier\\UserLoginNotifier' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Notifier/UserLoginNotifier.php',
-        'Orbit\\Queue\\Notifier\\UserUpdateNotifier' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Notifier/UserUpdateNotifier.php',
-        'Orbit\\Queue\\Payment\\CleanUpRefund' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Payment/CleanUpRefund.php',
-        'Orbit\\Queue\\Payment\\Midtrans\\CheckTransactionStatusQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Payment/Midtrans/CheckTransactionStatusQueue.php',
-        'Orbit\\Queue\\PromotionalEventMail' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/PromotionalEventMail.php',
-        'Orbit\\Queue\\Pulsa\\GetPulsaQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Pulsa/GetPulsaQueue.php',
-        'Orbit\\Queue\\RatingAndReviewMailQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/RatingAndReviewMailQueue.php',
-        'Orbit\\Queue\\RegistrationMail' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/RegistrationMail.php',
-        'Orbit\\Queue\\ResetPasswordMail' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/ResetPasswordMail.php',
-        'Orbit\\Queue\\ReviewImageApprovalMailQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/ReviewImageApprovalMailQueue.php',
-        'Orbit\\Queue\\ReviewImageNeedApprovalMailQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/ReviewImageNeedApprovalMailQueue.php',
-        'Orbit\\Queue\\SpendingCalculation' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/SpendingCalculation.php',
-        'Orbit\\Queue\\StoreSynchronization' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/StoreSynchronization.php',
-        'Orbit\\Queue\\SyncStore\\PostSyncStoreMail' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/SyncStore/PostSyncStoreMail.php',
-        'Orbit\\Queue\\SyncStore\\PreSyncStoreMail' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/SyncStore/PreSyncStoreMail.php',
         'Orbit\\RoutingServiceProvider' => __DIR__ . '/../..' . '/app/helpers/Orbit/RoutingServiceProvider.php',
         'Orbit\\Setting' => __DIR__ . '/../..' . '/app/helpers/Orbit/Setting.php',
         'Orbit\\Text' => __DIR__ . '/../..' . '/app/helpers/Orbit/Text.php',
@@ -1529,6 +1448,7 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'ProductTag' => __DIR__ . '/../..' . '/app/models/ProductTag.php',
         'ProductTagObject' => __DIR__ . '/../..' . '/app/models/ProductTagObject.php',
         'ProductVariant' => __DIR__ . '/../..' . '/app/models/ProductVariant.php',
+        'PromoCodeAPIController' => __DIR__ . '/../..' . '/app/controllers/api/v1/PromoCodeAPIController.php',
         'Promotion' => __DIR__ . '/../..' . '/app/models/Promotion.php',
         'PromotionAPIController' => __DIR__ . '/../..' . '/app/controllers/api/v1/PromotionAPIController.php',
         'PromotionCouponScope' => __DIR__ . '/../..' . '/app/models/PromotionCouponScope.php',
