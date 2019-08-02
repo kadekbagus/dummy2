@@ -39,7 +39,7 @@ class PendingPaymentNotification extends Base
     public function getEmailTemplates()
     {
         return [
-            'html' => 'emails.pending-payment.pulsa',
+            'html' => 'emails.pulsa.pending-payment',
         ];
     }
 

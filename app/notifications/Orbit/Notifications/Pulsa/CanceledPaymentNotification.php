@@ -30,7 +30,7 @@ class CanceledPaymentNotification extends Base
     public function getEmailTemplates()
     {
         return [
-            'html' => 'emails.canceled-payment-pulsa',
+            'html' => 'emails.pulsa.canceled-payment',
         ];
     }
 

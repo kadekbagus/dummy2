@@ -302,6 +302,7 @@ class PromoCodeAPIController extends ControllerAPI
                 $updatedPromoCode->status = $status;
             });
 
+            $updatedPromoCode->touch();
             $updatedPromoCode->save();
 
             Event::fire('orbit.promocode.postupdatepromocode.after.save', array($this, $updatedPromoCode));
@@ -394,7 +395,7 @@ class PromoCodeAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:discount_title,discount_code,value_in_percent,start_date,end_date,type,status,created_at',
+                    'sort_by' => 'in:discount_title,discount_code,value_in_percent,start_date,end_date,type,status,created_at,updated_at',
                 ),
                 array(
                     'in' => 'invalid sortby',
@@ -432,7 +433,7 @@ class PromoCodeAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
 
             // Builder object
-            $promoCode = Discount::select('discount_id', 'discount_title', 'start_date', 'end_date', 'type', 'status', 'created_at');
+            $promoCode = Discount::select('discount_id', 'discount_title', 'start_date', 'end_date', 'type', 'status', 'created_at', 'updated_at');
 
             // Filter news by Ids
             OrbitInput::get('discount_id', function($discount_id) use ($promoCode)
@@ -478,12 +479,12 @@ class PromoCodeAPIController extends ControllerAPI
 
             // Filter news by sticky order
             OrbitInput::get('status', function ($status) use ($promoCode) {
-                $promoCode->whereIn('discounts.status', $status);
+                $promoCode->where('discounts.status', $status);
             });
 
             // Filter news by link object type
             OrbitInput::get('type', function ($type) use ($promoCode) {
-                $promoCode->whereIn('discounts.type', $type);
+                $promoCode->where('discounts.type', $type);
             });
 
             // Clone the query builder which still does not include the take,
@@ -518,7 +519,7 @@ class PromoCodeAPIController extends ControllerAPI
             }
 
             // Default sort by
-            $sortBy = 'status';
+            $sortBy = 'discounts.updated_at';
             // Default sort mode
             $sortMode = 'asc';
 
@@ -533,7 +534,8 @@ class PromoCodeAPIController extends ControllerAPI
                     'end_date'        => 'discounts.end_date',
                     'type'            => 'discounts.type',
                     'status'          => 'discounts.status',
-                    'created_at'      => 'discounts.created_at'
+                    'created_at'      => 'discounts.created_at',
+                    'updated_at'      => 'discounts.updated_at'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];

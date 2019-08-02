@@ -54,7 +54,7 @@ class BeforeExpiredPaymentNotification extends CustomerNotification implements E
     public function getEmailTemplates()
     {
         return [
-            'html' => 'emails.before-payment-expired',
+            'html' => 'emails.payment.before-payment-expired',
         ];
     }
 
