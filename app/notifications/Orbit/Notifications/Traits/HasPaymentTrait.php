@@ -29,16 +29,23 @@ trait HasPaymentTrait
             'date'      => $this->payment->getTransactionDate(),
             'customer'  => $this->getCustomerData(),
             'items'     => [],
+            'discounts' => [],
             'total'     => $this->payment->getGrandTotal(),
         ];
 
         foreach($this->payment->details as $item) {
-            $transaction['items'][] = [
+            $detailItem = [
                 'name'      => $item->object_name,
                 'quantity'  => $item->quantity,
                 'price'     => $item->getPrice(),
                 'total'     => $item->getTotal(),
             ];
+
+            if ($item->price < 0 || $item->object_type === 'discount') {
+                $transaction['discounts'][] = $detailItem;
+            } else {
+                $transaction['items'][] = $detailItem;
+            }
         }
 
         return $transaction;

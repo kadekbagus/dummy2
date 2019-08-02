@@ -167,7 +167,7 @@
           <tr>
             <td colspan="2" class="invoice-body" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-pending-payment.body.greeting_pulsa', ['customerName' => $customerName], '', 'id') }}
+                {{ trans('email-pending-payment.body.greeting', ['customerName' => $customerName], '', 'id') }}
               </p>
               <br>
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
@@ -179,15 +179,31 @@
                 <br>
                 <strong>{{{ trans('email-pending-payment.body.transaction_labels.email', [], '', 'id') }}}</strong> {{ $customerEmail }}
                 <br>
+                <strong>{{{ trans('email-pending-payment.body.transaction_labels.phone', [], '', 'id') }}}</strong> {{ $customerPhone }}
                 <br>
-                <strong>{{{ trans('email-pending-payment.body.transaction_labels.pulsa_phone_number', [], '', 'id') }}}</strong> {{ $pulsaPhoneNumber }}
                 <br>
-                <strong>{{{ trans('email-pending-payment.body.transaction_labels.pulsa_name', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['name'] }}
+                <strong>{{{ trans('email-pending-payment.body.transaction_labels.coupon_name', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['name'] }}
                 <br>
-                <strong>{{{ trans('email-pending-payment.body.transaction_labels.pulsa_price', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['price'] }}
-                <br>
-                <strong>{{{ trans('email-pending-payment.body.transaction_labels.coupon_quantity', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['quantity'] }}
-                <br>
+                <div style="width: 100%;">
+                  <div style="width: 30%;display: inline-block;">
+                    <strong>{{{ trans('email-pending-payment.body.transaction_labels.coupon_price', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['price'] }}
+                  </div>
+                  <div style="width: 60%;display: inline-block;text-align: left;">
+                    X {{ $transaction['items'][0]['quantity'] }}
+                  </div>
+                </div>
+                @if (count($transaction['discounts']) > 0)
+                  @foreach($transaction['discounts'] as $discount)
+                    <div style="width: 100%;">
+                      <div style="width: 30%;display: inline-block;">
+                        <strong>{{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
+                      </div>
+                      <div style="width: 60%;display: inline-block;text-align: left;">
+                        X {{ $discount['quantity'] }}
+                      </div>
+                    </div>
+                  @endforeach
+                @endif
                 <strong>{{{ trans('email-pending-payment.body.transaction_labels.total_amount', [], '', 'id') }}}</strong> {{ $transaction['total'] }}
                 <br>
               </p>
@@ -211,7 +227,7 @@
           <tr>
             <td colspan="2" class="invoice-body" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:80px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-pending-payment.body.greeting_pulsa', ['customerName' => $customerName]) }}
+                {{ trans('email-pending-payment.body.greeting', ['customerName' => $customerName]) }}
               </p>
               <br>
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
@@ -223,15 +239,31 @@
                 <br>
                 <strong>{{{ trans('email-pending-payment.body.transaction_labels.email') }}}</strong> {{ $customerEmail }}
                 <br>
+                <strong>{{{ trans('email-pending-payment.body.transaction_labels.phone') }}}</strong> {{ $customerPhone }}
                 <br>
-                <strong>{{{ trans('email-pending-payment.body.transaction_labels.pulsa_phone_number') }}}</strong> {{ $pulsaPhoneNumber }}
                 <br>
-                <strong>{{{ trans('email-pending-payment.body.transaction_labels.pulsa_name') }}}</strong> {{ $transaction['items'][0]['name'] }}
+                <strong>{{{ trans('email-pending-payment.body.transaction_labels.coupon_name') }}}</strong> {{ $transaction['items'][0]['name'] }}
                 <br>
-                <strong>{{{ trans('email-pending-payment.body.transaction_labels.pulsa_price') }}}</strong> {{ $transaction['items'][0]['price'] }}
-                <br>
-                <strong>{{{ trans('email-pending-payment.body.transaction_labels.coupon_quantity') }}}</strong> {{ $transaction['items'][0]['quantity'] }}
-                <br>
+                <div style="width: 100%;">
+                  <div style="width: 30%;display: inline-block;">
+                    <strong>{{{ trans('email-pending-payment.body.transaction_labels.coupon_price') }}}</strong> {{ $transaction['items'][0]['price'] }}
+                  </div>
+                  <div style="width: 60%;display: inline-block;text-align: left;">
+                    X {{ $transaction['items'][0]['quantity'] }}
+                  </div>
+                </div>
+                @if (count($transaction['discounts']) > 0)
+                  @foreach($transaction['discounts'] as $discount)
+                    <div style="width: 100%;">
+                      <div style="width: 30%;display: inline-block;">
+                        <strong>{{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
+                      </div>
+                      <div style="width: 60%;display: inline-block;text-align: left;">
+                        X {{ $discount['quantity'] }}
+                      </div>
+                    </div>
+                  @endforeach
+                @endif
                 <strong>{{{ trans('email-pending-payment.body.transaction_labels.total_amount') }}}</strong> {{ $transaction['total'] }}
                 <br>
               </p>
