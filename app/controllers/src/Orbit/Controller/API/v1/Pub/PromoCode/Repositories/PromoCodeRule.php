@@ -71,6 +71,7 @@ class PromoCodeRule implements RuleInterface
     {
         $userPromos = $user->discountCodes()
             ->where('discount_id', $promo->discount_id)
+            ->issued()
             ->get();
 
         $totalUsage = count($userPromos);
