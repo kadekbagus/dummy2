@@ -147,7 +147,10 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
 
         // Check if pulsa is exists.
         Validator::extend('orbit.exists.pulsa', function ($attribute, $value, $parameters) {
-            $pulsa = Pulsa::where('pulsa_item_id', $value)->where('status', 'active')->first();
+            $pulsa = Pulsa::where('pulsa_item_id', $value)
+                ->where('displayed', 'yes')
+                ->where('status', 'active')
+                ->first();
 
             if (empty($pulsa)) {
                 return false;
