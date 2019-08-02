@@ -134,6 +134,9 @@ class PromoCodeRule implements RuleInterface
             'user_id' => $user->user_id,
             'object_type' => $promoData->object_type,
             'object_id' => $promoData->object_id,
+            'value_in_percent' => $promo->value_in_percent,
+            'start_date' => $promo->start_date,
+            'end_date' => $promo->end_date,
         ];
     }
 
