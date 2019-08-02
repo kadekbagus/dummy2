@@ -113,7 +113,9 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
                                     {$prefix}issued_coupons.expired_date
                             "))
                             ->with(['discount' => function($discountQuery) {
-                                $discountQuery->select('payment_transaction_id', 'object_name as name', 'price as amount', 'quantity');
+                                $discountQuery->select('payment_transaction_id', 'object_id')->with(['discount' => function($discountDetailQuery) {
+                                    $discountDetailQuery->select('discount_id', 'value_in_percent as percent_discount');
+                                }]);
                             }])
                             ->leftJoin('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                             ->leftJoin('payment_midtrans', 'payment_midtrans.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
