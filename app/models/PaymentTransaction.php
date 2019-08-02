@@ -128,6 +128,11 @@ class PaymentTransaction extends Eloquent
         return $this->hasMany('PaymentTransactionDetail');
     }
 
+    public function discount()
+    {
+        return $this->hasOne('PaymentTransactionDetail')->where('object_type', 'discount');
+    }
+
     public function midtrans()
     {
         return $this->hasOne('PaymentMidtrans');
