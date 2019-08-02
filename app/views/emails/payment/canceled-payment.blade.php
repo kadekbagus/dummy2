@@ -282,8 +282,6 @@
                   @endforeach
                 @endif
                 <br>
-                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.coupon_quantity') }}}</strong> {{ $transaction['items'][0]['quantity'] }}
-                <br>
                 <strong>{{{ trans('email-canceled-payment.body.transaction_labels.total_amount') }}}</strong> {{ $transaction['total'] }}
                 <br>
                 <strong>{{{ trans('email-canceled-payment.body.transaction_labels.status') }}} <span style="color:#f43d3c;">{{ trans('email-canceled-payment.body.transaction_labels.status_canceled') }}</span></strong>
