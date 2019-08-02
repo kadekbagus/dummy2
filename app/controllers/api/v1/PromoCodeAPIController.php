@@ -521,7 +521,7 @@ class PromoCodeAPIController extends ControllerAPI
             // Default sort by
             $sortBy = 'discounts.updated_at';
             // Default sort mode
-            $sortMode = 'desc';
+            $sortMode = 'asc';
 
             OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
             {
