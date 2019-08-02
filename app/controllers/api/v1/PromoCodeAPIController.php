@@ -478,12 +478,12 @@ class PromoCodeAPIController extends ControllerAPI
 
             // Filter news by sticky order
             OrbitInput::get('status', function ($status) use ($promoCode) {
-                $promoCode->whereIn('discounts.status', $status);
+                $promoCode->where('discounts.status', $status);
             });
 
             // Filter news by link object type
             OrbitInput::get('type', function ($type) use ($promoCode) {
-                $promoCode->whereIn('discounts.type', $type);
+                $promoCode->where('discounts.type', $type);
             });
 
             // Clone the query builder which still does not include the take,
