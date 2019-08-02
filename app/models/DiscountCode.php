@@ -15,6 +15,11 @@ class DiscountCode extends Eloquent
         return $query->where('status', 'reserved');
     }
 
+    public function scopeIssued($query)
+    {
+        return $query->where('status', 'issued');
+    }
+
     public function users()
     {
         return $this->belongsTo(User::class);
