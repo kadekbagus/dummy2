@@ -25,4 +25,12 @@ interface ReservationInterface
      */
     public function markAsAvailable($user, $promoCode);
 
+    /**
+     * mark promo code as issued
+     *
+     * @param User $user, current logged in user
+     * @param string $promoCode, promo code
+     */
+    public function markAsIssued($user, $promoCode);
+
 }

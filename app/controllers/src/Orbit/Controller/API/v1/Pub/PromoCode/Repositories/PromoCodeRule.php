@@ -91,7 +91,7 @@ class PromoCodeRule implements RuleInterface
         $availQuotaUsage = $quotaUsagePerUser < $quotaUsagePerTransaction ? $quotaUsagePerUser : $quotaUsagePerTransaction;
         return (object) [
             'eligible' => ($availQuotaUsage > 0),
-            'availUsage' => $availQuotaUsage
+            'availQuotaUsage' => $availQuotaUsage
         ];
     }
 
@@ -130,7 +130,8 @@ class PromoCodeRule implements RuleInterface
             'promo_id' => $promo->discount_id,
             'promo_code' => $promo->discount_code,
             'eligible' => $eligible,
-            'avail_usage_count' => $qtyEligible->availUsage,
+            'avail_quota_count' => $qtyEligible->availQuotaUsage,
+            'original_quantity' => $promoData->quantity,
             'user_id' => $user->user_id,
             'object_type' => $promoData->object_type,
             'object_id' => $promoData->object_id,
