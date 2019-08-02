@@ -246,7 +246,7 @@
                 <br>
                 <div style="width: 100%;">
                   <div style="width: 30%;display: inline-block;">
-                    <strong>{{{ trans('email-pending-payment.body.transaction_labels.coupon_price', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['price'] }}
+                    <strong>{{{ trans('email-pending-payment.body.transaction_labels.coupon_price') }}}</strong> {{ $transaction['items'][0]['price'] }}
                   </div>
                   <div style="width: 60%;display: inline-block;text-align: left;">
                     X {{ $transaction['items'][0]['quantity'] }}

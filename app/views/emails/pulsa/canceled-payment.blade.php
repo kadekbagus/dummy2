@@ -184,9 +184,26 @@
                 <br>
                 <strong>{{{ trans('email-canceled-payment.body.transaction_labels.pulsa_name', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['name'] }}
                 <br>
-                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.pulsa_price', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['price'] }}
-                <br>
-                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.coupon_quantity', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['quantity'] }}
+                <div style="width: 100%;">
+                  <div style="width: 30%;display: inline-block;">
+                    <strong>{{{ trans('email-canceled-payment.body.transaction_labels.pulsa_price', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['price'] }}
+                  </div>
+                  <div style="width: 60%;display: inline-block;text-align: left;">
+                    X {{ $transaction['items'][0]['quantity'] }}
+                  </div>
+                </div>
+                @if (count($transaction['discounts']) > 0)
+                  @foreach($transaction['discounts'] as $discount)
+                    <div style="width: 100%;">
+                      <div style="width: 30%;display: inline-block;">
+                        <strong>{{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
+                      </div>
+                      <div style="width: 60%;display: inline-block;text-align: left;">
+                        X {{ $discount['quantity'] }}
+                      </div>
+                    </div>
+                  @endforeach
+                @endif
                 <br>
                 <strong>{{{ trans('email-canceled-payment.body.transaction_labels.total_amount', [], '', 'id') }}}</strong> {{ $transaction['total'] }}
                 <br>
@@ -244,9 +261,26 @@
                 <br>
                 <strong>{{{ trans('email-canceled-payment.body.transaction_labels.pulsa_name') }}}</strong> {{ $transaction['items'][0]['name'] }}
                 <br>
-                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.pulsa_price') }}}</strong> {{ $transaction['items'][0]['price'] }}
-                <br>
-                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.coupon_quantity') }}}</strong> {{ $transaction['items'][0]['quantity'] }}
+                <div style="width: 100%;">
+                  <div style="width: 30%;display: inline-block;">
+                    <strong>{{{ trans('email-canceled-payment.body.transaction_labels.pulsa_price') }}}</strong> {{ $transaction['items'][0]['price'] }}
+                  </div>
+                  <div style="width: 60%;display: inline-block;text-align: left;">
+                    X {{ $transaction['items'][0]['quantity'] }}
+                  </div>
+                </div>
+                @if (count($transaction['discounts']) > 0)
+                  @foreach($transaction['discounts'] as $discount)
+                    <div style="width: 100%;">
+                      <div style="width: 30%;display: inline-block;">
+                        <strong>{{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
+                      </div>
+                      <div style="width: 60%;display: inline-block;text-align: left;">
+                        X {{ $discount['quantity'] }}
+                      </div>
+                    </div>
+                  @endforeach
+                @endif
                 <br>
                 <strong>{{{ trans('email-canceled-payment.body.transaction_labels.total_amount') }}}</strong> {{ $transaction['total'] }}
                 <br>
