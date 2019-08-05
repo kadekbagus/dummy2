@@ -10,30 +10,8 @@ use ObjectDiscount;
  *
  * @author Zamroni <zamroni@dominopos.com>
  */
-class CouponPromoCodeRule implements RuleInterface
+class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
 {
-    /**---------------------------------------------
-     * Check if promo code is applicable to object
-     *----------------------------------------------
-     * For example if DISC10K is linked to Coupon A
-     * and Coupon B, but user is trying to use promo
-     * DISC10K when purchase other than Coupon A or B,
-     * then it should return false
-     *----------------------------------------------
-     * @param string $discountId, id discount
-     * @param string $objectId, id linked object (i.e coupon)
-     * @param string $objectType, linked object type (i.e coupon)
-     * @return true if user can use promo code to object
-     * ---------------------------------------------
-     */
-    private function isEligibleForObjectType($discountId, $objectId, $objectType)
-    {
-        $obj = ObjectDiscount::where('discount_id', $discountId)
-            ->where('object_id', $objectId)
-            ->where('object_type', $objectType)
-            ->first();
-        return ! (empty($obj));
-    }
 
     /**---------------------------------------------
      * Check if asked quantity by user is eligible
@@ -128,10 +106,7 @@ class CouponPromoCodeRule implements RuleInterface
      */
     public function getEligibleStatus($user, $promoData)
     {
-        $promo = Discount::where('discount_code', $promoData->promo_code)
-            ->active()
-            ->betweenExpiryDate()
-            ->first();
+        $promo = $this->getPromoCodeDetail($promoData);
 
         $rejectReason = '';
 
