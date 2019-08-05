@@ -40,10 +40,10 @@ class PromoCodeValidator implements ValidatorInterface
 
     public function validate()
     {
-        $promoCode = OrbitInput::get('promo_code', null);
-        $objectId = OrbitInput::get('object_id', null);
-        $objectType = OrbitInput::get('object_type', null);
-        $quantity = OrbitInput::get('qty', null);
+        $promoCode = OrbitInput::post('promo_code', null);
+        $objectId = OrbitInput::post('object_id', null);
+        $objectType = OrbitInput::post('object_type', null);
+        $quantity = OrbitInput::post('qty', null);
 
         $this->registerCustomValidationRule();
 
