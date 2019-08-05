@@ -6,7 +6,7 @@
  *
  * @author Zamroni <zamroni@dominopos.com>
  */
-interface RepositoryInterface extends AuthorizerInterface
+interface ReservationRepositoryInterface extends AuthorizerInterface
 {
     /**
      * check availability of promo code and reserved it
@@ -20,6 +20,6 @@ interface RepositoryInterface extends AuthorizerInterface
      * @throws InvalidArgsException
      * @throws QueryException
      */
-    public function checkAvailabilityAndReserveIfAvail();
+    public function unreserved();
 
 }

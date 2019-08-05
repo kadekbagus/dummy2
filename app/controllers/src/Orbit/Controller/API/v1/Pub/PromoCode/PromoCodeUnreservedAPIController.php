@@ -5,14 +5,15 @@ use \Exception;
 use \QueryException;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
-use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\RepositoryInterface;
+use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationRepositoryInterface;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ResponseRendererInterface;
 use App;
 
-class PromoCodeCheckAPIController extends PubControllerAPI
+class PromoCodeUnreservedAPIController extends PubControllerAPI
 {
+
     /**
-     * POST - check availability of promo code
+     * POST - make promo code available after being reserved
      *
      * @author Zamroni <zamroni@dominopos.com>
      *
@@ -24,13 +25,12 @@ class PromoCodeCheckAPIController extends PubControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function postCheckPromoCode()
+    public function postUnreservedPromoCode()
     {
         $resp = App::make(ResponseRendererInterface::class);
-
         try {
-            $promoCode = App::make(RepositoryInterface::class)->authorizer($this);
-            $eligibleStatus = $promoCode->checkAvailabilityAndReserveIfAvail();
+            $promoCode = App::make(ReservationRepositoryInterface::class)->authorizer($this);
+            $eligibleStatus = $promoCode->unreserved();
             return $resp->renderSuccess($this, $eligibleStatus);
 
         } catch (ACLForbiddenException $e) {

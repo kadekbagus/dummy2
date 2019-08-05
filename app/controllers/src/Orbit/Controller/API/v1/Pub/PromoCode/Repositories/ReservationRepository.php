@@ -1,12 +1,12 @@
 <?php namespace Orbit\Controller\API\v1\Pub\PromoCode\Repositories;
 
-use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\RepositoryInterface;
+use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationRepositoryInterface;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\RuleInterface;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ValidatorInterface;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 
-class PromoCodeRepository implements RepositoryInterface
+class ReservationRepository implements ReservationRepositoryInterface
 {
     /**
      * instance class responsible to enforce
@@ -50,8 +50,7 @@ class PromoCodeRepository implements RepositoryInterface
     }
 
     /**
-     * check availability of promo code and reserved it
-     * current logged in user is eligible
+     * unreserved promo code
      *
      * @param string promocode
      * @param string object_id
@@ -61,7 +60,7 @@ class PromoCodeRepository implements RepositoryInterface
      * @throws InvalidArgsException
      * @throws QueryException
      */
-    public function checkAvailabilityAndReserveIfAvail()
+    public function unreserved()
     {
         //check if user is signed in or else throws ACLForbiddenException
         $user = $this->authorizer->getUser();
@@ -76,11 +75,7 @@ class PromoCodeRepository implements RepositoryInterface
             'quantity' => OrbitInput::get('qty'),
         ];
 
-        $eligibleStatus = $this->promoCodeRule->getEligibleStatus($user, $promoData);
-        if ($eligibleStatus->eligible) {
-            $this->promoCodeReservation->markAsReserved($user, $promoData);
-        }
-        return $eligibleStatus;
+        return $this->promoCodeReservation->markAsAvailable($user, $promoData);
     }
 
 }
