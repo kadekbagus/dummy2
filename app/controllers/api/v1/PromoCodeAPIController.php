@@ -11,6 +11,8 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
+use DiscountCode;
+use Orbit\Database\ObjectID;
 
 class PromoCodeAPIController extends ControllerAPI
 {
@@ -137,6 +139,22 @@ class PromoCodeAPIController extends ControllerAPI
             $newPromoCode->type = $type;
             $newPromoCode->status = $status;
             $newPromoCode->save();
+
+            // insert to discount code
+            if ($max_redemption != 0) {
+                for ($i=1; $i<=$max_redemption; $i++) {
+                    $data[] = [
+                                'discount_code_id' => ObjectID::make(),
+                                'discount_id' => $newPromoCode->discount_id,
+                                'discount_code' => $discount_code,
+                                'status'=> 'available',
+                                'created_at'=> date("Y-m-d H:i:s"),
+                                'updated_at'=> date("Y-m-d H:i:s")
+                              ];
+                }
+
+                DiscountCode::insert($data);
+            }
 
             Event::fire('orbit.promocode.postnewpromocode.after.save', array($this, $newPromoCode));
 
@@ -549,6 +567,7 @@ class PromoCodeAPIController extends ControllerAPI
             });
 
             $promoCode->orderBy($sortBy, $sortMode);
+            $promoCode->orderBy('updated_at', 'desc');
 
             $totalNews = RecordCounter::create($_promoCode)->count();
             $listOfNews = $promoCode->get();
