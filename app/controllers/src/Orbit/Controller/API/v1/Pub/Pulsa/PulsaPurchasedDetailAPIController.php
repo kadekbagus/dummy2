@@ -112,7 +112,11 @@ class PulsaPurchasedDetailAPIController extends PubControllerAPI
                             DB::raw($telcoLogo),
                             'payment_transactions.extra_data as phone_number'
                         )
-                        ->with(['discount'])
+                        ->with(['discount' => function($discountQuery) {
+                            $discountQuery->select('payment_transaction_id', 'object_id')->with(['discount' => function($discountDetailQuery) {
+                                $discountDetailQuery->select('discount_id', 'value_in_percent as percent_discount');
+                            }]);
+                        }])
                         ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                         ->leftJoin('payment_midtrans', 'payment_midtrans.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                         ->join('pulsa', 'pulsa.pulsa_item_id', '=', 'payment_transaction_details.object_id')
