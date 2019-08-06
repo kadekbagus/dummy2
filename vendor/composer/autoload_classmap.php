@@ -99,6 +99,7 @@ return array(
     'AlterTableCouponTranslationChangeDescriptionType' => $baseDir . '/app/database/migrations/2017_04_12_085327_alter_table_coupon_translation_change_description_type.php',
     'AlterTableCouponTranslationsAddFieldShortDescription' => $baseDir . '/app/database/migrations/2017_04_11_031420_alter_table_coupon_translations_add_field_short_description.php',
     'AlterTableCouponsAddTransactionFixed' => $baseDir . '/app/database/migrations/2017_09_26_082224_alter_table_coupons_add_transaction_fixed.php',
+    'AlterTableDiscountCodesAddFieldPaymentTransactionId' => $baseDir . '/app/database/migrations/2019_08_06_062927_alter_table_discount_codes_add_field_payment_transaction_id.php',
     'AlterTableDiscountCodesAddIndex' => $baseDir . '/app/database/migrations/2019_08_01_000002_alter_table_discount_codes_add_index.php',
     'AlterTableDiscountCodesChangeColumnDiscountCodeLength' => $baseDir . '/app/database/migrations/2019_08_05_081319_alter_table_discount_codes_change_column_discount_code_length.php',
     'AlterTableDiscountCodesSetDefaultValueForColumnStatusAndSetColumnUserIdAsNullable' => $baseDir . '/app/database/migrations/2019_07_31_025203_alter_table_discount_codes_set_default_value_for_column_status_and_set_column_user_id_as_nullable.php',
