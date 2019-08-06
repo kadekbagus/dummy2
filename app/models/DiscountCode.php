@@ -3,7 +3,7 @@
 class DiscountCode extends Eloquent
 {
     protected $table = 'discount_codes';
-    protected $primaryKey = 'object_discount_id';
+    protected $primaryKey = 'discount_code_id';
 
     public function scopeAvailable($query)
     {
