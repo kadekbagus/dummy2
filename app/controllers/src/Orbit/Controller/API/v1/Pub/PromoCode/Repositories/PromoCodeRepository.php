@@ -70,10 +70,10 @@ class PromoCodeRepository implements RepositoryInterface
         $this->validator->validate();
 
         $promoData = (object) [
-            'promo_code' => OrbitInput::get('promo_code'),
-            'object_id' => OrbitInput::get('object_id'),
-            'object_type' => OrbitInput::get('object_type'),
-            'quantity' => OrbitInput::get('qty'),
+            'promo_code' => OrbitInput::post('promo_code'),
+            'object_id' => OrbitInput::post('object_id'),
+            'object_type' => OrbitInput::post('object_type'),
+            'quantity' => OrbitInput::post('qty'),
         ];
 
         $eligibleStatus = $this->promoCodeRule->getEligibleStatus($user, $promoData);

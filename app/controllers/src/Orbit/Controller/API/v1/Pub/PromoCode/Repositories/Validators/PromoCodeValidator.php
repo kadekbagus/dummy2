@@ -7,6 +7,7 @@ use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ValidatorInterf
 use Discount;
 use DiscountCode;
 use Coupon;
+use Pulsa;
 
 class PromoCodeValidator implements ValidatorInterface
 {
@@ -36,6 +37,16 @@ class PromoCodeValidator implements ValidatorInterface
             }
             return $valid;
         });
+
+        Validator::extend('pulsa_exists', function($attribute, $value, $parameters, $validators) {
+            $data = $validators->getData();
+            $valid = true;
+            if ($data['object_type'] === 'pulsa') {
+                $pulsa = pulsa::where('pulsa_item_id', $value)->active()->first();
+                $valid = !empty($pulsa);
+            }
+            return $valid;
+        });
     }
 
     public function validate()
@@ -56,7 +67,7 @@ class PromoCodeValidator implements ValidatorInterface
             ),
             array(
                 'promo_code' => 'required|alpha_dash|active_discount|available_discount',
-                'object_id' => 'required|alpha_dash|coupon_exists',
+                'object_id' => 'required|alpha_dash|coupon_exists|pulsa_exists',
 
                 //for now only accepting coupon and pulsa
                 'object_type' => 'required|in:coupon,pulsa',
@@ -72,6 +83,7 @@ class PromoCodeValidator implements ValidatorInterface
                 'object_id.required' => 'Object Id is required',
                 'object_id.alpha_dash' => 'Object Id must be alpha numeric and dash and underscore characters',
                 'object_id.coupon_exists' => 'Object Id must be Id of valid active coupon',
+                'object_id.pulsa_exists' => 'Object Id must be Id of valid active pulsa',
 
                 'object_type.required' => 'Object Type is required',
                 'object_type.in' => 'Object Type must be coupon or pulsa',
