@@ -68,7 +68,7 @@ class PromoCodeAPIController extends ControllerAPI
             $value_in_percent = OrbitInput::post('value_in_percent');
             $start_date = OrbitInput::post('start_date');
             $end_date = OrbitInput::post('end_date');
-            $max_per_transaction = OrbitInput::post('max_per_transaction');
+            $max_per_transaction = OrbitInput::post('max_per_transaction', '1');
             $max_per_user = OrbitInput::post('max_per_user');
             $max_redemption = OrbitInput::post('max_redemption');
             $type = OrbitInput::post('type', 'coupon');
@@ -87,9 +87,9 @@ class PromoCodeAPIController extends ControllerAPI
                 'status'              => $status,
             ];
             $validator_validation = [
-                'discount_title'      => 'required',
+                'discount_title'      => 'required|orbit.exist.promoname',
                 'discount_code'       => 'required|orbit.exist.promocode',
-                'value_in_percent'    => 'required',
+                'value_in_percent'    => 'required|orbit.max.percent',
                 'start_date'          => 'required|date|orbit.empty.hour_format',
                 'end_date'            => 'required|date|orbit.empty.hour_format',
                 'max_per_transaction' => 'required',
@@ -102,10 +102,12 @@ class PromoCodeAPIController extends ControllerAPI
                 'discount_title.required'      => 'Promo Name required',
                 'discount_code.required'       => 'Promo Code required',
                 'orbit.exist.promocode'        => 'Promo Code already used',
+                'orbit.exist.promoname'        => 'Promo Name already used',
                 'value_in_percent.required'    => 'Promo Value required',
                 'max_per_transaction.required' => 'Maximum Redeemed Code Per Transaction required',
                 'max_per_user.required'        => 'Number of Use Per User required',
                 'max_redemption.required'      => 'Maximum Redeemed Code Quantity',
+                'orbit.max.percent'            => 'Promo Value cannot exceed 100%'
             ];
 
             $validator = Validator::make(
@@ -240,21 +242,29 @@ class PromoCodeAPIController extends ControllerAPI
             Event::fire('orbit.promocode.postupdatepromocode.after.authz', array($this, $user));
 
             $discount_id = OrbitInput::post('discount_id');
+            $discount_title = OrbitInput::post('discount_title');
             $discount_code = OrbitInput::post('discount_code');
+            $value_in_percent = OrbitInput::post('value_in_percent');
 
             $this->registerCustomValidation();
 
             $validator_value = [
                 'discount_id'      => $discount_id,
                 'discount_code'    => $discount_code,
+                'discount_title'   => $discount_title,
+                'value_in_percent' => $value_in_percent,
             ];
             $validator_validation = [
                 'discount_id'       => 'required|orbit.exist.discount_id',
                 'discount_code'     => 'orbit.exist.promocode_but_me:'.$discount_id,
+                'discount_title'    => 'orbit.exist.promoname_but_me:'.$discount_id,
+                'value_in_percent'  => 'orbit.max.percent'
             ];
             $validator_message = [
                 'discount_id.required'           => 'Discount id required',
                 'orbit.exist.promocode_but_me'   => 'Promo Code already used',
+                'orbit.exist.promoname_but_me'   => 'Promo Name already used',
+                'orbit.max.percent'              => 'Promo Value cannot exceed 100%'
             ];
 
             $validator = Validator::make(
@@ -756,6 +766,37 @@ class PromoCodeAPIController extends ControllerAPI
                                 ->first();
 
             if (!empty($discount)) {
+                return false;
+            }
+
+            return true;
+        });
+
+        Validator::extend('orbit.exist.promoname', function ($attribute, $value, $parameters) {
+            $exist = Discount::where('discount_title', $value)->first();
+
+            if (!empty($exist)) {
+                return false;
+            }
+
+            return true;
+        });
+
+        Validator::extend('orbit.exist.promoname_but_me', function ($attribute, $value, $parameters) {
+            $discount_id = trim($parameters[0]);
+            $discount = Discount::where('discount_title', $value)
+                                ->where('discount_id', '!=', $discount_id)
+                                ->first();
+
+            if (!empty($discount)) {
+                return false;
+            }
+
+            return true;
+        });
+
+        Validator::extend('orbit.max.percent', function ($attribute, $value, $parameters) {
+            if ($value>100) {
                 return false;
             }
 
