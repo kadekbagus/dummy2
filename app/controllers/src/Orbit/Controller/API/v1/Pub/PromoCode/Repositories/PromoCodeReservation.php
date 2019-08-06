@@ -25,17 +25,21 @@ class PromoCodeReservation implements ReservationInterface
     }
 
     /**
-     * mark promo code as reserved for current user
+     * mark promo code as reserved for current user.
+     * Only mark as reserved if not reserved yet.
      *
+     * @todo  start a job to check for reserved promo state in the future.
      * @param User $user, current logged in user
      * @param string $promoCode, promo code
      */
     public function markAsReserved($user, $promoCode)
     {
-        $discount = $this->getAvailableDiscountCode($promoCode);
-        $discount->user_id = $user->user_id;
-        $discount->status = 'reserved';
-        $discount->save();
+        if ($this->getReservedDiscountCode($user, $promoCode) === null) {
+            $discount = $this->getAvailableDiscountCode($promoCode);
+            $discount->user_id = $user->user_id;
+            $discount->status = 'reserved';
+            $discount->save();
+        }
     }
 
     /**
@@ -48,6 +52,8 @@ class PromoCodeReservation implements ReservationInterface
     {
         $discount = $this->getReservedDiscountCode($user, $promoCode);
         $discount->status = 'available';
+        $discount->payment_transaction_id = null;
+        $discount->user_id = null;
         $discount->save();
     }
 

@@ -79,7 +79,7 @@ class PaymentTransactionDetail extends Eloquent
 
     public function discount()
     {
-        return $this->belongsTo('Discount', 'object_id');
+        return $this->belongsTo('DiscountCode', 'object_id', 'discount_code_id');
     }
 
     /**

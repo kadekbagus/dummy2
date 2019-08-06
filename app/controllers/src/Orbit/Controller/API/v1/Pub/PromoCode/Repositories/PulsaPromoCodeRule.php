@@ -13,6 +13,12 @@ use ObjectDiscount;
  */
 class PulsaPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
 {
+    private $promo;
+
+    protected function isEligibleForObjectType($discountId, $objectId, $objectType)
+    {
+        return $this->promo->type === 'pulsa';
+    }
 
     /**---------------------------------------------
      * Check user eligiblity for promo code
@@ -26,12 +32,13 @@ class PulsaPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
      */
     public function getEligibleStatus($user, $promoData)
     {
-        $promo = $this->getPromoCodeDetail($promoData);
+        $this->promo = $this->getPromoCodeDetail($promoData);
 
         $rejectReason = '';
 
+        // TODO: Or just use promo->type === 'pulsa'
         $eligible = $this->isEligibleForObjectType(
-            $promo->discount_id,
+            $this->promo->discount_id,
             $promoData->object_id,
             $promoData->object_type
         );
@@ -43,8 +50,8 @@ class PulsaPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
         }
 
         return (object) [
-            'promo_id' => $promo->discount_id,
-            'promo_code' => $promo->discount_code,
+            'promo_id' => $this->promo->discount_id,
+            'promo_code' => $this->promo->discount_code,
             'eligible' => $eligible,
 
             //when eligible = false, rejectReason contains code why user
@@ -56,9 +63,9 @@ class PulsaPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
             'user_id' => $user->user_id,
             'object_type' => $promoData->object_type,
             'object_id' => $promoData->object_id,
-            'value_in_percent' => $promo->value_in_percent,
-            'start_date' => $promo->start_date,
-            'end_date' => $promo->end_date,
+            'value_in_percent' => $this->promo->value_in_percent,
+            'start_date' => $this->promo->start_date,
+            'end_date' => $this->promo->end_date,
         ];
     }
 
