@@ -19,6 +19,8 @@ use Mall;
 use Activity;
 use Country;
 use Carbon\Carbon as Carbon;
+use Log;
+use App;
 
 /**
  * Create payment record for Pulsa purchase.
@@ -64,6 +66,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
             $object_name = OrbitInput::post('object_name');
             $user_name = (!empty($last_name) ? $first_name.' '.$last_name : $first_name);
             $mallId = OrbitInput::post('mall_id', null);
+            $promoCode = OrbitInput::post('promo_code', null);
 
             $validator = Validator::make(
                 array(
@@ -78,6 +81,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                     'object_id'  => $object_id,
                     'object_type'  => $object_type,
                     'quantity'   => $quantity,
+                    'promo_code' => $promoCode,
                 ),
                 array(
                     'first_name' => 'required',
@@ -91,10 +95,12 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                     'object_type'  => 'required',
                     'object_id'  => 'required|orbit.exists.pulsa',
                     'quantity'   => 'required',
+                    'promo_code' => 'orbit.reserved.promo',
                 ),
                 array(
                     'orbit.allowed.quantity' => 'REQUESTED_QUANTITY_NOT_AVAILABLE',
                     'orbit.exists.pulsa' => 'Pulsa does not exists.',
+                    'orbit.reserved.promo' => 'RESERVED_PROMO_CODE_NOT_FOUND',
                 )
             );
 
@@ -178,6 +184,44 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
             $paymentMidtransDetail = new PaymentMidtrans;
             $payment_new->midtrans()->save($paymentMidtransDetail);
 
+            // process discount if any.
+            if (! empty($promoCode)) {
+                Log::info("Trying to make pulsa purchase with promo code {$promoCode}...");
+
+                // TODO: Move to PromoReservation helper?
+                $reservedPromoCode = $user->discountCodes()->with(['discount'])
+                    ->where('discount_code', $promoCode)
+                    ->whereNull('payment_transaction_id')
+                    ->reserved()
+                    ->first();
+
+                $discount = $reservedPromoCode->discount
+                    ? $reservedPromoCode->discount
+                    : Discount::findOrFail($reservedPromoCode->discount_id);
+
+                $discountRecord = new PaymentTransactionDetail;
+                $discountRecord->payment_transaction_id = $payment_new->payment_transaction_id;
+                $discountRecord->currency = $payment_new->currency;
+                $discountRecord->price = $discount->value_in_percent / 100 * $payment_new->amount * -1;
+                $discountRecord->quantity = 1;
+                $discountRecord->object_id = $reservedPromoCode->discount_code_id;
+                $discountRecord->object_type = 'discount';
+                $discountRecord->object_name = $discount->discount_title;
+                $discountRecord->save();
+
+
+                // $reservedPromoCode->status = 'ready_to_issue';
+                $reservedPromoCode->payment_transaction_id = $payment_new->payment_transaction_id;
+                $reservedPromoCode->save();
+
+                $payment_new->amount = $payment_new->amount + $discountRecord->price;
+                $payment_new->save();
+
+                $payment_new->promo_code = $reservedPromoCode->discount_code;
+
+                Log::info("Promo Code {$reservedPromoCode->discount_code} added to purchase {$payment_new->payment_transaction_id}");
+            }
+
             // Commit the changes
             $this->commit();
 
@@ -257,16 +301,8 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
 
         // Check if pulsa is exists.
         Validator::extend('orbit.exists.pulsa', function ($attribute, $value, $parameters) {
-            $prefix = DB::getTablePrefix();
-            $pulsa = Pulsa::where('pulsa_item_id', $value)->where('status', 'active')->first();
-
-            if (empty($pulsa)) {
-                return false;
-            }
-
-            \App::instance('orbit.instance.pulsa', $pulsa);
-
-            return true;
+            return Pulsa::where('pulsa_item_id', $value)->where('status', 'active')
+                ->where('displayed', 'yes')->first() !== null;
         });
 
         /**
@@ -275,8 +311,6 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
         Validator::extend('orbit.allowed.quantity', function ($attribute, $requestedQuantity, $parameters) use ($user) {
 
             $pulsaId = OrbitInput::post('object_id');
-
-            // $pulsa = \App::make('orbit.instance.pulsa');
 
             // Globally issued coupon count regardless of the Customer.
             $issuedPulsa = PaymentTransaction::select(
@@ -303,6 +337,22 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
             }
 
             return $requestedQuantity <= $issuedPulsa && ! $issuedPulsaForUser;
+        });
+
+        Validator::extend('orbit.reserved.promo', function($attribute, $promoCode, $parameters) use ($user)
+        {
+            // If promo code is not empty, then check for reserved status.
+            if (! empty($promoCode)) {
+                // TODO: Move to PromoReservation helper?
+                return $user->discountCodes()
+                    ->where('discount_code', $promoCode)
+                    ->whereNull('payment_transaction_id')
+                    ->reserved()
+                    ->first() !== null;
+            }
+
+            // Assume true (or reserved) if promocode empty/not passed.
+            return true;
         });
     }
 

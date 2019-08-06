@@ -28,6 +28,9 @@ use Orbit\Notifications\Pulsa\PulsaSuccessWithoutSerialNumberNotification;
 
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
 
+use App;
+use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
+
 /**
  * A job to get/issue Hot Deals Coupon after payment completed.
  * At this point, we assume the payment was completed (paid) so anything wrong
@@ -70,7 +73,7 @@ class GetPulsaQueue
 
             Log::info("Pulsa: Getting pulsa for PaymentID: {$paymentId}");
 
-            $payment = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'user', 'midtrans'])->findOrFail($paymentId);
+            $payment = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'details.discount', 'user', 'midtrans'])->findOrFail($paymentId);
 
             $activity->setUser($payment->user);
 
@@ -88,8 +91,9 @@ class GetPulsaQueue
                 return;
             }
 
-            $paymentDetail = $payment->details->first();
-            $pulsa = $paymentDetail->pulsa;
+            $paymentDetails = $this->getDetails($payment);
+            $pulsa = $paymentDetails['pulsa'];
+            $discount = $paymentDetails['discount'];
             $phoneNumber = $payment->extra_data;
             $pulsaName = $pulsa->pulsa_display_name;
 
@@ -119,6 +123,14 @@ class GetPulsaQueue
                         ->responseOK()
                         ->save();
 
+                if (! empty($discount)) {
+                    $discountCode = $discount->discount_code;
+                    // Mark promo code as issued.
+                    $promoCodeReservation = App::make(ReservationInterface::class);
+                    $promoCodeReservation->markAsIssued($payment->user, $discountCode);
+                    Log::info("Pulsa: Promo code {$discountCode} issued for purchase {$paymentId}");
+                }
+
                 Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
                 Log::info("Purchase response: " . serialize($pulsaPurchase));
             }
@@ -128,6 +140,14 @@ class GetPulsaQueue
                 Log::info("Purchase response: " . serialize($pulsaPurchase));
 
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
+
+                if (! empty($discount)) {
+                    $discountCode = $discount->discount_code;
+                    // Mark promo code as issued.
+                    $promoCodeReservation = App::make(ReservationInterface::class);
+                    $promoCodeReservation->markAsIssued($payment->user, $discountCode);
+                    Log::info("Pulsa: Promo code {$discountCode} issued for purchase {$paymentId}");
+                }
 
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Successful', 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
             }
@@ -230,8 +250,6 @@ class GetPulsaQueue
 
                 $notes = $phoneNumber . ' ---- ' . $e->getMessage();
 
-                $paymentDetail = $payment->details->first();
-                $pulsa = isset($paymentDetail->pulsa) ? $paymentDetail->pulsa : null;
                 $pulsaName = ! empty($pulsa) ? $pulsa->pulsa_display_name : '-';
 
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Failed', 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
@@ -254,5 +272,15 @@ class GetPulsaQueue
         }
 
         $job->delete();
+    }
+
+    private function getDetails($payment)
+    {
+        $details = ['pulsa' => null, 'discount' => null];
+        foreach($payment->details as $detail) {
+            $details[$detail->object_type] = $detail->{$detail->object_type};
+        }
+
+        return $details;
     }
 }
