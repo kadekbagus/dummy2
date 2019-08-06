@@ -91,7 +91,12 @@ class PaymentPulsaPurchasedListAPIController extends PubControllerAPI
                                                 'pulsa.value as pulsa_value',
                                                 'pulsa.price as pulsa_price',
                                                 'telco_operators.name as operator_name',
-                                                DB::raw($telcoLogo)
+                                                DB::raw($telcoLogo),
+                                                DB::raw("(SELECT D.value_in_percent FROM {$prefix}payment_transaction_details PTD
+                                                            LEFT JOIN {$prefix}discount_codes DC on DC.discount_code_id = PTD.object_id
+                                                            LEFT JOIN {$prefix}discounts D on D.discount_id = DC.discount_id
+                                                            WHERE PTD.object_type = 'discount'
+                                                            AND PTD.payment_transaction_id = {$prefix}payment_transactions.payment_transaction_id) as discount_percent")
                                                 )
                                         ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                                         ->join('pulsa', 'pulsa.pulsa_item_id', '=', 'payment_transaction_details.object_id')
