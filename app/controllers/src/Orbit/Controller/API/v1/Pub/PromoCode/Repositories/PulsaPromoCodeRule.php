@@ -51,6 +51,7 @@ class PulsaPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
 
         return (object) [
             'promo_id' => $this->promo->discount_id,
+            'promo_title' => $this->promo->discount_title,
             'promo_code' => $this->promo->discount_code,
             'eligible' => $eligible,
 

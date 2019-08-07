@@ -150,6 +150,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
 
         return (object) [
             'promo_id' => $promo->discount_id,
+            'promo_title' => $promo->discount_title,
             'promo_code' => $promo->discount_code,
             'eligible' => $eligible,
 
