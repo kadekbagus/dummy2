@@ -76,7 +76,7 @@ class GetPulsaQueue
 
             Log::info("Pulsa: Getting pulsa for PaymentID: {$paymentId}");
 
-            $payment = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'details.discount', 'user', 'midtrans', 'discount_code'])->findOrFail($paymentId);
+            $payment = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'user', 'midtrans', 'discount_code'])->findOrFail($paymentId);
 
             $activity->setUser($payment->user);
 
@@ -101,10 +101,7 @@ class GetPulsaQueue
 
             // Send request to buy pulsa from MCash
             $pulsaPurchase = Purchase::create()->doPurchase($pulsa->pulsa_code, $phoneNumber, $paymentId);
-
-            // Test only, mock purchase as success w/o serial number.
-            // $pulsaPurchase->setData(['status' => 0, 'pending' => 1]);
-            // $pulsaPurchase->unsetData(['serial_number']);
+            // $pulsaPurchase = Purchase::create()->mockSuccess()->doPurchase($pulsa->pulsa_code, $phoneNumber, $paymentId);
 
             if ($pulsaPurchase->isSuccess()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;

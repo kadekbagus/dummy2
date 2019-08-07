@@ -41,7 +41,11 @@ class CheckReservedPromoCode
             if (! empty($issuedPromoCodes)) {
                 $canceledPromoCodes = DiscountCode::onWriteConnection()->where(function($query) {
                                                     $query->whereHas('payment', function($payment) {
-                                                        $payment->where('status', PaymentTransaction::STATUS_STARTING);
+                                                        $payment->whereIn('status', [
+                                                            PaymentTransaction::STATUS_STARTING,
+                                                            PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED,
+                                                            PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED,
+                                                        ]);
                                                     })
                                                     ->orWhere(function($query) {
                                                         $query->whereNull('payment_transaction_id')->orWhere('payment_transaction_id', '');
@@ -56,7 +60,7 @@ class CheckReservedPromoCode
                         $canceledPromoCode->makeAvailable();
                     }
 
-                    Log::info("Queue CheckReservedPromoCode Runnning: Promo Code canceled... status reverted to available.");
+                    Log::info("Queue CheckReservedPromoCode Runnning: Promo Code canceled because no action/purchase was failed... status reverted to available.");
                 }
                 else {
                     Log::info("Queue CheckReservedPromoCode Runnning: Purchase was aborted/processed... Nothing to do.");
