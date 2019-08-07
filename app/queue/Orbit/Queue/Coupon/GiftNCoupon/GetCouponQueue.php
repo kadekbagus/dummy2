@@ -21,6 +21,8 @@ use Orbit\Notifications\Coupon\GiftNCoupon\ReceiptNotification;
 use Orbit\Notifications\Coupon\GiftNCoupon\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
 
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
+use App;
+use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
 
 /**
  * A job to get/issue Gift'N Coupon after payment completed.

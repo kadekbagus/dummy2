@@ -21,6 +21,8 @@ use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification;
 use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
 
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
+use App;
+use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
 
 /**
  * A job to get/issue Hot Deals Coupon after payment completed.
