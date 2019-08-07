@@ -217,6 +217,12 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                 $payment_new->amount = $payment_new->amount + $discountRecord->price;
                 $payment_new->save();
 
+                // Add additional property to indicate that this purchase is free,
+                // so frontend can bypass payment steps and continue to
+                if ($discount->value_in_percent === 100) {
+                    $payment_new->bypass_payment = true;
+                }
+
                 $payment_new->promo_code = $reservedPromoCode->discount_code;
 
                 Log::info("Promo Code {$reservedPromoCode->discount_code} added to purchase {$payment_new->payment_transaction_id}");
@@ -339,20 +345,28 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
             return $requestedQuantity <= $issuedPulsa && ! $issuedPulsaForUser;
         });
 
+        // Validator::extend('orbit.active_discount', function($attribute, $promoCode, $paramters) {
+        //     // Assume discount is active if promoCode is empty/not exists in the request.
+        //     if (empty($promocode)) return true;
+
+        //     // Otherwise, check if discount is still active.
+        //     return DiscountCode::whereHas('discount', function($discount) {
+        //         $discount->active()->betweenExpiryDate();
+        //     })->first() !== null;
+        // });
+
         Validator::extend('orbit.reserved.promo', function($attribute, $promoCode, $parameters) use ($user)
         {
-            // If promo code is not empty, then check for reserved status.
-            if (! empty($promoCode)) {
-                // TODO: Move to PromoReservation helper?
-                return $user->discountCodes()
-                    ->where('discount_code', $promoCode)
-                    ->whereNull('payment_transaction_id')
-                    ->reserved()
-                    ->first() !== null;
-            }
+            // Assume true (or reserved) if promocode empty/not exists in the request.
+            if (empty($promoCode)) return true;
 
-            // Assume true (or reserved) if promocode empty/not passed.
-            return true;
+            // Otherwise, check for reserved status.
+            // TODO: Move to PromoReservation helper?
+            return $user->discountCodes()
+                ->where('discount_code', $promoCode)
+                ->whereNull('payment_transaction_id')
+                ->reserved()
+                ->first() !== null;
         });
     }
 
