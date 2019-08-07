@@ -55,7 +55,7 @@ class GetCouponQueue
 
             Log::info("PaidCoupon: Getting coupon PaymentID: {$paymentId}");
 
-            $payment = PaymentTransaction::with(['details.coupon', 'user', 'midtrans', 'issued_coupons'])->findOrFail($paymentId);
+            $payment = PaymentTransaction::with(['details.coupon', 'user', 'midtrans', 'issued_coupons', 'discount_code'])->findOrFail($paymentId);
 
             $activity->setUser($payment->user);
 
@@ -65,6 +65,8 @@ class GetCouponQueue
                 Log::info("PaidCoupon: Payment {$paymentId} was denied/canceled. We should not issue any coupon.");
 
                 $payment->cleanUp();
+
+                $payment->resetDiscount();
 
                 DB::connection()->commit();
 

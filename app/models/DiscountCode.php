@@ -29,4 +29,12 @@ class DiscountCode extends Eloquent
     {
         return $this->belongsTo(Discount::class);
     }
+
+    public function makeAvailable()
+    {
+        $this->user_id = null;
+        $this->payment_transaction_id = null;
+        $this->status = 'available';
+        $this->save();
+    }
 }

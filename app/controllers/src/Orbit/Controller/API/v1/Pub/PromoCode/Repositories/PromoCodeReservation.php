@@ -3,6 +3,8 @@
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
 use Discount;
 use DiscountCode;
+use Config;
+use Carbon;
 
 /**
  * Class that reserved promo code
@@ -39,6 +41,14 @@ class PromoCodeReservation implements ReservationInterface
             $discount->user_id = $user->user_id;
             $discount->status = 'reserved';
             $discount->save();
+
+            $limitTimeCfg = Config::get('orbit.coupon_reserved_limit_time', 10);
+            $date = Carbon::now()->addMinutes($limitTimeCfg);
+            Queue::later(
+                $date,
+                'Orbit\\Queue\\PromoCode\\CheckReservedPromoCode',
+                ['user_id' => $user->user_id, 'discount_codes' => [$discount->discount_code_id]];
+            );
         }
     }
 
