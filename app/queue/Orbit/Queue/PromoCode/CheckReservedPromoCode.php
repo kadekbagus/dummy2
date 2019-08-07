@@ -12,6 +12,7 @@ use Orbit\Helper\Util\JobBurier;
 use IssuedCoupon;
 use Coupon;
 use PaymentTransaction;
+use DiscountCode;
 
 /**
  * Queue to check reserved coupon and returning the available coupon value if user cancel . . .
@@ -58,7 +59,7 @@ class CheckReservedPromoCode
                     Log::info("Queue CheckReservedPromoCode Runnning: Promo Code canceled... status reverted to available.");
                 }
                 else {
-                    Log::info("Queue CheckReservedPromoCode Runnning: Purchase continue... promo code being used.");
+                    Log::info("Queue CheckReservedPromoCode Runnning: Purchase was aborted/processed... Nothing to do.");
                 }
             }
 

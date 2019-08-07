@@ -37,4 +37,9 @@ class DiscountCode extends Eloquent
         $this->status = 'available';
         $this->save();
     }
+
+    public function payment()
+    {
+        return $this->belongsTo(PaymentTransaction::class, 'payment_transaction_id');
+    }
 }

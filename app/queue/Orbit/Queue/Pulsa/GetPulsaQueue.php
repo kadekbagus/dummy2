@@ -58,6 +58,9 @@ class GetPulsaQueue
         $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
         $mallId = isset($data['mall_id']) ? $data['mall_id'] : null;
         $mall = Mall::where('merchant_id', $mallId)->first();
+        $payment = null;
+        $discount = null;
+
         if (! isset($data['retry'])) {
             $data['retry'] = 0;
         }
@@ -73,7 +76,7 @@ class GetPulsaQueue
 
             Log::info("Pulsa: Getting pulsa for PaymentID: {$paymentId}");
 
-            $payment = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'details.discount', 'user', 'midtrans'])->findOrFail($paymentId);
+            $payment = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'details.discount', 'user', 'midtrans', 'discount_code'])->findOrFail($paymentId);
 
             $activity->setUser($payment->user);
 
@@ -91,9 +94,8 @@ class GetPulsaQueue
                 return;
             }
 
-            $paymentDetails = $this->getDetails($payment);
-            $pulsa = $paymentDetails['pulsa'];
-            $discount = $paymentDetails['discount'];
+            $pulsa = $this->getPulsa($payment);
+            $discount = $payment->discount_code;
             $phoneNumber = $payment->extra_data;
             $pulsaName = $pulsa->pulsa_display_name;
 
@@ -236,6 +238,14 @@ class GetPulsaQueue
                 $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED;
                 $payment->save();
 
+                if (! empty($discount)) {
+                    $discountCode = $discount->discount_code;
+                    // Mark promo code as issued.
+                    $promoCodeReservation = App::make(ReservationInterface::class);
+                    $promoCodeReservation->markAsAvailable($payment->user, $discountCode);
+                    Log::info("Pulsa: Promo code {$discountCode} reverted back/marked as available...");
+                }
+
                 DB::connection()->commit();
 
                 // Notify admin for this failure.
@@ -274,13 +284,16 @@ class GetPulsaQueue
         $job->delete();
     }
 
-    private function getDetails($payment)
+    private function getPulsa($payment)
     {
-        $details = ['pulsa' => null, 'discount' => null];
+        $pulsa = null;
         foreach($payment->details as $detail) {
-            $details[$detail->object_type] = $detail->{$detail->object_type};
+            if (! empty($detail->pulsa)) {
+                $pulsa = $detail->pulsa;
+                break;
+            }
         }
 
-        return $details;
+        return $pulsa;
     }
 }

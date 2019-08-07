@@ -4,7 +4,8 @@ use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInte
 use Discount;
 use DiscountCode;
 use Config;
-use Carbon;
+use Carbon\Carbon;
+use Queue;
 
 /**
  * Class that reserved promo code
@@ -47,8 +48,10 @@ class PromoCodeReservation implements ReservationInterface
             Queue::later(
                 $date,
                 'Orbit\\Queue\\PromoCode\\CheckReservedPromoCode',
-                ['user_id' => $user->user_id, 'discount_codes' => [$discount->discount_code_id]];
+                ['user_id' => $user->user_id, 'discount_codes' => [$discount->discount_code_id]]
             );
+
+            \Log::info("Check reserved promo code is scheduled in {$limitTimeCfg} minutes...");
         }
     }
 
