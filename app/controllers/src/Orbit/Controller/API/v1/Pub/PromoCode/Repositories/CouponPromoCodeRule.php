@@ -90,7 +90,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
 
         return (object) [
             'eligible' => ($totalAvail >= $qty),
-            'totalAvailable' => $totalAvail >= $qty ? $qty : $totalAvail,
+            'totalAvail' => $totalAvail >= $qty ? $qty : $totalAvail,
         ];
     }
 
