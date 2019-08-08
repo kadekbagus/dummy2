@@ -11,6 +11,14 @@ use Pulsa;
 
 class PromoCodeValidator implements ValidatorInterface
 {
+    private $currentUser;
+
+    public function user($currentUser)
+    {
+        $this->currentUser = $currentUser;
+        return $this;
+    }
+
     private function registerCustomValidationRule()
     {
         Validator::extend('active_discount', function($attribute, $value, $parameters) {
@@ -25,6 +33,16 @@ class PromoCodeValidator implements ValidatorInterface
             $discount = DiscountCode::where('discount_code', $value)
                 ->available()
                 ->first();
+
+            if (empty($discount)) {
+                //no more promo code is available, try if current user has
+                //reserved promo code
+                $discount = $this->currentUser
+                    ->discountCodes()
+                    ->where('discount_code', $value)
+                    ->reserved()
+                    ->first();
+            }
             return !empty($discount);
         });
 
