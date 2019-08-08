@@ -87,7 +87,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
         $totalAvail = DiscountCode::where('discount_id', $promo->discount_id)
             ->available()
             ->count();
-        $totalReserved = 0;
+
         if ($totalAvail < $qty) {
             //test if current user already reserved some promo codes
             $totalReserved = $user->discountCodes()
