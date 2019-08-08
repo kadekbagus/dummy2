@@ -146,6 +146,9 @@ class CouponGiftNAPIController extends ControllerAPI
             $price_to_gtm = OrbitInput::post('price_to_gtm');
             $status = OrbitInput::post('status');
 
+            // discounts
+            $discounts = OrbitInput::post('discounts', []);
+
             if ($status === 'active') {
                 $campaignStatus = 'ongoing';
             }
@@ -600,6 +603,9 @@ class CouponGiftNAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            // Sync discounts...
+            $newcoupon->discounts()->sync($this->mapDiscounts($discounts));
+
             $this->response->data = $newcoupon;
             // $this->response->data->translation_default = $coupon_translation_default;
 
@@ -811,6 +817,9 @@ class CouponGiftNAPIController extends ControllerAPI
             $how_to_buy_and_redeem = OrbitInput::post('how_to_buy_and_redeem');
             $terms_and_conditions = OrbitInput::post('terms_and_conditions');
             $status = OrbitInput::post('status');
+
+            // discount
+            $discounts = OrbitInput::post('discounts', []);
 
             if ($status === 'active') {
                 $campaignStatus = 'ongoing';
@@ -1358,6 +1367,9 @@ class CouponGiftNAPIController extends ControllerAPI
                                     ->update(['end_date' => $updatedcoupon->end_date]);
             }
 
+            // Sync discounts...
+            $updatedcoupon->discounts()->sync($this->mapDiscounts($discounts));
+
             $this->response->data = $updatedcoupon;
 
             // Commit the changes
@@ -1578,7 +1590,7 @@ class CouponGiftNAPIController extends ControllerAPI
             // Builder object
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::allowedForPMPUser($user, 'coupon')
-                //->with('couponRule')
+                ->with(['discounts'])
                 ->select(
                     DB::raw("{$table_prefix}promotions.promotion_id,
                              {$table_prefix}coupon_translations.promotion_name AS promotion_name,
@@ -2881,4 +2893,14 @@ class CouponGiftNAPIController extends ControllerAPI
         return $this;
     }
 
+    private function mapDiscounts($discounts)
+    {
+        $newDiscounts = [];
+
+        foreach($discounts as $discount) {
+            $newDiscounts[$discount] = ['object_type' => 'coupon'];
+        }
+
+        return $newDiscounts;
+    }
 }
