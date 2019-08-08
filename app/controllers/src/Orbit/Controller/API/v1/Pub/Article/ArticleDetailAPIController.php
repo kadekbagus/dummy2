@@ -317,7 +317,8 @@ class ArticleDetailAPIController extends PubControllerAPI
                                             )
                                             ->join('promotions', function($q) {
                                                 $q->on('promotion_id', '=', 'object_id')
-                                                  ->on('promotions.status', '=', DB::raw("'active'"));
+                                                  ->on('promotions.status', '=', DB::raw("'active'"))
+                                                  ->on('promotions.available', '!=', DB::raw("'0'"));
                                             })
                                             ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                                             ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
