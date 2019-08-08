@@ -77,12 +77,12 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
      * Check if asked quantity by user is less or equal than
      * total available discount code
      *----------------------------------------------
-     * @param User $user, current user
      * @param object $promo, promo instance
+     * @param User $user, current user
      * @return true if user can use promo code to object
      * ---------------------------------------------
      */
-    private function isEligibleForAvailQuantity($user, $promo, $qty)
+    private function isEligibleForAvailQuantity($promo, $user, $qty)
     {
         $totalAvail = DiscountCode::where('discount_id', $promo->discount_id)
             ->available()
@@ -131,6 +131,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
 
             $availQtyEligible = $this->isEligibleForAvailQuantity(
                 $promo,
+                $user,
                 $promoData->quantity
             );
 
