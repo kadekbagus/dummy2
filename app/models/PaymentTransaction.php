@@ -133,6 +133,11 @@ class PaymentTransaction extends Eloquent
         return $this->hasOne('PaymentTransactionDetail')->where('object_type', 'discount');
     }
 
+    public function discount_code()
+    {
+        return $this->hasOne('DiscountCode', 'payment_transaction_id');
+    }
+
     public function midtrans()
     {
         return $this->hasOne('PaymentMidtrans');
@@ -384,6 +389,17 @@ class PaymentTransaction extends Eloquent
 
         // Update the availability...
         Coupon::find($couponId)->updateAvailability();
+    }
+
+    /**
+     * [detachDiscount description]
+     * @return [type] [description]
+     */
+    public function resetDiscount()
+    {
+        if (! empty($this->discount_code)) {
+            $this->discount_code->makeAvailable();
+        }
     }
 
     /**
