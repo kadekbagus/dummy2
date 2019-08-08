@@ -47,12 +47,11 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
      */
     private function isEligibleForQuantity($promo, $user, $qty)
     {
-        $userPromos = $user->discountCodes()
+        $totalUsage = $user->discountCodes()
             ->where('discount_id', $promo->discount_id)
             ->issued()
-            ->get();
+            ->count();
 
-        $totalUsage = count($userPromos);
         $quotaUsagePerUser = $promo->max_per_user - $totalUsage;
         if ($quotaUsagePerUser <= 0) {
             $quotaUsagePerUser = 0;
@@ -78,15 +77,25 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
      * Check if asked quantity by user is less or equal than
      * total available discount code
      *----------------------------------------------
-     * @param string $discountId, id discount
+     * @param User $user, current user
+     * @param object $promo, promo instance
      * @return true if user can use promo code to object
      * ---------------------------------------------
      */
-    private function isEligibleForAvailQuantity($promo, $qty)
+    private function isEligibleForAvailQuantity($user, $promo, $qty)
     {
         $totalAvail = DiscountCode::where('discount_id', $promo->discount_id)
             ->available()
             ->count();
+        $totalReserved = 0;
+        if ($totalAvail < $qty) {
+            //test if current user already reserved some promo codes
+            $totalReserved = $user->discountCodes()
+                ->where('discount_id', $promo->discount_id)
+                ->reserved()
+                ->count();
+            $totalAvail = $totalAvail + $totalReserved;
+        }
 
         return (object) [
             'eligible' => ($totalAvail >= $qty),
