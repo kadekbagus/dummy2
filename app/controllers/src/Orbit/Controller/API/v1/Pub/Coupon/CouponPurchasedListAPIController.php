@@ -143,7 +143,10 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                                         LEFT JOIN {$prefix}discount_codes DC on DC.discount_code_id = PTD.object_id
                                         LEFT JOIN {$prefix}discounts D on D.discount_id = DC.discount_id
                                         WHERE PTD.object_type = 'discount'
-                                        AND PTD.payment_transaction_id = {$prefix}payment_transactions.payment_transaction_id) as discount_percent
+                                        AND PTD.payment_transaction_id = {$prefix}payment_transactions.payment_transaction_id) as discount_percent,
+                                    (SELECT PTD.price FROM {$prefix}payment_transaction_details PTD
+                                        WHERE PTD.object_type = 'discount'
+                                        AND PTD.payment_transaction_id = {$prefix}payment_transactions.payment_transaction_id) as discount_amount
                             "))
 
                             ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
