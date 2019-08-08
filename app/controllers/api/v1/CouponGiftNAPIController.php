@@ -2071,7 +2071,7 @@ class CouponGiftNAPIController extends ControllerAPI
                                          'promotions.coupon_validity_in_date',
                                          'promotions.status'
                                   )
-                                ->with('translations.media', 'keywords', 'product_tags', 'campaignObjectPartners')
+                                ->with('translations.media', 'keywords', 'product_tags', 'campaignObjectPartners', 'discounts')
                                 ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                                 ->where('promotions.promotion_id', $promotion_id)
                                 ->where('promotions.promotion_type', Coupon::TYPE_GIFTNCOUPON)
