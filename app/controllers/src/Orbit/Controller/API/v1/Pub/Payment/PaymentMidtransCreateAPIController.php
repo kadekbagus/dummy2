@@ -26,6 +26,9 @@ use Mall;
 use Activity;
 use Country;
 use Carbon\Carbon as Carbon;
+use Log;
+use App;
+use Discount;
 
 class PaymentMidtransCreateAPIController extends PubControllerAPI
 {
@@ -200,8 +203,8 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                 $discountRecord = new PaymentTransactionDetail;
                 $discountRecord->payment_transaction_id = $payment_new->payment_transaction_id;
                 $discountRecord->currency = $payment_new->currency;
-                $discountRecord->price = $discount->value_in_percent / 100 * $payment_new->amount * -1;
-                $discountRecord->quantity = 1;
+                $discountRecord->price = $discount->value_in_percent / 100 * $payment_new->amount * -1.00;
+                $discountRecord->quantity = $quantity;
                 $discountRecord->object_id = $reservedPromoCode->discount_code_id;
                 $discountRecord->object_type = 'discount';
                 $discountRecord->object_name = $discount->discount_title;
