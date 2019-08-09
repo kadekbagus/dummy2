@@ -204,7 +204,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                 $discountRecord->payment_transaction_id = $payment_new->payment_transaction_id;
                 $discountRecord->currency = $payment_new->currency;
                 $discountRecord->price = $discount->value_in_percent / 100 * $payment_new->amount * -1.00;
-                $discountRecord->quantity = $quantity;
+                $discountRecord->quantity = 1;
                 $discountRecord->object_id = $discount->discount_id;
                 $discountRecord->object_type = 'discount';
                 $discountRecord->object_name = $discount->discount_title;
