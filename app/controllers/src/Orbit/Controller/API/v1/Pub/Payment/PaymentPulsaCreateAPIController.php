@@ -194,7 +194,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                     ->where('discount_code', $promoCode)
                     ->whereNull('payment_transaction_id')
                     ->reserved()
-                    ->first();
+                    ->get();
 
                 $discount = $reservedPromoCodes->count() > 0
                     ? $reservedPromoCodes->first()->discount
