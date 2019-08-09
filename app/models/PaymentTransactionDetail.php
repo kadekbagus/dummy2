@@ -77,9 +77,14 @@ class PaymentTransactionDetail extends Eloquent
         return $this->belongsTo('Pulsa', 'object_id', 'pulsa_item_id');
     }
 
-    public function discount()
+    public function discount_code()
     {
         return $this->belongsTo('DiscountCode', 'object_id', 'discount_code_id');
+    }
+
+    public function discount()
+    {
+        return $this->belongsTo('Discount', 'object_id', 'discount_id');
     }
 
     /**

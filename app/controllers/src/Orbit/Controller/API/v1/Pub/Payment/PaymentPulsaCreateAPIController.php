@@ -205,7 +205,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                 $discountRecord->currency = $payment_new->currency;
                 $discountRecord->price = $discount->value_in_percent / 100 * $payment_new->amount * -1.00;
                 $discountRecord->quantity = $quantity;
-                $discountRecord->object_id = $reservedPromoCode->discount_code_id;
+                $discountRecord->object_id = $discount->discount_id;
                 $discountRecord->object_type = 'discount';
                 $discountRecord->object_name = $discount->discount_title;
                 $discountRecord->save();
@@ -219,7 +219,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                 $payment_new->save();
 
                 // Add additional property to indicate that this purchase is free,
-                // so frontend can bypass payment steps and continue to
+                // so frontend can bypass payment steps.
                 if ($discount->value_in_percent === 100) {
                     $payment_new->bypass_payment = true;
                 }
