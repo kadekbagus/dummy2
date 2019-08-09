@@ -190,15 +190,15 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                 Log::info("Trying to make purchase with promo code {$promoCode}...");
 
                 // TODO: Move to PromoReservation helper?
-                $reservedPromoCode = $user->discountCodes()->with(['discount'])
+                $reservedPromoCodes = $user->discountCodes()->with(['discount'])
                     ->where('discount_code', $promoCode)
                     ->whereNull('payment_transaction_id')
                     ->reserved()
-                    ->first();
+                    ->get();
 
-                $discount = $reservedPromoCode->discount
-                    ? $reservedPromoCode->discount
-                    : Discount::findOrFail($reservedPromoCode->discount_id); // this should never happen.
+                $discount = $reservedPromoCodes->count() > 0
+                    ? $reservedPromoCodes->first()->discount
+                    : Discount::findOrFail($reservedPromoCodes->first()->discount_id); // this should never happen.
 
                 $discountRecord = new PaymentTransactionDetail;
                 $discountRecord->payment_transaction_id = $payment_new->payment_transaction_id;
@@ -211,8 +211,10 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                 $discountRecord->save();
 
                 // $reservedPromoCode->status = 'ready_to_issue';
-                $reservedPromoCode->payment_transaction_id = $payment_new->payment_transaction_id;
-                $reservedPromoCode->save();
+                foreach($reservedPromoCodes as $reservedPromoCode) {
+                    $reservedPromoCode->payment_transaction_id = $payment_new->payment_transaction_id;
+                    $reservedPromoCode->save();
+                }
 
                 $payment_new->amount = $payment_new->amount + $discountRecord->price;
                 $payment_new->save();
