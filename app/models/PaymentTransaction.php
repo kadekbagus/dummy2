@@ -254,7 +254,13 @@ class PaymentTransaction extends Eloquent
      */
     public function forPulsa()
     {
-        return $this->details->count() > 0 && ! empty($this->details->first()->pulsa);
+        foreach($this->details as $detail) {
+            if (! empty($detail->pulsa)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
