@@ -205,7 +205,7 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                 $discountRecord->currency = $payment_new->currency;
                 $discountRecord->price = $discount->value_in_percent / 100 * $payment_new->amount * -1.00;
                 $discountRecord->quantity = $quantity;
-                $discountRecord->object_id = $reservedPromoCode->discount_code_id;
+                $discountRecord->object_id = $discount->discount_id;
                 $discountRecord->object_type = 'discount';
                 $discountRecord->object_name = $discount->discount_title;
                 $discountRecord->save();
