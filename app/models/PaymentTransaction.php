@@ -138,6 +138,11 @@ class PaymentTransaction extends Eloquent
         return $this->hasOne('DiscountCode', 'payment_transaction_id');
     }
 
+    public function discount_codes()
+    {
+        return $this->hasMany('DiscountCode', 'payment_transaction_id');
+    }
+
     public function midtrans()
     {
         return $this->hasOne('PaymentMidtrans');
@@ -397,8 +402,12 @@ class PaymentTransaction extends Eloquent
      */
     public function resetDiscount()
     {
-        if (! empty($this->discount_code)) {
-            $this->discount_code->makeAvailable();
+        if (! isset($this->discount_codes)) {
+            $this->load('discount_codes');
+        }
+
+        foreach($this->discount_codes as $discountCode) {
+            $discountCode->makeAvailable();
         }
     }
 
