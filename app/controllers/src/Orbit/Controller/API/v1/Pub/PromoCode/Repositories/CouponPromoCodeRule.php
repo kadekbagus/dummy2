@@ -151,10 +151,9 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
                 );
 
                 $eligible = $eligible && $qtyEligible->eligible;
-                if ($eligible) {
-                    $allowedQty = ($availQtyEligible->allowedQty < $qtyEligible->allowedQty) ?
-                        $availQtyEligible->allowedQty : $qtyEligible->allowedQty;
-                } else {
+                $allowedQty = ($allowedQty < $qtyEligible->allowedQty) ?
+                    $allowedQty : $qtyEligible->allowedQty;
+                if (! $eligible) {
                     $rejectReason = 'REMAINING_DISCOUNT_CODE_USAGE_FOR_USER_GREATER_THAN_ALLOWED';
                 }
             } else {
