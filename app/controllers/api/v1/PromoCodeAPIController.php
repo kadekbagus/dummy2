@@ -11,6 +11,8 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
+use DiscountCode;
+use Orbit\Database\ObjectID;
 
 class PromoCodeAPIController extends ControllerAPI
 {
@@ -66,7 +68,7 @@ class PromoCodeAPIController extends ControllerAPI
             $value_in_percent = OrbitInput::post('value_in_percent');
             $start_date = OrbitInput::post('start_date');
             $end_date = OrbitInput::post('end_date');
-            $max_per_transaction = OrbitInput::post('max_per_transaction');
+            $max_per_transaction = OrbitInput::post('max_per_transaction', '1');
             $max_per_user = OrbitInput::post('max_per_user');
             $max_redemption = OrbitInput::post('max_redemption');
             $type = OrbitInput::post('type', 'coupon');
@@ -85,9 +87,9 @@ class PromoCodeAPIController extends ControllerAPI
                 'status'              => $status,
             ];
             $validator_validation = [
-                'discount_title'      => 'required',
+                'discount_title'      => 'required|orbit.exist.promoname',
                 'discount_code'       => 'required|orbit.exist.promocode',
-                'value_in_percent'    => 'required',
+                'value_in_percent'    => 'required|orbit.max.percent',
                 'start_date'          => 'required|date|orbit.empty.hour_format',
                 'end_date'            => 'required|date|orbit.empty.hour_format',
                 'max_per_transaction' => 'required',
@@ -100,10 +102,12 @@ class PromoCodeAPIController extends ControllerAPI
                 'discount_title.required'      => 'Promo Name required',
                 'discount_code.required'       => 'Promo Code required',
                 'orbit.exist.promocode'        => 'Promo Code already used',
+                'orbit.exist.promoname'        => 'Promo Name already used',
                 'value_in_percent.required'    => 'Promo Value required',
                 'max_per_transaction.required' => 'Maximum Redeemed Code Per Transaction required',
                 'max_per_user.required'        => 'Number of Use Per User required',
                 'max_redemption.required'      => 'Maximum Redeemed Code Quantity',
+                'orbit.max.percent'            => 'Promo Value cannot exceed 100%'
             ];
 
             $validator = Validator::make(
@@ -137,6 +141,22 @@ class PromoCodeAPIController extends ControllerAPI
             $newPromoCode->type = $type;
             $newPromoCode->status = $status;
             $newPromoCode->save();
+
+            // insert to discount code
+            if ($max_redemption != 0) {
+                for ($i=1; $i<=$max_redemption; $i++) {
+                    $data[] = [
+                                'discount_code_id' => ObjectID::make(),
+                                'discount_id' => $newPromoCode->discount_id,
+                                'discount_code' => $discount_code,
+                                'status'=> 'available',
+                                'created_at'=> date("Y-m-d H:i:s"),
+                                'updated_at'=> date("Y-m-d H:i:s")
+                              ];
+                }
+
+                DiscountCode::insert($data);
+            }
 
             Event::fire('orbit.promocode.postnewpromocode.after.save', array($this, $newPromoCode));
 
@@ -222,21 +242,29 @@ class PromoCodeAPIController extends ControllerAPI
             Event::fire('orbit.promocode.postupdatepromocode.after.authz', array($this, $user));
 
             $discount_id = OrbitInput::post('discount_id');
+            $discount_title = OrbitInput::post('discount_title');
             $discount_code = OrbitInput::post('discount_code');
+            $value_in_percent = OrbitInput::post('value_in_percent');
 
             $this->registerCustomValidation();
 
             $validator_value = [
                 'discount_id'      => $discount_id,
                 'discount_code'    => $discount_code,
+                'discount_title'   => $discount_title,
+                'value_in_percent' => $value_in_percent,
             ];
             $validator_validation = [
                 'discount_id'       => 'required|orbit.exist.discount_id',
                 'discount_code'     => 'orbit.exist.promocode_but_me:'.$discount_id,
+                'discount_title'    => 'orbit.exist.promoname_but_me:'.$discount_id,
+                'value_in_percent'  => 'orbit.max.percent'
             ];
             $validator_message = [
                 'discount_id.required'           => 'Discount id required',
                 'orbit.exist.promocode_but_me'   => 'Promo Code already used',
+                'orbit.exist.promoname_but_me'   => 'Promo Name already used',
+                'orbit.max.percent'              => 'Promo Value cannot exceed 100%'
             ];
 
             $validator = Validator::make(
@@ -302,6 +330,7 @@ class PromoCodeAPIController extends ControllerAPI
                 $updatedPromoCode->status = $status;
             });
 
+            $updatedPromoCode->touch();
             $updatedPromoCode->save();
 
             Event::fire('orbit.promocode.postupdatepromocode.after.save', array($this, $updatedPromoCode));
@@ -394,7 +423,7 @@ class PromoCodeAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:discount_title,discount_code,value_in_percent,start_date,end_date,type,status,created_at',
+                    'sort_by' => 'in:discount_title,discount_code,value_in_percent,start_date,end_date,type,status,created_at,updated_at',
                 ),
                 array(
                     'in' => 'invalid sortby',
@@ -432,7 +461,7 @@ class PromoCodeAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
 
             // Builder object
-            $promoCode = Discount::select('discount_id', 'discount_title', 'start_date', 'end_date', 'type', 'status', 'created_at');
+            $promoCode = Discount::select('discount_id', 'discount_title', 'start_date', 'end_date', 'type', 'status', 'created_at', 'updated_at');
 
             // Filter news by Ids
             OrbitInput::get('discount_id', function($discount_id) use ($promoCode)
@@ -478,12 +507,12 @@ class PromoCodeAPIController extends ControllerAPI
 
             // Filter news by sticky order
             OrbitInput::get('status', function ($status) use ($promoCode) {
-                $promoCode->whereIn('discounts.status', $status);
+                $promoCode->where('discounts.status', $status);
             });
 
             // Filter news by link object type
             OrbitInput::get('type', function ($type) use ($promoCode) {
-                $promoCode->whereIn('discounts.type', $type);
+                $promoCode->where('discounts.type', $type);
             });
 
             // Clone the query builder which still does not include the take,
@@ -518,7 +547,7 @@ class PromoCodeAPIController extends ControllerAPI
             }
 
             // Default sort by
-            $sortBy = 'status';
+            $sortBy = 'discounts.updated_at';
             // Default sort mode
             $sortMode = 'asc';
 
@@ -533,7 +562,8 @@ class PromoCodeAPIController extends ControllerAPI
                     'end_date'        => 'discounts.end_date',
                     'type'            => 'discounts.type',
                     'status'          => 'discounts.status',
-                    'created_at'      => 'discounts.created_at'
+                    'created_at'      => 'discounts.created_at',
+                    'updated_at'      => 'discounts.updated_at'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -547,6 +577,7 @@ class PromoCodeAPIController extends ControllerAPI
             });
 
             $promoCode->orderBy($sortBy, $sortMode);
+            $promoCode->orderBy('updated_at', 'desc');
 
             $totalNews = RecordCounter::create($_promoCode)->count();
             $listOfNews = $promoCode->get();
@@ -735,6 +766,37 @@ class PromoCodeAPIController extends ControllerAPI
                                 ->first();
 
             if (!empty($discount)) {
+                return false;
+            }
+
+            return true;
+        });
+
+        Validator::extend('orbit.exist.promoname', function ($attribute, $value, $parameters) {
+            $exist = Discount::where('discount_title', $value)->first();
+
+            if (!empty($exist)) {
+                return false;
+            }
+
+            return true;
+        });
+
+        Validator::extend('orbit.exist.promoname_but_me', function ($attribute, $value, $parameters) {
+            $discount_id = trim($parameters[0]);
+            $discount = Discount::where('discount_title', $value)
+                                ->where('discount_id', '!=', $discount_id)
+                                ->first();
+
+            if (!empty($discount)) {
+                return false;
+            }
+
+            return true;
+        });
+
+        Validator::extend('orbit.max.percent', function ($attribute, $value, $parameters) {
+            if ($value>100) {
                 return false;
             }
 

@@ -50,7 +50,7 @@ class CanceledPaymentNotification extends CustomerNotification implements EmailN
     public function getEmailTemplates()
     {
         return [
-            'html' => 'emails.canceled-payment',
+            'html' => 'emails.payment.canceled-payment',
         ];
     }
 

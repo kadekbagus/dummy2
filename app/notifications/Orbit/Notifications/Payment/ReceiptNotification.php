@@ -63,7 +63,7 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
     public function getEmailTemplates()
     {
         return [
-            'html' => 'emails.receipt.hot-deals',
+            'html' => 'emails.hot-deals.receipt',
         ];
     }
 

@@ -21,6 +21,9 @@ use Country;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\CampaignSourceParser;
 use Request;
+use Log;
+use App;
+use Discount;
 
 /**
  * Create payment record for Pulsa purchase.
@@ -66,6 +69,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
             $object_name = OrbitInput::post('object_name');
             $user_name = (!empty($last_name) ? $first_name.' '.$last_name : $first_name);
             $mallId = OrbitInput::post('mall_id', null);
+            $promoCode = OrbitInput::post('promo_code', null);
 
             $validator = Validator::make(
                 array(
@@ -80,6 +84,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                     'object_id'  => $object_id,
                     'object_type'  => $object_type,
                     'quantity'   => $quantity,
+                    'promo_code' => $promoCode,
                 ),
                 array(
                     'first_name' => 'required',
@@ -93,10 +98,12 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                     'object_type'  => 'required',
                     'object_id'  => 'required|orbit.exists.pulsa',
                     'quantity'   => 'required',
+                    'promo_code' => 'orbit.reserved.promo',
                 ),
                 array(
                     'orbit.allowed.quantity' => 'REQUESTED_QUANTITY_NOT_AVAILABLE',
                     'orbit.exists.pulsa' => 'Pulsa does not exists.',
+                    'orbit.reserved.promo' => 'RESERVED_PROMO_CODE_NOT_FOUND',
                 )
             );
 
@@ -197,6 +204,51 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
             $paymentMidtransDetail = new PaymentMidtrans;
             $payment_new->midtrans()->save($paymentMidtransDetail);
 
+            // process discount if any.
+            if (! empty($promoCode)) {
+                Log::info("Trying to make pulsa purchase with promo code {$promoCode}...");
+
+                // TODO: Move to PromoReservation helper?
+                $reservedPromoCodes = $user->discountCodes()->with(['discount'])
+                    ->where('discount_code', $promoCode)
+                    ->whereNull('payment_transaction_id')
+                    ->reserved()
+                    ->get();
+
+                $discount = $reservedPromoCodes->count() > 0
+                    ? $reservedPromoCodes->first()->discount
+                    : Discount::findOrFail($reservedPromoCodes->first()->discount_id);
+
+                $discountRecord = new PaymentTransactionDetail;
+                $discountRecord->payment_transaction_id = $payment_new->payment_transaction_id;
+                $discountRecord->currency = $payment_new->currency;
+                $discountRecord->price = $discount->value_in_percent / 100 * $payment_new->amount * -1.00;
+                $discountRecord->quantity = 1;
+                $discountRecord->object_id = $discount->discount_id;
+                $discountRecord->object_type = 'discount';
+                $discountRecord->object_name = $discount->discount_title;
+                $discountRecord->save();
+
+                // $reservedPromoCode->status = 'ready_to_issue';
+                foreach($reservedPromoCodes as $reservedPromoCode) {
+                    $reservedPromoCode->payment_transaction_id = $payment_new->payment_transaction_id;
+                    $reservedPromoCode->save();
+                }
+
+                $payment_new->amount = $payment_new->amount + $discountRecord->price;
+                $payment_new->save();
+
+                // Add additional property to indicate that this purchase is free,
+                // so frontend can bypass payment steps.
+                if ($discount->value_in_percent === 100) {
+                    $payment_new->bypass_payment = true;
+                }
+
+                $payment_new->promo_code = $reservedPromoCode->discount_code;
+
+                Log::info("Promo Code {$reservedPromoCode->discount_code} added to purchase {$payment_new->payment_transaction_id}");
+            }
+
             // Commit the changes
             $this->commit();
 
@@ -276,16 +328,8 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
 
         // Check if pulsa is exists.
         Validator::extend('orbit.exists.pulsa', function ($attribute, $value, $parameters) {
-            $prefix = DB::getTablePrefix();
-            $pulsa = Pulsa::where('pulsa_item_id', $value)->where('status', 'active')->first();
-
-            if (empty($pulsa)) {
-                return false;
-            }
-
-            \App::instance('orbit.instance.pulsa', $pulsa);
-
-            return true;
+            return Pulsa::where('pulsa_item_id', $value)->where('status', 'active')
+                ->where('displayed', 'yes')->first() !== null;
         });
 
         /**
@@ -294,8 +338,6 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
         Validator::extend('orbit.allowed.quantity', function ($attribute, $requestedQuantity, $parameters) use ($user) {
 
             $pulsaId = OrbitInput::post('object_id');
-
-            // $pulsa = \App::make('orbit.instance.pulsa');
 
             // Globally issued coupon count regardless of the Customer.
             $issuedPulsa = PaymentTransaction::select(
@@ -322,6 +364,30 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
             }
 
             return $requestedQuantity <= $issuedPulsa && ! $issuedPulsaForUser;
+        });
+
+        // Validator::extend('orbit.active_discount', function($attribute, $promoCode, $paramters) {
+        //     // Assume discount is active if promoCode is empty/not exists in the request.
+        //     if (empty($promocode)) return true;
+
+        //     // Otherwise, check if discount is still active.
+        //     return DiscountCode::whereHas('discount', function($discount) {
+        //         $discount->active()->betweenExpiryDate();
+        //     })->first() !== null;
+        // });
+
+        Validator::extend('orbit.reserved.promo', function($attribute, $promoCode, $parameters) use ($user)
+        {
+            // Assume true (or reserved) if promocode empty/not exists in the request.
+            if (empty($promoCode)) return true;
+
+            // Otherwise, check for reserved status.
+            // TODO: Move to PromoReservation helper?
+            return $user->discountCodes()
+                ->where('discount_code', $promoCode)
+                ->whereNull('payment_transaction_id')
+                ->reserved()
+                ->first() !== null;
         });
     }
 
