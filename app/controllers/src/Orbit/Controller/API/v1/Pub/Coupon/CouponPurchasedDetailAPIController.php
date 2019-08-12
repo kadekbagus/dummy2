@@ -118,7 +118,9 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
                                 }]);
                             }])
                             ->with(['discount' => function($discountQuery) {
-                                $discountQuery->select('payment_transaction_id', 'price as discount_amount');
+                                $discountQuery->select('payment_transaction_id', 'price as discount_amount')->with(['discount' => function($discountQuery) {
+                                    $discountQuery->select('discount_id', 'discount_code as parent_discount_code', 'discount_title', 'value_in_percent as percent_discount');
+                                }]);
                             }])
                             ->leftJoin('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                             ->leftJoin('payment_midtrans', 'payment_midtrans.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
