@@ -19,10 +19,11 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
      * based on number use per user and number use per transaction
      * where least of them is used.
      *----------------------------------------------
-     * @param string $promo, discount object
-     * @param string $user, user object
-     * @param string $qty, asked quantity
-     * @return true if user eligible for asked quantity
+     * @param Discount $promo, discount object
+     * @param Coupon $coupon, coupon object
+     * @param User $user, user object
+     * @param int $qty, asked quantity
+     * @return Object eligible status
      * ---------------------------------------------
      */
     private function isEligibleForQuantity($promo, $coupon, $user, $qty)
@@ -51,9 +52,10 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
      * Check if asked quantity by user is less or equal than
      * total available discount code
      *----------------------------------------------
-     * @param object $promo, promo instance
+     * @param Discount $promo, promo instance
      * @param User $user, current user
-     * @return true if user can use promo code to object
+     * @param int $qty, asked quantity
+     * @return Object eligible status
      * ---------------------------------------------
      */
     private function isEligibleForAvailQuantity($promo, $user, $qty)
@@ -81,8 +83,8 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
      * get allowed purchase per user between
      * promo code vs coupon. The less value will be returned
      *----------------------------------------------
-     * @param Object $promo
-     * @param Object $coupon
+     * @param Discount $promo
+     * @param Coupon $coupon
      * @return int least value between two
      * ---------------------------------------------
      */
@@ -96,8 +98,8 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
      * get allowed purchase per transaction between
      * promo code vs coupon. The less value will be returned
      *----------------------------------------------
-     * @param Object $promo
-     * @param Object $coupon
+     * @param Discount $promo
+     * @param Coupon $coupon
      * @return int least value between two
      * ---------------------------------------------
      */
