@@ -663,4 +663,10 @@ class CouponSearch extends Search
         }
     }
 
+    public function filterPromotionType($type = '')
+    {
+        if ($type !== '') {
+            $this->must(['match' => ['promotion_type' => $type]]);
+        }
+    }
 }
