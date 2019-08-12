@@ -14,8 +14,9 @@ interface ReservationInterface
      *
      * @param User $user, current logged in user
      * @param string $promoCode, promo code
+     * @param  int $quantity quantity of purchase item/promo code that will be reserved.
      */
-    public function markAsReserved($user, $promoCode);
+    public function markAsReserved($user, $promoCode, $quantity = 1);
 
     /**
      * mark promo code as available

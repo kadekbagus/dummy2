@@ -21,6 +21,7 @@ use Country;
 use Carbon\Carbon as Carbon;
 use Log;
 use App;
+use Discount;
 
 /**
  * Create payment record for Pulsa purchase.
@@ -189,36 +190,37 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                 Log::info("Trying to make pulsa purchase with promo code {$promoCode}...");
 
                 // TODO: Move to PromoReservation helper?
-                $reservedPromoCode = $user->discountCodes()->with(['discount'])
+                $reservedPromoCodes = $user->discountCodes()->with(['discount'])
                     ->where('discount_code', $promoCode)
                     ->whereNull('payment_transaction_id')
                     ->reserved()
-                    ->first();
+                    ->get();
 
-                $discount = $reservedPromoCode->discount
-                    ? $reservedPromoCode->discount
-                    : Discount::findOrFail($reservedPromoCode->discount_id);
+                $discount = $reservedPromoCodes->count() > 0
+                    ? $reservedPromoCodes->first()->discount
+                    : Discount::findOrFail($reservedPromoCodes->first()->discount_id);
 
                 $discountRecord = new PaymentTransactionDetail;
                 $discountRecord->payment_transaction_id = $payment_new->payment_transaction_id;
                 $discountRecord->currency = $payment_new->currency;
-                $discountRecord->price = $discount->value_in_percent / 100 * $payment_new->amount * -1;
+                $discountRecord->price = $discount->value_in_percent / 100 * $payment_new->amount * -1.00;
                 $discountRecord->quantity = 1;
-                $discountRecord->object_id = $reservedPromoCode->discount_code_id;
+                $discountRecord->object_id = $discount->discount_id;
                 $discountRecord->object_type = 'discount';
                 $discountRecord->object_name = $discount->discount_title;
                 $discountRecord->save();
 
-
                 // $reservedPromoCode->status = 'ready_to_issue';
-                $reservedPromoCode->payment_transaction_id = $payment_new->payment_transaction_id;
-                $reservedPromoCode->save();
+                foreach($reservedPromoCodes as $reservedPromoCode) {
+                    $reservedPromoCode->payment_transaction_id = $payment_new->payment_transaction_id;
+                    $reservedPromoCode->save();
+                }
 
                 $payment_new->amount = $payment_new->amount + $discountRecord->price;
                 $payment_new->save();
 
                 // Add additional property to indicate that this purchase is free,
-                // so frontend can bypass payment steps and continue to
+                // so frontend can bypass payment steps.
                 if ($discount->value_in_percent === 100) {
                     $payment_new->bypass_payment = true;
                 }
