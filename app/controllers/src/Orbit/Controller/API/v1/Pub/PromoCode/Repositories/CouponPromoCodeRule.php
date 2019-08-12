@@ -4,6 +4,7 @@ use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\RuleInterface;
 use Discount;
 use DiscountCode;
 use ObjectDiscount;
+use Coupon;
 
 /**
  * Class which determine if user is eligible to get promo code when purchase coupon
@@ -18,57 +19,30 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
      * based on number use per user and number use per transaction
      * where least of them is used.
      *----------------------------------------------
-     * For example if DISC10K is set to maximum number of use
-     * per user 10 and per transaction is 2
-     * - user never use DISC10K
-     * -- For qty<=2, then eligible = true and avail_usage_count=2
-     * -- For qty>2, then eligible = false but avail_usage_count=2
-     * - user used DISC10K once
-     * -- For qty=1, then eligible = true and avail_usage_count=1
-     * -- For qty>=2, then eligible = false and avail_usage_count=1
-     * - user used DISC10K twice
-     * -- For qty=1, then eligible = false and avail_usage_count=1
-     * -- For qty>=2, then eligible = false and avail_usage_count=1
-     *
-     * For example if DISC20K is set to maximum number of use
-     * per user 3 and per transaction is 10
-     * - user never use DISC20K
-     * -- For qty<=3, then eligible = true and avail_usage_count=3
-     * -- For qty>3, then eligible = false but avail_usage_count=3
-     * - user never use DISC20K once
-     * -- For qty<=2, then eligible = true and avail_usage_count=2
-     * -- For qty>2, then eligible = false but avail_usage_count=2
-     *----------------------------------------------
      * @param string $promo, discount object
      * @param string $user, user object
      * @param string $qty, asked quantity
      * @return true if user eligible for asked quantity
      * ---------------------------------------------
      */
-    private function isEligibleForQuantity($promo, $user, $qty)
+    private function isEligibleForQuantity($promo, $coupon, $user, $qty)
     {
         $totalUsage = $user->discountCodes()
             ->where('discount_id', $promo->discount_id)
             ->issued()
             ->count();
 
-        $quotaUsagePerUser = $promo->max_per_user - $totalUsage;
+        $maxPerUser = getMaxAllowedQtyPerUser($promo, $coupon);
+        $quotaUsagePerUser = $maxPerUser - $totalUsage;
         if ($quotaUsagePerUser <= 0) {
             $quotaUsagePerUser = 0;
-        } else {
-            $quotaUsagePerUser = $quotaUsagePerUser > $qty ? $qty : $quotaUsagePerUser;
         }
 
-        $quotaUsagePerTransaction = $promo->max_per_transaction - $totalUsage;
-        if ($quotaUsagePerTransaction <= 0) {
-            $availUsagePerTransaction = 0;
-        } else {
-            $quotaUsagePerTransaction = $quotaUsagePerTransaction > $qty ? $qty : $quotaUsagePerTransaction;
-        }
+        $quotaUsagePerTransaction = getMaxAllowedQtyPerTransaction($promo, $coupon);
 
         $allowedQty = $quotaUsagePerUser < $quotaUsagePerTransaction ? $quotaUsagePerUser : $quotaUsagePerTransaction;
         return (object) [
-            'eligible' => ($allowedQty > 0),
+            'eligible' => ($allowedQty >= $qty),
             'allowedQty' => $allowedQty
         ];
     }
@@ -101,6 +75,36 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
             'eligible' => ($totalAvail >= $qty),
             'allowedQty' => $totalAvail >= $qty ? $qty : $totalAvail,
         ];
+    }
+
+    /**---------------------------------------------
+     * get allowed purchase per user between
+     * promo code vs coupon. The less value will be returned
+     *----------------------------------------------
+     * @param Object $promo
+     * @param Object $coupon
+     * @return int least value between two
+     * ---------------------------------------------
+     */
+    private function getMaxAllowedQtyPerUser($promo, $coupon)
+    {
+        return ($promo->max_per_user < $coupon->max_quantity_per_user) ?
+            $promo->max_per_user : $coupon->max_quantity_per_user;
+    }
+
+    /**---------------------------------------------
+     * get allowed purchase per transaction between
+     * promo code vs coupon. The less value will be returned
+     *----------------------------------------------
+     * @param Object $promo
+     * @param Object $coupon
+     * @return int least value between two
+     * ---------------------------------------------
+     */
+    private function getMaxAllowedQtyPerTransaction($promo, $coupon)
+    {
+        return ($promo->max_per_transaction < $coupon->max_quantity_per_purchase) ?
+            $promo->max_per_transaction : $coupon->max_quantity_per_purchase;
     }
 
     /**---------------------------------------------
@@ -141,6 +145,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
             if ($eligible) {
                 $qtyEligible = $this->isEligibleForQuantity(
                     $promo,
+                    Coupon::find($promoData->object_id),
                     $user,
                     $allowedQty
                 );
