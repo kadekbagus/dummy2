@@ -43,7 +43,6 @@
                       </div>
                     </div>
                     @if (count($transaction['discounts']) > 0)
-                      <br>
                       @foreach($transaction['discounts'] as $discount)
                         <div style="width: 100%;">
                           <div style="width: 85%;display: inline-block;">
