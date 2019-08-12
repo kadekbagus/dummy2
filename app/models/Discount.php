@@ -23,7 +23,7 @@ class Discount extends Eloquent
     public function scopeBetweenExpiryDate($query)
     {
         $currentDatetimeUTC = gmdate('Y-m-d H:i:s');
-        return $query->where('start_date', '<=', $currentDatetimeUTC)
-            ->where('end_date', '>=', $currentDatetimeUTC);
+        return $query->where(\DB::raw("CONVERT_TZ(start_date, 'Asia/Jakarta', '+00:00')"), '<=', $currentDatetimeUTC)
+            ->where(\DB::raw("CONVERT_TZ(end_date, 'Asia/Jakarta', '+00:00')"), '>=', $currentDatetimeUTC);
     }
 }
