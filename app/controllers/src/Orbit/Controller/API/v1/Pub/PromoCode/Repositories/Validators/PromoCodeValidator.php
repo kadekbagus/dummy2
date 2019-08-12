@@ -93,10 +93,10 @@ class PromoCodeValidator implements ValidatorInterface
                 'quantity' => 'required|integer|min:1',
             ),
             array(
-                'promo_code.required' => 'Promo Code is required',
-                'promo_code.alpha_dash' => 'Promo Code must be alpha numeric and dash and underscore characters',
-                'promo_code.active_discount' => 'Promo Code must be valid not expired discount code',
-                'promo_code.available_discount' => 'No more promo codes available',
+                'promo_code.required' => 'Promo Code is required.',
+                'promo_code.alpha_dash' => 'PROMO_CODE_MUST_BE_ALPHA_DASH',
+                'promo_code.active_discount' => 'PROMO_CODE_NOT_ACTIVE',
+                'promo_code.available_discount' => 'PROMO_CODE_NOT_AVAILABLE',
 
                 'object_id.required' => 'Object Id is required',
                 'object_id.alpha_dash' => 'Object Id must be alpha numeric and dash and underscore characters',
