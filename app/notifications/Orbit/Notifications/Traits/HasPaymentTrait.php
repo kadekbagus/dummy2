@@ -44,7 +44,7 @@ trait HasPaymentTrait
 
             if ($item->price < 0 || $item->object_type === 'discount') {
                 $discount = Discount::select('value_in_percent')->find($item->object_id);
-                $discount = ! empty($discount) ? $discount->value_in_percent : '';
+                $discount = ! empty($discount) ? $discount->value_in_percent . '%' : '';
                 $detailItem['name'] = "Discount {$discount}";
                 $detailItem['quantity'] = '';
                 $transaction['discounts'][] = $detailItem;
