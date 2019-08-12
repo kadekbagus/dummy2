@@ -73,7 +73,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
 
         return (object) [
             'eligible' => ($totalAvail >= $qty),
-            'allowedQty' => $totalAvail >= $qty ? $qty : $totalAvail,
+            'allowedQty' => $totalAvail,
         ];
     }
 
@@ -147,16 +147,13 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
                     $promo,
                     Coupon::find($promoData->object_id),
                     $user,
-                    $allowedQty
+                    $promoData->quantity
                 );
 
                 $eligible = $eligible && $qtyEligible->eligible;
                 if ($eligible) {
-                    $allowedQty = $qtyEligible->allowedQty;
-                    $eligible = ($allowedQty >= $promoData->quantity);
-                    if (! $eligible) {
-                        $rejectReason = 'REQUESTED_QTY_IS_GREATER_THAN_ALLOWED_PER_USER_OR_PER_TRX';
-                    }
+                    $allowedQty = ($availQtyEligible->allowedQty < $qtyEligible->allowedQty) ?
+                        $availQtyEligible->allowedQty : $qtyEligible->allowedQty;
                 } else {
                     $rejectReason = 'REMAINING_DISCOUNT_CODE_USAGE_FOR_USER_GREATER_THAN_ALLOWED';
                 }
