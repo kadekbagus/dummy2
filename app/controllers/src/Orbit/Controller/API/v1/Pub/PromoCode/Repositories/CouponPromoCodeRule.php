@@ -33,13 +33,13 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
             ->issued()
             ->count();
 
-        $maxPerUser = getMaxAllowedQtyPerUser($promo, $coupon);
+        $maxPerUser = $this->getMaxAllowedQtyPerUser($promo, $coupon);
         $quotaUsagePerUser = $maxPerUser - $totalUsage;
         if ($quotaUsagePerUser <= 0) {
             $quotaUsagePerUser = 0;
         }
 
-        $quotaUsagePerTransaction = getMaxAllowedQtyPerTransaction($promo, $coupon);
+        $quotaUsagePerTransaction = $this->getMaxAllowedQtyPerTransaction($promo, $coupon);
 
         $allowedQty = $quotaUsagePerUser < $quotaUsagePerTransaction ? $quotaUsagePerUser : $quotaUsagePerTransaction;
         return (object) [
