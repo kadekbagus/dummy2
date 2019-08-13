@@ -179,9 +179,9 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
         }
 
         //if asked quantity > allowed quantity
-        //adjust qty
+        //adjust qty and if adjustedQty is greater than zero assume eligible
         $adjustedQty = $allowedQty < $promoData->quantity ? $allowedQty : $promoData->quantity;
-        $eligible = $eligible && ($adjustedQty > 0);
+        $eligible = $eligible || ($adjustedQty > 0);
 
         return (object) [
             'promo_id' => $promo->discount_id,
