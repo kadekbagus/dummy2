@@ -111,6 +111,12 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
      */
     private function getMaxAllowedQtyPerTransaction($promo, $coupon)
     {
+        if (empty($coupon->max_quantity_per_purchase)) {
+            //zero value in coupon is used to marked unlimited use
+            //so for this special use case, we will automatically
+            //use data from promo
+            return $promo->max_per_transaction;
+        }
         return ($promo->max_per_transaction < $coupon->max_quantity_per_purchase) ?
             $promo->max_per_transaction : $coupon->max_quantity_per_purchase;
     }
