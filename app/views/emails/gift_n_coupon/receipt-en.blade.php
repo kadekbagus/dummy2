@@ -43,20 +43,14 @@
                       </div>
                     </div>
                     @if (count($transaction['discounts']) > 0)
-                      <br>
                       @foreach($transaction['discounts'] as $discount)
                         <div style="width: 100%;">
                           <div style="width: 85%;display: inline-block;">
                             <strong>{{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
                           </div>
-                          <div style="width: 10%;display: inline-block;">
-                            X {{ $discount['quantity'] }}
-                          </div>
                         </div>
                       @endforeach
                     @endif
-                    <br>
-                    <strong>{{{ trans('email-receipt.body.transaction_labels.coupon_quantity') }}}:</strong> {{ $transaction['items'][0]['quantity'] }}
                     <br>
                     <strong>{{{ trans('email-receipt.body.transaction_labels.total_amount') }}}:</strong> {{ $transaction['items'][0]['total'] }}
                     <br>
