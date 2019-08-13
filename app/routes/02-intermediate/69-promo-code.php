@@ -6,6 +6,11 @@
 Route::post('/app/v1/pub/promocode/use', ['as' => 'promocode-use', 'uses' => 'IntermediatePubAuthController@PromoCode\PromoCodeCheck_postCheckPromoCode']);
 
 /**
+ * Get detail promo code
+ */
+Route::get('/app/v1/pub/promocode/detail', 'IntermediatePubAuthController@PromoCode_getDetailPromoCode');
+
+/**
  * Routes file for Intermediate Promo Code API
  */
 
