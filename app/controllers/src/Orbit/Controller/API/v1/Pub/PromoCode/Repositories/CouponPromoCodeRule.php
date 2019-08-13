@@ -90,6 +90,12 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
      */
     private function getMaxAllowedQtyPerUser($promo, $coupon)
     {
+        if ($coupon->max_quantity_per_user === 0) {
+            //zero value in coupon is used to marked unlimited use
+            //so for this special use case, we will automatically
+            //use data from promo
+            return $promo->max_per_user;
+        }
         return ($promo->max_per_user < $coupon->max_quantity_per_user) ?
             $promo->max_per_user : $coupon->max_quantity_per_user;
     }
