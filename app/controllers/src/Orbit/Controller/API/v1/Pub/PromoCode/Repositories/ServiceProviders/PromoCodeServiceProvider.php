@@ -13,6 +13,7 @@ use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\PulsaPromoCodeRule;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\PromoCodeReservation;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\ResponseRenderer;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Validators\PromoCodeValidator;
+use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Validators\PromoCodeDetailValidator;
 
 class PromoCodeServiceProvider extends ServiceProvider
 {
@@ -29,6 +30,10 @@ class PromoCodeServiceProvider extends ServiceProvider
         $this->app->bind(ReservationInterface::class, PromoCodeReservation::class);
         $this->app->bind(ValidatorInterface::class, PromoCodeValidator::class);
         $this->app->bind(ResponseRendererInterface::class, ResponseRenderer::class);
+
+        $this->app->bind(DetailRepositoryInterface::class, function () {
+            return new DetailRepository(new PromoCodeDetailValidator());
+        });
     }
 
 }
