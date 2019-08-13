@@ -4,7 +4,7 @@
     <meta charset="utf-8"> <!-- utf-8 works for most cases -->
     <meta name="viewport" content="width=device-width"> <!-- Forcing initial-scale shouldn't be necessary -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Use the latest (edge) version of IE rendering engine -->
-    <title>Complete Your Payment | Gotomalls.com</title>
+    <title>Transaction Canceled | Gotomalls.com</title>
     <!-- Web Font / @font-face : BEGIN -->
     <!-- NOTE: If web fonts are not required, lines 10 - 27 can be safely removed. -->
     <!-- All other clients get the webfont reference; some will render the font and others will silently fail to the fallbacks. More on that here: http://stylecampaign.com/blog/2015/02/webfont-support-in-email/ -->
@@ -158,7 +158,7 @@
               <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/themes/default/images/logo-en.png?t=1523326836" alt="Logo" class="logo" style="-ms-interpolation-mode:bicubic;width:80%;">
             </th>
             <th class="text-right" style="font-family:'Roboto', 'Arial', sans-serif;text-align:right;padding-bottom:30px;">
-              <span class="text-red invoice-title" style="color:#f43d3c;font-size:28px;font-weight:bold;">{{{ trans('email-before-transaction-expired.header.invoice', [], '', 'id') }}}</span>
+              <span class="text-red invoice-title" style="color:#f43d3c;font-size:28px;font-weight:bold;">{{{ trans('email-canceled-payment.header.email-type', [], '', 'id') }}}</span>
             </th>
           </tr>
         </thead>
@@ -167,43 +167,67 @@
           <tr>
             <td colspan="2" class="invoice-body" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-before-transaction-expired.body.greeting', ['customerName' => $customerName], '', 'id') }}
+                {{ trans('email-canceled-payment.body.greeting', ['customerName' => $customerName], '', 'id') }}
               </p>
               <br>
-
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-pending-payment.body.payment-info-line-1', compact('paymentExpiration'), '', 'id') }}
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.transaction_id', [], '', 'id') }}}</strong> {{ $transaction['id'] }}
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.transaction_date', [], '', 'id') }}}</strong> {{ $transactionDateTime }}
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.customer_name', [], '', 'id') }}}</strong> {{ $customerName }}
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.email', [], '', 'id') }}}</strong> {{ $customerEmail }}
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.phone', [], '', 'id') }}}</strong> {{ $customerPhone }}
+                <br>
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.coupon_name', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['name'] }}
+                <br>
+                <div style="width: 100%;">
+                  <div style="width: 30%;display: inline-block;">
+                    <strong>{{{ trans('email-canceled-payment.body.transaction_labels.coupon_price', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['price'] }}
+                  </div>
+                  <div style="width: 60%;display: inline-block;text-align: left;">
+                    X {{ $transaction['items'][0]['quantity'] }}
+                  </div>
+                </div>
+                @if (count($transaction['discounts']) > 0)
+                  @foreach($transaction['discounts'] as $discount)
+                    <div style="width: 100%;">
+                      <div style="width: 99%;display: inline-block;">
+                        <strong>{{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
+                      </div>
+                    </div>
+                  @endforeach
+                @endif
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.total_amount', [], '', 'id') }}}</strong> {{ $transaction['total'] }}
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.status', [], '', 'id') }}} <span style="color:#f43d3c;">{{ trans('email-canceled-payment.body.transaction_labels.status_canceled', [], '', 'id') }}</span></strong>
+                <br>
               </p>
-              <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.transaction_id', [], '', 'id') }}}</strong> {{ $transaction['id'] }}
                 <br>
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.transaction_date', [], '', 'id') }}}</strong> {{ $transactionDateTime }}
-                <br>
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.customer_name', [], '', 'id') }}}</strong> {{ $customerName }}
-                <br>
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.email', [], '', 'id') }}}</strong> {{ $customerEmail }}
-                <br>
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.phone', [], '', 'id') }}}</strong> {{ $customerPhone }}
-                <br>
-                <br>
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.coupon_name', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['name'] }}
-                <br>
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.coupon_price', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['price'] }}
-                <br>
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.coupon_quantity', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['quantity'] }}
-                <br>
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.total_amount', [], '', 'id') }}}</strong> {{ $transaction['total'] }}
-                <br>
+                {{ trans('email-canceled-payment.body.payment-info-line-1', ['transactionDateTime' => $transactionDateTime], '', 'id') }}
               </p>
-              <br>
-
-              @include('emails.pending-payment.payment-info', compact('paymentInfo', 'paymentExpiration', 'myPurchasesUrl', 'cancelUrl', 'hideExpiration'))
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{ trans('email-before-transaction-expired.body.payment-info-line-3', [], '', 'id') }}
+                {{ trans('email-canceled-payment.body.payment-info-line-2', $cs, '', 'id') }}
+              </p>
+
+              <p style="text-align: center">
+                  <br>
+                  <a href="{{{ $buyUrl }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;font-size:16px;display:inline-block;padding:10px 20px;text-decoration:none;">
+                    {{{ trans('email-canceled-payment.body.buttons.buy_coupon', [], '', 'id') }}}
+                  </a>
+              </p>
+
+              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
+                <br>
+                {{ trans('email-canceled-payment.body.regards', [], '', 'id') }}
               </p>
             </td>
           </tr>
@@ -217,43 +241,78 @@
           <tr>
             <td colspan="2" class="invoice-body" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:80px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-before-transaction-expired.body.greeting', ['customerName' => $customerName]) }}
+                {{ trans('email-canceled-payment.body.greeting', ['customerName' => $customerName]) }}
+              </p>
+              <br>
+              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.transaction_id') }}}</strong> {{ $transaction['id'] }}
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.transaction_date') }}}</strong> {{ $transactionDateTime }}
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.customer_name') }}}</strong> {{ $customerName }}
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.email') }}}</strong> {{ $customerEmail }}
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.phone') }}}</strong> {{ $customerPhone }}
+                <br>
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.coupon_name') }}}</strong> {{ $transaction['items'][0]['name'] }}
+                <br>
+                <div style="width: 100%;">
+                  <div style="width: 30%;display: inline-block;">
+                    <strong>{{{ trans('email-canceled-payment.body.transaction_labels.coupon_price') }}}</strong> {{ $transaction['items'][0]['price'] }}
+                  </div>
+                  <div style="width: 60%;display: inline-block;text-align: left;">
+                    X {{ $transaction['items'][0]['quantity'] }}
+                  </div>
+                </div>
+                @if (count($transaction['discounts']) > 0)
+                  @foreach($transaction['discounts'] as $discount)
+                    <div style="width: 100%;">
+                      <div style="width: 99%;display: inline-block;">
+                        <strong>{{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
+                      </div>
+                    </div>
+                  @endforeach
+                @endif
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.total_amount') }}}</strong> {{ $transaction['total'] }}
+                <br>
+                <strong>{{{ trans('email-canceled-payment.body.transaction_labels.status') }}} <span style="color:#f43d3c;">{{ trans('email-canceled-payment.body.transaction_labels.status_canceled') }}</span></strong>
+                <br>
+              </p>
+
+              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
+                <br>
+                {{ trans('email-canceled-payment.body.payment-info-line-1') }}
               </p>
               <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-pending-payment.body.payment-info-line-1', compact('paymentExpiration')) }}
+                {{ trans('email-canceled-payment.body.payment-info-line-2') }}
               </p>
               <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.transaction_id') }}}</strong> {{ $transaction['id'] }}
-                <br>
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.transaction_date') }}}</strong> {{ $transactionDateTime }}
-                <br>
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.customer_name') }}}</strong> {{ $customerName }}
-                <br>
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.email') }}}</strong> {{ $customerEmail }}
-                <br>
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.phone') }}}</strong> {{ $customerPhone }}
-                <br>
-                <br>
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.coupon_name') }}}</strong> {{ $transaction['items'][0]['name'] }}
-                <br>
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.coupon_price') }}}</strong> {{ $transaction['items'][0]['price'] }}
-                <br>
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.coupon_quantity') }}}</strong> {{ $transaction['items'][0]['quantity'] }}
-                <br>
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.total_amount') }}}</strong> {{ $transaction['total'] }}
-                <br>
+                {{ trans('email-canceled-payment.body.payment-info-line-3') }}
               </p>
               <br>
 
-              @include('emails.pending-payment.payment-info-en', compact('paymentInfo', 'paymentExpiration', 'myPurchasesUrl', 'cancelUrl', 'hideExpiration'))
+              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
+                {{ trans('email-canceled-payment.body.payment-info-line-4') }}
+              </p>
+              <br>
+
+              <p style="text-align: center">
+                  <br>
+                  <a href="{{{ $buyUrl }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;font-size:16px;display:inline-block;padding:10px 20px;text-decoration:none;">
+                    {{{ trans('email-canceled-payment.body.buttons.buy_coupon') }}}
+                  </a>
+              </p>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{ trans('email-before-transaction-expired.body.payment-info-line-3') }}
+                {{ trans('email-canceled-payment.body.regards') }}
               </p>
             </td>
           </tr>

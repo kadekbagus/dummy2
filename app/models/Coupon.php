@@ -206,6 +206,11 @@ class Coupon extends Eloquent
         return $this->hasOne('CouponSepulsa', 'promotion_id', 'promotion_id');
     }
 
+    public function discounts()
+    {
+        return $this->belongsToMany('Discount', 'object_discount', 'object_id')->where('object_type', 'coupon')->withTimestamps();
+    }
+
     /**
      * Add Filter coupons based on user who request it.
      *

@@ -112,7 +112,16 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
                                                 ) as link_to_tenant,
                                     {$prefix}issued_coupons.expired_date
                             "))
-
+                            ->with(['discount_code' => function($discountCodeQuery) {
+                                $discountCodeQuery->select('payment_transaction_id', 'discount_code_id', 'discount_id', 'discount_code as used_discount_code')->with(['discount' => function($discountDetailQuery) {
+                                    $discountDetailQuery->select('discount_id', 'discount_code as parent_discount_code', 'discount_title', 'value_in_percent as percent_discount');
+                                }]);
+                            }])
+                            ->with(['discount' => function($discountQuery) {
+                                $discountQuery->select('payment_transaction_id', 'object_id', 'price as discount_amount')->with(['discount' => function($discountQuery) {
+                                    $discountQuery->select('discount_id', 'discount_code as parent_discount_code', 'discount_title', 'value_in_percent as percent_discount');
+                                }]);
+                            }])
                             ->leftJoin('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                             ->leftJoin('payment_midtrans', 'payment_midtrans.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                             ->join('promotions', 'promotions.promotion_id', '=', 'payment_transaction_details.object_id')
@@ -185,15 +194,6 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
             if (empty($coupon->currency)) {
                 $coupon->currency = 'IDR';
             }
-
-            // if ($coupon->currency === 'IDR') {
-            //     $coupon->price_selling = number_format($coupon->price_selling, 0, ',', '.');
-            //     $coupon->amount = number_format($coupon->amount, 0, ',', '.');
-            // }
-            // else {
-            //     $coupon->price_selling = number_format($coupon->price_selling, 2, '.', ',');
-            //     $coupon->amount = number_format($coupon->amount, 2, '.', ',');
-            // }
 
             // get Imahe from local when image cdn is null
             if ($coupon->cdnPath == null) {

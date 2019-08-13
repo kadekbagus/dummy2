@@ -26,6 +26,8 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
             $payment->cleanUp();
         }
 
+        $payment->resetDiscount();
+
         DB::connection()->commit();
     }
     else if ($payment->status === PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED || $payment->status === PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED) {
@@ -126,6 +128,8 @@ Event::listen('orbit.payment-stripe.postupdatepayment.after.commit', function(Pa
         DB::connection()->beginTransaction();
 
         $payment->cleanUp();
+
+        $payment->resetDiscount();
 
         DB::connection()->commit();
     }

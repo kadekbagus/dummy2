@@ -42,7 +42,7 @@ class CheckTransactionStatusQueue
 
             DB::connection()->beginTransaction();
 
-            $payment = PaymentTransaction::onWriteConnection()->with(['details.coupon', 'details.pulsa', 'refunds', 'midtrans', 'issued_coupons', 'user'])->find($data['transactionId']);
+            $payment = PaymentTransaction::onWriteConnection()->with(['details.coupon', 'details.pulsa', 'refunds', 'midtrans', 'issued_coupons', 'user', 'discount_code'])->find($data['transactionId']);
             $mallId = isset($data['mall_id']) ? $data['mall_id'] : null;
             $mall = Mall::where('merchant_id', $mallId)->first();
 
@@ -68,6 +68,8 @@ class CheckTransactionStatusQueue
                 if (! $payment->forPulsa()) {
                     $payment->cleanUp();
                 }
+
+                $payment->resetDiscount();
 
                 DB::connection()->commit();
 

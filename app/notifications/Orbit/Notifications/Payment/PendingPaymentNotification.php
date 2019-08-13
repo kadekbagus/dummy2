@@ -52,7 +52,7 @@ class PendingPaymentNotification extends CustomerNotification implements EmailNo
     public function getEmailTemplates()
     {
         return [
-            'html' => 'emails.pending-payment.hot-deals',
+            'html' => 'emails.payment.pending-payment',
         ];
     }
 
@@ -90,7 +90,7 @@ class PendingPaymentNotification extends CustomerNotification implements EmailNo
             $payment = PaymentTransaction::with(['midtrans'])->findOrFail($data['transaction']['id']);
 
             // Only send email if pending.
-            if ($payment->pending()) {
+            // if ($payment->pending()) {
                 $data['paymentInfo'] = json_decode(unserialize($payment->midtrans->payment_midtrans_info), true);
 
                 Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
@@ -102,7 +102,7 @@ class PendingPaymentNotification extends CustomerNotification implements EmailNo
                     $mail->from($emailConfig['email'], $emailConfig['name']);
                     $mail->to($data['recipientEmail']);
                 });
-            }
+            // }
 
         } catch (Exception $e) {
             Log::debug('Notification: PendingPayment email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
