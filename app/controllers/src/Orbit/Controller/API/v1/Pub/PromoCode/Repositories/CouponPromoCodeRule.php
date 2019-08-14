@@ -90,6 +90,12 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
      */
     private function getMaxAllowedQtyPerUser($promo, $coupon)
     {
+        if (empty($coupon->max_quantity_per_user)) {
+            //zero value in coupon is used to marked unlimited use
+            //so for this special use case, we will automatically
+            //use data from promo
+            return $promo->max_per_user;
+        }
         return ($promo->max_per_user < $coupon->max_quantity_per_user) ?
             $promo->max_per_user : $coupon->max_quantity_per_user;
     }
@@ -105,6 +111,12 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
      */
     private function getMaxAllowedQtyPerTransaction($promo, $coupon)
     {
+        if (empty($coupon->max_quantity_per_purchase)) {
+            //zero value in coupon is used to marked unlimited use
+            //so for this special use case, we will automatically
+            //use data from promo
+            return $promo->max_per_transaction;
+        }
         return ($promo->max_per_transaction < $coupon->max_quantity_per_purchase) ?
             $promo->max_per_transaction : $coupon->max_quantity_per_purchase;
     }
@@ -132,6 +144,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
         );
 
         $allowedQty = 0;
+        $adjustedQty = 0;
 
         if ($eligible) {
 
@@ -165,6 +178,11 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
             $rejectReason = 'DISCOUNT_CODE_NOT_APPLICABLE_TO_PURCHASED_ITEM';
         }
 
+        //if asked quantity > allowed quantity
+        //adjust qty and if adjustedQty is greater than zero assume eligible
+        $adjustedQty = $allowedQty < $promoData->quantity ? $allowedQty : $promoData->quantity;
+        $eligible = $eligible || ($adjustedQty > 0);
+
         return (object) [
             'promo_id' => $promo->discount_id,
             'promo_title' => $promo->discount_title,
@@ -173,10 +191,12 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
 
             //when eligible = false, rejectReason contains code why user
             //is not eligible for discount othweise this is empty string
-            'rejectReason' => $rejectReason,
+            'rejectReason' => ! $eligible ? $rejectReason : '',
 
             'avail_quota_count' => $allowedQty,
             'original_quantity' => $promoData->quantity,
+            'adjusted_quantity' => $adjustedQty,
+
             'user_id' => $user->user_id,
             'object_type' => $promoData->object_type,
             'object_id' => $promoData->object_id,
