@@ -5,7 +5,7 @@ use Coupon;
 class CouponExistsValidator
 {
 
-    private function __invoke($attribute, $value, $parameters, $validators)
+    public function __invoke($attribute, $value, $parameters, $validators)
     {
         $data = $validators->getData();
         $valid = true;

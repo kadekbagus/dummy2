@@ -10,7 +10,7 @@ class AvailableDiscountValidator
         return $this;
     }
 
-    private function __invoke($attribute, $value, $parameters, $validators)
+    public function __invoke($attribute, $value, $parameters, $validators)
     {
         $discount = DiscountCode::where('discount_code', $value)
             ->available()
