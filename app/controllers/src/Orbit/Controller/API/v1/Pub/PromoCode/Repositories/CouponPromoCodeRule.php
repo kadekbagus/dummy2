@@ -66,9 +66,15 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
 
         if ($totalAvail < $qty) {
             //test if current user already reserved some promo codes
+            //that does not yet waiting for payment
             $totalReserved = $user->discountCodes()
                 ->where('discount_id', $promo->discount_id)
                 ->reserved()
+
+                //this is to indicate that promo code is reserved
+                //but not waiting for payment (i.e user does not click checkout)
+                ->whereNull('payment_transaction_id')
+
                 ->count();
             $totalAvail = $totalAvail + $totalReserved;
         }

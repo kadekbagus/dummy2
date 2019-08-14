@@ -21,50 +21,16 @@ class PromoCodeValidator implements ValidatorInterface
 
     private function registerCustomValidationRule()
     {
-        Validator::extend('active_discount', function($attribute, $value, $parameters) {
-            $discount = Discount::where('discount_code', $value)
-                ->active()
-                ->betweenExpiryDate()
-                ->first();
-            return !empty($discount);
+        Validator::extend('active_discount', ActiveDiscountValidator::class . '@validate');
+
+        Validator::extend('available_discount', function ($attribute, $value, $parameters, $validators) {
+            $val = (new AvailableDiscountValidator())->user($this->currentUser);
+            return $val($attribute, $value, $parameters, $validators);
         });
 
-        Validator::extend('available_discount', function($attribute, $value, $parameters) {
-            $discount = DiscountCode::where('discount_code', $value)
-                ->available()
-                ->first();
+        Validator::extend('coupon_exists', CouponExistsValidator::class . '@validate');
 
-            if (empty($discount)) {
-                //no more promo code is available, try if current user has
-                //reserved promo code
-                $discount = $this->currentUser
-                    ->discountCodes()
-                    ->where('discount_code', $value)
-                    ->reserved()
-                    ->first();
-            }
-            return !empty($discount);
-        });
-
-        Validator::extend('coupon_exists', function($attribute, $value, $parameters, $validators) {
-            $data = $validators->getData();
-            $valid = true;
-            if ($data['object_type'] === 'coupon') {
-                $coupon = Coupon::where('promotion_id', $value)->active()->first();
-                $valid = !empty($coupon);
-            }
-            return $valid;
-        });
-
-        Validator::extend('pulsa_exists', function($attribute, $value, $parameters, $validators) {
-            $data = $validators->getData();
-            $valid = true;
-            if ($data['object_type'] === 'pulsa') {
-                $pulsa = pulsa::where('pulsa_item_id', $value)->active()->first();
-                $valid = !empty($pulsa);
-            }
-            return $valid;
-        });
+        Validator::extend('pulsa_exists', PulsaExistsValidator::class . '@validate');
     }
 
     public function validate()
