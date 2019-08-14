@@ -201,11 +201,8 @@
                 @if (count($transaction['discounts']) > 0)
                   @foreach($transaction['discounts'] as $discount)
                     <div style="width: 100%;">
-                      <div style="width: 30%;display: inline-block;">
+                      <div style="width: 90%;display: inline-block;">
                         <strong>{{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
-                      </div>
-                      <div style="width: 60%;display: inline-block;text-align: left;">
-                        X {{ $discount['quantity'] }}
                       </div>
                     </div>
                   @endforeach
@@ -267,11 +264,8 @@
                 @if (count($transaction['discounts']) > 0)
                   @foreach($transaction['discounts'] as $discount)
                     <div style="width: 100%;">
-                      <div style="width: 30%;display: inline-block;">
+                      <div style="width: 90%;display: inline-block;">
                         <strong>{{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
-                      </div>
-                      <div style="width: 60%;display: inline-block;text-align: left;">
-                        X {{ $discount['quantity'] }}
                       </div>
                     </div>
                   @endforeach
