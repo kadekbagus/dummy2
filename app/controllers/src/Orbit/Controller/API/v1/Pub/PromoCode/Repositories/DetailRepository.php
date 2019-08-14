@@ -3,6 +3,7 @@
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\DetailRepositoryInterface;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ValidatorInterface;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use Discount;
 
 class DetailRepository implements DetailRepositoryInterface
 {
@@ -46,7 +47,7 @@ class DetailRepository implements DetailRepositoryInterface
         //validate input data or else throws InvalidArgsException
         $this->validator->user($user)->validate();
 
-        return Discount::where('promo_code', OrbitInput::get('promo_code'))->first();
+        return Discount::where('discount_code', OrbitInput::get('promo_code'))->first();
     }
 
 }

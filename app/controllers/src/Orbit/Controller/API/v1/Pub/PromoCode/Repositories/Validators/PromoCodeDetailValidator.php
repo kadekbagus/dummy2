@@ -22,7 +22,7 @@ class PromoCodeDetailValidator implements ValidatorInterface
 
     public function validate()
     {
-        $promoCode = OrbitInput::post('promo_code', null);
+        $promoCode = OrbitInput::get('promo_code', null);
 
         $this->registerCustomValidationRule();
 
