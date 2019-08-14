@@ -2,10 +2,11 @@
 
 use Coupon;
 
-class CouponExistsValidator
+class CouponExistsValidator extends AbstractValidator
 {
-
-    public function __invoke($attribute, $value, $parameters, $validators)
+    //actual validator. Validator::extend() cannot work with invokable
+    //class eventhough can accept anonymous function, so we need to use
+    public function validate($attribute, $value, $parameters, $validators)
     {
         $data = $validators->getData();
         $valid = true;
@@ -15,5 +16,8 @@ class CouponExistsValidator
         }
         return $valid;
     }
-
+    public function __invoke($attribute, $value, $parameters, $validators)
+    {
+        return $this->validate($attribute, $value, $parameters, $validators);
+    }
 }

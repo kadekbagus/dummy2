@@ -21,13 +21,16 @@ class PromoCodeValidator implements ValidatorInterface
 
     private function registerCustomValidationRule()
     {
-        Validator::extend('active_discount', new ActiveDiscountValidator());
+        Validator::extend('active_discount', ActiveDiscountValidator::class . '@validate');
 
-        Validator::extend('available_discount', (new AvailableDiscountValidator())->user($this->currentUser));
+        Validator::extend('available_discount', function ($attribute, $value, $parameters, $validators) {
+            $val = (new AvailableDiscountValidator())->user($this->currentUser);
+            return $val($attribute, $value, $parameters, $validators);
+        });
 
-        Validator::extend('coupon_exists', new CouponExistsValidator());
+        Validator::extend('coupon_exists', CouponExistsValidator::class . '@validate');
 
-        Validator::extend('pulsa_exists', new PulsaExistsValidator());
+        Validator::extend('pulsa_exists', PulsaExistsValidator::class . '@validate');
     }
 
     public function validate()

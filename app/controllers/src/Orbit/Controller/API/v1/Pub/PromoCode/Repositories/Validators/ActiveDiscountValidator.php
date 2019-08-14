@@ -2,10 +2,11 @@
 
 use Discount;
 
-class ActiveDiscountValidator
+class ActiveDiscountValidator extends AbstractValidator
 {
-
-    public function __invoke($attribute, $value, $parameters, $validators)
+    //actual validator. Validator::extend() cannot work with invokable
+    //class eventhough can accept anonymous function, so we need to use
+    public function validate($attribute, $value, $parameters, $validators)
     {
         $discount = Discount::where('discount_code', $value)
             ->active()
@@ -13,5 +14,4 @@ class ActiveDiscountValidator
             ->first();
         return !empty($discount);
     }
-
 }
