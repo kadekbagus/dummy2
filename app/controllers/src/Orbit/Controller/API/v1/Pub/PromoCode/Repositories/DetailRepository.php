@@ -30,8 +30,7 @@ class DetailRepository implements DetailRepositoryInterface
     }
 
     /**
-     * check availability of promo code and reserved it
-     * current logged in user is eligible
+     * GET - get promo code detail
      *
      * @param string promocode
      * @return StdClass discount
@@ -47,7 +46,7 @@ class DetailRepository implements DetailRepositoryInterface
         //validate input data or else throws InvalidArgsException
         $this->validator->user($user)->validate();
 
-        return Discount::where('promo_code', OrbitInput::post('promo_code'))->first();
+        return Discount::where('promo_code', OrbitInput::get('promo_code'))->first();
     }
 
 }
