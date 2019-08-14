@@ -6,6 +6,7 @@ use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\RuleInterface;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ValidatorInterface;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ResponseRendererInterface;
+use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\DetailRepositoryInterface;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\PromoCodeRepository;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\PromoCodeRule;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\CouponPromoCodeRule;
@@ -14,6 +15,7 @@ use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\PromoCodeReservation;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\ResponseRenderer;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Validators\PromoCodeValidator;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Validators\PromoCodeDetailValidator;
+use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\DetailRepository;
 
 class PromoCodeServiceProvider extends ServiceProvider
 {

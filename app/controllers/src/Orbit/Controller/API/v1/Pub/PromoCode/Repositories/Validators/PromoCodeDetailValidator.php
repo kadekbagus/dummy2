@@ -17,7 +17,7 @@ class PromoCodeDetailValidator implements ValidatorInterface
 
     private function registerCustomValidationRule()
     {
-        Validator::extend('active_discount', ActiveDiscountValidator::class '@validate');
+        Validator::extend('active_discount', ActiveDiscountValidator::class . '@validate');
     }
 
     public function validate()

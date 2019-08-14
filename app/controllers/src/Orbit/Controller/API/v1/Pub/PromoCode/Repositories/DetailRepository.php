@@ -1,12 +1,10 @@
 <?php namespace Orbit\Controller\API\v1\Pub\PromoCode\Repositories;
 
-use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\RepositoryInterface;
-use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\RuleInterface;
-use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
+use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\DetailRepositoryInterface;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ValidatorInterface;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 
-class DetailRepository implements RepositoryInterface
+class DetailRepository implements DetailRepositoryInterface
 {
 
     /**
@@ -49,7 +47,7 @@ class DetailRepository implements RepositoryInterface
         //validate input data or else throws InvalidArgsException
         $this->validator->user($user)->validate();
 
-        return Discount::where(OrbitInput::post('promo_code'))->first();
+        return Discount::where('promo_code', OrbitInput::post('promo_code'))->first();
     }
 
 }
