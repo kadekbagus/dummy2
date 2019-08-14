@@ -9,6 +9,14 @@ Route::post('/api/v1/pub/promocode/use', function () {
 });
 
 /**
+ * Promo Code Detail
+ */
+Route::get('/api/v1/pub/promocode/detail', function()
+{
+    return PromoCodeAPIController::create()->getDetailPromoCode();
+});
+
+/**
  * Promo Code create
  */
 Route::post('/api/v1/promo-code/new', function()
