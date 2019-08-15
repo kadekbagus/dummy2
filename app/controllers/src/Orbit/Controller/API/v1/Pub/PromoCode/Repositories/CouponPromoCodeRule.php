@@ -58,7 +58,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
      * @return Object eligible status
      * ---------------------------------------------
      */
-    private function isEligibleForAvailQuantity($promo, $user, $qty)
+    private function isEligibleForAvailQuantity($promo, $objectId, $user, $qty)
     {
         $totalAvail = DiscountCode::where('discount_id', $promo->discount_id)
             ->available()
@@ -69,6 +69,8 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
             //that does not yet waiting for payment
             $totalReserved = $user->discountCodes()
                 ->where('discount_id', $promo->discount_id)
+                ->where('object_id', $objectId)
+                ->where('object_type', 'coupon')
 
                 //this is to indicate that promo code is reserved
                 //but not waiting for payment (i.e user click use promo code
@@ -156,6 +158,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
 
             $availQtyEligible = $this->isEligibleForAvailQuantity(
                 $promo,
+                $promoData->object_id,
                 $user,
                 $promoData->quantity
             );
