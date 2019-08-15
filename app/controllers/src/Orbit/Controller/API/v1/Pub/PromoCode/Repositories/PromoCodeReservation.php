@@ -87,10 +87,10 @@ class PromoCodeReservation implements ReservationInterface
      * @param User $user, current logged in user
      * @param string $promoCode, promo code
      */
-    public function markAsIssued($user, $promoCode)
+    public function markAsIssued($user, $promoData)
     {
-        DB::transaction(function() use ($user, $promoCode) {
-            $discounts = $this->getReservedDiscountCodes($user, $promoCode);
+        DB::transaction(function() use ($user, $promoData) {
+            $discounts = $this->getReservedDiscountCodes($user, $promoData);
             foreach($discounts as $discount) {
                 $discount->status = 'issued';
                 $discount->save();
