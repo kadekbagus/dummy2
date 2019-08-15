@@ -68,6 +68,9 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
             ->count();
 
         $avail = $totalAvail - $totalReserved;
+        if ($avail < 0) {
+            $avail = 0;
+        }
 
         // if ($totalAvail < $qty) {
         //     //test if current user already reserved some promo codes
@@ -87,7 +90,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
         // }
 
         return (object) [
-            'eligible' => ($qvail >= $qty),
+            'eligible' => ($avail >= $qty),
             'allowedQty' => $avail,
         ];
     }
