@@ -26,16 +26,22 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
      * @return Object eligible status
      * ---------------------------------------------
      */
-    private function isEligibleForQuantity($promo, $coupon, $user, $qty)
+    private function isEligibleForQuantity($promo, $coupon, $user, $qty, $isFinalCheck)
     {
         $totalUsage = $user->discountCodes()
             ->where('discount_id', $promo->discount_id)
             ->issuedOrWaitingPayment()
             ->count();
-        $totalReserved = $user->discountCodes()
-            ->where('discount_id', $promo->discount_id)
-            ->reserved()
-            ->count();
+
+        if (! $isFinalCheck) {
+            $totalReserved = $user->discountCodes()
+                ->where('discount_id', $promo->discount_id)
+                ->reserved()
+                //->reservedNotWaitingPayment()
+                ->count();
+        } else {
+            $totalReserved = 0;
+        }
 
 
         $maxPerUser = $this->getMaxAllowedQtyPerUser($promo, $coupon);
@@ -163,7 +169,8 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
                 $promo,
                 Coupon::find($promoData->object_id),
                 $user,
-                $promoData->quantity
+                $promoData->quantity,
+                $promoData->is_final_check
             );
 
             $eligible = $eligible && $qtyEligible->eligible;
