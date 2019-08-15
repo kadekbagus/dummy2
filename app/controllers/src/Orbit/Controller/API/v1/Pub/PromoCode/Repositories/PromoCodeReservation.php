@@ -43,7 +43,7 @@ class PromoCodeReservation implements ReservationInterface
      */
     public function markAsReserved($user, $promoCode, $quantity = 1)
     {
-        DB::transaction(function(){
+        DB::transaction(function() use($user, $promoCode, $quantity) {
             $reservedPromoCodes = $this->getReservedDiscountCodes($user, $promoCode);
             $reservedPromoCodesCount = $reservedPromoCodes->count();
 
@@ -66,7 +66,7 @@ class PromoCodeReservation implements ReservationInterface
      */
     public function markAsAvailable($user, $promoCode)
     {
-        DB::transaction(function(){
+        DB::transaction(function() use ($user, $promoCode) {
             $discounts = $this->getReservedDiscountCodes($user, $promoCode);
             foreach($discounts as $discount) {
                 $discount->status = 'available';
@@ -85,7 +85,7 @@ class PromoCodeReservation implements ReservationInterface
      */
     public function markAsIssued($user, $promoCode)
     {
-        DB::transaction(function() {
+        DB::transaction(function() use ($user, $promoCode) {
             $discounts = $this->getReservedDiscountCodes($user, $promoCode);
             foreach($discounts as $discount) {
                 $discount->status = 'issued';
