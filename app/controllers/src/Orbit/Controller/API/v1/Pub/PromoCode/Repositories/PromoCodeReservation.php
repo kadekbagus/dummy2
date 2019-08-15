@@ -74,8 +74,8 @@ class PromoCodeReservation implements ReservationInterface
                 $discount->status = 'available';
                 $discount->payment_transaction_id = null;
                 $discount->user_id = null;
-                $discount->object_id = null;
-                $discount->object_type = null;
+                $discount->object_id = '';
+                $discount->object_type = '';
                 $discount->save();
             }
         });
