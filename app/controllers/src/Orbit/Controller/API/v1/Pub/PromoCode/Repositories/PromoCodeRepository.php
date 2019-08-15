@@ -78,7 +78,7 @@ class PromoCodeRepository implements RepositoryInterface
 
         $eligibleStatus = $this->promoCodeRule->getEligibleStatus($user, $promoData);
         if ($eligibleStatus->eligible) {
-            $this->promoCodeReservation->markAsReserved($user, $promoData->promo_code, $eligibleStatus->adjusted_quantity);
+            $this->promoCodeReservation->markAsReserved($user, $promoData, $eligibleStatus->adjusted_quantity);
         }
         return $eligibleStatus;
     }
