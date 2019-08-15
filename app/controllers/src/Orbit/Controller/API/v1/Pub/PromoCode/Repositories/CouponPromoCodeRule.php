@@ -39,14 +39,14 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
 
 
         $maxPerUser = $this->getMaxAllowedQtyPerUser($promo, $coupon);
-        $quotaUsagePerUser = $maxPerUser - $totalUsage - $totalReserved;
+        $quotaUsagePerTransaction = $this->getMaxAllowedQtyPerTransaction($promo, $coupon);
+        $quota = min($maxPerUser, $quotaUsagePerTransaction);
+
+        $allowedQty = $quota - $totalUsage - $totalReserved;
         if ($quotaUsagePerUser <= 0) {
             $quotaUsagePerUser = 0;
         }
 
-        $quotaUsagePerTransaction = $this->getMaxAllowedQtyPerTransaction($promo, $coupon);
-
-        $allowedQty = min($quotaUsagePerUser, $quotaUsagePerTransaction);
         return (object) [
             'eligible' => ($allowedQty >= $qty),
             'allowedQty' => $allowedQty
@@ -109,8 +109,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
             //use data from promo
             return $promo->max_per_user;
         }
-        return ($promo->max_per_user < $coupon->max_quantity_per_user) ?
-            $promo->max_per_user : $coupon->max_quantity_per_user;
+        return min($promo->max_per_user, $coupon->max_quantity_per_user);
     }
 
     /**---------------------------------------------
@@ -130,8 +129,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
             //use data from promo
             return $promo->max_per_transaction;
         }
-        return ($promo->max_per_transaction < $coupon->max_quantity_per_purchase) ?
-            $promo->max_per_transaction : $coupon->max_quantity_per_purchase;
+        return min($promo->max_per_transaction, $coupon->max_quantity_per_purchase);
     }
 
     /**---------------------------------------------
