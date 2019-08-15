@@ -32,16 +32,21 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
             ->where('discount_id', $promo->discount_id)
             ->issuedOrWaitingPayment()
             ->count();
+        $totalReserved = $user->discountCodes()
+            ->where('discount_id', $promo->discount_id)
+            ->reserved()
+            ->count();
+
 
         $maxPerUser = $this->getMaxAllowedQtyPerUser($promo, $coupon);
-        $quotaUsagePerUser = $maxPerUser - $totalUsage;
+        $quotaUsagePerUser = $maxPerUser - $totalUsage - $totalReserved;
         if ($quotaUsagePerUser <= 0) {
             $quotaUsagePerUser = 0;
         }
 
         $quotaUsagePerTransaction = $this->getMaxAllowedQtyPerTransaction($promo, $coupon);
 
-        $allowedQty = $quotaUsagePerUser < $quotaUsagePerTransaction ? $quotaUsagePerUser : $quotaUsagePerTransaction;
+        $allowedQty = min($quotaUsagePerUser, $quotaUsagePerTransaction);
         return (object) [
             'eligible' => ($allowedQty >= $qty),
             'allowedQty' => $allowedQty
@@ -63,14 +68,6 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
         $totalAvail = DiscountCode::where('discount_id', $promo->discount_id)
             ->available()
             ->count();
-        $totalReserved = $user->discountCodes()
-            ->reserved()
-            ->count();
-
-        $avail = $totalAvail - $totalReserved;
-        if ($avail < 0) {
-            $avail = 0;
-        }
 
         // if ($totalAvail < $qty) {
         //     //test if current user already reserved some promo codes
@@ -164,27 +161,28 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
 
         if ($eligible) {
 
-            $availQtyEligible = $this->isEligibleForAvailQuantity(
+            $qtyEligible = $this->isEligibleForQuantity(
                 $promo,
-                $promoData->object_id,
+                Coupon::find($promoData->object_id),
                 $user,
                 $promoData->quantity
             );
 
-            $eligible = $eligible && $availQtyEligible->eligible;
-            $allowedQty = $availQtyEligible->allowedQty;
+            $eligible = $eligible && $qtyEligible->eligible;
 
             if ($eligible) {
-                $qtyEligible = $this->isEligibleForQuantity(
+                $allowedQty = $qtyEligible->allowedQty;
+
+                $availQtyEligible = $this->isEligibleForAvailQuantity(
                     $promo,
-                    Coupon::find($promoData->object_id),
+                    $promoData->object_id,
                     $user,
-                    $promoData->quantity
+                    $allowedQty
                 );
 
-                $eligible = $eligible && $qtyEligible->eligible;
-                $allowedQty = ($allowedQty < $qtyEligible->allowedQty) ?
-                    $allowedQty : $qtyEligible->allowedQty;
+                $eligible = $eligible && $availQtyEligible->eligible;
+                $allowedQty = min($allowedQty, $availQtyEligible->allowedQty);
+
                 if (! $eligible) {
                     $rejectReason = 'REMAINING_DISCOUNT_CODE_USAGE_FOR_USER_GREATER_THAN_ALLOWED';
                 }
