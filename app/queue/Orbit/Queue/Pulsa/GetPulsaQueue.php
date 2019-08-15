@@ -239,7 +239,12 @@ class GetPulsaQueue
                     $discountCode = $discount->discount_code;
                     // Mark promo code as issued.
                     $promoCodeReservation = App::make(ReservationInterface::class);
-                    $promoCodeReservation->markAsAvailable($payment->user, $discountCode);
+                    $promoData = (object) [
+                        'promo_code' => $discountCode,
+                        'object_id' => $pulsa->pulsa_item_id,
+                        'object_type' => 'pulsa'
+                    ];
+                    $promoCodeReservation->markAsAvailable($payment->user, $promoData);
                     Log::info("Pulsa: Promo code {$discountCode} reverted back/marked as available...");
                 }
 
