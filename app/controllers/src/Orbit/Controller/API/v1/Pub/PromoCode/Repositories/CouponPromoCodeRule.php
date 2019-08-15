@@ -30,7 +30,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
     {
         $totalUsage = $user->discountCodes()
             ->where('discount_id', $promo->discount_id)
-            ->issued()
+            ->issuedOrWaitingPayment()
             ->count();
 
         $maxPerUser = $this->getMaxAllowedQtyPerUser($promo, $coupon);
@@ -69,11 +69,11 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
             //that does not yet waiting for payment
             $totalReserved = $user->discountCodes()
                 ->where('discount_id', $promo->discount_id)
-                ->reserved()
 
                 //this is to indicate that promo code is reserved
-                //but not waiting for payment (i.e user does not click checkout)
-                ->whereNull('payment_transaction_id')
+                //but not waiting for payment (i.e user click use promo code
+                //but does not click checkout yet)
+                ->reservedNotWaitingPayment()
 
                 ->count();
             $totalAvail = $totalAvail + $totalReserved;

@@ -20,6 +20,35 @@ class DiscountCode extends Eloquent
         return $query->where('status', 'issued');
     }
 
+    public function scopeIssuedOrWaitingPayment($query)
+    {
+        return $query->where('status', 'issued')
+            ->orWhere(function($qry) {
+                $qry->where('status', 'reserved')
+                    ->whereNotNull('payment_transaction_id');
+            });
+    }
+
+    /**
+     * scope for condition when user reserved promo code
+     * but not yet click checkout
+     */
+    public function scopeReservedNotWaitingPayment($query)
+    {
+        return $query->where('status', 'reserved')
+            ->whereNull('payment_transaction_id');
+    }
+
+    /**
+     * scope for condition when user reserved promo code
+     * and click checkout
+     */
+    public function scopeReservedAndWaitingPayment($query)
+    {
+        return $query->where('status', 'reserved')
+            ->whereNotNull('payment_transaction_id');
+    }
+
     public function users()
     {
         return $this->belongsTo(User::class);
