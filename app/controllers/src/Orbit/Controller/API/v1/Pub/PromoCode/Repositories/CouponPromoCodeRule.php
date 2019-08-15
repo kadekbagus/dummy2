@@ -43,8 +43,8 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
         $quota = min($maxPerUser, $quotaUsagePerTransaction);
 
         $allowedQty = $quota - $totalUsage - $totalReserved;
-        if ($quotaUsagePerUser <= 0) {
-            $quotaUsagePerUser = 0;
+        if ($allowedQty < 0) {
+            $allowedQty = 0;
         }
 
         return (object) [
