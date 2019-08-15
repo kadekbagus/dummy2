@@ -36,8 +36,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
         if (! $isFinalCheck) {
             $totalReserved = $user->discountCodes()
                 ->where('discount_id', $promo->discount_id)
-                ->reserved()
-                //->reservedNotWaitingPayment()
+                ->reservedNotWaitingPayment()
                 ->count();
         } else {
             $totalReserved = 0;
