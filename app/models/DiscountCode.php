@@ -63,6 +63,8 @@ class DiscountCode extends Eloquent
     {
         $this->user_id = null;
         $this->payment_transaction_id = null;
+        $this->object_id = null;
+        $this->object_type = null;
         $this->status = 'available';
         $this->save();
     }
