@@ -22,11 +22,13 @@ class DiscountCode extends Eloquent
 
     public function scopeIssuedOrWaitingPayment($query)
     {
-        return $query->where('status', 'issued')
-            ->orWhere(function($qry) {
-                $qry->where('status', 'reserved')
+        return $query->where(function($qry) {
+            $qry->where('status', 'issued')
+                ->orWhere(function($q) {
+                    $q->where('status', 'reserved')
                     ->whereNotNull('payment_transaction_id');
-            });
+                });
+        });
     }
 
     /**
