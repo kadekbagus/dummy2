@@ -59,12 +59,8 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
             $allowedQty = 0;
         }
 
-        $allowedQty = min($allowedQty, $qty);
-
-        return (object) [
-            'eligible' => ($allowedQty > 0),
-            'allowedQty' => $allowedQty
-        ];
+        $allowedQty = min((int) $allowedQty, (int) $qty);
+        return (int) $allowedQty;
     }
 
     /**---------------------------------------------
@@ -82,11 +78,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
         $totalAvail = DiscountCode::where('discount_id', $promo->discount_id)
             ->available()
             ->count();
-
-        return (object) [
-            'eligible' => ($totalAvail >= $qty),
-            'allowedQty' => $totalAvail,
-        ];
+        return (int) $totalAvail;
     }
 
     /**---------------------------------------------
@@ -106,7 +98,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
             //use data from promo
             return $promo->max_per_user;
         }
-        return min($promo->max_per_user, $coupon->max_quantity_per_user);
+        return min((int) $promo->max_per_user, (int) $coupon->max_quantity_per_user);
     }
 
     /**---------------------------------------------
@@ -171,7 +163,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
                 $promoData->quantity
             );
 
-            $allowedQty = min($qtyEligible->allowedQty, $availQtyEligible->allowedQty);
+            $allowedQty = min((int) $qtyEligible, (int) $availQtyEligible);
             $eligible = ($allowedQty > 0);
             if (! $eligible) {
                 $rejectReason = 'REMAINING_AVAIL_DISCOUNT_CODE_LESS_THAN_REQUESTED_QTY';
