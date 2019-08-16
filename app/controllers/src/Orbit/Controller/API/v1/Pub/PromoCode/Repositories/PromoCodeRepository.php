@@ -74,11 +74,14 @@ class PromoCodeRepository implements RepositoryInterface
             'object_id' => OrbitInput::post('object_id'),
             'object_type' => OrbitInput::post('object_type'),
             'quantity' => OrbitInput::post('qty'),
+
+            //is_final_check = true for final test before creating payment transaction
+            'is_final_check' => OrbitInput::post('is_final_check'),
         ];
 
         $eligibleStatus = $this->promoCodeRule->getEligibleStatus($user, $promoData);
         if ($eligibleStatus->eligible) {
-            $this->promoCodeReservation->markAsReserved($user, $promoData->promo_code, $eligibleStatus->adjusted_quantity);
+            $this->promoCodeReservation->markAsReserved($user, $promoData, $eligibleStatus->adjusted_quantity);
         }
         return $eligibleStatus;
     }

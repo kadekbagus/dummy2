@@ -112,10 +112,14 @@ class GetCouponQueue
                 $coupon->updateAvailability();
 
                 if (! empty($discount)) {
-                    $discountCode = $discount->discount_code;
                     // Mark promo code as available if purchase was failed.
                     $promoCodeReservation = App::make(ReservationInterface::class);
-                    $promoCodeReservation->markAsIssued($payment->user, $discountCode);
+                    $promoData = (object) [
+                        'promo_code' => $discount->discount_code,
+                        'object_id' => $coupon->promotion_id,
+                        'object_type' => 'coupon'
+                    ];
+                    $promoCodeReservation->markAsIssued($payment->user, $promoData);
                     Log::info("PaidCoupon: Promo code {$discountCode} issued for payment {$paymentId}...");
                 }
 
@@ -179,7 +183,12 @@ class GetCouponQueue
                     $discountCode = $discount->discount_code;
                     // Mark promo code as available if purchase was failed.
                     $promoCodeReservation = App::make(ReservationInterface::class);
-                    $promoCodeReservation->markAsAvailable($payment->user, $discountCode);
+                    $promoData = (object) [
+                        'promo_code' => $discountCode,
+                        'object_id' => $coupon->promotion_id,
+                        'object_type' => 'coupon'
+                    ];
+                    $promoCodeReservation->markAsAvailable($payment->user, $promoData);
                     Log::info("PaidCoupon: Promo code {$discountCode} reverted back/marked as available...");
                 }
 

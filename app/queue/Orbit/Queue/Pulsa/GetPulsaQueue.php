@@ -123,10 +123,14 @@ class GetPulsaQueue
                         ->save();
 
                 if (! empty($discount)) {
-                    $discountCode = $discount->discount_code;
                     // Mark promo code as issued.
                     $promoCodeReservation = App::make(ReservationInterface::class);
-                    $promoCodeReservation->markAsIssued($payment->user, $discountCode);
+                    $promoData = (object) [
+                        'promo_code' => $discount->discount_code,
+                        'object_id' => $pulsa->pulsa_item_id,
+                        'object_type' => 'pulsa'
+                    ];
+                    $promoCodeReservation->markAsIssued($payment->user, $promoData);
                     Log::info("Pulsa: Promo code {$discountCode} issued for purchase {$paymentId}");
                 }
 
@@ -141,10 +145,14 @@ class GetPulsaQueue
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
 
                 if (! empty($discount)) {
-                    $discountCode = $discount->discount_code;
                     // Mark promo code as issued.
                     $promoCodeReservation = App::make(ReservationInterface::class);
-                    $promoCodeReservation->markAsIssued($payment->user, $discountCode);
+                    $promoData = (object) [
+                        'promo_code' => $discount->discount_code,
+                        'object_id' => $pulsa->pulsa_item_id,
+                        'object_type' => 'pulsa'
+                    ];
+                    $promoCodeReservation->markAsIssued($payment->user, $promoData);
                     Log::info("Pulsa: Promo code {$discountCode} issued for purchase {$paymentId}");
                 }
 
@@ -239,7 +247,12 @@ class GetPulsaQueue
                     $discountCode = $discount->discount_code;
                     // Mark promo code as issued.
                     $promoCodeReservation = App::make(ReservationInterface::class);
-                    $promoCodeReservation->markAsAvailable($payment->user, $discountCode);
+                    $promoData = (object) [
+                        'promo_code' => $discountCode,
+                        'object_id' => $pulsa->pulsa_item_id,
+                        'object_type' => 'pulsa'
+                    ];
+                    $promoCodeReservation->markAsAvailable($payment->user, $promoData);
                     Log::info("Pulsa: Promo code {$discountCode} reverted back/marked as available...");
                 }
 
