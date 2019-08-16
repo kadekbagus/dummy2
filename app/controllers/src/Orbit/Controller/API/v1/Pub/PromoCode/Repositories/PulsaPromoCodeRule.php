@@ -61,6 +61,8 @@ class PulsaPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
 
             'avail_quota_count' => $allowedQty,
             'original_quantity' => $promoData->quantity,
+            'adjusted_quantity' => $allowedQty,
+
             'user_id' => $user->user_id,
             'object_type' => $promoData->object_type,
             'object_id' => $promoData->object_id,
