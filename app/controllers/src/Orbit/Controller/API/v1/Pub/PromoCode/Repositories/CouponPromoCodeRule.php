@@ -164,25 +164,16 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
                 $promoData->is_final_check
             );
 
-            $eligible = $eligible && $qtyEligible->eligible;
+            $availQtyEligible = $this->isEligibleForAvailQuantity(
+                $promo,
+                $promoData->object_id,
+                $user,
+                $promoData->quantity
+            );
 
-            if ($eligible) {
-                $allowedQty = $qtyEligible->allowedQty;
-
-                $availQtyEligible = $this->isEligibleForAvailQuantity(
-                    $promo,
-                    $promoData->object_id,
-                    $user,
-                    $allowedQty
-                );
-
-                $eligible = $eligible && $availQtyEligible->eligible;
-                $allowedQty = min($allowedQty, $availQtyEligible->allowedQty);
-
-                if (! $eligible) {
-                    $rejectReason = 'REMAINING_DISCOUNT_CODE_USAGE_FOR_USER_GREATER_THAN_ALLOWED';
-                }
-            } else {
+            $allowedQty = min($qtyEligible->allowedQty, $availQtyEligible->allowedQty);
+            $eligible = ($allowedQty > 0);
+            if (! $eligible) {
                 $rejectReason = 'REMAINING_AVAIL_DISCOUNT_CODE_LESS_THAN_REQUESTED_QTY';
             }
         } else {
@@ -191,7 +182,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
 
         //if asked quantity > allowed quantity
         //adjust qty and if adjustedQty is greater than zero assume eligible
-        $adjustedQty = $allowedQty < $promoData->quantity ? $allowedQty : $promoData->quantity;
+        $adjustedQty = min($allowedQty, $promoData->quantity);
         $eligible = $eligible || ($adjustedQty > 0);
 
         return (object) [
