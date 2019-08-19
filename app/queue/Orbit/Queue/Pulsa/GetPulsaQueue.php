@@ -146,9 +146,10 @@ class GetPulsaQueue
 
                 if (! empty($discount)) {
                     // Mark promo code as issued.
+                    $discountCode = $discount->discount_code;
                     $promoCodeReservation = App::make(ReservationInterface::class);
                     $promoData = (object) [
-                        'promo_code' => $discount->discount_code,
+                        'promo_code' => $discountCode,
                         'object_id' => $pulsa->pulsa_item_id,
                         'object_type' => 'pulsa'
                     ];
@@ -244,8 +245,8 @@ class GetPulsaQueue
                 $payment->save();
 
                 if (! empty($discount)) {
+                    // Mark promo code as available.
                     $discountCode = $discount->discount_code;
-                    // Mark promo code as issued.
                     $promoCodeReservation = App::make(ReservationInterface::class);
                     $promoData = (object) [
                         'promo_code' => $discountCode,
