@@ -7,6 +7,7 @@ use Config;
 use Carbon\Carbon;
 use Queue;
 use Exception;
+use DB;
 
 /**
  * Class that reserved promo code
@@ -21,12 +22,26 @@ class PromoCodeReservation implements ReservationInterface
             ->get();
     }
 
-    private function getReservedDiscountCodes($user, $promoCode, $quantity = 9999)
+    private function getReservedByObjectId($user, $promoData, $quantity = 9999)
     {
         return $user->discountCodes()
-            ->where('discount_code', $promoCode)
+            ->where('discount_code', $promoData->promo_code)
+            ->where('object_id', $promoData->object_id)
+            ->where('object_type', $promoData->object_type)
+            ->take($quantity);
+    }
+
+    private function getReservedDiscountCodes($user, $promoData, $quantity = 9999)
+    {
+        return $this->getReservedByObjectId($user, $promoData, $quantity)
             ->reserved()
-            ->take($quantity)
+            ->get();
+    }
+
+    private function getReservedDiscountCodesNotWaitingPayment($user, $promoData, $quantity = 9999)
+    {
+        return $this->getReservedByObjectId($user, $promoData, $quantity)
+            ->reservedNotWaitingPayment()
             ->get();
     }
 
@@ -40,19 +55,21 @@ class PromoCodeReservation implements ReservationInterface
      * @param User $user, current logged in user
      * @param string $promoCode, promo code
      */
-    public function markAsReserved($user, $promoCode, $quantity = 1)
+    public function markAsReserved($user, $promoData, $quantity = 1)
     {
-        $reservedPromoCodes = $this->getReservedDiscountCodes($user, $promoCode);
-        $reservedPromoCodesCount = $reservedPromoCodes->count();
+        DB::transaction(function() use($user, $promoData, $quantity) {
+            $reservedPromoCodes = $this->getReservedDiscountCodes($user, $promoData);
+            $reservedPromoCodesCount = $reservedPromoCodes->count();
 
-        // If new quantity is greater than reserved or reserved is 0 (means new "use" request), then try reserving new ones.
-        // If new quantity is lower than reserved, then unreserved the diff.
-        if ($reservedPromoCodesCount === 0 || $reservedPromoCodesCount < $quantity) {
-            $this->reservePromoCodes($user, $promoCode, $quantity - $reservedPromoCodesCount, $reservedPromoCodes);
-        }
-        else if ($reservedPromoCodesCount > $quantity) {
-            $this->unreservePromoCodes($user, $promoCode, $reservedPromoCodesCount - $quantity);
-        }
+            // If new quantity is greater than reserved or reserved is 0 (means new "use" request), then try reserving new ones.
+            // If new quantity is lower than reserved, then unreserved the diff.
+            if ($reservedPromoCodesCount === 0 || $reservedPromoCodesCount < $quantity) {
+                $this->reservePromoCodes($user, $promoData, $quantity - $reservedPromoCodesCount, $reservedPromoCodes);
+            }
+            else if ($reservedPromoCodesCount > $quantity) {
+                $this->unreservePromoCodes($user, $promoData, $reservedPromoCodesCount - $quantity);
+            }
+        });
     }
 
     /**
@@ -61,15 +78,19 @@ class PromoCodeReservation implements ReservationInterface
      * @param User $user, current logged in user
      * @param string $promoCode, promo code
      */
-    public function markAsAvailable($user, $promoCode)
+    public function markAsAvailable($user, $promoData)
     {
-        $discounts = $this->getReservedDiscountCodes($user, $promoCode);
-        foreach($discounts as $discount) {
-            $discount->status = 'available';
-            $discount->payment_transaction_id = null;
-            $discount->user_id = null;
-            $discount->save();
-        }
+        DB::transaction(function() use ($user, $promoData) {
+            $discounts = $this->getReservedDiscountCodes($user, $promoData);
+            foreach($discounts as $discount) {
+                $discount->status = 'available';
+                $discount->payment_transaction_id = null;
+                $discount->user_id = null;
+                $discount->object_id = null;
+                $discount->object_type = null;
+                $discount->save();
+            }
+        });
     }
 
     /**
@@ -78,13 +99,15 @@ class PromoCodeReservation implements ReservationInterface
      * @param User $user, current logged in user
      * @param string $promoCode, promo code
      */
-    public function markAsIssued($user, $promoCode)
+    public function markAsIssued($user, $promoData)
     {
-        $discounts = $this->getReservedDiscountCodes($user, $promoCode);
-        foreach($discounts as $discount) {
-            $discount->status = 'issued';
-            $discount->save();
-        }
+        DB::transaction(function() use ($user, $promoData) {
+            $discounts = $this->getReservedDiscountCodes($user, $promoData);
+            foreach($discounts as $discount) {
+                $discount->status = 'issued';
+                $discount->save();
+            }
+        });
     }
 
     /**
@@ -95,12 +118,12 @@ class PromoCodeReservation implements ReservationInterface
      * @param  [type] $quantity  [description]
      * @return [type]            [description]
      */
-    private function reservePromoCodes($user, $promoCode, $quantity, $reservedPromoCodes)
+    private function reservePromoCodes($user, $promoData, $quantity, $reservedPromoCodes)
     {
         // Only reserve if available quantity = requested quantity.
         // Otherwise, throw exception.
         //
-        $discounts = $this->getAvailableDiscountCodes($promoCode, $quantity);
+        $discounts = $this->getAvailableDiscountCodes($promoData->promo_code, $quantity);
         if ($discounts->count() === $quantity) {
             $reservedPromoCodesArray = [];
             foreach($reservedPromoCodes as $reservedPromoCode) {
@@ -109,6 +132,8 @@ class PromoCodeReservation implements ReservationInterface
 
             foreach($discounts as $discount) {
                 $discount->user_id = $user->user_id;
+                $discount->object_id = $promoData->object_id;
+                $discount->object_type = $promoData->object_type;
                 $discount->status = 'reserved';
                 $discount->save();
                 $reservedPromoCodesArray[] = $discount->discount_code_id;
@@ -131,13 +156,15 @@ class PromoCodeReservation implements ReservationInterface
      * @param  [type] $quantity  [description]
      * @return [type]            [description]
      */
-    private function unreservePromoCodes($user, $promoCode, $quantity)
+    private function unreservePromoCodes($user, $promoData, $quantity)
     {
-        $reservedPromoCodes = $this->getReservedDiscountCodes($user, $promoCode, $quantity);
+        $reservedPromoCodes = $this->getReservedDiscountCodesNotWaitingPayment($user, $promoData, $quantity);
         foreach($reservedPromoCodes as $reservedPromoCode) {
             $reservedPromoCode->status = 'available';
             $reservedPromoCode->payment_transaction_id = null;
             $reservedPromoCode->user_id = null;
+            $reservedPromoCode->object_id = null;
+            $reservedPromoCode->object_type = null;
             $reservedPromoCode->save();
         }
     }

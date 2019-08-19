@@ -13,7 +13,7 @@ Route::post('/api/v1/pub/promocode/use', function () {
  */
 Route::get('/api/v1/pub/promocode/detail', function()
 {
-    return PromoCodeAPIController::create()->getDetailPromoCode();
+    return PromoCodeDetailAPIController::create()->getPromoCode();
 });
 
 /**
