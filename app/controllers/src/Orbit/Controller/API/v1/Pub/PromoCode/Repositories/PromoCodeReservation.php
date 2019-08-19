@@ -22,14 +22,26 @@ class PromoCodeReservation implements ReservationInterface
             ->get();
     }
 
-    private function getReservedDiscountCodes($user, $promoData, $quantity = 9999)
+    private function getReservedByObjectId($user, $promoData, $quantity = 9999)
     {
         return $user->discountCodes()
             ->where('discount_code', $promoData->promo_code)
             ->where('object_id', $promoData->object_id)
             ->where('object_type', $promoData->object_type)
+            ->take($quantity);
+    }
+
+    private function getReservedDiscountCodes($user, $promoData, $quantity = 9999)
+    {
+        return $this->getReservedByObjectId($user, $promoData, $quantity)
             ->reserved()
-            ->take($quantity)
+            ->get();
+    }
+
+    private function getReservedDiscountCodesNotWaitingPayment($user, $promoData, $quantity = 9999)
+    {
+        return $this->getReservedByObjectId($user, $promoData, $quantity)
+            ->reservedNotWaitingPayment()
             ->get();
     }
 
@@ -146,7 +158,7 @@ class PromoCodeReservation implements ReservationInterface
      */
     private function unreservePromoCodes($user, $promoData, $quantity)
     {
-        $reservedPromoCodes = $this->getReservedDiscountCodes($user, $promoData, $quantity);
+        $reservedPromoCodes = $this->getReservedDiscountCodesNotWaitingPayment($user, $promoData, $quantity);
         foreach($reservedPromoCodes as $reservedPromoCode) {
             $reservedPromoCode->status = 'available';
             $reservedPromoCode->payment_transaction_id = null;
