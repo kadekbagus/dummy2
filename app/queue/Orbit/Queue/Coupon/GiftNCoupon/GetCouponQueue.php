@@ -112,10 +112,10 @@ class GetCouponQueue
                 $coupon->updateAvailability();
 
                 if (! empty($discount)) {
-                    // Mark promo code as available if purchase was failed.
+                    $discountCode = $discount->discount_code;
                     $promoCodeReservation = App::make(ReservationInterface::class);
                     $promoData = (object) [
-                        'promo_code' => $discount->discount_code,
+                        'promo_code' => $discountCode,
                         'object_id' => $coupon->promotion_id,
                         'object_type' => 'coupon'
                     ];
