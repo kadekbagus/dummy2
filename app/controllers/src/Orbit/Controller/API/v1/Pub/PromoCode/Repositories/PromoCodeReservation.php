@@ -94,6 +94,27 @@ class PromoCodeReservation implements ReservationInterface
     }
 
     /**
+     * mark promo code as available
+     *
+     * @param User $user, current logged in user
+     * @param string $promoCode, promo code
+     */
+    public function markReservedNotWaitingPaymentAsAvailable($user, $promoData)
+    {
+        DB::transaction(function() use ($user, $promoData) {
+            $discounts = $this->getReservedDiscountCodesNotWaitingPayment($user, $promoData);
+            foreach($discounts as $discount) {
+                $discount->status = 'available';
+                $discount->payment_transaction_id = null;
+                $discount->user_id = null;
+                $discount->object_id = null;
+                $discount->object_type = null;
+                $discount->save();
+            }
+        });
+    }
+
+    /**
      * mark promo code as issued for current user
      *
      * @param User $user, current logged in user
