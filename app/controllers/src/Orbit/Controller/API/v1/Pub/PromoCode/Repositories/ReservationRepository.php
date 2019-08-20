@@ -66,7 +66,7 @@ class ReservationRepository implements ReservationRepositoryInterface
         $user = $this->authorizer->getUser();
 
         //validate input data or else throws InvalidArgsException
-        $this->validator->validate();
+        $this->validator->user($user)->validate();
 
         $promoData = (object) [
             'promo_code' => OrbitInput::post('promo_code'),
