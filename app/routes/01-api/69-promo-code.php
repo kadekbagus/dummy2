@@ -8,6 +8,15 @@ Route::post('/api/v1/pub/promocode/use', function () {
     return PromoCodeCheckAPIController::create()->postCheckPromoCode();
 });
 
+use Orbit\Controller\API\v1\Pub\PromoCode\PromoCodeUnreservedAPIController;
+
+/**
+ * Promo Code use
+ */
+Route::post('/api/v1/pub/promocode/unreserved', function () {
+    return PromoCodeUnreservedAPIController::create()->postUnreservedPromoCode();
+});
+
 /**
  * Promo Code Detail
  */
