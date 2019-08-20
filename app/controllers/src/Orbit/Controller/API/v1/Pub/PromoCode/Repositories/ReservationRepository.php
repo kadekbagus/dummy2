@@ -75,7 +75,13 @@ class ReservationRepository implements ReservationRepositoryInterface
             'quantity' => OrbitInput::post('qty'),
         ];
 
-        return $this->promoCodeReservation->markAsAvailable($user, $promoData);
+        $this->promoCodeReservation->markAsAvailable($user, $promoData);
+        return (object) [
+            'promo_code' => $promoData->promo_code,
+            'object_type' => $promoData->object_type,
+            'object_id' => $promoData->object_id,
+        ];
+
     }
 
 }
