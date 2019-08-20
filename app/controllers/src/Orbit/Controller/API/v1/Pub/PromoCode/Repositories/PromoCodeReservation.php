@@ -58,17 +58,17 @@ class PromoCodeReservation implements ReservationInterface
     public function markAsReserved($user, $promoData, $quantity = 1)
     {
         DB::transaction(function() use($user, $promoData, $quantity) {
-            $reservedPromoCodes = $this->getReservedDiscountCodesNotWaitingPayment($user, $promoData);
-            $reservedPromoCodesCount = $reservedPromoCodes->count();
+            $discounts = $this->getReservedDiscountCodesNotWaitingPayment($user, $promoData);
+            foreach($discounts as $discount) {
+                $discount->status = 'available';
+                $discount->payment_transaction_id = null;
+                $discount->user_id = null;
+                $discount->object_id = null;
+                $discount->object_type = null;
+                $discount->save();
+            }
 
-            // If new quantity is greater than reserved or reserved is 0 (means new "use" request), then try reserving new ones.
-            // If new quantity is lower than reserved, then unreserved the diff.
-            if ($reservedPromoCodesCount === 0 || $reservedPromoCodesCount < $quantity) {
-                $this->reservePromoCodes($user, $promoData, $quantity - $reservedPromoCodesCount, $reservedPromoCodes);
-            }
-            else if ($reservedPromoCodesCount > $quantity) {
-                $this->unreservePromoCodes($user, $promoData, $reservedPromoCodesCount - $quantity);
-            }
+            $this->reservePromoCodes($user, $promoData, $quantity);
         });
     }
 
