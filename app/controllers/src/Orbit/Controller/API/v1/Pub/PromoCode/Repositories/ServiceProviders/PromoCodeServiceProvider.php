@@ -7,6 +7,7 @@ use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInte
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ValidatorInterface;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ResponseRendererInterface;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\DetailRepositoryInterface;
+use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationRepositoryInterface;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\PromoCodeRepository;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\PromoCodeRule;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\CouponPromoCodeRule;
@@ -16,6 +17,7 @@ use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\ResponseRenderer;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Validators\PromoCodeValidator;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Validators\PromoCodeDetailValidator;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\DetailRepository;
+use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\ReservationRepository;
 
 class PromoCodeServiceProvider extends ServiceProvider
 {
@@ -36,6 +38,8 @@ class PromoCodeServiceProvider extends ServiceProvider
         $this->app->bind(DetailRepositoryInterface::class, function () {
             return new DetailRepository(new PromoCodeDetailValidator());
         });
+
+        $this->app->bind(ReservationRepositoryInterface::class, ReservationRepository::class);
     }
 
 }
