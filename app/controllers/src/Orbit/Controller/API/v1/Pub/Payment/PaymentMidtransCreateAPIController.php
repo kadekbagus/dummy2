@@ -211,8 +211,9 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                 $discount = Discount::where('discount_code', $promoCode)->first();
                 $reservedPromoCodes = $user->discountCodes()
                     ->where('discount_code', $promoCode)
-                    ->whereNull('payment_transaction_id')
-                    ->reserved()
+                    ->where('object_id', $object_id)
+                    ->where('object_type', $object_type)
+                    ->reservedNotWaitingPayment()
                     ->get();
 
                 // $discount = $reservedPromoCodes->count() > 0
