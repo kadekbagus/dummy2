@@ -68,7 +68,7 @@ class PromoCodeReservation implements ReservationInterface
                 $discount->save();
             }
 
-            $this->reservePromoCodes($user, $promoData, $quantity);
+            $this->reservePromoCodes($user, $promoData, $quantity, []);
         });
     }
 
