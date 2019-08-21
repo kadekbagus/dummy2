@@ -74,7 +74,11 @@ class Purchase
                 ->request('POST');
 
     	} catch (OrbitCustomException $e) {
-			$response = $e->getMessage();
+            $response = (object) [
+                'status' => $e->getCode(),
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
         } catch (Exception $e) {
             $response = $e->getMessage();
         }
