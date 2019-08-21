@@ -60,7 +60,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
 
         $allowedQty = min($allowedQty, $qty);
         return (object) [
-            'allowedQty' => $allowedQty,
+            'allowedQty' => (int) $allowedQty,
             'totalReserved' => $totalReserved,
             'quotaPerUser' => $quotaPerUser
         ];
