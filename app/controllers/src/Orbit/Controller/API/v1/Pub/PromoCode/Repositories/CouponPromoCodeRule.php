@@ -32,25 +32,27 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
             ->where('discount_id', $promo->discount_id)
             ->issuedOrWaitingPayment()
             ->count();
-        $maxPerUser = $this->getMaxAllowedQtyPerUser($promo, $coupon);
-        $quotaUsagePerTransaction = $this->getMaxAllowedQtyPerTransaction($promo, $coupon);
-        $totalReservedForCurrentCoupon = $user->discountCodes()
-            ->where('discount_id', $promo->discount_id)
-            ->where('object_id', $coupon->promotion_id)
-            ->where('object_type', 'coupon')
-            ->reservedNotWaitingPayment()
-            ->count();
 
         if (! $isFinalCheck) {
-            $totalReservedForAllCoupon = $user->discountCodes()
+            $totalReservedFoAllCoupon = $user->discountCodes()
                 ->where('discount_id', $promo->discount_id)
                 ->reservedNotWaitingPayment()
                 ->count();
-            $totalReserved = $totalReservedForAllCoupon - $totalReservedForCurrentCoupon;
-            $quotaPerUser = $maxPerUser - $totalUsage - $totalReserved;
+            $totalReservedForCurrentCoupon = $user->discountCodes()
+                ->where('discount_id', $promo->discount_id)
+                ->where('object_id', $coupon->promotion_id)
+                ->where('object_type', 'coupon')
+                ->reservedNotWaitingPayment()
+                ->count();
+            $totalReserved = $totalReservedFoAllCoupon - $totalReservedForCurrentCoupon;
         } else {
-            $quotaPerUser = $totalReservedForCurrentCoupon;
+            $totalReserved = 0;
         }
+
+
+        $maxPerUser = $this->getMaxAllowedQtyPerUser($promo, $coupon);
+        $quotaPerUser = $maxPerUser - $totalUsage - $totalReserved;
+        $quotaUsagePerTransaction = $this->getMaxAllowedQtyPerTransaction($promo, $coupon);
 
         $allowedQty = min($quotaPerUser, $quotaUsagePerTransaction);
         if ($allowedQty < 0) {
@@ -161,7 +163,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
                 $promoData->quantity
             );
 
-            $allowedQty = min($qtyEligible + $availQtyEligible, $promoData->quantity);
+            $allowedQty = min((int) $qtyEligible, (int) $availQtyEligible);
             $eligible = ($allowedQty > 0);
             if (! $eligible) {
                 $rejectReason = 'REMAINING_AVAIL_DISCOUNT_CODE_LESS_THAN_REQUESTED_QTY';
