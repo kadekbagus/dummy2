@@ -29,9 +29,9 @@ class PromoCodeUnreservedAPIController extends PubControllerAPI
     {
         $resp = App::make(ResponseRendererInterface::class);
         try {
-            $promoCode = App::make(ReservationRepositoryInterface::class)->authorizer($this);
-            $eligibleStatus = $promoCode->unreserved();
-            return $resp->renderSuccess($this, $eligibleStatus);
+            $reservationSvc = App::make(ReservationRepositoryInterface::class)->authorizer($this);
+            $unreservedStatus = $reservationSvc->unreserved();
+            return $resp->renderSuccess($this, $unreservedStatus);
 
         } catch (ACLForbiddenException $e) {
             return $resp->renderForbidden($this, $e);
