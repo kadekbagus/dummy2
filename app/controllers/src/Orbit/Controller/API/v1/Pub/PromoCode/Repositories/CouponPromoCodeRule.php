@@ -33,20 +33,20 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
             ->issuedOrWaitingPayment()
             ->count();
 
+        $totalReservedForCurrentCoupon = $user->discountCodes()
+            ->where('discount_id', $promo->discount_id)
+            ->where('object_id', $coupon->promotion_id)
+            ->where('object_type', 'coupon')
+            ->reservedNotWaitingPayment()
+            ->count();
         if (! $isFinalCheck) {
             $totalReservedFoAllCoupon = $user->discountCodes()
                 ->where('discount_id', $promo->discount_id)
                 ->reservedNotWaitingPayment()
                 ->count();
-            $totalReservedForCurrentCoupon = $user->discountCodes()
-                ->where('discount_id', $promo->discount_id)
-                ->where('object_id', $coupon->promotion_id)
-                ->where('object_type', 'coupon')
-                ->reservedNotWaitingPayment()
-                ->count();
             $totalReserved = $totalReservedFoAllCoupon - $totalReservedForCurrentCoupon;
         } else {
-            $totalReserved = 0;
+            $totalReserved = $totalReservedForCurrentCoupon;
         }
 
 
@@ -163,7 +163,11 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
                 $promoData->quantity
             );
 
-            $allowedQty = min((int) $qtyEligible, (int) $availQtyEligible);
+            if (! $promoData->is_final_check) {
+                $allowedQty = min((int) $qtyEligible, (int) $availQtyEligible);
+            } else {
+                $allowedQty = $qtyEligible;
+            }
             $eligible = ($allowedQty > 0);
             if (! $eligible) {
                 $rejectReason = 'REMAINING_AVAIL_DISCOUNT_CODE_LESS_THAN_REQUESTED_QTY';
