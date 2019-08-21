@@ -3,6 +3,7 @@
 use Orbit\Helper\MCash\Client as MCashClient;
 use Orbit\Helper\MCash\ConfigSelector;
 use Orbit\Helper\MCash\API\Responses\PurchaseResponse;
+use Orbit\Helper\Exception\OrbitCustomException;
 use Config;
 
 /**
@@ -55,10 +56,10 @@ class Purchase
     {
     	try {
     		if (empty($product)) {
-                throw new Exception("Product code is required", 1);
+                throw new \Exception("Product code is required", 1);
             }
             if (empty($customer)) {
-                throw new Exception("Customer phone number is required", 1);
+                throw new \Exception("Customer phone number is required", 1);
             }
 
             $requestParams = [
@@ -79,7 +80,7 @@ class Purchase
                 'message' => $e->getMessage(),
                 'data' => null,
             ];
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $response = $e->getMessage();
         }
 
