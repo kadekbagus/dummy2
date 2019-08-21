@@ -32,6 +32,8 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
             ->where('discount_id', $promo->discount_id)
             ->issuedOrWaitingPayment()
             ->count();
+        $maxPerUser = $this->getMaxAllowedQtyPerUser($promo, $coupon);
+        $quotaUsagePerTransaction = $this->getMaxAllowedQtyPerTransaction($promo, $coupon);
 
         $totalReservedForCurrentCoupon = $user->discountCodes()
             ->where('discount_id', $promo->discount_id)
@@ -45,24 +47,22 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
                 ->reservedNotWaitingPayment()
                 ->count();
             $totalReserved = $totalReservedFoAllCoupon - $totalReservedForCurrentCoupon;
+            $quotaPerUser = $maxPerUser - $totalUsage - $totalReserved;
         } else {
             $totalReserved = $totalReservedForCurrentCoupon;
+            $quotaPerUser = $totalReserved;
         }
-
-
-        $maxPerUser = $this->getMaxAllowedQtyPerUser($promo, $coupon);
-        $quotaPerUser = $maxPerUser - $totalUsage - $totalReserved;
-        $quotaUsagePerTransaction = $this->getMaxAllowedQtyPerTransaction($promo, $coupon);
 
         $allowedQty = min($quotaPerUser, $quotaUsagePerTransaction);
         if ($allowedQty < 0) {
             $allowedQty = 0;
         }
 
-        $allowedQty = min((int) $allowedQty, (int) $qty);
+        $allowedQty = min($allowedQty, $qty);
         return (object) [
             'allowedQty' => $allowedQty,
             'totalReserved' => $totalReserved,
+            'quotaPerUser' => $quotaPerUser
         ];
     }
 
@@ -155,7 +155,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
                 $promo,
                 Coupon::find($promoData->object_id),
                 $user,
-                $promoData->quantity,
+                (int) $promoData->quantity,
                 $promoData->is_final_check
             );
 
@@ -163,7 +163,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
                 $promo,
                 $promoData->object_id,
                 $user,
-                $promoData->quantity
+                (int) $promoData->quantity
             );
 
             if (! $promoData->is_final_check) {
