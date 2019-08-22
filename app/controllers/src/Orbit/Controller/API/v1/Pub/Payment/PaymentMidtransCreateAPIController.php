@@ -234,6 +234,12 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                 foreach($reservedPromoCodes as $reservedPromoCode) {
                     $reservedPromoCode->payment_transaction_id = $payment_new->payment_transaction_id;
                     $reservedPromoCode->save();
+
+                    Log::info(sprintf("Promo Code %s (discountCodeId: %s) added to purchase %s",
+                        $reservedPromoCode->discount_code,
+                        $reservedPromoCode->discount_code_id,
+                        $payment_new->payment_transaction_id
+                    ));
                 }
 
                 $payment_new->amount = $payment_new->amount + $discountRecord->price;
@@ -244,8 +250,6 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                 }
 
                 $payment_new->promo_code = $discount->discount_code;
-
-                Log::info("Promo Code {$discount->discount_code} added to purchase {$payment_new->payment_transaction_id}");
             }
 
             // Commit the changes
