@@ -59,11 +59,7 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
         }
 
         $allowedQty = min($allowedQty, $qty);
-        return (object) [
-            'allowedQty' => (int) $allowedQty,
-            'totalReserved' => $totalReserved,
-            'quotaPerUser' => $quotaPerUser
-        ];
+        return (int) $allowedQty;
     }
 
     /**---------------------------------------------
@@ -167,9 +163,9 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
             );
 
             if (! $promoData->is_final_check) {
-                $allowedQty = min($qtyEligible->allowedQty, (int) $availQtyEligible);
+                $allowedQty = min($qtyEligible, $availQtyEligible);
             } else {
-                $allowedQty = $qtyEligible->allowedQty;
+                $allowedQty = $qtyEligible;
             }
             $eligible = ($allowedQty > 0);
             if (! $eligible) {
@@ -204,7 +200,6 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
             'value_in_percent' => $promo->value_in_percent,
             'start_date' => $promo->start_date,
             'end_date' => $promo->end_date,
-            'qtyEligible' => $qtyEligible,
         ];
     }
 
