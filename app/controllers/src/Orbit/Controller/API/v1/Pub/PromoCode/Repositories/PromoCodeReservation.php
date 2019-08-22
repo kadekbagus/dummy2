@@ -200,7 +200,7 @@ class PromoCodeReservation implements ReservationInterface
      */
     private function cleanUpReservedPromoCodesLater($userId, $reservedPromoCodes = [])
     {
-        $limitTimeCfg = Config::get('orbit.coupon_reserved_limit_time', 10);
+        $limitTimeCfg = Config::get('orbit.coupon_reserved_limit_time', 10) * 2;
         $date = Carbon::now()->addMinutes($limitTimeCfg);
         Queue::later(
             $date,
