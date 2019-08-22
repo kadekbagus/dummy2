@@ -32,7 +32,7 @@
                   <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                     <strong>{{{ trans('email-receipt.body.transaction_labels.coupon_name', [], '', 'id') }}}:</strong> {{ $transaction['items'][0]['name'] }}
                     <br>
-                    <strong>{{{ trans('email-receipt.body.transaction_labels.coupon_expired_date') }}}:</strong> {{ $couponExpiredDate }}
+                    <strong>{{{ trans('email-receipt.body.transaction_labels.coupon_expired_date', [], '', 'id') }}}:</strong> {{ $couponExpiredDate }}
                     <br>
                     <div style="width: 100%;">
                       <div style="width: 85%;display: inline-block;">
@@ -46,7 +46,7 @@
                       @foreach($transaction['discounts'] as $discount)
                         <div style="width: 100%;">
                           <div style="width: 85%;display: inline-block;">
-                            <strong>{{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
+                            <strong>{{{ trans('label.discount', [], '', 'id') }}} {{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
                           </div>
                         </div>
                       @endforeach
