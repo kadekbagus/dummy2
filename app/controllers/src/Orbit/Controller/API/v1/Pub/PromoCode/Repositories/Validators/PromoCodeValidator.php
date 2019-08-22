@@ -59,7 +59,7 @@ class PromoCodeValidator implements ValidatorInterface
                 'quantity' => 'required|integer|min:1',
             ),
             array(
-                'promo_code.required' => 'Promo Code is required.',
+                'promo_code.required' => 'PROMO_CODE_IS_REQUIRED',
                 'promo_code.alpha_dash' => 'PROMO_CODE_MUST_BE_ALPHA_DASH',
                 'promo_code.active_discount' => 'PROMO_CODE_NOT_ACTIVE',
                 'promo_code.available_discount' => 'PROMO_CODE_NOT_AVAILABLE',
