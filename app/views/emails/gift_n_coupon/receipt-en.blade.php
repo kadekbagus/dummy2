@@ -36,7 +36,7 @@
                     <br>
                     <div style="width: 100%;">
                       <div style="width: 85%;display: inline-block;">
-                        <strong>{{{ trans('email-canceled-payment.body.transaction_labels.coupon_price', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['price'] }}
+                        <strong>{{{ trans('email-canceled-payment.body.transaction_labels.coupon_price') }}}</strong> {{ $transaction['items'][0]['price'] }}
                       </div>
                       <div style="width: 10%;display: inline-block;">
                         X {{ $transaction['items'][0]['quantity'] }}
@@ -46,13 +46,13 @@
                       @foreach($transaction['discounts'] as $discount)
                         <div style="width: 100%;">
                           <div style="width: 85%;display: inline-block;">
-                            <strong>{{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
+                            <strong>{{{ trans('label.discount') }}} {{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
                           </div>
                         </div>
                       @endforeach
                     @endif
                     <br>
-                    <strong>{{{ trans('email-receipt.body.transaction_labels.total_amount') }}}:</strong> {{ $transaction['items'][0]['total'] }}
+                    <strong>{{{ trans('email-receipt.body.transaction_labels.total_amount') }}}:</strong> {{ $transaction['total'] }}
                     <br>
                     <br>
                   </p>
