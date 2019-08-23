@@ -20,15 +20,15 @@ abstract class AbstractPromoCodeRule implements RuleInterface
      * DISC10K when purchase other than Coupon A or B,
      * then it should return false
      *----------------------------------------------
-     * @param string $discountId, id discount
+     * @param Discount $promo, discount object
      * @param string $objectId, id linked object (i.e coupon)
      * @param string $objectType, linked object type (i.e coupon)
      * @return true if user can use promo code to object
      * ---------------------------------------------
      */
-    protected function isEligibleForObjectType($discountId, $objectId, $objectType)
+    protected function isEligibleForObjectType($promo, $objectId, $objectType)
     {
-        $obj = ObjectDiscount::where('discount_id', $discountId)
+        $obj = ObjectDiscount::where('discount_id', $promo->discount_id)
             ->where('object_id', $objectId)
             ->where('object_type', $objectType)
             ->first();
@@ -201,7 +201,7 @@ abstract class AbstractPromoCodeRule implements RuleInterface
         $rejectReason = '';
 
         $eligible = $this->isEligibleForObjectType(
-            $promo->discount_id,
+            $promo,
             $promoData->object_id,
             $promoData->object_type
         );

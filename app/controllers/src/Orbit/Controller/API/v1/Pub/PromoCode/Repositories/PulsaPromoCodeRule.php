@@ -14,11 +14,9 @@ use Pulsa;
  */
 class PulsaPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
 {
-    private $promo;
-
-    protected function isEligibleForObjectType($discountId, $objectId, $objectType)
+    protected function isEligibleForObjectType($promo, $objectId, $objectType)
     {
-        return $this->promo->type === 'pulsa';
+        return $promo->type === 'pulsa';
     }
 
     /**---------------------------------------------
