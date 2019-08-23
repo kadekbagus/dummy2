@@ -52,7 +52,7 @@ class PulsaPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
     protected function getEligibleQty($promo, $user, $promoData)
     {
         $pulsa = Pulsa::find($promoData->object_id);
-        $qtyEligible = $this->isEligibleForQuantity(
+        return $this->isEligibleForQuantity(
             $promo,
             $pulsa,
             $pulsa->pulsa_item_id,
