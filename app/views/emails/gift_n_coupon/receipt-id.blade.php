@@ -52,7 +52,7 @@
                       @endforeach
                     @endif
                     <br>
-                    <strong>{{{ trans('email-receipt.body.transaction_labels.total_amount', [], '', 'id') }}}:</strong> {{ $transaction['items'][0]['total'] }}
+                    <strong>{{{ trans('email-receipt.body.transaction_labels.total_amount', [], '', 'id') }}}:</strong> {{ $transaction['total'] }}
                     <br>
                     <br>
                   </p>
