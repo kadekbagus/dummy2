@@ -44,6 +44,145 @@ abstract class AbstractPromoCodeRule implements RuleInterface
     }
 
     /**---------------------------------------------
+     * get allowed purchase per user between
+     * promo code vs purchased item. The less value will be returned
+     *----------------------------------------------
+     * @param Discount $promo
+     * @param Object $item purchased item
+     * @return int least value between two
+     * ---------------------------------------------
+     */
+    abstract protected function getMaxAllowedQtyPerUser($promo, $item);
+
+    /**---------------------------------------------
+     * get allowed purchase per transaction between
+     * promo code vs coupon. The less value will be returned
+     *----------------------------------------------
+     * @param Discount $promo
+     * @param Object $item purchased item
+     * @return int least value between two
+     * ---------------------------------------------
+     */
+    abstract protected function getMaxAllowedQtyPerTransaction($promo, $item);
+
+    /**---------------------------------------------
+     * Check if asked quantity by user is eligible
+     * based on number use per user and number use per transaction
+     * where least of them is used.
+     *----------------------------------------------
+     * @param Discount $promo, discount object
+     * @param Object $purchasedItem, purchased object (coupon or pulsa)
+     * @param User $user, user object
+     * @param int $qty, asked quantity
+     * @return Object eligible status
+     * ---------------------------------------------
+     */
+    protected function isEligibleForQuantity(
+        $promo,
+        $item,
+        $objectId,
+        $objectType,
+        $user,
+        $qty,
+        $isFinalCheck
+    ) {
+        $totalUsage = $user->discountCodes()
+            ->where('discount_id', $promo->discount_id)
+            ->issuedOrWaitingPayment()
+            ->count();
+        $maxPerUser = $this->getMaxAllowedQtyPerUser($promo, $item);
+        $quotaUsagePerTransaction = $this->getMaxAllowedQtyPerTransaction($promo, $item);
+
+        $totalReservedForCurrentItem = $user->discountCodes()
+            ->where('discount_id', $promo->discount_id)
+            ->where('object_id', $objectId)
+            ->where('object_type', $objectType)
+            ->reservedNotWaitingPayment()
+            ->count();
+        if (! $isFinalCheck) {
+            $totalReservedForAllItems = $user->discountCodes()
+                ->where('discount_id', $promo->discount_id)
+                ->reservedNotWaitingPayment()
+                ->count();
+            $totalReserved = $totalReservedForAllItems - $totalReservedForCurrentItem;
+            $quotaPerUser = $maxPerUser - $totalUsage - $totalReserved;
+        } else {
+            $totalReserved = $totalReservedForCurrentItem;
+            $quotaPerUser = $totalReserved;
+        }
+
+        $allowedQty = min($quotaPerUser, $quotaUsagePerTransaction);
+        if ($allowedQty < 0) {
+            $allowedQty = 0;
+        }
+
+        $allowedQty = min($allowedQty, $qty);
+        return (int) $allowedQty;
+    }
+
+    /**---------------------------------------------
+     * Check if asked quantity by user is less or equal than
+     * total available discount code
+     *----------------------------------------------
+     * @param Discount $promo, promo instance
+     * @param User $user, current user
+     * @param int $qty, asked quantity
+     * @return Object eligible status
+     * ---------------------------------------------
+     */
+    protected function isEligibleForAvailQuantity($promo, $objectId, $user, $qty)
+    {
+        $totalAvail = DiscountCode::where('discount_id', $promo->discount_id)
+            ->available()
+            ->count();
+        return (int) $totalAvail;
+    }
+
+    /**---------------------------------------------
+     * build eligible status response
+     *----------------------------------------------
+     * @param Discount $promo, discount object
+     * @param User $user, current logged in user
+     * @param StdClass $promoData, promo code data
+     *---------------------------------------------
+     * Note : this method assumes data has been validated
+     * So promo code must be exists and active.
+     * ---------------------------------------------
+     */
+    protected function buildEligibleStatusResponse(
+        $promo,
+        $user,
+        $promoData,
+        $eligible,
+        $rejectReason,
+        $allowedQty,
+        $adjustedQty
+    ) {
+
+        return (object) [
+            'promo_id' => $promo->discount_id,
+            'promo_title' => $promo->discount_title,
+            'promo_code' => $promo->discount_code,
+            'eligible' => $eligible,
+
+            //when eligible = false, rejectReason contains code why user
+            //is not eligible for discount othweise this is empty string
+            'rejectReason' => ! $eligible ? $rejectReason : '',
+
+            'avail_quota_count' => $allowedQty,
+            'original_quantity' => $promoData->quantity,
+            'adjusted_quantity' => $adjustedQty,
+
+            'user_id' => $user->user_id,
+            'object_type' => $promoData->object_type,
+            'object_id' => $promoData->object_id,
+            'value_in_percent' => $promo->value_in_percent,
+            'start_date' => $promo->start_date,
+            'end_date' => $promo->end_date,
+        ];
+    }
+
+    /**---------------------------------------------
      * Check user eligiblity for promo code
      *----------------------------------------------
      * @param User $user, current logged in user
