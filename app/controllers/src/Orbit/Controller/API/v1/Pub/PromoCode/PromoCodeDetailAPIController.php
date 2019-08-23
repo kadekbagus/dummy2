@@ -1,12 +1,8 @@
 <?php namespace Orbit\Controller\API\v1\Pub\PromoCode;
 
 use OrbitShop\API\v1\PubControllerAPI;
-use \Exception;
-use \QueryException;
-use OrbitShop\API\v1\Exception\InvalidArgsException;
-use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\DetailRepositoryInterface;
-use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ResponseRendererInterface;
+use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\RepositoryExecutorInterface;
 use App;
 
 class PromoCodeDetailAPIController extends PubControllerAPI
@@ -24,20 +20,10 @@ class PromoCodeDetailAPIController extends PubControllerAPI
      */
     public function getPromoCode()
     {
-        $resp = App::make(ResponseRendererInterface::class);
-
-        try {
-            $promoCode = App::make(DetailRepositoryInterface::class)->authorizer($this);
-            return $resp->renderSuccess($this, $promoCode->getDetail());
-
-        } catch (ACLForbiddenException $e) {
-            return $resp->renderForbidden($this, $e);
-        } catch (InvalidArgsException $e) {
-            return $resp->renderInvalidArgs($this, $e);
-        } catch (QueryException $e) {
-            return $resp->renderQueryExcept($this, $e);
-        } catch (Exception $e) {
-            return $resp->renderExcept($this, $e);
-        }
+        $executor = App::make(RepositoryExecutorInterface::class);
+        $executor->execute($this, function($ctrl) {
+            $promoCode = App::make(DetailRepositoryInterface::class);
+            return $promoCode->authorizer($ctrl)->getDetail();
+        });
     }
 }

@@ -182,6 +182,8 @@ abstract class AbstractPromoCodeRule implements RuleInterface
         ];
     }
 
+    abstract protected function getEligibleQty($promo, $user, $promoData);
+
     /**---------------------------------------------
      * Check user eligiblity for promo code
      *----------------------------------------------
@@ -192,6 +194,57 @@ abstract class AbstractPromoCodeRule implements RuleInterface
      * So promo code must be exists and active.
      * ---------------------------------------------
      */
-    abstract public function getEligibleStatus($user, $promoData);
+    public function getEligibleStatus($user, $promoData)
+    {
+        $promo = $this->getPromoCodeDetail($promoData);
 
+        $rejectReason = '';
+
+        $eligible = $this->isEligibleForObjectType(
+            $promo->discount_id,
+            $promoData->object_id,
+            $promoData->object_type
+        );
+
+        $allowedQty = 0;
+        $adjustedQty = 0;
+
+        if ($eligible) {
+            $qtyEligible = $this->getEligibleQty($promo, $user, $promoData);
+
+            $availQtyEligible = $this->isEligibleForAvailQuantity(
+                $promo,
+                $promoData->object_id,
+                $user,
+                (int) $promoData->quantity
+            );
+
+            if (! $promoData->is_final_check) {
+                $allowedQty = min($qtyEligible, $availQtyEligible);
+            } else {
+                $allowedQty = $qtyEligible;
+            }
+            $eligible = ($allowedQty > 0);
+            if (! $eligible) {
+                $rejectReason = 'REMAINING_AVAIL_DISCOUNT_CODE_LESS_THAN_REQUESTED_QTY';
+            }
+        } else {
+            $rejectReason = 'DISCOUNT_CODE_NOT_APPLICABLE_TO_PURCHASED_ITEM';
+        }
+
+        //if asked quantity > allowed quantity
+        //adjust qty and if adjustedQty is greater than zero assume eligible
+        $adjustedQty = min($allowedQty, $promoData->quantity);
+        $eligible = $eligible || ($adjustedQty > 0);
+
+        return $this->buildEligibleStatusResponse(
+            $promo,
+            $user,
+            $promoData,
+            $eligible,
+            $rejectReason,
+            $allowedQty,
+            $adjustedQty
+        );
+    }
 }
