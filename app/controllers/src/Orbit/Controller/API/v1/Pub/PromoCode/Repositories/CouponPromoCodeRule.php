@@ -80,10 +80,12 @@ class CouponPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
         $adjustedQty = 0;
 
         if ($eligible) {
-
+            $coupon = Coupon::find($promoData->object_id);
             $qtyEligible = $this->isEligibleForQuantity(
                 $promo,
-                Coupon::find($promoData->object_id),
+                $coupon,
+                $coupon->promotion_id,
+                'coupon',
                 $user,
                 (int) $promoData->quantity,
                 $promoData->is_final_check

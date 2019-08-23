@@ -48,28 +48,16 @@ class PulsaPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
         if (! $eligible) {
             $rejectReason = 'DISCOUNT_CODE_NOT_APPLICABLE_TO_PURCHASED_ITEM';
         }
+        return $this->buildEligibleStatusResponse(
+            $this->promo,
+            $user,
+            $promoData,
+            $eligible,
+            $rejectReason,
+            $allowedQty,
+            $adjustedQty
+        );
 
-        return (object) [
-            'promo_id' => $this->promo->discount_id,
-            'promo_title' => $this->promo->discount_title,
-            'promo_code' => $this->promo->discount_code,
-            'eligible' => $eligible,
-
-            //when eligible = false, rejectReason contains code why user
-            //is not eligible for discount othweise this is empty string
-            'rejectReason' => $rejectReason,
-
-            'avail_quota_count' => $allowedQty,
-            'original_quantity' => $promoData->quantity,
-            'adjusted_quantity' => $allowedQty,
-
-            'user_id' => $user->user_id,
-            'object_type' => $promoData->object_type,
-            'object_id' => $promoData->object_id,
-            'value_in_percent' => $this->promo->value_in_percent,
-            'start_date' => $this->promo->start_date,
-            'end_date' => $this->promo->end_date,
-        ];
     }
 
 }
