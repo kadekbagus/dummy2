@@ -1,4 +1,4 @@
-<?php namespace Orbit\Controller\API\v1\Pub\PromoCode;
+<?php namespace Orbit\Controller\API\v1\Pub\PromoCode\Repositories;
 
 use \Exception;
 use \QueryException;

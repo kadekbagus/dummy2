@@ -24,9 +24,9 @@ class PromoCodeUnreservedAPIController extends PubControllerAPI
     public function postUnreservedPromoCode()
     {
         $executor = App::make(RepositoryExecutorInterface::class);
-        $executor->execute($this, function($ctrl) {
-            $reservationSvc = App::make(ReservationRepositoryInterface::class)->authorizer($this);
-            return $reservationSvc->unreserved();
+        return $executor->execute($this, function($ctrl) {
+            $reservationSvc = App::make(ReservationRepositoryInterface::class);
+            return $reservationSvc->authorizer($this)->unreserved();
         });
     }
 }

@@ -21,7 +21,7 @@ class PromoCodeDetailAPIController extends PubControllerAPI
     public function getPromoCode()
     {
         $executor = App::make(RepositoryExecutorInterface::class);
-        $executor->execute($this, function($ctrl) {
+        return $executor->execute($this, function($ctrl) {
             $promoCode = App::make(DetailRepositoryInterface::class);
             return $promoCode->authorizer($ctrl)->getDetail();
         });

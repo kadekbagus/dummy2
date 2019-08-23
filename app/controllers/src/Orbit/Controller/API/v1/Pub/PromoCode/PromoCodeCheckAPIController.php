@@ -23,7 +23,7 @@ class PromoCodeCheckAPIController extends PubControllerAPI
     public function postCheckPromoCode()
     {
         $executor = App::make(RepositoryExecutorInterface::class);
-        $executor->execute($this, function($ctrl) {
+        return $executor->execute($this, function($ctrl) {
             $promoCode = App::make(RepositoryInterface::class)->authorizer($ctrl);
             return $promoCode->checkAvailabilityAndReserveIfAvail();
         });
