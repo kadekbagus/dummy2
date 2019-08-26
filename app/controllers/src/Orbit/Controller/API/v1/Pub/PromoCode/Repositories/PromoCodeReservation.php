@@ -69,6 +69,19 @@ class PromoCodeReservation implements ReservationInterface
             else if ($reservedPromoCodesCount > $quantity) {
                 $this->unreservePromoCodes($user, $promoData, $reservedPromoCodesCount - $quantity);
             }
+            else {
+                // if same quantity, then update the job key.
+                $jobKey = $this->generateJobKey($user);
+                $reservedPromoCodesArray = [];
+                foreach($reservedPromoCodes as $reservedPromoCode) {
+                    $reservedPromoCodesArray[] = $reservedPromoCode->discount_code_id;
+                    $reservedPromoCode->job_key = $jobKey;
+                    $reservedPromoCode->save();
+                }
+
+                // Register new queue to check reserved promo codes status later.
+                $this->cleanUpReservedPromoCodesLater($user->user_id, $reservedPromoCodesArray, $jobKey);
+            }
         });
     }
 
@@ -136,7 +149,7 @@ class PromoCodeReservation implements ReservationInterface
         $discounts = $this->getAvailableDiscountCodes($promoData->promo_code, $quantity);
         if ($discounts->count() === $quantity) {
             // Generate new job key for the new queue job.
-            $jobKey = md5(sprintf("%s|%s", $user->user_id, microtime()));
+            $jobKey = $this->generateJobKey($user);
 
             $reservedPromoCodesArray = [];
             foreach($reservedPromoCodes as $reservedPromoCode) {
@@ -197,5 +210,11 @@ class PromoCodeReservation implements ReservationInterface
             'Orbit\\Queue\\PromoCode\\CheckReservedPromoCode',
             ['user_id' => $userId, 'discount_codes' => $reservedPromoCodes, 'job_key' => $jobKey]
         );
+        \Log::info("Promo code Cleanup check will be run at {$date->format('Y-m-d H:i:s')}");
+    }
+
+    private function generateJobKey($user)
+    {
+        return md5(sprintf("%s|%s", $user->user_id, microtime()));
     }
 }
