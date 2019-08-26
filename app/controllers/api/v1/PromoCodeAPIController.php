@@ -11,7 +11,6 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
-use DiscountCode;
 use Orbit\Database\ObjectID;
 
 class PromoCodeAPIController extends ControllerAPI
@@ -684,7 +683,15 @@ class PromoCodeAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $promoCode = Discount::where('discount_id', $discount_id)->firstOrFail();
+            $prefix = DB::getTablePrefix();
+            $promoCode = Discount::select('discounts.*',
+                                          DB::raw("(SELECT COUNT(DC.discount_code_id) FROM {$prefix}discount_codes DC
+                                                            WHERE DC.discount_id = {$prefix}discounts.discount_id
+                                                            AND (DC.status != 'available')) as discount_used,
+                                                    (SELECT COUNT(DC.discount_code_id) FROM {$prefix}discount_codes DC
+                                                            WHERE DC.discount_id = {$prefix}discounts.discount_id
+                                                            AND DC.status = 'available') as discount_remaining"))
+                                    ->where('discounts.discount_id', $discount_id)->firstOrFail();
 
             $this->response->data = $promoCode;
 
