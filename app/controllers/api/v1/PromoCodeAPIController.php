@@ -506,7 +506,8 @@ class PromoCodeAPIController extends ControllerAPI
 
             // Filter news by sticky order
             OrbitInput::get('status', function ($status) use ($promoCode) {
-                $promoCode->where('discounts.status', $status);
+                $status = (array) $status;
+                $promoCode->whereIn('discounts.status', $status);
             });
 
             // Filter news by link object type
