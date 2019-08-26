@@ -184,9 +184,20 @@
                 <br>
                 <strong>{{{ trans('email-aborted-payment.body.transaction_labels.coupon_name', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['name'] }}
                 <br>
-                <strong>{{{ trans('email-aborted-payment.body.transaction_labels.coupon_price', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['price'] }}
-                <br>
-                <strong>{{{ trans('email-aborted-payment.body.transaction_labels.coupon_quantity', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['quantity'] }}
+                <div style="width: 100%;">
+                  <strong>{{{ trans('email-aborted-payment.body.transaction_labels.coupon_price', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['price'] }}
+                  &nbsp;&nbsp;&nbsp;
+                  X {{ $transaction['items'][0]['quantity'] }}
+                </div>
+                @if (count($transaction['discounts']) > 0)
+                  @foreach($transaction['discounts'] as $discount)
+                    <div style="width: 100%;">
+                      <div style="width: 99%;display: inline-block;">
+                        <strong>{{{ trans('label.discount', [], '', 'id') }}} {{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
+                      </div>
+                    </div>
+                  @endforeach
+                @endif
                 <br>
                 <strong>{{{ trans('email-aborted-payment.body.transaction_labels.total_amount', [], '', 'id') }}}</strong> {{ $transaction['total'] }}
                 <br>
@@ -244,9 +255,20 @@
                 <br>
                 <strong>{{{ trans('email-aborted-payment.body.transaction_labels.coupon_name') }}}</strong> {{ $transaction['items'][0]['name'] }}
                 <br>
-                <strong>{{{ trans('email-aborted-payment.body.transaction_labels.coupon_price') }}}</strong> {{ $transaction['items'][0]['price'] }}
-                <br>
-                <strong>{{{ trans('email-aborted-payment.body.transaction_labels.coupon_quantity') }}}</strong> {{ $transaction['items'][0]['quantity'] }}
+                <div style="width: 100%;">
+                  <strong>{{{ trans('email-aborted-payment.body.transaction_labels.coupon_price') }}}</strong> {{ $transaction['items'][0]['price'] }}
+                  &nbsp;&nbsp;&nbsp;
+                  X {{ $transaction['items'][0]['quantity'] }}
+                </div>
+                @if (count($transaction['discounts']) > 0)
+                  @foreach($transaction['discounts'] as $discount)
+                    <div style="width: 100%;">
+                      <div style="width: 99%;display: inline-block;">
+                        <strong>{{{ trans('label.discount') }}} {{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
+                      </div>
+                    </div>
+                  @endforeach
+                @endif
                 <br>
                 <strong>{{{ trans('email-aborted-payment.body.transaction_labels.total_amount') }}}</strong> {{ $transaction['total'] }}
                 <br>

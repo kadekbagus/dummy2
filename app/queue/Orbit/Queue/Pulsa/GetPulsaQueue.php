@@ -28,6 +28,9 @@ use Orbit\Notifications\Pulsa\PulsaSuccessWithoutSerialNumberNotification;
 
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
 
+use App;
+use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
+
 /**
  * A job to get/issue Hot Deals Coupon after payment completed.
  * At this point, we assume the payment was completed (paid) so anything wrong
@@ -55,6 +58,9 @@ class GetPulsaQueue
         $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
         $mallId = isset($data['mall_id']) ? $data['mall_id'] : null;
         $mall = Mall::where('merchant_id', $mallId)->first();
+        $payment = null;
+        $discount = null;
+
         if (! isset($data['retry'])) {
             $data['retry'] = 0;
         }
@@ -70,7 +76,7 @@ class GetPulsaQueue
 
             Log::info("Pulsa: Getting pulsa for PaymentID: {$paymentId}");
 
-            $payment = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'user', 'midtrans'])->findOrFail($paymentId);
+            $payment = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'user', 'midtrans', 'discount_code'])->findOrFail($paymentId);
 
             $activity->setUser($payment->user);
 
@@ -88,17 +94,14 @@ class GetPulsaQueue
                 return;
             }
 
-            $paymentDetail = $payment->details->first();
-            $pulsa = $paymentDetail->pulsa;
+            $pulsa = $this->getPulsa($payment);
+            $discount = $payment->discount_code;
             $phoneNumber = $payment->extra_data;
             $pulsaName = $pulsa->pulsa_display_name;
 
             // Send request to buy pulsa from MCash
             $pulsaPurchase = Purchase::create()->doPurchase($pulsa->pulsa_code, $phoneNumber, $paymentId);
-
-            // Test only, mock purchase as success w/o serial number.
-            // $pulsaPurchase->setData(['status' => 0, 'pending' => 1]);
-            // $pulsaPurchase->unsetData(['serial_number']);
+            // $pulsaPurchase = Purchase::create()->mockSuccess()->doPurchase($pulsa->pulsa_code, $phoneNumber, $paymentId);
 
             if ($pulsaPurchase->isSuccess()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
@@ -119,6 +122,18 @@ class GetPulsaQueue
                         ->responseOK()
                         ->save();
 
+                if (! empty($discount)) {
+                    // Mark promo code as issued.
+                    $promoCodeReservation = App::make(ReservationInterface::class);
+                    $promoData = (object) [
+                        'promo_code' => $discount->discount_code,
+                        'object_id' => $pulsa->pulsa_item_id,
+                        'object_type' => 'pulsa'
+                    ];
+                    $promoCodeReservation->markAsIssued($payment->user, $promoData);
+                    Log::info("Pulsa: Promo code {$discountCode} issued for purchase {$paymentId}");
+                }
+
                 Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
                 Log::info("Purchase response: " . serialize($pulsaPurchase));
             }
@@ -128,6 +143,19 @@ class GetPulsaQueue
                 Log::info("Purchase response: " . serialize($pulsaPurchase));
 
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
+
+                if (! empty($discount)) {
+                    // Mark promo code as issued.
+                    $discountCode = $discount->discount_code;
+                    $promoCodeReservation = App::make(ReservationInterface::class);
+                    $promoData = (object) [
+                        'promo_code' => $discountCode,
+                        'object_id' => $pulsa->pulsa_item_id,
+                        'object_type' => 'pulsa'
+                    ];
+                    $promoCodeReservation->markAsIssued($payment->user, $promoData);
+                    Log::info("Pulsa: Promo code {$discountCode} issued for purchase {$paymentId}");
+                }
 
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Successful', 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
             }
@@ -216,6 +244,19 @@ class GetPulsaQueue
                 $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED;
                 $payment->save();
 
+                if (! empty($discount)) {
+                    // Mark promo code as available.
+                    $discountCode = $discount->discount_code;
+                    $promoCodeReservation = App::make(ReservationInterface::class);
+                    $promoData = (object) [
+                        'promo_code' => $discountCode,
+                        'object_id' => $pulsa->pulsa_item_id,
+                        'object_type' => 'pulsa'
+                    ];
+                    $promoCodeReservation->markAsAvailable($payment->user, $promoData);
+                    Log::info("Pulsa: Promo code {$discountCode} reverted back/marked as available...");
+                }
+
                 DB::connection()->commit();
 
                 // Notify admin for this failure.
@@ -230,8 +271,6 @@ class GetPulsaQueue
 
                 $notes = $phoneNumber . ' ---- ' . $e->getMessage();
 
-                $paymentDetail = $payment->details->first();
-                $pulsa = isset($paymentDetail->pulsa) ? $paymentDetail->pulsa : null;
                 $pulsaName = ! empty($pulsa) ? $pulsa->pulsa_display_name : '-';
 
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Failed', 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
@@ -254,5 +293,18 @@ class GetPulsaQueue
         }
 
         $job->delete();
+    }
+
+    private function getPulsa($payment)
+    {
+        $pulsa = null;
+        foreach($payment->details as $detail) {
+            if (! empty($detail->pulsa)) {
+                $pulsa = $detail->pulsa;
+                break;
+            }
+        }
+
+        return $pulsa;
     }
 }

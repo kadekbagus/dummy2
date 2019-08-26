@@ -32,6 +32,12 @@ class Purchase
     protected $command = 'PURCHASE';
 
     /**
+     * Mock data.
+     * @var null
+     */
+    protected $mockData = null;
+
+    /**
      * Login response
      */
     protected $response;
@@ -47,6 +53,19 @@ class Purchase
         return new static($config);
     }
 
+    public function mockSuccess($data = [])
+    {
+        $this->mockData = (object) array_merge($data, [
+            'status' => 0,
+            'message' => 'TRX SUCCESS',
+            'data' => (object) [
+                'serial_number' => '12313131',
+            ]
+        ]);
+
+        return $this;
+    }
+
     /**
      * @param string $product - MCash product code (pulsa code)
      * @param string $customer - Customer phone number
@@ -55,6 +74,10 @@ class Purchase
     public function doPurchase($product, $customer, $partnerTrxid=null)
     {
     	try {
+            if (! empty($this->mockData)) {
+                return new PurchaseResponse($this->mockData);
+            }
+
     		if (empty($product)) {
                 throw new \Exception("Product code is required", 1);
             }

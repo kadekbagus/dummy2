@@ -124,7 +124,10 @@ return array(
         'Orbit\RoutingServiceProvider',
         'Laraeval\Laraeval\LaraevalServiceProvider',
         'Artdarek\OAuth\OAuthServiceProvider',
-        Intervention\Image\ImageServiceProvider::class
+        Intervention\Image\ImageServiceProvider::class,
+
+		//mall API specific service providers
+        Orbit\Controller\API\v1\Pub\PromoCode\Repositories\ServiceProviders\PromoCodeServiceProvider::class,
     ),
 
     /*

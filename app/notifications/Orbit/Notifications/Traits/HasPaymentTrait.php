@@ -3,6 +3,7 @@
 use Config;
 use Carbon\Carbon;
 use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
+use Discount;
 
 /**
  * A trait that indicate that the using object/model
@@ -29,16 +30,27 @@ trait HasPaymentTrait
             'date'      => $this->payment->getTransactionDate(),
             'customer'  => $this->getCustomerData(),
             'items'     => [],
+            'discounts' => [],
             'total'     => $this->payment->getGrandTotal(),
         ];
 
         foreach($this->payment->details as $item) {
-            $transaction['items'][] = [
+            $detailItem = [
                 'name'      => $item->object_name,
                 'quantity'  => $item->quantity,
                 'price'     => $item->getPrice(),
                 'total'     => $item->getTotal(),
             ];
+
+            if ($item->price < 0 || $item->object_type === 'discount') {
+                $discount = Discount::select('value_in_percent')->find($item->object_id);
+                $discount = ! empty($discount) ? $discount->value_in_percent . '%' : '';
+                $detailItem['name'] = $discount;
+                $detailItem['quantity'] = '';
+                $transaction['discounts'][] = $detailItem;
+            } else {
+                $transaction['items'][] = $detailItem;
+            }
         }
 
         return $transaction;

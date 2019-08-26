@@ -88,7 +88,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
             $shouldNotifyRefund = false;
             $refundReason = '';
 
-            $payment_update = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'refunds', 'midtrans', 'user'])->findOrFail($payment_transaction_id);
+            $payment_update = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'refunds', 'midtrans', 'user', 'discount_code'])->findOrFail($payment_transaction_id);
 
             $oldStatus = $payment_update->status;
 

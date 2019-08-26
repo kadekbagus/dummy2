@@ -128,6 +128,21 @@ class PaymentTransaction extends Eloquent
         return $this->hasMany('PaymentTransactionDetail');
     }
 
+    public function discount()
+    {
+        return $this->hasOne('PaymentTransactionDetail')->where('object_type', 'discount');
+    }
+
+    public function discount_code()
+    {
+        return $this->hasOne('DiscountCode', 'payment_transaction_id');
+    }
+
+    public function discount_codes()
+    {
+        return $this->hasMany('DiscountCode', 'payment_transaction_id');
+    }
+
     public function midtrans()
     {
         return $this->hasOne('PaymentMidtrans');
@@ -239,7 +254,13 @@ class PaymentTransaction extends Eloquent
      */
     public function forPulsa()
     {
-        return $this->details->count() > 0 && ! empty($this->details->first()->pulsa);
+        foreach($this->details as $detail) {
+            if (! empty($detail->pulsa)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -251,9 +272,13 @@ class PaymentTransaction extends Eloquent
      */
     public function forGiftNCoupon()
     {
-        return $this->details->count() > 0
-               && ! empty($this->details->first()->coupon)
-               && $this->details->first()->coupon->promotion_type === Coupon::TYPE_GIFTNCOUPON;
+        foreach($this->details as $detail) {
+            if (! empty($detail->coupon) && $detail->coupon->promotion_type === Coupon::TYPE_GIFTNCOUPON) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -275,11 +300,18 @@ class PaymentTransaction extends Eloquent
      */
     public function forHotDeals()
     {
-        if ($this->details->count() > 0 && ! empty($this->details->first()->coupon)) {
-            return $this->details->first()->coupon->promotion_type === Coupon::TYPE_HOT_DEALS;
+        foreach($this->details as $detail) {
+            if (! empty($detail->coupon) && $detail->coupon->promotion_type === Coupon::TYPE_HOT_DEALS) {
+                return true;
+            }
         }
 
         return false;
+    }
+
+    public function forHotDealsOrGiftN()
+    {
+        return $this->forHotDeals() || $this->forGiftNCoupon();
     }
 
     /**
@@ -368,17 +400,32 @@ class PaymentTransaction extends Eloquent
                 }
             }
         }
-        else if ($this->forHotDeals() || $this->forGiftNCoupon()) {
-            Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Reverting reserved hot deals coupon status.');
+        else if ($this->forHotDealsOrGiftN()) {
+            Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Reverting reserved hot deals/gift n coupon status.');
 
             foreach($issuedCoupons as $issuedCoupon) {
                 $issuedCoupon->makeAvailable();
-                Log::info('Payment: hot deals coupon reverted. IssuedCoupon ID: ' . $issuedCoupon->issued_coupon_id);
+                Log::info('Payment: hot deals/giftn coupon reverted. IssuedCoupon ID: ' . $issuedCoupon->issued_coupon_id);
             }
         }
 
         // Update the availability...
         Coupon::find($couponId)->updateAvailability();
+    }
+
+    /**
+     * [detachDiscount description]
+     * @return [type] [description]
+     */
+    public function resetDiscount()
+    {
+        if (! isset($this->discount_codes)) {
+            $this->load('discount_codes');
+        }
+
+        foreach($this->discount_codes as $discountCode) {
+            $discountCode->makeAvailable();
+        }
     }
 
     /**

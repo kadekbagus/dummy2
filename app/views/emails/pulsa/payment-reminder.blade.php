@@ -190,10 +190,20 @@
                 <br>
                 <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.pulsa_name', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['name'] }}
                 <br>
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.pulsa_price', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['price'] }}
-                <br>
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.coupon_quantity', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['quantity'] }}
-                <br>
+                <div style="width: 100%;">
+                  <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.pulsa_price', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['price'] }}
+                  &nbsp;&nbsp;&nbsp;
+                  X {{ $transaction['items'][0]['quantity'] }}
+                </div>
+                @if (count($transaction['discounts']) > 0)
+                  @foreach($transaction['discounts'] as $discount)
+                    <div style="width: 100%;">
+                      <div style="width: 90%;display: inline-block;">
+                        <strong>{{{ trans('label.discount', [], '', 'id') }}} {{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
+                      </div>
+                    </div>
+                  @endforeach
+                @endif
                 <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.total_amount', [], '', 'id') }}}</strong> {{ $transaction['total'] }}
                 <br>
               </p>
@@ -240,10 +250,20 @@
                 <br>
                 <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.pulsa_name') }}}</strong> {{ $transaction['items'][0]['name'] }}
                 <br>
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.pulsa_price') }}}</strong> {{ $transaction['items'][0]['price'] }}
-                <br>
-                <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.coupon_quantity') }}}</strong> {{ $transaction['items'][0]['quantity'] }}
-                <br>
+                <div style="width: 100%;">
+                  <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.pulsa_price') }}}</strong> {{ $transaction['items'][0]['price'] }}
+                  &nbsp;&nbsp;&nbsp;
+                  X {{ $transaction['items'][0]['quantity'] }}
+                </div>
+                @if (count($transaction['discounts']) > 0)
+                  @foreach($transaction['discounts'] as $discount)
+                    <div style="width: 100%;">
+                      <div style="width: 90%;display: inline-block;">
+                        <strong>{{{ trans('label.discount') }}} {{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
+                      </div>
+                    </div>
+                  @endforeach
+                @endif
                 <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.total_amount') }}}</strong> {{ $transaction['total'] }}
                 <br>
               </p>
