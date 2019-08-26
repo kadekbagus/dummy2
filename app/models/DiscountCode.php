@@ -68,6 +68,7 @@ class DiscountCode extends Eloquent
         $this->object_id = null;
         $this->object_type = null;
         $this->status = 'available';
+        $this->job_key = null;
         $this->save();
     }
 
