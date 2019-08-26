@@ -83,12 +83,7 @@ class PromoCodeReservation implements ReservationInterface
         DB::transaction(function() use ($user, $promoData) {
             $discounts = $this->getReservedDiscountCodes($user, $promoData);
             foreach($discounts as $discount) {
-                $discount->status = 'available';
-                $discount->payment_transaction_id = null;
-                $discount->user_id = null;
-                $discount->object_id = null;
-                $discount->object_type = null;
-                $discount->save();
+                $discount->makeAvailable();
             }
         });
     }
@@ -104,12 +99,7 @@ class PromoCodeReservation implements ReservationInterface
         DB::transaction(function() use ($user, $promoData) {
             $discounts = $this->getReservedDiscountCodesNotWaitingPayment($user, $promoData);
             foreach($discounts as $discount) {
-                $discount->status = 'available';
-                $discount->payment_transaction_id = null;
-                $discount->user_id = null;
-                $discount->object_id = null;
-                $discount->object_type = null;
-                $discount->save();
+                $discount->makeAvailable();
             }
         });
     }
@@ -143,12 +133,16 @@ class PromoCodeReservation implements ReservationInterface
     {
         // Only reserve if available quantity = requested quantity.
         // Otherwise, throw exception.
-        //
         $discounts = $this->getAvailableDiscountCodes($promoData->promo_code, $quantity);
         if ($discounts->count() === $quantity) {
+            // Generate new job key for the new queue job.
+            $jobKey = md5(sprintf("%s|%s", $user->user_id, microtime()));
+
             $reservedPromoCodesArray = [];
             foreach($reservedPromoCodes as $reservedPromoCode) {
                 $reservedPromoCodesArray[] = $reservedPromoCode->discount_code_id;
+                $reservedPromoCode->job_key = $jobKey;
+                $reservedPromoCode->save();
             }
 
             foreach($discounts as $discount) {
@@ -156,12 +150,13 @@ class PromoCodeReservation implements ReservationInterface
                 $discount->object_id = $promoData->object_id;
                 $discount->object_type = $promoData->object_type;
                 $discount->status = 'reserved';
+                $discount->job_key = $jobKey;
                 $discount->save();
                 $reservedPromoCodesArray[] = $discount->discount_code_id;
             }
 
             // Register new queue to check reserved promo codes status later.
-            $this->cleanUpReservedPromoCodesLater($user->user_id, $reservedPromoCodesArray);
+            $this->cleanUpReservedPromoCodesLater($user->user_id, $reservedPromoCodesArray, $jobKey);
         }
         else {
             // If we get here, that means requested amount of promo code not available anymore.
@@ -181,12 +176,7 @@ class PromoCodeReservation implements ReservationInterface
     {
         $reservedPromoCodes = $this->getReservedDiscountCodesNotWaitingPayment($user, $promoData, $quantity);
         foreach($reservedPromoCodes as $reservedPromoCode) {
-            $reservedPromoCode->status = 'available';
-            $reservedPromoCode->payment_transaction_id = null;
-            $reservedPromoCode->user_id = null;
-            $reservedPromoCode->object_id = null;
-            $reservedPromoCode->object_type = null;
-            $reservedPromoCode->save();
+            $reservedPromoCode->makeAvailable();
         }
     }
 
@@ -198,14 +188,14 @@ class PromoCodeReservation implements ReservationInterface
      * @param  array  $reservedPromoCodes [description]
      * @return [type]                     [description]
      */
-    private function cleanUpReservedPromoCodesLater($userId, $reservedPromoCodes = [])
+    private function cleanUpReservedPromoCodesLater($userId, $reservedPromoCodes = [], $jobKey = '')
     {
         $limitTimeCfg = Config::get('orbit.coupon_reserved_limit_time', 10) * 2;
         $date = Carbon::now()->addMinutes($limitTimeCfg);
         Queue::later(
             $date,
             'Orbit\\Queue\\PromoCode\\CheckReservedPromoCode',
-            ['user_id' => $userId, 'discount_codes' => $reservedPromoCodes]
+            ['user_id' => $userId, 'discount_codes' => $reservedPromoCodes, 'job_key' => $jobKey]
         );
     }
 }
