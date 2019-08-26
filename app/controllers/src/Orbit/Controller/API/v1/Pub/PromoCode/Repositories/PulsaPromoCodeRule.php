@@ -4,6 +4,7 @@ use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\RuleInterface;
 use Discount;
 use DiscountCode;
 use ObjectDiscount;
+use Pulsa;
 
 /**
  * Class which determine if user is eligible to get promo code when purchasing
@@ -13,63 +14,52 @@ use ObjectDiscount;
  */
 class PulsaPromoCodeRule extends AbstractPromoCodeRule implements RuleInterface
 {
-    private $promo;
-
-    protected function isEligibleForObjectType($discountId, $objectId, $objectType)
+    protected function isEligibleForObjectType($promo, $objectId, $objectType)
     {
-        return $this->promo->type === 'pulsa';
+        return $promo->type === 'pulsa';
     }
 
     /**---------------------------------------------
-     * Check user eligiblity for promo code
+     * get allowed purchase per user between
+     * promo code vs coupon. The less value will be returned
      *----------------------------------------------
-     * @param User $user, current logged in user
-     * @param StdClass $promoData, promo code data
-     *---------------------------------------------
-     * Note : this method assumes data has been validated
-     * So promo code must be exists and active.
+     * @param Discount $promo
+     * @param Pulsa $pulsa
+     * @return int least value between two
      * ---------------------------------------------
      */
-    public function getEligibleStatus($user, $promoData)
+    protected function getMaxAllowedQtyPerUser($promo, $pulsa)
     {
-        $this->promo = $this->getPromoCodeDetail($promoData);
-
-        $rejectReason = '';
-
-        // TODO: Or just use promo->type === 'pulsa'
-        $eligible = $this->isEligibleForObjectType(
-            $this->promo->discount_id,
-            $promoData->object_id,
-            $promoData->object_type
-        );
-
-        $allowedQty = $promoData->quantity;
-
-        if (! $eligible) {
-            $rejectReason = 'DISCOUNT_CODE_NOT_APPLICABLE_TO_PURCHASED_ITEM';
-        }
-
-        return (object) [
-            'promo_id' => $this->promo->discount_id,
-            'promo_title' => $this->promo->discount_title,
-            'promo_code' => $this->promo->discount_code,
-            'eligible' => $eligible,
-
-            //when eligible = false, rejectReason contains code why user
-            //is not eligible for discount othweise this is empty string
-            'rejectReason' => $rejectReason,
-
-            'avail_quota_count' => $allowedQty,
-            'original_quantity' => $promoData->quantity,
-            'adjusted_quantity' => $allowedQty,
-
-            'user_id' => $user->user_id,
-            'object_type' => $promoData->object_type,
-            'object_id' => $promoData->object_id,
-            'value_in_percent' => $this->promo->value_in_percent,
-            'start_date' => $this->promo->start_date,
-            'end_date' => $this->promo->end_date,
-        ];
+        //pulsa does not have limit per user, only promo
+        return (int) $promo->max_per_user;
     }
 
+    /**---------------------------------------------
+     * get allowed purchase per transaction between
+     * promo code vs coupon. The less value will be returned
+     *----------------------------------------------
+     * @param Discount $promo
+     * @param Pulsa $pulsa
+     * @return int least value between two
+     * ---------------------------------------------
+     */
+    protected function getMaxAllowedQtyPerTransaction($promo, $pulsa)
+    {
+        //pulsa does not have limit per transaction, only promo
+        return $promo->max_per_transaction;
+    }
+
+    protected function getEligibleQty($promo, $user, $promoData)
+    {
+        $pulsa = Pulsa::find($promoData->object_id);
+        return $this->isEligibleForQuantity(
+            $promo,
+            $pulsa,
+            $pulsa->pulsa_item_id,
+            'pulsa',
+            $user,
+            (int) $promoData->quantity,
+            $promoData->is_final_check
+        );
+    }
 }
