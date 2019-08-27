@@ -208,6 +208,14 @@
                         <td style="font-family:'Roboto', 'Arial', sans-serif;border-bottom:1px solid #999;vertical-align:top;padding:15px 8px;border-bottom:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $item['total'] }}}</td>
                       </tr>
                     @endforeach
+                    @foreach($transaction['discounts'] as $item)
+                      <tr class="transaction-item">
+                        <td class="first" style="font-family:'Roboto', 'Arial', sans-serif;border-bottom:1px solid #999;vertical-align:top;padding:15px 8px;border-bottom:0;padding-left:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;word-wrap: break-word;">{{{ trans('label.discount', [], '', 'id') }}} {{{ $item['name'] }}}</td>
+                        <td style="font-family:'Roboto', 'Arial', sans-serif;border-bottom:1px solid #999;vertical-align:top;padding:15px 8px;border-bottom:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $item['quantity'] }}}</td>
+                        <td style="font-family:'Roboto', 'Arial', sans-serif;border-bottom:1px solid #999;vertical-align:top;padding:15px 8px;border-bottom:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $item['price'] }}}</td>
+                        <td style="font-family:'Roboto', 'Arial', sans-serif;border-bottom:1px solid #999;vertical-align:top;padding:15px 8px;border-bottom:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $item['total'] }}}</td>
+                      </tr>
+                    @endforeach
                 </tbody>
                 <tfoot class="transaction-footer">
                   <tr>
@@ -273,6 +281,14 @@
                     @foreach($transaction['items'] as $item)
                       <tr class="transaction-item">
                         <td class="first" style="font-family:'Roboto', 'Arial', sans-serif;border-bottom:1px solid #999;vertical-align:top;padding:15px 8px;border-bottom:0;padding-left:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;word-wrap: break-word;">{{{ $item['name'] }}}</td>
+                        <td style="font-family:'Roboto', 'Arial', sans-serif;border-bottom:1px solid #999;vertical-align:top;padding:15px 8px;border-bottom:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $item['quantity'] }}}</td>
+                        <td style="font-family:'Roboto', 'Arial', sans-serif;border-bottom:1px solid #999;vertical-align:top;padding:15px 8px;border-bottom:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $item['price'] }}}</td>
+                        <td style="font-family:'Roboto', 'Arial', sans-serif;border-bottom:1px solid #999;vertical-align:top;padding:15px 8px;border-bottom:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $item['total'] }}}</td>
+                      </tr>
+                    @endforeach
+                    @foreach($transaction['discounts'] as $item)
+                      <tr class="transaction-item">
+                        <td class="first" style="font-family:'Roboto', 'Arial', sans-serif;border-bottom:1px solid #999;vertical-align:top;padding:15px 8px;border-bottom:0;padding-left:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;word-wrap: break-word;">{{{ trans('label.discount') }}} {{{ $item['name'] }}}</td>
                         <td style="font-family:'Roboto', 'Arial', sans-serif;border-bottom:1px solid #999;vertical-align:top;padding:15px 8px;border-bottom:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $item['quantity'] }}}</td>
                         <td style="font-family:'Roboto', 'Arial', sans-serif;border-bottom:1px solid #999;vertical-align:top;padding:15px 8px;border-bottom:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $item['price'] }}}</td>
                         <td style="font-family:'Roboto', 'Arial', sans-serif;border-bottom:1px solid #999;vertical-align:top;padding:15px 8px;border-bottom:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $item['total'] }}}</td>

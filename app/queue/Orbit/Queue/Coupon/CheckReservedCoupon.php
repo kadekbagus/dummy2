@@ -12,6 +12,7 @@ use Orbit\Helper\Util\JobBurier;
 use IssuedCoupon;
 use Coupon;
 use PaymentTransaction;
+use DiscountCode;
 
 /**
  * Queue to check reserved coupon and returning the available coupon value if user cancel . . .
@@ -56,12 +57,28 @@ class CheckReservedCoupon
                                                 ->get();
 
                 if ($canceledCoupons->count() > 0) {
+                    $transactionId = null;
                     foreach($canceledCoupons as $canceledCoupon) {
+                        $transactionId = $canceledCoupon->transaction_id;
                         if ($coupon->promotion_type === Coupon::TYPE_SEPULSA) {
                             $canceledCoupon->delete(TRUE);
                         }
                         else {
                             $canceledCoupon->makeAvailable();
+                        }
+                    }
+
+                    // Unreserve related promo codes (if there any)...
+                    if (! empty($transactionId)) {
+                        $reservedPromoCodes = DiscountCode::where('status', 'reserved')
+                            ->where('payment_transaction_id', $transactionId)
+                            ->where('user_id', $userId)
+                            ->where('object_id', $couponId)
+                            ->where('object_type', 'coupon')
+                            ->get();
+
+                        foreach($reservedPromoCodes as $reservedPromoCode) {
+                            $reservedPromoCode->makeAvailable();
                         }
                     }
 

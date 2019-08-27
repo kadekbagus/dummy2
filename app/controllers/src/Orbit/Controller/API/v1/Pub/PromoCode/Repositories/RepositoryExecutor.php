@@ -19,7 +19,8 @@ class RepositoryExecutor implements RepositoryExecutorInterface
     /**
      * execute callback and return response
      *
-     * @param string promocode
+     * @param Controller $controller
+     * @param callable $callback
      * @return Illuminate\Support\Facades\Response
      */
     public function execute($ctrl, $callback)
