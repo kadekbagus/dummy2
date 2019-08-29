@@ -316,16 +316,16 @@ Event::listen('orbit.coupon.postnewcoupon.after.commit', function($controller, $
     $timestamp = new DateTime($coupon->created_at);
     $date = $timestamp->format('d F Y H:i').' (UTC)';
 
-    // Send email process to the queue
-    Queue::push('Orbit\\Queue\\CampaignMail', [
-        'campaignType'       => 'Coupon',
-        'campaignName'       => $coupon->promotion_name,
-        'pmpUser'            => $controller->api->user->username,
-        'eventType'          => 'created',
-        'date'               => $date,
-        'campaignId'         => $coupon->promotion_id,
-        'mode'               => 'create'
-    ]);
+    // Send email process to the queue (disabled because there's no use)
+    // Queue::push('Orbit\\Queue\\CampaignMail', [
+    //     'campaignType'       => 'Coupon',
+    //     'campaignName'       => $coupon->promotion_name,
+    //     'pmpUser'            => $controller->api->user->username,
+    //     'eventType'          => 'created',
+    //     'date'               => $date,
+    //     'campaignId'         => $coupon->promotion_id,
+    //     'mode'               => 'create'
+    // ]);
 });
 
 
@@ -344,16 +344,16 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
     $timestamp = new DateTime($coupon->updated_at);
     $date = $timestamp->format('d F Y H:i').' (UTC)';
 
-    // Send email process to the queue
-    Queue::push('Orbit\\Queue\\CampaignMail', [
-        'campaignType'       => 'Coupon',
-        'campaignName'       => $coupon->promotion_name,
-        'pmpUser'            => $controller->api->user->username,
-        'eventType'          => 'updated',
-        'date'               => $date,
-        'campaignId'         => $coupon->promotion_id,
-        'mode'               => 'update'
-    ]);
+    // Send email process to the queue (disabled because there's no use)
+    // Queue::push('Orbit\\Queue\\CampaignMail', [
+    //     'campaignType'       => 'Coupon',
+    //     'campaignName'       => $coupon->promotion_name,
+    //     'pmpUser'            => $controller->api->user->username,
+    //     'eventType'          => 'updated',
+    //     'date'               => $date,
+    //     'campaignId'         => $coupon->promotion_id,
+    //     'mode'               => 'update'
+    // ]);
 
 
     if ($coupon->promotion_type != 'sepulsa') {

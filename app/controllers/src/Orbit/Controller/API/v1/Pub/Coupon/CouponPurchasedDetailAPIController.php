@@ -21,6 +21,7 @@ use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Helper\Util\CdnUrlGenerator;
 use PromotionRetailer;
 use PaymentTransaction;
+use PaymentTransactionDetail;
 use Helper\EloquentRecordCounter as RecordCounter;
 
 class CouponPurchasedDetailAPIController extends PubControllerAPI
@@ -83,6 +84,10 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
+            $totalQty = PaymentTransactionDetail::where('payment_transaction_id', $payment_transaction_id)
+                ->where('object_type', 'coupon')
+                ->sum('quantity');
+
             $coupon = PaymentTransaction::select(DB::raw("
                                     {$prefix}payment_transactions.payment_transaction_id,
                                     {$prefix}payment_transactions.external_payment_transaction_id,
@@ -91,7 +96,7 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
                                     {$prefix}payment_transactions.currency,
                                     {$prefix}payment_transactions.amount,
                                     {$prefix}promotions.price_selling,
-                                    FORMAT({$prefix}payment_transactions.amount / {$prefix}promotions.price_selling, 0) as qty,
+                                    {$totalQty} as qty,
                                     {$prefix}payment_transactions.status,
                                     {$prefix}payment_midtrans.payment_midtrans_info,
                                     {$prefix}promotions.promotion_id  as coupon_id,

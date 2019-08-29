@@ -33,6 +33,7 @@ class CheckReservedPromoCode
         try {
             $userId = $data['user_id'];
             $issuedPromoCodes = isset($data['discount_codes']) ? $data['discount_codes'] : [];
+            $jobKey = isset($data['job_key']) ? $data['job_key'] : null;
 
             DB::connection()->beginTransaction();
 
@@ -53,6 +54,8 @@ class CheckReservedPromoCode
                                                 })
                                                 ->where('user_id', $userId)
                                                 ->whereIn('discount_code_id', $issuedPromoCodes)
+                                                ->whereNotNull('job_key')
+                                                ->where('job_key', $jobKey)
                                                 ->get();
 
                 if ($canceledPromoCodes->count() > 0) {
