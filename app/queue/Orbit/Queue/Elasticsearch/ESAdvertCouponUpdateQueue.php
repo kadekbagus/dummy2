@@ -128,29 +128,8 @@ class ESAdvertCouponUpdateQueue
 
         if (! is_object($coupon)) {
 
-            // check exist elasticsearch index
-            $params_search = [
-                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_coupons.index'),
-                'type' => Config::get('orbit.elasticsearch.indices.advert_coupons.type'),
-                'body' => [
-                    'query' => [
-                        'match' => [
-                            '_id' => $adverts->advert_id
-                        ]
-                    ]
-                ]
-            ];
-            $response_search = $this->poster->search($params_search);
-
-            if ($response_search['hits']['total'] > 0) {
-                $params = [
-                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_coupons.index'),
-                    'type' => Config::get('orbit.elasticsearch.indices.advert_coupons.type'),
-                    'id' => $response_search['hits']['hits'][0]['_id']
-                ];
-
-                $response = $this->poster->delete($params);
-            }
+            $esAdvertCouponDelete = new \Orbit\Queue\Elasticsearch\ESAdvertCouponDeleteQueue('default', $advertData);
+            $doESCouponDelete = $esAdvertCouponDelete->fire($fakeJob, ['coupon_id' => $couponId]);
 
             $job->delete();
 
