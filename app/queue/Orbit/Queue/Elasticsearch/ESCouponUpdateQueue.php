@@ -530,7 +530,7 @@ class ESCouponUpdateQueue
             // Safely delete the object
             $job->delete();
 
-            $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; Coupon ID: %s; Coupon Name: %s',
+            $message = sprintf('[Job ID: `%s`] Elasticsearch Coupon Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; Coupon ID: %s; Coupon Name: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['coupons']['index'],
                                 $esConfig['indices']['coupons']['type'],
@@ -543,7 +543,7 @@ class ESCouponUpdateQueue
                 'message' => $message
             ];
         } catch (Exception $e) {
-            $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
+            $message = sprintf('[Job ID: `%s`] Elasticsearch Coupon Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['coupons']['index'],
                                 $esConfig['indices']['coupons']['type'],
@@ -559,8 +559,8 @@ class ESCouponUpdateQueue
         })->bury();
 
         return [
-                'status' => 'fail',
-                'message' => $message
-            ];
+            'status' => 'fail',
+            'message' => $message
+        ];
     }
 }
