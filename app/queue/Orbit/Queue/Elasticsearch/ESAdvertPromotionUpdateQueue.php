@@ -124,6 +124,10 @@ class ESAdvertPromotionUpdateQueue
                     ->first();
 
         if (! is_object($news)) {
+
+            $esAdvertPromotionDelete = new \Orbit\Queue\Elasticsearch\ESAdvertPromotionDeleteQueue('default', $advertData);
+            $doESPromotionDelete = $esAdvertPromotionDelete->fire($fakeJob, ['news_id' => $newsId]);
+
             $job->delete();
 
             return [

@@ -184,10 +184,10 @@ class AdvertUpdateQueue
 
                 // TODO: Move to escoupondeletequeue if possible.
                 $esAdvertPromotionDelete = new \Orbit\Queue\Elasticsearch\ESAdvertPromotionDeleteQueue();
-                $doESCouponDelete = $esAdvertPromotionDelete->fire($fakeJob, ['news_id' => $promotion->news_id]);
+                $doESPromotionDelete = $esAdvertPromotionDelete->fire($fakeJob, ['news_id' => $promotion->news_id]);
 
                 $esPromotionSuggestionDelete = new \Orbit\Queue\Elasticsearch\ESPromotionSuggestionDeleteQueue();
-                $doESCouponSuggestionDelete = $esPromotionSuggestionDelete->fire($fakeJob, ['news_id' => $promotion->news_id]);
+                $doESPromotionSuggestionDelete = $esPromotionSuggestionDelete->fire($fakeJob, ['news_id' => $promotion->news_id]);
             } else {
                 // Notify the queueing system to delete Elasticsearch document
                 $esQueue = new \Orbit\Queue\Elasticsearch\ESPromotionUpdateQueue();
@@ -228,11 +228,11 @@ class AdvertUpdateQueue
                 $response = $esQueue->fire($fakeJob, ['news_id' => $news->news_id]);
 
                 // TODO: Move to escoupondeletequeue if possible.
-                // $esAdvertNewsDelete = new \Orbit\Queue\Elasticsearch\ESAdvertNewsDeleteQueue();
-                // $doESCouponDelete = $esAdvertNewsDelete->fire($fakeJob, ['coupon_id' => $coupon->promotion_id]);
+                $esAdvertNewsDelete = new \Orbit\Queue\Elasticsearch\ESAdvertNewsDeleteQueue();
+                $doESAdvertNewsDelete = $esAdvertNewsDelete->fire($fakeJob, ['news_id' => $news->news_id]);
 
-                // $esCouponSuggestionDelete = new \Orbit\Queue\Elasticsearch\ESNewsSuggestionDeleteQueue();
-                // $doESCouponSuggestionDelete = $esCouponSuggestionDelete->fire($fakeJob, ['coupon_id' => $coupon->promotion_id]);
+                $esNewsSuggestionDelete = new \Orbit\Queue\Elasticsearch\ESNewsSuggestionDeleteQueue();
+                $doESNewsSuggestionDelete = $esNewsSuggestionDelete->fire($fakeJob, ['news_id' => $news->news_id]);
             } else {
                 // Notify the queueing system to delete Elasticsearch document
                 $esQueue = new \Orbit\Queue\Elasticsearch\ESNewsUpdateQueue();
