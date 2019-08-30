@@ -1,9 +1,5 @@
 <?php namespace Orbit\Queue\Elasticsearch;
-/**
- * Update Elasticsearch index when coupon has been updated.
- *
- * @author Ahmad Anshori <ahmad@dominopos.com>
- */
+
 use Elasticsearch\ClientBuilder as ESBuilder;
 use Config;
 use DB;
@@ -131,10 +127,10 @@ class ESAdvertCouponDeleteQueue
             // Safely delete the object
             $job->delete();
 
-            $message = sprintf('[Job ID: `%s`] Elasticsearch Delete Advert Coupon Index; Status: OK; ES Index Name: %s; ES Index Type: %s; Coupon ID: %s; Coupon Name: %s',
+            $message = sprintf('[Job ID: `%s`] Elasticsearch Advert Coupon Delete Index; Status: OK; ES Index Name: %s; ES Index Type: %s; Coupon ID: %s; Coupon Name: %s',
                                 $job->getJobId(),
-                                $esConfig['indices']['coupons']['index'],
-                                $esConfig['indices']['coupons']['type'],
+                                $esConfig['indices']['advert_coupons']['index'],
+                                $esConfig['indices']['advert_coupons']['type'],
                                 $couponId,
                                 $couponName);
             Log::info($message);
@@ -145,10 +141,10 @@ class ESAdvertCouponDeleteQueue
             ];
 
         } catch (Exception $e) {
-            $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
+            $message = sprintf('[Job ID: `%s`] Elasticsearch Advert Coupon Delete Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
-                                $esConfig['indices']['coupons']['index'],
-                                $esConfig['indices']['coupons']['type'],
+                                $esConfig['indices']['advert_coupons']['index'],
+                                $esConfig['indices']['advert_coupons']['type'],
                                 $e->getCode(),
                                 $e->getMessage());
             Log::info($message);

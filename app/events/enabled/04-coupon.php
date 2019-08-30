@@ -402,6 +402,10 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
                 'coupon_id' => $coupon->promotion_id
             ]);
 
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESAdvertCouponDeleteQueue', [
+                'coupon_id' => $coupon->promotion_id
+            ]);
+
             // Notify the queueing system to update Elasticsearch suggestion document
             Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
                 'coupon_id' => $coupon->promotion_id
@@ -1104,6 +1108,10 @@ Event::listen('orbit.coupon.postnewgiftncoupon.after.commit', function($controll
                 'coupon_id' => $coupon->promotion_id
             ]);
 
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESAdvertCouponDeleteQueue', [
+                'coupon_id' => $coupon->promotion_id
+            ]);
+
             // Notify the queueing system to update Elasticsearch suggestion document
             Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
                 'coupon_id' => $coupon->promotion_id
@@ -1117,5 +1125,4 @@ Event::listen('orbit.coupon.postnewgiftncoupon.after.commit', function($controll
             }
         }
     }
-
 });
