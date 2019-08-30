@@ -94,6 +94,17 @@ class ESPromotionUpdateQueue
                     ->first();
 
         if (! is_object($news)) {
+            $fakeJob = new FakeJob();
+
+            $esPromotionDelete = new \Orbit\Queue\Elasticsearch\ESPromotionDeleteQueue();
+            $doESNewsDelete = $esPromotionDelete->fire($fakeJob, ['news_id' => $newsId]);
+
+            $esAdvertPromotionDelete = new \Orbit\Queue\Elasticsearch\ESAdvertPromotionDeleteQueue();
+            $doESPromotionDelete = $esAdvertPromotionDelete->fire($fakeJob, ['news_id' => $newsId]);
+
+            $esPromotionSuggestionDelete = new \Orbit\Queue\Elasticsearch\ESPromotionSuggestionDeleteQueue();
+            $doESCouponSuggestionDelete = $esPromotionSuggestionDelete->fire($fakeJob, ['news_id' => $newsId]);
+
             $job->delete();
 
             return [
