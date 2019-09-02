@@ -106,7 +106,7 @@ class ESCouponUpdateQueue
                 $doESCouponDelete = $esCouponDelete->fire($fakeJob, ['coupon_id' => $couponId]);
 
                 $esAdvertCouponDelete = new \Orbit\Queue\Elasticsearch\ESAdvertCouponDeleteQueue();
-                $doESCouponDelete = $esAdvertCouponDelete->fire($fakeJob, ['coupon_id' => $couponId]);
+                $doESAdvertCouponDelete = $esAdvertCouponDelete->fire($fakeJob, ['coupon_id' => $couponId]);
 
                 $esCouponSuggestionDelete = new \Orbit\Queue\Elasticsearch\ESCouponSuggestionDeleteQueue();
                 $doESCouponSuggestionDelete = $esCouponSuggestionDelete->fire($fakeJob, ['coupon_id' => $couponId]);

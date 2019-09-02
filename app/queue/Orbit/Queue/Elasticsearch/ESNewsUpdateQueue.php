@@ -101,10 +101,10 @@ class ESNewsUpdateQueue
             $doESNewsDelete = $esNewsDelete->fire($fakeJob, ['news_id' => $newsId]);
 
             $esAdvertNewsDelete = new \Orbit\Queue\Elasticsearch\ESAdvertNewsDeleteQueue();
-            $doESNewsDelete = $esAdvertNewsDelete->fire($fakeJob, ['news_id' => $newsId]);
+            $doESAdvertNewsDelete = $esAdvertNewsDelete->fire($fakeJob, ['news_id' => $newsId]);
 
             $esNewsSuggestionDelete = new \Orbit\Queue\Elasticsearch\ESNewsSuggestionDeleteQueue();
-            $doESCouponSuggestionDelete = $esNewsSuggestionDelete->fire($fakeJob, ['news_id' => $newsId]);
+            $doESNewsSuggestionDelete = $esNewsSuggestionDelete->fire($fakeJob, ['news_id' => $newsId]);
 
             $job->delete();
 

@@ -184,7 +184,7 @@ class AdvertUpdateQueue
 
                 // TODO: Move to escoupondeletequeue if possible.
                 $esAdvertPromotionDelete = new \Orbit\Queue\Elasticsearch\ESAdvertPromotionDeleteQueue();
-                $doESPromotionDelete = $esAdvertPromotionDelete->fire($fakeJob, ['news_id' => $promotion->news_id]);
+                $doESAdvertPromotionDelete = $esAdvertPromotionDelete->fire($fakeJob, ['news_id' => $promotion->news_id]);
 
                 $esPromotionSuggestionDelete = new \Orbit\Queue\Elasticsearch\ESPromotionSuggestionDeleteQueue();
                 $doESPromotionSuggestionDelete = $esPromotionSuggestionDelete->fire($fakeJob, ['news_id' => $promotion->news_id]);

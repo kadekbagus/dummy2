@@ -103,7 +103,7 @@ class ESPromotionUpdateQueue
             $doESPromotionDelete = $esAdvertPromotionDelete->fire($fakeJob, ['news_id' => $newsId]);
 
             $esPromotionSuggestionDelete = new \Orbit\Queue\Elasticsearch\ESPromotionSuggestionDeleteQueue();
-            $doESCouponSuggestionDelete = $esPromotionSuggestionDelete->fire($fakeJob, ['news_id' => $newsId]);
+            $doESPromotionSuggestionDelete = $esPromotionSuggestionDelete->fire($fakeJob, ['news_id' => $newsId]);
 
             $job->delete();
 
