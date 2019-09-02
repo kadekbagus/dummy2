@@ -202,16 +202,16 @@ Event::listen('orbit.news.postnewnews.after.commit', function($controller, $news
         $campaignType = 'News';
     }
 
-    // Send email process to the queue
-    Queue::push('Orbit\\Queue\\CampaignMail', [
-        'campaignType'       => $campaignType,
-        'campaignName'       => $news->news_name,
-        'pmpUser'            => $controller->api->user->username,
-        'eventType'          => 'created',
-        'date'               => $date,
-        'campaignId'         => $news->news_id,
-        'mode'               => 'create'
-    ]);
+    // Send email process to the queue (disabled because there's no use)
+    // Queue::push('Orbit\\Queue\\CampaignMail', [
+    //     'campaignType'       => $campaignType,
+    //     'campaignName'       => $news->news_name,
+    //     'pmpUser'            => $controller->api->user->username,
+    //     'eventType'          => 'created',
+    //     'date'               => $date,
+    //     'campaignId'         => $news->news_id,
+    //     'mode'               => 'create'
+    // ]);
 
 });
 
@@ -236,16 +236,16 @@ Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $n
         $campaignType = 'News';
     }
 
-    // Send email process to the queue
-    Queue::push('Orbit\\Queue\\CampaignMail', [
-        'campaignType'       => $campaignType,
-        'campaignName'       => $news->news_name,
-        'pmpUser'            => $controller->api->user->username,
-        'eventType'          => 'updated',
-        'date'               => $date,
-        'campaignId'         => $news->news_id,
-        'mode'               => 'update'
-    ]);
+    // Send email process to the queue (disabled because there's no use)
+    // Queue::push('Orbit\\Queue\\CampaignMail', [
+    //     'campaignType'       => $campaignType,
+    //     'campaignName'       => $news->news_name,
+    //     'pmpUser'            => $controller->api->user->username,
+    //     'eventType'          => 'updated',
+    //     'date'               => $date,
+    //     'campaignId'         => $news->news_id,
+    //     'mode'               => 'update'
+    // ]);
 
     $prefix = DB::getTablePrefix();
     if ($news->object_type === 'promotion') {
@@ -271,6 +271,11 @@ Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $n
         if ($promotions->campaign_status === 'stopped' || $promotions->campaign_status === 'expired') {
             // Notify the queueing system to delete Elasticsearch document
             Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionDeleteQueue', [
+                'news_id' => $promotions->news_id
+            ]);
+
+            // Notify the queueing system to delete Elasticsearch document
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESAdvertPromotionDeleteQueue', [
                 'news_id' => $promotions->news_id
             ]);
 
@@ -309,6 +314,10 @@ Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $n
         if ($news->campaign_status === 'stopped' || $news->campaign_status === 'expired') {
             // Notify the queueing system to delete Elasticsearch document
             Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsDeleteQueue', [
+                'news_id' => $news->news_id
+            ]);
+
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESAdvertNewsDeleteQueue', [
                 'news_id' => $news->news_id
             ]);
 

@@ -316,16 +316,16 @@ Event::listen('orbit.coupon.postnewcoupon.after.commit', function($controller, $
     $timestamp = new DateTime($coupon->created_at);
     $date = $timestamp->format('d F Y H:i').' (UTC)';
 
-    // Send email process to the queue
-    Queue::push('Orbit\\Queue\\CampaignMail', [
-        'campaignType'       => 'Coupon',
-        'campaignName'       => $coupon->promotion_name,
-        'pmpUser'            => $controller->api->user->username,
-        'eventType'          => 'created',
-        'date'               => $date,
-        'campaignId'         => $coupon->promotion_id,
-        'mode'               => 'create'
-    ]);
+    // Send email process to the queue (disabled because there's no use)
+    // Queue::push('Orbit\\Queue\\CampaignMail', [
+    //     'campaignType'       => 'Coupon',
+    //     'campaignName'       => $coupon->promotion_name,
+    //     'pmpUser'            => $controller->api->user->username,
+    //     'eventType'          => 'created',
+    //     'date'               => $date,
+    //     'campaignId'         => $coupon->promotion_id,
+    //     'mode'               => 'create'
+    // ]);
 });
 
 
@@ -344,16 +344,16 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
     $timestamp = new DateTime($coupon->updated_at);
     $date = $timestamp->format('d F Y H:i').' (UTC)';
 
-    // Send email process to the queue
-    Queue::push('Orbit\\Queue\\CampaignMail', [
-        'campaignType'       => 'Coupon',
-        'campaignName'       => $coupon->promotion_name,
-        'pmpUser'            => $controller->api->user->username,
-        'eventType'          => 'updated',
-        'date'               => $date,
-        'campaignId'         => $coupon->promotion_id,
-        'mode'               => 'update'
-    ]);
+    // Send email process to the queue (disabled because there's no use)
+    // Queue::push('Orbit\\Queue\\CampaignMail', [
+    //     'campaignType'       => 'Coupon',
+    //     'campaignName'       => $coupon->promotion_name,
+    //     'pmpUser'            => $controller->api->user->username,
+    //     'eventType'          => 'updated',
+    //     'date'               => $date,
+    //     'campaignId'         => $coupon->promotion_id,
+    //     'mode'               => 'update'
+    // ]);
 
 
     if ($coupon->promotion_type != 'sepulsa') {
@@ -382,6 +382,7 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
                         THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END)
                     END AS campaign_status,
                     COUNT({$prefix}issued_coupons.issued_coupon_id) as available,
+                    {$prefix}promotions.available as agg_available,
                     {$prefix}promotions.is_visible
                 "))
                 ->join('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
@@ -396,9 +397,13 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
                 ->first();
 
     if (! empty($coupon)) {
-        if ($coupon->campaign_status === 'stopped' || $coupon->campaign_status === 'expired' || $coupon->available === 0 || $coupon->is_visible === 'N') {
+        if ($coupon->campaign_status === 'stopped' || $coupon->campaign_status === 'expired' || $coupon->agg_available === 0 || $coupon->is_visible === 'N') {
             // Notify the queueing system to delete Elasticsearch document
             Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
+                'coupon_id' => $coupon->promotion_id
+            ]);
+
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESAdvertCouponDeleteQueue', [
                 'coupon_id' => $coupon->promotion_id
             ]);
 
@@ -1104,6 +1109,10 @@ Event::listen('orbit.coupon.postnewgiftncoupon.after.commit', function($controll
                 'coupon_id' => $coupon->promotion_id
             ]);
 
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESAdvertCouponDeleteQueue', [
+                'coupon_id' => $coupon->promotion_id
+            ]);
+
             // Notify the queueing system to update Elasticsearch suggestion document
             Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
                 'coupon_id' => $coupon->promotion_id
@@ -1117,5 +1126,4 @@ Event::listen('orbit.coupon.postnewgiftncoupon.after.commit', function($controll
             }
         }
     }
-
 });
