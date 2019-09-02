@@ -78,10 +78,6 @@ class ESAdvertNewsUpdateQueue
                             ->get();
 
         if ($advertData->isEmpty()) {
-
-            $esAdvertNewsDelete = new \Orbit\Queue\Elasticsearch\ESAdvertNewsDeleteQueue('default', $advertData);
-            $doESAdvertNewsDelete = $esAdvertNewsDelete->fire($fakeJob, ['news_id' => $newsId]);
-
             $job->delete();
 
             return [
@@ -128,6 +124,9 @@ class ESAdvertNewsUpdateQueue
                     ->first();
 
         if (! is_object($news)) {
+            $esAdvertNewsDelete = new \Orbit\Queue\Elasticsearch\ESAdvertNewsDeleteQueue('default', $advertData);
+            $doESAdvertNewsDelete = $esAdvertNewsDelete->fire($fakeJob, ['news_id' => $newsId]);
+
             $job->delete();
 
             return [
