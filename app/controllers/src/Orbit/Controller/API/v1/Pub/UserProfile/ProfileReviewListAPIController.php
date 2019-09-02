@@ -201,7 +201,7 @@ class ProfileReviewListAPIController extends PubControllerAPI
                                                                 ->on('media.media_name_long', '=', DB::raw("'retailer_logo_orig'"));
                                                         })
                                             ->leftJoin('merchants as parent', DB::raw('parent.merchant_id'), '=', 'merchants.parent_id' )
-                                            ->where('merchants.merchant_id', $rating->object_id)
+                                            ->where('merchants.merchant_id', $rating->store_id)
                                             ->first();
 
                             $getName = $store->display_name;
