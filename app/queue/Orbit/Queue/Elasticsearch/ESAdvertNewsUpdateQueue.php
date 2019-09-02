@@ -80,7 +80,7 @@ class ESAdvertNewsUpdateQueue
         if ($advertData->isEmpty()) {
 
             $esAdvertNewsDelete = new \Orbit\Queue\Elasticsearch\ESAdvertNewsDeleteQueue('default', $advertData);
-            $doESNewsDelete = $esAdvertNewsDelete->fire($fakeJob, ['news_id' => $newsId]);
+            $doESAdvertNewsDelete = $esAdvertNewsDelete->fire($fakeJob, ['news_id' => $newsId]);
 
             $job->delete();
 
