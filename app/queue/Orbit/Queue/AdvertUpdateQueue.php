@@ -136,6 +136,13 @@ class AdvertUpdateQueue
                 // Notify the queueing system to delete Elasticsearch document
                 $esQueue = new \Orbit\Queue\Elasticsearch\ESCouponDeleteQueue();
                 $response = $esQueue->fire($fakeJob, ['coupon_id' => $coupon->promotion_id]);
+
+                // TODO: Move to escoupondeletequeue if possible.
+                $esAdvertCouponDelete = new \Orbit\Queue\Elasticsearch\ESAdvertCouponDeleteQueue();
+                $doESCouponDelete = $esAdvertCouponDelete->fire($fakeJob, ['coupon_id' => $coupon->promotion_id]);
+
+                $esCouponSuggestionDelete = new \Orbit\Queue\Elasticsearch\ESCouponSuggestionDeleteQueue();
+                $doESCouponSuggestionDelete = $esCouponSuggestionDelete->fire($fakeJob, ['coupon_id' => $coupon->promotion_id]);
             } else {
                 // Notify the queueing system to update Elasticsearch document
                 $esQueue = new \Orbit\Queue\Elasticsearch\ESCouponUpdateQueue();
@@ -174,6 +181,13 @@ class AdvertUpdateQueue
                 // Notify the queueing system to delete Elasticsearch document
                 $esQueue = new \Orbit\Queue\Elasticsearch\ESPromotionDeleteQueue();
                 $response = $esQueue->fire($fakeJob, ['news_id' => $promotion->news_id]);
+
+                // TODO: Move to escoupondeletequeue if possible.
+                $esAdvertPromotionDelete = new \Orbit\Queue\Elasticsearch\ESAdvertPromotionDeleteQueue();
+                $doESAdvertPromotionDelete = $esAdvertPromotionDelete->fire($fakeJob, ['news_id' => $promotion->news_id]);
+
+                $esPromotionSuggestionDelete = new \Orbit\Queue\Elasticsearch\ESPromotionSuggestionDeleteQueue();
+                $doESPromotionSuggestionDelete = $esPromotionSuggestionDelete->fire($fakeJob, ['news_id' => $promotion->news_id]);
             } else {
                 // Notify the queueing system to delete Elasticsearch document
                 $esQueue = new \Orbit\Queue\Elasticsearch\ESPromotionUpdateQueue();
@@ -212,6 +226,13 @@ class AdvertUpdateQueue
                 // Notify the queueing system to delete Elasticsearch document
                 $esQueue = new \Orbit\Queue\Elasticsearch\ESNewsDeleteQueue();
                 $response = $esQueue->fire($fakeJob, ['news_id' => $news->news_id]);
+
+                // TODO: Move to escoupondeletequeue if possible.
+                $esAdvertNewsDelete = new \Orbit\Queue\Elasticsearch\ESAdvertNewsDeleteQueue();
+                $doESAdvertNewsDelete = $esAdvertNewsDelete->fire($fakeJob, ['news_id' => $news->news_id]);
+
+                $esNewsSuggestionDelete = new \Orbit\Queue\Elasticsearch\ESNewsSuggestionDeleteQueue();
+                $doESNewsSuggestionDelete = $esNewsSuggestionDelete->fire($fakeJob, ['news_id' => $news->news_id]);
             } else {
                 // Notify the queueing system to delete Elasticsearch document
                 $esQueue = new \Orbit\Queue\Elasticsearch\ESNewsUpdateQueue();
@@ -259,7 +280,7 @@ class AdvertUpdateQueue
 
     /**
      * Update ES Mall Document related to given advert.
-     * 
+     *
      * @param  [type] $advert [description]
      * @return [type]         [description]
      */

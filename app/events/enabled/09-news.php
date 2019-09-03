@@ -274,6 +274,11 @@ Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $n
                 'news_id' => $promotions->news_id
             ]);
 
+            // Notify the queueing system to delete Elasticsearch document
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESAdvertPromotionDeleteQueue', [
+                'news_id' => $promotions->news_id
+            ]);
+
             // Notify the queueing system to update Elasticsearch Suggestion document
             Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionSuggestionDeleteQueue', [
                 'news_id' => $news->news_id
@@ -309,6 +314,10 @@ Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $n
         if ($news->campaign_status === 'stopped' || $news->campaign_status === 'expired') {
             // Notify the queueing system to delete Elasticsearch document
             Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsDeleteQueue', [
+                'news_id' => $news->news_id
+            ]);
+
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESAdvertNewsDeleteQueue', [
                 'news_id' => $news->news_id
             ]);
 
