@@ -763,6 +763,10 @@ class Coupon extends Eloquent
                 'coupon_id' => $this->promotion_id
             ]);
 
+            Queue::later(2, 'Orbit\\Queue\\Elasticsearch\\ESAdvertCouponDeleteQueue', [
+                'coupon_id' => $coupon->promotion_id
+            ]);
+
             Queue::later(2, 'Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
                 'coupon_id' => $this->promotion_id
             ]);
