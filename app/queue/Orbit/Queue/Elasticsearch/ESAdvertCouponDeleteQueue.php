@@ -118,10 +118,10 @@ class ESAdvertCouponDeleteQueue
                     ];
 
                     $response = $this->poster->delete($params);
-                }
 
-                // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
-                ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
+                    // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
+                    ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
+                }
             }
 
             // Safely delete the object
