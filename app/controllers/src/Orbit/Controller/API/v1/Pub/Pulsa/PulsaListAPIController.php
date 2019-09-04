@@ -49,6 +49,10 @@ class PulsaListAPIController extends PubControllerAPI
             // $sort_mode = OrbitInput::get('sortmode','asc');
             // $language = OrbitInput::get('language', 'id');
             $country = OrbitInput::get('country', 0);
+            $type = OrbitInput::get('type', 'pulsa');
+            if (! in_array($type, ['pulsa', 'data_plan'])) {
+                $type = 'pulsa';
+            }
             // $no_total_records = OrbitInput::get('no_total_records', null);
 
             if (empty($country) || $country == '0') {
@@ -108,6 +112,7 @@ class PulsaListAPIController extends PubControllerAPI
                                      ->on('media.media_name_long', '=', DB::raw("'telco_operator_logo_orig'"));
                             })
                             ->where('countries.name', $country)
+                            ->where('pulsa.object_type', $type)
                             ->where('telco_operators.status', 'active')
                             ->where('displayed', 'yes')
                             ->orderBy('telco_operators.telco_operator_id')
