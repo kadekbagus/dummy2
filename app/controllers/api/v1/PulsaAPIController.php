@@ -384,7 +384,7 @@ class PulsaAPIController extends ControllerAPI
                 array(
                     'sort_by' => 'in:pulsa_item_id,pulsa_code,pulsa_display_name,value,price,name,quantity,status',
                     'object_type' => 'required|in:pulsa,data_plan',
-                ),
+                )
             );
 
             // Run the validation
