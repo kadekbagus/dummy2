@@ -15,4 +15,9 @@ class Pulsa extends Eloquent
     {
         return $this->belongsTo('TelcoOperator', 'telco_operator_id', 'telco_operator_id');
     }
+
+    public function scopeAvailable($query)
+    {
+        return $query->where('status', 'active')->where('displayed', 'yes');
+    }
 }

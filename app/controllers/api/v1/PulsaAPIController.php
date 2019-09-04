@@ -71,6 +71,7 @@ class PulsaAPIController extends ControllerAPI
             $status = OrbitInput::post('status');
             $vendor_price = OrbitInput::post('vendor_price');
             $displayed = OrbitInput::post('displayed', 'yes');
+            $object_type = OrbitInput::post('object_type', 'pulsa');
 
             $validator = Validator::make(
                 array(
@@ -79,6 +80,7 @@ class PulsaAPIController extends ControllerAPI
                     'pulsa_display_name'    => $pulsa_display_name,
                     'value'                 => $value,
                     'price'                 => $price,
+                    'object_type'           => $object_type,
                 ),
                 array(
                     'telco_operator_id'     => 'required|orbit.empty.telcooperator',
@@ -86,6 +88,7 @@ class PulsaAPIController extends ControllerAPI
                     'pulsa_display_name'    => 'required',
                     'value'                 => 'required',
                     'price'                 => 'required',
+                    'object_type'           => 'required|in:pulsa,data_plan',
                 ),
                 array(
                     'pulsa_code.required'                => 'Pulsa Product Name M-Cash field is required',
@@ -109,6 +112,7 @@ class PulsaAPIController extends ControllerAPI
 
             $newPulsa = new Pulsa();
             $newPulsa->telco_operator_id = $telco_operator_id;
+            $newPulsa->object_type = $object_type;
             $newPulsa->pulsa_code = $pulsa_code;
             $newPulsa->pulsa_display_name = $pulsa_display_name;
             $newPulsa->description = $description;
@@ -370,17 +374,17 @@ class PulsaAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $sort_by = OrbitInput::get('sortby');
+            $object_type = OrbitInput::get('object_type', 'pulsa');
 
             $validator = Validator::make(
                 array(
                     'sort_by' => $sort_by,
+                    'object_type' => $object_type,
                 ),
                 array(
                     'sort_by' => 'in:pulsa_item_id,pulsa_code,pulsa_display_name,value,price,name,quantity,status',
+                    'object_type' => 'required|in:pulsa,data_plan',
                 ),
-                array(
-                    'in' => 'The sort by argument you specified is not valid, the valid values are: pulsa_item_id,pulsa_code,pulsa_display_name,value,price,name,quantity,status',
-                )
             );
 
             // Run the validation
@@ -410,8 +414,9 @@ class PulsaAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $pulsa = Pulsa::select('pulsa.pulsa_item_id', 'pulsa.pulsa_code', 'pulsa.pulsa_display_name', 'telco_operators.name', 'pulsa.value', 'pulsa.price', 'pulsa.quantity', 'pulsa.status', 'pulsa.vendor_price')
-                          ->leftJoin('telco_operators', 'telco_operators.telco_operator_id', '=', 'pulsa.telco_operator_id');
+            $pulsa = Pulsa::select('pulsa.pulsa_item_id', 'pulsa.pulsa_code', 'pulsa.pulsa_display_name', 'telco_operators.name', 'pulsa.value', 'pulsa.price', 'pulsa.quantity', 'pulsa.status', 'pulsa.vendor_price', 'object_type')
+                          ->leftJoin('telco_operators', 'telco_operators.telco_operator_id', '=', 'pulsa.telco_operator_id')
+                          ->where('object_type', $object_type);
 
             // Filter pulsa by pulsa item id
             OrbitInput::get('pulsa_item_id', function ($pulsaItemId) use ($pulsa) {
