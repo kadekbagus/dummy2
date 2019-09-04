@@ -124,6 +124,10 @@ class ESAdvertPromotionUpdateQueue
                     ->first();
 
         if (! is_object($news)) {
+
+            $esAdvertPromotionDelete = new \Orbit\Queue\Elasticsearch\ESAdvertPromotionDeleteQueue('default', $advertData);
+            $doESAdvertPromotionDelete = $esAdvertPromotionDelete->fire($fakeJob, ['news_id' => $newsId]);
+
             $job->delete();
 
             return [
@@ -554,7 +558,7 @@ class ESAdvertPromotionUpdateQueue
             // Safely delete the object
             $job->delete();
 
-            $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; News ID: %s; Promotion Name: %s',
+            $message = sprintf('[Job ID: `%s`] Elasticsearch Advert Promotion Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; News ID: %s; Promotion Name: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['promotions']['index'],
                                 $esConfig['indices']['promotions']['type'],
@@ -567,7 +571,7 @@ class ESAdvertPromotionUpdateQueue
                 'message' => $message
             ];
         } catch (Exception $e) {
-            $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
+            $message = sprintf('[Job ID: `%s`] Elasticsearch Advert Promotion Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['promotions']['index'],
                                 $esConfig['indices']['promotions']['type'],
