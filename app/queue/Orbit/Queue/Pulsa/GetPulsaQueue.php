@@ -46,6 +46,8 @@ class GetPulsaQueue
      */
     protected $retryDelay = 3;
 
+    private $objectType = 'pulsa';
+
     /**
      * Issue hot deals coupon.
      *
@@ -60,6 +62,7 @@ class GetPulsaQueue
         $mall = Mall::where('merchant_id', $mallId)->first();
         $payment = null;
         $discount = null;
+        $pulsa = null;
 
         if (! isset($data['retry'])) {
             $data['retry'] = 0;
@@ -74,7 +77,7 @@ class GetPulsaQueue
 
             $paymentId = $data['paymentId'];
 
-            Log::info("Pulsa: Getting pulsa for PaymentID: {$paymentId}");
+            $this->log("Getting item for PaymentID: {$paymentId}");
 
             $payment = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'user', 'midtrans', 'discount_code'])->findOrFail($paymentId);
 
@@ -85,7 +88,7 @@ class GetPulsaQueue
                 || $payment->status === PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED
                 || $payment->status === PaymentTransaction::STATUS_SUCCESS_REFUND) {
 
-                Log::info("Pulsa: Payment {$paymentId} was denied/canceled/failed/refunded. We should not issue any pulsa.");
+                $this->log("Payment {$paymentId} was denied/canceled/failed/refunded. We should not issue any item.");
 
                 DB::connection()->commit();
 
@@ -95,18 +98,23 @@ class GetPulsaQueue
             }
 
             $pulsa = $this->getPulsa($payment);
+
+            if (! empty($pulsa)) {
+                $this->objectType = str_replace(['_', '-'], ' ', ucfirst($pulsa->object_type));
+            }
+
             $discount = $payment->discount_code;
             $phoneNumber = $payment->extra_data;
             $pulsaName = $pulsa->pulsa_display_name;
 
             // Send request to buy pulsa from MCash
-            $pulsaPurchase = Purchase::create()->doPurchase($pulsa->pulsa_code, $phoneNumber, $paymentId);
-            // $pulsaPurchase = Purchase::create()->mockSuccess()->doPurchase($pulsa->pulsa_code, $phoneNumber, $paymentId);
+            // $pulsaPurchase = Purchase::create()->doPurchase($pulsa->pulsa_code, $phoneNumber, $paymentId);
+            $pulsaPurchase = Purchase::create()->mockSuccess()->doPurchase($pulsa->pulsa_code, $phoneNumber, $paymentId);
 
             if ($pulsaPurchase->isSuccess()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
 
-                Log::info("Pulsa: issued for payment {$paymentId}..");
+                $this->log("Issued for payment {$paymentId}..");
 
                 // Notify Customer.
                 $payment->user->notify(new ReceiptNotification($payment));
@@ -131,16 +139,16 @@ class GetPulsaQueue
                         'object_type' => 'pulsa'
                     ];
                     $promoCodeReservation->markAsIssued($payment->user, $promoData);
-                    Log::info("Pulsa: Promo code {$discountCode} issued for purchase {$paymentId}");
+                    $this->log("Promo code {$discountCode} issued for purchase {$paymentId}");
                 }
 
-                Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
-                Log::info("Purchase response: " . serialize($pulsaPurchase));
+                $this->log("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
+                $this->log("Purchase response: " . serialize($pulsaPurchase));
             }
             else if ($pulsaPurchase->isPending()) {
-                Log::info("Pulsa: Pulsa purchase is PENDING for payment {$paymentId}.");
-                Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
-                Log::info("Purchase response: " . serialize($pulsaPurchase));
+                $this->log("Pulsa purchase is PENDING for payment {$paymentId}.");
+                $this->log("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
+                $this->log("Purchase response: " . serialize($pulsaPurchase));
 
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
 
@@ -154,7 +162,7 @@ class GetPulsaQueue
                         'object_type' => 'pulsa'
                     ];
                     $promoCodeReservation->markAsIssued($payment->user, $promoData);
-                    Log::info("Pulsa: Promo code {$discountCode} issued for purchase {$paymentId}");
+                    $this->log("Promo code {$discountCode} issued for purchase {$paymentId}");
                 }
 
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Successful', 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
@@ -164,9 +172,9 @@ class GetPulsaQueue
 
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Retry ' . $data['retry'], 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
 
-                Log::info("Retry #{$data['retry']} for Pulsa Purchase will be run in {$this->retryDelay} minutes...");
-                Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
-                Log::info("Purchase response: " . serialize($pulsaPurchase));
+                $this->log("Retry #{$data['retry']} for Pulsa Purchase will be run in {$this->retryDelay} minutes...");
+                $this->log("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
+                $this->log("Purchase response: " . serialize($pulsaPurchase));
 
                 // Retry purchase in a few minutes...
                 $this->retryDelay = $this->retryDelay * 60; // seconds
@@ -184,20 +192,20 @@ class GetPulsaQueue
                 }
             }
             else if ($pulsaPurchase->maxRetryReached($data['retry'])) {
-                Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
-                Log::info("Purchase response: " . serialize($pulsaPurchase));
+                $this->log("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
+                $this->log("Purchase response: " . serialize($pulsaPurchase));
                 throw new Exception("Pulsa purchase is FAILED, MAX RETRY REACHED ({$data['retry']}).");
             }
             else if ($pulsaPurchase->isOutOfStock()) {
-                Log::info("Pulsa: Pulsa {$pulsa->pulsa_code} -- {$pulsa->pulsa_display_name} is OUT OF STOCK.");
-                Log::info("Pulsa: PulsaPurchase Data" . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
-                Log::info("Pulsa: PulsaPurchase Response: " . serialize($pulsaPurchase));
+                $this->log("Pulsa {$pulsa->pulsa_code} -- {$pulsa->pulsa_display_name} is OUT OF STOCK.");
+                $this->log("PulsaPurchase Data" . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
+                $this->log("PulsaPurchase Response: " . serialize($pulsaPurchase));
                 throw new Exception("Pulsa {$pulsa->pulsa_code} -- {$pulsa->pulsa_display_name} is OUT OF STOCK (STATUS: {$pulsaPurchase->getData()->status}).");
             }
             else {
-                Log::info("Pulsa: Pulsa purchase is FAILED for payment {$paymentId}. Unknown status from MCash.");
-                Log::info("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
-                Log::info("Purchase response: " . serialize($pulsaPurchase));
+                $this->log("Pulsa purchase is FAILED for payment {$paymentId}. Unknown status from MCash.");
+                $this->log("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
+                $this->log("Purchase response: " . serialize($pulsaPurchase));
                 throw new Exception("Pulsa purchase is FAILED, unknown status from MCASH.");
             }
 
@@ -244,7 +252,7 @@ class GetPulsaQueue
                 $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED;
                 $payment->save();
 
-                if (! empty($discount)) {
+                if (! empty($discount) && ! empty($pulsa)) {
                     // Mark promo code as available.
                     $discountCode = $discount->discount_code;
                     $promoCodeReservation = App::make(ReservationInterface::class);
@@ -254,7 +262,7 @@ class GetPulsaQueue
                         'object_type' => 'pulsa'
                     ];
                     $promoCodeReservation->markAsAvailable($payment->user, $promoData);
-                    Log::info("Pulsa: Promo code {$discountCode} reverted back/marked as available...");
+                    $this->log("Promo code {$discountCode} reverted back/marked as available...");
                 }
 
                 DB::connection()->commit();
@@ -288,8 +296,8 @@ class GetPulsaQueue
                 DB::connection()->rollBack();
             }
 
-            Log::info(sprintf('Pulsa: Get Pulsa exception: %s:%s, %s', $e->getFile(), $e->getLine(), $e->getMessage()));
-            Log::info('Pulsa: ' . serialize($data));
+            $this->log(sprintf("Get {$this->objectType} exception: %s:%s, %s", $e->getFile(), $e->getLine(), $e->getMessage()));
+            $this->log(serialize($data));
         }
 
         $job->delete();
@@ -305,6 +313,21 @@ class GetPulsaQueue
             }
         }
 
+        if (empty($pulsa)) {
+            throw new Exception("{$this->objectType} for payment {$payment->payment_transaction_id} is not found.", 1);
+        }
+
         return $pulsa;
+    }
+
+    /**
+     * Log to file with specific objectType prefix.
+     *
+     * @param  [type] $message [description]
+     * @return [type]          [description]
+     */
+    private function log($message)
+    {
+        Log::info("{$this->objectType}: {$message}");
     }
 }

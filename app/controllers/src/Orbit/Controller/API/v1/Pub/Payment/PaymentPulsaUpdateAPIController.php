@@ -43,6 +43,7 @@ use Mall;
  */
 class PaymentPulsaUpdateAPIController extends PubControllerAPI
 {
+    private $objectType = 'pulsa';
 
     public function postPaymentPulsaUpdate()
     {
@@ -116,11 +117,11 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
             // ask Midtrans for the correct one.
             $tmpNewStatus = $status;
             if (in_array($oldStatus, $finalStatus) && $tmpOldStatus !== $status) {
-                Log::info("Pulsa: Payment {$payment_transaction_id} was marked as FINAL, but there is new request to change status to " . $tmpNewStatus);
+                $this->log("Payment {$payment_transaction_id} was marked as FINAL, but there is new request to change status to {$tmpNewStatus}");
 
                 // If it is a refund request, then try to record it..
                 if (in_array($tmpNewStatus, ['refund', 'partial_refund']) && ! empty($refundData)) {
-                    Log::info("Pulsa: It is a refund notification for payment {$payment_transaction_id}...");
+                    $this->log("It is a refund notification for payment {$payment_transaction_id}...");
 
                     $refundData = json_decode($refundData, true);
                     $refundDataObject = new \stdClass;
@@ -142,16 +143,16 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                     }
                 }
                 else {
-                    Log::info("Pulsa: Getting correct status from Midtrans for payment {$payment_transaction_id}...");
+                    $this->log("Getting correct status from Midtrans for payment {$payment_transaction_id}...");
                     $transactionStatus = TransactionStatus::create()->getStatus($payment_transaction_id);
                     $status = $transactionStatus->mapToInternalStatus();
                     // If the new status doesnt match with what midtrans gave us, then
                     // we can ignored this request (dont update).
                     if ($tmpNewStatus !== $status) {
-                        Log::info("Pulsa: New status {$tmpNewStatus} for payment {$payment_transaction_id} will be IGNORED since the correct status is {$status}!");
+                        $this->log("New status {$tmpNewStatus} for payment {$payment_transaction_id} will be IGNORED since the correct status is {$status}!");
                     }
                     else {
-                        Log::info("Pulsa: New status {$status} for payment {$payment_transaction_id} will be set!");
+                        $this->log("New status {$status} for payment {$payment_transaction_id} will be set!");
                         $shouldUpdate = true;
                     }
                 }
@@ -161,15 +162,15 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                     // If status is aborted, then check if the transaction is in pending (exists) or not in Midtrans.
                     // If doesn't exist, assume the payment is starting and we can abort it.
                     // Otherwise, assume it is pending and we should not update the statusad.
-                    Log::info("Pulsa: Request to abort payment {$payment_transaction_id}...");
-                    Log::info("Pulsa: Checking transaction {$payment_transaction_id} status in Midtrans...");
+                    $this->log("Request to abort payment {$payment_transaction_id}...");
+                    $this->log("Checking transaction {$payment_transaction_id} status in Midtrans...");
                     $transactionStatus = TransactionStatus::create()->getStatus($payment_transaction_id);
                     if ($transactionStatus->notFound()) {
-                        Log::info("Pulsa: Transaction {$payment_transaction_id} not found! Aborting payment...");
+                        $this->log("Transaction {$payment_transaction_id} not found! Aborting payment...");
                         $shouldUpdate = true;
                     }
                     else {
-                        Log::info("Pulsa: Transaction {$payment_transaction_id} found! Payment can not be aborted/canceled.");
+                        $this->log("Transaction {$payment_transaction_id} found! Payment can not be aborted/canceled.");
                     }
                 }
                 else {
@@ -177,7 +178,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                 }
             }
             else {
-                Log::info("Pulsa: Payment {$payment_transaction_id} is good. Nothing to do.");
+                $this->log("Payment {$payment_transaction_id} is good. Nothing to do.");
                 // Commit the changes ASAP so if there are any other requests that trigger this controller
                 // they will use the updated payment data/status.
                 // Try not doing any expensive operation above.
@@ -199,14 +200,14 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                     $paymentSuspicious = true;
                     $status = PaymentTransaction::STATUS_PENDING;
                     $payment_update->notes = $payment_update->notes . 'Payment suspicious.' . "\n----\n";
-                    Log::info("Pulsa: Payment {$payment_transaction_id} is suspicious.");
+                    $this->log("Payment {$payment_transaction_id} is suspicious.");
                 }
 
                 if ($payment_update->completed() && $status === PaymentTransaction::STATUS_DENIED) {
                     // Flag to send denied payment.
                     $paymentDenied = true;
-                    $payment_update->notes = $payment_update->notes . 'Payment denied.' . "\n----\n";
-                    Log::info("Pulsa: Payment {$payment_transaction_id} is denied after paid.");
+                    $payment_update->notes = $payment_update->notes . ' Payment denied.' . "\n----\n";
+                    $this->log("Payment {$payment_transaction_id} is denied after paid.");
                 }
 
                 $payment_update->status = $status;
@@ -283,7 +284,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                             ->save();
                 }
                 else if ($payment_update->status === PaymentTransaction::STATUS_SUCCESS_NO_PULSA) {
-                    $activity->setActivityNameLong('Transaction is Success - Getting Pulsa')
+                    $activity->setActivityNameLong('Transaction is Success - Getting ' . $this->objectType)
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment_update)
                             ->setObjectDisplayName($pulsaName)
@@ -293,11 +294,11 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                             ->save();
                 }
                 else if ($payment_update->status === PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED) {
-                    $activity->setActivityNameLong('Transaction is Success - Failed Getting Pulsa')
+                    $activity->setActivityNameLong('Transaction is Success - Failed Getting ' . $this->objectType)
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment_update)
                             ->setObjectDisplayName($pulsaName)
-                            ->setNotes('Failed to get pulsa. Can not get buy pulsa for this transaction.')
+                            ->setNotes("Failed to get {$this->objectType}. Can not get {$this->objectType} for this transaction.")
                             ->setLocation($mall)
                             ->responseFailed()
                             ->save();
@@ -446,5 +447,10 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
         }
 
         return $this->render($httpCode);
+    }
+
+    private function log($message = '')
+    {
+        Log::info("{$this->objectType}: {$message}");
     }
 }
