@@ -72,6 +72,7 @@ class PulsaAPIController extends ControllerAPI
             $vendor_price = OrbitInput::post('vendor_price');
             $displayed = OrbitInput::post('displayed', 'yes');
             $object_type = OrbitInput::post('object_type', 'pulsa');
+            $errorMessageObjectType = ucwords(str_replace(['_'], ' ', $object_type));
 
             $validator = Validator::make(
                 array(
@@ -91,13 +92,13 @@ class PulsaAPIController extends ControllerAPI
                     'object_type'           => 'required|in:pulsa,data_plan',
                 ),
                 array(
-                    'pulsa_code.required'                => 'Pulsa Product Name M-Cash field is required',
-                    'pulsa_display_name.required'        => 'Pulsa Product Name field is required',
+                    'pulsa_code.required'                => "{$errorMessageObjectType} Product Name M-Cash field is required",
+                    'pulsa_display_name.required'        => "{$errorMessageObjectType} Product Name field is required",
                     'value.required'                     => 'Facial Value field is required',
                     'price.required'                     => 'Selling Price field is required',
-                    'telco_operator_id.required'         => 'Pulsa Operator field is required',
-                    'orbit.empty.telcooperator'          => 'Pulsa Operator not found',
-                    'orbit.exist.pulsa'                  => 'Pulsa Product Name M-Cash must be unique'
+                    'telco_operator_id.required'         => "{$errorMessageObjectType} Operator field is required",
+                    'orbit.empty.telcooperator'          => "{$errorMessageObjectType} Operator not found",
+                    'orbit.exist.pulsa'                  => "{$errorMessageObjectType} Product Name M-Cash must be unique",
                 )
             );
 
@@ -223,6 +224,8 @@ class PulsaAPIController extends ControllerAPI
             $value = OrbitInput::post('value');
             $price = OrbitInput::post('price');
             $quantity = OrbitInput::post('quantity');
+            $object_type = OrbitInput::post('object_type', 'pulsa');
+            $errorMessageObjectType = ucwords(str_replace(['_'], ' ', $object_type));
 
             $validator = Validator::make(
                 array(
@@ -242,13 +245,13 @@ class PulsaAPIController extends ControllerAPI
                     'price'                 => 'required',
                 ),
                 array(
-                    'pulsa_code.required'          => 'Pulsa Product Name M-Cash field is required',
-                    'pulsa_display_name.required'  => 'Pulsa Product Name field is required',
+                    'pulsa_code.required'          => "{$errorMessageObjectType} Product Name M-Cash field is required",
+                    'pulsa_display_name.required'  => "{$errorMessageObjectType} Product Name field is required",
                     'value.required'               => 'Facial Value field is required',
                     'price.required'               => 'Selling Price field is required',
-                    'telco_operator_id.required'   => 'Pulsa Operator field is required',
-                    'orbit.empty.telcooperator'    => 'Pulsa Operator not found',
-                    'pulsa_code_exists_but_me'     => 'Pulsa Product Name M-Cash must be unique',
+                    'telco_operator_id.required'   => "{$errorMessageObjectType} Operator field is required",
+                    'orbit.empty.telcooperator'    => "{$errorMessageObjectType} Operator not found",
+                    'pulsa_code_exists_but_me'     => "{$errorMessageObjectType} Product Name M-Cash must be unique",
                 )
 
             );
