@@ -91,6 +91,8 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
 
             $payment_update = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'refunds', 'midtrans', 'user', 'discount_code'])->findOrFail($payment_transaction_id);
 
+            $this->resolveObjectType($payment_update);
+
             $oldStatus = $payment_update->status;
 
             // List of status which considered as final (should not be changed again except some conditions met).
@@ -253,7 +255,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
 
                 $payment_update->save();
 
-                $pulsaName = $payment_update->details->first()->pulsa->pulsa_display_name;
+                $objectName = $this->resolveObjectName($payment_update);
 
                 // Commit the changes ASAP so if there are any other requests that trigger this controller
                 // they will use the updated payment data/status.
@@ -267,7 +269,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                     $activity->setActivityNameLong('Transaction is Failed')
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment_update)
-                            ->setObjectDisplayName($pulsaName)
+                            ->setObjectDisplayName($objectName)
                             ->setNotes('Transaction is failed from Midtrans/Customer.')
                             ->setLocation($mall)
                             ->responseFailed()
@@ -277,7 +279,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                     $activity->setActivityNameLong('Transaction is Expired')
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment_update)
-                            ->setObjectDisplayName($pulsaName)
+                            ->setObjectDisplayName($objectName)
                             ->setNotes('Transaction is expired from Midtrans.')
                             ->setLocation($mall)
                             ->responseFailed()
@@ -287,8 +289,8 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                     $activity->setActivityNameLong('Transaction is Success - Getting ' . $this->objectType)
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment_update)
-                            ->setObjectDisplayName($pulsaName)
-                            ->setNotes($pulsaName)
+                            ->setObjectDisplayName($objectName)
+                            ->setNotes($objectName)
                             ->setLocation($mall)
                             ->responseOK()
                             ->save();
@@ -297,7 +299,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                     $activity->setActivityNameLong('Transaction is Success - Failed Getting ' . $this->objectType)
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment_update)
-                            ->setObjectDisplayName($pulsaName)
+                            ->setObjectDisplayName($objectName)
                             ->setNotes("Failed to get {$this->objectType}. Can not get {$this->objectType} for this transaction.")
                             ->setLocation($mall)
                             ->responseFailed()
@@ -328,8 +330,8 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                     $activity->setActivityNameLong('Transaction is Pending')
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment_update)
-                            ->setObjectDisplayName($pulsaName)
-                            ->setNotes($pulsaName)
+                            ->setObjectDisplayName($objectName)
+                            ->setNotes($objectName)
                             ->setLocation($mall)
                             ->responseOK()
                             ->save();
@@ -347,8 +349,8 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                     $activity->setActivityNameLong('Transaction Canceled')
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment_update)
-                            ->setObjectDisplayName($pulsaName)
-                            ->setNotes($pulsaName)
+                            ->setObjectDisplayName($objectName)
+                            ->setNotes($objectName)
                             ->setLocation($mall)
                             ->responseOK()
                             ->save();
@@ -452,5 +454,32 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
     private function log($message = '')
     {
         Log::info("{$this->objectType}: {$message}");
+    }
+
+    private function resolveObjectName($payment)
+    {
+        foreach ($payment->details as $detail) {
+            if (! empty($detail->pulsa)) {
+                return $detail->pulsa->pulsa_display_name;
+            }
+        }
+
+        return 'unknown object name';
+    }
+
+    /**
+     * Resolve object type from payment. Possible value should be pulsa or data_plan.
+     *
+     * @param  [type] $payment [description]
+     * @return [type]          [description]
+     */
+    private function resolveObjectType($payment)
+    {
+        foreach($payment->details as $detail) {
+            if (! empty($detail->pulsa)) {
+                $this->objectType = $detail->pulsa->object_type;
+                break;
+            }
+        }
     }
 }
