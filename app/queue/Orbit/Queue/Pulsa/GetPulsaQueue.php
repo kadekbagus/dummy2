@@ -108,8 +108,8 @@ class GetPulsaQueue
             $pulsaName = $pulsa->pulsa_display_name;
 
             // Send request to buy pulsa from MCash
-            // $pulsaPurchase = Purchase::create()->doPurchase($pulsa->pulsa_code, $phoneNumber, $paymentId);
-            $pulsaPurchase = Purchase::create()->mockSuccess()->doPurchase($pulsa->pulsa_code, $phoneNumber, $paymentId);
+            $pulsaPurchase = Purchase::create()->doPurchase($pulsa->pulsa_code, $phoneNumber, $paymentId);
+            // $pulsaPurchase = Purchase::create()->mockSuccess()->doPurchase($pulsa->pulsa_code, $phoneNumber, $paymentId);
 
             if ($pulsaPurchase->isSuccess()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
