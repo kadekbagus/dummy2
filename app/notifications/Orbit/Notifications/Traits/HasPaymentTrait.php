@@ -15,6 +15,8 @@ trait HasPaymentTrait
 {
     protected $payment = null;
 
+    protected $objectType = 'pulsa';
+
     /**
      * Get the transaction data.
      *

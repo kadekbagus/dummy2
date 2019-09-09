@@ -3,6 +3,7 @@
 return [
     'subject' => 'Kuponmu Ketinggalan, Nih! - Gotomalls.com',
     'subject_pulsa' => 'Pulsamu Ketinggalan, Nih! – GoToMalls.com',
+    'subject_data_plan' => 'Paket Datamu Ketinggalan, Nih! – GoToMalls.com',
 
     'header' => [
         'email-type'       => 'Pesanan Dibatalkan',
@@ -18,9 +19,9 @@ return [
             'transaction_date' => 'Tanggal Transaksi: ',
             'coupon_name' => 'Nama Kupon: ',
             'coupon_price' => 'Harga Kupon: ',
-            'pulsa_name' => 'Pulsa: ',
-            'pulsa_phone_number' => 'No. HP Pulsa: ',
-            'pulsa_price' => 'Harga Pulsa: ',
+            'pulsa_name' => 'Pulsa/Paket Data: ',
+            'pulsa_phone_number' => 'No. HP: ',
+            'pulsa_price' => 'Harga Pulsa/Paket Data: ',
             'coupon_quantity' => 'Jumlah: ',
             'customer_name' => 'Nama Pelanggan: ',
             'email' => 'Email: ',
@@ -40,11 +41,17 @@ Apabila kamu mengalami kesulitan, silahkan <strong>tanyakan keluhanmu</strong> m
 Bantu GoToMalls.com dengan memberikan feedback dan membalas email ini dengan keluhan atau alasanmu tidak menyelesaikan pembelian pulsa ini, ya.
 Apabila kamu mengalami kesulitan dalam pembelian pulsa, silahkan <strong>tanyakan keluhanmu</strong> melalui email <a style="text-decoration: none;color:#f43d3c;" href="mailto::email">:email</a> dan GoToMalls.com akan siap membantu.',
 
+        'payment-info-line-1-data-plan' => 'GoToMalls.com mendeteksi bahwa kamu <strong>membatalkan</strong> transaksi paket data pada tanggal :transactionDateTime.',
+        'payment-info-line-2-data-plan' => 'Apakah terdapat kendala dalam melakukan transaksi pembelian paket datamu?
+Bantu GoToMalls.com dengan memberikan feedback dan membalas email ini dengan keluhan atau alasanmu tidak menyelesaikan pembelian paket data ini, ya.
+Apabila kamu mengalami kesulitan dalam pembelian paket data, silahkan <strong>tanyakan keluhanmu</strong> melalui email <a style="text-decoration: none;color:#f43d3c;" href="mailto::email">:email</a> dan GoToMalls.com akan siap membantu.',
+
         'regards' => 'Terima kasih.<br><br>Salam,<br>Gotomalls.com Customer Service Team',
 
         'buttons' => [
             'buy_coupon' => 'Beli Kupon Sekarang',
             'buy_pulsa' => 'Beli Pulsa Sekarang',
+            'buy_data_plan' => 'Beli Paket Data Sekarang',
         ]
     ],
 ];

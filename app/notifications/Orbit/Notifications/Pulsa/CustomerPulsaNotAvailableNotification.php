@@ -29,8 +29,6 @@ class CustomerPulsaNotAvailableNotification extends CustomerNotification impleme
      */
     protected $notificationDelay = 3;
 
-    protected $objectType = 'pulsa';
-
     function __construct($payment = null)
     {
         $this->payment = $payment;
