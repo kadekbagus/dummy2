@@ -29,6 +29,8 @@ class CustomerPulsaNotAvailableNotification extends CustomerNotification impleme
      */
     protected $notificationDelay = 3;
 
+    protected $objectType = 'pulsa';
+
     function __construct($payment = null)
     {
         $this->payment = $payment;
@@ -46,9 +48,23 @@ class CustomerPulsaNotAvailableNotification extends CustomerNotification impleme
      */
     public function getEmailTemplates()
     {
-        return [
-            'html' => 'emails.pulsa.customer-pulsa-not-available',
-        ];
+        $template = $this->objectType === 'pulsa'
+            ? 'emails.pulsa.customer-pulsa-not-available'
+            : 'emails.data-plan.customer-data-plan-not-available';
+
+        return ['html' => $template];
+    }
+
+    /**
+     * Get email subject.
+     *
+     * @return [type] [description]
+     */
+    protected function getEmailSubject()
+    {
+        return $this->objectType === 'pulsa'
+            ? trans('email-coupon-not-available.subject_pulsa', [], '', 'id')
+            : trans('email-coupon-not-available.subject_data_plan', [], '', 'id');
     }
 
     /**
@@ -58,6 +74,8 @@ class CustomerPulsaNotAvailableNotification extends CustomerNotification impleme
      */
     public function getEmailData()
     {
+        $this->objectType = $this->getObjectType();
+
         return [
             'recipientEmail'    => $this->getRecipientEmail(),
             'customerEmail'     => $this->getCustomerEmail(),
@@ -66,6 +84,8 @@ class CustomerPulsaNotAvailableNotification extends CustomerNotification impleme
             'transaction'       => $this->getTransactionData(),
             'cs'                => $this->getContactData(),
             'transactionDateTime' => $this->payment->getTransactionDate('d F Y, H:i ') . " {$this->getLocalTimezoneName($this->payment->timezone_name)}",
+            'subject'           => $this->getEmailSubject(),
+            'template'          => $this->getEmailTemplates(),
         ];
     }
 
@@ -79,10 +99,10 @@ class CustomerPulsaNotAvailableNotification extends CustomerNotification impleme
     public function toEmail($job, $data)
     {
         try {
-            Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
+            Mail::send($data['template'], $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                $subject = trans('email-coupon-not-available.subject_pulsa');
+                $subject = $data['subject'];
 
                 $mail->subject($subject);
                 $mail->from($emailConfig['email'], $emailConfig['name']);
