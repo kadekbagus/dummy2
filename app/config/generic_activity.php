@@ -2462,7 +2462,7 @@ return array(
         // Click Use Promo Code Button
         '268' => array(
             'name' => 'click_use_promo_code',
-            'name_long' => 'Click Use Promo Code	',
+            'name_long' => 'Click Use Promo Code',
             'module_name' => 'Application',
             'type' => 'click',
             'object_type' => 'Coupon',
@@ -2471,7 +2471,7 @@ return array(
         // Click Cancel Promo Code Button
         '269' => array(
             'name' => 'click_cancel_promo_code',
-            'name_long' => 'Click Cancel Promo Code	',
+            'name_long' => 'Click Cancel Promo Code',
             'module_name' => 'Application',
             'type' => 'click',
             'object_type' => 'Coupon',
@@ -2480,11 +2480,38 @@ return array(
         // Click Expand Promo Code Button
         '270' => array(
             'name' => 'click_expand_promo_code',
-            'name_long' => 'Click Expand Promo Code	',
+            'name_long' => 'Click Expand Promo Code',
             'module_name' => 'Application',
             'type' => 'click',
             'object_type' => 'Coupon',
             'parameter_name' => 'object_id',
+        ),
+        // Click Buy Data Plan
+        '271' => array(
+            'name' => 'click_buy_data_plan',
+            'name_long' => 'Click Buy Data Plan',
+            'module_name' => 'Data Plan',
+            'type' => 'click',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id',
+        ),
+        // Click Pulsa Tab
+        '272' => array(
+            'name' => 'click_pulsa_tab',
+            'name_long' => 'Click Pulsa Tab',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => 'Pulsa',
+            'parameter_name' => null,
+        ),
+        // Click Data Plan Tab
+        '273' => array(
+            'name' => 'click_data_plan_tab',
+            'name_long' => 'Click Data Plan Tab',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => 'Pulsa',
+            'parameter_name' => null,
         ),
     ),
 );

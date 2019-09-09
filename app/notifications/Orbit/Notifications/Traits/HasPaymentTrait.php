@@ -15,6 +15,8 @@ trait HasPaymentTrait
 {
     protected $payment = null;
 
+    protected $objectType = 'pulsa';
+
     /**
      * Get the transaction data.
      *
@@ -176,5 +178,20 @@ trait HasPaymentTrait
             $paymentDetail->object_id,
             $paymentDetail->object_name
         )->generateUrl();
+    }
+
+    /**
+     * Get purchased object type.
+     *
+     * @return [type] [description]
+     */
+    protected function getObjectType()
+    {
+        foreach($this->payment->details as $detail) {
+            if ($detail->object_type !== 'discount') {
+                $this->objectType = $detail->object_type;
+                break;
+            }
+        }
     }
 }
