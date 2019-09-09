@@ -305,6 +305,12 @@ class ESMallUpdateQueue
                 // Notify the queueing system to delete Elasticsearch document
                 $esQueue = new \Orbit\Queue\Elasticsearch\ESCouponDeleteQueue();
                 $response = $esQueue->fire($fakeJob, ['coupon_id' => $coupon->promotion_id]);
+
+                $esAdvertCouponQueue = new \Orbit\Queue\Elasticsearch\ESAdvertCouponDeleteQueue();
+                $response = $esAdvertCouponQueue->fire($fakeJob, ['coupon_id' => $coupon->promotion_id]);
+
+                $esCouponSuggestionDelete = new \Orbit\Queue\Elasticsearch\ESCouponSuggestionDeleteQueue();
+                $doESCouponSuggestionDelete = $esCouponSuggestionDelete->fire($fakeJob, ['coupon_id' => $coupon->promotion_id]);
             } else {
                 // Notify the queueing system to update Elasticsearch document
                 $esQueue = new \Orbit\Queue\Elasticsearch\ESCouponUpdateQueue();

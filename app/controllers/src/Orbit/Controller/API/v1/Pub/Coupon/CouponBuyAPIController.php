@@ -184,7 +184,8 @@ class CouponBuyAPIController extends PubControllerAPI
                     ['coupon_id' => $coupon_id, 'user_id' => $user->user_id, 'issued_coupons' => $arrIssuedCoupons]
                 );
 
-                $issuedCoupon->limit_time = date('Y-m-d H:i:s', strtotime("+$limitTimeCfg minutes", strtotime($issuedCoupon->issued_date)));
+                $limitTimeCfg = $limitTimeCfg * 60 - 30;
+                $issuedCoupon->limit_time = date('Y-m-d H:i:s', strtotime("+$limitTimeCfg seconds", strtotime($issuedCoupon->issued_date)));
 
                 // Return the data
                 $response = $issuedCoupon;

@@ -3,6 +3,7 @@
 use Orbit\Helper\MCash\Client as MCashClient;
 use Orbit\Helper\MCash\ConfigSelector;
 use Orbit\Helper\MCash\API\Responses\PurchaseResponse;
+use Orbit\Helper\Exception\OrbitCustomException;
 use Config;
 
 /**
@@ -31,6 +32,12 @@ class Purchase
     protected $command = 'PURCHASE';
 
     /**
+     * Mock data.
+     * @var null
+     */
+    protected $mockData = null;
+
+    /**
      * Login response
      */
     protected $response;
@@ -46,6 +53,19 @@ class Purchase
         return new static($config);
     }
 
+    public function mockSuccess($data = [])
+    {
+        $this->mockData = (object) array_merge($data, [
+            'status' => 0,
+            'message' => 'TRX SUCCESS',
+            'data' => (object) [
+                'serial_number' => '12313131',
+            ]
+        ]);
+
+        return $this;
+    }
+
     /**
      * @param string $product - MCash product code (pulsa code)
      * @param string $customer - Customer phone number
@@ -54,11 +74,15 @@ class Purchase
     public function doPurchase($product, $customer, $partnerTrxid=null)
     {
     	try {
+            if (! empty($this->mockData)) {
+                return new PurchaseResponse($this->mockData);
+            }
+
     		if (empty($product)) {
-                throw new Exception("Product code is required", 1);
+                throw new \Exception("Product code is required", 1);
             }
             if (empty($customer)) {
-                throw new Exception("Customer phone number is required", 1);
+                throw new \Exception("Customer phone number is required", 1);
             }
 
             $requestParams = [
@@ -74,8 +98,12 @@ class Purchase
                 ->request('POST');
 
     	} catch (OrbitCustomException $e) {
-			$response = $e->getMessage();
-        } catch (Exception $e) {
+            $response = (object) [
+                'status' => $e->getCode(),
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
+        } catch (\Exception $e) {
             $response = $e->getMessage();
         }
 

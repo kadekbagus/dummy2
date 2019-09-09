@@ -2459,5 +2459,32 @@ return array(
             'object_type' => 'Tenant',
             'parameter_name' => 'object_id',
         ),
+        // Click Use Promo Code Button
+        '268' => array(
+            'name' => 'click_use_promo_code',
+            'name_long' => 'Click Use Promo Code	',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'Coupon',
+            'parameter_name' => 'object_id',
+        ),
+        // Click Cancel Promo Code Button
+        '269' => array(
+            'name' => 'click_cancel_promo_code',
+            'name_long' => 'Click Cancel Promo Code	',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'Coupon',
+            'parameter_name' => 'object_id',
+        ),
+        // Click Expand Promo Code Button
+        '270' => array(
+            'name' => 'click_expand_promo_code',
+            'name_long' => 'Click Expand Promo Code	',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => 'Coupon',
+            'parameter_name' => 'object_id',
+        ),
     ),
 );

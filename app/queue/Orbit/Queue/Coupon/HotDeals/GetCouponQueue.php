@@ -21,6 +21,8 @@ use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification;
 use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
 
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
+use App;
+use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
 
 /**
  * A job to get/issue Hot Deals Coupon after payment completed.
@@ -43,6 +45,8 @@ class GetCouponQueue
         $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
         $mallId = isset($data['mall_id']) ? $data['mall_id'] : null;
         $mall = Mall::where('merchant_id', $mallId)->first();
+        $payment = null;
+        $discount = null;
 
         $activity = Activity::mobileci()
                             ->setActivityType('transaction')
@@ -55,7 +59,7 @@ class GetCouponQueue
 
             Log::info("PaidCoupon: Getting coupon PaymentID: {$paymentId}");
 
-            $payment = PaymentTransaction::with(['details.coupon', 'user', 'midtrans', 'issued_coupons'])->findOrFail($paymentId);
+            $payment = PaymentTransaction::with(['details.coupon', 'user', 'midtrans', 'issued_coupons', 'discount_code'])->findOrFail($paymentId);
 
             $activity->setUser($payment->user);
 
@@ -65,6 +69,8 @@ class GetCouponQueue
                 Log::info("PaidCoupon: Payment {$paymentId} was denied/canceled. We should not issue any coupon.");
 
                 $payment->cleanUp();
+
+                $payment->resetDiscount();
 
                 DB::connection()->commit();
 
@@ -101,8 +107,21 @@ class GetCouponQueue
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
                 $payment->save();
 
-                $coupon = $payment->details->first()->coupon;
+                $coupon = $this->getCoupon($payment);
+                $discount = $payment->discount_code;
                 $coupon->updateAvailability();
+
+                if (! empty($discount)) {
+                    $discountCode = $discount->discount_code;
+                    $promoCodeReservation = App::make(ReservationInterface::class);
+                    $promoData = (object) [
+                        'promo_code' => $discountCode,
+                        'object_id' => $coupon->promotion_id,
+                        'object_type' => 'coupon'
+                    ];
+                    $promoCodeReservation->markAsIssued($payment->user, $promoData);
+                    Log::info("PaidCoupon: Promo code {$discountCode} issued for payment {$paymentId}...");
+                }
 
                 // Commit the changes ASAP.
                 DB::connection()->commit();
@@ -160,6 +179,19 @@ class GetCouponQueue
                 $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
                 $payment->save();
 
+                if (! empty($discount)) {
+                    $discountCode = $discount->discount_code;
+                    // Mark promo code as available if purchase was failed.
+                    $promoCodeReservation = App::make(ReservationInterface::class);
+                    $promoData = (object) [
+                        'promo_code' => $discountCode,
+                        'object_id' => $coupon->promotion_id,
+                        'object_type' => 'coupon'
+                    ];
+                    $promoCodeReservation->markAsAvailable($payment->user, $promoData);
+                    Log::info("PaidCoupon: Promo code {$discountCode} reverted back/marked as available...");
+                }
+
                 DB::connection()->commit();
 
                 // Notify admin for this failure.
@@ -204,5 +236,18 @@ class GetCouponQueue
         }
 
         $job->delete();
+    }
+
+    private function getCoupon($payment)
+    {
+        $coupon = null;
+        foreach($payment->details as $detail) {
+            if (! empty($detail->coupon)) {
+                $coupon = $detail->coupon;
+                break;
+            }
+        }
+
+        return $coupon;
     }
 }

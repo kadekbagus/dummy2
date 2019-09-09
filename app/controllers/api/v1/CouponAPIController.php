@@ -208,6 +208,9 @@ class CouponAPIController extends ControllerAPI
             $merchant_commision = OrbitInput::post('merchant_commision', 0);
             $price_selling = OrbitInput::post('price_selling', 0);
 
+            // discounts
+            $discounts = OrbitInput::post('discounts', []);
+
             if ($payByNormal === 'N') {
                 $fixedAmountCommission = 0;
             }
@@ -1067,6 +1070,9 @@ class CouponAPIController extends ControllerAPI
                 }
             }
 
+            // Sync discounts...
+            $newcoupon->discounts()->sync($this->mapDiscounts($discounts));
+
             $this->response->data = $newcoupon;
             // $this->response->data->translation_default = $coupon_translation_default;
 
@@ -1349,6 +1355,9 @@ class CouponAPIController extends ControllerAPI
 
             $is_sponsored = OrbitInput::post('is_sponsored', 'N');
             $sponsor_ids = OrbitInput::post('sponsor_ids');
+
+            // discount
+            $discounts = OrbitInput::post('discounts', []);
 
             $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
             $status = 'inactive';
@@ -2500,6 +2509,9 @@ class CouponAPIController extends ControllerAPI
                                     ->update(['end_date' => $updatedcoupon->end_date]);
             }
 
+            // Sync discounts...
+            $updatedcoupon->discounts()->sync($this->mapDiscounts($discounts));
+
             $this->response->data = $updatedcoupon;
 
             // Commit the changes
@@ -2995,7 +3007,7 @@ class CouponAPIController extends ControllerAPI
             // Builder object
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::allowedForPMPUser($user, 'coupon')
-                ->with('couponRule')
+                ->with(['couponRule', 'discounts'])
                 ->select(
                     DB::raw("{$table_prefix}promotions.*, {$table_prefix}promotions.promotion_id as campaign_id, 'coupon' as campaign_type, {$table_prefix}coupon_translations.promotion_name AS display_name, media.path as image_path,
                     CASE WHEN {$table_prefix}campaign_status.campaign_status_name = 'expired' THEN {$table_prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$table_prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
@@ -5285,6 +5297,17 @@ class CouponAPIController extends ControllerAPI
         $this->returnBuilder = $bool;
 
         return $this;
+    }
+
+    private function mapDiscounts($discounts)
+    {
+        $newDiscounts = [];
+
+        foreach($discounts as $discount) {
+            $newDiscounts[$discount] = ['object_type' => 'coupon'];
+        }
+
+        return $newDiscounts;
     }
 
 }

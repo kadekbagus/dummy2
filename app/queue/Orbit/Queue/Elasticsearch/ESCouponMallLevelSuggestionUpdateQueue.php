@@ -258,7 +258,7 @@ class ESCouponMallLevelSuggestionUpdateQueue
                 // Safely delete the object
                 $job->delete();
 
-                $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; Coupon ID: %s; Coupon Name: %s',
+                $message = sprintf('[Job ID: `%s`] Elasticsearch Mall Level Suggestions Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; Coupon ID: %s; Coupon Name: %s',
                                     $job->getJobId(),
                                     $esConfig['indices']['coupon_mall_level_suggestions']['index'],
                                     $esConfig['indices']['coupon_mall_level_suggestions']['type'],
@@ -274,7 +274,7 @@ class ESCouponMallLevelSuggestionUpdateQueue
 
 
         } catch (Exception $e) {
-            $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
+            $message = sprintf('[Job ID: `%s`] Elasticsearch Mall Level Suggestions Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['coupon_mall_level_suggestions']['index'],
                                 $esConfig['indices']['coupon_mall_level_suggestions']['type'],

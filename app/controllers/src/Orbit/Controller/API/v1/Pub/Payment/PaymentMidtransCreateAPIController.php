@@ -28,6 +28,9 @@ use Country;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\CampaignSourceParser;
 use Request;
+use Log;
+use App;
+use Discount;
 
 class PaymentMidtransCreateAPIController extends PubControllerAPI
 {
@@ -66,6 +69,7 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
             $object_name = OrbitInput::post('object_name');
             $user_name = (!empty($last_name) ? $first_name.' '.$last_name : $first_name);
             $mallId = OrbitInput::post('mall_id', null);
+            $promoCode = OrbitInput::post('promo_code', null);
 
             $validator = Validator::make(
                 array(
@@ -89,11 +93,13 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                     'post_data'  => 'required',
                     'mall_id'    => 'required',
                     'object_id'  => 'required|orbit.exists.coupon',
+                    'promo_code' => 'orbit.reserved.promo',
                 ),
                 array(
                     'orbit.allowed.quantity' => 'REQUESTED_QUANTITY_NOT_AVAILABLE',
                     'orbit.allowed.per_user' => 'MAXIMUM_PURCHASE_REACHED',
                     'orbit.exists.coupon' => 'Coupon does not exists.',
+                    'orbit.reserved.promo' => 'RESERVED_PROMO_CODE_NOT_FOUND',
                 )
             );
 
@@ -196,6 +202,55 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                 ->where('status', IssuedCoupon::STATUS_RESERVED)
                 ->skip(0)->take($quantity)
                 ->update(['transaction_id' => $payment_new->payment_transaction_id]);
+
+            // process discount if any.
+            if (! empty($promoCode)) {
+                Log::info("Trying to make purchase with promo code {$promoCode}...");
+
+                // TODO: Move to PromoReservation helper?
+                $discount = Discount::where('discount_code', $promoCode)->first();
+                $reservedPromoCodes = $user->discountCodes()
+                    ->where('discount_code', $promoCode)
+                    ->where('object_id', $object_id)
+                    ->where('object_type', $object_type)
+                    ->reservedNotWaitingPayment()
+                    ->get();
+
+                // $discount = $reservedPromoCodes->count() > 0
+                //     ? $reservedPromoCodes->first()->discount
+                //     : Discount::findOrFail($reservedPromoCodes->first()->discount_id); // this should never happen.
+
+                $discountRecord = new PaymentTransactionDetail;
+                $discountRecord->payment_transaction_id = $payment_new->payment_transaction_id;
+                $discountRecord->currency = $payment_new->currency;
+                $discountRecord->price = $discount->value_in_percent / 100 * $payment_new->amount * -1.00;
+                $discountRecord->quantity = 1;
+                $discountRecord->object_id = $discount->discount_id;
+                $discountRecord->object_type = 'discount';
+                $discountRecord->object_name = $discount->discount_title;
+                $discountRecord->save();
+
+                // $reservedPromoCode->status = 'ready_to_issue';
+                foreach($reservedPromoCodes as $reservedPromoCode) {
+                    $reservedPromoCode->payment_transaction_id = $payment_new->payment_transaction_id;
+                    $reservedPromoCode->save();
+
+                    Log::info(sprintf("Promo Code %s (discountCodeId: %s) added to purchase %s",
+                        $reservedPromoCode->discount_code,
+                        $reservedPromoCode->discount_code_id,
+                        $payment_new->payment_transaction_id
+                    ));
+                }
+
+                $payment_new->amount = $payment_new->amount + $discountRecord->price;
+                $payment_new->save();
+
+                if ($discount->value_in_percent === 100) {
+                    $payment_new->bypass_payment = true;
+                }
+
+                $payment_new->promo_code = $discount->discount_code;
+            }
 
             // Commit the changes
             $this->commit();
@@ -337,6 +392,20 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                    $requestedQuantity <= $maxQuantityPerPurchase &&
                    $requestedQuantity <= $availableCouponForUser &&
                    $requestedQuantity <= $reservedCouponCount;
+        });
+
+        Validator::extend('orbit.reserved.promo', function($attribute, $promoCode, $parameters) use ($user)
+        {
+            // Assume true (or reserved) if promocode empty/not exists in the request.
+            if (empty($promoCode)) return true;
+
+            // Otherwise, check for reserved status.
+            // TODO: Move to PromoReservation helper?
+            return $user->discountCodes()
+                ->where('discount_code', $promoCode)
+                ->whereNull('payment_transaction_id')
+                ->reserved()
+                ->first() !== null;
         });
     }
 }

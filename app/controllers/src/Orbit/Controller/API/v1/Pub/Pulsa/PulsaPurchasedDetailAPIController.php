@@ -112,26 +112,35 @@ class PulsaPurchasedDetailAPIController extends PubControllerAPI
                             DB::raw($telcoLogo),
                             'payment_transactions.extra_data as phone_number'
                         )
+                        ->with(['discount_code' => function($discountCodeQuery) {
+                            $discountCodeQuery->select('payment_transaction_id', 'discount_code_id', 'discount_id', 'discount_code as used_discount_code')->with(['discount' => function($discountDetailQuery) {
+                                $discountDetailQuery->select('discount_id', 'discount_code as parent_discount_code', 'discount_title', 'value_in_percent as percent_discount');
+                            }]);
+                        }])
+                        ->with(['discount' => function($discountQuery) {
+                            $discountQuery->select('payment_transaction_id', 'object_id', 'price as discount_amount')->with(['discount' => function($discountQuery) {
+                                $discountQuery->select('discount_id', 'discount_code as parent_discount_code', 'discount_title', 'value_in_percent as percent_discount');
+                            }]);
+                        }])
+                        ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
+                        ->leftJoin('payment_midtrans', 'payment_midtrans.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
+                        ->join('pulsa', 'pulsa.pulsa_item_id', '=', 'payment_transaction_details.object_id')
+                        ->join('telco_operators', 'telco_operators.telco_operator_id', '=', 'pulsa.telco_operator_id')
+                        ->leftJoin('media', function ($q) {
+                            $q->on('media.object_id', '=', 'telco_operators.telco_operator_id');
+                            $q->on('media.media_name_long', '=', DB::raw("'telco_operator_logo_orig'"));
+                        })
+                        ->where('payment_transactions.user_id', $user->user_id)
+                        ->where('payment_transaction_details.object_type', 'pulsa')
+                        ->where('payment_transactions.payment_method', '!=', 'normal')
+                        //->where('pulsa.status', 'active')
 
-                            ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
-                            ->leftJoin('payment_midtrans', 'payment_midtrans.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
-                            ->join('pulsa', 'pulsa.pulsa_item_id', '=', 'payment_transaction_details.object_id')
-                            ->join('telco_operators', 'telco_operators.telco_operator_id', '=', 'pulsa.telco_operator_id')
-                            ->leftJoin('media', function ($q) {
-                                $q->on('media.object_id', '=', 'telco_operators.telco_operator_id');
-                                $q->on('media.media_name_long', '=', DB::raw("'telco_operator_logo_orig'"));
-                            })
-                            ->where('payment_transactions.user_id', $user->user_id)
-                            ->where('payment_transaction_details.object_type', 'pulsa')
-                            ->where('payment_transactions.payment_method', '!=', 'normal')
-                            //->where('pulsa.status', 'active')
-
-                            // payment_transaction_id is value of payment_transaction_id or external_payment_transaction_id
-                            ->where(function($query) use($payment_transaction_id) {
-                                $query->where('payment_transactions.payment_transaction_id', '=', $payment_transaction_id)
-                                      ->orWhere('payment_transactions.external_payment_transaction_id', '=', $payment_transaction_id);
-                              })
-                            ->first();
+                        // payment_transaction_id is value of payment_transaction_id or external_payment_transaction_id
+                        ->where(function($query) use($payment_transaction_id) {
+                            $query->where('payment_transactions.payment_transaction_id', '=', $payment_transaction_id)
+                                  ->orWhere('payment_transactions.external_payment_transaction_id', '=', $payment_transaction_id);
+                          })
+                        ->first();
 
             if (!$pulsa) {
                 OrbitShopAPI::throwInvalidArgument('purchased detail not found');

@@ -206,6 +206,11 @@ class Coupon extends Eloquent
         return $this->hasOne('CouponSepulsa', 'promotion_id', 'promotion_id');
     }
 
+    public function discounts()
+    {
+        return $this->belongsToMany('Discount', 'object_discount', 'object_id')->where('object_type', 'coupon')->withTimestamps();
+    }
+
     /**
      * Add Filter coupons based on user who request it.
      *
@@ -755,6 +760,10 @@ class Coupon extends Eloquent
         else if ($this->available === 0) {
             // Delete the coupon and also suggestion
             Queue::later(2, 'Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
+                'coupon_id' => $this->promotion_id
+            ]);
+
+            Queue::later(2, 'Orbit\\Queue\\Elasticsearch\\ESAdvertCouponDeleteQueue', [
                 'coupon_id' => $this->promotion_id
             ]);
 

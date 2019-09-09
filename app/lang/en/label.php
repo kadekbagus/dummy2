@@ -32,5 +32,7 @@ return array(
             'promotion'  => 'Your promotion code is',
             'lucky_draw' => 'Your lucky number is'
         ]
-    ]
+    ],
+
+    'discount' => 'Discount ',
 );
