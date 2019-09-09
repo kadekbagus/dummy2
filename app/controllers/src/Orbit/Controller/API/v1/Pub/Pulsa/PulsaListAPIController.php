@@ -49,10 +49,6 @@ class PulsaListAPIController extends PubControllerAPI
             // $sort_mode = OrbitInput::get('sortmode','asc');
             // $language = OrbitInput::get('language', 'id');
             $country = OrbitInput::get('country', 0);
-            $object_type = OrbitInput::get('object_type', 'pulsa');
-            if (! in_array($object_type, ['pulsa', 'data_plan'])) {
-                $object_type = 'pulsa';
-            }
             // $no_total_records = OrbitInput::get('no_total_records', null);
 
             if (empty($country) || $country == '0') {
@@ -112,7 +108,7 @@ class PulsaListAPIController extends PubControllerAPI
                                      ->on('media.media_name_long', '=', DB::raw("'telco_operator_logo_orig'"));
                             })
                             ->where('countries.name', $country)
-                            ->where('pulsa.object_type', $object_type)
+                            ->whereIn('pulsa.object_type', ['pulsa', 'data_plan'])
                             //this is added just ensure object_type_status_displayed_idx is used
                             ->whereIn('pulsa.status', ['active', 'inactive'])
                             ->where('pulsa.displayed', 'yes')

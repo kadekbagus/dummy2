@@ -5449,6 +5449,7 @@ return array(
 
             // Bots
             'GoogleBot' => 'GoogleBot/.*bot\.html|Google Keyword Suggestion|AdsBot-Google',
+            'GoogleAdsenseBot' => 'Mediapartners-Google',
             'BingBot' => 'bingbot',
             'Slurp (Yahoo Bot)' => 'Slurp',
             'DuckDuckBot' => 'DuckDuckBot',
@@ -5476,6 +5477,7 @@ return array(
 
         'bot_crawler' => [
             'GoogleBot' => 'GoogleBot/.*bot\.html|Google Keyword Suggestion|AdsBot-Google',
+            'GoogleAdsenseBot' => 'Mediapartners-Google',
             'BingBot' => 'bingbot',
             'Slurp (Yahoo Bot)' => 'Slurp',
             'DuckDuckBot' => 'DuckDuckBot',
