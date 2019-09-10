@@ -22,8 +22,12 @@ class AbortedPaymentNotification extends Base
      */
     public function getEmailTemplates()
     {
+        $template = $this->objectType === 'pulsa'
+            ? 'emails.pulsa.aborted-payment'
+            : 'emails.data-plan.aborted-payment';
+
         return [
-            'html' => 'emails.pulsa.aborted-payment',
+            'html' => $template,
         ];
     }
 
