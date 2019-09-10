@@ -17,7 +17,7 @@ return [
             'transaction_date' => 'Transaction Date: ',
             'coupon_name' => 'Coupon Name: ',
             'coupon_price' => 'Coupon Price: ',
-            'pulsa_name' => 'Pulsa: ',
+            'pulsa_name' => 'Pulsa/Data Plan: ',
             'pulsa_phone_number' => 'Phone Number: ',
             'pulsa_price' => 'Price: ',
             'coupon_quantity' => 'Quantity: ',
