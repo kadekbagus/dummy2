@@ -23,8 +23,15 @@ class AbortedPaymentNotification extends Base
     public function getEmailTemplates()
     {
         return [
-            'html' => 'emails.aborted-payment-pulsa',
+            'html' => 'emails.pulsa.aborted-payment',
         ];
+    }
+
+    protected function getEmailSubject()
+    {
+        return $this->objectType === 'pulsa'
+            ? trans('email-aborted-payment.subject_pulsa', [], '', 'id')
+            : trans('email-aborted-payment.subject_data_plan', [], '', 'id');
     }
 
     /**
@@ -36,7 +43,7 @@ class AbortedPaymentNotification extends Base
     {
         return array_merge(parent::getEmailData(), [
             'pulsaPhoneNumber' => $this->payment->extra_data,
-            'emailSubject' => trans('email-aborted-payment.subject_pulsa', [], '', 'id'),
+            'emailSubject' => $this->getEmailSubject(),
         ]);
     }
 }
