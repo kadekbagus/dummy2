@@ -12,6 +12,7 @@ use \DB;
 use VendorGTMCity;
 use VendorGTMCountry;
 use \stdClass;
+use Orbit\Helper\Util\UserAgent;
 
 class LocationDetectionAPIController extends PubControllerAPI
 {
@@ -126,6 +127,19 @@ class LocationDetectionAPIController extends PubControllerAPI
         $_GET['take'] = '1';
         $_GET['by_pass_mall_order'] = 'y';
         $_GET['from_homepage'] = 'y';
+
+        // Bypass bot ('Mediapartners-Google' issue)
+        $userAgent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'Unknown-UA/?';
+        $fallbackUARules = ['browser' => [], 'platform' => [], 'device_model' => [], 'bot_crawler' => []];
+        $detectUA = new UserAgent();
+        $detectUA->setRules(Config::get('orbit.user_agent_rules', $fallbackUARules));
+        $detectUA->setUserAgent($userAgent);
+        if ($detectUA->isBotCrawler()) {
+            $res = new stdClass();
+            $res->country = 'Indonesia';
+            $res->cities = ['Jakarta Barat','Jakarta Pusat','Jakarta Selatan','Jakarta Timur','Jakarta Utara'];
+            return $res;
+        }
 
         $response = MallListAPIController::create('raw')->getMallList();
         if (is_object($response) && $response->code === 0) {

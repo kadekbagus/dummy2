@@ -61,6 +61,8 @@ class CustomerRefundNotification extends CustomerNotification implements EmailNo
      */
     public function getEmailData()
     {
+        $this->objectType = $this->getObjectType();
+
         return [
             'recipientEmail'    => $this->getRecipientEmail(),
             'customerEmail'     => $this->getCustomerEmail(),
@@ -73,6 +75,7 @@ class CustomerRefundNotification extends CustomerNotification implements EmailNo
             'subject'           => trans('email-customer-refund.subject_pulsa', [], '', 'id'),
             'reason'            => $this->reason,
             'pulsaPhone'        => $this->getPulsaPhone(),
+            'template'          => $this->getEmailTemplates(),
         ];
     }
 
@@ -86,7 +89,7 @@ class CustomerRefundNotification extends CustomerNotification implements EmailNo
     public function toEmail($job, $data)
     {
         try {
-            Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
+            Mail::send($data['template'], $data, function($mail) use ($data) {
                 $mail->subject($data['subject']);
                 $mail->from($data['sender']['email'], $data['sender']['name']);
                 $mail->to($data['recipientEmail']);

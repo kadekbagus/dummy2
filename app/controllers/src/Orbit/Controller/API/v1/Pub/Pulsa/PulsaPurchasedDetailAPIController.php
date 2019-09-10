@@ -99,6 +99,7 @@ class PulsaPurchasedDetailAPIController extends PubControllerAPI
                             'payment_transactions.amount',
                             'pulsa.price',
                             'payment_transaction_details.quantity as qty',
+                            'payment_transaction_details.object_type',
                             'payment_transactions.status',
                             'payment_midtrans.payment_midtrans_info',
                             'pulsa.pulsa_item_id as item_id',
@@ -131,7 +132,7 @@ class PulsaPurchasedDetailAPIController extends PubControllerAPI
                             $q->on('media.media_name_long', '=', DB::raw("'telco_operator_logo_orig'"));
                         })
                         ->where('payment_transactions.user_id', $user->user_id)
-                        ->where('payment_transaction_details.object_type', 'pulsa')
+                        ->whereIn('payment_transaction_details.object_type', ['pulsa', 'data_plan'])
                         ->where('payment_transactions.payment_method', '!=', 'normal')
                         //->where('pulsa.status', 'active')
 
