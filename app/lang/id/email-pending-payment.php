@@ -53,5 +53,6 @@ return [
         'btn_payment_instruction' => 'Instruksi Pembayaran',
         'btn_my_wallet' => 'Buka Dompet Saya',
         'btn_cancel_purchase' => 'Batalkan Pembelian',
+        // 'btn_pay' => 'Bayar',
     ],
 ];
