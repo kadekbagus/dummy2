@@ -181,12 +181,12 @@
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{ trans('email-expired-payment.body.payment-info-line-1', ['transactionDateTime' => $transactionDateTime], '', 'id') }}
+                {{ trans('email-expired-payment.body.payment-info-line-1-pulsa', ['transactionDateTime' => $transactionDateTime], '', 'id') }}
               </p>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{ trans('email-expired-payment.body.payment-info-line-2', $cs, '', 'id') }}
+                {{ trans('email-expired-payment.body.payment-info-line-2-pulsa', $cs, '', 'id') }}
               </p>
 
               <p style="text-align: center">
@@ -242,7 +242,7 @@
               <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-expired-payment.body.payment-info-line-4') }}
+                {{ trans('email-expired-payment.body.payment-info-line-4-pulsa') }}
               </p>
               <br>
               <p style="text-align: center;">
