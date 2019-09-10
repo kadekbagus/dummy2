@@ -88,7 +88,6 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
             $pulsa = new \stdClass;
             $pulsa->available = true;
             $pulsa->limit_time = Carbon::now()->addMinutes($limitTimeCfg);
-            $pulsa->item = Pulsa::find($pulsa_id);
 
             $this->response->data = $pulsa;
 
