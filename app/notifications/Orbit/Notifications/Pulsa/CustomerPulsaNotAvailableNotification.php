@@ -72,7 +72,7 @@ class CustomerPulsaNotAvailableNotification extends CustomerNotification impleme
      */
     public function getEmailData()
     {
-        $this->objectType = $this->getObjectType();
+        $this->getObjectType();
 
         return [
             'recipientEmail'    => $this->getRecipientEmail(),
