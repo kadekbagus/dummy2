@@ -54,7 +54,7 @@ class ExpiredPaymentNotification extends Base
     {
         return array_merge(parent::getEmailData(), [
             'pulsaPhoneNumber' => $this->payment->extra_data,
-            'emailSubject' => trans('email-expired-payment.subject_pulsa', [], '', 'id'),
+            'emailSubject' => $this->getEmailSubject(),
         ]);
     }
 }
