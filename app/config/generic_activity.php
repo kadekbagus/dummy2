@@ -2513,5 +2513,56 @@ return array(
             'object_type' => 'Pulsa',
             'parameter_name' => null,
         ),
+
+        // Click buy now step 1 pulsa
+        '274' => array(
+            'name' => 'click_pulsa_buy_now_step_1',
+            'name_long' => 'Click Buy Now Step 1 Pulsa',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id'
+        ),
+
+        // Click buy now step 2 pulsa
+        '275' => array(
+            'name' => 'click_pulsa_buy_now_step_2',
+            'name_long' => 'Click Buy Now Step 2 Pulsa',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id'
+        ),
+
+        // view payment page pulsa
+        '276' => array(
+            'name' => 'view_payment_page_midtrans_payment_page_pulsa',
+            'name_long' => 'Pulsa View Payment Page (Midtrans Payment Page)',
+            'module_name' => 'Pulsa',
+            'type' => 'view',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id'
+        ),
+
+        // view sold out popup step 1 pulsa
+        '277' => array(
+            'name' => 'view_pulsa_sold_out_popup_step_1',
+            'name_long' => 'View Sold Out Popup Step 1 Pulsa',
+            'module_name' => 'Pulsa',
+            'type' => 'view',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id'
+        ),
+
+        // view sold out popup step 2 pulsa
+        '278' => array(
+            'name' => 'view_pulsa_sold_out_popup_step_2',
+            'name_long' => 'View Sold Out Popup Step 2 Pulsa',
+            'module_name' => 'Pulsa',
+            'type' => 'view',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id'
+        ),
+
     ),
 );
