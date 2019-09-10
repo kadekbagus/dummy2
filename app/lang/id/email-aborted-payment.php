@@ -45,6 +45,7 @@ Apabila kamu mengalami kesulitan dalam pembelian pulsa, silahkan <strong>tanyaka
         'buttons' => [
             'buy_coupon' => 'Beli Kupon Sekarang',
             'buy_pulsa' => 'Beli Pulsa Sekarang',
+            'buy_data_plan' => 'Beli Paket Data Sekarang',
         ]
     ],
 ];

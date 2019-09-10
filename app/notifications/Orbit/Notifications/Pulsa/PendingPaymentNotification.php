@@ -38,8 +38,12 @@ class PendingPaymentNotification extends Base
      */
     public function getEmailTemplates()
     {
+        $template = $this->objectType === 'pulsa'
+            ? 'emails.pulsa.pending-payment'
+            : 'emails.data-plan.pending-payment';
+
         return [
-            'html' => 'emails.pulsa.pending-payment',
+            'html' => $template,
         ];
     }
 
@@ -74,10 +78,10 @@ class PendingPaymentNotification extends Base
             if ($payment->pending()) {
                 $data['paymentInfo'] = json_decode(unserialize($payment->midtrans->payment_midtrans_info), true);
 
-                Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
+                Mail::send($data['template'], $data, function($mail) use ($data) {
                     $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                    $subject = trans('email-pending-payment.subject');
+                    $subject = $data['emailSubject'];
 
                     $mail->subject($subject);
                     $mail->from($emailConfig['email'], $emailConfig['name']);

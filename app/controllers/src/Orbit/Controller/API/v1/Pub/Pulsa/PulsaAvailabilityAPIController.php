@@ -72,7 +72,7 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
                     'phone_number' => 'required|min:10|orbit.limit.pending|orbit.limit.purchase',
                 ),
                 array(
-                    'orbit.exists.pulsa' => 'Requested Pulsa does not exist.',
+                    'orbit.exists.pulsa' => 'REQUESTED_ITEM_NOT_FOUND.',
                     'orbit.allowed.quantity' => 'REQUESTED_QUANTITY_NOT_AVAILABLE',
                     'orbit.limit.purchase' => 'PURCHASE_TIME_LIMITED',
                     'orbit.limit.pending' => 'FINISH_PENDING_FIRST',
@@ -147,19 +147,7 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
 
         // Check if pulsa is exists.
         Validator::extend('orbit.exists.pulsa', function ($attribute, $value, $parameters) {
-            $pulsa = Pulsa::where('pulsa_item_id', $value)
-                ->where('displayed', 'yes')
-                ->where('status', 'active')
-                ->first();
-
-            if (empty($pulsa)) {
-                return false;
-            }
-
-            // Why it doesn't
-            // \App::instance('orbit.exists.pulsa', $pulsa);
-
-            return true;
+            return Pulsa::where('pulsa_item_id', $value)->available()->first() !== null;
         });
 
         /**
@@ -182,7 +170,7 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
                 )
                 ->join('payment_transaction_details', 'payment_transactions.payment_transaction_id', '=', 'payment_transaction_details.payment_transaction_id')
                 ->join('pulsa', 'payment_transaction_details.object_id', '=', 'pulsa.pulsa_item_id')
-                ->where('payment_transaction_details.object_type', 'pulsa')
+                ->whereIn('payment_transaction_details.object_type', ['pulsa', 'data_plan'])
                 ->where('payment_transaction_details.object_id', $pulsaId)
                 ->whereIn('payment_transactions.status', [
                     PaymentTransaction::STATUS_SUCCESS,
@@ -206,7 +194,7 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
             $pendingPurchase = PaymentTransaction::select('payment_transactions.payment_transaction_id')
                                 ->join('payment_transaction_details', 'payment_transactions.payment_transaction_id', '=', 'payment_transaction_details.payment_transaction_id')
                                 ->join('pulsa', 'payment_transaction_details.object_id', '=', 'pulsa.pulsa_item_id')
-                                ->where('payment_transaction_details.object_type', 'pulsa')
+                                ->whereIn('payment_transaction_details.object_type', ['pulsa', 'data_plan'])
                                 ->where('pulsa.pulsa_code', $pulsa->pulsa_code)
                                 ->where('payment_transactions.extra_data', $phoneNumber)
                                 ->whereIn('payment_transactions.status', [
@@ -231,7 +219,7 @@ class PulsaAvailabilityAPIController extends PubControllerAPI
             $samePurchase = PaymentTransaction::select('payment_transactions.payment_transaction_id')
                             ->join('payment_transaction_details', 'payment_transactions.payment_transaction_id', '=', 'payment_transaction_details.payment_transaction_id')
                             ->join('pulsa', 'payment_transaction_details.object_id', '=', 'pulsa.pulsa_item_id')
-                            ->where('payment_transaction_details.object_type', 'pulsa')
+                            ->whereIn('payment_transaction_details.object_type', ['pulsa', 'data_plan'])
                             ->where('pulsa.pulsa_code', $pulsa->pulsa_code)
                             ->where('payment_transactions.extra_data', $phoneNumber)
                             ->where('payment_transactions.updated_at', '>', $lastTime)

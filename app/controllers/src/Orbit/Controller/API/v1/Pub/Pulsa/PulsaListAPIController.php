@@ -108,8 +108,11 @@ class PulsaListAPIController extends PubControllerAPI
                                      ->on('media.media_name_long', '=', DB::raw("'telco_operator_logo_orig'"));
                             })
                             ->where('countries.name', $country)
+                            ->whereIn('pulsa.object_type', ['pulsa', 'data_plan'])
+                            //this is added just ensure object_type_status_displayed_idx is used
+                            ->whereIn('pulsa.status', ['active', 'inactive'])
+                            ->where('pulsa.displayed', 'yes')
                             ->where('telco_operators.status', 'active')
-                            ->where('displayed', 'yes')
                             ->orderBy('telco_operators.telco_operator_id')
                             ->orderBy('pulsa.value')
                             ->groupBy('pulsa_item_id');

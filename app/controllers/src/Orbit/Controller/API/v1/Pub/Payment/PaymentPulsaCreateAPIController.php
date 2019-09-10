@@ -35,6 +35,8 @@ use Discount;
  */
 class PaymentPulsaCreateAPIController extends PubControllerAPI
 {
+    private $objectType = 'pulsa';
+
     public function postPaymentPulsaCreate()
     {
         $httpCode = 200;
@@ -95,14 +97,13 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                     'amount'     => 'required',
                     'post_data'  => 'required',
                     'mall_id'    => 'required',
-                    'object_type'  => 'required',
+                    'object_type'  => 'required|in:pulsa,data_plan',
                     'object_id'  => 'required|orbit.exists.pulsa',
-                    'quantity'   => 'required',
+                    'quantity'   => 'required|min:1',
                     'promo_code' => 'orbit.reserved.promo',
                 ),
                 array(
-                    'orbit.allowed.quantity' => 'REQUESTED_QUANTITY_NOT_AVAILABLE',
-                    'orbit.exists.pulsa' => 'Pulsa does not exists.',
+                    'orbit.exists.pulsa' => 'REQUESTED_ITEM_NOT_FOUND',
                     'orbit.reserved.promo' => 'RESERVED_PROMO_CODE_NOT_FOUND',
                 )
             );
@@ -117,10 +118,12 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
             $this->beginTransaction();
 
             // Get pulsa detail from DB.
-            $pulsa = Pulsa::select('pulsa_item_id', 'price', 'vendor_price')
+            $pulsa = Pulsa::select('pulsa_item_id', 'price', 'vendor_price', 'object_type')
                 ->where('status', 'active')
                 ->where('displayed', 'yes')
                 ->findOrFail($object_id);
+
+            $this->objectType = $object_type;
 
             // Resolve country_id
             if ($country_id !== '0' || $country_id !== 0) {
@@ -264,7 +267,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                     ->setActivityNameLong('Transaction is Starting')
                     ->setModuleName('Midtrans Transaction')
                     ->setObject($payment_new)
-                    ->setNotes('Pulsa')
+                    ->setNotes($this->objectType)
                     ->setLocation($mall)
                     ->responseOK()
                     ->save();
@@ -331,43 +334,8 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
         $user = $this->getUser();
 
         // Check if pulsa is exists.
-        Validator::extend('orbit.exists.pulsa', function ($attribute, $value, $parameters) {
-            return Pulsa::where('pulsa_item_id', $value)->where('status', 'active')
-                ->where('displayed', 'yes')->first() !== null;
-        });
-
-        /**
-         * Check if pulsa still available.
-         */
-        Validator::extend('orbit.allowed.quantity', function ($attribute, $requestedQuantity, $parameters) use ($user) {
-
-            $pulsaId = OrbitInput::post('object_id');
-
-            // Globally issued coupon count regardless of the Customer.
-            $issuedPulsa = PaymentTransaction::select(
-                    'payment_transactions.payment_transaction_id',
-                    'payment_transaction_details.object_id',
-                    'payment_transactions.user_id'
-                )
-                ->join('payment_transaction_details', 'payment_transactions.payment_transaction_id', '=', 'payment_transaction_details.payment_transaction_id')
-                ->where('payment_transaction_details.object_type', 'pulsa')
-                // ->where('payment_transaction_details.object_id', $pulsaId)
-                ->whereIn('payment_transactions.status', [
-                    PaymentTransaction::STATUS_SUCCESS,
-                    PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
-                    PaymentTransaction::STATUS_SUCCESS_NO_PULSA,
-                    // PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED,
-                ])
-                ->get();
-
-            $issuedPulsaForUser = false;
-            foreach($issuedPulsa as $issuedPulsaItem) {
-                if ($issuedPulsaItem->user_id === $user->user_id) {
-                    $issuedPulsaForUser = true;
-                }
-            }
-
-            return $requestedQuantity <= $issuedPulsa && ! $issuedPulsaForUser;
+        Validator::extend('orbit.exists.pulsa', function ($attribute, $pulsaId, $parameters) {
+            return Pulsa::where('pulsa_item_id', $pulsaId)->available()->first() !== null;
         });
 
         // Validator::extend('orbit.active_discount', function($attribute, $promoCode, $paramters) {

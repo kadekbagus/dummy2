@@ -94,6 +94,18 @@ class ESNewsUpdateQueue
                     ->first();
 
         if (! is_object($news)) {
+
+            $fakeJob = new FakeJob();
+
+            $esNewsDelete = new \Orbit\Queue\Elasticsearch\ESNewsDeleteQueue();
+            $doESNewsDelete = $esNewsDelete->fire($fakeJob, ['news_id' => $newsId]);
+
+            $esAdvertNewsDelete = new \Orbit\Queue\Elasticsearch\ESAdvertNewsDeleteQueue();
+            $doESAdvertNewsDelete = $esAdvertNewsDelete->fire($fakeJob, ['news_id' => $newsId]);
+
+            $esNewsSuggestionDelete = new \Orbit\Queue\Elasticsearch\ESNewsSuggestionDeleteQueue();
+            $doESNewsSuggestionDelete = $esNewsSuggestionDelete->fire($fakeJob, ['news_id' => $newsId]);
+
             $job->delete();
 
             return [
