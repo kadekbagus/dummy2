@@ -54,6 +54,11 @@ class CanceledPaymentNotification extends CustomerNotification implements EmailN
         ];
     }
 
+    protected function getEmailSubject()
+    {
+        return trans('email-canceled-payment.subject', [], '', 'id');
+    }
+
     /**
      * Get the email data.
      *
@@ -61,7 +66,7 @@ class CanceledPaymentNotification extends CustomerNotification implements EmailN
      */
     public function getEmailData()
     {
-        $this->objectType = $this->getObjectType();
+        $this->getObjectType();
 
         return [
             'recipientEmail'    => $this->getRecipientEmail(),
@@ -72,7 +77,7 @@ class CanceledPaymentNotification extends CustomerNotification implements EmailN
             'cs'                => $this->getContactData(),
             'transactionDateTime' => $this->payment->getTransactionDate('d F Y, H:i ') . " {$this->getLocalTimezoneName($this->payment->timezone_name)}",
             'buyUrl'            => $this->getBuyUrl(),
-            'emailSubject'      => trans('email-canceled-payment.subject', [], '', 'id'),
+            'emailSubject'      => $this->getEmailSubject(),
             'template'          => $this->getEmailTemplates(),
         ];
     }
