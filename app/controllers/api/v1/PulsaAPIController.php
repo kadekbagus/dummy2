@@ -220,7 +220,6 @@ class PulsaAPIController extends ControllerAPI
             $telco_operator_id = OrbitInput::post('telco_operator_id');
             $pulsa_code = OrbitInput::post('pulsa_code');
             $pulsa_display_name = OrbitInput::post('pulsa_display_name');
-            $description = OrbitInput::post('description');
             $value = OrbitInput::post('value');
             $price = OrbitInput::post('price');
             $quantity = OrbitInput::post('quantity');
@@ -270,6 +269,10 @@ class PulsaAPIController extends ControllerAPI
             // update Partner
             OrbitInput::post('telco_operator_id', function($telco_operator_id) use ($updatedPulsa) {
                 $updatedPulsa->telco_operator_id = $telco_operator_id;
+            });
+
+            OrbitInput::post('description', function($description) use ($updatedPulsa) {
+                $updatedPulsa->description = $description;
             });
 
             OrbitInput::post('pulsa_code', function($pulsa_code) use ($updatedPulsa) {
