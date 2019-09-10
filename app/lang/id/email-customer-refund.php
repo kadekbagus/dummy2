@@ -16,9 +16,9 @@ return [
 
         'greeting_pulsa' => 'Hai, :customerName
                         <br>
-                        Kami mengalami kendala teknis yang terjadi saat pembelian pulsa melalui Gotomalls hari ini.',
+                        Kami mengalami kendala teknis yang terjadi saat pembelian pulsa/paket data melalui Gotomalls hari ini.',
 
-        'content_1' => 'Pembayaran Kakak telah berhasil, namun pulsa tidak diterima dari operator.',
+        'content_1' => 'Pembayaran Kakak telah berhasil, namun pulsa/paket data tidak diterima dari operator.',
         'content_2' => 'Kami mohon maaf atas ketidaknyamanannya.
 Kami telah mengembalikan pembayaran ke GOPAY Kakak, mohon dibantu konfirmasi bila pengembalian dana telah diterima.',
 

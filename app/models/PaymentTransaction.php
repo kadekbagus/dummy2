@@ -246,7 +246,7 @@ class PaymentTransaction extends Eloquent
     }
 
     /**
-     * Determine if the payment is for Pulsa.
+     * Determine if the payment is for Pulsa or Data Plan.
      *
      * @author Budi <budi@dominopos.com>
      *

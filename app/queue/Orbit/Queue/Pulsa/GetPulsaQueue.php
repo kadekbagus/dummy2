@@ -100,7 +100,7 @@ class GetPulsaQueue
             $pulsa = $this->getPulsa($payment);
 
             if (! empty($pulsa)) {
-                $this->objectType = str_replace(['_', '-'], ' ', ucfirst($pulsa->object_type));
+                $this->objectType = ucwords(str_replace(['_', '-'], ' ', $pulsa->object_type));
             }
 
             $discount = $payment->discount_code;
@@ -283,7 +283,7 @@ class GetPulsaQueue
 
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Failed', 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
 
-                $activity->setActivityNameLong('Transaction is Success - Failed Getting Pulsa')
+                $activity->setActivityNameLong('Transaction is Success - Failed Getting ' . $this->objectType)
                          ->setModuleName('Midtrans Transaction')
                          ->setObject($payment)
                          ->setObjectDisplayName($pulsaName)

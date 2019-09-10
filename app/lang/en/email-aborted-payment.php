@@ -40,6 +40,7 @@ return [
         'buttons' => [
             'buy_coupon' => 'Buy Coupon Now',
             'buy_pulsa' => 'Buy Pulsa Now',
+            'buy_data_plan' => 'Buy Data Plan Now',
         ]
     ],
 ];
