@@ -172,11 +172,6 @@
               <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-before-transaction-expired.body.payment-info-line-1-pulsa', compact('paymentExpiration'), '', 'id') }}
-              </p>
-              <br>
-
-              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.transaction_id', [], '', 'id') }}}</strong> {{ $transaction['id'] }}
                 <br>
                 <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.transaction_date', [], '', 'id') }}}</strong> {{ $transaction['date'] }}
@@ -209,7 +204,7 @@
               </p>
               <br>
 
-              @include('emails.pending-payment.payment-info', compact('paymentInfo', 'paymentExpiration', 'myPurchasesUrl', 'cancelUrl', 'hideExpiration'))
+              @include('emails.pending-payment.payment-info-pulsa', compact('paymentInfo', 'paymentExpiration', 'myPurchasesUrl', 'cancelUrl', 'hideExpiration'))
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
@@ -269,7 +264,7 @@
               </p>
               <br>
 
-              @include('emails.pending-payment.payment-info', compact('paymentInfo', 'paymentExpiration', 'myPurchasesUrl', 'cancelUrl', 'hideExpiration'))
+              @include('emails.pending-payment.payment-info-pulsa', compact('paymentInfo', 'paymentExpiration', 'myPurchasesUrl', 'cancelUrl', 'hideExpiration'))
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
