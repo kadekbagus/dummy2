@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'subject' => 'Waiting for your Payment',
+    'subject' => 'Menunggu Pembayaran',
 
     'header' => [
         'invoice'       => 'Notice',
@@ -16,13 +16,17 @@ return [
                         <br>
                         Terima kasih telah membeli Pulsa di Gotomalls.com. Silakan lakukan pembayaran menggunakan aplikasi GOJEK di HP Anda. Berikut ini detail transaksi Anda.',
 
+        'greeting_data_plan' => 'Yth, :customerName
+                        <br>
+                        Terima kasih telah membeli Paket Data di Gotomalls.com. Silakan lakukan pembayaran menggunakan aplikasi GOJEK di HP Anda. Berikut ini detail transaksi Anda.',
+
         'transaction_labels' => [
             'transaction_id' => 'No. Transaksi: ',
             'transaction_date' => 'Tanggal Transaksi: ',
             'coupon_name' => 'Nama Kupon: ',
             'coupon_price' => 'Harga Kupon: ',
-            'pulsa_name' => 'Pulsa: ',
-            'pulsa_phone_number' => 'No. Telp: ',
+            'pulsa_name' => 'Pulsa/Paket Data: ',
+            'pulsa_phone_number' => 'No. HP: ',
             'pulsa_price' => 'Harga: ',
             'coupon_quantity' => 'Jumlah: ',
             'customer_name' => 'Nama Pelanggan: ',
@@ -49,5 +53,6 @@ return [
         'btn_payment_instruction' => 'Instruksi Pembayaran',
         'btn_my_wallet' => 'Buka Dompet Saya',
         'btn_cancel_purchase' => 'Batalkan Pembelian',
+        // 'btn_pay' => 'Bayar',
     ],
 ];

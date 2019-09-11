@@ -29,9 +29,20 @@ class ExpiredPaymentNotification extends Base
      */
     public function getEmailTemplates()
     {
+        $template = $this->objectType === 'pulsa'
+            ? 'emails.pulsa.expired-payment'
+            : 'emails.data-plan.expired-payment';
+
         return [
-            'html' => 'emails.expired-payment-pulsa',
+            'html' => $template,
         ];
+    }
+
+    public function getEmailSubject()
+    {
+        return $this->objectType === 'pulsa'
+            ? trans('email-expired-payment.subject_pulsa', [], '', 'id')
+            : trans('email-expired-payment.subject_data_plan', [], '', 'id');
     }
 
     /**
@@ -43,7 +54,7 @@ class ExpiredPaymentNotification extends Base
     {
         return array_merge(parent::getEmailData(), [
             'pulsaPhoneNumber' => $this->payment->extra_data,
-            'emailSubject' => trans('email-expired-payment.subject_pulsa', [], '', 'id'),
+            'emailSubject' => $this->getEmailSubject(),
         ]);
     }
 }

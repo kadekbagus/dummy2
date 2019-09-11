@@ -2462,7 +2462,7 @@ return array(
         // Click Use Promo Code Button
         '268' => array(
             'name' => 'click_use_promo_code',
-            'name_long' => 'Click Use Promo Code	',
+            'name_long' => 'Click Use Promo Code',
             'module_name' => 'Application',
             'type' => 'click',
             'object_type' => 'Coupon',
@@ -2471,7 +2471,7 @@ return array(
         // Click Cancel Promo Code Button
         '269' => array(
             'name' => 'click_cancel_promo_code',
-            'name_long' => 'Click Cancel Promo Code	',
+            'name_long' => 'Click Cancel Promo Code',
             'module_name' => 'Application',
             'type' => 'click',
             'object_type' => 'Coupon',
@@ -2480,11 +2480,89 @@ return array(
         // Click Expand Promo Code Button
         '270' => array(
             'name' => 'click_expand_promo_code',
-            'name_long' => 'Click Expand Promo Code	',
+            'name_long' => 'Click Expand Promo Code',
             'module_name' => 'Application',
             'type' => 'click',
             'object_type' => 'Coupon',
             'parameter_name' => 'object_id',
         ),
+        // Click Buy Data Plan
+        '271' => array(
+            'name' => 'click_buy_data_plan',
+            'name_long' => 'Click Buy Data Plan',
+            'module_name' => 'Data Plan',
+            'type' => 'click',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id',
+        ),
+        // Click Pulsa Tab
+        '272' => array(
+            'name' => 'click_pulsa_tab',
+            'name_long' => 'Click Pulsa Tab',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => 'Pulsa',
+            'parameter_name' => null,
+        ),
+        // Click Data Plan Tab
+        '273' => array(
+            'name' => 'click_data_plan_tab',
+            'name_long' => 'Click Data Plan Tab',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => 'Pulsa',
+            'parameter_name' => null,
+        ),
+
+        // Click buy now step 1 pulsa
+        '274' => array(
+            'name' => 'click_pulsa_buy_now_step_1',
+            'name_long' => 'Click Buy Now Step 1 Pulsa',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id'
+        ),
+
+        // Click buy now step 2 pulsa
+        '275' => array(
+            'name' => 'click_pulsa_buy_now_step_2',
+            'name_long' => 'Click Buy Now Step 2 Pulsa',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id'
+        ),
+
+        // view payment page pulsa
+        '276' => array(
+            'name' => 'view_payment_page_midtrans_payment_page_pulsa',
+            'name_long' => 'Pulsa View Payment Page (Midtrans Payment Page)',
+            'module_name' => 'Pulsa',
+            'type' => 'view',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id'
+        ),
+
+        // view sold out popup step 1 pulsa
+        '277' => array(
+            'name' => 'view_pulsa_sold_out_popup_step_1',
+            'name_long' => 'View Sold Out Popup Step 1 Pulsa',
+            'module_name' => 'Pulsa',
+            'type' => 'view',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id'
+        ),
+
+        // view sold out popup step 2 pulsa
+        '278' => array(
+            'name' => 'view_pulsa_sold_out_popup_step_2',
+            'name_long' => 'View Sold Out Popup Step 2 Pulsa',
+            'module_name' => 'Pulsa',
+            'type' => 'view',
+            'object_type' => 'Pulsa',
+            'parameter_name' => 'object_id'
+        ),
+
     ),
 );

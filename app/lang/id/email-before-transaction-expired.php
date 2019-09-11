@@ -14,16 +14,16 @@ return [
 
         'greeting_pulsa' => 'Yth, :customerName
                         <br>
-                        Pulsa Anda sedang menunggu. Batas waktu pembayaran Anda adalah hari ini.',
+                        Pulsa/Paket Data Anda sedang menunggu. Batas waktu pembayaran Anda adalah hari ini.',
 
         'transaction_labels' => [
             'transaction_id' => 'ID Transaksi: ',
             'transaction_date' => 'Tanggal Transaksi: ',
             'coupon_name' => 'Nama Kupon/Voucher: ',
             'coupon_price' => 'Harga Kupon/Voucher: ',
-            'pulsa_phone_number' => 'No. Telp Pulsa',
-            'pulsa_name' => 'Pulsa',
-            'pulsa_price' => 'Harga Pulsa',
+            'pulsa_phone_number' => 'No. Telp Pulsa: ',
+            'pulsa_name' => 'Pulsa/Paket Data: ',
+            'pulsa_price' => 'Harga Pulsa/Paket Data: ',
             'coupon_quantity' => 'Jumlah: ',
             'customer_name' => 'Nama Pelanggan: ',
             'email' => 'Email: ',
