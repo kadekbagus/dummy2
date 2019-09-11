@@ -192,7 +192,7 @@
               <p style="text-align: center">
                   <br>
                   <a href="{{{ $buyUrl }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;font-size:16px;display:inline-block;padding:10px 20px;text-decoration:none;">
-                    {{{ trans('email-aborted-payment.body.buttons.buy_pulsa', [], '', 'id') }}}
+                    {{{ trans('email-aborted-payment.body.buttons.buy_data_plan', [], '', 'id') }}}
                   </a>
               </p>
 
@@ -247,7 +247,7 @@
               <br>
               <p style="text-align: center;">
                   <a href="{{{ $buyUrl }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;font-size:16px;display:inline-block;padding:10px 20px;text-decoration:none;">
-                    {{{ trans('email-aborted-payment.body.buttons.buy_pulsa') }}}
+                    {{{ trans('email-aborted-payment.body.buttons.buy_data_plan') }}}
                   </a>
               </p>
 
