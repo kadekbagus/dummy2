@@ -489,10 +489,17 @@ class PaymentTransaction extends Eloquent
                 $refundedPayment = new PaymentTransaction;
                 $refundedPayment->external_payment_transaction_id = $midtransRefund->refund_key;
                 $refundedPayment->user_email = $this->user_email;
+                $refundedPayment->user_name = $this->user_name;
                 $refundedPayment->user_id = $this->user_id;
+                $refundedPayment->phone = $this->phone; // phone
+                $refundedPayment->country_id = $this->country_id; // country
                 $refundedPayment->amount = $midtransRefund->refund_amount * -1;
                 $refundedPayment->parent_id = $this->payment_transaction_id;
                 $refundedPayment->status = PaymentTransaction::STATUS_REFUND;
+                $refundedPayment->timezone_name = $this->timezone_name;
+                $refundedPayment->payment_method = $this->payment_method;
+                $refundedPayment->currency = $this->currency;
+                $refundedPayment->extra_data = $this->extra_data;
                 $refundedPayment->provider_response_message = json_encode([
                     'key' => $midtransRefund->refund_key,
                     'amount' => $midtransRefund->refund_amount,
