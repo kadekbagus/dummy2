@@ -357,16 +357,24 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
 
                 // Send notification if the purchase was aborted
                 // Only send if previous status was pending.
-                if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_ABORTED) {
-                    if ($fromSnap) {
-                        $payment_update->user->notify(new AbortedPaymentNotification($payment_update));
-                    }
+                if ($oldStatus === PaymentTransaction::STATUS_PENDING && $status === PaymentTransaction::STATUS_EXPIRED) {
+                    $payment_update->user->notify(new ExpiredPaymentNotification($payment_update));
                 }
 
                 // Send notification if the purchase was aborted
                 // Only send if previous status was pending.
-                if ($oldStatus === PaymentTransaction::STATUS_PENDING && $status === PaymentTransaction::STATUS_EXPIRED) {
-                    $payment_update->user->notify(new ExpiredPaymentNotification($payment_update));
+                if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_ABORTED) {
+                    if ($fromSnap) {
+                        $payment_update->user->notify(new AbortedPaymentNotification($payment_update));
+
+                        $activity->setActivityNameLong('Transaction is Aborted')
+                                ->setModuleName('Midtrans Transaction')
+                                ->setObject($payment_update)
+                                ->setNotes('Pulsa/Data Plan Transaction aborted by customer.')
+                                ->setLocation($mall)
+                                ->responseFailed()
+                                ->save();
+                    }
                 }
 
                 // If previous status was success and now is denied, then send notification to admin.

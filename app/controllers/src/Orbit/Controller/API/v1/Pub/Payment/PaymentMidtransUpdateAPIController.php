@@ -345,10 +345,18 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 }
 
                 // Send notification if the purchase was aborted.
-                // Only send if previous status was pending.
+                // Only send if previous status was starting.
                 if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_ABORTED) {
                     if ($fromSnap) {
                         $payment_update->user->notify(new AbortedPaymentNotification($payment_update));
+
+                        $activity->setActivityNameLong('Transaction is Aborted')
+                                ->setModuleName('Midtrans Transaction')
+                                ->setObject($payment_update)
+                                ->setNotes('Coupon Transaction aborted by customer.')
+                                ->setLocation($mall)
+                                ->responseFailed()
+                                ->save();
                     }
                 }
 
