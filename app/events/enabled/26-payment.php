@@ -4,6 +4,7 @@ use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
 use Orbit\Notifications\Coupon\Sepulsa\CouponNotAvailableNotification as SepulsaCouponNotAvailableNotification;
 use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
 use Orbit\Notifications\Payment\CanceledPaymentNotification;
+use Request;
 
 /**
  * Listen on:    `orbit.payment.postupdatepayment.after.commit`
@@ -58,7 +59,7 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
     else if ($payment->completed()) {
         Log::info("PaidCoupon: PaymentID: {$paymentId} verified!");
 
-        $queueData = ['paymentId' => $payment->payment_transaction_id, 'retries' => 0];
+        $queueData = ['paymentId' => $payment->payment_transaction_id, 'retries' => 0, 'current_url' => Request::fullUrl()];
         if (! empty($mall)) {
             $queueData['mall_id'] = $mall->merchant_id;
         }
