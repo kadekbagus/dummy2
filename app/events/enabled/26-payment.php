@@ -4,7 +4,6 @@ use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
 use Orbit\Notifications\Coupon\Sepulsa\CouponNotAvailableNotification as SepulsaCouponNotAvailableNotification;
 use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
 use Orbit\Notifications\Payment\CanceledPaymentNotification;
-use Request;
 
 /**
  * Listen on:    `orbit.payment.postupdatepayment.after.commit`
