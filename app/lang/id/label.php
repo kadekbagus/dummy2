@@ -32,5 +32,8 @@ return array(
             'promotion'  => 'Kode promosi anda adalah',
             'lucky_draw' => 'Lucky number anda adalah'
         ]
-    ]
+    ],
+
+    'discount' => 'Diskon',
+
 );

@@ -6,6 +6,16 @@
 Route::post('/app/v1/pub/promocode/use', ['as' => 'promocode-use', 'uses' => 'IntermediatePubAuthController@PromoCode\PromoCodeCheck_postCheckPromoCode']);
 
 /**
+ * Promo Code unreserved
+ */
+Route::post('/app/v1/pub/promocode/unreserved', 'IntermediatePubAuthController@PromoCode\PromoCodeUnreserved_postUnreservedPromoCode');
+
+/**
+ * Get detail promo code
+ */
+Route::get('/app/v1/pub/promocode/detail', 'IntermediatePubAuthController@PromoCode\PromoCodeDetail_getPromoCode');
+
+/**
  * Routes file for Intermediate Promo Code API
  */
 

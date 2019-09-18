@@ -3,6 +3,7 @@
 return [
     'subject' => 'Kupon Tidak Tersedia',
     'subject_pulsa' => 'Pulsa Tidak Tersedia',
+    'subject_data_plan' => 'Paket Data Tidak Tersedia',
 
     'header' => [
         'invoice'       => 'Pemberitahuan',
@@ -17,6 +18,10 @@ return [
         'greeting_pulsa' => 'Yth, :customerName
                         <br>
                         Kami mohon maaf karena tidak dapat menyediakan Pulsa yang sudah Anda beli.',
+
+        'greeting_data_plan' => 'Yth, :customerName
+                        <br>
+                        Kami mohon maaf karena tidak dapat menyediakan Paket Data yang sudah Anda beli.',
 
         'help' => 'Layanan Pelanggan kami akan mengembalikan dana Anda secepatnya.
         Proses pengembalian dana dilakukan maksimal dalam 24 jam selama hari kerja (Senin-Jumat). Saat hari libur atau akhir pekan, pengembalian akan dilakukan di hari kerja berikutnya.

@@ -16,6 +16,10 @@ return [
                         <br>
                         Thank you for purchasing Pulsa in Gotomalls.com. Please perform the payment using your GOJEK App (GoPay). Below are your transaction details. ',
 
+        'greeting_data_plan' => 'Dear, :customerName
+                        <br>
+                        Thank you for purchasing Data Plan in Gotomalls.com. Please perform the payment using your GOJEK App (GoPay). Below are your transaction details. ',
+
         'transaction_labels' => [
             'transaction_id' => 'Transaction ID: ',
             'transaction_date' => 'Transaction Date: ',
@@ -49,5 +53,6 @@ return [
         'btn_payment_instruction' => 'Payment Instructions',
         'btn_my_wallet' => 'Go to My Wallet',
         'btn_cancel_purchase' => 'Cancel Transaction',
+        // 'btn_pay' => 'Pay Now',
     ],
 ];

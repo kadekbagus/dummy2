@@ -27,6 +27,7 @@ class CouponSearch extends Search
     public function isActive($params = [])
     {
         $this->must([ 'match' => ['status' => 'active'] ]);
+        $this->must([ 'range' => ['available' => ['gt' => 0]] ]);
         $this->must([ 'range' => ['begin_date' => ['lte' => $params['dateTimeEs']]] ]);
         $this->must([ 'range' => ['end_date' => ['gte' => $params['dateTimeEs']]] ]);
     }
@@ -221,6 +222,13 @@ class CouponSearch extends Search
                                     'query' => [
                                         'match' => [
                                             'advert_status' => 'active'
+                                        ]
+                                    ]
+                                ],
+                                [
+                                    'range' => [
+                                        'available' => [
+                                            'gt' => 0,
                                         ]
                                     ]
                                 ],

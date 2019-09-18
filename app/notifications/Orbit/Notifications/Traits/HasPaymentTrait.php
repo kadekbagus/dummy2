@@ -15,6 +15,8 @@ trait HasPaymentTrait
 {
     protected $payment = null;
 
+    protected $objectType = 'pulsa';
+
     /**
      * Get the transaction data.
      *
@@ -45,7 +47,7 @@ trait HasPaymentTrait
             if ($item->price < 0 || $item->object_type === 'discount') {
                 $discount = Discount::select('value_in_percent')->find($item->object_id);
                 $discount = ! empty($discount) ? $discount->value_in_percent . '%' : '';
-                $detailItem['name'] = "Discount {$discount}";
+                $detailItem['name'] = $discount;
                 $detailItem['quantity'] = '';
                 $transaction['discounts'][] = $detailItem;
             } else {
@@ -176,5 +178,20 @@ trait HasPaymentTrait
             $paymentDetail->object_id,
             $paymentDetail->object_name
         )->generateUrl();
+    }
+
+    /**
+     * Get purchased object type.
+     *
+     * @return [type] [description]
+     */
+    protected function getObjectType()
+    {
+        foreach($this->payment->details as $detail) {
+            if ($detail->object_type !== 'discount') {
+                $this->objectType = $detail->object_type;
+                break;
+            }
+        }
     }
 }

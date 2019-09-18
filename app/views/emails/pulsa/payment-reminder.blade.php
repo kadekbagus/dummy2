@@ -172,11 +172,6 @@
               <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-before-transaction-expired.body.payment-info-line-1-pulsa', compact('paymentExpiration'), '', 'id') }}
-              </p>
-              <br>
-
-              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.transaction_id', [], '', 'id') }}}</strong> {{ $transaction['id'] }}
                 <br>
                 <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.transaction_date', [], '', 'id') }}}</strong> {{ $transaction['date'] }}
@@ -191,21 +186,15 @@
                 <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.pulsa_name', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['name'] }}
                 <br>
                 <div style="width: 100%;">
-                  <div style="width: 30%;display: inline-block;">
-                    <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.pulsa_price', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['price'] }}
-                  </div>
-                  <div style="width: 60%;display: inline-block;text-align: left;">
-                    X {{ $transaction['items'][0]['quantity'] }}
-                  </div>
+                  <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.pulsa_price', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['price'] }}
+                  &nbsp;&nbsp;&nbsp;
+                  X {{ $transaction['items'][0]['quantity'] }}
                 </div>
                 @if (count($transaction['discounts']) > 0)
                   @foreach($transaction['discounts'] as $discount)
                     <div style="width: 100%;">
-                      <div style="width: 30%;display: inline-block;">
-                        <strong>{{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
-                      </div>
-                      <div style="width: 60%;display: inline-block;text-align: left;">
-                        X {{ $discount['quantity'] }}
+                      <div style="width: 90%;display: inline-block;">
+                        <strong>{{{ trans('label.discount', [], '', 'id') }}} {{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
                       </div>
                     </div>
                   @endforeach
@@ -215,7 +204,7 @@
               </p>
               <br>
 
-              @include('emails.pending-payment.payment-info', compact('paymentInfo', 'paymentExpiration', 'myPurchasesUrl', 'cancelUrl', 'hideExpiration'))
+              @include('emails.pending-payment.payment-info-pulsa', compact('paymentInfo', 'paymentExpiration', 'myPurchasesUrl', 'cancelUrl', 'hideExpiration'))
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
@@ -257,21 +246,15 @@
                 <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.pulsa_name') }}}</strong> {{ $transaction['items'][0]['name'] }}
                 <br>
                 <div style="width: 100%;">
-                  <div style="width: 30%;display: inline-block;">
-                    <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.pulsa_price') }}}</strong> {{ $transaction['items'][0]['price'] }}
-                  </div>
-                  <div style="width: 60%;display: inline-block;text-align: left;">
-                    X {{ $transaction['items'][0]['quantity'] }}
-                  </div>
+                  <strong>{{{ trans('email-before-transaction-expired.body.transaction_labels.pulsa_price') }}}</strong> {{ $transaction['items'][0]['price'] }}
+                  &nbsp;&nbsp;&nbsp;
+                  X {{ $transaction['items'][0]['quantity'] }}
                 </div>
                 @if (count($transaction['discounts']) > 0)
                   @foreach($transaction['discounts'] as $discount)
                     <div style="width: 100%;">
-                      <div style="width: 30%;display: inline-block;">
-                        <strong>{{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
-                      </div>
-                      <div style="width: 60%;display: inline-block;text-align: left;">
-                        X {{ $discount['quantity'] }}
+                      <div style="width: 90%;display: inline-block;">
+                        <strong>{{{ trans('label.discount') }}} {{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
                       </div>
                     </div>
                   @endforeach
@@ -281,7 +264,7 @@
               </p>
               <br>
 
-              @include('emails.pending-payment.payment-info', compact('paymentInfo', 'paymentExpiration', 'myPurchasesUrl', 'cancelUrl', 'hideExpiration'))
+              @include('emails.pending-payment.payment-info-pulsa', compact('paymentInfo', 'paymentExpiration', 'myPurchasesUrl', 'cancelUrl', 'hideExpiration'))
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>

@@ -29,9 +29,20 @@ class CanceledPaymentNotification extends Base
      */
     public function getEmailTemplates()
     {
+        $template = $this->objectType === 'pulsa'
+            ? 'emails.pulsa.canceled-payment'
+            : 'emails.data-plan.canceled-payment';
+
         return [
-            'html' => 'emails.pulsa.canceled-payment',
+            'html' => $template,
         ];
+    }
+
+    protected function getEmailSubject()
+    {
+        return $this->objectType === 'pulsa'
+            ? trans('email-canceled-payment.subject_pulsa', [], '', 'id')
+            : trans('email-canceled-payment.subject_data_plan', [], '', 'id');
     }
 
     /**
@@ -43,7 +54,7 @@ class CanceledPaymentNotification extends Base
     {
         return array_merge(parent::getEmailData(), [
             'pulsaPhoneNumber' => $this->payment->extra_data,
-            'emailSubject'      => trans('email-canceled-payment.subject_pulsa', [], '', 'id'),
+            'emailSubject'      => $this->getEmailSubject(),
         ]);
     }
 }

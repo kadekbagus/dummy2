@@ -128,29 +128,8 @@ class ESAdvertCouponUpdateQueue
 
         if (! is_object($coupon)) {
 
-            // check exist elasticsearch index
-            $params_search = [
-                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_coupons.index'),
-                'type' => Config::get('orbit.elasticsearch.indices.advert_coupons.type'),
-                'body' => [
-                    'query' => [
-                        'match' => [
-                            '_id' => $adverts->advert_id
-                        ]
-                    ]
-                ]
-            ];
-            $response_search = $this->poster->search($params_search);
-
-            if ($response_search['hits']['total'] > 0) {
-                $params = [
-                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_coupons.index'),
-                    'type' => Config::get('orbit.elasticsearch.indices.advert_coupons.type'),
-                    'id' => $response_search['hits']['hits'][0]['_id']
-                ];
-
-                $response = $this->poster->delete($params);
-            }
+            $esAdvertCouponDelete = new \Orbit\Queue\Elasticsearch\ESAdvertCouponDeleteQueue('default', $advertData);
+            $doESCouponDelete = $esAdvertCouponDelete->fire($fakeJob, ['coupon_id' => $couponId]);
 
             $job->delete();
 
@@ -665,7 +644,7 @@ class ESAdvertCouponUpdateQueue
             // Safely delete the object
             $job->delete();
 
-            $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; Coupon ID: %s; Coupon Name: %s',
+            $message = sprintf('[Job ID: `%s`] Elasticsearch Advert Coupon Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; Coupon ID: %s; Coupon Name: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['coupons']['index'],
                                 $esConfig['indices']['coupons']['type'],
@@ -678,7 +657,7 @@ class ESAdvertCouponUpdateQueue
                 'message' => $message
             ];
         } catch (Exception $e) {
-            $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
+            $message = sprintf('[Job ID: `%s`] Elasticsearch Advert Coupon Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['coupons']['index'],
                                 $esConfig['indices']['coupons']['type'],
@@ -694,8 +673,8 @@ class ESAdvertCouponUpdateQueue
         })->bury();
 
         return [
-                'status' => 'fail',
-                'message' => $message
-            ];
+            'status' => 'fail',
+            'message' => $message
+        ];
     }
 }

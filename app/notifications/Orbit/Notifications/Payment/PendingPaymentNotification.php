@@ -56,6 +56,11 @@ class PendingPaymentNotification extends CustomerNotification implements EmailNo
         ];
     }
 
+    public function getEmailSubject()
+    {
+        return trans('email-pending-payment.subject', [], '', 'id');
+    }
+
     /**
      * Get the email data.
      *
@@ -63,6 +68,8 @@ class PendingPaymentNotification extends CustomerNotification implements EmailNo
      */
     public function getEmailData()
     {
+        $this->getObjectType();
+
         return [
             'recipientEmail'    => $this->getRecipientEmail(),
             'customerEmail'     => $this->getCustomerEmail(),
@@ -74,6 +81,8 @@ class PendingPaymentNotification extends CustomerNotification implements EmailNo
             'myWalletUrl'       => $this->getMyPurchasesUrl() . '/coupons',
             'cancelUrl'         => $this->getCancelUrl(),
             'transactionDateTime' => $this->payment->getTransactionDate('d F Y, H:i ') . $this->getLocalTimezoneName($this->payment->timezone_name),
+            'emailSubject'      => $this->getEmailSubject(),
+            'template'          => $this->getEmailTemplates(),
         ];
     }
 
@@ -93,10 +102,10 @@ class PendingPaymentNotification extends CustomerNotification implements EmailNo
             // if ($payment->pending()) {
                 $data['paymentInfo'] = json_decode(unserialize($payment->midtrans->payment_midtrans_info), true);
 
-                Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
+                Mail::send($data['template'], $data, function($mail) use ($data) {
                     $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                    $subject = trans('email-pending-payment.subject');
+                    $subject = $data['emailSubject'];
 
                     $mail->subject($subject);
                     $mail->from($emailConfig['email'], $emailConfig['name']);

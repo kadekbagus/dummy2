@@ -1,7 +1,7 @@
 <?php namespace Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts;
 
 /**
- * interface for aby class having capability to check availability of
+ * interface for any class having capability to check availability of
  * promo code
  *
  * @author Zamroni <zamroni@dominopos.com>

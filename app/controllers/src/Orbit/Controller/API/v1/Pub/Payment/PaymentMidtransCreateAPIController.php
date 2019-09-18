@@ -208,15 +208,17 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                 Log::info("Trying to make purchase with promo code {$promoCode}...");
 
                 // TODO: Move to PromoReservation helper?
-                $reservedPromoCodes = $user->discountCodes()->with(['discount'])
+                $discount = Discount::where('discount_code', $promoCode)->first();
+                $reservedPromoCodes = $user->discountCodes()
                     ->where('discount_code', $promoCode)
-                    ->whereNull('payment_transaction_id')
-                    ->reserved()
+                    ->where('object_id', $object_id)
+                    ->where('object_type', $object_type)
+                    ->reservedNotWaitingPayment()
                     ->get();
 
-                $discount = $reservedPromoCodes->count() > 0
-                    ? $reservedPromoCodes->first()->discount
-                    : Discount::findOrFail($reservedPromoCodes->first()->discount_id); // this should never happen.
+                // $discount = $reservedPromoCodes->count() > 0
+                //     ? $reservedPromoCodes->first()->discount
+                //     : Discount::findOrFail($reservedPromoCodes->first()->discount_id); // this should never happen.
 
                 $discountRecord = new PaymentTransactionDetail;
                 $discountRecord->payment_transaction_id = $payment_new->payment_transaction_id;
@@ -232,6 +234,12 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                 foreach($reservedPromoCodes as $reservedPromoCode) {
                     $reservedPromoCode->payment_transaction_id = $payment_new->payment_transaction_id;
                     $reservedPromoCode->save();
+
+                    Log::info(sprintf("Promo Code %s (discountCodeId: %s) added to purchase %s",
+                        $reservedPromoCode->discount_code,
+                        $reservedPromoCode->discount_code_id,
+                        $payment_new->payment_transaction_id
+                    ));
                 }
 
                 $payment_new->amount = $payment_new->amount + $discountRecord->price;
@@ -241,9 +249,7 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                     $payment_new->bypass_payment = true;
                 }
 
-                $payment_new->promo_code = $reservedPromoCode->discount_code;
-
-                Log::info("Promo Code {$reservedPromoCode->discount_code} added to purchase {$payment_new->payment_transaction_id}");
+                $payment_new->promo_code = $discount->discount_code;
             }
 
             // Commit the changes

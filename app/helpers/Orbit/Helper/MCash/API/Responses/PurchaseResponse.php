@@ -18,7 +18,7 @@ class PurchaseResponse
      *
      * @var [type]
      */
-    protected $retryStatus = [609, 413];
+    protected $retryStatus = [609, 413, 8701];
 
     /**
      * Maximum number of retry we would do if the first time was failed.

@@ -94,6 +94,17 @@ class ESPromotionUpdateQueue
                     ->first();
 
         if (! is_object($news)) {
+            $fakeJob = new FakeJob();
+
+            $esPromotionDelete = new \Orbit\Queue\Elasticsearch\ESPromotionDeleteQueue();
+            $doESNewsDelete = $esPromotionDelete->fire($fakeJob, ['news_id' => $newsId]);
+
+            $esAdvertPromotionDelete = new \Orbit\Queue\Elasticsearch\ESAdvertPromotionDeleteQueue();
+            $doESPromotionDelete = $esAdvertPromotionDelete->fire($fakeJob, ['news_id' => $newsId]);
+
+            $esPromotionSuggestionDelete = new \Orbit\Queue\Elasticsearch\ESPromotionSuggestionDeleteQueue();
+            $doESPromotionSuggestionDelete = $esPromotionSuggestionDelete->fire($fakeJob, ['news_id' => $newsId]);
+
             $job->delete();
 
             return [
@@ -450,7 +461,7 @@ class ESPromotionUpdateQueue
             // Safely delete the object
             $job->delete();
 
-            $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; News ID: %s; Promotion Name: %s',
+            $message = sprintf('[Job ID: `%s`] Elasticsearch Promotion Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; News ID: %s; Promotion Name: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['promotions']['index'],
                                 $esConfig['indices']['promotions']['type'],
@@ -463,7 +474,7 @@ class ESPromotionUpdateQueue
                 'message' => $message
             ];
         } catch (Exception $e) {
-            $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
+            $message = sprintf('[Job ID: `%s`] Elasticsearch Promotion Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['promotions']['index'],
                                 $esConfig['indices']['promotions']['type'],

@@ -54,6 +54,11 @@ class CanceledPaymentNotification extends CustomerNotification implements EmailN
         ];
     }
 
+    protected function getEmailSubject()
+    {
+        return trans('email-canceled-payment.subject', [], '', 'id');
+    }
+
     /**
      * Get the email data.
      *
@@ -61,6 +66,8 @@ class CanceledPaymentNotification extends CustomerNotification implements EmailN
      */
     public function getEmailData()
     {
+        $this->getObjectType();
+
         return [
             'recipientEmail'    => $this->getRecipientEmail(),
             'customerEmail'     => $this->getCustomerEmail(),
@@ -70,7 +77,8 @@ class CanceledPaymentNotification extends CustomerNotification implements EmailN
             'cs'                => $this->getContactData(),
             'transactionDateTime' => $this->payment->getTransactionDate('d F Y, H:i ') . " {$this->getLocalTimezoneName($this->payment->timezone_name)}",
             'buyUrl'            => $this->getBuyUrl(),
-            'emailSubject'      => trans('email-canceled-payment.subject', [], '', 'id'),
+            'emailSubject'      => $this->getEmailSubject(),
+            'template'          => $this->getEmailTemplates(),
         ];
     }
 
@@ -84,7 +92,7 @@ class CanceledPaymentNotification extends CustomerNotification implements EmailN
     public function toEmail($job, $data)
     {
         try {
-            Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
+            Mail::send($data['template'], $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.contact_information.customer_service');
 
                 $subject = $data['emailSubject'];

@@ -185,21 +185,15 @@
                 <strong>{{{ trans('email-canceled-payment.body.transaction_labels.pulsa_name', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['name'] }}
                 <br>
                 <div style="width: 100%;">
-                  <div style="width: 30%;display: inline-block;">
-                    <strong>{{{ trans('email-canceled-payment.body.transaction_labels.pulsa_price', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['price'] }}
-                  </div>
-                  <div style="width: 60%;display: inline-block;text-align: left;">
-                    X {{ $transaction['items'][0]['quantity'] }}
-                  </div>
+                  <strong>{{{ trans('email-canceled-payment.body.transaction_labels.pulsa_price', [], '', 'id') }}}</strong> {{ $transaction['items'][0]['price'] }}
+                  &nbsp;&nbsp;&nbsp;
+                  X {{ $transaction['items'][0]['quantity'] }}
                 </div>
                 @if (count($transaction['discounts']) > 0)
                   @foreach($transaction['discounts'] as $discount)
                     <div style="width: 100%;">
-                      <div style="width: 30%;display: inline-block;">
-                        <strong>{{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
-                      </div>
-                      <div style="width: 60%;display: inline-block;text-align: left;">
-                        X {{ $discount['quantity'] }}
+                      <div style="width: 90%;display: inline-block;">
+                        <strong>{{{ trans('label.discount', [], '', 'id') }}} {{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
                       </div>
                     </div>
                   @endforeach
@@ -213,24 +207,24 @@
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{ trans('email-aborted-payment.body.payment-info-line-1-pulsa', ['transactionDateTime' => $transactionDateTime], '', 'id') }}
+                {{ trans('email-canceled-payment.body.payment-info-line-1-pulsa', ['transactionDateTime' => $transactionDateTime], '', 'id') }}
               </p>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{ trans('email-aborted-payment.body.payment-info-line-2-pulsa', $cs, '', 'id') }}
+                {{ trans('email-canceled-payment.body.payment-info-line-2-pulsa', $cs, '', 'id') }}
               </p>
 
               <p style="text-align: center">
                   <br>
                   <a href="{{{ $buyUrl }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;font-size:16px;display:inline-block;padding:10px 20px;text-decoration:none;">
-                    {{{ trans('email-aborted-payment.body.buttons.buy_pulsa', [], '', 'id') }}}
+                    {{{ trans('email-canceled-payment.body.buttons.buy_pulsa', [], '', 'id') }}}
                   </a>
               </p>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{ trans('email-aborted-payment.body.regards', [], '', 'id') }}
+                {{ trans('email-canceled-payment.body.regards', [], '', 'id') }}
               </p>
             </td>
           </tr>
@@ -262,21 +256,15 @@
                 <strong>{{{ trans('email-canceled-payment.body.transaction_labels.pulsa_name') }}}</strong> {{ $transaction['items'][0]['name'] }}
                 <br>
                 <div style="width: 100%;">
-                  <div style="width: 30%;display: inline-block;">
-                    <strong>{{{ trans('email-canceled-payment.body.transaction_labels.pulsa_price') }}}</strong> {{ $transaction['items'][0]['price'] }}
-                  </div>
-                  <div style="width: 60%;display: inline-block;text-align: left;">
-                    X {{ $transaction['items'][0]['quantity'] }}
-                  </div>
+                  <strong>{{{ trans('email-canceled-payment.body.transaction_labels.pulsa_price') }}}</strong> {{ $transaction['items'][0]['price'] }}
+                  &nbsp;&nbsp;&nbsp;
+                  X {{ $transaction['items'][0]['quantity'] }}
                 </div>
                 @if (count($transaction['discounts']) > 0)
                   @foreach($transaction['discounts'] as $discount)
                     <div style="width: 100%;">
-                      <div style="width: 30%;display: inline-block;">
-                        <strong>{{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
-                      </div>
-                      <div style="width: 60%;display: inline-block;text-align: left;">
-                        X {{ $discount['quantity'] }}
+                      <div style="width: 90%;display: inline-block;">
+                        <strong>{{{ trans('label.discount') }}} {{{ $discount['name'] }}}</strong>: {{ $discount['price'] }}
                       </div>
                     </div>
                   @endforeach
@@ -290,34 +278,34 @@
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{ trans('email-aborted-payment.body.payment-info-line-1') }}
+                {{ trans('email-canceled-payment.body.payment-info-line-1') }}
               </p>
               <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-aborted-payment.body.payment-info-line-2') }}
+                {{ trans('email-canceled-payment.body.payment-info-line-2') }}
               </p>
               <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-aborted-payment.body.payment-info-line-3') }}
+                {{ trans('email-canceled-payment.body.payment-info-line-3') }}
               </p>
               <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-aborted-payment.body.payment-info-line-4-pulsa') }}
+                {{ trans('email-canceled-payment.body.payment-info-line-4-pulsa') }}
               </p>
               <br>
               <p style="text-align: center;">
                   <a href="{{{ $buyUrl }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;font-size:16px;display:inline-block;padding:10px 20px;text-decoration:none;">
-                    {{{ trans('email-aborted-payment.body.buttons.buy_pulsa') }}}
+                    {{{ trans('email-canceled-payment.body.buttons.buy_pulsa') }}}
                   </a>
               </p>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
                 <br>
-                {{ trans('email-aborted-payment.body.regards') }}
+                {{ trans('email-canceled-payment.body.regards') }}
               </p>
             </td>
           </tr>
