@@ -1257,5 +1257,7 @@ class Activity extends Eloquent
             $this->fromQueue = true;
             $this->currentUrl = $url;
         }
+
+        return $this;
     }
 }
