@@ -10,6 +10,14 @@ use Orbit\Notifications\Payment\ReceiptNotification as BaseReceiptNotification;
  */
 class ReceiptNotification extends BaseReceiptNotification
 {
+    protected $serialNumber = null;
+
+    function __construct($payment = null, $serialNumber = null)
+    {
+        parent::__construct($payment);
+        $this->serialNumber = $serialNumber;
+    }
+
     public function getEmailTemplates()
     {
         return [
