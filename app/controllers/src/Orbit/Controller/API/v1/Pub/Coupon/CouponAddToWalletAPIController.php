@@ -156,7 +156,13 @@ class CouponAddToWalletAPIController extends PubControllerAPI
 
             if ($issuedCoupon) {
                 // send google analytics event
-                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Normal Coupon Add to Wallet Successful', 'ec' => 'Coupon', 'el' => $coupon->promotion_name])->request();
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                    ->setQueryString([
+                        'ea' => 'Normal Coupon Add to Wallet Successful',
+                        'ec' => 'Coupon',
+                        'el' => $coupon->promotion_name
+                    ])
+                    ->request();
 
                 $this->response->message = 'Request Ok';
                 $this->response->data = NULL;
@@ -176,7 +182,13 @@ class CouponAddToWalletAPIController extends PubControllerAPI
                 $this->response->data = NULL;
 
                 // send google analytics event
-                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Normal Coupon Add to Wallet Failed', 'ec' => 'Coupon', 'el' => $coupon->promotion_name])->request();
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                    ->setQueryString([
+                        'ea' => 'Normal Coupon Add to Wallet Failed',
+                        'ec' => 'Coupon',
+                        'el' => $coupon->promotion_name
+                    ])
+                    ->request();
 
                 $activityNotes = sprintf('Failed to add to wallet. Coupon Id: %s. Error: %s', $coupon_id, $this->response->message);
                 $activity->setUser($user)
@@ -208,7 +220,13 @@ class CouponAddToWalletAPIController extends PubControllerAPI
             $this->rollback();
 
             // send google analytics event
-            GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Normal Coupon Add to Wallet Failed', 'ec' => 'Coupon', 'el' => $coupon->promotion_name])->request();
+            GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                ->setQueryString([
+                    'ea' => 'Normal Coupon Add to Wallet Failed',
+                    'ec' => 'Coupon',
+                    'el' => $coupon->promotion_name
+                ])
+                ->request();
 
             $activityNotes = sprintf('Failed to add to wallet. Coupon Id: %s. Error: %s', $coupon_id, $e->getMessage());
             $activity->setUser($user)
@@ -230,7 +248,13 @@ class CouponAddToWalletAPIController extends PubControllerAPI
             $this->response->data = NULL;
             $this->rollback();
             // send google analytics event
-            GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Normal Coupon Add to Wallet Failed', 'ec' => 'Coupon', 'el' => $coupon->promotion_name])->request();
+            GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                ->setQueryString([
+                    'ea' => 'Normal Coupon Add to Wallet Failed',
+                    'ec' => 'Coupon',
+                    'el' => $coupon->promotion_name
+                ])
+                ->request();
 
             $activityNotes = sprintf('Failed to add to wallet. Coupon Id: %s. Error: %s', $coupon_id, $e->getMessage());
             $activity->setUser($user)
@@ -253,7 +277,13 @@ class CouponAddToWalletAPIController extends PubControllerAPI
             $this->response->data = $e->getFile();
             $this->rollback();
             // send google analytics event
-            GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Normal Coupon Add to Wallet Failed', 'ec' => 'Coupon', 'el' => $coupon->promotion_name])->request();
+            GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                ->setQueryString([
+                    'ea' => 'Normal Coupon Add to Wallet Failed',
+                    'ec' => 'Coupon',
+                    'el' => $coupon->promotion_name
+                ])
+                ->request();
 
             $activityNotes = sprintf('Failed to add to wallet. Coupon Id: %s. Error: %s', $coupon_id, $e->getMessage());
             $activity->setUser($user)

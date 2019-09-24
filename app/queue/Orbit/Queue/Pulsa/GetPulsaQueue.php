@@ -120,7 +120,18 @@ class GetPulsaQueue
                 // Notify Customer.
                 $payment->user->notify(new ReceiptNotification($payment, $pulsaPurchase->getSerialNumber()));
 
-                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Successful', 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                    ->setQueryString([
+                        'ea' => 'Purchase Pulsa Successful',
+                        'ec' => 'Pulsa',
+                        'el' => $pulsaName,
+                        'cs' => $payment->utm_source,
+                        'cm' => $payment->utm_medium,
+                        'cn' => $payment->utm_campaign,
+                        'ck' => $payment->utm_term,
+                        'cc' => $payment->utm_content
+                    ])
+                    ->request();
 
                 $activity->setActivityNameLong('Transaction is Successful')
                         ->setModuleName('Midtrans Transaction')
@@ -168,12 +179,34 @@ class GetPulsaQueue
                     $this->log("Promo code {$discountCode} issued for purchase {$paymentId}");
                 }
 
-                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Successful', 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                    ->setQueryString([
+                        'ea' => 'Purchase Pulsa Successful',
+                        'ec' => 'Pulsa',
+                        'el' => $pulsaName,
+                        'cs' => $payment->utm_source,
+                        'cm' => $payment->utm_medium,
+                        'cn' => $payment->utm_campaign,
+                        'ck' => $payment->utm_term,
+                        'cc' => $payment->utm_content
+                    ])
+                    ->request();
             }
             else if ($pulsaPurchase->shouldRetry($data['retry'])) {
                 $data['retry']++;
 
-                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Retry ' . $data['retry'], 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                    ->setQueryString([
+                        'ea' => 'Purchase Pulsa Retry ' . $data['retry'],
+                        'ec' => 'Pulsa',
+                        'el' => $pulsaName,
+                        'cs' => $payment->utm_source,
+                        'cm' => $payment->utm_medium,
+                        'cn' => $payment->utm_campaign,
+                        'ck' => $payment->utm_term,
+                        'cc' => $payment->utm_content
+                    ])
+                    ->request();
 
                 $this->log("Retry #{$data['retry']} for Pulsa Purchase will be run in {$this->retryDelay} minutes...");
                 $this->log("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
@@ -284,7 +317,18 @@ class GetPulsaQueue
 
                 $pulsaName = ! empty($pulsa) ? $pulsa->pulsa_display_name : '-';
 
-                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Failed', 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                    ->setQueryString([
+                        'ea' => 'Purchase Pulsa Failed',
+                        'ec' => 'Pulsa',
+                        'el' => $pulsaName,
+                        'cs' => $payment->utm_source,
+                        'cm' => $payment->utm_medium,
+                        'cn' => $payment->utm_campaign,
+                        'ck' => $payment->utm_term,
+                        'cc' => $payment->utm_content
+                    ])
+                    ->request();
 
                 $activity->setActivityNameLong('Transaction is Success - Failed Getting ' . $this->objectType)
                          ->setModuleName('Midtrans Transaction')
