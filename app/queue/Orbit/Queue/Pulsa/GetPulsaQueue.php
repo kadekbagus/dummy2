@@ -206,7 +206,7 @@ class GetPulsaQueue
                 $this->log("Pulsa purchase is FAILED for payment {$paymentId}. Unknown status from MCash.");
                 $this->log("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
                 $this->log("Purchase response: " . serialize($pulsaPurchase));
-                throw new Exception("Pulsa purchase is FAILED, unknown status from MCASH.");
+                throw new Exception($pulsaPurchase->getFailureMessage());
             }
 
             $payment->save();
