@@ -51,6 +51,7 @@ trait HasPaymentTrait
                 $detailItem['quantity'] = '';
                 $transaction['discounts'][] = $detailItem;
             } else {
+                $detailItem['name'] .= $this->getSerialNumber();
                 $transaction['items'][] = $detailItem;
             }
         }
@@ -193,5 +194,19 @@ trait HasPaymentTrait
                 break;
             }
         }
+    }
+
+    /**
+     * Get serial number from the purchase.
+     *
+     * @return [type] [description]
+     */
+    protected function getSerialNumber()
+    {
+        if (isset($this->serialNumber) && ! empty($this->serialNumber)) {
+            return "<br>SN: {$this->serialNumber}";
+        }
+
+        return '';
     }
 }

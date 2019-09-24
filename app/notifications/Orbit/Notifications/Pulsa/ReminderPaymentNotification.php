@@ -48,6 +48,7 @@ class ReminderPaymentNotification extends BeforeExpiredPaymentNotification
     {
         return array_merge(parent::getEmailData(), [
             'pulsaPhoneNumber'  => $this->payment->extra_data,
+            // 'payUrl' => $this->getPayUrl(),
         ]);
     }
 }

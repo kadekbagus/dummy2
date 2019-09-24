@@ -38,7 +38,7 @@ class CanceledPaymentNotification extends Base
         ];
     }
 
-    private function getEmailSubject()
+    protected function getEmailSubject()
     {
         return $this->objectType === 'pulsa'
             ? trans('email-canceled-payment.subject_pulsa', [], '', 'id')

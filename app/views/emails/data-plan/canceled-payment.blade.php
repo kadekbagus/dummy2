@@ -207,24 +207,24 @@
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{ trans('email-aborted-payment.body.payment-info-line-1-data-plan', ['transactionDateTime' => $transactionDateTime], '', 'id') }}
+                {{ trans('email-canceled-payment.body.payment-info-line-1-data-plan', ['transactionDateTime' => $transactionDateTime], '', 'id') }}
               </p>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{ trans('email-aborted-payment.body.payment-info-line-2-data-plan', $cs, '', 'id') }}
+                {{ trans('email-canceled-payment.body.payment-info-line-2-data-plan', $cs, '', 'id') }}
               </p>
 
               <p style="text-align: center">
                   <br>
                   <a href="{{{ $buyUrl }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;font-size:16px;display:inline-block;padding:10px 20px;text-decoration:none;">
-                    {{{ trans('email-aborted-payment.body.buttons.buy_data_plan', [], '', 'id') }}}
+                    {{{ trans('email-canceled-payment.body.buttons.buy_data_plan', [], '', 'id') }}}
                   </a>
               </p>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{ trans('email-aborted-payment.body.regards', [], '', 'id') }}
+                {{ trans('email-canceled-payment.body.regards', [], '', 'id') }}
               </p>
             </td>
           </tr>
@@ -278,34 +278,34 @@
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
-                {{ trans('email-aborted-payment.body.payment-info-line-1') }}
+                {{ trans('email-canceled-payment.body.payment-info-line-1') }}
               </p>
               <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-aborted-payment.body.payment-info-line-2') }}
+                {{ trans('email-canceled-payment.body.payment-info-line-2') }}
               </p>
               <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-aborted-payment.body.payment-info-line-3') }}
+                {{ trans('email-canceled-payment.body.payment-info-line-3') }}
               </p>
               <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-aborted-payment.body.payment-info-line-4-data-plan') }}
+                {{ trans('email-canceled-payment.body.payment-info-line-4-data-plan') }}
               </p>
               <br>
               <p style="text-align: center;">
                   <a href="{{{ $buyUrl }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;font-size:16px;display:inline-block;padding:10px 20px;text-decoration:none;">
-                    {{{ trans('email-aborted-payment.body.buttons.buy_data_plan') }}}
+                    {{{ trans('email-canceled-payment.body.buttons.buy_data_plan') }}}
                   </a>
               </p>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
                 <br>
-                {{ trans('email-aborted-payment.body.regards') }}
+                {{ trans('email-canceled-payment.body.regards') }}
               </p>
             </td>
           </tr>

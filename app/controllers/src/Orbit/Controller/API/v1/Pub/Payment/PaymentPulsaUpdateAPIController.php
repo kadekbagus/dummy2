@@ -32,6 +32,7 @@ use Orbit\Notifications\Pulsa\AbortedPaymentNotification;
 use Orbit\Notifications\Pulsa\ExpiredPaymentNotification;
 use Orbit\Notifications\Pulsa\CustomerRefundNotification;
 use Mall;
+use Request;
 
 /**
  * Controller for update payment with midtrans
@@ -314,7 +315,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                 // The job will be run forever until the transaction status is success, failed, expired or reached the maximum number of allowed check.
                 if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_PENDING) {
                     $delay = Config::get('orbit.partners_api.midtrans.transaction_status_timeout', 60);
-                    $queueData = ['transactionId' => $payment_transaction_id, 'check' => 0];
+                    $queueData = ['transactionId' => $payment_transaction_id, 'check' => 0, 'current_url' => Request::fullUrl()];
                     if (! empty($mall)) {
                         $queueData['mall_id'] = $mall->merchant_id;
                     }
@@ -360,16 +361,24 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
 
                 // Send notification if the purchase was aborted
                 // Only send if previous status was pending.
-                if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_ABORTED) {
-                    if ($fromSnap) {
-                        $payment_update->user->notify(new AbortedPaymentNotification($payment_update));
-                    }
+                if ($oldStatus === PaymentTransaction::STATUS_PENDING && $status === PaymentTransaction::STATUS_EXPIRED) {
+                    $payment_update->user->notify(new ExpiredPaymentNotification($payment_update));
                 }
 
                 // Send notification if the purchase was aborted
                 // Only send if previous status was pending.
-                if ($oldStatus === PaymentTransaction::STATUS_PENDING && $status === PaymentTransaction::STATUS_EXPIRED) {
-                    $payment_update->user->notify(new ExpiredPaymentNotification($payment_update));
+                if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_ABORTED) {
+                    if ($fromSnap) {
+                        $payment_update->user->notify(new AbortedPaymentNotification($payment_update));
+
+                        $activity->setActivityNameLong('Transaction is Aborted')
+                                ->setModuleName('Midtrans Transaction')
+                                ->setObject($payment_update)
+                                ->setNotes('Pulsa/Data Plan Transaction aborted by customer.')
+                                ->setLocation($mall)
+                                ->responseFailed()
+                                ->save();
+                    }
                 }
 
                 // If previous status was success and now is denied, then send notification to admin.

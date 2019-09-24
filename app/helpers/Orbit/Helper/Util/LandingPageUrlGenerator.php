@@ -190,6 +190,7 @@ class LandingPageUrlGenerator
                 $url = str_replace(['id', 'name-slug'], [$this->objectId, Str::slug($this->objectName)], $this->promotionalEventUrl);
                 break;
             case 'pulsa':
+            case 'data_plan':
                 $url = $this->pulsaUrl;
                 break;
         }

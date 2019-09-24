@@ -58,6 +58,11 @@ class BeforeExpiredPaymentNotification extends CustomerNotification implements E
         ];
     }
 
+    public function getEmailSubject()
+    {
+        return trans('email-before-transaction-expired.subject', [], '', 'id');
+    }
+
     /**
      * Get the email data.
      *
@@ -65,6 +70,8 @@ class BeforeExpiredPaymentNotification extends CustomerNotification implements E
      */
     public function getEmailData()
     {
+        $this->getObjectType();
+
         return [
             'recipientEmail'    => $this->getRecipientEmail(),
             'customerEmail'     => $this->getCustomerEmail(),
@@ -78,6 +85,8 @@ class BeforeExpiredPaymentNotification extends CustomerNotification implements E
             'paymentInfo'       => $this->getPaymentInfo(),
             'hideExpiration'    => true,
             'transactionDateTime' => $this->payment->getTransactionDate('d F Y, H:i ') . $this->getLocalTimezoneName($this->payment->timezone_name),
+            'emailSubject'      => $this->getEmailSubject(),
+            'template'          => $this->getEmailTemplates(),
         ];
     }
 
@@ -91,10 +100,10 @@ class BeforeExpiredPaymentNotification extends CustomerNotification implements E
     public function toEmail($job, $data)
     {
         try {
-            Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
+            Mail::send($data['template'], $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                $subject = trans('email-before-transaction-expired.subject');
+                $subject = $data['emailSubject'];
 
                 $mail->subject($subject);
                 $mail->from($emailConfig['email'], $emailConfig['name']);
