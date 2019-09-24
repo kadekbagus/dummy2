@@ -94,6 +94,15 @@ class AbortedPaymentNotification extends PaymentNotification implements EmailNot
     public function toEmail($job, $data)
     {
         try {
+            $blacklistedEmails = [
+                'sputraqu@yahoo.com'
+            ];
+
+            if (in_array($data['recipientEmail'], $blacklistedEmails)) {
+                $job->delete();
+                return;
+            }
+
             Mail::send($data['template'], $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.contact_information.customer_service');
 
