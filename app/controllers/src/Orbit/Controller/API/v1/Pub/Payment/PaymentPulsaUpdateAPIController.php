@@ -32,6 +32,7 @@ use Orbit\Notifications\Pulsa\AbortedPaymentNotification;
 use Orbit\Notifications\Pulsa\ExpiredPaymentNotification;
 use Orbit\Notifications\Pulsa\CustomerRefundNotification;
 use Mall;
+use Request;
 
 /**
  * Controller for update payment with midtrans
@@ -314,7 +315,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                 // The job will be run forever until the transaction status is success, failed, expired or reached the maximum number of allowed check.
                 if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_PENDING) {
                     $delay = Config::get('orbit.partners_api.midtrans.transaction_status_timeout', 60);
-                    $queueData = ['transactionId' => $payment_transaction_id, 'check' => 0];
+                    $queueData = ['transactionId' => $payment_transaction_id, 'check' => 0, 'current_url' => Request::fullUrl()];
                     if (! empty($mall)) {
                         $queueData['mall_id'] = $mall->merchant_id;
                     }

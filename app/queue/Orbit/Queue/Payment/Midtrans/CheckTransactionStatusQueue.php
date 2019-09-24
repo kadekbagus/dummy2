@@ -49,7 +49,8 @@ class CheckTransactionStatusQueue
             $activity = Activity::mobileci()
                             ->setActivityType('transaction')
                             ->setUser($payment->user)
-                            ->setActivityName('transaction_status');
+                            ->setActivityName('transaction_status')
+                            ->setCurrentUrl($data['current_url']);
 
             // If payment completed or expired then do nothing.
             // (It maybe completed by notification callback/ping from Midtrans)
