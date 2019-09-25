@@ -97,15 +97,6 @@ class CustomerPulsaNotAvailableNotification extends CustomerNotification impleme
     public function toEmail($job, $data)
     {
         try {
-            $blacklistedEmails = [
-                'sputraqu@yahoo.com'
-            ];
-
-            if (in_array($data['recipientEmail'], $blacklistedEmails)) {
-                $job->delete();
-                return;
-            }
-            
             Mail::send($data['template'], $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
