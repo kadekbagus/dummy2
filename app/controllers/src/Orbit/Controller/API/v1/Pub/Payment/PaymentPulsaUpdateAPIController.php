@@ -32,7 +32,6 @@ use Orbit\Notifications\Pulsa\AbortedPaymentNotification;
 use Orbit\Notifications\Pulsa\ExpiredPaymentNotification;
 use Orbit\Notifications\Pulsa\CustomerRefundNotification;
 use Mall;
-use Request;
 
 /**
  * Controller for update payment with midtrans
@@ -89,6 +88,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
             $shouldUpdate = false;
             $shouldNotifyRefund = false;
             $refundReason = '';
+            $currentUtmUrl = $this->generateUtmUrl($payment_transaction_id);
 
             $payment_update = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'refunds', 'midtrans', 'user', 'discount_code'])->findOrFail($payment_transaction_id);
 
@@ -193,7 +193,8 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                 $activity = Activity::mobileci()
                                         ->setActivityType('transaction')
                                         ->setUser($payment_update->user)
-                                        ->setActivityName('transaction_status');
+                                        ->setActivityName('transaction_status')
+                                        ->setCurrentUrl($currentUtmUrl);
 
                 $mall = Mall::where('merchant_id', $mallId)->first();
 
@@ -315,7 +316,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                 // The job will be run forever until the transaction status is success, failed, expired or reached the maximum number of allowed check.
                 if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_PENDING) {
                     $delay = Config::get('orbit.partners_api.midtrans.transaction_status_timeout', 60);
-                    $queueData = ['transactionId' => $payment_transaction_id, 'check' => 0, 'current_url' => Request::fullUrl()];
+                    $queueData = ['transactionId' => $payment_transaction_id, 'check' => 0, 'current_url' => $currentUtmUrl)];
                     if (! empty($mall)) {
                         $queueData['mall_id'] = $mall->merchant_id;
                     }
@@ -490,5 +491,20 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                 break;
             }
         }
+    }
+
+    private function generateUtmUrl($payment_transaction_id)
+    {
+        $utmUrl = '';
+        $paymentTransaction = PaymentTransaction::where('payment_transaction_id', '=', $payment_transaction_id)->first();
+        $utm_source = (isset($paymentTransaction->utm_source)) ? $paymentTransaction->utm_source : '';
+        $utm_medium = (isset($paymentTransaction->utm_medium)) ? $paymentTransaction->utm_medium : '';
+        $utm_term = (isset($paymentTransaction->utm_term)) ? $paymentTransaction->utm_term : '';
+        $utm_content = (isset($paymentTransaction->utm_content)) ? $paymentTransaction->utm_content : '';
+        $utm_campaign = (isset($paymentTransaction->utm_campaign)) ? $paymentTransaction->utm_campaign : '';
+
+        $utmUrl = '?utm_source='.$utm_source.'&utm_medium='.$utm_medium.'&utm_term='.$utm_term.'&utm_content='.$utm_content.'&utm_campaign='.$utm_campaign;
+
+        return $utmUrl;
     }
 }
