@@ -89,15 +89,6 @@ class CustomerRefundNotification extends CustomerNotification implements EmailNo
     public function toEmail($job, $data)
     {
         try {
-            $blacklistedEmails = [
-                'sputraqu@yahoo.com'
-            ];
-
-            if (in_array($data['recipientEmail'], $blacklistedEmails)) {
-                $job->delete();
-                return;
-            }
-
             Mail::send($data['template'], $data, function($mail) use ($data) {
                 $mail->subject($data['subject']);
                 $mail->from($data['sender']['email'], $data['sender']['name']);
