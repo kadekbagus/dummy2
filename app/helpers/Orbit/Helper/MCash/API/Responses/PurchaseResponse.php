@@ -69,6 +69,19 @@ class PurchaseResponse
     }
 
     /**
+     * Get serial number from purchase.
+     *
+     * @return boolean [description]
+     */
+    public function getSerialNumber()
+    {
+        return isset($this->data->data) && ! empty($this->data->data)
+            && isset($this->data->data->serial_number) && ! empty($this->data->data->serial_number)
+            ? $this->data->data->serial_number
+            : null;
+    }
+
+    /**
      * Determine if the requested pulsa is out of stock or not.
      *
      * @return boolean [description]
