@@ -55,7 +55,6 @@ class DeniedPaymentNotification extends AdminNotification
     public function toEmail($job, $data)
     {
         try {
-
             Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
