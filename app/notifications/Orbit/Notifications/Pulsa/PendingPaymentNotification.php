@@ -73,14 +73,6 @@ class PendingPaymentNotification extends Base
     {
         try {
             $payment = PaymentTransaction::with(['midtrans'])->findOrFail($data['transaction']['id']);
-            $blacklistedEmails = [
-                'sputraqu@yahoo.com'
-            ];
-
-            if (in_array($data['recipientEmail'], $blacklistedEmails)) {
-                $job->delete();
-                return;
-            }
 
             // Only send email if pending.
             if ($payment->pending()) {
