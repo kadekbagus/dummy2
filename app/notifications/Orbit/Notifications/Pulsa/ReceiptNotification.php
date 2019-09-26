@@ -1,6 +1,7 @@
 <?php namespace Orbit\Notifications\Pulsa;
 
 use Orbit\Notifications\Payment\ReceiptNotification as BaseReceiptNotification;
+use PaymentTransaction;
 
 /**
  * Receipt Notification for Customer after purchasing Pulsa.
@@ -11,6 +12,8 @@ use Orbit\Notifications\Payment\ReceiptNotification as BaseReceiptNotification;
 class ReceiptNotification extends BaseReceiptNotification
 {
     protected $serialNumber = null;
+
+    protected $notificationDelay = 10;
 
     function __construct($payment = null, $serialNumber = null)
     {
@@ -42,5 +45,33 @@ class ReceiptNotification extends BaseReceiptNotification
         return array_merge(parent::getEmailData(), [
             'myWalletUrl' => $this->getMyPurchasesUrl() . '/pulsa',
         ]);
+    }
+
+    /**
+     * Send the receipt if we have to.
+     *
+     * @param  [type] $job  [description]
+     * @param  [type] $data [description]
+     * @return [type]       [description]
+     */
+    public function toEmail($job, $data)
+    {
+        if ($this->shouldSendReceipt($data)) {
+            parent::toEmail($job, $data);
+        }
+    }
+
+    /**
+     * Determine if we should send receipt or not.
+     *
+     * @param  [type] $data [description]
+     * @return [type]       [description]
+     */
+    private function shouldSendReceipt($data)
+    {
+        // Fetch latest payment status from db.
+        $payment = PaymentTransaction::onWriteConnection()->select('status')->findOrFail($data['transaction']['id']);
+
+        return in_array($payment->status, [PaymentTransaction::STATUS_SUCCESS]);
     }
 }
