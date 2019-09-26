@@ -25,7 +25,7 @@ class PurchaseResponse
      *
      * @var [type]
      */
-    protected $displayableErrorStatus = [627, 617];
+    protected $displayableErrorStatus = [627, 617, 628];
 
     /**
      * Maximum number of retry we would do if the first time was failed.
