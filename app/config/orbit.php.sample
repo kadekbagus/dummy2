@@ -6222,4 +6222,13 @@ return array(
             //
         ],
     ],
+
+    'pulsa_list_url' => [
+        'base_url' => '/pulsa-list?country=Indonesia',
+        'utm_params' => [
+            'utm_source' => 'email',
+            'utm_medium' => 'email',
+            'utm_campaign' => 'Update Pulsa dan Paket Data',
+        ],
+    ],
 );
