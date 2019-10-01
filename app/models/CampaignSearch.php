@@ -7,7 +7,7 @@ use Orbit\Helper\Util\FollowStatusChecker;
 /**
 * Implementation of ES search for campaign...
 */
-class CampaignSearch extends Search
+abstract class CampaignSearch extends Search
 {
     protected $objectType = null;
     protected $objectTypeAlias = null;
@@ -325,6 +325,64 @@ class CampaignSearch extends Search
                 'query' => [
                     'terms' => [
                         'sponsor_provider.sponsor_id' => $sponsorProviderIds
+                    ]
+                ]
+            ]
+        ]);
+    }
+
+    protected function filterAdvertCampaign($options = [])
+    {
+        $this->must([
+            'bool' => [
+                'should' => [
+                    [
+                        'bool' => [
+                            'must' => [
+                                [
+                                    'query' => [
+                                        'match' => [
+                                            'advert_status' => 'active'
+                                        ]
+                                    ]
+                                ],
+                                [
+                                    'range' => [
+                                        'advert_start_date' => [
+                                            'lte' => $options['dateTimeEs']
+                                        ]
+                                    ]
+                                ],
+                                [
+                                    'range' => [
+                                        'advert_end_date' => [
+                                            'gte' => $options['dateTimeEs']
+                                        ]
+                                    ]
+                                ],
+                                [
+                                    'match' => [
+                                        'advert_location_ids' => $options['locationId']
+                                    ]
+                                ],
+                                [
+                                    'terms' => [
+                                        'advert_type' => $options['advertType']
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ],
+                    [
+                        'bool' => [
+                            'must_not' => [
+                                [
+                                    'exists' => [
+                                        'field' => 'advert_status'
+                                    ]
+                                ]
+                            ]
+                        ]
                     ]
                 ]
             ]

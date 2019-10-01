@@ -12,69 +12,6 @@ class PromotionSearch extends CampaignSearch
     protected $objectType = 'promotions';
     protected $objectTypeAlias = 'promotion';
 
-    /**
-     * Apply the same advert filtering to main query.
-     *
-     * @param  array  $options [description]
-     * @return [type]          [description]
-     */
-    public function filterAdvertPromotions($options = [])
-    {
-        $this->must([
-            'bool' => [
-                'should' => [
-                    [
-                        'bool' => [
-                            'must' => [
-                                [
-                                    'query' => [
-                                        'match' => [
-                                            'advert_status' => 'active'
-                                        ]
-                                    ]
-                                ],
-                                [
-                                    'range' => [
-                                        'advert_start_date' => [
-                                            'lte' => $options['dateTimeEs']
-                                        ]
-                                    ]
-                                ],
-                                [
-                                    'range' => [
-                                        'advert_end_date' => [
-                                            'gte' => $options['dateTimeEs']
-                                        ]
-                                    ]
-                                ],
-                                [
-                                    'match' => [
-                                        'advert_location_ids' => $options['locationId']
-                                    ]
-                                ],
-                                [
-                                    'terms' => [
-                                        'advert_type' => $options['advertType']
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ],
-                    [
-                        'bool' => [
-                            'must_not' => [
-                                [
-                                    'exists' => [
-                                        'field' => 'advert_status'
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-        ]);
-    }
 
     /**
      * Filter advert and main collections.
@@ -93,7 +30,7 @@ class PromotionSearch extends CampaignSearch
         $advertSearch->filterPromotions($options);
 
         // Apply the same filter to main query.
-        $this->filterAdvertPromotions($options);
+        $this->filterAdvertCampaign($options);
 
         $advertSearchResult = $advertSearch->getResult();
 

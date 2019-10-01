@@ -12,63 +12,6 @@ class NewsSearch extends CampaignSearch
     protected $objectType = 'news';
     protected $objectTypeAlias = 'news';
 
-    public function filterAdvertNews($options = [])
-    {
-        $this->must([
-            'bool' => [
-                'should' => [
-                    [
-                        'bool' => [
-                            'must' => [
-                                [
-                                    'query' => [
-                                        'match' => [
-                                            'advert_status' => 'active'
-                                        ]
-                                    ]
-                                ],
-                                [
-                                    'range' => [
-                                        'advert_start_date' => [
-                                            'lte' => $options['dateTimeEs']
-                                        ]
-                                    ]
-                                ],
-                                [
-                                    'range' => [
-                                        'advert_end_date' => [
-                                            'gte' => $options['dateTimeEs']
-                                        ]
-                                    ]
-                                ],
-                                [
-                                    'match' => [
-                                        'advert_location_ids' => $options['locationId']
-                                    ]
-                                ],
-                                [
-                                    'terms' => [
-                                        'advert_type' => $options['advertType']
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ],
-                    [
-                        'bool' => [
-                            'must_not' => [
-                                [
-                                    'exists' => [
-                                        'field' => 'advert_status'
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-        ]);
-    }
 
     public function filterWithAdvert($options = [])
     {
@@ -79,7 +22,7 @@ class NewsSearch extends CampaignSearch
 
         $advertSearch->filterNews($options);
 
-        $this->filterAdvertNews($options);
+        $this->filterAdvertCampaign($options);
 
         $advertSearchResult = $advertSearch->getResult();
 

@@ -31,7 +31,6 @@ class CouponSearch extends CampaignSearch
      */
     public function filterByLocation($location = [])
     {
-
     }
 
     protected function setPriorityForLinkToTenant($keyword)
@@ -66,7 +65,7 @@ class CouponSearch extends CampaignSearch
         ]);
     }
 
-    public function filterAdvertCoupons($options = [])
+    public function filterAdvertCampaign($options = [])
     {
         $this->must([
             'bool' => [
@@ -147,7 +146,7 @@ class CouponSearch extends CampaignSearch
 
         $advertSearch->filterCoupons($options);
 
-        $this->filterAdvertCoupons($options);
+        $this->filterAdvertCampaign($options);
 
         $advertSearchResult = $advertSearch->getResult();
 
