@@ -478,31 +478,85 @@ abstract class CampaignSearch extends Search
         $scriptFieldReview = "double review = 0;";
 
         if (! empty($params['mallId'])) {
-            $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('mall_rating.rating_" . $params['mallId'] . "')) { if (! doc['mall_rating.rating_" . $params['mallId'] . "'].empty) { counter = counter + doc['mall_rating.review_" . $params['mallId'] . "'].value; rating = rating + (doc['mall_rating.rating_" . $params['mallId'] . "'].value * doc['mall_rating.review_" . $params['mallId'] . "'].value);}};";
-            $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('mall_rating.review_" . $params['mallId'] . "')) { if (! doc['mall_rating.review_" . $params['mallId'] . "'].empty) { review = review + doc['mall_rating.review_" . $params['mallId'] . "'].value;}}; ";
+            $scriptFieldRating = $scriptFieldRating . " " .
+            "if (doc.containsKey('mall_rating.rating_" . $params['mallId'] . "')) {
+                if (! doc['mall_rating.rating_" . $params['mallId'] . "'].empty) {
+                    counter = counter + doc['mall_rating.review_" . $params['mallId'] . "'].value;
+                    rating = rating + (doc['mall_rating.rating_" . $params['mallId'] . "'].value * doc['mall_rating.review_" . $params['mallId'] . "'].value);
+                }
+            };";
+            $scriptFieldReview = $scriptFieldReview . " " .
+            "if (doc.containsKey('mall_rating.review_" . $params['mallId'] . "')) {
+                if (! doc['mall_rating.review_" . $params['mallId'] . "'].empty) {
+                    review = review + doc['mall_rating.review_" . $params['mallId'] . "'].value;
+                }
+            };";
         } else if (! empty($params['cityFilters'])) {
             $countryId = $params['countryData']->country_id;
             foreach ((array) $params['cityFilters'] as $cityFilter) {
-                $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { if (! doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value * doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value);}}; ";
-                $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { if (! doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value;}}; ";
+                $scriptFieldRating = $scriptFieldRating . " " .
+                "if (doc.containsKey('location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) {
+                    if (! doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) {
+                        counter = counter + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value;
+                        rating = rating + (doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value * doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value);
+                    }
+                }; ";
+                $scriptFieldReview = $scriptFieldReview . " " .
+                "if (doc.containsKey('location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) {
+                    if (! doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) {
+                        review = review + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value;
+                    }
+                }; ";
             }
         } else if (! empty($params['countryFilter'])) {
             $countryId = $params['countryData']->country_id;
-            $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { if (! doc['location_rating.rating_" . $countryId . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);}}; ";
-            $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "')) { if (! doc['location_rating.review_" . $countryId . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "'].value;}}; ";
+            $scriptFieldRating = $scriptFieldRating . " " .
+            "if (doc.containsKey('location_rating.rating_" . $countryId . "')) {
+                if (! doc['location_rating.rating_" . $countryId . "'].empty) {
+                    counter = counter + doc['location_rating.review_" . $countryId . "'].value;
+                    rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);
+                }
+            };";
+            $scriptFieldReview = $scriptFieldReview . " " .
+            "if (doc.containsKey('location_rating.review_" . $countryId . "')) {
+                if (! doc['location_rating.review_" . $countryId . "'].empty) {
+                    review = review + doc['location_rating.review_" . $countryId . "'].value;
+                }
+            }; ";
         } else {
             $mallCountry = Mall::groupBy('country')->lists('country');
             $countries = Country::select('country_id')->whereIn('name', $mallCountry)->get();
 
             foreach ($countries as $country) {
                 $countryId = $country->country_id;
-                $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { if (! doc['location_rating.rating_" . $countryId . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);}}; ";
-                $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "')) { if (! doc['location_rating.review_" . $countryId . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "'].value;}}; ";
+                $scriptFieldRating = $scriptFieldRating . " " .
+                "if (doc.containsKey('location_rating.rating_" . $countryId . "')) {
+                    if (! doc['location_rating.rating_" . $countryId . "'].empty) {
+                        counter = counter + doc['location_rating.review_" . $countryId . "'].value;
+                        rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);
+                    }
+                }; ";
+                $scriptFieldReview = $scriptFieldReview . " " .
+                "if (doc.containsKey('location_rating.review_" . $countryId . "')) {
+                    if (! doc['location_rating.review_" . $countryId . "'].empty) {
+                        review = review + doc['location_rating.review_" . $countryId . "'].value;
+                    }
+                }; ";
             }
         }
 
-        $scriptFieldRating = $scriptFieldRating . " if(counter == 0 || rating == 0) {return 0;} else {return rating/counter;}; ";
-        $scriptFieldReview = $scriptFieldReview . " if(review == 0) {return 0;} else {return review;}; ";
+        $scriptFieldRating = $scriptFieldRating . " " .
+        "if (counter == 0 || rating == 0) {
+            return 0;
+        } else {
+            return rating/counter;
+        }; ";
+        $scriptFieldReview = $scriptFieldReview . " " .
+        "if (review == 0) {
+            return 0;
+        } else {
+            return review;
+        }; ";
 
         // Add script fields into request body...
         $this->scriptFields([
