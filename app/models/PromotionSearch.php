@@ -1,7 +1,5 @@
 <?php
 
-use CampaignSearch;
-
 use Orbit\Helper\Util\FollowStatusChecker;
 
 /**
