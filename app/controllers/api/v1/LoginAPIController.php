@@ -2012,8 +2012,6 @@ class LoginAPIController extends ControllerAPI
      */
     public function postLoginRGP()
     {
-        $activity = Activity::portal()
-                            ->setActivityType('login');
         try {
             $email = trim(OrbitInput::post('email'));
             $password = trim(OrbitInput::post('password'));
@@ -2040,18 +2038,6 @@ class LoginAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            $roles = new stdClass();
-            $roles->role_id = 0;
-            $roles->role_name = 'RGP User';
-
-            $user->role = $roles;
-
-            // Successfull login
-            $activity->setUser($user)
-                     ->setActivityName('login_ok')
-                     ->setActivityNameLong('Sign in')
-                     ->responseOK();
-
             $this->response->data = $user;
 
         } catch (ACLForbiddenException $e) {
@@ -2059,38 +2045,17 @@ class LoginAPIController extends ControllerAPI
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
-
-            $activity->setUser('guest')
-                     ->setActivityName('login_failed')
-                     ->setActivityNameLong('Login Failed')
-                     ->setNotes($e->getMessage())
-                     ->responseFailed();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
-
-            $activity->setUser('guest')
-                     ->setActivityName('login_failed')
-                     ->setActivityNameLong('Login Failed')
-                     ->setNotes($e->getMessage())
-                     ->responseFailed();
         } catch (Exception $e) {
             $this->response->code = Status::UNKNOWN_ERROR;
             $this->response->status = 'error';
             $this->response->message = $e->getLine();
             $this->response->data = null;
-
-            $activity->setUser('guest')
-                     ->setActivityName('login_failed')
-                     ->setActivityNameLong('Login Failed')
-                     ->setNotes($e->getMessage())
-                     ->responseFailed();
         }
-
-        // Save the activity
-        $activity->setModuleName('Application')->save();
 
         return $this->render();
     }
