@@ -313,6 +313,40 @@ class IntermediateLoginController extends IntermediateBaseController
     }
 
     /**
+     * Login for Report Generator Portal (RGP)
+     * @author kadek <kadek@dominopos.com>
+     * @param @see LoginAPIController::postLoginRGP
+     * @return Response
+     */
+    public function postLoginRGP()
+    {
+        $response = LoginAPIController::create('raw')->postLoginRGP();
+        if ($response->code === 0)
+        {
+            $user = $response->data;
+            $user->setHidden(array('password', 'apikey'));
+            // Auth::login($user);
+
+            // Start the orbit session
+            $data = array(
+                'logged_in' => TRUE,
+                'user_id'   => $user->rgp_user_id,
+                'email'     => $user->email,
+                'username'  => $user->username
+            );
+            $this->session->enableForceNew()->start($data);
+
+            // Send the session id via HTTP header
+            $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
+            $sessionHeader = 'Set-' . $sessionHeader;
+            $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
+        }
+
+        return $this->render($response);
+    }
+
+
+    /**
      * @author Rio Astamal <me@rioastamal.net>
      * @param @see LoginAPIController::postLoginMall
      * @return Response
