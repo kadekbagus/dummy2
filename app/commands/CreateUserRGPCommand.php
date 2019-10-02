@@ -72,6 +72,7 @@ class CreateUserRGPCommand extends Command {
             $email = trim($data['email']);
             $username = trim($data['username']);
             $password = trim($data['password']);
+            $name = trim($data['name']);
 
             $this->registerCustomValidation();
 
@@ -103,6 +104,7 @@ class CreateUserRGPCommand extends Command {
             $newuser = new RgpUser();
             $newuser->email = $email;
             $newuser->username = $username;
+            $newuser->name = $name;
             $newuser->status = 'active';
             $newuser->password = Hash::make($password);
             $newuser->save();
