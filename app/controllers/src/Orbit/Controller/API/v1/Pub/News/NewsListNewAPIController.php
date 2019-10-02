@@ -139,6 +139,8 @@ class NewsListNewAPIController extends PubControllerAPI
             $myCCFilter = OrbitInput::get('my_cc_filter', false);
             $withAdvert = (bool) OrbitInput::get('with_advert', true);
             $gender = OrbitInput::get('gender', 'all');
+            $ratingLow = OrbitInput::get('rating_low', 0);
+            $ratingHigh = OrbitInput::get('rating_high', 5);
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -149,10 +151,14 @@ class NewsListNewAPIController extends PubControllerAPI
                 array(
                     'language' => $language,
                     'sortby'   => $sortBy,
+                    'rating_low' => $ratingLow,
+                    'rating_high' => $ratingHigh,
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
                     'sortby'   => 'in:name,location,created_date,updated_date,rating,relevance',
+                    'rating_low' => 'numeric|min:0|max:5',
+                    'rating_high' => 'numeric|min:0|max:5',
                 )
             );
 
@@ -310,6 +316,15 @@ class NewsListNewAPIController extends PubControllerAPI
                 $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
                 $this->searcher->filterWithAdvert(compact('dateTimeEs', 'mallId', 'advertType', 'locationId', 'list_type', 'advertSorting'));
             }
+
+            //filter by rating number
+            $this->searcher->filterByRating(
+                $ratingLow,
+                $ratingHigh,
+                compact(
+                    'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
+                )
+            );
 
             // Add script fields...
             $scriptFields = $this->searcher->addReviewFollowScript(compact(

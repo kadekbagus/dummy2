@@ -189,7 +189,7 @@ abstract class ObjectTypeSearch extends Search
         ]);
     }
 
-    public function addReviewFollowScript($params = [])
+    protected function buildRatingReviewCalcScript($params = [])
     {
         // calculate rating and review based on location/mall
         $scriptFieldRating = "double counter = 0; double rating = 0;";
@@ -262,29 +262,71 @@ abstract class ObjectTypeSearch extends Search
                 }; ";
             }
         }
+        return compact('scriptFieldRating', 'scriptFieldReview');
+    }
 
-        $scriptFieldRating = $scriptFieldRating . " " .
+    protected function getReviewRatingScript($params = [])
+    {
+        $scripts = $this->buildRatingReviewCalcScript($params);
+        $scriptFieldRating = $scripts['scriptFieldRating'] . " " .
         "if (counter == 0 || rating == 0) {
             return 0;
         } else {
             return rating/counter;
         }; ";
-        $scriptFieldReview = $scriptFieldReview . " " .
+        $scriptFieldReview = $scripts['scriptFieldReview'] . " " .
         "if (review == 0) {
             return 0;
         } else {
             return review;
         }; ";
 
+        return compact('scriptFieldRating', 'scriptFieldReview');
+    }
+
+    protected function getRatingFilterScript($params = [])
+    {
+        $scripts = $this->buildRatingReviewCalcScript($params);
+        return $scripts['scriptFieldRating'] . " " .
+        "return (rating >= rateLow) && (rating <= rateHigh);";
+    }
+
+    public function addReviewFollowScript($params = [])
+    {
+        $scripts = $this->getReviewRatingScript($params);
         // Add script fields into request body...
         $this->scriptFields([
-            'average_rating' => $scriptFieldRating,
-            'total_review' => $scriptFieldReview,
+            'average_rating' => $scripts['scriptFieldRating'],
+            'total_review' => $scripts['scriptFieldReview'],
         ]);
 
-        return compact('scriptFieldRating', 'scriptFieldReview');
+        return $scripts;
+    }
 
-        //////// END RATING & FOLLOW SCRIPTS /////
+    /**
+     * filter by using a script
+     *
+     * @return void
+     */
+    public function filterByScript($aScript, $params = [])
+    {
+        $scriptData = [
+            'script' => $aScript
+        ];
+        if (!empty($params)) {
+            $scriptData['params'] = $params;
+        }
+        $this->filter(['script' => $scriptData ]);
+    }
+
+    public function filterByRating($ratingLow, $ratingHigh, $params)
+    {
+        $rateLow = (double) $ratingLow;
+        $rateHigh = (double) $ratingHigh;
+        $this->filterByScript(
+            $this->getRatingFilterScript($params),
+            compact('rateLow', 'rateHigh')
+        );
     }
 
     /**
@@ -382,11 +424,4 @@ abstract class ObjectTypeSearch extends Search
         }
     }
 
-    public function getResult($resultMapperClass = '')
-    {
-        $res = parent::getResult($resultMapperClass);
-        $last = $this->client->transport->getLastConnection()->getLastRequestInfo();
-        Log::info(print_r($last, true));
-        return $res;
-    }
 }
