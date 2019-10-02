@@ -1,7 +1,6 @@
 <?php
 
 use Orbit\Helper\Elasticsearch\Search;
-use Log;
 use Orbit\Helper\Util\FollowStatusChecker;
 
 /**
