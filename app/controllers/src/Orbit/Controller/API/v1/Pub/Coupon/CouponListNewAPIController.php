@@ -132,6 +132,8 @@ class CouponListNewAPIController extends PubControllerAPI
             $myCCFilter = OrbitInput::get('my_cc_filter', false);
             $withAdvert = (bool) OrbitInput::get('with_advert', true);
             $gender = OrbitInput::get('gender', 'all');
+            $ratingLow = OrbitInput::get('rating_low', 0);
+            $ratingHigh = OrbitInput::get('rating_high', 5);
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -143,11 +145,15 @@ class CouponListNewAPIController extends PubControllerAPI
                     'language' => $language,
                     'sortby'   => $sortBy,
                     'list_type'   => $list_type,
+                    'rating_low' => $ratingLow,
+                    'rating_high' => $ratingHigh,
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
                     'sortby'   => 'in:name,location,created_date,updated_date,rating,relevance',
                     'list_type'   => 'in:featured,preferred',
+                    'rating_low' => 'numeric|min:0|max:5',
+                    'rating_high' => 'numeric|min:0|max:5',
                 ),
                 array(
                 )
@@ -317,6 +323,15 @@ class CouponListNewAPIController extends PubControllerAPI
 
                 $this->searcher->filterWithAdvert(compact('dateTimeEs', 'mallId', 'list_type', 'advertType', 'locationId', 'advertSorting'));
             }
+
+            //filter by rating number
+            $this->searcher->filterByRating(
+                $ratingLow,
+                $ratingHigh,
+                compact(
+                    'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
+                )
+            );
 
             // Add script fields...
             $scriptFields = $this->searcher->addReviewFollowScript(compact(
