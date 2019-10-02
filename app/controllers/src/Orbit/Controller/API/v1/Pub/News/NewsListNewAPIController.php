@@ -174,7 +174,9 @@ class NewsListNewAPIController extends PubControllerAPI
                 'no_total_record' => $no_total_records,
                 'take' => $take, 'skip' => $skip,
                 'country' => $countryFilter, 'cities' => $cityFilters,
-                'my_cc_filter' => $myCCFilter
+                'my_cc_filter' => $myCCFilter,
+                'rating_low' => $ratingLow,
+                'rating_high' => $ratingHigh,
             ];
 
             // Run the validation
