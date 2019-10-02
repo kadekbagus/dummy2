@@ -324,3 +324,6 @@ Artisan::add(new UserSignUpPointCommand);
 
 // Register command to send pulsa pricelist.
 Artisan::add(new SendPulsaPriceListCommand);
+
+// Create RGP user
+Artisan::add(new CreateUserRGPCommand);

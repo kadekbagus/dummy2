@@ -12,4 +12,9 @@ class RgpUser extends Eloquent
     {
         return $this->username;
     }
+
+    public function apikey()
+    {
+        return $this->hasOne('Apikey', 'user_id', 'rgp_user_id')->where('apikeys.status','=','active');
+    }
 }
