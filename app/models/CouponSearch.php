@@ -31,19 +31,19 @@ class CouponSearch extends CampaignSearch
     {
     }
 
-    protected function setPriorityForLinkToTenant($keyword)
+    protected function setPriorityForLinkToTenant($objType, $keyword)
     {
-        $priorityCountry = isset($this->esConfig['priority'][$this->objectType]['country']) ?
-            $this->esConfig['priority'][$this->objectType]['country'] : '';
+        $priorityCountry = isset($this->esConfig['priority'][$objType]['country']) ?
+            $this->esConfig['priority'][$objType]['country'] : '';
 
-        $priorityProvince = isset($this->esConfig['priority'][$this->objectType]['province']) ?
-            $this->esConfig['priority'][$this->objectType]['province'] : '';
+        $priorityProvince = isset($this->esConfig['priority'][$objType]['province']) ?
+            $this->esConfig['priority'][$objType]['province'] : '';
 
-        $priorityCity = isset($this->esConfig['priority'][$this->objectType]['city']) ?
-            $this->esConfig['priority'][$this->objectType]['city'] : '';
+        $priorityCity = isset($this->esConfig['priority'][$objType]['city']) ?
+            $this->esConfig['priority'][$objType]['city'] : '';
 
-        $priorityMallName = isset($this->esConfig['priority'][$this->objectType]['mall_name']) ?
-            $this->esConfig['priority'][$this->objectType]['mall_name'] : '';
+        $priorityMallName = isset($this->esConfig['priority'][$objType]['mall_name']) ?
+            $this->esConfig['priority'][$objType]['mall_name'] : '';
 
         $this->should([
             'nested' => [

@@ -320,7 +320,7 @@ class StoreListNewAPIController extends PubControllerAPI
                     $this->searcher->sortByFavorite($scriptFields['scriptFieldFollow']);
                     break;
                 default:
-                    $this->searcher->sortByName($sortMode);
+                    $this->searcher->sortByName($language, $sortMode);
                     break;
             }
 
