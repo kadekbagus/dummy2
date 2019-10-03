@@ -139,7 +139,10 @@ abstract class ObjectTypeSearch extends Search
      *
      * @return [type] [description]
      */
-    abstract public function sortByName($language = 'id', $sortMode = 'asc');
+    public function sortByName($language = 'id', $sortMode = 'asc')
+    {
+        $this->sort(['lowercase_name' => ['order' => $sortMode]]);
+    }
 
     /**
      * Sort store by rating.
@@ -287,7 +290,8 @@ abstract class ObjectTypeSearch extends Search
     {
         $scripts = $this->buildRatingReviewCalcScript($params);
         return $scripts['scriptFieldRating'] . " " .
-        "return (rating >= rateLow) && (rating <= rateHigh);";
+        "return (counter == 0 && rateLow == 0) || ".
+        "((counter>0) && (rating/counter >= rateLow) && (rating/counter <= rateHigh));";
     }
 
     public function addReviewFollowScript($params = [])
@@ -321,10 +325,12 @@ abstract class ObjectTypeSearch extends Search
     public function filterByRating($ratingLow, $ratingHigh, $params)
     {
         $rateLow = (double) $ratingLow;
-        $rateHigh = (double) $ratingHigh;
+        //TODO: 0.01 is hack because they way rating is added by
+        $rateHigh = (double) $ratingHigh + 0.001;
+
         $this->filterByScript(
-            $this->getRatingFilterScript($params),
-            compact('rateLow', 'rateHigh')
+             $this->getRatingFilterScript($params),
+             compact('rateLow', 'rateHigh')
         );
     }
 
@@ -343,7 +349,7 @@ abstract class ObjectTypeSearch extends Search
      *
      * @return [type] [description]
      */
-    public function sortByNearest($ul = null)
+    protected function nearestSort($item, $itemPos, $ul = null)
     {
         // Get user location ($ul), latitude and longitude.
         // If latitude and longitude doesn't exist in query string, the code will be read cookie to get lat and lon
@@ -362,24 +368,32 @@ abstract class ObjectTypeSearch extends Search
         }
 
         if (isset($longitude) && isset($latitude))  {
-            $this->sort(
-                        [
-                          '_geo_distance'=> [
-                            'nested_path'=> 'link_to_tenant',
-                            'link_to_tenant.position'=> [
-                              'lon' => $longitude,
-                              'lat' => $latitude
-                            ],
-                            'order'=> 'asc',
-                            'unit'=> 'km',
-                            'distance_type'=> 'plane'
-                          ]
-                        ]
-                    );
+            $geoData = [
+                '_geo_distance'=> [
+                    $itemPos => [
+                        'lon' => $longitude,
+                        'lat' => $latitude
+                    ],
+                    'order'=> 'asc',
+                    'unit'=> 'km',
+                    'distance_type'=> 'plane'
+                ]
+            ];
+            if (! empty($item)) {
+                $geoData['_geo_distance']['nested_path'] = $item;
+            }
+            $this->sort($geoData);
         }
 
         $this->sortByName();
     }
+
+    /**
+     * Sort by Nearest..
+     *
+     * @return [type] [description]
+     */
+    abstract public function sortByNearest($ul = null);
 
     /**
      * Init default search params.

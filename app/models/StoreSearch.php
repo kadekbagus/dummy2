@@ -299,16 +299,6 @@ class StoreSearch extends CampaignSearch
         }
     }
 
-    /**
-     * Sort by name..
-     *
-     * @return [type] [description]
-     */
-    public function sortByName($language = 'id', $sortMode = 'asc')
-    {
-        $this->sort(['lowercase_name' => ['order' => $sortMode]]);
-    }
-
 
     /**
      * Sort store by favorite.
@@ -378,7 +368,7 @@ class StoreSearch extends CampaignSearch
      */
     public function sortByNearest($ul = null)
     {
-        $this->nearestSort('tenant_detail', $ul);
+        $this->nearestSort('tenant_detail', 'tenant_detail.position', $ul);
     }
 
     // check user follow
