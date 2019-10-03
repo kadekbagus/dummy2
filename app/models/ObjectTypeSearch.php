@@ -325,7 +325,9 @@ abstract class ObjectTypeSearch extends Search
     public function filterByRating($ratingLow, $ratingHigh, $params)
     {
         $rateLow = (double) $ratingLow;
-        //TODO: 0.01 is hack because they way rating is added by
+        //TODO: +0.01 is hack because they way rating is added in update queue
+        //for example ESNewsUpdateQueue.php (line 189)
+        //need to fix them.
         $rateHigh = (double) $ratingHigh + 0.001;
 
         $this->filterByScript(
