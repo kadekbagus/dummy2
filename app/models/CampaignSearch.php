@@ -452,73 +452,9 @@ abstract class CampaignSearch extends ObjectTypeSearch
      *
      * @return [type] [description]
      */
-    protected function nearestSort($path, $ul = null)
-    {
-        // Get user location ($ul), latitude and longitude.
-        // If latitude and longitude doesn't exist in query string, the code will be read cookie to get lat and lon
-        if ($ul == null) {
-            $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
-
-            $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
-            if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
-                $longitude = $userLocationCookieArray[0];
-                $latitude = $userLocationCookieArray[1];
-            }
-        } else {
-            $loc = explode('|', $ul);
-            $longitude = $loc[0];
-            $latitude = $loc[1];
-        }
-
-        if (isset($longitude) && isset($latitude))  {
-            $this->sort([
-                '_geo_distance'=> [
-                    'nested_path'=> $path,
-                    $path . '.position'=> [
-                        'lon' => $longitude,
-                        'lat' => $latitude
-                    ],
-                    'order'=> 'asc',
-                    'unit'=> 'km',
-                    'distance_type'=> 'plane'
-                ]
-            ]);
-        }
-
-        $this->sortByName();
-    }
-
-    /**
-     * Sort by Nearest..
-     *
-     * @return [type] [description]
-     */
     public function sortByNearest($ul = null)
     {
-        $this->nearestSort('link_to_tenant', $ul);
-    }
-
-    /**
-     * Init default search params.
-     *
-     * @return [type] [description]
-     */
-    public function setDefaultSearchParam()
-    {
-        $this->searchParam = [
-            'index' => '',
-            'type' => '',
-            'body' => [
-                'from' => 0,
-                'size' => 20,
-                'fields' => [
-                    '_source'
-                ],
-                'query' => [],
-                'track_scores' => true,
-                'sort' => []
-            ]
-        ];
+        $this->nearestSort('link_to_tenant', 'link_to_tenant.position', $ul);
     }
 
     /**
