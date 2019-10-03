@@ -1746,4 +1746,66 @@ class IntermediateLoginController extends IntermediateBaseController
         $response = new ResponseProvider();
         return $this->render($response);
     }
+
+
+    /**
+     * Clear the session for RGP user
+     *
+     * @author kadek <kadek@dominopos.com>
+     *
+     * @return Response
+     */
+    public function getLogoutRGP()
+    {
+        $from = isset($_GET['_orbit_logout_from']) === FALSE ? 'portal' : $_GET['_orbit_logout_from'];
+        $location_id = isset($_GET['mall_id']) ? $_GET['mall_id'] : NULL;
+        $validFrom = ['portal', 'mobile-ci', 'pos'];
+
+        $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
+        unset($_COOKIE['login_from']);
+        unset($_COOKIE['orbit_email']);
+        unset($_COOKIE['orbit_firstname']);
+        setcookie('orbit_email', '', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+        setcookie('orbit_firstname', '', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+        setcookie('login_from', '', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+
+        $response = new ResponseProvider();
+
+        try {
+            $this->session->start(array(), 'no-session-creation');
+
+            $userId = $this->session->read('user_id');
+
+
+            if ($this->session->read('logged_in') !== TRUE || ! $userId) {
+                OrbitShopAPI::throwInvalidArgument('Invalid session data.');
+            }
+            $user = RgpUser::excludeDeleted()->find($userId);
+
+            if (! $user) {
+                OrbitShopAPI::throwInvalidArgument('Session error: user not found.');
+            }
+
+            $response->data = NULL;
+
+            // Store session id only from mobile-ci login & logout
+            if($from == 'mobile-ci'){
+
+            } else {
+                $this->session->destroy();
+            }
+
+        } catch (Exception $e) {
+            try {
+                $this->session->destroy();
+            } catch (Exception $e) {
+            }
+
+            $response->code = $e->getCode();
+            $response->status = 'error';
+            $response->message = $e->getMessage();
+        }
+
+        return $this->render($response);
+    }
 }
