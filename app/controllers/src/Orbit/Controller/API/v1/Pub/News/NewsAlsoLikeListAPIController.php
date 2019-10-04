@@ -30,7 +30,7 @@ use Orbit\Helper\Database\Cache as OrbitDBCache;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Elasticsearch\ClientBuilder;
 use Orbit\Helper\Elasticsearch\IndexNameBuilder;
-use Orbit\Controller\API\v1\Pub\News\NewsListAPIController;
+use Orbit\Controller\API\v1\Pub\News\NewsListNewAPIController;
 
 class NewsAlsoLikeListAPIController extends PubControllerAPI
 {
@@ -71,6 +71,7 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
             $language = OrbitInput::get('language', 'id');
             $token = OrbitInput::get('token', NULL);
             $take = OrbitInput::get('take', 4); // @todo take from config
+            $isHotEvent = OrbitInput::get('is_hot_event', 'no');
 
             //+1 to allow front end doing simple test
             //to display see all button or not
@@ -110,6 +111,7 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
                 'filter'      => 'Y',
                 'primary_key' => 'news_id',
                 'take'        => $take,
+                'is_hot_event' => $isHotEvent,
             ];
 
             // Reset the index of the array by array_values so it does not decode as an object
@@ -189,6 +191,7 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
         $_GET['token'] = $params['token'];
         $_GET['from_homepage'] = 'y';   // prevent activity recording
         $_GET['excluded_ids'] = (array)$params['except_id'];
+        $_GET['is_hot_event'] = $params['is_hot_event'];
 
         if ($params['sort_by'] === 'location') {
             unset($_GET['cities']);
@@ -207,7 +210,7 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
 
         Config::set('orbit.cache.context.event-list.enable', FALSE);
 
-        $responseSameCategory = NewsListAPIController::create('raw')
+        $responseSameCategory = NewsListNewAPIController::create('raw')
                     ->setUser($this->api->user)
                     ->getSearchNews();
 
@@ -228,7 +231,7 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
             }
 
             // get news
-            $responseSameType = NewsListAPIController::create('raw')
+            $responseSameType = NewsListNewAPIController::create('raw')
                     ->setUser($this->api->user)
                     ->getSearchNews();
 
