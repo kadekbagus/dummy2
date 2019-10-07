@@ -11,6 +11,8 @@ abstract class ObjectTypeSearch extends Search
     protected $objectType = null;
     protected $objectTypeAlias = null;
 
+    private $mallCountryList = null;
+
     public function __construct($ESConfig = [])
     {
         parent::__construct($ESConfig);
@@ -191,6 +193,19 @@ abstract class ObjectTypeSearch extends Search
         ]);
     }
 
+    protected function getMallCountryList()
+    {
+        //TODO : cache this call database call as we may need to call it several times
+        if (empty($mallCountryList)) {
+            $mallCountry = Mall::groupBy('country')->lists('country');
+            $countries = Country::select('country_id')->whereIn('name', $mallCountry)->get();
+            $mallCountryList = $countries;
+        } else {
+            $countries = $mallCountryList;
+        }
+        return $countries;
+    }
+
     protected function buildRatingReviewCalcScript($params = [])
     {
         // calculate rating and review based on location/mall
@@ -244,8 +259,7 @@ abstract class ObjectTypeSearch extends Search
                 }
             }; ";
         } else {
-            $mallCountry = Mall::groupBy('country')->lists('country');
-            $countries = Country::select('country_id')->whereIn('name', $mallCountry)->get();
+            $countries = $this->getMallCountryList();
 
             foreach ($countries as $country) {
                 $countryId = $country->country_id;

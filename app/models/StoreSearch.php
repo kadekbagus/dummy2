@@ -447,4 +447,14 @@ class StoreSearch extends CampaignSearch
                 // do nothing
         }
     }
+
+    /**
+     * Sort by name..
+     *
+     * @return [type] [description]
+     */
+    public function sortByName($language = 'id', $sortMode = 'asc')
+    {
+        $this->sort(['lowercase_name' => ['order' => $sortMode]]);
+    }
 }
