@@ -50,7 +50,8 @@ class GetCouponQueue
 
         $activity = Activity::mobileci()
                             ->setActivityType('transaction')
-                            ->setActivityName('transaction_status');
+                            ->setActivityName('transaction_status')
+                            ->setCurrentUrl($data['current_url']);
 
         try {
             DB::connection()->beginTransaction();
