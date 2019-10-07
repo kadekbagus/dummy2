@@ -945,6 +945,7 @@ return array(
             'rrp_portal' => 'X-OMS-RRP',
             'am_portal' => 'X-OMS-AMP',
             'pp_portal' => 'X-OMS-PP',
+            'rgp_portal' => 'X-OMS-RGP',
         ],
 
         /**
@@ -965,6 +966,7 @@ return array(
             'rrp_portal' => '10',
             'am_portal' => '11',
             'pp_portal' => '12',
+            'rgp_portal' => '13',
         ],
 
         /**
@@ -1478,6 +1480,33 @@ return array(
                     'httponly'  => TRUE
                 ),
             ),
+
+            'rgp_portal' => array(
+                'expire' => 3600,   // 1 hour
+                // From HTTP Headers
+                'header'  => array(
+                    'name'      => 'X-OMS-RGP'
+                ),
+                // From Query String
+                'query_string' => array(
+                    'name'      => 'X-OMS-RGP'
+                ),
+                // From Cookie
+                'cookie'    => array(
+                    'name'      => 'X-OMS-RGP',
+                    // Expire time, should be set equals or higher than
+                    // SessionConifg.expire
+                    'expire' => 62208000,   // two years
+                    // Path of the cookie
+                    'path'      => '/',
+                    // domain
+                    'domain'    => NULL,
+                    // secure transfer via HTTPS only
+                    'secure'    => FALSE,
+                    // Deny access from client side script
+                    'httponly'  => TRUE
+                ),
+            ),
         ),
     ),
 
@@ -1536,6 +1565,7 @@ return array(
                 'Set-X-OMS-MT',
                 'Set-X-OMS-AMP',
                 'Set-X-OMS-PP',
+                'Set-X-OMS-RGP',
             ],
 
             // No need protocol, just enter domain name
@@ -6220,6 +6250,15 @@ return array(
     'blacklisted_notification_recipients' => [
         'email' => [
             //
+        ],
+    ],
+
+    'pulsa_list_url' => [
+        'base_url' => '/pulsa-list?country=Indonesia',
+        'utm_params' => [
+            'utm_source' => 'email',
+            'utm_medium' => 'email',
+            'utm_campaign' => 'Update Pulsa dan Paket Data',
         ],
     ],
 );

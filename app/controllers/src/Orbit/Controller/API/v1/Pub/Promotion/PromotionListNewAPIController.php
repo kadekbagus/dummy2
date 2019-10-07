@@ -136,6 +136,8 @@ class PromotionListNewAPIController extends PubControllerAPI
             $myCCFilter = OrbitInput::get('my_cc_filter', false);
             $withAdvert = (bool) OrbitInput::get('with_advert', true);
             $gender = OrbitInput::get('gender', 'all');
+            $ratingLow = OrbitInput::get('rating_low', 0);
+            $ratingHigh = OrbitInput::get('rating_high', 5);
 
              // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -146,10 +148,14 @@ class PromotionListNewAPIController extends PubControllerAPI
                 array(
                     'language' => $language,
                     'sortby'   => $sortBy,
+                    'rating_low' => $ratingLow,
+                    'rating_high' => $ratingHigh,
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
                     'sortby'   => 'in:relevance,name,location,created_date,updated_date,rating',
+                    'rating_low' => 'numeric|min:0|max:5',
+                    'rating_high' => 'numeric|min:0|max:5',
                 )
             );
 
@@ -165,7 +171,9 @@ class PromotionListNewAPIController extends PubControllerAPI
                 'no_total_record' => $no_total_records,
                 'take' => $take, 'skip' => $skip,
                 'country' => $countryFilter, 'cities' => $cityFilters,
-                'my_cc_filter' => $myCCFilter
+                'my_cc_filter' => $myCCFilter,
+                'rating_low' => $ratingLow,
+                'rating_high' => $ratingHigh,
             ];
 
             // Run the validation
@@ -309,10 +317,20 @@ class PromotionListNewAPIController extends PubControllerAPI
                 $this->searcher->filterWithAdvert(compact('dateTimeEs', 'mallId', 'advertType', 'locationId', 'list_type', 'advertSorting'));
             }
 
+            //filter by rating number
+            $this->searcher->filterByRating(
+                $ratingLow,
+                $ratingHigh,
+                compact(
+                    'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
+                )
+            );
+
             // Add script fiedls...
             $scriptFields = $this->searcher->addReviewFollowScript(compact(
                 'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
+
 
             if (! empty($keyword)) {
                 $sortBy = 'relevance';
@@ -367,10 +385,11 @@ class PromotionListNewAPIController extends PubControllerAPI
 
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-                $response = $recordCache->get($serializedCacheKey, function() {
-                    return $this->searcher->getResult();
+                $response = $recordCache->get($serializedCacheKey, function() use($serializedCacheKey, $recordCache) {
+                    $resp = $this->searcher->getResult();
+                    $recordCache->put($serializedCacheKey, $resp);
+                    return $resp;
                 });
-                $recordCache->put($serializedCacheKey, $response);
             } else {
                 $response = $this->searcher->getResult();
             }
