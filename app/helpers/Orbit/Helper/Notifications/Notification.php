@@ -75,6 +75,14 @@ abstract class Notification {
      */
     protected $disabledNotifications = [];
 
+    /**
+     * List of blacklisted recipient/user emails.
+     * @var array
+     */
+    protected $blacklistedRecipients = [
+        'email' => [],
+    ];
+
     function __construct($notifiable = null)
     {
         $this->setNotifiable($notifiable);
@@ -126,10 +134,20 @@ abstract class Notification {
             // Override the delay if needed.
             $this->notificationDelay = $customDelay === 0 ? $this->notificationDelay : $customDelay;
 
+            // Check if email is being blacklisted.
+            // If so, then do nothing.
+            $this->blacklistedRecipients['email'] = $this->getBlacklistedEmails();
+            $emailData = $this->getEmailData();
+            $recipientEmail = isset($emailData['recipientEmail']) ? $emailData['recipientEmail'] : '';
+
+            if (in_array($recipientEmail, $this->blacklistedRecipients['email'])) {
+                return;
+            }
+
             Queue::later(
                 $this->notificationDelay,
                 get_class($this) . '@toEmail',
-                $this->getEmailData(),
+                $emailData,
                 $this->getQueueName()
             );
         }
@@ -226,5 +244,15 @@ abstract class Notification {
                && ! empty($this->context)
                && isset($this->disabledNotifications[$this->context][$method])
                && in_array($this->signature, $this->disabledNotifications[$this->context][$method]);
+    }
+
+    /**
+     * Get list of blacklisted emails.
+     *
+     * @return [type] [description]
+     */
+    protected function getBlacklistedEmails()
+    {
+        return Config::get('orbit.blacklisted_notification_recipients.email', []);
     }
 }
