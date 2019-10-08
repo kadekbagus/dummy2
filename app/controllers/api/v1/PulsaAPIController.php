@@ -72,6 +72,7 @@ class PulsaAPIController extends ControllerAPI
             $vendor_price = OrbitInput::post('vendor_price');
             $displayed = OrbitInput::post('displayed', 'yes');
             $object_type = OrbitInput::post('object_type', 'pulsa');
+            $isPromo = OrbitInput::post('is_promo', 'no');
             $errorMessageObjectType = ucwords(str_replace(['_'], ' ', $object_type));
 
             $validator = Validator::make(
@@ -82,6 +83,7 @@ class PulsaAPIController extends ControllerAPI
                     'value'                 => $value,
                     'price'                 => $price,
                     'object_type'           => $object_type,
+                    'is_promo'              => $isPromo,
                 ),
                 array(
                     'telco_operator_id'     => 'required|orbit.empty.telcooperator',
@@ -90,6 +92,7 @@ class PulsaAPIController extends ControllerAPI
                     'value'                 => 'required',
                     'price'                 => 'required',
                     'object_type'           => 'required|in:pulsa,data_plan',
+                    'isPromo'               => 'in:yes,no',
                 ),
                 array(
                     'pulsa_code.required'                => "{$errorMessageObjectType} Product Name M-Cash field is required",
@@ -123,6 +126,7 @@ class PulsaAPIController extends ControllerAPI
             $newPulsa->status = $status;
             $newPulsa->vendor_price = $vendor_price;
             $newPulsa->displayed = $displayed;
+            $newPulsa->is_promo = $isPromo;
             $newPulsa->save();
 
             // Commit the changes
@@ -224,6 +228,7 @@ class PulsaAPIController extends ControllerAPI
             $price = OrbitInput::post('price');
             $quantity = OrbitInput::post('quantity');
             $object_type = OrbitInput::post('object_type', 'pulsa');
+            $isPromo = OrbitInput::post('is_promo', 'no');
             $errorMessageObjectType = ucwords(str_replace(['_'], ' ', $object_type));
 
             $validator = Validator::make(
@@ -234,6 +239,7 @@ class PulsaAPIController extends ControllerAPI
                     'pulsa_display_name'    => $pulsa_display_name,
                     'value'                 => $value,
                     'price'                 => $price,
+                    'is_promo'              => $isPromo,
                 ),
                 array(
                     'pulsa_item_id'         => 'required',
@@ -242,6 +248,7 @@ class PulsaAPIController extends ControllerAPI
                     'pulsa_display_name'    => 'required',
                     'value'                 => 'required',
                     'price'                 => 'required',
+                    'is_promo'              => 'in:yes,no',
                 ),
                 array(
                     'pulsa_code.required'          => "{$errorMessageObjectType} Product Name M-Cash field is required",
@@ -305,6 +312,10 @@ class PulsaAPIController extends ControllerAPI
 
             OrbitInput::post('displayed', function($displayed) use ($updatedPulsa) {
                 $updatedPulsa->displayed = $displayed;
+            });
+
+            OrbitInput::post('is_promo', function($isPromo) use ($updatedPulsa) {
+                $updatedPulsa->is_promo = $isPromo;
             });
 
             $updatedPulsa->save();
@@ -420,7 +431,7 @@ class PulsaAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $pulsa = Pulsa::select('pulsa.pulsa_item_id', 'pulsa.pulsa_code', 'pulsa.pulsa_display_name', 'telco_operators.name', 'pulsa.value', 'pulsa.price', 'pulsa.quantity', 'pulsa.status', 'pulsa.vendor_price', 'object_type')
+            $pulsa = Pulsa::select('pulsa.pulsa_item_id', 'pulsa.pulsa_code', 'pulsa.pulsa_display_name', 'telco_operators.name', 'pulsa.value', 'pulsa.price', 'pulsa.quantity', 'pulsa.status', 'pulsa.vendor_price', 'object_type', 'is_promo')
                           ->leftJoin('telco_operators', 'telco_operators.telco_operator_id', '=', 'pulsa.telco_operator_id')
                           ->where('object_type', $object_type);
 
@@ -471,6 +482,12 @@ class PulsaAPIController extends ControllerAPI
             OrbitInput::get('price', function($price) use ($pulsa)
             {
                 $pulsa->where('pulsa.price', $price);
+            });
+
+            // Filter pulsa by is_promo
+            OrbitInput::get('is_promo', function($isPromo) use ($pulsa)
+            {
+                $pulsa->where('pulsa.is_promo', $isPromo);
             });
 
             // Filter pulsa by quantity
@@ -530,6 +547,7 @@ class PulsaAPIController extends ControllerAPI
                     'quantity'           => 'pulsa.quantity',
                     'status'             => 'pulsa.status',
                     'name'               => 'telco_operators.name',
+                    'is_promo'           => 'pulsa.is_promo',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];

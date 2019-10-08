@@ -15,6 +15,13 @@ use Orbit\Notifications\Payment\CanceledPaymentNotification;
 Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTransaction $payment, $mall = null)
 {
     $paymentId = $payment->payment_transaction_id;
+    $utm_source = (isset($payment->utm_source)) ? $payment->utm_source : '';
+    $utm_medium = (isset($payment->utm_medium)) ? $payment->utm_medium : '';
+    $utm_term = (isset($payment->utm_term)) ? $payment->utm_term : '';
+    $utm_content = (isset($payment->utm_content)) ? $payment->utm_content : '';
+    $utm_campaign = (isset($payment->utm_campaign)) ? $payment->utm_campaign : '';
+
+    $utmUrl = '?utm_source='.$utm_source.'&utm_medium='.$utm_medium.'&utm_term='.$utm_term.'&utm_content='.$utm_content.'&utm_campaign='.$utm_campaign;
 
     // Clean up payment if expired, failed, denied, or canceled.
     if ($payment->expired() || $payment->failed() || $payment->denied() || $payment->canceled()) {
@@ -58,7 +65,7 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
     else if ($payment->completed()) {
         Log::info("PaidCoupon: PaymentID: {$paymentId} verified!");
 
-        $queueData = ['paymentId' => $payment->payment_transaction_id, 'retries' => 0, 'current_url' => Request::fullUrl()];
+        $queueData = ['paymentId' => $payment->payment_transaction_id, 'retries' => 0, 'current_url' => $utmUrl];
         if (! empty($mall)) {
             $queueData['mall_id'] = $mall->merchant_id;
         }
@@ -161,7 +168,7 @@ Event::listen('orbit.payment-stripe.postupdatepayment.after.commit', function(Pa
     else if ($payment->completed()) {
         Log::info("PaidCoupon: PaymentID: {$paymentId} verified!");
 
-        $queueData = ['paymentId' => $payment->payment_transaction_id, 'retries' => 0];
+        $queueData = ['paymentId' => $payment->payment_transaction_id, 'retries' => 0, 'current_url' => $utmUrl];
         if (! empty($mall)) {
             $queueData['mall_id'] = $mall->merchant_id;
         }
