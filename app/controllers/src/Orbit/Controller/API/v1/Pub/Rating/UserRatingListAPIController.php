@@ -62,6 +62,8 @@ class UserRatingListAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $mongoConfig = Config::get('database.mongodb');
             $mallId = OrbitInput::get('mall_id', null);
+            $sortBy = OrbitInput::get('sortby', 'updated_at');
+            $sortMode = OrbitInput::get('sortmode', 'desc');
 
             $session = SessionPreparer::prepareSession();
 
@@ -74,12 +76,33 @@ class UserRatingListAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
+            $validator = Validator::make(
+                array(
+                    'object_id'   => $objectId,
+                    'object_type' => $objectType,
+                    'sort_by' => $sortBy,
+                    'sort_mode' => $sortMode
+                ),
+                array(
+                    'object_id' => 'required',
+                    'object_type' => 'required',
+                    'sort_by' => 'in:updated_at,average',
+                    'sort_mode' => 'in:desc,asc'
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             $queryString = [
                 'take'        => $take,
                 'skip'        => $skip,
-                'sortBy'      => 'updated_at',
-                'sortMode'    => 'desc',
-                'user_id'     => $user->user_id
+                'sortBy'      => $sortBy,
+                'sortMode'    => $sortMode,
+                'user_id'     => $user->user_id,
             ];
 
             $prefix = DB::getTablePrefix();
