@@ -885,10 +885,6 @@ class Activity extends Eloquent
                 // try to get the current session id
                 $this->session_id = static::getSessionId();
             }
-
-            if ($this->activity_type !== 'logout'){
-                $this->saveToConnectedNow();
-            }
         }
 
         $notificationToken = OrbitInput::post('notification_token', OrbitInput::get('notification_token', NULL));
