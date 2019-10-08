@@ -1084,60 +1084,6 @@ class Activity extends Eloquent
     }
 
     /**
-     * Check, Create and Update Connected Now.
-     *
-     * @author Irianto <irianto@dominopos.com>
-     * @throws Exception
-     */
-    protected function saveToConnectedNow()
-    {
-        $date = date('Y-m-d');
-        $hour = date('H');
-        $minute = date('i');
-
-        $activity = ConnectedNow::select('connected_now.*', 'list_connected_user.user_id')->leftJoin('list_connected_user', function ($join) {
-                $join->on('connected_now.connected_now_id', '=', 'list_connected_user.connected_now_id');
-                $join->where('list_connected_user.user_id', '=', $this->user_id);
-            })
-            ->where('merchant_id', '=', $this->location_id)
-            ->where('date', '=', $date)
-            ->where('hour', '=', $hour)
-            ->where('minute', '=', $minute)
-            ->first();
-
-        if (empty($activity)) {
-            if (! empty($this->location_id)) {
-                $newConnected = new ConnectedNow();
-                $newConnected->merchant_id = $this->location_id;
-                $newConnected->customer_connected = 1;
-                $newConnected->date = $date;
-                $newConnected->hour = $hour;
-                $newConnected->minute = $minute;
-                $newConnected->save();
-
-                if (! empty($this->user_id)) {
-                    $newListConnectedUser = new ListConnectedUser();
-                    $newListConnectedUser->connected_now_id = $newConnected->connected_now_id;
-                    $newListConnectedUser->user_id = $this->user_id;
-                    $newListConnectedUser->save();
-                }
-            }
-        } else {
-            if (is_null($activity->user_id)) {
-                if (! empty($this->user_id)) {
-                    $newListConnectedUser = new ListConnectedUser();
-                    $newListConnectedUser->connected_now_id = $activity->connected_now_id;
-                    $newListConnectedUser->user_id = $this->user_id;
-                    $newListConnectedUser->save();
-                }
-
-                $activity->customer_connected += 1;
-                $activity->save();
-            }
-        }
-    }
-
-    /**
      * Add the email to subscriber list in the Mailchimp.
      *
      * @author Rio Astamal <rio@dominopos.com>
