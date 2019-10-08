@@ -59,6 +59,7 @@ class RatingListAPIController extends PubControllerAPI
             $mongoConfig = Config::get('database.mongodb');
             $mallId = OrbitInput::get('mall_id', null);
             $sortBy = OrbitInput::get('sortby', 'updated_at');
+            $sortMode = OrbitInput::get('sortmode', 'desc');
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -67,12 +68,14 @@ class RatingListAPIController extends PubControllerAPI
                 array(
                     'object_id'   => $objectId,
                     'object_type' => $objectType,
-                    'sort_by' => $sortBy
+                    'sort_by' => $sortBy,
+                    'sort_mode' => $sortMode
                 ),
                 array(
                     'object_id' => 'required',
                     'object_type' => 'required',
-                    'sort_by' => 'in:updated_at,average'
+                    'sort_by' => 'in:updated_at,average',
+                    'sort_mode' => 'in:desc,asc'
                 )
             );
 
@@ -88,7 +91,7 @@ class RatingListAPIController extends PubControllerAPI
                 'take'        => $take,
                 'skip'        => $skip,
                 'sortBy'      => $sortBy,
-                'sortMode'    => 'desc'
+                'sortMode'    => $sortMode
             ];
 
             $arrayQuery = '';
