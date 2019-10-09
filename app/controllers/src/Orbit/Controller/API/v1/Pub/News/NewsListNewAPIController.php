@@ -75,6 +75,8 @@ class NewsListNewAPIController extends PubControllerAPI
     /**
      * GET - get active news in all mall, and also provide for searching
      *
+     * @todo refactor as this is similar to promotion, coupon or store listing
+     *
      * @author Firmansyayh <firmansyah@dominopos.com>
      * @author Rio Astamal <rio@dominopos.com>
      *
@@ -141,6 +143,8 @@ class NewsListNewAPIController extends PubControllerAPI
             $gender = OrbitInput::get('gender', 'all');
             $ratingLow = OrbitInput::get('rating_low', 0);
             $ratingHigh = OrbitInput::get('rating_high', 5);
+            $ratingLow = empty($ratingLow) ? 0 : $ratingLow;
+            $ratingHigh = empty($ratingHigh) ? 5 : $ratingHigh;
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
