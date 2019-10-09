@@ -32,6 +32,17 @@ class NewsSearch extends Search
     }
 
     /**
+     * Filter only hot event (loket).
+     *
+     * @param  string  $isHotEvent [description]
+     * @return boolean             [description]
+     */
+    public function isHotEvent()
+    {
+        $this->must(['match' => ['is_hot_event' => 'yes']]);
+    }
+
+    /**
      * Filter by Mall...
      *
      * @param  string $mallId [description]
