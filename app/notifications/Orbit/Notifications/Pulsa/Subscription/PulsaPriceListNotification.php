@@ -59,7 +59,7 @@ class PulsaPriceListNotification extends CustomerNotification implements EmailNo
     public function getEmailData()
     {
         $emailData = [
-            'subject' => trans('email-pulsa-subscription.pulsa-data-plan-list.subject', [], '', 'id'),
+            'subject' => trans('email-subscription.pulsa.subject', [], '', 'id'),
             'customerName' => $this->notifiable->user_firstname . ' ' . $this->notifiable->user_lastname,
             'cs' => $this->getContactData(),
             'recipientEmail' => $this->getRecipientEmail(),
