@@ -396,13 +396,13 @@ abstract class CampaignSearch extends ObjectTypeSearch
      * @param  string $sortingScript [description]
      * @return [type]                [description]
      */
-    public function sortByRating($sortingScript = '')
+    public function sortByRating($sortingScript = '', $sortMode = 'desc')
     {
         $this->sort([
             '_script' => [
                 'script' => $sortingScript,
                 'type' => 'number',
-                'order' => 'desc'
+                'order' => $sortMode
             ]
         ]);
     }
