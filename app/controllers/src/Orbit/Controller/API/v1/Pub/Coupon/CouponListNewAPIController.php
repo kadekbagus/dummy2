@@ -71,6 +71,8 @@ class CouponListNewAPIController extends PubControllerAPI
     /**
      * GET - get all coupon in all mall
      *
+     * @todo refactor as this is similar to promotion, news or store listing
+     *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
      *
      * List of API Parameters
@@ -134,6 +136,8 @@ class CouponListNewAPIController extends PubControllerAPI
             $gender = OrbitInput::get('gender', 'all');
             $ratingLow = OrbitInput::get('rating_low', 0);
             $ratingHigh = OrbitInput::get('rating_high', 5);
+            $ratingLow = empty($ratingLow) ? 0 : $ratingLow;
+            $ratingHigh = empty($ratingHigh) ? 5 : $ratingHigh;
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
