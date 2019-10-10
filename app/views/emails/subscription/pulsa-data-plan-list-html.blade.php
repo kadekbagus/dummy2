@@ -160,7 +160,7 @@
                       <h1 style="font-size: 16pt;">
                         {{ trans('email-subscription.pulsa.body.greetings.customer', ['customerName' => $customerName], '', 'id') }}
                       </h1>
-                      <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;color:#888">
+                      <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;color:#888;font-size:14px;">
                         {{ trans('email-subscription.pulsa.body.greetings.text', [], '', 'id') }}
                       </p>
                     </td>
@@ -187,7 +187,7 @@
                             <h3 style="font-size:14pt;color:#444;" class="pulsa-promo-title">
                               {{ trans('email-subscription.pulsa.body.marketing_title', [], '', 'id') }}
                             </h3>
-                            <p style="color:#888;line-height:1.5em;" class="pulsa-promo-description">
+                            <p style="color:#888;line-height:1.5em;font-size:14px;" class="pulsa-promo-description">
                               {{ trans('email-subscription.pulsa.body.marketing_body', [], '', 'id') }}
                             </p>
                             <a style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;font-size:14px;display:inline-block;padding:10px 12px;text-decoration:none;" href="http://gotomalls.budi/pulsa-list?country=Indonesia&utm_source=email&utm_medium=email&utm_campaign=Update Pulsa dan Paket Data">
@@ -215,7 +215,7 @@
                     </tr>
                     <tr>
                       <td class="">
-                        <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;color:#888;">
+                        <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;color:#888;font-size: 14px;">
                           {{ trans('email-subscription.pulsa.body.campaign_suggestion_text', [], '', 'id') }}
                         </p>
                       </td>
@@ -234,7 +234,7 @@
                     <td align="center">
                       <table class="container">
                         <tr>
-                          <td align="center" style="color: #666;" colspan="6" height="30" valign="top">
+                          <td align="center" style="color: #666;font-size:14px;" colspan="6" height="30" valign="top">
                             {{ trans('email-subscription.pulsa.body.help', [], '', 'id') }}
                           </td>
                         </tr>
