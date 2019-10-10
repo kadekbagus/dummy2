@@ -6261,4 +6261,8 @@ return array(
             'utm_campaign' => 'Update Pulsa dan Paket Data',
         ],
     ],
+
+    'subscription' => [
+        'max_campaign_to_display' => 4,
+    ],
 );

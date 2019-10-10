@@ -65,9 +65,9 @@ class NewsListNewAPIController extends PubControllerAPI
      */
     protected $esConfig = [];
 
-    public function __construct()
+    public function __construct($contentType = 'application/json')
     {
-        parent::__construct();
+        parent::__construct($contentType);
         $this->esConfig = Config::get('orbit.elasticsearch');
         $this->searcher = new NewsSearch($this->esConfig);
     }
@@ -587,7 +587,7 @@ class NewsListNewAPIController extends PubControllerAPI
             }
 
 
-            if (OrbitInput::get('from_homepage', '') !== 'y') {
+            if (OrbitInput::get('from_homepage', '') !== 'y' && $this->contentType !== 'raw') {
                 if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
                     if (is_object($mall)) {
                         $activityNotes = sprintf('Page viewed: View mall event list');
