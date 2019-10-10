@@ -346,7 +346,7 @@ class NewsListNewAPIController extends PubControllerAPI
                     $this->searcher->sortByNearest($ul);
                     break;
                 case 'rating':
-                    $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
+                    $this->searcher->sortByRating($scriptFields['scriptFieldRating'], $sortMode);
                     break;
                 case 'created_date':
                     $this->searcher->sortByCreatedDate($sortMode);

@@ -274,7 +274,7 @@ class MallListNewAPIController extends PubControllerAPI
                     $this->searcher->sortByNearest($ul);
                     break;
                 case 'rating':
-                    $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
+                    $this->searcher->sortByRating($scriptFields['scriptFieldRating'], $sortMode);
                     break;
                 case 'followed':
                     $this->searcher->sortByFavorite($scriptFields['scriptFieldFollow']);
