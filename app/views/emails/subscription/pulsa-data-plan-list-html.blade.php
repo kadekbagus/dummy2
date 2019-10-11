@@ -240,7 +240,7 @@
                         </tr>
                         <tr>
                           <td align="center" width="40">
-                            <a href="tel:{{ $cs['phone'] }}" class="contact-link" target="_blank">
+                            <a href="https://wa.me/62816588561" class="contact-link" target="_blank">
                               <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/socmed-icon-01.png" alt="tel" class="contact-img">
                             </a>
                           </td>
