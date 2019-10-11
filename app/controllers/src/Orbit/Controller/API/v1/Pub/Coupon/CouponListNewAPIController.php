@@ -61,15 +61,17 @@ class CouponListNewAPIController extends PubControllerAPI
      */
     protected $esConfig = [];
 
-    public function __construct()
+    public function __construct($contentType = 'application/json')
     {
-        parent::__construct();
+        parent::__construct($contentType);
         $this->esConfig = Config::get('orbit.elasticsearch');
         $this->searcher = new CouponSearch($this->esConfig);
     }
 
     /**
      * GET - get all coupon in all mall
+     *
+     * @todo refactor as this is similar to promotion, news or store listing
      *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
      *
@@ -134,6 +136,8 @@ class CouponListNewAPIController extends PubControllerAPI
             $gender = OrbitInput::get('gender', 'all');
             $ratingLow = OrbitInput::get('rating_low', 0);
             $ratingHigh = OrbitInput::get('rating_high', 5);
+            $ratingLow = empty($ratingLow) ? 0 : $ratingLow;
+            $ratingHigh = empty($ratingHigh) ? 5 : $ratingHigh;
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -351,7 +355,7 @@ class CouponListNewAPIController extends PubControllerAPI
                     $this->searcher->sortByNearest($ul);
                     break;
                 case 'rating':
-                    $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
+                    $this->searcher->sortByRating($scriptFields['scriptFieldRating'], $sortMode);
                     break;
                 case 'created_date':
                     $this->searcher->sortByCreatedDate($sortMode);
@@ -640,7 +644,7 @@ class CouponListNewAPIController extends PubControllerAPI
             // save activity when accessing listing
             // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
             // moved from generic activity number 32
-            if (OrbitInput::get('from_homepage', '') !== 'y') {
+            if (OrbitInput::get('from_homepage', '') !== 'y' && $this->contentType !== 'raw') {
                 if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
                     if (is_object($mall)) {
                         $activityNotes = sprintf('Page viewed: View mall coupon list');

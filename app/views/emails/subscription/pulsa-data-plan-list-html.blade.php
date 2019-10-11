@@ -1,201 +1,288 @@
-<!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
-  <head>
-    <meta charset="utf-8"> <!-- utf-8 works for most cases -->
-    <meta name="viewport" content="width=device-width"> <!-- Forcing initial-scale shouldn't be necessary -->
-    <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Use the latest (edge) version of IE rendering engine -->
-    <title>{{ $subject }}</title>
-    <!-- Web Font / @font-face : BEGIN -->
-    <!-- NOTE: If web fonts are not required, lines 10 - 27 can be safely removed. -->
-    <!-- All other clients get the webfont reference; some will render the font and others will silently fail to the fallbacks. More on that here: http://stylecampaign.com/blog/2015/02/webfont-support-in-email/ -->
-    <!--[if !mso]><!-->
-    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
-        <!--<![endif]-->
-      <!-- Web Font / @font-face : END -->
-    <style type="text/css">
-        /* What it does: Stops Outlook from adding extra spacing to tables. */
-        body, th, td, p, a {
-            font-family: 'Roboto', 'Arial', sans-serif;
-        }
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-        p {
-            margin: 0;
-        }
+  <title>Pulsa & Data Plan Promos</title>
 
-        body {
-            text-align: left;
-        }
+  <style type="text/css">
 
-        table.email-container {
+    /* Outlines the grids, remove when sending */
+    /* table td { border: 1px solid cyan; } */
 
-            max-width: 640px;
-        }
+    /* CLIENT-SPECIFIC STYLES */
+    body, table, td, a {
+      -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;
+      font-family: 'Roboto', 'Arial', sans-serif;
+      color: #222;
+    }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; }
 
-        table {
-            line-height: 1.7em;
-            font-size: 14px;
-            color: #222;
-            width: 100%;
-            border-spacing: 0 !important;
-            border-collapse: collapse !important;
-            table-layout: fixed !important;
-            margin: 0 auto !important;
-        }
+    /* RESET STYLES */
+    img { border: 0; outline: none; text-decoration: none; }
+    table { border-collapse: collapse !important; }
+    body { margin: 0 !important; padding: 0 !important; width: 100% !important; }
 
-        table.no-border  {
-            border: 0;
-        }
+    /* iOS BLUE LINKS */
+    a[x-apple-data-detectors] {
+      color: inherit !important;
+      text-decoration: none !important;
+      font-size: inherit !important;
+      font-family: inherit !important;
+      font-weight: inherit !important;
+      line-height: inherit !important;
+    }
 
-        /* What it does: Stops Outlook from adding extra spacing to tables. */
-        table,
-        td {
-            mso-table-lspace: 0pt !important;
-            mso-table-rspace: 0pt !important;
-        }
+    /* ANDROID CENTER FIX */
+    div[style*="margin: 16px 0;"] { margin: 0 !important; }
 
-        /* What it does: Uses a better rendering method when resizing images in IE. */
-        img {
-            -ms-interpolation-mode:bicubic;
-        }
+    .pulsa-promo-container {
+      padding-top: 20px;
+      padding-bottom: 20px;
+      width: 600px;
+    }
 
-        .text-red { color: #f43d3c; }
+    .pulsa-promo-title {
+        margin: 0;
+    }
 
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
-        .text-left { text-align: left; }
+    .pulsa-promo-description {
+      margin: 10px 10px 20px 0;
+    }
 
-        thead tr.invoice-header th {
-            padding-bottom: 30px;
-        }
+    .suggestion-list-item {
+      padding-bottom: 30px !important;
+    }
+    .suggestion-list-item.odd {
+      padding-right:10px;
+    }
+    .suggestion-list-item.even {
+      padding-left: 10px;
+    }
 
-        img.logo {
-            width: 80%;
-        }
+    /* Custom styles */
+    .box-shadow {
+      box-shadow:0px 0px 10px rgba(0,0,0,0.2);border-radius:8px;
+    }
 
-        .invoice-title {
-            font-size: 28px;
-            font-weight: bold;
-        }
+    .padding-h-15 {
+      padding-left: 20px; padding-right:20px;
+    }
 
-        .invoice-info {
-            padding-top: 20px;
-            padding-bottom: 20px;
-        }
+    .padding-t {
+      padding-top: 15px !important;
+    }
+    .padding-b {
+      padding-bottom: 15px !important;
+    }
 
-        .invoice-body {
-            padding-top: 10px;
-            padding-bottom: 80px;
-        }
+    .contact-link {
+      text-decoration: none;
+    }
 
-        table.customer {
-            margin-top: 30px;
-        }
+    .contact-img {
+      width:40px;
+      height: 40px;
+      margin-left: 2px;
+      margin-right: 2px;
+    }
 
-        table.customer tr th {
-            padding-left: 15px;
-        }
+    /* MEDIA QUERIES */
+    @media all and (max-width:639px){
+      .wrapper{ width:320px!important; padding: 0 !important; }
+      .container{ width:300px!important;  padding: 0 !important; }
+      .mobile{ width:100%!important; display:block!important; padding: 0 !important; }
+      .img{ width:100% !important; height:auto !important; }
+      *[class="mobileOff"] { width: 0px !important; display: none !important; }
+      *[class*="mobileOn"] { display: block !important; max-height:none !important; }
+      .center-on-mobile {
+        text-align: center !important;
+      }
+      .padding-h-15 {
+        padding-left: 10px !important; padding-right: 10px !important;
+      }
+      .padding-v-15 {
+        padding-top: 10px !important; padding-bottom: 10px !important;
+      }
 
-        table.customer tr td {
-            padding: 15px;
-        }
+      .margin-h { margin-left: 10px; margin-right: 10px; }
 
-        table.customer tr th.first,
-        table.customer tr td.first {
-            padding-left: 0;
-        }
+      .suggestion-list-item {
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+        padding-bottom: 15px !important;
+      }
 
-        table.transaction {
-            margin-top: 30px;
-        }
+      .pulsa-promo-container {
+        width: 300px !important;
+        padding-top: 20px !important;
+        padding-bottom: 20px !important;
+      }
 
-        table.transaction tr th {
-            padding: 8px;
-        }
+      .pulsa-promo-title {
+        margin-top: 10px;
+      }
 
-        table.transaction tr td {
-            padding: 15px 8px;
-        }
+      .pulsa-promo-description {
+        margin: 10px;
+      }
+    }
 
-        table.transaction tr th.first,
-        table.transaction tr td.first {
-            padding-left: 0;
-        }
+  </style>
+</head>
+<body style="margin:0; padding:0; background-color:#F2F2F2;">
 
-        tr.transaction-item td {
-            border-bottom: 1px solid #999;
-            vertical-align: top;
-        }
-        tr.transaction-item:last-child td {
-            border-bottom: 0;
-        }
+  <span style="display: block; width: 640px !important; max-width: 640px; height: 1px" class="mobileOff"></span>
 
-        thead.bordered tr th {
-            border-top: 1px solid #999;
-            border-bottom: 1px solid #999;
-        }
+  <center>
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#F2F2F2">
+      <tr>
+        <td align="center" valign="top">
 
-        tfoot.transaction-footer tr td {
-            border-top: 1px solid #999;
-        }
+          <table width="640" cellpadding="0" cellspacing="0" border="0" class="wrapper" bgcolor="#FFFFFF">
+            <tr>
+              <td height="10" style="font-size:10px; line-height:10px;">&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="center" valign="top">
 
-        .btn-redeem {
-            border-radius: 5px;
-            background-color: #f43d3c;
-            color: #fff;
-            font-weight: bold;
-            font-size: 16px;
-            display: inline-block;
-            padding: 10px 20px;
-            text-decoration: none;
-        }
-    </style>
-  </head>
-  <body style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;">
-      <table border="0" cellpadding="0" cellspacing="0" class="no-border email-container" style="line-height:1.7em;font-size:14px;color:#222;width:100%;max-width:640px;border:0;border-spacing:0 !important;border-collapse:collapse !important;table-layout:fixed !important;margin:0 auto !important;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
-        <thead>
-          <tr class="invoice-header">
-            <th width="50%" class="text-left" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-bottom:30px;">
-              <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/themes/default/images/logo-en.png?t=1523326836" alt="Logo" class="logo" style="-ms-interpolation-mode:bicubic;width:80%;">
-            </th>
-            <th class="text-right" style="font-family:'Roboto', 'Arial', sans-serif;text-align:right;padding-bottom:30px;">
-              <span class="text-red invoice-title" style="color:#f43d3c;font-size:28px;font-weight:bold;"></span>
-            </th>
-          </tr>
-        </thead>
+                <table width="600" cellpadding="0" cellspacing="0" border="0" class="container">
+                  <tr>
+                    <td align="center" valign="top">
+                      <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/themes/default/images/logo-thumb.png?t=1560407284" alt="Logo" style="-ms-interpolation-mode:bicubic;width:80px;">
+                    </td>
+                  </tr>
+                  <tr>
+                    <td align="center">
+                      <h1 style="font-size: 16pt;">
+                        {{ trans('email-subscription.pulsa.body.greetings.customer', ['customerName' => $customerName], '', 'id') }}
+                      </h1>
+                      <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;color:#888;font-size:14px;">
+                        {{ trans('email-subscription.pulsa.body.greetings.text', [], '', 'id') }}
+                      </p>
+                    </td>
+                  </tr>
+                </table>
 
-        <tbody>
-          <tr>
-            <td colspan="2" class="invoice-body" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
-              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-subscription.pulsa.body.greetings', ['customerName' => $customerName], '', 'id') }}
-              </p>
-              <br>
-              <br>
-              <p class="text-center" style="font-family:'Roboto', 'Arial', sans-serif;margin:0;text-align:center;">
-                <a href="{{{ $pulsaListUrl }}}" class="btn-redeem" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;font-size:16px;display:inline-block;padding:10px 20px;text-decoration:none;">
-                  {{{ trans('email-subscription.pulsa.body.buttons.pulsa_list', [], '', 'id') }}}
-                </a>
-              </p>
-              <br>
-              <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-subscription.pulsa.body.help', ['csPhone' => $cs['phone'], 'csEmail' => $cs['email']], '', 'id') }}
-                <br>
-                <br>
-                {{{ trans('email-subscription.pulsa.body.thank_you', [], '', 'id') }}}
-              </p>
-            </td>
-          </tr>
-        </tbody>
+              </td>
+            </tr>
+            <tr>
+              <td height="30" style="font-size:10px; line-height:10px;">&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="center">
 
-        <tfoot>
-          <tr>
-            <td colspan="2" class="text-left footer" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
-              <small>
-                @include('emails.components.basic-footer', $cs)
-              </small>
-            </td>
-          </tr>
-        </tfoot>
+                <div style="" class="container box-shadow pulsa-promo-container">
+                  <table width="600" cellpadding="0" cellspacing="0" border="0" class="container">
+                    <tbody>
+                      <tr>
+                        <td width="150" align="center" valign="top" class="mobile">
+                          <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/themes/default/images/logo-thumb.png?t=1560407284" alt="Logo" style="-ms-interpolation-mode:bicubic;width:100px;height:100px;background-color: #eee;">
+                        </td>
+                        <td width="" valign="top" class="mobile center-on-mobile">
+                          <div class="">
+                            <h3 style="font-size:14pt;color:#444;" class="pulsa-promo-title">
+                              {{ trans('email-subscription.pulsa.body.marketing_title', [], '', 'id') }}
+                            </h3>
+                            <p style="color:#888;line-height:1.5em;font-size:14px;" class="pulsa-promo-description">
+                              {{ trans('email-subscription.pulsa.body.marketing_body', [], '', 'id') }}
+                            </p>
+                            <a style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;font-size:14px;display:inline-block;padding:10px 12px;text-decoration:none;" href="http://gotomalls.budi/pulsa-list?country=Indonesia&utm_source=email&utm_medium=email&utm_campaign=Update Pulsa dan Paket Data">
+                              {{ trans('email-subscription.pulsa.body.buttons.pulsa_list', [], '', 'id') }}
+                            </a>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+              </td>
+            </tr>
+            <tr>
+              <td height="10" style="line-height:10px;font-size:10px;">&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="center" valign="top">
+                <table width="600" cellpadding="0" cellspacing="0" border="0" class="container" bgcolor="#FFFFFF">
+
+                  @if (count($campaigns['coupons']) > 0 || count($campaigns['events']) > 0)
+                    <tr>
+                      <td height="30" style="font-size:10px; line-height:10px;">&nbsp;</td>
+                    </tr>
+                    <tr>
+                      <td class="">
+                        <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;color:#888;font-size: 14px;">
+                          {{ trans('email-subscription.pulsa.body.campaign_suggestion_text', [], '', 'id') }}
+                        </p>
+                      </td>
+                    </tr>
+
+                    @include('emails.subscription.pulsa-data-plan-list-coupon-suggestion', ['campaigns' => $campaigns['coupons'], 'campaignListUrl' => $campaigns['couponListUrl']])
+
+                    @include('emails.subscription.pulsa-data-plan-list-event-suggestion', ['campaigns' => $campaigns['events'], 'campaignListUrl' => $campaigns['eventListUrl']])
+
+                  @endif
+
+                  <tr>
+                    <td height="60">&nbsp;</td>
+                  </tr>
+                  <tr>
+                    <td align="center">
+                      <table class="container">
+                        <tr>
+                          <td align="center" style="color: #666;font-size:14px;" colspan="6" height="30" valign="top">
+                            {{ trans('email-subscription.pulsa.body.help', [], '', 'id') }}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td align="center" width="40">
+                            <a href="https://wa.me/62816588561" class="contact-link" target="_blank">
+                              <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/socmed-icon-01.png" alt="tel" class="contact-img">
+                            </a>
+                          </td>
+                          <td align="center" width="40">
+                            <a href="https://www.facebook.com/Gotomalls.Indo" class="contact-link" target="_blank">
+                              <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/socmed-icon-02.png" alt="tel" class="contact-img">
+                            </a>
+                          </td>
+                          <td width="40">
+                            <a href="https://twitter.com/gotomalls" class="contact-link" target="_blank">
+                              <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/socmed-icon-03.png" alt="tel" class="contact-img">
+                            </a>
+                          </td>
+                          <td width="40">
+                            <a href="https://www.instagram.com/gotomalls/" class="contact-link" target="_blank">
+                              <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/socmed-icon-04.png" alt="tel" class="contact-img">
+                            </a>
+                          </td>
+                          <td width="40">
+                            <a href="https://www.youtube.com/gotomallscom" class="contact-link" target="_blank">
+                              <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/socmed-icon-05.png" alt="tel" class="contact-img">
+                            </a>
+                          </td>
+                          <td width="40">
+                            <a href="https://id.linkedin.com/company/gotomalls" class="contact-link" target="_blank">
+                              <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/socmed-icon-06.png" alt="tel" class="contact-img">
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td height="60">&nbsp;</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
     </table>
-  </body>
+  </center>
+</body>
 </html>

@@ -21,9 +21,17 @@ use Orbit\Helper\Notifications\Contracts\EmailNotificationInterface;
  */
 class PulsaPriceListNotification extends CustomerNotification implements EmailNotificationInterface
 {
+    use HasContactTrait;
+
     protected $shouldQueue = true;
 
-    use HasContactTrait;
+    protected $campaigns;
+
+    function __construct($user = null, $campaigns = null)
+    {
+        parent::__construct($user);
+        $this->campaigns = $campaigns;
+    }
 
     /**
      * Get the email templates.
@@ -51,11 +59,12 @@ class PulsaPriceListNotification extends CustomerNotification implements EmailNo
     public function getEmailData()
     {
         $emailData = [
-            'subject' => trans('email-pulsa-subscription.pulsa-data-plan-list.subject', [], '', 'id'),
+            'subject' => trans('email-subscription.pulsa.subject', [], '', 'id'),
             'customerName' => $this->notifiable->user_firstname . ' ' . $this->notifiable->user_lastname,
             'cs' => $this->getContactData(),
             'recipientEmail' => $this->getRecipientEmail(),
             'pulsaListUrl' => $this->getPulsaListUrl(),
+            'campaigns' => $this->campaigns,
         ];
 
         return $emailData;
@@ -79,7 +88,7 @@ class PulsaPriceListNotification extends CustomerNotification implements EmailNo
                 $mail->to($data['recipientEmail']);
             });
         } catch (Exception $e) {
-            Log::debug('PulsaListNotification: Email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
+            Log::debug('PulsaListNotification: Email exception. File: ' . $e->getFile() . '::' . $e->getLine() . ', Message: ' . $e->getMessage());
         }
 
         $job->delete();

@@ -72,6 +72,7 @@ class PulsaAPIController extends ControllerAPI
             $vendor_price = OrbitInput::post('vendor_price');
             $displayed = OrbitInput::post('displayed', 'yes');
             $object_type = OrbitInput::post('object_type', 'pulsa');
+            $isPromo = OrbitInput::post('is_promo', 'no');
             $errorMessageObjectType = ucwords(str_replace(['_'], ' ', $object_type));
 
             $validator = Validator::make(
@@ -82,6 +83,7 @@ class PulsaAPIController extends ControllerAPI
                     'value'                 => $value,
                     'price'                 => $price,
                     'object_type'           => $object_type,
+                    'is_promo'              => $isPromo,
                 ),
                 array(
                     'telco_operator_id'     => 'required|orbit.empty.telcooperator',
@@ -90,6 +92,7 @@ class PulsaAPIController extends ControllerAPI
                     'value'                 => 'required',
                     'price'                 => 'required',
                     'object_type'           => 'required|in:pulsa,data_plan',
+                    'isPromo'               => 'in:yes,no',
                 ),
                 array(
                     'pulsa_code.required'                => "{$errorMessageObjectType} Product Name M-Cash field is required",
@@ -123,6 +126,7 @@ class PulsaAPIController extends ControllerAPI
             $newPulsa->status = $status;
             $newPulsa->vendor_price = $vendor_price;
             $newPulsa->displayed = $displayed;
+            $newPulsa->is_promo = $isPromo;
             $newPulsa->save();
 
             // Commit the changes
@@ -224,6 +228,7 @@ class PulsaAPIController extends ControllerAPI
             $price = OrbitInput::post('price');
             $quantity = OrbitInput::post('quantity');
             $object_type = OrbitInput::post('object_type', 'pulsa');
+            $isPromo = OrbitInput::post('is_promo', 'no');
             $errorMessageObjectType = ucwords(str_replace(['_'], ' ', $object_type));
 
             $validator = Validator::make(
@@ -234,6 +239,7 @@ class PulsaAPIController extends ControllerAPI
                     'pulsa_display_name'    => $pulsa_display_name,
                     'value'                 => $value,
                     'price'                 => $price,
+                    'is_promo'              => $isPromo,
                 ),
                 array(
                     'pulsa_item_id'         => 'required',
@@ -242,6 +248,7 @@ class PulsaAPIController extends ControllerAPI
                     'pulsa_display_name'    => 'required',
                     'value'                 => 'required',
                     'price'                 => 'required',
+                    'is_promo'              => 'in:yes,no',
                 ),
                 array(
                     'pulsa_code.required'          => "{$errorMessageObjectType} Product Name M-Cash field is required",
@@ -307,6 +314,10 @@ class PulsaAPIController extends ControllerAPI
                 $updatedPulsa->displayed = $displayed;
             });
 
+            OrbitInput::post('is_promo', function($isPromo) use ($updatedPulsa) {
+                $updatedPulsa->is_promo = $isPromo;
+            });
+
             $updatedPulsa->save();
             // Commit the changes
             $this->commit();
@@ -356,6 +367,123 @@ class PulsaAPIController extends ControllerAPI
         return $this->render($httpCode);
     }
 
+    /**
+     * POST - Update Pulsa
+     *
+     * @author kadek <kadek@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string    `pulsa_item_id`         (optional) - pulsa_item_id
+     * @param string    `telco_operator_id`     (optional) - telco_operator_id
+     * @param string    `pulsa_code`            (optional) - pulsa_code
+     * @param string    `pulsa_display_name`    (optional) - pulsa_display_name
+     * @param string    `description`           (optional) - description
+     * @param string    `value`                 (optional) - value
+     * @param string    `price`                 (optional) - price
+     * @param string    `quantity`              (optional) - quantity
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUpdatePulsaStatus()
+    {
+        $user = NULL;
+        $updatedPulsa = NULL;
+        try {
+            $httpCode = 200;
+
+            $this->checkAuth();
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->modifyPulsaRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $this->registerCustomValidation();
+
+            $pulsa_item_id = OrbitInput::post('pulsa_item_id');
+
+            $validator = Validator::make(
+                array(
+                    'pulsa_item_id'         => $pulsa_item_id,
+                ),
+                array(
+                    'pulsa_item_id'         => 'required',
+                )
+            );
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $updatedPulsa = Pulsa::where('pulsa_item_id', $pulsa_item_id)->firstOrFail();
+
+            if ($updatedPulsa->status == 'active') {
+                $updatedPulsa->status = 'inactive';
+            } else {
+                $updatedPulsa->status = 'active';
+            }
+
+            $updatedPulsa->save();
+            // Commit the changes
+            $this->commit();
+
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->message = 'Request OK';
+            $this->response->data = $updatedPulsa;
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+            // Rollback the changes
+            $this->rollBack();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+            // Rollback the changes
+            $this->rollBack();
+        } catch (QueryException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+            // Rollback the changes
+            $this->rollBack();
+        } catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getLine();
+            // Rollback the changes
+            $this->rollBack();
+        }
+
+        return $this->render($httpCode);
+    }
 
     public function getSearchPulsa()
     {
@@ -420,7 +548,7 @@ class PulsaAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $pulsa = Pulsa::select('pulsa.pulsa_item_id', 'pulsa.pulsa_code', 'pulsa.pulsa_display_name', 'telco_operators.name', 'pulsa.value', 'pulsa.price', 'pulsa.quantity', 'pulsa.status', 'pulsa.vendor_price', 'object_type')
+            $pulsa = Pulsa::select('pulsa.pulsa_item_id', 'pulsa.pulsa_code', 'pulsa.pulsa_display_name', 'telco_operators.name', 'pulsa.value', 'pulsa.price', 'pulsa.quantity', 'pulsa.status', 'pulsa.vendor_price', 'object_type', 'is_promo')
                           ->leftJoin('telco_operators', 'telco_operators.telco_operator_id', '=', 'pulsa.telco_operator_id')
                           ->where('object_type', $object_type);
 
@@ -471,6 +599,12 @@ class PulsaAPIController extends ControllerAPI
             OrbitInput::get('price', function($price) use ($pulsa)
             {
                 $pulsa->where('pulsa.price', $price);
+            });
+
+            // Filter pulsa by is_promo
+            OrbitInput::get('is_promo', function($isPromo) use ($pulsa)
+            {
+                $pulsa->where('pulsa.is_promo', $isPromo);
             });
 
             // Filter pulsa by quantity
@@ -530,6 +664,7 @@ class PulsaAPIController extends ControllerAPI
                     'quantity'           => 'pulsa.quantity',
                     'status'             => 'pulsa.status',
                     'name'               => 'telco_operators.name',
+                    'is_promo'           => 'pulsa.is_promo',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];

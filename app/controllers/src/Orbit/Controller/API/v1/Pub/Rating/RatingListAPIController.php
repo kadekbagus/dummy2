@@ -74,7 +74,7 @@ class RatingListAPIController extends PubControllerAPI
                 array(
                     'object_id' => 'required',
                     'object_type' => 'required',
-                    'sort_by' => 'in:updated_at,average',
+                    'sort_by' => 'in:updated_at,rating',
                     'sort_mode' => 'in:desc,asc'
                 )
             );

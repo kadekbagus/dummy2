@@ -65,15 +65,17 @@ class NewsListNewAPIController extends PubControllerAPI
      */
     protected $esConfig = [];
 
-    public function __construct()
+    public function __construct($contentType = 'application/json')
     {
-        parent::__construct();
+        parent::__construct($contentType);
         $this->esConfig = Config::get('orbit.elasticsearch');
         $this->searcher = new NewsSearch($this->esConfig);
     }
 
     /**
      * GET - get active news in all mall, and also provide for searching
+     *
+     * @todo refactor as this is similar to promotion, coupon or store listing
      *
      * @author Firmansyayh <firmansyah@dominopos.com>
      * @author Rio Astamal <rio@dominopos.com>
@@ -141,6 +143,8 @@ class NewsListNewAPIController extends PubControllerAPI
             $gender = OrbitInput::get('gender', 'all');
             $ratingLow = OrbitInput::get('rating_low', 0);
             $ratingHigh = OrbitInput::get('rating_high', 5);
+            $ratingLow = empty($ratingLow) ? 0 : $ratingLow;
+            $ratingHigh = empty($ratingHigh) ? 5 : $ratingHigh;
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -346,7 +350,7 @@ class NewsListNewAPIController extends PubControllerAPI
                     $this->searcher->sortByNearest($ul);
                     break;
                 case 'rating':
-                    $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
+                    $this->searcher->sortByRating($scriptFields['scriptFieldRating'], $sortMode);
                     break;
                 case 'created_date':
                     $this->searcher->sortByCreatedDate($sortMode);
@@ -587,7 +591,7 @@ class NewsListNewAPIController extends PubControllerAPI
             }
 
 
-            if (OrbitInput::get('from_homepage', '') !== 'y') {
+            if (OrbitInput::get('from_homepage', '') !== 'y' && $this->contentType !== 'raw') {
                 if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
                     if (is_object($mall)) {
                         $activityNotes = sprintf('Page viewed: View mall event list');

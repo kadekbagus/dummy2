@@ -112,6 +112,8 @@ class MallListNewAPIController extends PubControllerAPI
             $withAdvert = (bool) OrbitInput::get('with_advert', true);
             $ratingLow = (double) OrbitInput::get('rating_low', 0);
             $ratingHigh = (double) OrbitInput::get('rating_high', 5);
+            $ratingLow = empty($ratingLow) ? 0 : $ratingLow;
+            $ratingHigh = empty($ratingHigh) ? 5 : $ratingHigh;
             $latitude = '';
             $longitude = '';
             $locationFilter = '';
@@ -274,7 +276,7 @@ class MallListNewAPIController extends PubControllerAPI
                     $this->searcher->sortByNearest($ul);
                     break;
                 case 'rating':
-                    $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
+                    $this->searcher->sortByRating($scriptFields['scriptFieldRating'], $sortMode);
                     break;
                 case 'followed':
                     $this->searcher->sortByFavorite($scriptFields['scriptFieldFollow']);
