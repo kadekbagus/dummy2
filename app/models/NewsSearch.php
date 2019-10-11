@@ -60,4 +60,15 @@ class NewsSearch extends CampaignSearch
         }
     }
 
+    /**
+     * Filter only hot event (loket).
+     *
+     * @param  string  $isHotEvent [description]
+     * @return boolean             [description]
+     */
+    public function isHotEvent()
+    {
+        $this->must(['match' => ['is_hot_event' => 'yes']]);
+    }
+
 }
