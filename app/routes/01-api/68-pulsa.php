@@ -17,6 +17,14 @@ Route::post('/api/v1/pulsa/update', function()
 });
 
 /**
+ * Pulsa status update
+ */
+Route::post('/api/v1/pulsa/update-status', function()
+{
+    return PulsaAPIController::create()->postUpdatePulsaStatus();
+});
+
+/**
  * Pulsa list
  */
 Route::get('/api/v1/pulsa/list', function()

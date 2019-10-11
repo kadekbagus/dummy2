@@ -2000,6 +2000,67 @@ class LoginAPIController extends ControllerAPI
     }
 
     /**
+     * POST - Login for Report Generator Portal
+     *
+     * @author kadek <kadek@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string    `email`                 (required) - Email address of the user
+     * @param string    `password`              (required) - Password for the account
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postLoginRGP()
+    {
+        try {
+            $email = trim(OrbitInput::post('email'));
+            $password = trim(OrbitInput::post('password'));
+
+            if (trim($email) === '') {
+                $errorMessage = Lang::get('validation.required', array('attribute' => 'email'));
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if (trim($password) === '') {
+                $errorMessage = Lang::get('validation.required', array('attribute' => 'password'));
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $user = RgpUser::active()->where('email', $email)->first();
+
+            if (! is_object($user)) {
+                $message = Lang::get('validation.orbit.access.inactiveuser');
+                ACL::throwAccessForbidden($message);
+            }
+
+            if (! Hash::check($password, $user->password)) {
+                $message = Lang::get('validation.orbit.access.loginfailed');
+                ACL::throwAccessForbidden($message);
+            }
+
+            $this->response->data = $user;
+
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        } catch (Exception $e) {
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getLine();
+            $this->response->data = null;
+        }
+
+        return $this->render();
+    }
+
+    /**
      * @return mixed
      */
     protected function getRetailerId()

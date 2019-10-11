@@ -247,3 +247,7 @@ Route::get('/api/v1/pub/user-profile/follow', function()
 {
     return Orbit\Controller\API\v1\Pub\UserProfile\ProfileFollowListAPIController::create()->getFollowList();
 });
+
+Route::get('/{api}/v1/rgp/check-session', ['as' => 'rgp-check-session', function() {
+    return UserRgpAPIController::create()->validateSession();
+}])->where('api', '(api|app)');

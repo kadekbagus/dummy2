@@ -367,6 +367,123 @@ class PulsaAPIController extends ControllerAPI
         return $this->render($httpCode);
     }
 
+    /**
+     * POST - Update Pulsa
+     *
+     * @author kadek <kadek@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string    `pulsa_item_id`         (optional) - pulsa_item_id
+     * @param string    `telco_operator_id`     (optional) - telco_operator_id
+     * @param string    `pulsa_code`            (optional) - pulsa_code
+     * @param string    `pulsa_display_name`    (optional) - pulsa_display_name
+     * @param string    `description`           (optional) - description
+     * @param string    `value`                 (optional) - value
+     * @param string    `price`                 (optional) - price
+     * @param string    `quantity`              (optional) - quantity
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUpdatePulsaStatus()
+    {
+        $user = NULL;
+        $updatedPulsa = NULL;
+        try {
+            $httpCode = 200;
+
+            $this->checkAuth();
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->modifyPulsaRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $this->registerCustomValidation();
+
+            $pulsa_item_id = OrbitInput::post('pulsa_item_id');
+
+            $validator = Validator::make(
+                array(
+                    'pulsa_item_id'         => $pulsa_item_id,
+                ),
+                array(
+                    'pulsa_item_id'         => 'required',
+                )
+            );
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $updatedPulsa = Pulsa::where('pulsa_item_id', $pulsa_item_id)->firstOrFail();
+
+            if ($updatedPulsa->status == 'active') {
+                $updatedPulsa->status = 'inactive';
+            } else {
+                $updatedPulsa->status = 'active';
+            }
+
+            $updatedPulsa->save();
+            // Commit the changes
+            $this->commit();
+
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->message = 'Request OK';
+            $this->response->data = $updatedPulsa;
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+            // Rollback the changes
+            $this->rollBack();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+            // Rollback the changes
+            $this->rollBack();
+        } catch (QueryException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+            // Rollback the changes
+            $this->rollBack();
+        } catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getLine();
+            // Rollback the changes
+            $this->rollBack();
+        }
+
+        return $this->render($httpCode);
+    }
 
     public function getSearchPulsa()
     {

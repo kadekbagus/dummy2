@@ -465,7 +465,8 @@ class ESNewsUpdateQueue
                 'mall_rating'           => $mallRating,
                 'avg_general_rating'    => $averageGeneralRating,
                 'total_general_reviews' => $totalGeneralReviews,
-                'sponsor_provider'      => $sponsorProviderES
+                'sponsor_provider'      => $sponsorProviderES,
+                'is_hot_event'          => $news->is_hot_event,
             ];
 
             $body = array_merge($body, $translationBody);
