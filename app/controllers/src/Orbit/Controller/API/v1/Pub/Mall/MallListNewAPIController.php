@@ -110,6 +110,10 @@ class MallListNewAPIController extends PubControllerAPI
             $viewType = OrbitInput::get('view_type', 'grid');
             $list_type = OrbitInput::get('list_type', 'preferred');
             $withAdvert = (bool) OrbitInput::get('with_advert', true);
+            $ratingLow = (double) OrbitInput::get('rating_low', 0);
+            $ratingHigh = (double) OrbitInput::get('rating_high', 5);
+            $ratingLow = empty($ratingLow) ? 0 : $ratingLow;
+            $ratingHigh = empty($ratingHigh) ? 5 : $ratingHigh;
             $latitude = '';
             $longitude = '';
             $locationFilter = '';
@@ -135,7 +139,9 @@ class MallListNewAPIController extends PubControllerAPI
                 'sort_mode' => $sortMode,
                 'language' => $language,
                 'location' => $location,
-                'list_type' => $list_type
+                'list_type' => $list_type,
+                'rating_low' => $ratingLow,
+                'rating_high' => $ratingHigh,
             ];
 
             $timezone = 'Asia/Jakarta'; // now with jakarta timezone
@@ -238,6 +244,15 @@ class MallListNewAPIController extends PubControllerAPI
                 $withPreferred = $advertResult['withPreferred'];
             }
 
+            //filter by rating number
+            $this->searcher->filterByRating(
+                $ratingLow,
+                $ratingHigh,
+                compact(
+                    'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
+                )
+            );
+
             $scriptFields = $this->searcher->addReviewFollowScript(compact(
                 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
@@ -261,7 +276,7 @@ class MallListNewAPIController extends PubControllerAPI
                     $this->searcher->sortByNearest($ul);
                     break;
                 case 'rating':
-                    $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
+                    $this->searcher->sortByRating($scriptFields['scriptFieldRating'], $sortMode);
                     break;
                 case 'followed':
                     $this->searcher->sortByFavorite($scriptFields['scriptFieldFollow']);
@@ -286,10 +301,11 @@ class MallListNewAPIController extends PubControllerAPI
 
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-                $response = $recordCache->get($serializedCacheKey, function() {
-                    return $this->searcher->getResult();
+                $response = $recordCache->get($serializedCacheKey, function() use($serializedCacheKey, $recordCache) {
+                    $resp = $this->searcher->getResult();
+                    $recordCache->put($serializedCacheKey, $resp);
+                    return $resp;
                 });
-                $recordCache->put($serializedCacheKey, $response);
             } else {
                 $response = $this->searcher->getResult();
             }

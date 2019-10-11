@@ -35,6 +35,16 @@ Route::post('/api/v1/pub/pulsa/availability', function()
 Route::post('/app/v1/pub/pulsa/availability', ['as' => 'pub-pulsa-availability', 'uses' => 'IntermediatePubAuthController@Pulsa\PulsaAvailability_postAvailability']);
 
 /**
+ * Subscribe to pulsa.
+ */
+Route::post('/api/v1/pub/pulsa/subscription', function()
+{
+    return Orbit\Controller\API\v1\Pub\Pulsa\PulsaSubscriptionAPIController::create()->postSubscription();
+});
+
+Route::post('/app/v1/pub/pulsa/subscription', ['as' => 'pub-pulsa-subscription', 'uses' => 'IntermediatePubAuthController@Pulsa\PulsaSubscription_postSubscription']);
+
+/**
  * List of Telco Operators
  */
 Route::get('/api/v1/pub/telco-operator/list', function()
