@@ -84,6 +84,10 @@ class MenuCounterAPIController extends PubControllerAPI
             $articleCategories = OrbitInput::get('category_id', []);
             $articleObjectType = OrbitInput::get('object_type', null);
             $articleObjectId = OrbitInput::get('object_id', null);
+            $ratingLow = OrbitInput::get('rating_low', 0);
+            $ratingHigh = OrbitInput::get('rating_high', 5);
+            $ratingLow = empty($ratingLow) ? 0 : $ratingLow;
+            $ratingHigh = empty($ratingHigh) ? 5 : $ratingHigh;
 
             $prefix = DB::getTablePrefix();
 
@@ -526,11 +530,47 @@ class MenuCounterAPIController extends PubControllerAPI
                 }
             }
 
-            /* old query
-            if (! empty($campaignCountryCityFilterArr)) {
-                $campaignJsonQuery['query']['bool']['should'][] = $campaignCountryCityFilterArr;
-                $couponJsonQuery['query']['bool']['should'][] = $campaignCountryCityFilterArr;
-            }*/
+            // calculate rating and review based on location/mall
+            $scriptFieldRating = "double counter = 0; double rating = 0;";
+            $scriptFieldReview = "double review = 0;";
+
+            if (! empty($mallId)) {
+                // count total review and average rating for store inside mall
+                $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('mall_rating.rating_" . $mallId . "')) { if (! doc['mall_rating.rating_" . $mallId . "'].empty) { counter = counter + doc['mall_rating.review_" . $mallId . "'].value; rating = rating + (doc['mall_rating.rating_" . $mallId . "'].value * doc['mall_rating.review_" . $mallId . "'].value);}};";
+                $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('mall_rating.review_" . $mallId . "')) { if (! doc['mall_rating.review_" . $mallId . "'].empty) { review = review + doc['mall_rating.review_" . $mallId . "'].value;}}; ";
+            } else if (! empty($cityFilters)) {
+                // count total review and average rating based on city filter
+                $countryId = $countryData->country_id;
+                foreach ((array) $cityFilters as $cityFilter) {
+                    $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { if (! doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value * doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value);}}; ";
+                    $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { if (! doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value;}}; ";
+                }
+            } else if (! empty($countryFilter)) {
+                // count total review and average rating based on country filter
+                $countryId = $countryData->country_id;
+                $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { if (! doc['location_rating.rating_" . $countryId . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);}}; ";
+                $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "')) { if (! doc['location_rating.review_" . $countryId . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "'].value;}}; ";
+            } else {
+                // count total review and average rating based in all location
+                $mallCountry = Mall::groupBy('country')->lists('country');
+                $countries = Country::select('country_id')->whereIn('name', $mallCountry)->get();
+
+                foreach ($countries as $country) {
+                    $countryId = $country->country_id;
+                    $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { if (! doc['location_rating.rating_" . $countryId . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);}}; ";
+                    $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "')) { if (! doc['location_rating.review_" . $countryId . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "'].value;}}; ";
+                }
+            }
+
+            $scriptFieldRating = $scriptFieldRating . " return (counter == 0 && rateLow == 0) || "."((counter>0) && (rating/counter >= rateLow) && (rating/counter <= rateHigh));";
+            $scriptFieldReview = $scriptFieldReview . " if(review == 0) {return 0;} else {return review;}; ";
+
+            $rateLow = (double) $ratingLow;
+            $rateHigh = (double) $ratingHigh + 0.001;
+
+            $paramFilterRating = compact('rateLow', 'rateHigh');
+
+            $queryFilterRating = ['script' => ['script' => $scriptFieldRating, 'params' => $paramFilterRating]];
 
             // filter by gender
             if (! empty($genderFilter)) {
@@ -554,14 +594,6 @@ class MenuCounterAPIController extends PubControllerAPI
                 $couponJsonQuery['query']['bool']['must'][] = $campaignCityFilter;
             }
 
-            // if (! empty($merchantCountryCityFilterArr)) {
-            //     $merchantJsonQuery['query']['bool']['must'][] = $merchantCountryCityFilterArr;
-            // }
-
-            /* old query
-            if (! empty($storeCountryCityFilterArr)) {
-                $storeJsonQuery['query']['bool']['must'][] = $storeCountryCityFilterArr;
-            }*/
             if (! empty($storeCountryFilter)) {
                 $merchantJsonQuery['query']['bool']['must'][] = $storeCountryFilter;
             }
@@ -622,6 +654,12 @@ class MenuCounterAPIController extends PubControllerAPI
                 $couponJsonQuery['query']['bool']['must'][] = $partnerFilterMust;
                 $merchantJsonQuery['query']['bool']['must'][] = $partnerFilterMust;
             }
+
+            // filter by rating
+            $merchantJsonQuery['query']['bool']['filter'][] = $queryFilterRating;
+            $mallJsonQuery['query']['bool']['filter'][] = $queryFilterRating;
+            $campaignJsonQuery['query']['bool']['filter'][] = $queryFilterRating;
+            $couponJsonQuery['query']['bool']['filter'][] = $queryFilterRating;
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
             $newsIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.news.index');
