@@ -108,12 +108,14 @@
     .marketing-section-text {
       line-height: 1.5em;
       margin-top: 10px;
+      font-size: 16px;
     }
 
     .bottom-info {
       color: #333;
       line-height: 1.5em;
       margin-bottom: 5px;
+      font-size: 16px;
     }
 
     .footer-container {
