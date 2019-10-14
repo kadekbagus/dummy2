@@ -68,7 +68,7 @@
     .greeting-text {
       color: #333;
       line-height: 1.5em;
-      font-size: 16px;
+      font-size: 14px;
     }
 
     .btn-activate {
@@ -102,24 +102,24 @@
     .marketing-section-title {
       margin-top: 0;
       margin-bottom: 0;
-      font-size: 18px;
+      font-size: 17px;
     }
 
     .marketing-section-text {
       line-height: 1.5em;
       margin-top: 10px;
-      font-size: 16px;
+      font-size: 14px;
     }
 
     .bottom-info {
       color: #333;
       line-height: 1.5em;
       margin-bottom: 5px;
-      font-size: 16px;
+      font-size: 14px;
     }
 
     .footer-container {
-      font-size: 13px;
+      font-size: 12px;
       color: #333;
       text-align: left;
     }
@@ -150,7 +150,7 @@
     }
 
     .footer-follow {
-      font-size: 15px;
+      font-size: 14px;
       margin-top:0;
       margin-bottom:5px;
       line-height:1.7em;
