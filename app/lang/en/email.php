@@ -42,7 +42,7 @@ return array(
         'label_events'      => 'Events',
         'subject'           => 'Welcome to Gotomalls!',
         'greeting'          => 'Hi',
-        'message_part1'     => 'Thank you for joining Gotomalls!',
+        'message_part1'     => 'Thank you for joining Gotomalls. You have sucessfully created a Gotomalls account. Please click button below to verify your email address and complete your registration.',
         'message_part2'     => 'To activate your account, please click the button below.',
         'button_activation' => 'Activate Account',
         'message_part3'     => 'You can access Gotomalls on difference devices with the same account:',
@@ -53,6 +53,8 @@ return array(
         'list_5'            => 'You can change profile photo and phone number here',
         'message_part4'     => 'Have fun with Gotomalls!',
         'team_name'         => 'Gotomalls Team',
+        'ignore_email'      => 'Just ignore this email if you never created an account on Gotomalls. It is likely someone just type your email address by accident.',
+        'find_follow'       => 'Find and follow us',
     ),
 
     'reset_password' => array(
