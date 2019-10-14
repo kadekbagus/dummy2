@@ -180,7 +180,7 @@
                     <tbody>
                       <tr>
                         <td width="150" align="center" valign="top" class="mobile">
-                          <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/email-pulsa.jpg" alt="Logo" style="-ms-interpolation-mode:bicubic;width:100px;height:100px;background-color: #eee;">
+                          <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/email-pulsa.jpg" alt="Logo" style="-ms-interpolation-mode:bicubic;width:100px;height:100px;background-color: #eee;border-radius:5px;">
                         </td>
                         <td width="" valign="top" class="mobile center-on-mobile">
                           <div class="">
