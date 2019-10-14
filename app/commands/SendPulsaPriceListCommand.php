@@ -166,7 +166,9 @@ class SendPulsaPriceListCommand extends Command {
             ];
         }
 
-        return $campaignListArray;
+        return count($campaignListArray) > 0
+            ? array_chunk($campaignListArray, 2, true)
+            : $campaignListArray;
     }
 
     /**
@@ -208,10 +210,13 @@ class SendPulsaPriceListCommand extends Command {
                 'name' => $campaign['news_name'],
                 'image_url' => $campaign['image_url'],
                 'location' => $this->flattenLocation($campaign),
+                'is_hot_event' => isset($campaign['is_hot_event']) && $campaign['is_hot_event'] === 'yes',
             ];
         }
 
-        return $campaignListArray;
+        return count($campaignListArray) > 0
+            ? array_chunk($campaignListArray, 2, true)
+            : $campaignListArray;
     }
 
     /**
