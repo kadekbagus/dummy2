@@ -138,7 +138,7 @@
   <span style="display: block; width: 640px !important; max-width: 640px; height: 1px" class="mobileOff"></span>
 
   <center>
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#F2F2F2">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#FFF">
       <tr>
         <td align="center" valign="top">
 
