@@ -7,24 +7,18 @@
                       <h3 style="color: #444;margin: 0;margin-bottom: 10px;font-size: 14pt;">Vouchers</h3>
                     </td>
                   </tr>
-                  <?php $itemCounter = 0; ?>
                   <?php $itemPerRow = 2; ?>
-                  @foreach($campaigns as $campaign)
+                  @foreach($campaigns as $chunk)
+                    <tr>
+                      <td align="center" valign="top">
 
-                    <?php $itemCounter++; ?>
-                    <?php $newRow = $itemCounter % $itemPerRow === 1 || $itemCounter === 1; ?>
-                    <?php $lastItemInRow = $itemCounter % $itemPerRow === 0; ?>
-                    @if ($newRow)
-                      <tr>
-                        <td align="center" valign="top">
+                        <table width="600" cellpadding="0" cellspacing="0" border="0" class="container">
+                          <tr>
 
-                          <table width="600" cellpadding="0" cellspacing="0" border="0" class="container">
-                            <tr>
-                    @endif
-
+                            @foreach($chunk as $index => $campaign)
 
                               <td width="300" class="mobile" align="left" valign="top" style="">
-                                <div class="suggestion-list-item {{ $itemCounter % $itemPerRow === 0 ? 'even' : 'odd' }}">
+                                <div class="suggestion-list-item {{ ($index+1) % $itemPerRow === 0 ? 'even' : 'odd' }}">
 
                                   <table>
                                     <tbody>
@@ -58,12 +52,13 @@
                                 </div>
 
                               </td>
-                    @if ($lastItemInRow)
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                    @endif
+
+                            @endforeach
+
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
                   @endforeach
 
                   <tr>
