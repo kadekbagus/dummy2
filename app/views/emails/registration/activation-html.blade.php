@@ -60,7 +60,7 @@
     }
 
     .greeting-username {
-      margin: 20px 0;
+      margin: 25px 0 10px 0;
       color: #222;
       font-size: 16px;
     }
@@ -69,6 +69,7 @@
       color: #333;
       line-height: 1.5em;
       font-size: 14px;
+      margin-top: 10px;
     }
 
     .btn-activate {
