@@ -2570,7 +2570,7 @@ return array(
             'name_long' => 'Click Buy Hot Event',
             'module_name' => 'Event',
             'type' => 'click',
-            'object_type' => 'Event',
+            'object_type' => 'News',
             'parameter_name' => 'object_id'
         ),
     ),
