@@ -65,9 +65,9 @@ class NewsListNewAPIController extends PubControllerAPI
      */
     protected $esConfig = [];
 
-    public function __construct()
+    public function __construct($contentType = 'application/json')
     {
-        parent::__construct();
+        parent::__construct($contentType);
         $this->esConfig = Config::get('orbit.elasticsearch');
         $this->searcher = new NewsSearch($this->esConfig);
     }
@@ -139,6 +139,7 @@ class NewsListNewAPIController extends PubControllerAPI
             $myCCFilter = OrbitInput::get('my_cc_filter', false);
             $withAdvert = (bool) OrbitInput::get('with_advert', true);
             $gender = OrbitInput::get('gender', 'all');
+            $isHotEvent = OrbitInput::get('is_hot_event', 'no');
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -199,6 +200,10 @@ class NewsListNewAPIController extends PubControllerAPI
 
             // Only search active promotions..
             $this->searcher->isActive(compact('dateTimeEs'));
+
+            if ($isHotEvent === 'yes') {
+                $this->searcher->isHotEvent();
+            }
 
             // Filter by given keyword...
             $keyword = OrbitInput::get('keyword');
