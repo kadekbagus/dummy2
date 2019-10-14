@@ -38,7 +38,9 @@
                                               <tr>
                                                 <td colspan="2" valign="top">
                                                   <h4 style="margin-bottom: 0;margin-top:0;line-height:1.3em;font-size:15px;color:#444;">{{ $campaign['name'] }}</h4>
-                                                  <p style="font-size: 12px;margin-top:5px;color:#444;">{{ $campaign['location'] }}</p>
+                                                  @if (! $campaign['is_hot_event'])
+                                                    <p style="font-size: 12px;margin-top:5px;color:#444;">{{ $campaign['location'] }}</p>
+                                                  @endif
                                                 </td>
                                               </tr>
                                             </tbody>
