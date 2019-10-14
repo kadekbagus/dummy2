@@ -138,7 +138,7 @@
   <span style="display: block; width: 640px !important; max-width: 640px; height: 1px" class="mobileOff"></span>
 
   <center>
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#F2F2F2">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#FFF">
       <tr>
         <td align="center" valign="top">
 
@@ -180,7 +180,7 @@
                     <tbody>
                       <tr>
                         <td width="150" align="center" valign="top" class="mobile">
-                          <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/themes/default/images/logo-thumb.png?t=1560407284" alt="Logo" style="-ms-interpolation-mode:bicubic;width:100px;height:100px;background-color: #eee;">
+                          <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/email-pulsa.jpg" alt="Logo" style="-ms-interpolation-mode:bicubic;width:100px;height:100px;background-color: #eee;border-radius:5px;">
                         </td>
                         <td width="" valign="top" class="mobile center-on-mobile">
                           <div class="">
