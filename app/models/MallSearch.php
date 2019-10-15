@@ -1,23 +1,15 @@
 <?php
 
-use Orbit\Helper\Elasticsearch\Search;
 
 use Orbit\Helper\Util\FollowStatusChecker;
 
 /**
 * Implementation of ES search for Malls...
 */
-class MallSearch extends Search
+class MallSearch extends ObjectTypeSearch
 {
-    function __construct($ESConfig = [])
-    {
-        parent::__construct($ESConfig);
-
-        $this->setDefaultSearchParam();
-
-        $this->setIndex($this->esConfig['indices_prefix'] . $this->esConfig['indices']['malldata']['index']);
-        $this->setType($this->esConfig['indices']['malldata']['type']);
-    }
+    protected $objectType = 'malldata';
+    protected $objectTypeAlias = 'malldata';
 
     /**
      * Basic requirements of malls that will be listed.
@@ -272,33 +264,6 @@ class MallSearch extends Search
     }
 
     /**
-     * Sort by name..
-     *
-     * @return [type] [description]
-     */
-    public function sortByName($sortMode = 'asc')
-    {
-        $this->sort(['lowercase_name' => ['order' => $sortMode]]);
-    }
-
-    /**
-     * Sort store by rating.
-     *
-     * @param  string $sortingScript [description]
-     * @return [type]                [description]
-     */
-    public function sortByRating($sortingScript = '')
-    {
-        $this->sort([
-            '_script' => [
-                'script' => $sortingScript,
-                'type' => 'number',
-                'order' => 'desc'
-            ]
-        ]);
-    }
-
-    /**
      * Sort store by favorite.
      *
      * @param  string $sortingScript [description]
@@ -318,7 +283,7 @@ class MallSearch extends Search
         $this->sortByName();
     }
 
-    public function addReviewFollowScript($params = [])
+    protected function buildRatingReviewCalcScript($params = [])
     {
         $scriptFieldRating = "double counter = 0; double rating = 0;";
         $scriptFieldReview = "double review = 0;";
@@ -337,19 +302,13 @@ class MallSearch extends Search
             $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { if (! doc['location_rating.rating_" . $countryId . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);}}; ";
             $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "')) { if (! doc['location_rating.review_" . $countryId . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "'].value;}}; ";
         } else {
-            // count total review and average rating based in all location
-            $mallCountry = Mall::groupBy('country')->lists('country');
-            $countries = Country::select('country_id')->whereIn('name', $mallCountry)->get();
-
+            $countries = $this->getMallCountryList();
             foreach ($countries as $country) {
                 $countryId = $country->country_id;
                 $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { if (! doc['location_rating.rating_" . $countryId . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);}}; ";
                 $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "')) { if (! doc['location_rating.review_" . $countryId . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "'].value;}}; ";
             }
         }
-
-        $scriptFieldRating = $scriptFieldRating . " if(counter == 0 || rating == 0) {return 0;} else {return rating/counter;}; ";
-        $scriptFieldReview = $scriptFieldReview . " if(review == 0) {return 0;} else {return review;}; ";
 
         $role = $params['user']->role->role_name;
         $objectFollow = [];
@@ -367,26 +326,37 @@ class MallSearch extends Search
             }
         }
 
-        // Add script fields into request body...
-        $this->scriptFields([
-            'average_rating' => $scriptFieldRating,
-            'total_review' => $scriptFieldReview,
-            'is_follow' => $scriptFieldFollow
-        ]);
-
         return compact('scriptFieldRating', 'scriptFieldReview', 'scriptFieldFollow', 'objectFollow');
-
-        //////// END RATING & FOLLOW SCRIPTS /////
     }
 
-    /**
-     * Sort by relevance..
-     *
-     * @return [type] [description]
-     */
-    public function sortByRelevance()
+    protected function getReviewRatingScript($params = [])
     {
-        $this->sort(['_score' => ['order' => 'desc']]);
+        $scripts = $this->buildRatingReviewCalcScript($params);
+        $scriptFieldRating = $scripts['scriptFieldRating'] . " " .
+        "if (counter == 0 || rating == 0) {
+            return 0;
+        } else {
+            return rating/counter;
+        }; ";
+        $scriptFieldReview = $scripts['scriptFieldReview'] . " " .
+        "if (review == 0) {
+            return 0;
+        } else {
+            return review;
+        }; ";
+
+        return array_merge($scripts, compact('scriptFieldRating', 'scriptFieldReview'));
+    }
+
+    public function addReviewFollowScript($params = [])
+    {
+        $scripts = $this->getReviewRatingScript($params);
+        $this->scriptFields([
+            'average_rating' => $scripts['scriptFieldRating'],
+            'total_review' => $scripts['scriptFieldReview'],
+            'is_follow' => $scripts['scriptFieldFollow'],
+        ]);
+        return $scripts;
     }
 
     public function sortByUpdatedAt()
@@ -401,42 +371,8 @@ class MallSearch extends Search
      */
     public function sortByNearest($ul = null)
     {
-        // Get user location ($ul), latitude and longitude.
-        // If latitude and longitude doesn't exist in query string, the code will be read cookie to get lat and lon
-        if ($ul == null) {
-            $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
-
-            $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
-            if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
-                $longitude = $userLocationCookieArray[0];
-                $latitude = $userLocationCookieArray[1];
-            }
-        } else {
-            $loc = explode('|', $ul);
-            $longitude = $loc[0];
-            $latitude = $loc[1];
-        }
-
-        if (isset($longitude) && isset($latitude))  {
-            $this->sort(
-                            [
-                              '_geo_distance' => [
-                                'position' => [
-                                  'lon' => $longitude,
-                                  'lat' => $latitude
-                                ],
-                                'order' => 'asc',
-                                'unit' => 'km',
-                                'distance_type' => 'plane'
-                              ]
-                            ]
-                    );
-        }
-
-        $this->sortByName();
-
+        $this->nearestSort(nul, 'position', $ul);
     }
-
 
     /**
      * Bypass Malls ordering...
@@ -499,29 +435,6 @@ class MallSearch extends Search
         return $follow;
     }
 
-    /**
-     * Init default search params.
-     *
-     * @return [type] [description]
-     */
-    public function setDefaultSearchParam()
-    {
-        $this->searchParam = [
-            'index' => '',
-            'type' => '',
-            'body' => [
-                'from' => 0,
-                'size' => 20,
-                'fields' => [
-                    '_source'
-                ],
-                'query' => [],
-                'track_scores' => true,
-                'sort' => []
-            ]
-        ];
-    }
-
     public function filterAdvertMalls($options = [])
     {
         $this->filter([
@@ -576,15 +489,6 @@ class MallSearch extends Search
                         ]
                     ]
                 ]
-            ]
-        ]);
-    }
-
-    public function exclude($excludedIds = [])
-    {
-        $this->mustNot([
-            'terms' => [
-                '_id' => $excludedIds,
             ]
         ]);
     }

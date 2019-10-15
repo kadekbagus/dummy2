@@ -2564,5 +2564,44 @@ return array(
             'parameter_name' => 'object_id'
         ),
 
+        // click button buy hot event
+        '279' => array(
+            'name' => 'click_buy_hot_event',
+            'name_long' => 'Click Buy Hot Event',
+            'module_name' => 'Event',
+            'type' => 'click',
+            'object_type' => 'News',
+            'parameter_name' => 'object_id'
+        ),
+
+        // Click subscribe to pulsa list newsletter.
+        '280' => array(
+            'name' => 'click_pulsa_subscribe',
+            'name_long' => 'Click Pulsa Subscribe',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null,
+        ),
+
+        // Click unsubscribe to pulsa list newsletter.
+        '281' => array(
+            'name' => 'click_pulsa_unsubscribe',
+            'name_long' => 'Click Pulsa Unsubscribe',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null,
+        ),
+
+        // Click buy pulsa from pulsa list/status page.
+        '282' => array(
+            'name' => 'click_buy_pulsa_status',
+            'name_long' => 'Click Buy Pulsa From Pulsa Status',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null,
+        ),
     ),
 );

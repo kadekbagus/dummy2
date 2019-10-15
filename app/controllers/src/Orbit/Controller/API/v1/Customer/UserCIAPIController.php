@@ -43,7 +43,7 @@ class UserCIAPIController extends BaseAPIController
             // note that we need to alias location as user_loc because
             // otherwise UserDetail::getLocationAttribute() will be called
             // when we use $userdetail->location
-            $userDetail = User::select('phone', 'gender', 'location AS user_loc', 'about', 'birthdate', 'users.created_at')
+            $userDetail = User::select('phone', 'gender', 'location AS user_loc', 'about', 'birthdate', 'users.created_at', 'pulsa_email_subscription')
                 ->leftJoin('user_details', 'user_details.user_id', '=', 'users.user_id')
                 ->leftJoin('extended_users', 'extended_users.user_id', '=', 'users.user_id')
                 ->where('users.user_id', $user->user_id)
@@ -86,6 +86,7 @@ class UserCIAPIController extends BaseAPIController
             $data->about = ! empty($userDetail) ? $userDetail->about : null;
             $data->birthdate = ! empty($userDetail) ? $userDetail->birthdate : null;
             $data->join_date = $userDetail->created_at->format('Y-m-d H:i:s');
+            $data->pulsa_email_subscription = $userDetail->pulsa_email_subscription === 'yes';
 
             $this->response->data = $data;
             $this->response->code = 0;
