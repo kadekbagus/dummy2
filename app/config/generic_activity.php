@@ -2564,6 +2564,16 @@ return array(
             'parameter_name' => 'object_id'
         ),
 
+        // click button buy hot event
+        '279' => array(
+            'name' => 'click_buy_hot_event',
+            'name_long' => 'Click Buy Hot Event',
+            'module_name' => 'Event',
+            'type' => 'click',
+            'object_type' => 'News',
+            'parameter_name' => 'object_id'
+        ),
+
         // Click subscribe to pulsa list newsletter.
         '280' => array(
             'name' => 'click_pulsa_subscribe',

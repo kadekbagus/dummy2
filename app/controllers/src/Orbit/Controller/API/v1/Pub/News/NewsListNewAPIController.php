@@ -145,6 +145,7 @@ class NewsListNewAPIController extends PubControllerAPI
             $ratingHigh = OrbitInput::get('rating_high', 5);
             $ratingLow = empty($ratingLow) ? 0 : $ratingLow;
             $ratingHigh = empty($ratingHigh) ? 5 : $ratingHigh;
+            $isHotEvent = OrbitInput::get('is_hot_event', 'no');
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -211,6 +212,10 @@ class NewsListNewAPIController extends PubControllerAPI
 
             // Only search active promotions..
             $this->searcher->isActive(compact('dateTimeEs'));
+
+            if ($isHotEvent === 'yes') {
+                $this->searcher->isHotEvent();
+            }
 
             // Filter by given keyword...
             $keyword = OrbitInput::get('keyword');
