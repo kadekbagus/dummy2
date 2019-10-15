@@ -46,7 +46,7 @@
 
     .greeting-title-container {
       background-color: red;
-      background: url('https://tinypng.com/web/output/5a02x8vw8u6p6u1h751c6063vd50q28m/Banner.png');
+      background: url('https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/banner.png');
       background-size: 640px;
       background-repeat: no-repeat;
     }
@@ -261,7 +261,7 @@
                   <tr>
                     <td width="200" class="mobile" valign="middle">
                       <div class="marketing-section-img">
-                        <img src="https://tinypng.com/web/output/2zx24dzzydyujgjz904e1ufcc0p8tmxk/icon-1.png" alt="marketing-icon-1" class="marketing-icon">
+                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/icon-1.png" alt="marketing-icon-1" class="marketing-icon">
                       </div>
                     </td>
                     <td width="400" class="mobile" valign="top">
@@ -281,7 +281,7 @@
                   <tr>
                     <td width="200" class="mobile" valign="middle">
                       <div class="marketing-section-img">
-                        <img src="https://tinypng.com/web/output/rtgvn5x95mfw9kdt17jqe7r5g07ytmm6/icon-2.png" alt="marketing-icon-1" class="marketing-icon">
+                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/icon-2.png" alt="marketing-icon-1" class="marketing-icon">
                       </div>
                     </td>
                     <td width="400" class="mobile" valign="top">
@@ -301,7 +301,7 @@
                   <tr>
                     <td width="200" class="mobile" valign="middle">
                       <div class="marketing-section-img">
-                        <img src="https://tinypng.com/web/output/ae0a25x113gpex4wzzvgfmr5gd1rp72m/icon-3.png" alt="marketing-icon-1" class="marketing-icon">
+                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/icon-3.png" alt="marketing-icon-1" class="marketing-icon">
                       </div>
                     </td>
                     <td width="400" class="mobile" valign="top">
