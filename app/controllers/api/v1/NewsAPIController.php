@@ -108,6 +108,8 @@ class NewsAPIController extends ControllerAPI
             $is_sponsored = OrbitInput::post('is_sponsored', 'N');
             $sponsor_ids = OrbitInput::post('sponsor_ids');
             $gender = OrbitInput::post('gender', 'A');
+            $isHotEvent = OrbitInput::post('is_hot_event', 'no');
+            $hotEventLink = OrbitInput::post('hot_event_link');
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -127,6 +129,8 @@ class NewsAPIController extends ControllerAPI
                 'link_object_type'    => $link_object_type,
                 'id_language_default' => $id_language_default,
                 'sticky_order'        => $sticky_order,
+                'is_hot_event'        => $isHotEvent,
+                'hot_event_link'      => $hotEventLink,
             ];
             $validator_validation = [
                 'news_name'           => 'required|max:255',
@@ -137,6 +141,8 @@ class NewsAPIController extends ControllerAPI
                 'end_date'            => 'required|date|orbit.empty.hour_format',
                 'id_language_default' => 'required|orbit.empty.language_default',
                 'sticky_order'        => 'in:0,1',
+                'is_hot_event'        => 'sometimes|required|in:yes,no',
+                'hot_event_link'      => 'required_if:is_hot_event,yes|max:500',
             ];
             $validator_message = [
                 'sticky_order.in' => 'The sticky order value must 0 or 1',
@@ -199,6 +205,11 @@ class NewsAPIController extends ControllerAPI
             $newnews->sticky_order = $sticky_order;
             $newnews->is_exclusive = $is_exclusive;
             $newnews->is_sponsored = $is_sponsored;
+            $newnews->is_hot_event = $isHotEvent;
+
+            if ($isHotEvent === 'yes' && ! empty($hotEventLink)) {
+                $newnews->hot_event_link = $hotEventLink;
+            }
 
             // Check for english content
             $dataTranslations = @json_decode($translations);
@@ -601,6 +612,8 @@ class NewsAPIController extends ControllerAPI
             $is_exclusive = OrbitInput::post('is_exclusive');
             $is_sponsored = OrbitInput::post('is_sponsored', 'N');
             $sponsor_ids = OrbitInput::post('sponsor_ids');
+            $isHotEvent = OrbitInput::post('is_hot_event', 'no');
+            $hotEventLink = OrbitInput::post('hot_event_link');
 
             $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
             $status = 'inactive';
@@ -617,6 +630,8 @@ class NewsAPIController extends ControllerAPI
                 'end_date'            => $end_date,
                 'id_language_default' => $id_language_default,
                 'partner_exclusive'    => $is_exclusive,
+                'is_hot_event'        => $isHotEvent,
+                'hot_event_link'      => $hotEventLink,
             );
 
             // Validate news_name only if exists in POST.
@@ -635,6 +650,8 @@ class NewsAPIController extends ControllerAPI
                     'end_date'            => 'date||orbit.empty.hour_format',
                     'id_language_default' => 'required|orbit.empty.language_default',
                     'partner_exclusive'   => 'in:Y,N|orbit.empty.exclusive_partner',
+                    'is_hot_event'        => 'required|in:yes,no',
+                    'hot_event_link'      => 'required_if:is_hot_event,yes|max:500',
                 ),
                 array(
                    'news_name_exists_but_me' => Lang::get('validation.orbit.exists.news_name'),
@@ -893,6 +910,10 @@ class NewsAPIController extends ControllerAPI
                 $errorMessage = Lang::get('validation.orbit.empty.default_language_desc', ['type' => $object_type]);
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            $updatednews->is_hot_event = $isHotEvent;
+            $updatednews->hot_event_link = $isHotEvent === 'yes'
+                ? $hotEventLink : null;
 
             $updatednews->modified_by = $this->api->user->user_id;
             $updatednews->touch();
