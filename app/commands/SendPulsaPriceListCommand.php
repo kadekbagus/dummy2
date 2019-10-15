@@ -163,6 +163,7 @@ class SendPulsaPriceListCommand extends Command {
                 'store_names' => $this->flattenStoreNames($campaign),
                 'price_old' => 'Rp ' . number_format($campaign['price_old'], 0, '', ','),
                 'price_selling' => 'Rp ' . number_format($campaign['price_selling'], 0, '', ','),
+                'detail_url' => $this->generateCampaignUrl('coupons', $campaign['coupon_id'], $campaign['coupon_name']),
             ];
         }
 
@@ -211,6 +212,7 @@ class SendPulsaPriceListCommand extends Command {
                 'image_url' => $campaign['image_url'],
                 'location' => $this->flattenLocation($campaign),
                 'is_hot_event' => isset($campaign['is_hot_event']) && $campaign['is_hot_event'] === 'yes',
+                'detail_url' => $this->generateCampaignUrl('events', $campaign['news_id'], $campaign['news_name']),
             ];
         }
 
@@ -251,5 +253,12 @@ class SendPulsaPriceListCommand extends Command {
 
         return Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com')
             . "/{$objectType}{$utmStringParams}";
+    }
+
+    private function generateCampaignUrl($objectType = '', $campaignId, $campaignName)
+    {
+        $format = "/{$objectType}/%s/%s";
+        return Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com')
+            . sprintf($format, $campaignId, Str::slug($campaignName));
     }
 }
