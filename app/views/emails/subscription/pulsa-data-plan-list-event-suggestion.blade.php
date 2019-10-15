@@ -20,31 +20,33 @@
 
                               <td width="300" class="mobile" align="left" valign="top" style="">
                                 <div class="suggestion-list-item {{ ($index+1) % $itemPerRow === 0 ? 'even' : 'odd' }}">
-                                  <a href="{{ $campaign['detail_url'] }}" style="text-decoration: none;">
-                                    <table>
-                                      <tbody>
-                                        <tr>
-                                          <td width="90" valign="top">
+                                  <table>
+                                    <tbody>
+                                      <tr>
+                                        <td width="90" valign="top">
+                                          <a href="{{ $campaign['detail_url'] }}" style="text-decoration: none;">
                                             <img src="{{ $campaign['image_url'] }}" alt="Logo" style="-ms-interpolation-mode:bicubic;width:80px;height:80px;border:1px solid #eee;">
-                                          </td>
-                                          <td width="210" valign="top">
-                                            <table width="100%">
-                                              <tbody>
-                                                <tr>
-                                                  <td colspan="2" valign="top">
+                                          </a>
+                                        </td>
+                                        <td width="210" valign="top">
+                                          <table width="100%">
+                                            <tbody>
+                                              <tr>
+                                                <td colspan="2" valign="top">
+                                                  <a href="{{ $campaign['detail_url'] }}" style="text-decoration: none;">
                                                     <h4 style="margin-bottom: 0;margin-top:0;line-height:1.3em;font-size:15px;color:#444;">{{ $campaign['name'] }}</h4>
                                                     @if (! $campaign['is_hot_event'])
                                                       <p style="font-size: 12px;margin-top:5px;color:#444;">{{ $campaign['location'] }}</p>
                                                     @endif
-                                                  </td>
-                                                </tr>
-                                              </tbody>
-                                            </table>
-                                          </td>
-                                        </tr>
-                                      </tbody>
-                                    </table>
-                                  </a>
+                                                  </a>
+                                                </td>
+                                              </tr>
+                                            </tbody>
+                                          </table>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
                                 </div>
 
                               </td>
