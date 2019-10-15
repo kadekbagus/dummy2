@@ -81,6 +81,8 @@ class PulsaListAPIController extends PubControllerAPI
 
             $pulsa = Pulsa::select(
                                 'pulsa.*',
+                                DB::raw("{$prefix}telco_operators.telco_operator_id as operator_id"),
+                                DB::raw("{$prefix}telco_operators.name as operator_name"),
                                 DB::raw("count({$prefix}payment_transactions.payment_transaction_id) as sold_quantity")
                             )
                             ->leftJoin('payment_transaction_details', 'pulsa.pulsa_item_id', '=', 'payment_transaction_details.object_id')
