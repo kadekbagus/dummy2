@@ -106,6 +106,7 @@ class PulsaListAPIController extends PubControllerAPI
                             //this is added just ensure object_type_status_displayed_idx is used
                             ->whereIn('pulsa.status', ['active', 'inactive'])
                             ->where('pulsa.displayed', 'yes')
+                            ->orderBy('telco_operators.name')
                             ->orderBy('pulsa.value')
                             ->groupBy('pulsa_item_id');
 
