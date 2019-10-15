@@ -206,7 +206,7 @@
     <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#F2F2F2">
       <tr>
         <td align="center" valign="middle">
-          <img src="https://tinypng.com/web/output/enbpvtzud9bur67rxtuqcvwkm8482j4f/GTM-Logo.png" class="logo" alt="Logo">
+          <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/gtm-logo.png" class="logo" alt="Logo">
         </td>
       </tr>
 
