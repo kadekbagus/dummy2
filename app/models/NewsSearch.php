@@ -11,6 +11,17 @@ class NewsSearch extends CampaignSearch
     protected $objectType = 'news';
     protected $objectTypeAlias = 'news';
 
+    /**
+     * Filter only hot event (loket).
+     *
+     * @param  string  $isHotEvent [description]
+     * @return boolean             [description]
+     */
+    public function isHotEvent()
+    {
+        $this->must(['match' => ['is_hot_event' => 'yes']]);
+    }
+
 
     public function filterWithAdvert($options = [])
     {

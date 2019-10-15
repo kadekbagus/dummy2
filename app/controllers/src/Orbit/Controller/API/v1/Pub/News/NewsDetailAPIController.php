@@ -137,6 +137,8 @@ class NewsDetailAPIController extends PubControllerAPI
                             'news.begin_date',
                             'news.end_date',
                             'news.is_exclusive',
+                            'news.is_hot_event',
+                            'news.hot_event_link',
                             DB::raw("default_translation.news_name as default_name"),
                             // query for get status active based on timezone
                             DB::raw("
