@@ -199,7 +199,9 @@ class RegistrationMail
             'list_4'            => Lang::get('email.activation.list_4'),
             'list_5'            => Lang::get('email.activation.list_5'),
             'message_part4'     => Lang::get('email.activation.message_part4'),
-            'team_name'         => Lang::get('email.activation.team_name')
+            'team_name'         => Lang::get('email.activation.team_name'),
+            'ignore_email'      => Lang::get('email.activation.ignore_email'),
+            'find_follow'       => Lang::get('email.activation.find_follow'),
         );
 
         $mailviews = array(
