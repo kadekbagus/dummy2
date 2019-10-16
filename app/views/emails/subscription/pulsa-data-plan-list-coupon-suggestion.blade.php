@@ -24,23 +24,29 @@
                                     <tbody>
                                       <tr>
                                         <td width="90" valign="top">
-                                          <img src="{{ $campaign['image_url'] }}" alt="Logo" style="-ms-interpolation-mode:bicubic;width:80px;height:80px;border:1px solid #eee;">
+                                          <a href="{{ $campaign['detail_url'] }}" style="text-decoration: none;"><img src="{{ $campaign['image_url'] }}" alt="Logo" style="-ms-interpolation-mode:bicubic;width:80px;height:80px;border:1px solid #eee;"></a>
                                         </td>
                                         <td width="210" valign="top">
                                           <table width="100%">
                                             <tbody>
                                               <tr>
                                                 <td colspan="2" valign="top">
-                                                  <h4 style="margin-bottom: 0;margin-top:0;line-height:1.3em;font-size:15px;color:#444;">{{ $campaign['name'] }}</h4>
-                                                  <p style="font-size: 12px;margin-top:5px;color:#444;">{{ $campaign['store_names'] }}</p>
+                                                  <a href="{{ $campaign['detail_url'] }}" style="text-decoration: none;">
+                                                    <h4 style="margin-bottom: 0;margin-top:0;line-height:1.3em;font-size:15px;color:#444;">{{ $campaign['name'] }}</h4>
+                                                    <p style="font-size: 12px;margin-top:5px;color:#444;">{{ $campaign['store_names'] }}</p>
+                                                  </a>
                                                 </td>
                                               </tr>
                                               <tr style="font-size: 14px;">
                                                 <td align="left" valign="top">
-                                                  <span style="color: #888;text-decoration:line-through;">{{ $campaign['price_old'] }}</span>
+                                                  <a href="{{ $campaign['detail_url'] }}" style="text-decoration: none;">
+                                                    <span style="color: #888;text-decoration:line-through;">{{ $campaign['price_old'] }}</span>
+                                                  </a>
                                                 </td>
                                                 <td align="right" valign="top">
-                                                  <span style="color: #2196f3">{{ $campaign['price_selling'] }}</span>
+                                                  <a href="{{ $campaign['detail_url'] }}" style="text-decoration: none;">
+                                                    <span style="color: #2196f3">{{ $campaign['price_selling'] }}</span>
+                                                  </a>
                                                 </td>
                                               </tr>
                                             </tbody>

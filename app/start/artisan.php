@@ -327,3 +327,6 @@ Artisan::add(new SendPulsaPriceListCommand);
 
 // Create RGP user
 Artisan::add(new CreateUserRGPCommand);
+
+// Update slug for telco operator
+Artisan::add(new TelcoOperatorSlugCommand);

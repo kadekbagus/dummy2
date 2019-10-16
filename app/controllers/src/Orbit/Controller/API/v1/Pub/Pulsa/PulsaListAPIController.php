@@ -10,6 +10,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \DB;
 use Pulsa;
+use TelcoOperator;
 use PaymentTransaction;
 use Orbit\Controller\API\v1\Pub\Partner\PartnerHelper;
 use Validator;
@@ -82,9 +83,6 @@ class PulsaListAPIController extends PubControllerAPI
                                 'pulsa.*',
                                 DB::raw("{$prefix}telco_operators.telco_operator_id as operator_id"),
                                 DB::raw("{$prefix}telco_operators.name as operator_name"),
-                                'telco_operators.country_id',
-                                'telco_operators.identification_prefix_numbers as operator_prefixes',
-                                DB::raw($telcoLogo),
                                 DB::raw("count({$prefix}payment_transactions.payment_transaction_id) as sold_quantity")
                             )
                             ->leftJoin('payment_transaction_details', 'pulsa.pulsa_item_id', '=', 'payment_transaction_details.object_id')
@@ -103,19 +101,31 @@ class PulsaListAPIController extends PubControllerAPI
                             })
                             ->join('telco_operators', 'pulsa.telco_operator_id', '=', 'telco_operators.telco_operator_id')
                             ->join('countries', 'telco_operators.country_id', '=', 'countries.country_id')
-                            ->leftJoin('media', function($join) use ($prefix) {
-                                $join->on('telco_operators.telco_operator_id', '=', 'media.object_id')
-                                     ->on('media.media_name_long', '=', DB::raw("'telco_operator_logo_orig'"));
-                            })
                             ->where('countries.name', $country)
                             ->whereIn('pulsa.object_type', ['pulsa', 'data_plan'])
                             //this is added just ensure object_type_status_displayed_idx is used
                             ->whereIn('pulsa.status', ['active', 'inactive'])
                             ->where('pulsa.displayed', 'yes')
-                            ->where('telco_operators.status', 'active')
-                            ->orderBy('telco_operators.telco_operator_id')
+                            ->orderBy('telco_operators.name')
                             ->orderBy('pulsa.value')
                             ->groupBy('pulsa_item_id');
+
+            $telcoOperators = TelcoOperator::select(
+                    'telco_operators.*',
+                    DB::raw("{$prefix}telco_operators.telco_operator_id as operator_id"),
+                    DB::raw("{$prefix}telco_operators.name as operator_name"),
+                    'telco_operators.country_id',
+                    'telco_operators.identification_prefix_numbers as operator_prefixes',
+                    DB::raw($telcoLogo)
+                )
+                ->join('countries', 'telco_operators.country_id', '=', 'countries.country_id')
+                ->leftJoin('media', function($join) use ($prefix) {
+                    $join->on('telco_operators.telco_operator_id', '=', 'media.object_id')
+                         ->on('media.media_name_long', '=', DB::raw("'telco_operator_logo_orig'"));
+                })
+                ->where('countries.name', $country)
+                ->where('status', 'active')
+                ->get();
 
             // Cache the result of database calls
             // OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($pulsa);
@@ -126,9 +136,10 @@ class PulsaListAPIController extends PubControllerAPI
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
             $data->total_records = $totalRec;
-
             $data->records = $listOfRec;
-            $this->resolveOperator($listOfRec, $data);
+
+            $data->records_operator = $telcoOperators;
+            $data->total_records_operator = $telcoOperators->count();
 
             $this->response->data = $data;
             $this->response->code = 0;
@@ -179,31 +190,5 @@ class PulsaListAPIController extends PubControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
-    }
-
-    /**
-     * Populate operator from pulsa list,
-     *
-     * @param  [type] $pulsa [description]
-     * @param  [type] &$data [description]
-     * @return [type]        [description]
-     */
-    private function resolveOperator($pulsa, &$data)
-    {
-        $data->records_operator = [];
-        $data->total_records_operator = 0;
-        foreach($pulsa as $pulsaItem) {
-            if (! isset($data->records_operator[$pulsaItem->operator_id])) {
-                $data->records_operator[$pulsaItem->operator_id] = (object) [
-                    'operator_id' => $pulsaItem->operator_id,
-                    'operator_name' => $pulsaItem->operator_name,
-                    'logo_url' => $pulsaItem->logo_url,
-                    'operator_prefixes' => $pulsaItem->operator_prefixes,
-                ];
-            }
-        }
-
-        $data->records_operator = array_values($data->records_operator);
-        $data->total_records_operator = count($data->records_operator);
     }
 }
