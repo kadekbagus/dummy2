@@ -42,7 +42,6 @@ class PulsaSuccessWithoutSerialNumberNotification extends BaseNotification
     public function toEmail($job, $data)
     {
         try {
-            Log::info("notifiable: " . serialize($this->notifiable));
             Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 

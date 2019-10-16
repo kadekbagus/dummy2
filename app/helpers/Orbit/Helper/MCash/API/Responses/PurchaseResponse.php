@@ -21,6 +21,13 @@ class PurchaseResponse
     protected $retryStatus = [609, 413, 8701];
 
     /**
+     * List of error status that will be displayed in the admin email.
+     *
+     * @var [type]
+     */
+    protected $displayableErrorStatus = [627, 617, 628];
+
+    /**
      * Maximum number of retry we would do if the first time was failed.
      * @var integer
      */
@@ -59,6 +66,19 @@ class PurchaseResponse
                 && isset($this->data->data)
                 && isset($this->data->data->serial_number)
                 && empty($this->data->data->serial_number);
+    }
+
+    /**
+     * Get serial number from purchase.
+     *
+     * @return boolean [description]
+     */
+    public function getSerialNumber()
+    {
+        return isset($this->data->data) && ! empty($this->data->data)
+            && isset($this->data->data->serial_number) && ! empty($this->data->data->serial_number)
+            ? $this->data->data->serial_number
+            : null;
     }
 
     /**
@@ -178,5 +198,28 @@ class PurchaseResponse
                 unset($this->data->{$key});
             }
         }
+    }
+
+    /**
+     * Determine if current (error) purchase response should be displayed in
+     * the admin notification email and then return the formatted error message.
+     *
+     * @return [type] [description]
+     */
+    public function getFailureMessage()
+    {
+        $displayErrorInAdminEmail = ! empty($this->data) && isset($this->data->status)
+                && in_array((int) $this->data->status, $this->displayableErrorStatus);
+
+        $failureMessage = "Pulsa purchase is FAILED, unknown status from MCASH.";
+        if ($displayErrorInAdminEmail) {
+            $failureMessage = sprintf(
+                "ERR [%s] : %s",
+                $this->data->status,
+                $this->data->message
+            );
+        }
+
+        return $failureMessage;
     }
 }

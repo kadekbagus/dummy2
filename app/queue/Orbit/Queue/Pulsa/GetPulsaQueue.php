@@ -118,7 +118,7 @@ class GetPulsaQueue
                 $this->log("Issued for payment {$paymentId}..");
 
                 // Notify Customer.
-                $payment->user->notify(new ReceiptNotification($payment));
+                $payment->user->notify(new ReceiptNotification($payment, $pulsaPurchase->getSerialNumber()));
 
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Pulsa Successful', 'ec' => 'Pulsa', 'el' => $pulsaName])->request();
 
@@ -207,7 +207,7 @@ class GetPulsaQueue
                 $this->log("Pulsa purchase is FAILED for payment {$paymentId}. Unknown status from MCash.");
                 $this->log("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
                 $this->log("Purchase response: " . serialize($pulsaPurchase));
-                throw new Exception("Pulsa purchase is FAILED, unknown status from MCASH.");
+                throw new Exception($pulsaPurchase->getFailureMessage());
             }
 
             $payment->save();

@@ -6215,4 +6215,11 @@ return array(
             ]
         ]
     ],
+
+    // List of blocked recipients.
+    'blacklisted_notification_recipients' => [
+        'email' => [
+            //
+        ],
+    ],
 );
