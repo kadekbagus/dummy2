@@ -132,7 +132,18 @@ class GetCouponQueue
                 // Notify Customer.
                 $payment->user->notify(new ReceiptNotification($payment));
 
-                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Coupon Successful', 'ec' => 'Coupon', 'el' => $coupon->promotion_name])->request();
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                    ->setQueryString([
+                        'ea' => 'Purchase Coupon Successful',
+                        'ec' => 'Coupon',
+                        'el' => $coupon->promotion_name,
+                        'cs' => $payment->utm_source,
+                        'cm' => $payment->utm_medium,
+                        'cn' => $payment->utm_campaign,
+                        'ck' => $payment->utm_term,
+                        'cc' => $payment->utm_content
+                    ])
+                    ->request();
 
                 // Log Activity
                 $activity->setActivityNameLong('Transaction is Successful')
@@ -206,7 +217,18 @@ class GetCouponQueue
                 $payment->user->notify(new HotDealsCouponNotAvailableNotification($payment));
 
                 $objectName = $payment->details->first()->object_name;
-                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Purchase Coupon Failed', 'ec' => 'Coupon', 'el' => $objectName])->request();
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                    ->setQueryString([
+                        'ea' => 'Purchase Coupon Failed',
+                        'ec' => 'Coupon',
+                        'el' => $objectName,
+                        'cs' => $payment->utm_source,
+                        'cm' => $payment->utm_medium,
+                        'cn' => $payment->utm_campaign,
+                        'ck' => $payment->utm_term,
+                        'cc' => $payment->utm_content
+                    ])
+                    ->request();
 
                 $activity->setActivityNameLong('Transaction is Success - Failed Getting Coupon')
                          ->setModuleName('Midtrans Transaction')

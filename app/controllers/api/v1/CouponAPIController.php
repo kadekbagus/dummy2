@@ -3947,8 +3947,21 @@ class CouponAPIController extends ControllerAPI
                     $activityNotes = Coupon::TYPE_HOT_DEALS;
                 }
 
+                $payment = PaymentTransaction::find($transactionId);
+
                 // send google analytics event
-                GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Redeem Coupon Successful', 'ec' => 'Coupon', 'el' => $issuedcoupon->coupon->promotion_name])->request();
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                    ->setQueryString([
+                        'ea' => 'Redeem Coupon Successful',
+                        'ec' => 'Coupon',
+                        'el' => $issuedcoupon->coupon->promotion_name,
+                        'cs' => is_object($payment) ? $payment->utm_source : null,
+                        'cm' => is_object($payment) ? $payment->utm_medium : null,
+                        'cn' => is_object($payment) ? $payment->utm_campaign : null,
+                        'ck' => is_object($payment) ? $payment->utm_term : null,
+                        'cc' => is_object($payment) ? $payment->utm_content : null
+                    ])
+                    ->request();
 
                 $activity->setUser($user)
                         ->setActivityName('redeem_coupon')
@@ -3979,7 +3992,13 @@ class CouponAPIController extends ControllerAPI
             $this->rollBack();
 
             // send google analytics event
-            GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Redeem Coupon Failed', 'ec' => 'Coupon', 'el' => $issuedcoupon->coupon->promotion_name])->request();
+            GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                ->setQueryString([
+                    'ea' => 'Redeem Coupon Failed',
+                    'ec' => 'Coupon',
+                    'el' => $issuedcoupon->coupon->promotion_name
+                ])
+                ->request();
 
             // Deletion failed Activity log
             if ($paymentProvider === '0') {
@@ -4007,7 +4026,13 @@ class CouponAPIController extends ControllerAPI
             $this->rollBack();
 
             // send google analytics event
-            GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Redeem Coupon Failed', 'ec' => 'Coupon', 'el' => $issuedcoupon->coupon->promotion_name])->request();
+            GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                ->setQueryString([
+                    'ea' => 'Redeem Coupon Failed',
+                    'ec' => 'Coupon',
+                    'el' => $issuedcoupon->coupon->promotion_name
+                ])
+                ->request();
 
             // Deletion failed Activity log
             if ($paymentProvider === '0') {
@@ -4041,7 +4066,13 @@ class CouponAPIController extends ControllerAPI
             $this->rollBack();
 
             // send google analytics event
-            GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Redeem Coupon Failed', 'ec' => 'Coupon', 'el' => $issuedcoupon->coupon->promotion_name])->request();
+            GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                ->setQueryString([
+                    'ea' => 'Redeem Coupon Failed',
+                    'ec' => 'Coupon',
+                    'el' => $issuedcoupon->coupon->promotion_name
+                ])
+                ->request();
 
             // Deletion failed Activity log
             if ($paymentProvider === '0') {
@@ -4068,7 +4099,13 @@ class CouponAPIController extends ControllerAPI
             $this->rollBack();
 
             // send google analytics event
-            GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Redeem Coupon Failed', 'ec' => 'Coupon', 'el' => $issuedcoupon->coupon->promotion_name])->request();
+            GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                ->setQueryString([
+                    'ea' => 'Redeem Coupon Failed',
+                    'ec' => 'Coupon',
+                    'el' => $issuedcoupon->coupon->promotion_name
+                ])
+                ->request();
 
             // Deletion failed Activity log
             if ($paymentProvider === '0') {

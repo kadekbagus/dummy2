@@ -273,7 +273,24 @@ class CouponRedeemAPIController extends PubControllerAPI
             $this->response->data = $isAvailable->issued_coupon_code;
 
             // send google analytics event
-            GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Redeem Coupon Successful', 'ec' => 'Coupon', 'el' => $coupon->promotion_name])->request();
+            $payment = null;
+            if (is_object($issuedCoupon)) {
+                if (! empty($issuedCoupon->transaction_id)) {
+                    $payment = PaymentTransaction::find($issuedCoupon->transaction_id);
+                }
+            }
+            GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                ->setQueryString([
+                    'ea' => 'Redeem Coupon Successful',
+                    'ec' => 'Coupon',
+                    'el' => $coupon->promotion_name,
+                    'cs' => is_object($payment) ? $payment->utm_source : null,
+                    'cm' => is_object($payment) ? $payment->utm_medium : null,
+                    'cn' => is_object($payment) ? $payment->utm_campaign : null,
+                    'ck' => is_object($payment) ? $payment->utm_term : null,
+                    'cc' => is_object($payment) ? $payment->utm_content : null
+                ])
+                ->request();
 
             // customize user property before saving activity
             $user = $couponHelper->customizeUserProps($user, $userIdentifier);
@@ -292,7 +309,13 @@ class CouponRedeemAPIController extends PubControllerAPI
             Log::info('orbit.redeem.coupon.success coupon redeem');
             Event::fire('orbit.redeem.coupon.success', [$user, $body]);
         } catch (Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException $e) {
-            GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Redeem Coupon Failed', 'ec' => 'Coupon', 'el' => isset($coupon->promotion_name) ? $coupon->promotion_name : 'Unknown Coupon'])->request();
+            GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                ->setQueryString([
+                    'ea' => 'Redeem Coupon Failed',
+                    'ec' => 'Coupon',
+                    'el' => isset($coupon->promotion_name) ? $coupon->promotion_name : 'Unknown Coupon'
+                ])
+                ->request();
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -314,7 +337,13 @@ class CouponRedeemAPIController extends PubControllerAPI
                     ->setModuleName('Coupon')
                     ->responseFailed();
         } catch (ACLForbiddenException $e) {
-            GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Redeem Coupon Failed', 'ec' => 'Coupon', 'el' => isset($coupon->promotion_name) ? $coupon->promotion_name : 'Unknown Coupon'])->request();
+            GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                ->setQueryString([
+                    'ea' => 'Redeem Coupon Failed',
+                    'ec' => 'Coupon',
+                    'el' => isset($coupon->promotion_name) ? $coupon->promotion_name : 'Unknown Coupon'
+                ])
+                ->request();
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
@@ -335,7 +364,13 @@ class CouponRedeemAPIController extends PubControllerAPI
                     ->setModuleName('Coupon')
                     ->responseFailed();
         } catch (InvalidArgsException $e) {
-            GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Redeem Coupon Failed', 'ec' => 'Coupon', 'el' => isset($coupon->promotion_name) ? $coupon->promotion_name : 'Unknown Coupon'])->request();
+            GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                ->setQueryString([
+                    'ea' => 'Redeem Coupon Failed',
+                    'ec' => 'Coupon',
+                    'el' => isset($coupon->promotion_name) ? $coupon->promotion_name : 'Unknown Coupon'
+                ])
+                ->request();
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
@@ -356,7 +391,13 @@ class CouponRedeemAPIController extends PubControllerAPI
                     ->setModuleName('Coupon')
                     ->responseFailed();
         } catch (QueryException $e) {
-            GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Redeem Coupon Failed', 'ec' => 'Coupon', 'el' => isset($coupon->promotion_name) ? $coupon->promotion_name : 'Unknown Coupon'])->request();
+            GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                ->setQueryString([
+                    'ea' => 'Redeem Coupon Failed',
+                    'ec' => 'Coupon',
+                    'el' => isset($coupon->promotion_name) ? $coupon->promotion_name : 'Unknown Coupon'
+                ])
+                ->request();
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
 
@@ -383,7 +424,13 @@ class CouponRedeemAPIController extends PubControllerAPI
                     ->setModuleName('Coupon')
                     ->responseFailed();
         } catch (Exception $e) {
-            GMP::create(Config::get('orbit.partners_api.google_measurement'))->setQueryString(['ea' => 'Redeem Coupon Failed', 'ec' => 'Coupon', 'el' => 'Coupon Name'])->request();
+            GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                ->setQueryString([
+                    'ea' => 'Redeem Coupon Failed',
+                    'ec' => 'Coupon',
+                    'el' => 'Coupon Name'
+                ])
+                ->request();
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
