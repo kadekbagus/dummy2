@@ -17,7 +17,7 @@
 
                             @foreach($chunk as $index => $campaign)
 
-                              <td width="300" class="mobile" align="left" valign="top" style="">
+                              <td width="300" class="mobile" align="left" valign="middle" style="">
                                 <div class="suggestion-list-item {{ ($index+1) % $itemPerRow === 0 ? 'even' : 'odd' }}">
 
                                   <table>
