@@ -82,6 +82,7 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                     'post_data'  => $post_data,
                     'mall_id'    => $mall_id,
                     'object_id'  => $object_id,
+                    'promo_code' => $promoCode,
                 ),
                 array(
                     'first_name' => 'required',
