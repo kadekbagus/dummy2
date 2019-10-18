@@ -22,6 +22,8 @@ use Carbon\Carbon as Carbon;
 use Log;
 use App;
 use Discount;
+use Orbit\Helper\Util\CampaignSourceParser;
+use Request;
 
 /**
  * Create payment record for Pulsa purchase.
@@ -142,6 +144,17 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                 }
             }
 
+            // Get utm
+            $referer = NULL;
+            if (isset($_SERVER['HTTP_REFERER']) && ! empty($_SERVER['HTTP_REFERER'])) {
+                $referer = $_SERVER['HTTP_REFERER'];
+            }
+            $current_url = Request::fullUrl();
+            $urlForTracking = [$referer, $current_url];
+            $campaignData = CampaignSourceParser::create()
+                                ->setUrls($urlForTracking)
+                                ->getCampaignSource();
+
             $payment_new = new PaymentTransaction;
             $payment_new->user_email = $email;
             $payment_new->user_name = $user_name;
@@ -155,6 +168,12 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
             $payment_new->timezone_name = $mallTimeZone;
             $payment_new->post_data = serialize($post_data);
             $payment_new->extra_data = $this->cleanPhone($pulsa_phone);
+
+            $payment_new->utm_source = $campaignData['campaign_source'];
+            $payment_new->utm_medium = $campaignData['campaign_medium'];
+            $payment_new->utm_term = $campaignData['campaign_term'];
+            $payment_new->utm_content = $campaignData['campaign_content'];
+            $payment_new->utm_campaign = $campaignData['campaign_name'];
 
             $payment_new->save();
 
