@@ -78,37 +78,37 @@ class StoreSearch extends CampaignSearch
         }
     }
 
-    protected function setPriorityForLinkToTenant($objType, $keyword)
-    {
-        $priorityCountry = isset($this->esConfig['priority'][$objType]['country']) ?
-            $this->esConfig['priority'][$objType]['country'] : '';
+    // protected function setPriorityForLinkToTenant($objType, $keyword)
+    // {
+    //     $priorityCountry = isset($this->esConfig['priority'][$objType]['country']) ?
+    //         $this->esConfig['priority'][$objType]['country'] : '';
 
-        $priorityProvince = isset($this->esConfig['priority'][$objType]['province']) ?
-            $this->esConfig['priority'][$objType]['province'] : '';
+    //     $priorityProvince = isset($this->esConfig['priority'][$objType]['province']) ?
+    //         $this->esConfig['priority'][$objType]['province'] : '';
 
-        $priorityCity = isset($this->esConfig['priority'][$objType]['city']) ?
-            $this->esConfig['priority'][$objType]['city'] : '';
+    //     $priorityCity = isset($this->esConfig['priority'][$objType]['city']) ?
+    //         $this->esConfig['priority'][$objType]['city'] : '';
 
-        $priorityMallName = isset($this->esConfig['priority'][$objType]['mall_name']) ?
-            $this->esConfig['priority'][$objType]['mall_name'] : '';
+    //     $priorityMallName = isset($this->esConfig['priority'][$objType]['mall_name']) ?
+    //         $this->esConfig['priority'][$objType]['mall_name'] : '';
 
-        $this->should([
-            'nested' => [
-                'path' => 'link_to_tenant',
-                'query' => [
-                    'query_string' => [
-                        'query' => '*' . $keyword . '*',
-                        'fields' => [
-                            'link_to_tenant.country' . $priorityCountry,
-                            'link_to_tenant.province' . $priorityProvince,
-                            'link_to_tenant.city' . $priorityCity,
-                            'link_to_tenant.mall_name' . $priorityMallName,
-                        ]
-                    ]
-                ]
-            ]
-        ]);
-    }
+    //     $this->should([
+    //         'nested' => [
+    //             'path' => 'link_to_tenant',
+    //             'query' => [
+    //                 'query_string' => [
+    //                     'query' => '*' . $keyword . '*',
+    //                     'fields' => [
+    //                         'link_to_tenant.country' . $priorityCountry,
+    //                         'link_to_tenant.province' . $priorityProvince,
+    //                         'link_to_tenant.city' . $priorityCity,
+    //                         'link_to_tenant.mall_name' . $priorityMallName,
+    //                     ]
+    //                 ]
+    //             ]
+    //         ]
+    //     ]);
+    // }
 
 
     /**
@@ -125,7 +125,7 @@ class StoreSearch extends CampaignSearch
         //override we should change key
         //ESConfig['priority']['store] to ESConfig['priority']['stores']
         $this->setPriorityForQueryStr('store', $keyword);
-        $this->setPriorityForLinkToTenant('store', $keyword);
+        //$this->setPriorityForLinkToTenant('store', $keyword);
     }
 
     /**
