@@ -141,11 +141,11 @@ class NewsListNewAPIController extends PubControllerAPI
             $myCCFilter = OrbitInput::get('my_cc_filter', false);
             $withAdvert = (bool) OrbitInput::get('with_advert', true);
             $gender = OrbitInput::get('gender', 'all');
-            $isHotEvent = OrbitInput::get('is_hot_event', 'no');
             $ratingLow = OrbitInput::get('rating_low', 0);
             $ratingHigh = OrbitInput::get('rating_high', 5);
             $ratingLow = empty($ratingLow) ? 0 : $ratingLow;
             $ratingHigh = empty($ratingHigh) ? 5 : $ratingHigh;
+            $isHotEvent = OrbitInput::get('is_hot_event', 'no');
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
