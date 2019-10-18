@@ -2603,5 +2603,15 @@ return array(
             'object_type' => null,
             'parameter_name' => null,
         ),
+
+        // Click buy pulsa from pulsa list/status page.
+        '283' => array(
+            'name' => 'view_pulsa_status_page',
+            'name_long' => 'View Pulsa Status Page',
+            'module_name' => 'Pulsa',
+            'type' => 'view',
+            'object_type' => null,
+            'parameter_name' => null,
+        ),
     ),
 );
