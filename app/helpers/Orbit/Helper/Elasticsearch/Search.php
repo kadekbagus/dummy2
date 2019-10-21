@@ -87,6 +87,8 @@ class Search
      */
     public function getRequestParam($key = '')
     {
+        $this->buildExcludedIdsQuery();
+
         if ($key == '')
             return $this->searchParam;
 
@@ -337,7 +339,7 @@ class Search
      *
      * @return void
      */
-    protected function buildExcludedIdsQuery()
+    public function buildExcludedIdsQuery()
     {
         if (! empty($this->excludedIds)) {
             $this->mustNot([
@@ -345,6 +347,12 @@ class Search
                     '_id' => $this->excludedIds,
                 ]
             ]);
+        }
+
+        // Add custom excluded id parameter. Can be added
+        // in each sub class as needed.
+        if (method_exists($this, 'addExcludedIdsParam')) {
+            $this->addExcludedIdsParam();
         }
     }
 }
