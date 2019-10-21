@@ -30,6 +30,12 @@ class Search
     // ES connection config
     protected $esConfig = [];
 
+    /**
+     * List of item id that will be excluded from result.
+     * @var array
+     */
+    protected $excludedIds = [];
+
     function __construct($ESConfig = [])
     {
         if (empty($ESConfig)) {
@@ -231,6 +237,8 @@ class Search
      */
     public function getResult($resultMapperClass = '')
     {
+        $this->buildExcludedIdsQuery();
+
         $this->searchParam['body'] = json_encode($this->searchParam['body']);
 
         return $this->client->search($this->searchParam);
@@ -321,5 +329,22 @@ class Search
             ':'
         );
         return str_replace($forbiddenCharacter, '', $str);
+    }
+
+    /**
+     * Build query with excluded ids.
+     * Basically only add must not terms into the search params body.
+     *
+     * @return void
+     */
+    protected function buildExcludedIdsQuery()
+    {
+        if (! empty($this->excludedIds)) {
+            $this->mustNot([
+                'terms' => [
+                    '_id' => $this->excludedIds,
+                ]
+            ]);
+        }
     }
 }
