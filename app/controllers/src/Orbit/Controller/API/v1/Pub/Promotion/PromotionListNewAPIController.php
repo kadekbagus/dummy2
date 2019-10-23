@@ -377,7 +377,7 @@ class PromotionListNewAPIController extends PubControllerAPI
             OrbitInput::get('excluded_ids', function($excludedIds) use (&$withAdvert) {
                 $jsonExcludedIds = [];
                 foreach ($excludedIds as $excludedId) {
-                    $jsonExcludedIds[] = array('term' => ['_id' => $excludedId]);
+                    $jsonExcludedIds[] = $excludedId;
                 }
 
                 if (count($jsonExcludedIds) > 0) {
