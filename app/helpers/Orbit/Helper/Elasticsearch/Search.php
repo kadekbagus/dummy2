@@ -342,11 +342,13 @@ class Search
     public function buildExcludedIdsQuery()
     {
         if (! empty($this->excludedIds)) {
-            $this->mustNot([
-                'terms' => [
-                    '_id' => $this->excludedIds,
-                ]
-            ]);
+            foreach($this->excludedIds as $excludedId) {
+                $this->mustNot([
+                    'term' => [
+                        '_id' => $excludedId,
+                    ]
+                ]);
+            }
         }
 
         // Add custom excluded id parameter. Can be added
