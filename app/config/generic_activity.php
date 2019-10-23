@@ -2597,7 +2597,7 @@ return array(
         // Click buy pulsa from pulsa list/status page.
         '282' => array(
             'name' => 'click_buy_pulsa_price_list',
-            'name_long' => 'Click Buy Pulsa From Pulsa Price List',
+            'name_long' => 'Click Buy Pulsa From Pulsa Price List Page',
             'module_name' => 'Pulsa',
             'type' => 'click',
             'object_type' => null,
