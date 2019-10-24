@@ -283,73 +283,9 @@ class MallSearch extends ObjectTypeSearch
         $this->sortByName();
     }
 
-    protected function buildRatingReviewCalcScript($params = [])
+    private function buildFollowCalcScript($params = [])
     {
-        $scriptFieldRating = "double counter = 0; double rating = 0;";
-        $scriptFieldReview = "double review = 0;";
         $scriptFieldFollow = "int follow = 0;";
-
-        if (!empty($params['countryData']) && ! empty($params['cityFilters'])) {
-            // count total review and average rating based on city filter
-            $countryId = $params['countryData']->country_id;
-            foreach ((array) $params['cityFilters'] as $cityFilter) {
-                $cities = str_replace(" ", "_", trim(strtolower($cityFilter), " "));
-                $ratingKey = "location_rating.rating_{$countryId}_{$cities}";
-                $reviewKey = "location_rating.review_{$countryId}_{$cities}";
-                $scriptFieldRating = $scriptFieldRating . ' ' .
-                "if (doc.containsKey('{$ratingKey}')) {
-                    if (! doc['{$ratingKey}'].empty) {
-                        counter = counter + doc['{$reviewKey}'].value;
-                        rating = rating + (doc['{$reviewKey}'].value * doc['{$reviewKey}'].value);
-                    }
-                }; ";
-                $scriptFieldReview = $scriptFieldReview . ' ' .
-                "if (doc.containsKey('{$reviewKey}')) {
-                    if (! doc['{$reviewKey}'].empty) {
-                        review = review + doc['{$reviewKey}'].value;
-                    }
-                }; ";
-            }
-        } else if (! empty($params['countryData']) && ! empty($countryFilter)) {
-            // count total review and average rating based on country filter
-            $countryId = $params['countryData']->country_id;
-            $ratingKey = "location_rating.rating_{$countryId}";
-            $reviewKey = "location_rating.review_{$countryId}";
-            $scriptFieldRating = $scriptFieldRating . ' ' .
-            "if (doc.containsKey('{$ratingKey}')) {
-                if (! doc['{$ratingKey}'].empty) {
-                    counter = counter + doc['{$reviewKey}'].value;
-                    rating = rating + (doc['{$ratingKey}'].value * doc['{$reviewKey}'].value);
-                }
-            }; ";
-            $scriptFieldReview = $scriptFieldReview . ' ' .
-            "if (doc.containsKey('{$reviewKey}')) {
-                if (! doc['{$reviewKey}'].empty) {
-                    review = review + doc['{$reviewKey}'].value;
-                }
-            }; ";
-        } else {
-            $countries = $this->getMallCountryList();
-            foreach ($countries as $country) {
-                $ratingKey = "location_rating.rating_{$countryId}";
-                $reviewKey = "location_rating.review_{$countryId}";
-                $countryId = $country->country_id;
-                $scriptFieldRating = $scriptFieldRating . ' ' .
-                "if (doc.containsKey('{$ratingKey}')) {
-                    if (! doc['{$ratingKey}'].empty) {
-                        counter = counter + doc['{$reviewKey}'].value;
-                        rating = rating + (doc['{$ratingKey}'].value * doc['{$reviewKey}'].value);
-                    }
-                }; ";
-                $scriptFieldReview = $scriptFieldReview . ' ' .
-                "if (doc.containsKey('{$reviewKey}')) {
-                    if (! doc['{$reviewKey}'].empty) {
-                        review = review + doc['{$reviewKey}'].value;
-                    }
-                }; ";
-            }
-        }
-
         $role = $params['user']->role->role_name;
         $objectFollow = [];
         if (strtolower($role) === 'consumer') {
@@ -377,8 +313,24 @@ class MallSearch extends ObjectTypeSearch
                 }
             }
         }
+        return compact('scriptFieldFollow', 'objectFollow');
+    }
 
-        return compact('scriptFieldRating', 'scriptFieldReview', 'scriptFieldFollow', 'objectFollow');
+    protected function buildRatingReviewCalcScript($params = [])
+    {
+        $scripts = [];
+        if (!empty($params['countryData']) && ! empty($params['cityFilters'])) {
+            $countryId = $params['countryData']->country_id;
+            $scripts = $this->buildRatingReviewCalcScriptByCountryCities($countryId, $params['cityFilters']);
+
+        } else if (! empty($params['countryData']) && empty($params['cityFilters'])) {
+            // count total review and average rating based on country filter
+            $countryId = $params['countryData']->country_id;
+            $scripts = $this->buildRatingReviewCalcScriptByCountry($countryId);
+        } else {
+            $scripts = $this->buildRatingReviewCalcScriptByMallCountries();
+        }
+        return $scripts + $this->buildFollowCalcScript($params);
     }
 
     protected function getReviewRatingScript($params = [])
