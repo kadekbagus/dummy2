@@ -122,18 +122,21 @@ abstract class ObjectTypeSearch extends Search
     abstract public function filterWithAdvert($options = []);
 
     /**
-     * Exclude some stores from the result.
+     * Add items into excludedIds list.
+     * The list will be added into the search param body query later.
      *
      * @param  array  $excludedId [description]
-     * @return [type]             [description]
+     * @return void
      */
-    public function exclude($excludedId = [])
+    public function exclude($excludedIds = null)
     {
-        $this->mustNot([
-            'terms' => [
-                '_id' => $excludedId,
-            ]
-        ]);
+        if ( empty($excludedIds)) return;
+
+        if (! is_array($excludedIds)) {
+            $excludedIds = [$excludedIds];
+        }
+
+        $this->excludedIds = array_unique(array_merge($this->excludedIds, $excludedIds));
     }
 
     /**
