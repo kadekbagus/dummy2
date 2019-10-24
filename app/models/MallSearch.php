@@ -293,20 +293,60 @@ class MallSearch extends ObjectTypeSearch
             // count total review and average rating based on city filter
             $countryId = $params['countryData']->country_id;
             foreach ((array) $params['cityFilters'] as $cityFilter) {
-                $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { if (! doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value * doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value);}}; ";
-                $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { if (! doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value;}}; ";
+                $cities = str_replace(" ", "_", trim(strtolower($cityFilter), " "));
+                $ratingKey = "location_rating.rating_{$countryId}_{$cities}";
+                $reviewKey = "location_rating.review_{$countryId}_{$cities}";
+                $scriptFieldRating = $scriptFieldRating . ' ' .
+                "if (doc.containsKey('{$ratingKey}')) {
+                    if (! doc['{$ratingKey}'].empty) {
+                        counter = counter + doc['{$reviewKey}'].value;
+                        rating = rating + (doc['{$reviewKey}'].value * doc['{$reviewKey}'].value);
+                    }
+                }; ";
+                $scriptFieldReview = $scriptFieldReview . ' ' .
+                "if (doc.containsKey('{$reviewKey}')) {
+                    if (! doc['{$reviewKey}'].empty) {
+                        review = review + doc['{$reviewKey}'].value;
+                    }
+                }; ";
             }
         } else if (! empty($params['countryData']) && ! empty($countryFilter)) {
             // count total review and average rating based on country filter
             $countryId = $params['countryData']->country_id;
-            $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { if (! doc['location_rating.rating_" . $countryId . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);}}; ";
-            $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "')) { if (! doc['location_rating.review_" . $countryId . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "'].value;}}; ";
+            $ratingKey = "location_rating.rating_{$countryId}";
+            $reviewKey = "location_rating.review_{$countryId}";
+            $scriptFieldRating = $scriptFieldRating . ' ' .
+            "if (doc.containsKey('{$ratingKey}')) {
+                if (! doc['{$ratingKey}'].empty) {
+                    counter = counter + doc['{$reviewKey}'].value;
+                    rating = rating + (doc['{$ratingKey}'].value * doc['{$reviewKey}'].value);
+                }
+            }; ";
+            $scriptFieldReview = $scriptFieldReview . ' ' .
+            "if (doc.containsKey('{$reviewKey}')) {
+                if (! doc['{$reviewKey}'].empty) {
+                    review = review + doc['{$reviewKey}'].value;
+                }
+            }; ";
         } else {
             $countries = $this->getMallCountryList();
             foreach ($countries as $country) {
+                $ratingKey = "location_rating.rating_{$countryId}";
+                $reviewKey = "location_rating.review_{$countryId}";
                 $countryId = $country->country_id;
-                $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { if (! doc['location_rating.rating_" . $countryId . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);}}; ";
-                $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "')) { if (! doc['location_rating.review_" . $countryId . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "'].value;}}; ";
+                $scriptFieldRating = $scriptFieldRating . ' ' .
+                "if (doc.containsKey('{$ratingKey}')) {
+                    if (! doc['{$ratingKey}'].empty) {
+                        counter = counter + doc['{$reviewKey}'].value;
+                        rating = rating + (doc['{$ratingKey}'].value * doc['{$reviewKey}'].value);
+                    }
+                }; ";
+                $scriptFieldReview = $scriptFieldReview . ' ' .
+                "if (doc.containsKey('{$reviewKey}')) {
+                    if (! doc['{$reviewKey}'].empty) {
+                        review = review + doc['{$reviewKey}'].value;
+                    }
+                }; ";
             }
         }
 
@@ -318,10 +358,22 @@ class MallSearch extends ObjectTypeSearch
             if (! empty($objectFollow)) {
                 if ($params['sortBy'] === 'followed') {
                     foreach ($objectFollow as $followId) {
-                        $scriptFieldFollow = $scriptFieldFollow . " if (doc.containsKey('merchant_id')) { if (! doc['merchant_id'].empty) { if (doc['merchant_id'].value.toLowerCase() == '" . strtolower($followId) . "'){ follow = 1; }}};";
+                        $scriptFieldFollow = $scriptFieldFollow . ' ' .
+                        "if (doc.containsKey('merchant_id')) {
+                            if (! doc['merchant_id'].empty) {
+                                if (doc['merchant_id'].value.toLowerCase() == '" . strtolower($followId) . "') {
+                                    follow = 1;
+                                }
+                            }
+                        };";
                     }
 
-                    $scriptFieldFollow = $scriptFieldFollow . " if(follow == 0) {return 0;} else {return follow;}; ";
+                    $scriptFieldFollow = $scriptFieldFollow . ' ' .
+                    "if (follow == 0) {
+                        return 0;
+                    } else {
+                        return follow;
+                    }; ";
                 }
             }
         }
