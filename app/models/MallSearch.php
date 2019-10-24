@@ -326,7 +326,7 @@ class MallSearch extends ObjectTypeSearch
         } else if (! empty($params['countryData']) && empty($params['cityFilters'])) {
             // count total review and average rating based on country filter
             $countryId = $params['countryData']->country_id;
-            $scripts = $this->buildRatingReviewCalcScriptByCountry($countryId);
+            $scripts = $this->buildRatingReviewCalcScriptByCountries([$countryId]);
         } else {
             $scripts = $this->buildRatingReviewCalcScriptByMallCountries();
         }
