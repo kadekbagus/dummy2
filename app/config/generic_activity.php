@@ -2633,5 +2633,15 @@ return array(
             'object_type' => null,
             'parameter_name' => null,
         ),
+
+        // Click button Go to Price List page.
+        '286' => array(
+            'name' => 'click_pulsa_price_list_button',
+            'name_long' => 'Click Pulsa Price List Button',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null,
+        ),
     ),
 );
