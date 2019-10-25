@@ -321,3 +321,12 @@ Artisan::add(new CreateUserMallCSCommand);
 
 // Give signup point to all active user
 Artisan::add(new UserSignUpPointCommand);
+
+// Register command to send pulsa pricelist.
+Artisan::add(new SendPulsaPriceListCommand);
+
+// Create RGP user
+Artisan::add(new CreateUserRGPCommand);
+
+// Update slug for telco operator
+Artisan::add(new TelcoOperatorSlugCommand);

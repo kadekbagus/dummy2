@@ -53,6 +53,7 @@ class TelcoOperatorAPIController extends ControllerAPI
             $countryId = OrbitInput::post('country_id');
             $identificationPrefixNumbers = OrbitInput::post('identification_prefix_numbers');
             $status = OrbitInput::post('status');
+            $seoText = OrbitInput::post('seo_text');
             $logo = OrbitInput::files('logo');
 
             $this->registerCustomValidation();
@@ -105,6 +106,7 @@ class TelcoOperatorAPIController extends ControllerAPI
             $newTelco->country_id = $countryId;
             $newTelco->identification_prefix_numbers = $identificationPrefixNumbers;
             $newTelco->status = $status;
+            $newTelco->seo_text = $seoText;
 
             $newTelco->save();
 
@@ -198,6 +200,7 @@ class TelcoOperatorAPIController extends ControllerAPI
             $countryId = OrbitInput::post('country_id');
             $identificationPrefixNumbers = OrbitInput::post('identification_prefix_numbers');
             $status = OrbitInput::post('status');
+            $seoText = OrbitInput::post('seo_text');
             $logo = OrbitInput::files('logo');
 
             $this->registerCustomValidation();
@@ -254,6 +257,7 @@ class TelcoOperatorAPIController extends ControllerAPI
             $updatedTelco->name = $name;
             $updatedTelco->country_id = $countryId;
             $updatedTelco->identification_prefix_numbers = $identificationPrefixNumbers;
+            $updatedTelco->seo_text = $seoText;
             $updatedTelco->status = $status;
 
             $updatedTelco->save();
@@ -554,7 +558,9 @@ class TelcoOperatorAPIController extends ControllerAPI
                     'countries.name as country_name',
                     'countries.country_id as country_id',
                     'identification_prefix_numbers',
-                    'telco_operators.status')
+                    'telco_operators.status',
+                    'telco_operators.seo_text'
+                )
                 ->leftJoin('countries', 'countries.country_id', '=', 'telco_operators.country_id')
                 ->with(['mediaLogo' => function($q) {
                     $q->select('media_id', 'path', 'media_name_long', 'object_id');

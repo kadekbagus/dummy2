@@ -127,6 +127,7 @@ class PromotionDetailAPIController extends PubControllerAPI
                                 END AS original_media_path
                             "),
                             'news.object_type',
+                            'news.begin_date',
                             'news.end_date',
                             'news.is_exclusive',
                             DB::raw("default_translation.news_name as default_name"),

@@ -134,6 +134,7 @@ class NewsDetailAPIController extends PubControllerAPI
                                 END AS original_media_path
                             "),
                             'news.object_type',
+                            'news.begin_date',
                             'news.end_date',
                             'news.is_exclusive',
                             'news.is_hot_event',

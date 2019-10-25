@@ -2573,5 +2573,75 @@ return array(
             'object_type' => 'News',
             'parameter_name' => 'object_id'
         ),
+
+        // Click subscribe to pulsa list newsletter.
+        '280' => array(
+            'name' => 'click_pulsa_email_subscribe',
+            'name_long' => 'Click Pulsa Email Subscribe',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null,
+        ),
+
+        // Click unsubscribe to pulsa list newsletter.
+        '281' => array(
+            'name' => 'click_pulsa_email_unsubscribe',
+            'name_long' => 'Click Pulsa Email Unsubscribe',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null,
+        ),
+
+        // Click buy pulsa from pulsa list/status page.
+        '282' => array(
+            'name' => 'click_buy_pulsa_price_list',
+            'name_long' => 'Click Buy Pulsa From Pulsa Price List Page',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null,
+        ),
+
+        // View pulsa list/status page.
+        '283' => array(
+            'name' => 'view_pulsa_price_list_page',
+            'name_long' => 'View Pulsa List Page',
+            'module_name' => 'Pulsa',
+            'type' => 'view',
+            'object_type' => null,
+            'parameter_name' => null,
+        ),
+
+        // Click subscribe to Whatsapp
+        '284' => array(
+            'name' => 'click_pulsa_whatsapp_subscribe',
+            'name_long' => 'Click Pulsa Whatsapp Subscribe',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null,
+        ),
+
+        // Click subscribe to Telegram
+        '285' => array(
+            'name' => 'click_pulsa_telegram_subscribe',
+            'name_long' => 'Click Pulsa Telegram Subscribe',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null,
+        ),
+
+        // Click button Go to Price List page.
+        '286' => array(
+            'name' => 'click_pulsa_price_list_button',
+            'name_long' => 'Click Pulsa Price List Button',
+            'module_name' => 'Pulsa',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null,
+        ),
     ),
 );

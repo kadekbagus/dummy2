@@ -69,15 +69,16 @@ class StoreListNewAPIController extends PubControllerAPI
      */
     protected $esConfig = [];
 
-    public function __construct()
+    public function __construct($contentType = 'application/json')
     {
-        parent::__construct();
+        parent::__construct($contentType);
         $this->esConfig = Config::get('orbit.elasticsearch');
         $this->searcher = new StoreSearch($this->esConfig);
     }
 
     /**
      *
+     * @todo refactor as this is similar to promotion, coupon or store listing
      *
      * @return [type] [description]
      */
@@ -133,8 +134,13 @@ class StoreListNewAPIController extends PubControllerAPI
             $withCache = FALSE;
             $withAdvert = (bool) OrbitInput::get('with_advert', true);
             $gender = OrbitInput::get('gender', 'all');
+            $ratingLow = OrbitInput::get('rating_low', 0);
+            $ratingHigh = OrbitInput::get('rating_high', 5);
+            $ratingLow = empty($ratingLow) ? 0 : $ratingLow;
+            $ratingHigh = empty($ratingHigh) ? 5 : $ratingHigh;
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
+            $excludedIds = OrbitInput::get('excluded_ids');
 
             // store can not sorted by date, so it must be changes to default sorting (name - ascending)
             if ($sortBy === "created_date") {
@@ -150,10 +156,14 @@ class StoreListNewAPIController extends PubControllerAPI
                 array(
                     'language' => $language,
                     'sortby'   => $sortBy,
+                    'rating_low' => $ratingLow,
+                    'rating_high' => $ratingHigh,
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
                     'sortby'   => 'in:name,location,updated_date,rating,followed,relevance',
+                    'rating_low' => 'numeric|min:0|max:5',
+                    'rating_high' => 'numeric|min:0|max:5',
                 )
             );
 
@@ -197,6 +207,8 @@ class StoreListNewAPIController extends PubControllerAPI
             $this->searcher->setPaginationParams(['from' => $skip, 'size' => $take]);
 
             $this->searcher->hasAtLeastOneTenant();
+
+            $this->searcher->exclude($excludedIds);
 
             $countryData = null;
             if (! empty($mallId)) {
@@ -300,6 +312,15 @@ class StoreListNewAPIController extends PubControllerAPI
 
             $objectFollow = $scriptFields['objectFollow'];
 
+            //filter by rating number
+            $this->searcher->filterByRating(
+                $ratingLow,
+                $ratingHigh,
+                compact(
+                    'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
+                )
+            );
+
             // Force sort by relevance if visitor provide any keyword/searching.
             if (! empty($keyword)) {
                 $sortBy = 'relevance';
@@ -314,13 +335,13 @@ class StoreListNewAPIController extends PubControllerAPI
                     $this->searcher->sortByNearest($ul);
                     break;
                 case 'rating':
-                    $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
+                    $this->searcher->sortByRating($scriptFields['scriptFieldRating'], $sortMode);
                     break;
                 case 'followed':
                     $this->searcher->sortByFavorite($scriptFields['scriptFieldFollow']);
                     break;
                 default:
-                    $this->searcher->sortByName($sortMode);
+                    $this->searcher->sortByName($language, $sortMode);
                     break;
             }
 
@@ -336,10 +357,11 @@ class StoreListNewAPIController extends PubControllerAPI
 
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-                $response = $recordCache->get($serializedCacheKey, function() {
-                    return $this->searcher->getResult();
+                $response = $recordCache->get($serializedCacheKey, function() use ($serializedCacheKey, $recordCache) {
+                    $resp = $this->searcher->getResult();
+                    $recordCache->put($serializedCacheKey, $resp);
+                    return $resp;
                 });
-                $recordCache->put($serializedCacheKey, $response);
             } else {
                 $response = $this->searcher->getResult();
             }
