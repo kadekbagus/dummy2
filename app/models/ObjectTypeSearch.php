@@ -222,7 +222,7 @@ abstract class ObjectTypeSearch extends Search
             "if (doc.containsKey('{$ratingKey}')) {
                 if (! doc['{$ratingKey}'].empty) {
                     counter = counter + doc['{$reviewKey}'].value;
-                    rating = rating + (doc['{$reviewKey}'].value * doc['{$reviewKey}'].value);
+                    rating = rating + (doc['{$ratingKey}'].value * doc['{$reviewKey}'].value);
                 }
             }; ";
             $scriptFieldReview = $scriptFieldReview . ' ' .
