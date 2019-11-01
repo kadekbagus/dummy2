@@ -223,7 +223,7 @@
                 <table width="640" cellpadding="0" cellspacing="0" border="0" class="container mobile-full-width">
                   <tr>
                     <td align="center" valign="middle" height="184" class="greeting-title-container" style="border-radius: 5px 5px 0 0;">
-                        <h1 class="greeting-title">welcome to gotomalls!</h1>
+                        <h1 class="greeting-title">{{ $header }}</h1>
                     </td>
                   </tr>
                 </table>
@@ -266,9 +266,9 @@
                     </td>
                     <td width="400" class="mobile" valign="top">
                       <div class="mobile marketing-section-text-container">
-                        <h4 class="mobile marketing-section-title">Find a Good Discount</h4>
+                        <h4 class="mobile marketing-section-title">{{ $list_1_title }}</h4>
                         <p class="mobile marketing-section-text">
-                          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer vitae felis quis elit vestibulum blandit eu ac velit.
+                          {{ $list_1_body }}
                         </p>
                       </div>
                     </td>
@@ -286,9 +286,9 @@
                     </td>
                     <td width="400" class="mobile" valign="top">
                       <div class="mobile marketing-section-text-container">
-                        <h4 class="mobile marketing-section-title">Find a Good Discount</h4>
+                        <h4 class="mobile marketing-section-title">{{ $list_2_title }}</h4>
                         <p class="mobile marketing-section-text">
-                          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer vitae felis quis elit vestibulum blandit eu ac velit.
+                          {{ $list_2_body }}
                         </p>
                       </div>
                     </td>
@@ -306,9 +306,9 @@
                     </td>
                     <td width="400" class="mobile" valign="top">
                       <div class="mobile marketing-section-text-container">
-                        <h4 class="mobile marketing-section-title">Find a Good Discount</h4>
+                        <h4 class="mobile marketing-section-title">{{ $list_3_title }}</h4>
                         <p class="mobile marketing-section-text">
-                          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer vitae felis quis elit vestibulum blandit eu ac velit.
+                          {{ $list_3_body }}
                         </p>
                       </div>
                     </td>
@@ -371,26 +371,25 @@
                       <p class="footer-follow">
                         {{ $find_follow }}
                       </p>
-                      <a href="tel:+62 811 1232 1231" class="contact-link">
-                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/socmed-icon-02.png" alt="tel" class="contact-img" style="margin-left: 0;">
+                      <a href="https://www.facebook.com/Gotomalls.Indo" class="contact-link" target="_blank">
+                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/socmed-icon-02.png" alt="FB icon" class="contact-img" style="margin-left: 0;">
                       </a>
 
-                      <a href="tel:+62 811 1232 1231" class="contact-link">
-                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/socmed-icon-03.png" alt="tel" class="contact-img">
+                      <a href="https://twitter.com/gotomalls" class="contact-link" target="_blank">
+                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/socmed-icon-03.png" alt="Twitter icon" class="contact-img">
                       </a>
 
-                      <a href="tel:+62 811 1232 1231" class="contact-link">
-                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/socmed-icon-04.png" alt="tel" class="contact-img">
+                      <a href="https://www.instagram.com/gotomalls/" class="contact-link" target="_blank">
+                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/socmed-icon-04.png" alt="Instagram icon" class="contact-img">
                       </a>
 
-                      <a href="tel:+62 811 1232 1231" class="contact-link">
-                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/socmed-icon-05.png" alt="tel" class="contact-img">
+                      <a href="https://www.youtube.com/gotomallscom" class="contact-link" target="_blank">
+                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/socmed-icon-05.png" alt="Youtube icon" class="contact-img">
                       </a>
 
-                      <a href="tel:+62 811 1232 1231" class="contact-link">
-                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/socmed-icon-06.png" alt="tel" class="contact-img" style="margin-right: 0;">
+                      <a href="https://id.linkedin.com/company/gotomalls" class="contact-link" target="_blank">
+                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/socmed-icon-06.png" alt="LinkedIn icon" class="contact-img" style="margin-right: 0;">
                       </a>
-
                     </td>
                   </tr>
                   <tr>
