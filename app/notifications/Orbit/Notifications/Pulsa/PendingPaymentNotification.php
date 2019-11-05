@@ -24,6 +24,18 @@ use Orbit\Notifications\Payment\PendingPaymentNotification as Base;
  */
 class PendingPaymentNotification extends Base
 {
+    /**
+     * Context of this notification.
+     * @var string
+     */
+    protected $context = 'transaction';
+
+    /**
+     * Signature/ID for this notification.
+     * @var string
+     */
+    protected $signature = 'pulsa-pending-transaction';
+
     function __construct($payment = null)
     {
         parent::__construct($payment);
