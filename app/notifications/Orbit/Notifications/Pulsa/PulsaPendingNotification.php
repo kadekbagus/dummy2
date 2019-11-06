@@ -21,6 +21,18 @@ use Exception;
 class PulsaPendingNotification extends BaseNotification
 {
     /**
+     * Context of this notification.
+     * @var string
+     */
+    protected $context = 'transaction';
+
+    /**
+     * Signature for this notification.
+     * @var string
+     */
+    protected $signature = 'mcash-pending-purchase';
+
+    /**
      * Get the email templates.
      *
      * @return [type] [description]
