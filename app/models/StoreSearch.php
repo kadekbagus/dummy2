@@ -49,6 +49,10 @@ class StoreSearch extends CampaignSearch
         ]);
     }
 
+    protected function getCategoryField()
+    {
+        return 'category';
+    }
 
     /**
      * Filter by user's geo-location...
