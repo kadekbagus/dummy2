@@ -112,6 +112,16 @@ class GetPulsaQueue
             $pulsaPurchase = Purchase::create()->doPurchase($pulsa->pulsa_code, $phoneNumber, $paymentId);
             // $pulsaPurchase = Purchase::create()->mockSuccess()->doPurchase($pulsa->pulsa_code, $phoneNumber, $paymentId);
 
+            // Append noted
+            $notes = $payment->notes;
+            if (empty($notes)) {
+                $notes = '[' . json_encode($pulsaPurchase->getData()) .']';
+            } else {
+                $notes = substr_replace($notes, "," . json_encode($pulsaPurchase->getData()), -1, 0);
+            }
+
+            $payment->notes = $notes;
+
             if ($pulsaPurchase->isSuccess()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
 
