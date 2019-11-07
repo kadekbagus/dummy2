@@ -51,7 +51,7 @@ abstract class CampaignSearch extends ObjectTypeSearch
         $arrCategories = [];
 
         foreach($categories as $category) {
-            $arrCategories[] = ['match' => ['category_ids' => $category]];
+            $arrCategories[] = ['match' => ['category' => $category]];
         }
 
         $this->must([
