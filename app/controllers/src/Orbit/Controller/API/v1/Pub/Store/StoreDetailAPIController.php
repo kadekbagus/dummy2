@@ -226,7 +226,9 @@ class StoreDetailAPIController extends PubControllerAPI
                                 'merchants.video_id_3',
                                 'merchants.video_id_4',
                                 'merchants.video_id_5',
-                                'merchants.video_id_6'
+                                'merchants.video_id_6',
+                                'countries.name as country_name',
+                                DB::raw('oms.city as city_name')
                             )
                 ->with(['categories' => function ($q) use ($valid_language, $prefix) {
                         $q->select(
@@ -291,7 +293,8 @@ class StoreDetailAPIController extends PubControllerAPI
                             );
                     }
                     ])
-                ->join(DB::raw("(select merchant_id, country_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                ->join(DB::raw("(select merchant_id, country_id, city_id, city, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                ->join('countries', DB::raw('oms.country_id'), '=', 'countries.country_id')
                 ->join('languages', 'languages.name', '=', 'merchants.mobile_default_language')
                 ->where('merchants.merchant_id', $merchantId)
                 ->where('merchants.status', 'active')
