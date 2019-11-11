@@ -34,6 +34,8 @@ class CdnUploadUpdateQueue
      *    'bucket_name' => Bucket name in the S3
      * ]
     */
+    protected $retryDelay = 3;
+
     public function fire($job, $data)
     {
         $prefix = DB::getTablePrefix();
@@ -49,6 +51,10 @@ class CdnUploadUpdateQueue
 
         $mongoConfig = Config::get('database.mongodb');
         $mongoClient = MongoClient::create($mongoConfig);
+
+        if (! isset($data['retry'])) {
+            $data['retry'] = 0;
+        }
 
         try {
             $sdk = new Aws\Sdk(Config::get('orbit.aws-sdk', []));
@@ -189,6 +195,20 @@ class CdnUploadUpdateQueue
             ];
 
         } catch (Aws\S3\Exception\S3Exception $e) {
+            $data['retry']++;
+
+            if ($data['retry'] <= 3) {
+                $this->retryDelay = $this->retryDelay * 60; // seconds
+
+                Log::info(sprintf('S3Exception Retry cdn upload Object_id: %s retry number:%s', $objectId, $data['retry']));
+
+                Queue::later(
+                    $this->retryDelay,
+                    'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue',
+                    $data
+                );
+            }
+
             $message = sprintf('Update file to S3; Status: FAIL; Object_id: %s; S3Exception Message: %s',
                                 $objectId,
                                 $e->getMessage());
@@ -201,6 +221,20 @@ class CdnUploadUpdateQueue
             }
 
         } catch (Exception $e) {
+            $data['retry']++;
+
+            if ($data['retry'] <= 3) {
+                $this->retryDelay = $this->retryDelay * 60; // seconds
+
+                Log::info(sprintf('Retry cdn upload Object_id: %s retry number:%s', $objectId, $data['retry']));
+
+                Queue::later(
+                    $this->retryDelay,
+                    'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue',
+                    $data
+                );
+            }
+
             $message = sprintf('Update file to S3; Status: FAIL; Object_id: %s; Exception Message: %s',
                                 $objectId,
                                 $e->getMessage());
