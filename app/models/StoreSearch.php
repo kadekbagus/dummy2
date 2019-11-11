@@ -49,6 +49,10 @@ class StoreSearch extends CampaignSearch
         ]);
     }
 
+    protected function getCategoryField()
+    {
+        return 'category';
+    }
 
     /**
      * Filter by user's geo-location...
@@ -78,37 +82,37 @@ class StoreSearch extends CampaignSearch
         }
     }
 
-    protected function setPriorityForLinkToTenant($objType, $keyword)
-    {
-        $priorityCountry = isset($this->esConfig['priority'][$objType]['country']) ?
-            $this->esConfig['priority'][$objType]['country'] : '';
+    // protected function setPriorityForLinkToTenant($objType, $keyword)
+    // {
+    //     $priorityCountry = isset($this->esConfig['priority'][$objType]['country']) ?
+    //         $this->esConfig['priority'][$objType]['country'] : '';
 
-        $priorityProvince = isset($this->esConfig['priority'][$objType]['province']) ?
-            $this->esConfig['priority'][$objType]['province'] : '';
+    //     $priorityProvince = isset($this->esConfig['priority'][$objType]['province']) ?
+    //         $this->esConfig['priority'][$objType]['province'] : '';
 
-        $priorityCity = isset($this->esConfig['priority'][$objType]['city']) ?
-            $this->esConfig['priority'][$objType]['city'] : '';
+    //     $priorityCity = isset($this->esConfig['priority'][$objType]['city']) ?
+    //         $this->esConfig['priority'][$objType]['city'] : '';
 
-        $priorityMallName = isset($this->esConfig['priority'][$objType]['mall_name']) ?
-            $this->esConfig['priority'][$objType]['mall_name'] : '';
+    //     $priorityMallName = isset($this->esConfig['priority'][$objType]['mall_name']) ?
+    //         $this->esConfig['priority'][$objType]['mall_name'] : '';
 
-        $this->should([
-            'nested' => [
-                'path' => 'link_to_tenant',
-                'query' => [
-                    'query_string' => [
-                        'query' => '*' . $keyword . '*',
-                        'fields' => [
-                            'link_to_tenant.country' . $priorityCountry,
-                            'link_to_tenant.province' . $priorityProvince,
-                            'link_to_tenant.city' . $priorityCity,
-                            'link_to_tenant.mall_name' . $priorityMallName,
-                        ]
-                    ]
-                ]
-            ]
-        ]);
-    }
+    //     $this->should([
+    //         'nested' => [
+    //             'path' => 'link_to_tenant',
+    //             'query' => [
+    //                 'query_string' => [
+    //                     'query' => '*' . $keyword . '*',
+    //                     'fields' => [
+    //                         'link_to_tenant.country' . $priorityCountry,
+    //                         'link_to_tenant.province' . $priorityProvince,
+    //                         'link_to_tenant.city' . $priorityCity,
+    //                         'link_to_tenant.mall_name' . $priorityMallName,
+    //                     ]
+    //                 ]
+    //             ]
+    //         ]
+    //     ]);
+    // }
 
 
     /**
@@ -125,7 +129,7 @@ class StoreSearch extends CampaignSearch
         //override we should change key
         //ESConfig['priority']['store] to ESConfig['priority']['stores']
         $this->setPriorityForQueryStr('store', $keyword);
-        $this->setPriorityForLinkToTenant('store', $keyword);
+        //$this->setPriorityForLinkToTenant('store', $keyword);
     }
 
     /**
@@ -456,5 +460,33 @@ class StoreSearch extends CampaignSearch
     public function sortByName($language = 'id', $sortMode = 'asc')
     {
         $this->sort(['lowercase_name' => ['order' => $sortMode]]);
+    }
+
+    /**
+     * Sibling stores are stores with a same name
+     * but linked into different location/mall.
+     *
+     * Since we only have one "master" record for each store in the elastic,
+     * we need to filter based on 'link to location' property (tenant_detail).
+     *
+     * @return void
+     */
+    public function addExcludedIdsParam()
+    {
+        if (empty($this->excludedIds)) return;
+
+        // We must not include stores that have $this->excludedIds in their 'tenant_detail'.
+        // This will opt-out the same stores when we visit from
+        // a "slave" store (the ones that we dont record on elastic).
+        $this->mustNot([
+            'nested' => [
+                'path' => 'tenant_detail',
+                'query' => [
+                    'terms' => [
+                        'tenant_detail.merchant_id' => $this->excludedIds
+                    ]
+                ],
+            ],
+        ]);
     }
 }

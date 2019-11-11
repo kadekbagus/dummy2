@@ -1,17 +1,19 @@
-{{ $subject }}
+{{ $header }}
 
 {{ $greeting }} {{ $first_name or $email }},
-{{ $message_part1 }} {{ $message_part2 }}
+{{ $message_part1 }}
 
 {{ $token_url }}
 
-{{ $message_part3 }}
-1. {{ $list_1 }}
-2. {{ $list_2 }}
-3. {{ $list_3 }}
+{{ $list_1_title }}
+{{ $list_1_body }}
 
+{{ $list_2_title }}
+{{ $list_2_body }}
 
-{{ $message_part4 }}
+{{ $list_3_title }}
+{{ $list_3_body }}
 
+{{ $ignore_email }}
 
 {{ $team_name }}
