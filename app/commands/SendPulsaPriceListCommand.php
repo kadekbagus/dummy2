@@ -246,7 +246,7 @@ class SendPulsaPriceListCommand extends Command {
      */
     private function generateLandingPageUrl($objectType = '', $utmParams = [])
     {
-        $utmStringParams = '?country=0';
+        $utmStringParams = '?country=Indonesia';
         foreach($utmParams as $utmKey => $utmValue) {
             $utmStringParams .= "&{$utmKey}={$utmValue}";
         }
@@ -257,7 +257,7 @@ class SendPulsaPriceListCommand extends Command {
 
     private function generateCampaignUrl($objectType = '', $campaignId, $campaignName)
     {
-        $format = "/{$objectType}/%s/%s";
+        $format = "/{$objectType}/%s/%s?country=Indonesia";
         return Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com')
             . sprintf($format, $campaignId, Str::slug($campaignName));
     }
