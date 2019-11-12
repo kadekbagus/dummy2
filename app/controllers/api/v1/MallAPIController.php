@@ -1043,7 +1043,7 @@ class MallAPIController extends ControllerAPI
                 ->leftJoin('merchants AS mall_group', DB::raw('mall_group.merchant_id'), '=', 'merchants.parent_id')
                 ->leftJoin('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id')
                 ->where('merchants.merchant_id', $merchantId)
-                ->groupBy('merchants.merchant_id');
+                ->groupBy('merchants.merchant_id')
                 ->firstOrFail();
 
             $data = $mall;
