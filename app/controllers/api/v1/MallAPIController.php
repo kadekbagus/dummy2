@@ -963,7 +963,7 @@ class MallAPIController extends ControllerAPI
             // Get Facebook social media ID
             $facebookSocmedId = SocialMedia::whereSocialMediaCode('facebook')->first()->social_media_id;
 
-            $mall = Mall::excludeDeleted()
+            $mall = Mall::excludeDeleted('merchants')
                 ->select(
                     'merchants.*', DB::raw("LEFT({$prefix}merchants.ci_domain, instr({$prefix}merchants.ci_domain, '.') - 1) as subdomain"),
                     DB::raw('count(tenant.merchant_id) AS total_tenant'),
