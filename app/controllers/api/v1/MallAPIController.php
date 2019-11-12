@@ -927,6 +927,172 @@ class MallAPIController extends ControllerAPI
         return $this->render($httpCode);
     }
 
+    public function getMallDetail()
+    {
+        try {
+            $httpCode = 200;
+            $mall = null;
+            // Require authentication
+            $this->checkAuth();
+            // Try to check access control list, does this mall allowed to
+            // perform this action
+            $user = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'merchant database admin'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $merchantId = OrbitInput::get('merchant_id');
+
+            $validator = Validator::make(
+                array(
+                    'merchant_id' => $merchantId,
+                ),
+                array(
+                    'merchant_id' => 'required',
+                )
+            );
+
+            $prefix = DB::getTablePrefix();
+            $subdomain = Config::get('orbit.shop.ci_domain');
+
+            // Get Facebook social media ID
+            $facebookSocmedId = SocialMedia::whereSocialMediaCode('facebook')->first()->social_media_id;
+
+            $mall = Mall::excludeDeleted()
+                ->select(
+                    'merchants.*', DB::raw("LEFT({$prefix}merchants.ci_domain, instr({$prefix}merchants.ci_domain, '.') - 1) as subdomain"),
+                    DB::raw('count(tenant.merchant_id) AS total_tenant'),
+                    DB::raw('mall_group.name AS mall_group_name'),
+                    'merchant_social_media.social_media_uri as facebook_uri',
+                    // latitude
+                    DB::raw("SUBSTR(AsText({$prefix}merchant_geofences.position), LOCATE('(', AsText({$prefix}merchant_geofences.position)) + 1, LOCATE(' ', AsText({$prefix}merchant_geofences.position)) - 1 - LOCATE('(', AsText({$prefix}merchant_geofences.position))) as geo_point_latitude"),
+                    // longitude
+                    DB::raw("SUBSTR(AsText({$prefix}merchant_geofences.position), LOCATE(' ', AsText({$prefix}merchant_geofences.position)) + 1, LOCATE(')', AsText({$prefix}merchant_geofences.position)) - 1 - LOCATE(' ', AsText({$prefix}merchant_geofences.position))) as geo_point_longitude"),
+                    // area
+                    DB::raw("SUBSTR(AsText({$prefix}merchant_geofences.area), LOCATE('((', AsText({$prefix}merchant_geofences.area)) + 2, LOCATE('))', AsText({$prefix}merchant_geofences.area)) - 2 - LOCATE('((', AsText({$prefix}merchant_geofences.area))) as geo_area"),
+                    DB::raw("CASE WHEN
+                        (
+                            select sum(total_campaign_has_translation) as total_translation
+                            from
+                            (
+                                select CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id,
+                                        nt.merchant_language_id, count(n.news_id) as total_campaign_has_translation
+                                from {$prefix}news_translations nt
+                                join {$prefix}news n
+                                    on n.news_id = nt.news_id
+                                join {$prefix}news_merchant nm
+                                    on nm.news_id = n.news_id
+                                join {$prefix}merchants m
+                                    on m.merchant_id = nm.merchant_id
+                                where m.object_type in ('mall', 'tenant')
+                                    and n.status != 'deleted'
+                                group by mall_id, nt.merchant_language_id
+
+                                union
+
+                                select CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id,
+                                        ct.merchant_language_id, count(c.promotion_id) as total_campaign_has_translation
+                                from {$prefix}coupon_translations ct
+                                join {$prefix}promotions c
+                                    on c.promotion_id = ct.promotion_id
+                                join {$prefix}promotion_retailer pr
+                                    on pr.promotion_id = c.promotion_id
+                                join {$prefix}merchants m
+                                    on m.merchant_id = pr.retailer_id
+                                where m.object_type in ('mall', 'tenant')
+                                    and c.status != 'deleted'
+                                group by mall_id, ct.merchant_language_id
+                            ) as campaign
+                            where campaign.mall_id = {$prefix}merchants.merchant_id
+                                and campaign.merchant_language_id = (
+                                    select lang.language_id
+                                    from {$prefix}languages lang
+                                    where lang.name = {$prefix}merchants.mobile_default_language
+                                )
+                        )
+                        > 0 THEN 'true' ELSE 'false' END as disable_mobile_default_language")
+                )
+                ->with(
+                    'parent',
+                    'mediaLogo',
+                    'mediaMapOrig',
+                    'mallFloors',
+                    'timezone',
+                    'mallCampaignBasePrices',
+                    'mallLanguages',
+                    'mallCategories',
+                    'mallCategoryTranslations',
+                    'widget_free_wifi',
+                    'partners'
+                )
+                ->leftJoin('merchants AS tenant', function($join) {
+                        $join->on(DB::raw('tenant.parent_id'), '=', 'merchants.merchant_id')
+                            ->where(DB::raw('tenant.status'), '!=', 'deleted')
+                            ->where(DB::raw('tenant.object_type'), '=', 'tenant');
+                    })
+                // A left join to get tenants' Facebook URIs
+                ->leftJoin('merchant_social_media', function ($join) use ($facebookSocmedId) {
+                        $join->on('merchants.merchant_id', '=', 'merchant_social_media.merchant_id')
+                            ->where('social_media_id', '=', $facebookSocmedId);
+                    })
+                ->leftJoin('merchants AS mall_group', DB::raw('mall_group.merchant_id'), '=', 'merchants.parent_id')
+                ->leftJoin('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id')
+                ->where('merchants.merchant_id', $merchantId)
+                ->groupBy('merchants.merchant_id');
+                ->firstOrFail();
+
+            $data = $mall;
+
+            $this->response->data = $data;
+
+        } catch (ACLForbiddenException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+        $output = $this->render($httpCode);
+
+        return $output;
+    }
+
     /**
      * GET - Search mall
      *
@@ -1067,126 +1233,22 @@ class MallAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
             $subdomain = Config::get('orbit.shop.ci_domain');
 
-            // Get Facebook social media ID
-            $facebookSocmedId = SocialMedia::whereSocialMediaCode('facebook')->first()->social_media_id;
-
             $malls = Mall::excludeDeleted('merchants')
-                                ->select(
-                                        'merchants.name',
-                                        'merchants.merchant_id',
-                                        'merchants.country',
-                                        'merchants.is_subscribed',
-                                        'merchants.status',
-                                        'merchants.description',
-                                        'merchants.operating_hours',
-                                        'merchants.email',
-                                        'merchants.postal_code',
-                                        'merchants.city',
-                                        'merchants.province',
-                                        'merchants.phone',
-                                        'merchants.url',
-                                        'merchants.contact_person_email',
-                                        'merchants.contact_person_firstname',
-                                        'merchants.contact_person_lastname',
-                                        'merchants.contact_person_position',
-                                        'merchants.contact_person_phone',
-                                        'merchants.start_date_activity',
-                                        'merchants.end_date_activity',
-                                        'merchants.timezone_id',
-                                        'merchants.country_id',
-                                        'merchants.address_line1',
-                                        'merchants.mobile_default_language',
-                                        'merchants.parent_id',
-                                        'merchants.disable_ads',
-                                        'merchants.disable_ymal',
-                                        'merchants.video_id_1',
-                                        'merchants.video_id_2',
-                                        'merchants.video_id_3',
-                                        'merchants.video_id_4',
-                                        'merchants.video_id_5',
-                                        'merchants.video_id_6',
-                                        'merchants.other_photo_section_title',
-                                        'countries.code as country_code',
-                                        DB::raw("TRIM(TRAILING {$this->quote($subdomain)} FROM {$prefix}merchants.ci_domain) as subdomain"),
-                                        DB::raw('count(tenant.merchant_id) AS total_tenant'),
-                                        DB::raw('mall_group.name AS mall_group_name'),
-                                        'merchant_social_media.social_media_uri as facebook_uri',
-                                        // latitude
-                                        DB::raw("SUBSTR(AsText({$prefix}merchant_geofences.position), LOCATE('(', AsText({$prefix}merchant_geofences.position)) + 1, LOCATE(' ', AsText({$prefix}merchant_geofences.position)) - 1 - LOCATE('(', AsText({$prefix}merchant_geofences.position))) as geo_point_latitude"),
-                                        // longitude
-                                        DB::raw("SUBSTR(AsText({$prefix}merchant_geofences.position), LOCATE(' ', AsText({$prefix}merchant_geofences.position)) + 1, LOCATE(')', AsText({$prefix}merchant_geofences.position)) - 1 - LOCATE(' ', AsText({$prefix}merchant_geofences.position))) as geo_point_longitude"),
-                                        // area
-                                        DB::raw("SUBSTR(AsText({$prefix}merchant_geofences.area), LOCATE('((', AsText({$prefix}merchant_geofences.area)) + 2, LOCATE('))', AsText({$prefix}merchant_geofences.area)) - 2 - LOCATE('((', AsText({$prefix}merchant_geofences.area))) as geo_area"),
-                                        DB::raw("CASE WHEN
-                                            (
-                                                select sum(total_campaign_has_translation) as total_translation
-                                                from
-                                                (
-                                                    select CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id,
-                                                            nt.merchant_language_id, count(n.news_id) as total_campaign_has_translation
-                                                    from {$prefix}news_translations nt
-                                                    join {$prefix}news n
-                                                        on n.news_id = nt.news_id
-                                                    join {$prefix}news_merchant nm
-                                                        on nm.news_id = n.news_id
-                                                    join {$prefix}merchants m
-                                                        on m.merchant_id = nm.merchant_id
-                                                    where m.object_type in ('mall', 'tenant')
-                                                        and n.status != 'deleted'
-                                                    group by mall_id, nt.merchant_language_id
-
-                                                    union
-
-                                                    select CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id,
-                                                            ct.merchant_language_id, count(c.promotion_id) as total_campaign_has_translation
-                                                    from {$prefix}coupon_translations ct
-                                                    join {$prefix}promotions c
-                                                        on c.promotion_id = ct.promotion_id
-                                                    join {$prefix}promotion_retailer pr
-                                                        on pr.promotion_id = c.promotion_id
-                                                    join {$prefix}merchants m
-                                                        on m.merchant_id = pr.retailer_id
-                                                    where m.object_type in ('mall', 'tenant')
-                                                        and c.status != 'deleted'
-                                                    group by mall_id, ct.merchant_language_id
-                                                ) as campaign
-                                                where campaign.mall_id = {$prefix}merchants.merchant_id
-                                                    and campaign.merchant_language_id = (
-                                                        select lang.language_id
-                                                        from {$prefix}languages lang
-                                                        where lang.name = {$prefix}merchants.mobile_default_language
-                                                    )
-                                            )
-                                            > 0 THEN 'true' ELSE 'false' END as disable_mobile_default_language")
-                                    )
-                                ->leftJoin('merchants AS tenant', function($join) {
-                                        $join->on(DB::raw('tenant.parent_id'), '=', 'merchants.merchant_id')
-                                            ->where(DB::raw('tenant.status'), '!=', 'deleted')
-                                            ->where(DB::raw('tenant.object_type'), '=', 'tenant');
-                                    })
-                                // A left join to get tenants' Facebook URIs
-                                ->leftJoin('merchant_social_media', function ($join) use ($facebookSocmedId) {
-                                        $join->on('merchants.merchant_id', '=', 'merchant_social_media.merchant_id')
-                                            ->where('social_media_id', '=', $facebookSocmedId);
-                                    })
-                                ->leftJoin('merchants AS mall_group', DB::raw('mall_group.merchant_id'), '=', 'merchants.parent_id')
-                                ->leftJoin('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id')
-                                ->join('countries', 'countries.country_id', '=', 'merchants.country_id')
-                                ->groupBy('merchants.merchant_id');
+                ->select(
+                    'merchants.name',
+                    'merchants.city',
+                    'merchants.country',
+                    DB::raw('mall_group.name AS mall_group_name'),
+                    'merchants.is_subscribed',
+                    'merchants.status'
+                )
+                ->leftJoin('merchants AS mall_group', DB::raw('mall_group.merchant_id'), '=', 'merchants.parent_id')
+                ->join('countries', 'countries.country_id', '=', 'merchants.country_id')
+                ->groupBy('merchants.merchant_id');
 
             // Filter mall by Ids
             OrbitInput::get('merchant_id', function ($merchantIds) use ($malls) {
                 $malls->whereIn('merchants.merchant_id', $merchantIds);
-            });
-
-            // Filter mall by orid
-            OrbitInput::get('orid', function ($orid) use ($malls) {
-                $malls->whereIn('merchants.orid', $orid);
-            });
-
-            // Filter mall by user Ids
-            OrbitInput::get('user_id', function ($userIds) use ($malls) {
-                $malls->whereIn('merchants.user_id', $userIds);
             });
 
             // Filter mall by name
@@ -1197,61 +1259,6 @@ class MallAPIController extends ControllerAPI
             // Filter mall by name pattern
             OrbitInput::get('name_like', function ($name) use ($malls) {
                 $malls->where('merchants.name', 'like', "%$name%");
-            });
-
-            // Filter mall by description
-            OrbitInput::get('description', function ($description) use ($malls) {
-                $malls->whereIn('merchants.description', $description);
-            });
-
-            // Filter mall by description pattern
-            OrbitInput::get('description_like', function ($description) use ($malls) {
-                $malls->where('merchants.description', 'like', "%$description%");
-            });
-
-            // Filter mall by email
-            OrbitInput::get('email', function ($email) use ($malls) {
-                $malls->whereIn('merchants.email', $email);
-            });
-
-            // Filter mall by email pattern
-            OrbitInput::get('email_like', function ($email) use ($malls) {
-                $malls->where('merchants.email', 'like', "%$email%");
-            });
-
-            // Filter mall by address1
-            OrbitInput::get('address1', function ($address1) use ($malls) {
-                $malls->whereIn('merchants.address_line1', $address1);
-            });
-
-            // Filter mall by address1 pattern
-            OrbitInput::get('address1_like', function ($address1) use ($malls) {
-                $malls->where('merchants.address_line1', 'like', "%$address1%");
-            });
-
-            // Filter mall by address2
-            OrbitInput::get('address2', function ($address2) use ($malls) {
-                $malls->whereIn('merchants.address_line2', $address2);
-            });
-
-            // Filter mall by address2 pattern
-            OrbitInput::get('address2_like', function ($address2) use ($malls) {
-                $malls->where('merchants.address_line2', 'like', "%$address2%");
-            });
-
-            // Filter mall by address3
-            OrbitInput::get('address3', function ($address3) use ($malls) {
-                $malls->whereIn('merchants.address_line3', $address3);
-            });
-
-            // Filter mall by address3 pattern
-            OrbitInput::get('address3_like', function ($address3) use ($malls) {
-                $malls->where('merchants.address_line3', 'like', "%$address3%");
-            });
-
-            // Filter mall by postal code
-            OrbitInput::get('postal_code', function ($postalcode) use ($malls) {
-                $malls->whereIn('merchants.postal_code', $postalcode);
             });
 
             // Filter mall by cityID
@@ -1284,99 +1291,14 @@ class MallAPIController extends ControllerAPI
                 $malls->where('merchants.country', 'like', "%$country%");
             });
 
-            // Filter mall by phone
-            OrbitInput::get('phone', function ($phone) use ($malls) {
-                $malls->whereIn('merchants.phone', $phone);
-            });
-
-            // Filter mall by fax
-            OrbitInput::get('fax', function ($fax) use ($malls) {
-                $malls->whereIn('merchants.fax', $fax);
-            });
-
             // Filter mall by status
             OrbitInput::get('status', function ($status) use ($malls) {
                 $malls->whereIn('merchants.status', $status);
             });
 
-            // Filter mall by currency
-            OrbitInput::get('currency', function ($currency) use ($malls) {
-                $malls->whereIn('merchants.currency', $currency);
-            });
-
-            // Filter mall by contact person firstname
-            OrbitInput::get('contact_person_firstname', function ($contact_person_firstname) use ($malls) {
-                $malls->whereIn('merchants.contact_person_firstname', $contact_person_firstname);
-            });
-
-            // Filter mall by contact person firstname like
-            OrbitInput::get('contact_person_firstname_like', function ($contact_person_firstname) use ($malls) {
-                $malls->where('merchants.contact_person_firstname', 'like', "%$contact_person_firstname%");
-            });
-
-            // Filter mall by contact person lastname
-            OrbitInput::get('contact_person_lastname', function ($contact_person_lastname) use ($malls) {
-                $malls->whereIn('merchants.contact_person_lastname', $contact_person_lastname);
-            });
-
-            // Filter mall by contact person lastname like
-            OrbitInput::get('contact_person_lastname_like', function ($contact_person_lastname) use ($malls) {
-                $malls->where('merchants.contact_person_lastname', 'like', "%$contact_person_lastname%");
-            });
-
-            // Filter mall by contact person position
-            OrbitInput::get('contact_person_position', function ($contact_person_position) use ($malls) {
-                $malls->whereIn('merchants.contact_person_position', $contact_person_position);
-            });
-
-            // Filter mall by contact person position like
-            OrbitInput::get('contact_person_position_like', function ($contact_person_position) use ($malls) {
-                $malls->where('merchants.contact_person_position', 'like', "%$contact_person_position%");
-            });
-
-            // Filter mall by contact person phone
-            OrbitInput::get('contact_person_phone', function ($contact_person_phone) use ($malls) {
-                $malls->whereIn('merchants.contact_person_phone', $contact_person_phone);
-            });
-
-            // Filter mall by contact person phone2
-            OrbitInput::get('contact_person_phone2', function ($contact_person_phone2) use ($malls) {
-                $malls->whereIn('merchants.contact_person_phone2', $contact_person_phone2);
-            });
-
-            // Filter mall by contact person email
-            OrbitInput::get('contact_person_email', function ($contact_person_email) use ($malls) {
-                $malls->whereIn('merchants.contact_person_email', $contact_person_email);
-            });
-
-            // Filter mall by sector of activity
-            OrbitInput::get('sector_of_activity', function ($sector_of_activity) use ($malls) {
-                $malls->whereIn('merchants.sector_of_activity', $sector_of_activity);
-            });
-
-            // Filter mall by url
-            OrbitInput::get('url', function ($url) use ($malls) {
-                $malls->whereIn('merchants.url', $url);
-            });
-
-            // Filter mall by masterbox_number
-            OrbitInput::get('masterbox_number', function ($masterbox_number) use ($malls) {
-                $malls->whereIn('merchants.masterbox_number', $masterbox_number);
-            });
-
-            // Filter mall by slavebox_number
-            OrbitInput::get('slavebox_number', function ($slavebox_number) use ($malls) {
-                $malls->whereIn('merchants.slavebox_number', $slavebox_number);
-            });
-
-            // Filter mall by mobile_default_language
-            OrbitInput::get('mobile_default_language', function ($mobile_default_language) use ($malls) {
-                $malls->whereIn('merchants.mobile_default_language', $mobile_default_language);
-            });
-
-            // Filter mall by pos_language
-            OrbitInput::get('pos_language', function ($pos_language) use ($malls) {
-                $malls->whereIn('merchants.pos_language', $pos_language);
+            // Filter mall by status
+            OrbitInput::get('is_subscribed', function ($is_subscribed) use ($malls) {
+                $malls->whereIn('merchants.is_subscribed', $is_subscribed);
             });
 
             // Filter mall by location (city country)
@@ -1393,59 +1315,6 @@ class MallAPIController extends ControllerAPI
                     $malls->where(DB::raw("CONCAT(COALESCE({$prefix}merchants.city, ''), ' ', COALESCE({$prefix}merchants.country, ''))"), 'like', "%$data%");
                 }
             });
-
-            // Filter user by first_visit date begin_date
-            OrbitInput::get('start_date_activity_from', function($begindate) use ($malls)
-            {
-                $malls->where('merchants.start_date_activity', '>=', $begindate);
-            });
-
-            // Filter user by first visit date end_date
-            OrbitInput::get('start_date_activity_to', function($enddate) use ($malls)
-            {
-                $malls->where('merchants.start_date_activity', '<=', $enddate);
-            });
-
-            // Add new relation based on request
-            OrbitInput::get('with', function ($with) use ($malls) {
-                $with = (array) $with;
-
-                // exclude unused with relation that still called by the frontend
-                $validWith = [];
-                 foreach ($with as $key => $value) {
-                    if ($value !== 'widget_free_wifi' && $value !== 'mallCampaignBasePrices' && $value !== 'mallCategories' && $value !== 'mallCategoryTranslations') {
-                      $validWith[] = $value;
-                    }
-                }
-                $with = $validWith;
-
-                if (in_array('settings', $with)) {
-                    $malls->addSelect('media.path as mall_image');
-                    $malls->leftJoin('media', function($join) {
-                        $join->on('media.object_id', '=', 'merchants.merchant_id')
-                            ->where('media.media_name_id', '=', 'retailer_background')
-                            ->where('media.media_name_long', '=', 'retailer_background_orig')
-                            ->where('media.object_name', '=', 'mall');
-                    });
-                }
-
-                // Make sure the with_count also in array format
-                $withCount = array();
-                OrbitInput::get('with_count', function ($_wcount) use (&$withCount) {
-                    $withCount = (array) $_wcount;
-                });
-
-                foreach ($with as $relation) {
-                    $malls->with($relation);
-
-                    // Also include number of count if consumer ask it
-                    if (in_array($relation, $withCount)) {
-                        $countRelation = $relation . 'Number';
-                        $malls->with($countRelation);
-                    }
-                }
-            });
-
 
             $_malls = clone $malls;
 
@@ -1484,27 +1353,13 @@ class MallAPIController extends ControllerAPI
             OrbitInput::get('sortby', function ($_sortBy) use (&$sortBy) {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'merchant_orid'        => 'merchants.orid',
-                    'registered_date'      => 'merchants.created_at',
                     'merchant_name'        => 'merchants.name',
-                    'merchant_email'       => 'merchants.email',
-                    'merchant_userid'      => 'merchants.user_id',
-                    'merchant_description' => 'merchants.description',
                     'merchantid'           => 'merchants.merchant_id',
-                    'merchant_address1'    => 'merchants.address_line1',
-                    'merchant_address2'    => 'merchants.address_line2',
-                    'merchant_address3'    => 'merchants.address_line3',
                     'merchant_cityid'      => 'merchants.city_id',
                     'merchant_city'        => 'merchants.city',
                     'merchant_countryid'   => 'merchants.country_id',
                     'merchant_country'     => 'merchants.country',
-                    'merchant_phone'       => 'merchants.phone',
-                    'merchant_fax'         => 'merchants.fax',
                     'merchant_status'      => 'merchants.status',
-                    'merchant_currency'    => 'merchants.currency',
-                    'start_date_activity'  => 'merchants.start_date_activity',
-                    'end_date_activity'    => 'merchants.end_date_activity',
-                    'total_retailer'       => 'total_retailer',
                     'mallgroup'            => 'mall_group_name',
                 );
 
