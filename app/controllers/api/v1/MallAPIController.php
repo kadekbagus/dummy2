@@ -1235,6 +1235,7 @@ class MallAPIController extends ControllerAPI
 
             $malls = Mall::excludeDeleted('merchants')
                 ->select(
+                    'merchants.merchant_id',
                     'merchants.name',
                     'merchants.city',
                     'merchants.country',
