@@ -707,11 +707,6 @@ class AccountAPIController extends ControllerAPI
         $pmpAccounts->disable_mobile_default_language = $disable_mobile_default_language;
         $pmpAccounts->tenant_count = $tenantAtMallArray;
 
-            // Taken from getUserCreatedAtAttribute() in the model
-            //                                                     What is this?
-            //                                                         \/
-        $pmpAccounts->created_at = $pmpAccounts->user_created_at->setTimezone('Asia/Singapore')->format('d F Y H:i:s');
-
         $pmpAccounts->status = $pmpAccounts->campaignAccount->status;
         $pmpAccounts->id = $pmpAccounts->user_id;
 
