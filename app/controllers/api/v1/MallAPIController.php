@@ -965,7 +965,9 @@ class MallAPIController extends ControllerAPI
 
             $mall = Mall::excludeDeleted('merchants')
                 ->select(
-                    'merchants.*', DB::raw("LEFT({$prefix}merchants.ci_domain, instr({$prefix}merchants.ci_domain, '.') - 1) as subdomain"),
+                    'merchants.*',
+                    'countries.code as country_code',
+                    DB::raw("LEFT({$prefix}merchants.ci_domain, instr({$prefix}merchants.ci_domain, '.') - 1) as subdomain"),
                     DB::raw('count(tenant.merchant_id) AS total_tenant'),
                     DB::raw('mall_group.name AS mall_group_name'),
                     'merchant_social_media.social_media_uri as facebook_uri',
@@ -1043,6 +1045,7 @@ class MallAPIController extends ControllerAPI
                     })
                 ->leftJoin('merchants AS mall_group', DB::raw('mall_group.merchant_id'), '=', 'merchants.parent_id')
                 ->leftJoin('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id')
+                ->leftJoin('countries', 'merchants.country_id', '=', 'countries.country_id')
                 ->where('merchants.merchant_id', $merchantId)
                 ->groupBy('merchants.merchant_id')
                 ->firstOrFail();
