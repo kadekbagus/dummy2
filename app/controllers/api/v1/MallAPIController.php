@@ -1028,7 +1028,8 @@ class MallAPIController extends ControllerAPI
                     'mallCategories',
                     'mallCategoryTranslations',
                     'widget_free_wifi',
-                    'partners'
+                    'partners',
+                    'country'
                 )
                 ->leftJoin('merchants AS tenant', function($join) {
                         $join->on(DB::raw('tenant.parent_id'), '=', 'merchants.merchant_id')
