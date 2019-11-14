@@ -340,6 +340,9 @@ class MallAPIController extends ControllerAPI
             $widgets = OrbitInput::post('widgets', $this->default['widgets']);
             $age_ranges = OrbitInput::post('age_ranges', $this->default['age_ranges']);
 
+            $mall_google_indoor_map = OrbitInput::post('mall_google_indoor_map');
+            $mall_google_indoor_streetview = OrbitInput::post('mall_google_indoor_streetview');
+
             $validation_data = [
                 'name'                          => $mall_name,
                 'email'                         => $email,
@@ -566,6 +569,9 @@ class MallAPIController extends ControllerAPI
             $newmall->video_id_5 = $video_id_5;
             $newmall->video_id_6 = $video_id_6;
             $newmall->other_photo_section_title = $other_photo_section_title;
+
+            $newmall->mall_google_indoor_map = $mall_google_indoor_map;
+            $newmall->mall_google_indoor_streetview = $mall_google_indoor_streetview;
 
             $newmall->modified_by = $this->api->user->user_id;
 
@@ -1106,6 +1112,8 @@ class MallAPIController extends ControllerAPI
                                         'merchants.video_id_5',
                                         'merchants.video_id_6',
                                         'merchants.other_photo_section_title',
+                                        'merchants.mall_google_indoor_map',
+                                        'merchants.mall_google_indoor_streetview',
                                         'countries.code as country_code',
                                         DB::raw("TRIM(TRAILING {$this->quote($subdomain)} FROM {$prefix}merchants.ci_domain) as subdomain"),
                                         DB::raw('count(tenant.merchant_id) AS total_tenant'),
