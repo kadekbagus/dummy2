@@ -66,7 +66,7 @@ class ConfirmTransferNotification extends CouponTransferNotification
     {
         $baseLandingPageUrl = Config::get('orbit.base_landing_page_url', 'https://gotomalls.com');
         return sprintf(
-            "{$baseLandingPageUrl}/landing-page/coupon-transfer/decline?couponId=%s&email=%s",
+            "{$baseLandingPageUrl}/coupon-transfer/decline?couponId=%s&email=%s",
             $this->issuedCoupon->issued_coupon_id,
             $this->issuedCoupon->transfer_email
         );
