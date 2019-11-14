@@ -1,5 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Coupon\Transfer\Notifications;
 
+use Illuminate\Support\Facades\Config;
 use Orbit\Controller\API\v1\Pub\Coupon\Transfer\Notifications\CouponTransferNotification;
 
 /**
