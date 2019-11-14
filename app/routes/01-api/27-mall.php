@@ -36,6 +36,14 @@ Route::get('/api/v1/mall/{search}', function()
 })->where('search', '(list|search)');
 
 /**
+ * Detail mall
+ */
+Route::get('/api/v1/mall/detail', function()
+{
+    return MallAPIController::create()->getMallDetail();
+});
+
+/**
  * List/Search tenant
  */
 Route::get('/api/v1/mall-name/{search}', function()
