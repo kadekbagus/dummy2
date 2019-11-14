@@ -176,6 +176,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                                         )
                                         END as cdnPath,
                                     {$prefix}issued_coupons.issued_coupon_code,
+                                    {$prefix}issued_coupons.transfer_status,
                                     {$prefix}promotions.end_date,
                                     {$prefix}issued_coupons.expired_date as coupon_validity_in_date,
                                     {$prefix}promotions.status,
