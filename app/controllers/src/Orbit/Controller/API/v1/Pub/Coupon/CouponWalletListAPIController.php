@@ -209,7 +209,6 @@ class CouponWalletListAPIController extends PubControllerAPI
                                         ELSE 'false'
                                     END AS is_exceeding_validity_date,
                                     {$prefix}issued_coupons.issued_coupon_id,
-                                    {$prefix}issued_coupons.transfer_status,
                                     CASE WHEN {$prefix}issued_coupons.status = 'issued' THEN
                                         CASE WHEN {$prefix}promotions.is_payable_by_wallet = 'Y' THEN 'payable' ELSE 'redeemable' END
                                         ELSE 'redeemed' END as issued_coupon_status,
