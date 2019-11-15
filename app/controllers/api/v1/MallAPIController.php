@@ -2157,6 +2157,14 @@ class MallAPIController extends ControllerAPI
                 $updatedmall->other_photo_section_title = $other_photo_section_title;
             });
 
+            OrbitInput::post('mall_google_indoor_map', function($mall_google_indoor_map) use ($updatedmall) {
+                $updatedmall->mall_google_indoor_map = $mall_google_indoor_map;
+            });
+
+            OrbitInput::post('mall_google_indoor_streetview', function($mall_google_indoor_streetview) use ($updatedmall) {
+                $updatedmall->mall_google_indoor_streetview = $mall_google_indoor_streetview;
+            });
+
             $updatedmall->modified_by = $this->api->user->user_id;
 
             Event::fire('orbit.mall.postupdatemall.before.save', array($this, $updatedmall));
