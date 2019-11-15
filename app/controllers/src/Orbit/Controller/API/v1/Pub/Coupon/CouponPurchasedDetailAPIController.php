@@ -191,8 +191,7 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
                               ->orWhere('payment_transactions.external_payment_transaction_id', '=', $payment_transaction_id);
                       })
                     ->where('issued_coupons.status', '=', 'issued')
-                    ->get()
-                    ->lists('url', 'issued_coupon_id');
+                    ->get();
             }
 
             // Fallback to IDR by default?
