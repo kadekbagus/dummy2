@@ -1,5 +1,9 @@
 <?php namespace Report;
 
+/**
+ * Deprecated
+ */
+
 use Report\DataPrinterController;
 use Config;
 use DB;

@@ -9,6 +9,12 @@ Route::get('/api/v1/account/list', function()
     return AccountAPIController::create()->getAccount();
 });
 
+// PMP Account Detail
+Route::get('/api/v1/account/detail', function()
+{
+    return AccountAPIController::create()->getAccountDetail();
+});
+
 // Create new PMP Account
 Route::post('/api/v1/account/new', function()
 {
