@@ -52,7 +52,7 @@ class ConfirmTransferNotification extends CouponTransferNotification
         $baseLandingPageUrl = Config::get('orbit.base_landing_page_url', 'https://gotomalls.com');
 
         return sprintf(
-            "{$baseLandingPageUrl}/coupon-transfer/accept?couponId=%s&email=%s",
+            "{$baseLandingPageUrl}/coupon-transfer/accept?issuedCouponId=%s&email=%s",
             $this->issuedCoupon->issued_coupon_id,
             $this->issuedCoupon->transfer_email
         );
@@ -67,7 +67,7 @@ class ConfirmTransferNotification extends CouponTransferNotification
     {
         $baseLandingPageUrl = Config::get('orbit.base_landing_page_url', 'https://gotomalls.com');
         return sprintf(
-            "{$baseLandingPageUrl}/coupon-transfer/decline?couponId=%s&email=%s",
+            "{$baseLandingPageUrl}/coupon-transfer/decline?issuedCouponId=%s&email=%s",
             $this->issuedCoupon->issued_coupon_id,
             $this->issuedCoupon->transfer_email
         );
