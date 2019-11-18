@@ -13,6 +13,12 @@ class TransferCanceledNotification extends CouponTransferNotification
 
     protected $logID = 'TransferCanceledNotification';
 
+    public function __construct($issuedCoupon = null,  $recipientName = '')
+    {
+        parent::__construct($issuedCoupon);
+        $this->recipientName = $recipientName;
+    }
+
     public function getRecipientEmail()
     {
         return $this->notifiable->email;
@@ -31,6 +37,11 @@ class TransferCanceledNotification extends CouponTransferNotification
         ];
     }
 
+    private function getRecipientName()
+    {
+        return $this->issuedCoupon->transfer_name;
+    }
+
     /**
      * Get the email data.
      *
@@ -39,8 +50,11 @@ class TransferCanceledNotification extends CouponTransferNotification
     public function getEmailData()
     {
         return array_merge(parent::getEmailData(), [
-            'emailSubject'      => 'Coupon Transfer Canceled',
-            'couponOwnerName'   => $this->issuedCoupon->user->getFullName(),
+            'locale'            => 'en',
+            'emailSubject'      => trans('email-transfer.canceled.subject'),
+            'header'            => trans('email-transfer.header'),
+            'greeting'          => trans('email-transfer.canceled.greeting', ['recipientName' => $this->recipientName]),
+            'body'              => trans('email-transfer.canceled.message', ['ownerName' => $this->issuedCoupon->user->getFullName()]),
         ]);
     }
 }

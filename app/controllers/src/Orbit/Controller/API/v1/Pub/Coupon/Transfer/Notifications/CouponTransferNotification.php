@@ -32,6 +32,8 @@ class CouponTransferNotification extends CustomerNotification implements EmailNo
 
     protected $context = 'coupon-transfer';
 
+    protected $recipientName = '';
+
     function __construct($issuedCoupon = null)
     {
         $this->issuedCoupon = $issuedCoupon;

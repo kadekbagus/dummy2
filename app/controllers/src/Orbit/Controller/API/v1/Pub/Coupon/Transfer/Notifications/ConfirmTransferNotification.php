@@ -14,6 +14,12 @@ class ConfirmTransferNotification extends CouponTransferNotification
 
     protected $logID = 'ConfirmTransferNotification';
 
+    public function __construct($issuedCoupon = null, $recipientName = '')
+    {
+        parent::__construct($issuedCoupon);
+        $this->recipientName = $recipientName;
+    }
+
     /**
      * Get the email templates that will be used.
      *
@@ -35,10 +41,14 @@ class ConfirmTransferNotification extends CouponTransferNotification
     public function getEmailData()
     {
         return array_merge(parent::getEmailData(), [
-            'emailSubject'      => 'Confirm Coupon Transfer',
-            'couponOwnerName'   => $this->issuedCoupon->user->getFullName(),
+            'header'            => trans('email-transfer.header'),
+            'greeting'          => trans('email-transfer.confirm.greeting', ['recipientName' => $this->recipientName]),
+            'emailSubject'      => trans('email-transfer.confirm.subject'),
+            'body'              => trans('email-transfer.confirm.message', ['ownerName' => $this->issuedCoupon->user->getFullName()]),
             'acceptUrl'         => $this->generateAcceptUrl(),
+            'btnAccept'         => trans('email-transfer.confirm.btn_accept'),
             'declineUrl'        => $this->generateDeclineUrl(),
+            'btnDecline'        => trans('email-transfer.confirm.btn_decline'),
         ]);
     }
 
@@ -52,7 +62,7 @@ class ConfirmTransferNotification extends CouponTransferNotification
         $baseLandingPageUrl = Config::get('orbit.base_landing_page_url', 'https://gotomalls.com');
 
         return sprintf(
-            "{$baseLandingPageUrl}/coupon-transfer/accept?issuedCouponId=%s&email=%s",
+            "{$baseLandingPageUrl}/coupons/accept-transfer?issuedCouponId=%s&email=%s",
             $this->issuedCoupon->issued_coupon_id,
             $this->issuedCoupon->transfer_email
         );
@@ -67,7 +77,7 @@ class ConfirmTransferNotification extends CouponTransferNotification
     {
         $baseLandingPageUrl = Config::get('orbit.base_landing_page_url', 'https://gotomalls.com');
         return sprintf(
-            "{$baseLandingPageUrl}/coupon-transfer/decline?issuedCouponId=%s&email=%s",
+            "{$baseLandingPageUrl}/coupons/decline-transfer?issuedCouponId=%s&email=%s",
             $this->issuedCoupon->issued_coupon_id,
             $this->issuedCoupon->transfer_email
         );

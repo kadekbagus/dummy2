@@ -161,7 +161,7 @@ class CouponTransferRepository
         // Send notification/confirmation email to new owner...
         if ($this->issuedCoupon->transfer_status === 'in_progress') {
             $this->response->transfer_status = 'started';
-            $this->getRecipient()->notify(new ConfirmTransferNotification($this->issuedCoupon));
+            $this->getRecipient()->notify(new ConfirmTransferNotification($this->issuedCoupon, $this->issuedCoupon->transfer_name));
         }
     }
 
@@ -195,6 +195,8 @@ class CouponTransferRepository
      */
     public function decline()
     {
+        $recipientName = $this->issuedCoupon->transfer_name;
+        $recipientEmail = $this->issuedCoupon->transfer_email;
         DB::transaction(function() {
             $this->issuedCoupon->resetTransfer();
         });
@@ -202,7 +204,7 @@ class CouponTransferRepository
         // Notify to original owner that the coupon was rejected by recipient.
         if (empty($this->issedCoupon->transfer_status)) {
             $this->response->transfer_status = 'declined';
-            $this->getOwner()->notify(new TransferDeclinedNotification($this->issuedCoupon));
+            $this->getOwner()->notify(new TransferDeclinedNotification($this->issuedCoupon, $recipientName));
         }
     }
 
@@ -213,8 +215,8 @@ class CouponTransferRepository
      */
     public function cancel()
     {
+        $recipientName = $this->issuedCoupon->transfer_name;
         $recipientEmail = $this->issuedCoupon->transfer_email;
-
         DB::transaction(function() {
             $this->issuedCoupon->resetTransfer();
         });
@@ -222,7 +224,10 @@ class CouponTransferRepository
         // Notify for cancelation.
         if (empty($this->issedCoupon->transfer_status)) {
             $this->response->transfer_status = 'canceled';
-            $this->getRecipient($recipientEmail)->notify(new TransferCanceledNotification($this->issuedCoupon));
+            $this->getRecipient($recipientEmail)->notify(new TransferCanceledNotification(
+                $this->issuedCoupon,
+                $recipientName
+            ));
         }
     }
 
