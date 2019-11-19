@@ -13,12 +13,6 @@ class TransferCanceledNotification extends CouponTransferNotification
 
     protected $logID = 'TransferCanceledNotification';
 
-    public function __construct($issuedCoupon = null,  $recipientName = '')
-    {
-        parent::__construct($issuedCoupon);
-        $this->recipientName = $recipientName;
-    }
-
     public function getRecipientEmail()
     {
         return $this->notifiable->email;
@@ -35,11 +29,6 @@ class TransferCanceledNotification extends CouponTransferNotification
             'html' => 'emails.coupon.transfer.transfer-canceled',
             'text' => 'emails.coupon.transfer.transfer-canceled-text',
         ];
-    }
-
-    private function getRecipientName()
-    {
-        return $this->issuedCoupon->transfer_name;
     }
 
     /**

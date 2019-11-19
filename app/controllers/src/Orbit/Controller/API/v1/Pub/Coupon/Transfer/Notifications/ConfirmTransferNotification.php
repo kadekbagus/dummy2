@@ -14,12 +14,6 @@ class ConfirmTransferNotification extends CouponTransferNotification
 
     protected $logID = 'ConfirmTransferNotification';
 
-    public function __construct($issuedCoupon = null, $recipientName = '')
-    {
-        parent::__construct($issuedCoupon);
-        $this->recipientName = $recipientName;
-    }
-
     /**
      * Get the email templates that will be used.
      *

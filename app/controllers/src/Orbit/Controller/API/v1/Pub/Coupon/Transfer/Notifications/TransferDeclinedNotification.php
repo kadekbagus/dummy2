@@ -1,5 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Coupon\Transfer\Notifications;
 
+use Illuminate\Support\Facades\Config;
 use Orbit\Controller\API\v1\Pub\Coupon\Transfer\Notifications\CouponTransferNotification;
 
 /**
@@ -32,6 +33,15 @@ class TransferDeclinedNotification extends CouponTransferNotification
     }
 
     /**
+     * Get my wallet url.
+     * @return [type] [description]
+     */
+    private function getMyWalletUrl()
+    {
+        return Config::get('orbit.coupon.direct_redemption_url');
+    }
+
+    /**
      * Get the email data.
      *
      * @return [type] [description]
@@ -39,8 +49,12 @@ class TransferDeclinedNotification extends CouponTransferNotification
     public function getEmailData()
     {
         return array_merge(parent::getEmailData(), [
-            'emailSubject'      => 'Coupon Transfer Declined',
-            'couponOwnerName'   => $this->issuedCoupon->user->getFullName(),
+            'header'            => trans('email-transfer.header'),
+            'greeting'          => trans('email-transfer.declined.greeting', ['ownerName' => $this->issuedCoupon->user->getFullName()]),
+            'emailSubject'      => trans('email-transfer.declined.subject'),
+            'body'              => trans('email-transfer.declined.message', ['recipientName' => $this->recipientName]),
+            'myWalletUrl'       => $this->getMyWalletUrl(),
+            'btnOpenWallet'     => trans('email-transfer.declined.btn_open_my_wallet'),
         ]);
     }
 }
