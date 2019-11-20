@@ -39,8 +39,11 @@ class TransferCanceledNotification extends CouponTransferNotification
     public function getEmailData()
     {
         return array_merge(parent::getEmailData(), [
-            'emailSubject'      => 'Coupon Transfer Canceled',
-            'couponOwnerName'   => $this->issuedCoupon->user->getFullName(),
+            'locale'            => 'en',
+            'emailSubject'      => trans('email-transfer.canceled.subject'),
+            'header'            => trans('email-transfer.header'),
+            'greeting'          => trans('email-transfer.canceled.greeting', ['recipientName' => $this->recipientName]),
+            'body'              => trans('email-transfer.canceled.message', ['ownerName' => $this->issuedCoupon->user->getFullName()]),
         ]);
     }
 }

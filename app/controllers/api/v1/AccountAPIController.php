@@ -32,8 +32,75 @@ class AccountAPIController extends ControllerAPI
     /**
      * The main method
      *
+     * @author Ahmad <ahmad@dominopos.com>
+     */
+    public function getAccountDetail()
+    {
+        try {
+            // Require authentication
+            $this->checkAuth();
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $apiUser = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $apiRole = $apiUser->role;
+            $validRoles = $this->pmpAccountModifiyRoles;
+            if (! in_array( strtolower($apiRole->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $campaignAccountId = OrbitInput::get('campaign_account_id');
+
+            $validator = Validator::make(
+                array(
+                    'campaign_account_id'             => $campaignAccountId
+                ),
+                array(
+                    'campaign_account_id'             => 'required'
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $account = $this->prepareData($campaignAccountId);
+
+
+            $this->response->data = $account;
+        } catch (QueryException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        return $this->render(200);
+    }
+
+    /**
+     * The main method
+     *
      * @author Qosdil A. <qosdil@dominopos.com>
      * @author Shelgi <shelgi@dominopos.com>
+     * @author Ahmad <ahmad@dominopos.com>
      * @todo Validation.
      */
     public function getAccount()
@@ -54,11 +121,109 @@ class AccountAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            $this->prepareData();
+            $prefix = DB::getTablePrefix();
 
-            $this->data->returned_records = count($this->data->records);
+            $accounts = CampaignAccount::excludeDeleted('campaign_account')
+                ->select(
+                    'campaign_account_id',
+                    'account_name',
+                    'type_name',
+                    'company_name',
+                    'city',
+                    DB::raw("{$prefix}countries.name as country_name"),
+                    'role_name',
+                    DB::raw("count({$prefix}user_merchant.user_merchant_id) as tenant_count"),
+                    'campaign_account.status'
+                )
+                ->leftJoin('account_types', 'account_types.account_type_id', '=', 'campaign_account.account_type_id')
+                ->leftJoin('users', 'users.user_id', '=', 'campaign_account.user_id')
+                ->leftJoin('user_details', 'users.user_id', '=', 'user_details.user_id')
+                ->leftJoin('roles', 'users.user_role_id', '=', 'roles.role_id')
+                ->leftJoin('countries', 'countries.country_id', '=', 'user_details.country_id')
+                ->leftJoin('user_merchant', 'user_merchant.user_id', '=', 'campaign_account.user_id');
 
-            $this->response->data = $this->data;
+            // Filter by account type id
+            OrbitInput::get('account_type_id', function ($account_type_id) use ($accounts) {
+                $accounts->where('account_types.account_type_id', '=', $account_type_id);
+            });
+
+            // Filter by account type name
+            OrbitInput::get('account_type_name', function ($account_type_name) use ($accounts) {
+                $accounts->where('account_types.type_name', 'LIKE', '%' . $account_type_name . '%');
+            });
+
+            // Filter by Account Name
+            if (Input::get('account_name')) {
+                $accounts->where('account_name', 'LIKE', '%' . Input::get('account_name') . '%');
+            }
+
+            // Filter by Company Name
+            if (Input::get('company_name')) {
+                $accounts->where('company_name', 'LIKE', '%' . Input::get('company_name') . '%');
+            }
+
+            // Filter by Location
+            if (Input::get('location')) {
+
+                // The following keyword forms handled by the preg_split()
+                // "bali"
+                // "indonesia"
+                // "bali,indonesia"
+                // "bali, indonesia"
+                // "bali indonesia"
+                $keywords = preg_split("/[\s,]+/", Input::get('location'));
+
+                $accounts->whereCity($keywords[0]);
+                switch (count($keywords)) {
+                    case 2:
+                        $accounts->where('countries.name', $keywords[1]);
+                        break;
+                    default:
+                        $accounts->orWhere('countries.name', $keywords[0]);
+                        break;
+                }
+            }
+
+            // Filter by Status
+            if (OrbitInput::get('status')) {
+                $accounts->where('campaign_account.status', OrbitInput::get('status'));
+            }
+
+            // Filter by Role Name
+            if (OrbitInput::get('role_name')) {
+                $accounts->whereRoleName(OrbitInput::get('role_name'));
+            }
+
+            $accounts->groupBy('campaign_account.campaign_account_id');
+
+            $_accounts = clone($accounts);
+
+            $totalRec = RecordCounter::create($_accounts)->count();
+
+            $accounts->take(OrbitInput::get('take', 15))
+                ->skip(OrbitInput::get('skip', 0));
+
+            $sortKey = OrbitInput::get('sortby', 'account_name');
+
+            // Prevent ambiguous error
+            if ($sortKey == 'created_at') {
+                $sortKey = 'users.created_at';
+            }
+
+            // Prevent ambiguous error
+            if ($sortKey == 'status') {
+                $sortKey = 'campaign_account.status';
+            }
+
+            $accounts->orderBy($sortKey, OrbitInput::get('sortmode', 'asc'));
+
+            $data = new stdClass();
+            $data->records = $accounts->get();
+
+            $data->returned_records = count($data->records);
+            $data->total_records = $totalRec;
+
+            $this->response->data = $data;
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
@@ -446,7 +611,7 @@ class AccountAPIController extends ControllerAPI
         return $this->render($httpCode);
     }
 
-    protected function prepareData()
+    protected function prepareData($campaignAccountId)
     {
         $data = new stdClass();
 
@@ -454,15 +619,6 @@ class AccountAPIController extends ControllerAPI
         $pmpAccounts = User::excludeDeleted('users')
                         // ->join('roles', 'users.user_role_id', '=', 'roles.role_id')->whereIn('role_name', ['Campaign Owner', 'Campaign Employee', 'Campaign Admin']);
                             ->pmpAccounts();
-
-        // Filter by mall name
-        if (Input::get('mall_name')) {
-            $mall = Mall::whereName(Input::get('mall_name'))->first();
-
-            $pmpAccounts = ($mall)
-                ? User::ofSpecificMallPmpAccounts($mall->merchant_id)
-                : $pmpAccounts->whereUserId('');
-        }
 
         // Join with 'user_details' (one to one)
         $pmpAccounts->join('user_details', 'users.user_id', '=', 'user_details.user_id');
@@ -528,155 +684,45 @@ class AccountAPIController extends ControllerAPI
                         ) as total_campaign
                     ")
             );
+        $pmpAccounts = $pmpAccounts->where('campaign_account.campaign_account_id', $campaignAccountId)->firstOrFail();
 
-        // Filter by account type id
-        OrbitInput::get('account_type_id', function ($account_type_id) use ($pmpAccounts) {
-            $pmpAccounts->where('account_types.account_type_id', '=', $account_type_id);
-        });
-
-        // Filter by account type name
-        OrbitInput::get('account_type_name', function ($account_type_name) use ($pmpAccounts) {
-            $pmpAccounts->where('account_types.type_name', 'LIKE', '%' . $account_type_name . '%');
-        });
-
-        // Filter by Account Name
-        if (Input::get('account_name')) {
-            $pmpAccounts->where('account_name', 'LIKE', '%' . Input::get('account_name') . '%');
+        if ($pmpAccounts->campaignAccount->is_link_to_all === 'Y' && in_array($pmpAccounts->type_name, $this->allow_select_all_tenant)) {
+            $tenantAtMallArray = $this->getTenantAtMallArray($pmpAccounts->type_name);
+        } else {
+            $tenantAtMallArray = $this->getTenantAtMallArray($pmpAccounts->type_name, $pmpAccounts->user_id);
         }
 
-        // Filter by Company Name
-        if (Input::get('company_name')) {
-            $pmpAccounts->where('company_name', 'LIKE', '%' . Input::get('company_name') . '%');
-        }
+        $disable_mobile_default_language = ($pmpAccounts->total_campaign > 0) ? true : false;
 
-        // Filter by Location
-        if (Input::get('location')) {
+        $pmpAccounts->account_name = $pmpAccounts->campaignAccount->account_name;
+        $pmpAccounts->company_name = $pmpAccounts->company_name;
+        $pmpAccounts->city = $pmpAccounts->userDetail->city;
+        $pmpAccounts->role_name = $pmpAccounts->role_name;
+        $pmpAccounts->account_type_id = $pmpAccounts->campaignAccount->account_type_id;
+        $pmpAccounts->type_name = $pmpAccounts->type_name;
+        $pmpAccounts->select_all_tenants = $pmpAccounts->campaignAccount->is_link_to_all;
+        $pmpAccounts->is_subscribed = $pmpAccounts->campaignAccount->is_subscribed;
+        $pmpAccounts->mobile_default_language = $pmpAccounts->campaignAccount->mobile_default_language;
+        $pmpAccounts->phone = $pmpAccounts->campaignAccount->phone;
+        $pmpAccounts->disable_mobile_default_language = $disable_mobile_default_language;
+        $pmpAccounts->tenant_count = $tenantAtMallArray;
 
-            // The following keyword forms handled by the preg_split()
-            // "bali"
-            // "indonesia"
-            // "bali,indonesia"
-            // "bali, indonesia"
-            // "bali indonesia"
-            $keywords = preg_split("/[\s,]+/", Input::get('location'));
+        $pmpAccounts->status = $pmpAccounts->campaignAccount->status;
+        $pmpAccounts->id = $pmpAccounts->user_id;
 
-            $pmpAccounts->whereCity($keywords[0]);
-            switch (count($keywords)) {
-                case 2:
-                    $pmpAccounts->where('countries.name', $keywords[1]);
-                    break;
-                default:
-                    $pmpAccounts->orWhere('countries.name', $keywords[0]);
-                    break;
-            }
-        }
+            // Needed by frontend for the edit page
+        $pmpAccounts->user_firstname = $pmpAccounts->user_firstname;
+        $pmpAccounts->user_lastname = $pmpAccounts->user_lastname;
+        $pmpAccounts->position = $pmpAccounts->campaignAccount->position;
+        $pmpAccounts->user_email = $pmpAccounts->user_email;
+        $pmpAccounts->address_line1 = $pmpAccounts->userDetail->address_line1;
+        $pmpAccounts->province = $pmpAccounts->userDetail->province;
+        $pmpAccounts->postal_code = $pmpAccounts->userDetail->postal_code;
+        $pmpAccounts->country = (object) ['id' => $pmpAccounts->userDetail->country_id, 'name' => @$pmpAccounts->userDetail->userCountry->name];
+        $pmpAccounts->country_name = @$pmpAccounts->userDetail->userCountry->name;
+        $pmpAccounts->pmp_languages = $pmpAccounts->campaignAccount->pmpLanguages;
 
-        // Filter by Status
-        if (Input::get('status')) {
-            $pmpAccounts->where('campaign_account.status', Input::get('status'));
-        }
-
-        // Filter by Creation Date
-        if (Input::get('creation_date_from')) {
-
-            // From
-            $creationDateTimeFrom = Carbon::createFromFormat('Y-m-d H:i:s', Input::get('creation_date_from'), 'Asia/Singapore')
-                ->format('Y-m-d H:i:s');
-
-            $pmpAccounts->where('users.created_at', '>=', $creationDateTimeFrom);
-
-            if (Input::get('creation_date_to')) {
-
-                // To
-                $creationDateTimeTo = Carbon::createFromFormat('Y-m-d H:i:s', Input::get('creation_date_to'), 'Asia/Singapore')
-                    ->format('Y-m-d H:i:s');
-
-                $pmpAccounts->where('users.created_at', '<=', $creationDateTimeTo);
-            }
-        }
-
-        // Filter by Role Name
-        if (Input::get('role_name')) {
-            $pmpAccounts->whereRoleName(Input::get('role_name'));
-        }
-
-        // Get total row count
-        $allRows = clone $pmpAccounts;
-        $data->total_records = $allRows->count();
-
-        if ( ! Input::get('export')) {
-            $pmpAccounts->take(Input::get('take'))->skip(Input::get('skip'));
-        }
-
-        $sortKey = Input::get('sortby', 'account_name');
-
-        // Prevent ambiguous error
-        if ($sortKey == 'created_at') {
-            $sortKey = 'users.created_at';
-        }
-
-        // Prevent ambiguous error
-        if ($sortKey == 'status') {
-            $sortKey = 'campaign_account.status';
-        }
-
-        $pmpAccounts = $pmpAccounts->orderBy($sortKey, Input::get('sortmode', 'asc'))->get();
-
-        $records = [];
-        foreach ($pmpAccounts as $row) {
-            if ($row->campaignAccount->is_link_to_all === 'Y' && in_array($row->type_name, $this->allow_select_all_tenant)) {
-                $tenantAtMallArray = $this->getTenantAtMallArray($row->type_name);
-            } else {
-                $tenantAtMallArray = $this->getTenantAtMallArray($row->type_name, $row->user_id);
-            }
-
-            $disable_mobile_default_language = ($row->total_campaign > 0) ? true : false;
-
-            $records[] = [
-                'account_name'                    => $row->campaignAccount->account_name,
-                'company_name'                    => $row->company_name,
-                'city'                            => $row->userDetail->city,
-                'role_name'                       => $row->role_name,
-                'account_type_id'                 => $row->campaignAccount->account_type_id,
-                'type_name'                       => $row->type_name,
-                'select_all_tenants'              => $row->campaignAccount->is_link_to_all,
-                'is_subscribed'                   => $row->campaignAccount->is_subscribed,
-                'mobile_default_language'         => $row->campaignAccount->mobile_default_language,
-                'phone'                           => $row->campaignAccount->phone,
-                'disable_mobile_default_language' => $disable_mobile_default_language,
-                'tenant_count'       => $tenantAtMallArray,
-
-                // Taken from getUserCreatedAtAttribute() in the model
-                //                                                     What is this?
-                //                                                         \/
-                'created_at'   => $row->user_created_at->setTimezone('Asia/Singapore')->format('d F Y H:i:s'),
-
-                'status'       => $row->campaignAccount->status,
-                'id'           => $row->user_id,
-
-                // Needed by frontend for the edit page
-                'user_firstname' => $row->user_firstname,
-                'user_lastname'  => $row->user_lastname,
-                'position'       => $row->campaignAccount->position,
-                'user_email'     => $row->user_email,
-                'address_line1'  => $row->userDetail->address_line1,
-                'province'       => $row->userDetail->province,
-                'postal_code'    => $row->userDetail->postal_code,
-                'country'        => (object) ['id' => $row->userDetail->country_id, 'name' => @$row->userDetail->userCountry->name],
-                'country_name'   => @$row->userDetail->userCountry->name,
-                'pmp_languages'  => $row->campaignAccount->pmpLanguages,
-            ];
-        }
-
-        $data->columns = Config::get('account.listColumns');
-
-        // Remove subscription and creation date columns.
-        unset($data->columns['is_subscribed']);
-        unset($data->columns['created_at']);
-
-        $data->records = $records;
-
-        $this->data = $data;
+        return $pmpAccounts;
     }
 
     protected function validate()

@@ -1,4 +1,8 @@
-Hi, {{ $couponOwnerName }} just sent you a coupon via Gotomalls.com.
+{{ $header }}
+
+{{ $greeting }}
+
+{{ $body }}
 
 Click url below to ACCEPT the transfer.
 {{ $acceptUrl }}

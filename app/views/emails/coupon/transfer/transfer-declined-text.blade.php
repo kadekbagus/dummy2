@@ -1,1 +1,5 @@
-Your coupon transfer was declined by the recipient!
+{{ $header }}
+
+{{ $body }}
+
+{{ $myWalletUrl }}
