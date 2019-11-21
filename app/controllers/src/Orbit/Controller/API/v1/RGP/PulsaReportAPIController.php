@@ -10,40 +10,67 @@ use Validator;
 use Config;
 use PaymentTransaction;
 use stdclass;
+use Carbon\Carbon;
+use DB;
 
-class PulsaReportAPIController extends ControllerAPI
+class PulsaReportTotalDailyAPIController extends ControllerAPI
 {
-	public function getAllTransactionsPerDay()
+	public function get()
 	{
 		try {
 			$httpCode = 200;
-			// @todo: authenticate
-			// $sessionKey = Config::get('orbit.session.app_list.rgp_portal', 'X-OMS-RGP');
-			// $sessionString = OrbitInput::get($sessionKey);
+			// authenticate
+			$sessionKey = Config::get('orbit.session.app_list.rgp_portal', 'X-OMS-RGP');
+			$sessionString = OrbitInput::get($sessionKey);
 
-			// $session = Session::where('session_id', $sessionString)
-			// 	->firstOrFail();
+			$session = Session::where('session_id', $sessionString)
+				->firstOrFail();
 
-			// if (! is_object($session)) {
-			// 	throw new Exception("You need to login to continue.", 1);
-			// }
+			if (! is_object($session)) {
+				throw new Exception("You need to login to continue.", 1);
+			}
 
-			// $sessionData = unserialize($session->session_data);
+			$sessionData = unserialize($session->session_data);
 
+			if (! isset($sessionData->value['email'])) {
+				throw new Exception("You need to login to continue.", 1);
+			}
 
-			// @todo: get inputs
+			$userEmail = $sessionData->value['email'];
+			$user = RgpUser::active()->where('email', $email)->first();
+
+			if (! is_object($user)) {
+				throw new Exception("You need to login to continue.", 1);
+			}
+
+			// get inputs
 			$startDateInput = OrbitInput::get('start_date');
 			$endDateInput = OrbitInput::get('end_date');
-			$startDate = Carbon::parse($startDateInput)->format('Y-m-d');
-			$endDate = Carbon::parse($endDateInput)->format('Y-m-d');
+
+			$validator = Validator::make(
+                array(
+                    'start_date' => $startDateInput,
+                    'end_date' => $endDateInput,
+                ),
+                array(
+                    'start_date' => 'required',
+                    'end_date' => 'required',
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                throw new Exception($errorMessage, 1);
+            }
+
+            $startDate = new Carbon($startDateInput);
+			$endDate = new Carbon($endDateInput);
 			$startDateMinOneDay = $startDate->subDay();
 			$take = $endDate->diffInDays($startDateMinOneDay);
 			$skip = 0;
 
-			// @todo: validate
-
-
-			// @todo: query
+			// query
 			$prefix = DB::getTablePrefix();
 			$result = DB::raw(
 				"select
@@ -80,7 +107,7 @@ class PulsaReportAPIController extends ControllerAPI
 			);
 
 			$this->response->data = $result;
-			// @todo: response
+
 		} catch (Exception $e) {
 			$this->response->code = $e->getCode();
             $this->response->status = 'error';
