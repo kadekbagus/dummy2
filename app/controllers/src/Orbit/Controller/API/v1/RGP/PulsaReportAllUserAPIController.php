@@ -14,7 +14,7 @@ use DB;
 use Exception;
 use RgpUser;
 
-class PulsaReportTotalDailyAPIController extends ControllerAPI
+class PulsaReportAllUserAPIController extends ControllerAPI
 {
 	public function get()
 	{
@@ -26,7 +26,7 @@ class PulsaReportTotalDailyAPIController extends ControllerAPI
 
 			$session = DB::table('sessions')
 				->where('session_id', $sessionString)
-				->firstOrFail();
+				->first();
 
 			if (! is_object($session)) {
 				throw new Exception("You need to login to continue.", 1);
@@ -48,6 +48,7 @@ class PulsaReportTotalDailyAPIController extends ControllerAPI
 			// get inputs
 			$startDateInput = OrbitInput::get('start_date');
 			$endDateInput = OrbitInput::get('end_date');
+			$page = OrbitInput::get('page', 1);
 
 			$validator = Validator::make(
                 array(
@@ -68,44 +69,23 @@ class PulsaReportTotalDailyAPIController extends ControllerAPI
 
             $startDate = new Carbon($startDateInput);
 			$endDate = new Carbon($endDateInput);
-			$startDateMinOneDay = $startDate->subDay();
-			$take = $endDate->diffInDays($startDateMinOneDay);
-			$skip = 0;
+			$take = 20;
+			$skip = ($page - 1) * $take;
 
 			// query
 			$prefix = DB::getTablePrefix();
 			$result = DB::select(
 				DB::raw(
-					"select
-						start_date as dt,
-					    CASE WHEN total_amount IS NULL THEN '0' ELSE total_amount END as total_amount,
-					    CASE WHEN total_unique_user IS NULL THEN '0' ELSE total_unique_user END as total_unique_user,
-					    CASE WHEN counter IS NULL THEN '0' ELSE counter END as total_transactions
-					from (
-						select
-							@startDate := {$this->quote($startDate)},
-							DATE_FORMAT(DATE_ADD(@startDate, INTERVAL sequence_number DAY), '%Y-%m-%d 00:00:00') AS start_date
-						from {$prefix}sequence
-					) as p1
-					left join
-						(
-							SELECT
-								SUM(amount) AS total_amount,
-								COUNT(pt.payment_transaction_id) AS counter,
-								DATE_FORMAT(pt.created_at, '%Y-%m-%d 00:00:00') AS view_date,
-					            count(distinct user_id) as total_unique_user
-							FROM
-								{$prefix}payment_transactions pt
-							LEFT JOIN
-								{$prefix}payment_transaction_details ptd
-					            ON ptd.payment_transaction_id = pt.payment_transaction_id
-							WHERE
-								status = 'success'
-								AND ptd.object_type = 'pulsa'
-							GROUP BY view_date
-							ORDER BY view_date DESC
-						) as p2
-						on p1.start_date = p2.view_date
+					"select user_id, user_email, count(pt.payment_transaction_id) as total_transactions, sum(amount) as total_amount
+					from {$prefix}payment_transactions pt
+					LEFT JOIN
+						{$prefix}payment_transaction_details ptd
+					    ON ptd.payment_transaction_id = pt.payment_transaction_id
+					where pt.status = 'success'
+					and ptd.object_type = 'pulsa'
+					and pt.created_at between {$this->quote($startDate)} and {$this->quote($endDate)}
+					group by user_id
+					order by total_transactions desc
 					limit {$skip}, {$take}"
 				)
 			);
