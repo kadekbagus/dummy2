@@ -78,7 +78,7 @@ class Client
      */
     public function setQueryString(array $queryString=[])
     {
-        $this->queryString = $queryString + $this->queryString;
+        $this->queryString = $this->queryString + $queryString;
 
         // remove empty keys
         $this->queryString = array_filter($this->queryString);
