@@ -134,6 +134,7 @@ class GetPulsaQueue
                 // send google analitics event hit
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))
                     ->setQueryString([
+                        't' => 'event',
                         'ea' => 'Purchase Pulsa Successful',
                         'ec' => 'Pulsa',
                         'el' => $pulsaName,
@@ -217,6 +218,7 @@ class GetPulsaQueue
 
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))
                     ->setQueryString([
+                        't' => 'event',
                         'ea' => 'Purchase Pulsa Successful',
                         'ec' => 'Pulsa',
                         'el' => $pulsaName,
@@ -259,6 +261,7 @@ class GetPulsaQueue
 
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))
                     ->setQueryString([
+                        't' => 'event',
                         'ea' => 'Purchase Pulsa Retry ' . $data['retry'],
                         'ec' => 'Pulsa',
                         'el' => $pulsaName,
@@ -381,6 +384,7 @@ class GetPulsaQueue
 
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))
                     ->setQueryString([
+                        't' => 'event',
                         'ea' => 'Purchase Pulsa Failed',
                         'ec' => 'Pulsa',
                         'el' => $pulsaName,
