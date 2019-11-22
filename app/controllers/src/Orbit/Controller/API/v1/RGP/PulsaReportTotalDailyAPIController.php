@@ -39,7 +39,7 @@ class PulsaReportTotalDailyAPIController extends ControllerAPI
 			}
 
 			$userEmail = $sessionData->value['email'];
-			$user = RgpUser::active()->where('email', $email)->first();
+			$user = RgpUser::active()->where('email', $userEmail)->first();
 
 			if (! is_object($user)) {
 				throw new Exception("You need to login to continue.", 1);
