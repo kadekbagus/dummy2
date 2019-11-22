@@ -96,12 +96,18 @@ class Client
                 return;
             }
 
-            // validate other parameters (required: ec, ea)
-            if (! isset($this->queryString['ec']) || empty($this->queryString['ec'])) {
-                throw new OrbitCustomException("Event Category (ec) parameter is required", 1);
+            // validate other parameters (required: t, ec, ea)
+            if (! isset($this->queryString['t']) || empty($this->queryString['t'])) {
+                throw new OrbitCustomException("Hit Type (t) parameter is required", 1);
             }
-            if (! isset($this->queryString['ea']) || empty($this->queryString['ea'])) {
-                throw new OrbitCustomException("Event Action (ea) parameter is required", 1);
+
+            if ($this->queryString['t'] == 'event') {
+                if (! isset($this->queryString['ec']) || empty($this->queryString['ec'])) {
+                    throw new OrbitCustomException("Event Category (ec) parameter is required", 1);
+                }
+                if (! isset($this->queryString['ea']) || empty($this->queryString['ea'])) {
+                    throw new OrbitCustomException("Event Action (ea) parameter is required", 1);
+                }
             }
 
             $options = [];
