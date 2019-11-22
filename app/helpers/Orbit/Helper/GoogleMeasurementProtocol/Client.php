@@ -56,7 +56,7 @@ class Client
 
         $this->queryString['tid'] = $this->config['tid'];
         $this->queryString['v'] = '1';
-        $this->queryString['t'] = 'event';
+        $this->queryString['t'] = (! isset($this->queryString['t']) || empty($this->queryString['t'])) ? 'event' : $this->queryString['t'];
         $this->queryString['cid'] = '555'; // default cid (anonymous)
         $this->userAgent = 'Mozilla/5.0 (Linux; Android 4.0.4; Galaxy Nexus Build/IMM76B) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.133 Mobile Safari/535.19';
     }
@@ -111,7 +111,7 @@ class Client
 
             // $options['verify'] = false;
 
-            $response = $this->client->request('POST', $this->endpoint, $options);
+            $response = $this->client->requestAsync('POST', $this->endpoint, $options);
             $response = $response->getBody()->getContents();
 
         } catch (\GuzzleHttp\Exception\ConnectException $e) {

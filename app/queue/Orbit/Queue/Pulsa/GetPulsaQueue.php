@@ -98,6 +98,7 @@ class GetPulsaQueue
                 return;
             }
 
+            $detail = isset($payment->details[0]) ? $payment->details[0] : null;
             $pulsa = $this->getPulsa($payment);
 
             if (! empty($pulsa)) {
@@ -130,6 +131,7 @@ class GetPulsaQueue
                 // Notify Customer.
                 $payment->user->notify(new ReceiptNotification($payment, $pulsaPurchase->getSerialNumber()));
 
+                // send google analitics event hit
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))
                     ->setQueryString([
                         'ea' => 'Purchase Pulsa Successful',
@@ -142,6 +144,32 @@ class GetPulsaQueue
                         'cc' => $payment->utm_content
                     ])
                     ->request();
+
+                if (! is_null($detail) && ! is_null($pulsa)) {
+                    // send google analitics transaction hit
+                    GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                        ->setQueryString([
+                            't' => 'transaction',
+                            'ti' => $payment->payment_transaction_id,
+                            'tr' => $payment->amount,
+                            'cu' => $payment->currency,
+                        ])
+                        ->request();
+
+                    // send google analitics item hit
+                    GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                        ->setQueryString([
+                            't' => 'item',
+                            'ti' => $payment->payment_transaction_id,
+                            'in' => $pulsa->pulsa_display_name,
+                            'ip' => $detail->price,
+                            'iq' => $detail->quantity,
+                            'ic' => $pulsa->pulsa_code,
+                            'iv' => 'pulsa',
+                            'cu' => $payment->currency,
+                        ])
+                        ->request();
+                }
 
                 $activity->setActivityNameLong('Transaction is Successful')
                         ->setModuleName('Midtrans Transaction')
@@ -199,6 +227,32 @@ class GetPulsaQueue
                         'cc' => $payment->utm_content
                     ])
                     ->request();
+
+                if (! is_null($detail) && ! is_null($pulsa)) {
+                    // send google analitics transaction hit
+                    GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                        ->setQueryString([
+                            't' => 'transaction',
+                            'ti' => $payment->payment_transaction_id,
+                            'tr' => $payment->amount,
+                            'cu' => $payment->currency,
+                        ])
+                        ->request();
+
+                    // send google analitics item hit
+                    GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                        ->setQueryString([
+                            't' => 'item',
+                            'ti' => $payment->payment_transaction_id,
+                            'in' => $pulsa->pulsa_display_name,
+                            'ip' => $detail->price,
+                            'iq' => $detail->quantity,
+                            'ic' => $pulsa->pulsa_code,
+                            'iv' => 'pulsa',
+                            'cu' => $payment->currency,
+                        ])
+                        ->request();
+                }
             }
             else if ($pulsaPurchase->shouldRetry($data['retry'])) {
                 $data['retry']++;
