@@ -111,7 +111,7 @@ class Client
 
             // $options['verify'] = false;
 
-            $response = $this->client->requestAsync('POST', $this->endpoint, $options);
+            $response = $this->client->request('POST', $this->endpoint, $options);
             $response = $response->getBody()->getContents();
 
         } catch (\GuzzleHttp\Exception\ConnectException $e) {
