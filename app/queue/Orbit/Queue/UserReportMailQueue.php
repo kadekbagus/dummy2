@@ -36,8 +36,8 @@ class UserReportMailQueue
             $dataView = $data;
 
             $mailViews = array(
-                            'html' => 'emails.user-report-html',
-                            'text' => 'emails.user-report-text'
+                            'html' => 'emails.user-report.user-report-html',
+                            'text' => 'emails.user-report.user-report-text'
                             );
 
             $this->sendUserReportEmail($mailViews, $dataView);
