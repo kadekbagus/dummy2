@@ -320,4 +320,20 @@ class IssuedCoupon extends Eloquent
 
         $this->touch();
     }
+
+    /**
+     * Reset Coupon Transfer fields.
+     *
+     * @return [type] [description]
+     */
+    public function resetTransfer()
+    {
+        $this->original_user_id = null;
+        $this->transfer_start_at = null;
+        $this->transfer_complete_at = null;
+        $this->transfer_status = null;
+        $this->transfer_name = null;
+        $this->transfer_email = null;
+        $this->save();
+    }
 }
