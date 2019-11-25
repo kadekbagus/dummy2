@@ -2,9 +2,6 @@
 
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Validator;
-use IssuedCoupon;
-use OrbitShop\API\v1\Helper\Input as OrbitInput;
-use OrbitShop\API\v1\OrbitShopAPI;
 use Orbit\Controller\API\v1\Pub\Coupon\Transfer\Repository\CouponTransferRepository;
 
 /**
@@ -32,7 +29,7 @@ class TransferRequest extends FormRequest
         return [
             'issued_coupon_id' => 'bail|required|available.for.transfer',
             'name' => 'required',
-            'email'  => 'required|email',
+            'email'  => 'required|email|distinct_with_owner_email',
         ];
     }
 
@@ -45,6 +42,7 @@ class TransferRequest extends FormRequest
     {
         return [
             'available.for.transfer' => 'COUPON_NOT_AVAILABLE_FOR_TRANSFER',
+            'distinct_with_owner_email' => 'RECIPIENT_EMAIL_SAME_AS_OWNER_EMAIL',
         ];
     }
 
@@ -62,6 +60,7 @@ class TransferRequest extends FormRequest
             return true;
         });
 
+        // Validate that issued coupon available for transferring.
         Validator::extend('available.for.transfer', function($attribute, $issuedCouponId, $parameters) {
             $couponTransfer = App::make(CouponTransferRepository::class);
 
@@ -95,11 +94,17 @@ class TransferRequest extends FormRequest
             return ! empty($issuedCoupon) && $issuedCoupon->transfer_email === $validatorData['email'];
         });
 
+        // Validate that request is being requested by coupon owner.
         Validator::extend('requested_by_owner', function() {
             $couponTransfer = App::make(CouponTransferRepository::class);
             $issuedCoupon = $couponTransfer->getIssuedCoupon();
 
             return ! empty($issuedCoupon) && $issuedCoupon->user_id === $this->user->user_id;
+        });
+
+        // Validate that recipient email !== currently logged in user's email.
+        Validator::extend('distinct_with_owner_email', function($attribute, $email, $parameters) {
+            return $email !== $this->user->user_email;
         });
     }
 }
