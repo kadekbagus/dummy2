@@ -330,3 +330,9 @@ Artisan::add(new CreateUserRGPCommand);
 
 // Update slug for telco operator
 Artisan::add(new TelcoOperatorSlugCommand);
+
+// Send User Report Email
+Artisan::add(new UserReportEmailCommand);
+
+// List all active user
+Artisan::add(new GetListActiveUserCommand);
