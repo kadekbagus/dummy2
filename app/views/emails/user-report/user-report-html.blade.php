@@ -401,8 +401,8 @@
                               <tr>
                               @foreach($mall_data as $key => $value)
                                 <td width="64" height="64" style="padding-right: 10px;" valign="middle">
-                                  <a href="{{$value->link_url}}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
-                                    <img src="{{$value->cdn_url}}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
+                                  <a href="{{ $mall_data[$key]['link_url'] }}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
+                                    <img src="{{ $mall_data[$key]['cdn_url'] }}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
                                   </a>
                                 </td>
                               @endforeach
@@ -433,8 +433,8 @@
                               <tr>
                               @foreach($store_data as $key => $value)
                                 <td width="64" height="64" style="padding-right: 10px;" valign="middle">
-                                  <a href="{{$value->link_url}}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
-                                    <img src="{{$value->cdn_url}}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
+                                  <a href="{{ $store_data[$key]['link_url'] }}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
+                                    <img src="{{ $store_data[$key]['cdn_url'] }}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
                                   </a>
                                 </td>
                               @endforeach
@@ -479,8 +479,8 @@
                               <tr>
                               @foreach($coupon_data as $key => $value)
                                 <td width="64" height="64" style="padding-right: 10px;" valign="middle">
-                                  <a href="{{$value->link_url}}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
-                                    <img src="{{$value->cdn_url}}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
+                                  <a href="{{ $coupon_data[$key]['link_url'] }}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
+                                    <img src="{{ $coupon_data[$key]['cdn_url'] }}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
                                   </a>
                                 </td>
                               @endforeach
@@ -511,8 +511,8 @@
                               <tr>
                               @foreach($promotion_data as $key => $value)
                                 <td width="64" height="64" style="padding-right: 10px;" valign="middle">
-                                  <a href="{{$value->link_url}}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
-                                    <img src="{{$value->cdn_url}}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
+                                  <a href="{{ $promotion_data[$key]['link_url'] }}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
+                                    <img src="{{ $promotion_data[$key]['cdn_url'] }}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
                                   </a>
                                 </td>
                               @endforeach
@@ -557,8 +557,8 @@
                               <tr>
                               @foreach($event_data as $key => $value)
                                 <td width="64" height="64" style="padding-right: 10px;" valign="middle">
-                                  <a href="{{$value->link_url}}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
-                                    <img src="{{$value->cdn_url}}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
+                                  <a href="{{ $event_data[$key]['link_url'] }}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
+                                    <img src="{{ $event_data[$key]['cdn_url'] }}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
                                   </a>
                                 </td>
                               @endforeach
@@ -587,10 +587,10 @@
                           <td width="200">
                             <table>
                               <tr>
-                              @foreach($event_data as $key => $value)
+                              @foreach($article_data as $key => $value)
                                 <td width="64" height="64" style="padding-right: 10px;" valign="middle">
-                                  <a href="{{$value->link_url}}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
-                                    <img src="{{$value->cdn_url}}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
+                                  <a href="{{ $article_data[$key]['link_url'] }}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
+                                    <img src="{{ $article_data[$key]['cdn_url'] }}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
                                   </a>
                                 </td>
                               @endforeach
