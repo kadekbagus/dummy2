@@ -55,7 +55,8 @@ class UserReportMailQueue
             $message = sprintf('[Job ID: `%s`] User Report Mail; Status: FAIL; Code: %s; Message: %s',
                     $job->getJobId(),
                     $e->getCode(),
-                    $e->getMessage());
+                    $e->getMessage(),
+                    $e->getLine());
             Log::info($message);
         }
 
