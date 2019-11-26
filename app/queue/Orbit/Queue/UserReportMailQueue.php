@@ -32,8 +32,15 @@ class UserReportMailQueue
                 App::setLocale($data['language']);
             }
 
-            Log::info($data);
             $dataView = $data;
+            $dataView['landing_page_url'] = Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com');
+            $dataView['pulsa_page_url'] = $dataView['landing_page_url'].'/pulsa?country=Indonesia';
+            $dataView['mall_list_page_url'] = $dataView['landing_page_url'].'/malls';
+            $dataView['store_list_page_url'] = $dataView['landing_page_url'].'/stores';
+            $dataView['coupon_list_page_url'] = $dataView['landing_page_url'].'/coupons';
+            $dataView['promotion_list_page_url'] = $dataView['landing_page_url'].'/promotions';
+            $dataView['event_list_page_url'] = $dataView['landing_page_url'].'/events';
+            $dataView['article_list_page_url'] = $dataView['landing_page_url'].'/articles';
 
             $mailViews = array(
                             'html' => 'emails.user-report.user-report-html',
@@ -52,7 +59,7 @@ class UserReportMailQueue
                 'message' => $message
             ];
         } catch (Exception $e) {
-            $message = sprintf('[Job ID: `%s`] User Report Mail; Status: FAIL; Code: %s; Message: %s',
+            $message = sprintf('[Job ID: `%s`] User Report Mail; Status: FAIL; Code: %s; Message: %s; Line: %s',
                     $job->getJobId(),
                     $e->getCode(),
                     $e->getMessage(),
