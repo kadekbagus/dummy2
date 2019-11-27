@@ -264,6 +264,8 @@ class MallInfoAPIController extends PubControllerAPI
                 $itemMall['other_photo_section_title'] = $mallData->other_photo_section_title;
                 $itemMall['mall_photos'] = $mallData->mediaPhotos;
                 $itemMall['mall_other_photos'] = $mallData->mediaOtherPhotos;
+                $itemMall['mall_google_indoor_map'] = $mallData->mall_google_indoor_map;
+                $itemMall['mall_google_indoor_streetview'] = $mallData->mall_google_indoor_streetview;
             }
             // ---- END OF RATING ----
 
