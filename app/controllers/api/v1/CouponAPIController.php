@@ -3998,7 +3998,7 @@ class CouponAPIController extends ControllerAPI
                     't' => 'event',
                     'ea' => 'Redeem Coupon Failed',
                     'ec' => 'Coupon',
-                    'el' => $issuedcoupon->coupon->promotion_name
+                    'el' => null
                 ])
                 ->request();
 
@@ -4033,7 +4033,7 @@ class CouponAPIController extends ControllerAPI
                     't' => 'event',
                     'ea' => 'Redeem Coupon Failed',
                     'ec' => 'Coupon',
-                    'el' => $issuedcoupon->coupon->promotion_name
+                    'el' => null
                 ])
                 ->request();
 
@@ -4074,7 +4074,7 @@ class CouponAPIController extends ControllerAPI
                     't' => 'event',
                     'ea' => 'Redeem Coupon Failed',
                     'ec' => 'Coupon',
-                    'el' => $issuedcoupon->coupon->promotion_name
+                    'el' => null
                 ])
                 ->request();
 
@@ -4108,7 +4108,7 @@ class CouponAPIController extends ControllerAPI
                     't' => 'event',
                     'ea' => 'Redeem Coupon Failed',
                     'ec' => 'Coupon',
-                    'el' => $issuedcoupon->coupon->promotion_name
+                    'el' => null
                 ])
                 ->request();
 
