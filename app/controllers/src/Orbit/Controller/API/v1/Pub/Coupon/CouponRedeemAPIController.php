@@ -281,6 +281,7 @@ class CouponRedeemAPIController extends PubControllerAPI
             }
             GMP::create(Config::get('orbit.partners_api.google_measurement'))
                 ->setQueryString([
+                    't' => 'event',
                     'ea' => 'Redeem Coupon Successful',
                     'ec' => 'Coupon',
                     'el' => $coupon->promotion_name,
@@ -311,6 +312,7 @@ class CouponRedeemAPIController extends PubControllerAPI
         } catch (Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException $e) {
             GMP::create(Config::get('orbit.partners_api.google_measurement'))
                 ->setQueryString([
+                    't' => 'event',
                     'ea' => 'Redeem Coupon Failed',
                     'ec' => 'Coupon',
                     'el' => isset($coupon->promotion_name) ? $coupon->promotion_name : 'Unknown Coupon'
@@ -339,6 +341,7 @@ class CouponRedeemAPIController extends PubControllerAPI
         } catch (ACLForbiddenException $e) {
             GMP::create(Config::get('orbit.partners_api.google_measurement'))
                 ->setQueryString([
+                    't' => 'event',
                     'ea' => 'Redeem Coupon Failed',
                     'ec' => 'Coupon',
                     'el' => isset($coupon->promotion_name) ? $coupon->promotion_name : 'Unknown Coupon'
@@ -366,6 +369,7 @@ class CouponRedeemAPIController extends PubControllerAPI
         } catch (InvalidArgsException $e) {
             GMP::create(Config::get('orbit.partners_api.google_measurement'))
                 ->setQueryString([
+                    't' => 'event',
                     'ea' => 'Redeem Coupon Failed',
                     'ec' => 'Coupon',
                     'el' => isset($coupon->promotion_name) ? $coupon->promotion_name : 'Unknown Coupon'
@@ -393,6 +397,7 @@ class CouponRedeemAPIController extends PubControllerAPI
         } catch (QueryException $e) {
             GMP::create(Config::get('orbit.partners_api.google_measurement'))
                 ->setQueryString([
+                    't' => 'event',
                     'ea' => 'Redeem Coupon Failed',
                     'ec' => 'Coupon',
                     'el' => isset($coupon->promotion_name) ? $coupon->promotion_name : 'Unknown Coupon'
@@ -426,6 +431,7 @@ class CouponRedeemAPIController extends PubControllerAPI
         } catch (Exception $e) {
             GMP::create(Config::get('orbit.partners_api.google_measurement'))
                 ->setQueryString([
+                    't' => 'event',
                     'ea' => 'Redeem Coupon Failed',
                     'ec' => 'Coupon',
                     'el' => 'Coupon Name'

@@ -3952,6 +3952,7 @@ class CouponAPIController extends ControllerAPI
                 // send google analytics event
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))
                     ->setQueryString([
+                        't' => 'event',
                         'ea' => 'Redeem Coupon Successful',
                         'ec' => 'Coupon',
                         'el' => $issuedcoupon->coupon->promotion_name,
@@ -3994,9 +3995,10 @@ class CouponAPIController extends ControllerAPI
             // send google analytics event
             GMP::create(Config::get('orbit.partners_api.google_measurement'))
                 ->setQueryString([
+                    't' => 'event',
                     'ea' => 'Redeem Coupon Failed',
                     'ec' => 'Coupon',
-                    'el' => $issuedcoupon->coupon->promotion_name
+                    'el' => null
                 ])
                 ->request();
 
@@ -4028,9 +4030,10 @@ class CouponAPIController extends ControllerAPI
             // send google analytics event
             GMP::create(Config::get('orbit.partners_api.google_measurement'))
                 ->setQueryString([
+                    't' => 'event',
                     'ea' => 'Redeem Coupon Failed',
                     'ec' => 'Coupon',
-                    'el' => $issuedcoupon->coupon->promotion_name
+                    'el' => null
                 ])
                 ->request();
 
@@ -4068,9 +4071,10 @@ class CouponAPIController extends ControllerAPI
             // send google analytics event
             GMP::create(Config::get('orbit.partners_api.google_measurement'))
                 ->setQueryString([
+                    't' => 'event',
                     'ea' => 'Redeem Coupon Failed',
                     'ec' => 'Coupon',
-                    'el' => $issuedcoupon->coupon->promotion_name
+                    'el' => null
                 ])
                 ->request();
 
@@ -4101,9 +4105,10 @@ class CouponAPIController extends ControllerAPI
             // send google analytics event
             GMP::create(Config::get('orbit.partners_api.google_measurement'))
                 ->setQueryString([
+                    't' => 'event',
                     'ea' => 'Redeem Coupon Failed',
                     'ec' => 'Coupon',
-                    'el' => $issuedcoupon->coupon->promotion_name
+                    'el' => null
                 ])
                 ->request();
 
