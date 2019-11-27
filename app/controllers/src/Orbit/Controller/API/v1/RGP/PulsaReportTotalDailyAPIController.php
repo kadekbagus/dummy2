@@ -24,6 +24,10 @@ class PulsaReportTotalDailyAPIController extends ControllerAPI
 			$sessionKey = Config::get('orbit.session.app_list.rgp_portal', 'X-OMS-RGP');
 			$sessionString = OrbitInput::get($sessionKey);
 
+			if (empty($sessionKey) || empty($sessionString)) {
+                throw new Exception("Error Processing Request", 1);
+            }
+
 			$session = DB::table('sessions')
 				->where('session_id', $sessionString)
 				->firstOrFail();
@@ -83,7 +87,7 @@ class PulsaReportTotalDailyAPIController extends ControllerAPI
 					    CASE WHEN counter IS NULL THEN '0' ELSE counter END as total_transactions
 					from (
 						select
-							@startDate := {$this->quote($startDate)},
+							@startDate := {$this->quote($startDateMinOneDay)},
 							DATE_FORMAT(DATE_ADD(@startDate, INTERVAL sequence_number DAY), '%Y-%m-%d 00:00:00') AS start_date
 						from {$prefix}sequence
 					) as p1
@@ -110,7 +114,10 @@ class PulsaReportTotalDailyAPIController extends ControllerAPI
 				)
 			);
 
-			$this->response->data = $result;
+			$data = new stdClass();
+			$data->records = $result;
+
+			$this->response->data = $data;
 
 		} catch (Exception $e) {
 			$this->response->code = $e->getCode();

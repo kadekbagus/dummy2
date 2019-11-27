@@ -87,14 +87,38 @@ class PulsaReportAllUserAPIController extends ControllerAPI
                         ON ptd.payment_transaction_id = pt.payment_transaction_id
                     where pt.status = 'success'
                     and ptd.object_type = 'pulsa'
-                    and pt.created_at between {$this->quote($startDate)} and {$this->quote($endDate)}
+                    and pt.updated_at between {$this->quote($startDate)} and {$this->quote($endDate)}
                     group by user_id
                     order by total_transactions desc
                     limit {$skip}, {$take}"
                 )
             );
 
-            $this->response->data = $result;
+            $counter = DB::select(
+                DB::raw(
+                    "select count(user_id) as counter
+                    from (
+                        select
+                            user_id, user_email, count(pt.payment_transaction_id) as total_transactions, sum(amount) as total_amount
+                            from {$prefix}payment_transactions pt
+                            LEFT JOIN
+                                {$prefix}payment_transaction_details ptd
+                                ON ptd.payment_transaction_id = pt.payment_transaction_id
+                            where pt.status = 'success'
+                            and ptd.object_type = 'pulsa'
+                            and pt.updated_at between {$this->quote($startDate)} and {$this->quote($endDate)}
+                            group by user_id
+                    ) as list_query"
+                )
+            );
+
+            $data = new stdclass();
+            $data->records = $result;
+            $data->returned_records = count($result);
+            $data->total_records = $counter[0]->counter;
+
+            $this->response->data = $data;
+
 
         } catch (Exception $e) {
             $this->response->code = $e->getCode();
