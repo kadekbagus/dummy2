@@ -30,7 +30,7 @@ class PulsaReportTotalDailyAPIController extends ControllerAPI
 
 			$session = DB::table('sessions')
 				->where('session_id', $sessionString)
-				->firstOrFail();
+				->first();
 
 			if (! is_object($session)) {
 				throw new Exception("You need to login to continue.", 1);
@@ -107,7 +107,7 @@ class PulsaReportTotalDailyAPIController extends ControllerAPI
 								status = 'success'
 								AND ptd.object_type = 'pulsa'
 							GROUP BY view_date
-							ORDER BY view_date DESC
+							ORDER BY view_date ASC
 						) as p2
 						on p1.start_date = p2.view_date
 					limit {$skip}, {$take}"
