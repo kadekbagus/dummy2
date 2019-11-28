@@ -87,7 +87,7 @@ class PulsaReportAllUserAPIController extends ControllerAPI
                         ON ptd.payment_transaction_id = pt.payment_transaction_id
                     where pt.status = 'success'
                     and ptd.object_type = 'pulsa'
-                    and pt.updated_at between {$this->quote($startDate)} and {$this->quote($endDate)}
+                    and pt.updated_at between {$this->quote($startDate)} and {$this->quote($endDate->endOfDay())}
                     group by user_id
                     order by total_transactions desc
                     limit {$skip}, {$take}"
@@ -106,7 +106,7 @@ class PulsaReportAllUserAPIController extends ControllerAPI
                                 ON ptd.payment_transaction_id = pt.payment_transaction_id
                             where pt.status = 'success'
                             and ptd.object_type = 'pulsa'
-                            and pt.updated_at between {$this->quote($startDate)} and {$this->quote($endDate)}
+                            and pt.updated_at between {$this->quote($startDate)} and {$this->quote($endDate->endOfDay())}
                             group by user_id
                     ) as list_query"
                 )
