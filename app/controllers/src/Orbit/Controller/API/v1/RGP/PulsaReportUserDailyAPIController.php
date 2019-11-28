@@ -14,7 +14,7 @@ use DB;
 use Exception;
 use RgpUser;
 
-class PulsaReportTotalDailyAPIController extends ControllerAPI
+class PulsaReportUserDailyAPIController extends ControllerAPI
 {
 	public function get()
 	{
@@ -52,15 +52,18 @@ class PulsaReportTotalDailyAPIController extends ControllerAPI
 			// get inputs
 			$startDateInput = OrbitInput::get('start_date');
 			$endDateInput = OrbitInput::get('end_date');
+			$userId = OrbitInput::get('user_id');
 
 			$validator = Validator::make(
                 array(
                     'start_date' => $startDateInput,
                     'end_date' => $endDateInput,
+                    'user_id' => $userId,
                 ),
                 array(
                     'start_date' => 'required|date_format:Y-m-d',
                     'end_date' => 'required|date_format:Y-m-d',
+                    'user_id' => 'required',
                 )
             );
 
@@ -83,7 +86,6 @@ class PulsaReportTotalDailyAPIController extends ControllerAPI
 					"select
 						start_date as dt,
 					    CASE WHEN total_amount IS NULL THEN '0' ELSE total_amount END as total_amount,
-					    CASE WHEN total_unique_user IS NULL THEN '0' ELSE total_unique_user END as total_unique_user,
 					    CASE WHEN counter IS NULL THEN '0' ELSE counter END as total_transactions
 					from (
 						select
@@ -96,18 +98,17 @@ class PulsaReportTotalDailyAPIController extends ControllerAPI
 							SELECT
 								SUM(amount) AS total_amount,
 								COUNT(pt.payment_transaction_id) AS counter,
-								DATE_FORMAT(pt.updated_at, '%Y-%m-%d 00:00:00') AS view_date,
-					            count(distinct user_id) as total_unique_user
+								DATE_FORMAT(pt.updated_at, '%Y-%m-%d 00:00:00') AS view_date
 							FROM
 								{$prefix}payment_transactions pt
 							LEFT JOIN
-								{$prefix}payment_transaction_details ptd
-					            ON ptd.payment_transaction_id = pt.payment_transaction_id
+								{$prefix}payment_transaction_details ptd ON ptd.payment_transaction_id = pt.payment_transaction_id
 							WHERE
-								status = 'success'
-								AND ptd.object_type = 'pulsa'
-							GROUP BY view_date
-							ORDER BY view_date ASC
+								pt.user_id = {$this->quote($userId)}
+									AND pt.status = 'success'
+					                AND ptd.object_type = 'pulsa'
+							GROUP BY view_date, user_id
+							ORDER BY view_date DESC
 						) as p2
 						on p1.start_date = p2.view_date
 					limit {$skip}, {$take}"
