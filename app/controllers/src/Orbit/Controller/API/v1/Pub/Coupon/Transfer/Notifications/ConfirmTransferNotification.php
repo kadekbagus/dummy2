@@ -28,11 +28,19 @@ class ConfirmTransferNotification extends CouponTransferNotification
         ];
     }
 
-    private function getImageUrl($relativeUrl)
+    private function getImageUrl($coupon)
     {
+        $img = $coupon->media()
+            ->select('path', 'cdn_url')
+            ->where('object_id', $coupon->promotion_id)
+            ->where('object_name', 'coupon_translation')
+            ->where('media_name_id', 'coupon_translation_image')
+            ->where('media_name_id', 'coupon_translation_image')
+            ->where('media_name_long', 'coupon_translation_image_resized_default')
+            ->first();
         $cdnConfig = Config::get('orbit.cdn');
         $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
-        return $imgUrl->getImageUrl($relativeUrl, '');
+        return $imgUrl->getImageUrl($img->path, $img->cdn_url);
     }
 
     /**
@@ -50,7 +58,7 @@ class ConfirmTransferNotification extends CouponTransferNotification
             'emailSubject'      => trans('email-transfer.confirm.subject', ['ownerName' => $this->issuedCoupon->user->getFullName()]),
             'body'              => trans('email-transfer.confirm.message', ['ownerName' => $this->issuedCoupon->user->getFullName()]),
             'couponName'        => $this->issuedCoupon->coupon->promotion_name,
-            'couponImage'       => $this->getImageUrl($this->issuedCoupon->coupon->image),
+            'couponImage'       => $this->getImageUrl($this->issuedCoupon->coupon),
             'brandName'         => $brandName,
             'acceptUrl'         => $this->generateAcceptUrl(),
             'btnAccept'         => trans('email-transfer.confirm.btn_accept'),
