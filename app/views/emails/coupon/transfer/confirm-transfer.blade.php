@@ -260,7 +260,7 @@
                           <div style="display:flex; justify-content:center">
                               <div style="margin:10px"><a href="{{ $couponUrl }}"><img src="{{ $couponImage }}" width="100"></a></div>
                               <div style="margin:10px">
-                                  <h3><a href="{{ $couponUrl }}">{{ $couponName}}</a></h3>
+                                  <h3><a href="{{ $couponUrl }}" data-coupon-id="{{ $couponId }}">{{ $couponName}}</a></h3>
                                   <span>{{ $brandName }}</span>
                               </div>
                           </div>
