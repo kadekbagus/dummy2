@@ -53,7 +53,7 @@ class ConfirmTransferNotification extends CouponTransferNotification
      *
      * @return [type] [description]
      */
-    private function generateCouponUrl($coupon)
+    private function getCouponUrl($coupon)
     {
         $baseLandingPageUrl = Config::get('orbit.base_landing_page_url', 'https://gotomalls.com');
         return LandingPageUrlGenerator::create(
