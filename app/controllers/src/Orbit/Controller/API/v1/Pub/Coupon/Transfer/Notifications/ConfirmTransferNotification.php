@@ -30,8 +30,9 @@ class ConfirmTransferNotification extends CouponTransferNotification
 
     private function getImageUrl($coupon)
     {
-        $img = $coupon->media()
-            ->select('path', 'cdn_url')
+        $img = Media::select('path', 'cdn_url')
+            ->where('object_id', $coupon->promotion_id)
+            ->where('object_name', 'coupon')
             ->where('media_name_id', 'coupon_image')
             ->where('media_name_long', 'coupon_image_resized_default')
             ->first();
