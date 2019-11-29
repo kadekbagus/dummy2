@@ -255,7 +255,7 @@
                       </p>
                     </td>
                   </tr>
-                  <tr>
+                  <tr style="margin-bottom:10px">
                     <td width="600" class="mobile" align="center" valign="middle">
                           <div style="display:flex; justify-content:center">
                               <div><a href="{{ $couponUrl }}"><img src="{{ $couponImage }}" width="100"></a></div>
@@ -265,6 +265,9 @@
                               </div>
                           </div>
                     </td>
+                  </tr>
+                  <tr>
+                    <td height="30" align="center">&nbsp;</td>
                   </tr>
                   <tr>
                     <td width="600" class="mobile" align="center" valign="middle">

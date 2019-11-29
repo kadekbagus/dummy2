@@ -57,12 +57,11 @@ class ConfirmTransferNotification extends CouponTransferNotification
      */
     private function getCouponUrl($coupon)
     {
-        $baseLandingPageUrl = Config::get('orbit.base_landing_page_url', 'https://gotomalls.com');
         return LandingPageUrlGenerator::create(
             'coupon',
             $coupon->promotion_id,
             $coupon->promotion_name
-        )->generateUrl();
+        )->generateUrl(true);
     }
 
     /**
@@ -72,7 +71,6 @@ class ConfirmTransferNotification extends CouponTransferNotification
      */
     public function getEmailData()
     {
-        //$brandName = $this->issuedCoupon->coupon->linkToTenants()->first()->name;
         $brandName = '';
         return array_merge(parent::getEmailData(), [
             'header'            => trans('email-transfer.header'),
