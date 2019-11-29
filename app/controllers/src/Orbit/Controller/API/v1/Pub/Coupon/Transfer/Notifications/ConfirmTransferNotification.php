@@ -72,14 +72,16 @@ class ConfirmTransferNotification extends CouponTransferNotification
     public function getEmailData()
     {
         $brandName = '';
+        $coupon = $this->issuedCoupon->coupon;
         return array_merge(parent::getEmailData(), [
             'header'            => trans('email-transfer.header'),
             'greeting'          => trans('email-transfer.confirm.greeting', ['recipientName' => $this->recipientName]),
             'emailSubject'      => trans('email-transfer.confirm.subject', ['ownerName' => $this->issuedCoupon->user->getFullName()]),
             'body'              => trans('email-transfer.confirm.message', ['ownerName' => $this->issuedCoupon->user->getFullName()]),
-            'couponName'        => $this->issuedCoupon->coupon->promotion_name,
-            'couponUrl'         => $this->getCouponUrl($this->issuedCoupon->coupon),
-            'couponImage'       => $this->getImageUrl($this->issuedCoupon->coupon),
+            'coupon' => $coupon,
+            'couponName'        => $coupon->promotion_name,
+            'couponUrl'         => $this->getCouponUrl($coupon),
+            'couponImage'       => $this->getImageUrl($coupon),
             'brandName'         => $brandName,
             'acceptUrl'         => $this->generateAcceptUrl(),
             'btnAccept'         => trans('email-transfer.confirm.btn_accept'),
