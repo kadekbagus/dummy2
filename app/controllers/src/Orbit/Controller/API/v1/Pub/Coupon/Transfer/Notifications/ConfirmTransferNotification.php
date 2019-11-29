@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Config;
 use Orbit\Controller\API\v1\Pub\Coupon\Transfer\Notifications\CouponTransferNotification;
+use Orbit\Helper\Util\CdnUrlGenerator;
 
 /**
  * Notify recipient to accept or decline a coupon transfer.
@@ -27,6 +28,13 @@ class ConfirmTransferNotification extends CouponTransferNotification
         ];
     }
 
+    private function getImageUrl($relativeUrl)
+    {
+        $cdnConfig = Config::get('orbit.cdn');
+        $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+        return $imgUrl->getImageUrl($relativeUrl, '');
+    }
+
     /**
      * Get the email data.
      *
@@ -42,7 +50,7 @@ class ConfirmTransferNotification extends CouponTransferNotification
             'emailSubject'      => trans('email-transfer.confirm.subject', ['ownerName' => $this->issuedCoupon->user->getFullName()]),
             'body'              => trans('email-transfer.confirm.message', ['ownerName' => $this->issuedCoupon->user->getFullName()]),
             'couponName'        => $this->issuedCoupon->coupon->promotion_name,
-            'couponImage'       => $this->issuedCoupon->coupon->image,
+            'couponImage'       => $this->getImageUrl($this->issuedCoupon->coupon->image),
             'brandName'         => $brandName,
             'acceptUrl'         => $this->generateAcceptUrl(),
             'btnAccept'         => trans('email-transfer.confirm.btn_accept'),
