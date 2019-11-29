@@ -57,11 +57,11 @@ class ConfirmTransferNotification extends CouponTransferNotification
      */
     private function getCouponUrl($couponId, $couponName)
     {
-        return LandingPageUrlGenerator::create(
+        return (new LandingPageUrlGenerator(
             'coupon',
             $couponId,
             $couponName
-        )->generateUrl(true);
+        ))->generateUrl(true);
     }
 
     /**

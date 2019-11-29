@@ -263,7 +263,7 @@
                               </div>
                               <div style="margin:10px">
                                   <h3><a href="{{ $couponUrl }}">{{ $couponName}}</a></h3>
-                                  <span>{{ $couponId }} - {{ $brandName }}</span>
+                                  <span>{{ $brandName }}</span>
                               </div>
                           </div>
                     </td>
