@@ -256,7 +256,15 @@
                     </td>
                   </tr>
                   <tr>
-                    <td height="20">&nbsp;</td>
+                    <td width="600" class="mobile" align="center" valign="middle">
+                          <div style="display:flex; justify-content:center">
+                              <div><img src="{{ $couponImage }}"></div>
+                              <div>
+                                  <h4>{{ $couponName}}</h4>
+                                  <span>{{ $brandName }}</span>
+                              </div>
+                          </div>
+                    </td>
                   </tr>
                   <tr>
                     <td width="600" class="mobile" align="center" valign="middle">
