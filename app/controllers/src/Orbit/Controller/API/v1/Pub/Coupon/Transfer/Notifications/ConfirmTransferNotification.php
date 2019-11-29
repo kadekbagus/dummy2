@@ -38,7 +38,7 @@ class ConfirmTransferNotification extends CouponTransferNotification
             ->where('media_name_id', 'coupon_image')
             ->where('media_name_long', 'coupon_image_resized_default')
             ->first();
-        if ($img) {
+        if (empty($img)) {
             $cdnConfig = Config::get('orbit.cdn');
             $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
             return $imgUrl->getImageUrl($img->path, $img->cdn_url);
