@@ -30,18 +30,14 @@ class ConfirmTransferNotification extends CouponTransferNotification
 
     private function getImageUrl($coupon)
     {
-        return 'https://img.juhara.com/64x64.png';
-        // $img = $coupon->media()
-        //     ->select('path', 'cdn_url')
-        //     ->where('object_id', $coupon->promotion_id)
-        //     ->where('object_name', 'coupon_translation')
-        //     ->where('media_name_id', 'coupon_translation_image')
-        //     ->where('media_name_id', 'coupon_translation_image')
-        //     ->where('media_name_long', 'coupon_translation_image_resized_default')
-        //     ->first();
-        // $cdnConfig = Config::get('orbit.cdn');
-        // $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
-        // return $imgUrl->getImageUrl($img->path, $img->cdn_url);
+        $img = $coupon->media()
+            ->select('path', 'cdn_url')
+            ->where('media_name_id', 'coupon_image')
+            ->where('media_name_long', 'coupon_image_resized_default')
+            ->first();
+        $cdnConfig = Config::get('orbit.cdn');
+        $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+        return $imgUrl->getImageUrl($img->path, $img->cdn_url);
     }
 
     /**
