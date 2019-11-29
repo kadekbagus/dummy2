@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Config;
 use Orbit\Controller\API\v1\Pub\Coupon\Transfer\Notifications\CouponTransferNotification;
 use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\LandingPageUrlGenerator;
 use Media;
 
 /**
@@ -48,6 +49,21 @@ class ConfirmTransferNotification extends CouponTransferNotification
     }
 
     /**
+     * Generate coupon detail url.
+     *
+     * @return [type] [description]
+     */
+    private function generateCouponUrl($coupon)
+    {
+        $baseLandingPageUrl = Config::get('orbit.base_landing_page_url', 'https://gotomalls.com');
+        return LandingPageUrlGenerator::create(
+            'coupon',
+            $coupon->promotion_id,
+            $coupon->promotion_name
+        )->generateUrl();
+    }
+
+    /**
      * Get the email data.
      *
      * @return [type] [description]
@@ -62,6 +78,7 @@ class ConfirmTransferNotification extends CouponTransferNotification
             'emailSubject'      => trans('email-transfer.confirm.subject', ['ownerName' => $this->issuedCoupon->user->getFullName()]),
             'body'              => trans('email-transfer.confirm.message', ['ownerName' => $this->issuedCoupon->user->getFullName()]),
             'couponName'        => $this->issuedCoupon->coupon->promotion_name,
+            'couponUrl'         => $this->getCouponUrl($this->issuedCoupon->coupon),
             'couponImage'       => $this->getImageUrl($this->issuedCoupon->coupon),
             'brandName'         => $brandName,
             'acceptUrl'         => $this->generateAcceptUrl(),

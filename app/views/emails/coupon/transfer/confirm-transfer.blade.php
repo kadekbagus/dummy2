@@ -258,9 +258,9 @@
                   <tr>
                     <td width="600" class="mobile" align="center" valign="middle">
                           <div style="display:flex; justify-content:center">
-                              <div><img src="{{ $couponImage }}" width="64"></div>
+                              <div><a href="{{ $couponUrl }}"><img src="{{ $couponImage }}" width="100"></a></div>
                               <div>
-                                  <h4>{{ $couponName}}</h4>
+                                  <h4><a href="{{ $couponUrl }}">{{ $couponName}}</a></h4>
                                   <span>{{ $brandName }}</span>
                               </div>
                           </div>
