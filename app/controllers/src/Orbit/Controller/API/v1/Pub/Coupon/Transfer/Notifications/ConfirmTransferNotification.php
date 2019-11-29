@@ -36,9 +36,14 @@ class ConfirmTransferNotification extends CouponTransferNotification
             ->where('media_name_id', 'coupon_image')
             ->where('media_name_long', 'coupon_image_resized_default')
             ->first();
-        $cdnConfig = Config::get('orbit.cdn');
-        $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
-        return $imgUrl->getImageUrl($img->path, $img->cdn_url);
+        if ($img) {
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            return $imgUrl->getImageUrl($img->path, $img->cdn_url);
+        } else {
+            $baseLandingPageUrl = Config::get('orbit.base_landing_page_url', 'https://gotomalls.com');
+            return $baseLandingPageUrl + '/themes/default/images/campaign-default.png';
+        }
     }
 
     /**
