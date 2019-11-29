@@ -5,6 +5,7 @@ use Orbit\Controller\API\v1\Pub\Coupon\Transfer\Notifications\CouponTransferNoti
 use Orbit\Helper\Util\CdnUrlGenerator;
 use Orbit\Helper\Util\LandingPageUrlGenerator;
 use Media;
+use Str;
 
 /**
  * Notify recipient to accept or decline a coupon transfer.
@@ -57,11 +58,8 @@ class ConfirmTransferNotification extends CouponTransferNotification
      */
     private function getCouponUrl($couponId, $couponName)
     {
-        return (new LandingPageUrlGenerator(
-            'coupon',
-            $couponId,
-            $couponName
-        ))->generateUrl(true);
+        $baseLandingPageUrl = Config::get('orbit.base_landing_page_url', 'https://gotomalls.com');
+        return $baseLandingPageUrl . "/coupon/{$couponId}/" . Str::slug($couponName);
     }
 
     /**
