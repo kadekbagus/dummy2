@@ -31,34 +31,23 @@ class ConfirmTransferNotification extends CouponTransferNotification
         ];
     }
 
-    private function getImage($couponId)
-    {
-        return Media::select('path', 'cdn_url')
-            ->where('object_id', $couponId)
-            ->where('object_name', 'coupon')
-            // ->where('media_name_id', 'coupon_image')
-            // ->where('media_name_long', 'coupon_image_resized_default')
-            ->first();
-    }
-
     private function getImageUrl($couponId)
     {
 
-//         $img = Media::select('path', 'cdn_url')
-//             ->where('object_id', $couponId)
-//             ->where('object_name', 'coupon')
-//             // ->where('media_name_id', 'coupon_image')
-//             // ->where('media_name_long', 'coupon_image_resized_default')
-//             ->first();
-//         if (empty($img)) {
-// //            $cdnConfig = Config::get('orbit.cdn');
-//             //$imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
-//             //return $imgUrl->getImageUrl($img->path, $img->cdn_url);
-//             return $img->path;
-//         } else {
+        $img = Media::select('path', 'cdn_url')
+            ->where('object_id', $couponId)
+            ->where('object_name', 'coupon')
+            ->where('media_name_id', 'coupon_image')
+            ->where('media_name_long', 'coupon_image_resized_default')
+            ->first();
+        if (empty($img)) {
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            return $imgUrl->getImageUrl($img->path, $img->cdn_url);
+        } else {
             $baseLandingPageUrl = Config::get('orbit.base_landing_page_url', 'https://gotomalls.com');
-            return $baseLandingPageUrl + '/themes/default/images/campaign-default.png';
-        // }
+            return $baseLandingPageUrl . '/themes/default/images/campaign-default.png';
+        }
     }
 
     /**
