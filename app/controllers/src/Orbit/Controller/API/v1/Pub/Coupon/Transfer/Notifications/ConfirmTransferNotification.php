@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Config;
 use Orbit\Controller\API\v1\Pub\Coupon\Transfer\Notifications\CouponTransferNotification;
 use Orbit\Helper\Util\CdnUrlGenerator;
+use Media;
 
 /**
  * Notify recipient to accept or decline a coupon transfer.
