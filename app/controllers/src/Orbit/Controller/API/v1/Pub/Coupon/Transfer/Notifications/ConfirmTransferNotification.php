@@ -78,7 +78,6 @@ class ConfirmTransferNotification extends CouponTransferNotification
             'greeting'          => trans('email-transfer.confirm.greeting', ['recipientName' => $this->recipientName]),
             'emailSubject'      => trans('email-transfer.confirm.subject', ['ownerName' => $this->issuedCoupon->user->getFullName()]),
             'body'              => trans('email-transfer.confirm.message', ['ownerName' => $this->issuedCoupon->user->getFullName()]),
-            'coupon' => $coupon,
             'couponName'        => $coupon->promotion_name,
             'couponUrl'         => $this->getCouponUrl($coupon),
             'couponImage'       => $this->getImageUrl($coupon),
