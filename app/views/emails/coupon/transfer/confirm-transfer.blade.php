@@ -258,10 +258,12 @@
                   <tr style="margin-bottom:10px">
                     <td width="600" class="mobile" align="center" valign="middle">
                           <div style="display:flex; justify-content:center">
-                              <div style="margin:10px"><a href="{{ $couponUrl }}"><img src="{{ $couponImage }}" width="100"></a></div>
                               <div style="margin:10px">
-                                  <h3><a href="{{ $couponUrl }}" data-coupon-id="{{ $couponId }}">{{ $couponName}}</a></h3>
-                                  <span>{{ $brandName }}</span>
+                                <a href="{{ $couponUrl }}"><img src="{{ $couponImage }}" width="100"></a>
+                              </div>
+                              <div style="margin:10px">
+                                  <h3><a href="{{ $couponUrl }}">{{ $couponName}}</a></h3>
+                                  <span>{{ $couponId }} - {{ $brandName }}</span>
                               </div>
                           </div>
                     </td>
