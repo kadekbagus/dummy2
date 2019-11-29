@@ -30,12 +30,12 @@ class ConfirmTransferNotification extends CouponTransferNotification
         ];
     }
 
-    private function getImageUrl($coupon)
+    private function getImageUrl($couponId)
     {
         return 'https://img.juhara.com/100x100.png';
 
         // $img = Media::select('path', 'cdn_url')
-        //     ->where('object_id', $coupon->promotion_id)
+        //     ->where('object_id', $couponId)
         //     ->where('object_name', 'coupon')
         //     ->where('media_name_id', 'coupon_image')
         //     ->where('media_name_long', 'coupon_image_resized_default')
@@ -55,12 +55,12 @@ class ConfirmTransferNotification extends CouponTransferNotification
      *
      * @return [type] [description]
      */
-    private function getCouponUrl($coupon)
+    private function getCouponUrl($couponId, $couponName)
     {
         return LandingPageUrlGenerator::create(
             'coupon',
-            $coupon->promotion_id,
-            $coupon->promotion_name
+            $couponId,
+            $couponName
         )->generateUrl(true);
     }
 
@@ -79,8 +79,8 @@ class ConfirmTransferNotification extends CouponTransferNotification
             'emailSubject'      => trans('email-transfer.confirm.subject', ['ownerName' => $this->issuedCoupon->user->getFullName()]),
             'body'              => trans('email-transfer.confirm.message', ['ownerName' => $this->issuedCoupon->user->getFullName()]),
             'couponName'        => $coupon->promotion_name,
-            'couponUrl'         => $this->getCouponUrl($coupon),
-            'couponImage'       => $this->getImageUrl($coupon),
+            'couponUrl'         => $this->getCouponUrl($coupon->promotion_id, $coupon->promotion_name),
+            'couponImage'       => $this->getImageUrl($coupon->promotion_id),
             'brandName'         => $brandName,
             'acceptUrl'         => $this->generateAcceptUrl(),
             'btnAccept'         => trans('email-transfer.confirm.btn_accept'),
