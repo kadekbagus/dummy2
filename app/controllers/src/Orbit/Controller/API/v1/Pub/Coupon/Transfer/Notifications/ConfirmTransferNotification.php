@@ -30,7 +30,7 @@ class ConfirmTransferNotification extends CouponTransferNotification
 
     private function getImageUrl($coupon)
     {
-        return 'http://img.juhara.com/64x64.png';
+        return 'https://img.juhara.com/64x64.png';
         // $img = $coupon->media()
         //     ->select('path', 'cdn_url')
         //     ->where('object_id', $coupon->promotion_id)
