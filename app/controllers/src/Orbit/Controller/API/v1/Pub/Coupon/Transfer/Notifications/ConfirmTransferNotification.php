@@ -56,15 +56,6 @@ class ConfirmTransferNotification extends CouponTransferNotification
 
     private function getBrand($couponId)
     {
-        // $coupon = Coupon::find($couponId);
-        // $baseMerchant = $coupon->linkToTenants()
-        //     ->baseStore()
-        //     ->baseMerchant();
-        // $names = $baseMerchant->select('name')
-        //     ->groupBy('base_merchant_id')
-        //     ->get()
-        //     ->lists('name');
-        // return join($names, ',');
         $names = DB::table('promotion_retailer')
             ->join('base_stores', 'base_stores.base_store_id', '=', 'promotion_retailer.retailer_id')
             ->join('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
@@ -83,7 +74,7 @@ class ConfirmTransferNotification extends CouponTransferNotification
     private function getCouponUrl($couponId, $couponName)
     {
         $baseLandingPageUrl = Config::get('orbit.base_landing_page_url', 'https://gotomalls.com');
-        return $baseLandingPageUrl . "/coupon/{$couponId}/" . Str::slug($couponName);
+        return $baseLandingPageUrl . "/coupons/{$couponId}/" . Str::slug($couponName);
     }
 
     /**
