@@ -5,6 +5,9 @@ use Orbit\Controller\API\v1\Pub\Coupon\Transfer\Notifications\CouponTransferNoti
 use Orbit\Helper\Util\CdnUrlGenerator;
 use Orbit\Helper\Util\LandingPageUrlGenerator;
 use Media;
+use BaseStore;
+use BaseMerchant;
+use Coupon;
 use Str;
 
 /**
@@ -52,7 +55,15 @@ class ConfirmTransferNotification extends CouponTransferNotification
 
     private function getBrand($couponId)
     {
-        return '';
+        $coupon = Coupon::find($couponId);
+        $baseMerchant = $coupon->linkToTenants()
+            ->baseStore()
+            ->baseMerchant();
+        $names = $baseMerchant->select('name')
+            ->groupBy('base_merchant_id')
+            ->get()
+            ->list('name');
+        return join($names, ',');
     }
 
     /**
