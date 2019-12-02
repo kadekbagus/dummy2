@@ -8,6 +8,7 @@ use Media;
 use BaseStore;
 use BaseMerchant;
 use Coupon;
+use DB;
 use Str;
 
 /**
