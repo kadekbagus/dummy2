@@ -176,6 +176,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                                         )
                                         END as cdnPath,
                                     {$prefix}issued_coupons.issued_coupon_code,
+                                    {$prefix}issued_coupons.url,
                                     {$prefix}issued_coupons.transfer_status,
                                     {$prefix}promotions.end_date,
                                     {$prefix}issued_coupons.expired_date as coupon_validity_in_date,
@@ -277,7 +278,9 @@ class CouponWalletListAPIController extends PubControllerAPI
                                 $q->on('timezones.timezone_id', '=', DB::raw("CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.timezone_id ELSE malls.timezone_id END"));
                             })
                             ->where('issued_coupons.user_id', $user->user_id)
-                            ->where('promotion_type', '<>', 'gift_n_coupon')
+                            //due to requirement of coupon transfer (OM-5453),
+                            //we need to display giftn coupon MyWallet too
+                            //->where('promotion_type', '<>', 'gift_n_coupon')
                             ->whereIn("campaign_status.campaign_status_name", array('ongoing', 'expired'));
 
 

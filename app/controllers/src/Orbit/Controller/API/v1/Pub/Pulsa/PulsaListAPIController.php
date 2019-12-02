@@ -116,7 +116,8 @@ class PulsaListAPIController extends PubControllerAPI
                     DB::raw("{$prefix}telco_operators.name as operator_name"),
                     'telco_operators.country_id',
                     'telco_operators.identification_prefix_numbers as operator_prefixes',
-                    DB::raw($telcoLogo)
+                    DB::raw($telcoLogo),
+                    DB::raw("{$prefix}telco_operators.slug as slug")
                 )
                 ->join('countries', 'telco_operators.country_id', '=', 'countries.country_id')
                 ->leftJoin('media', function($join) use ($prefix) {
