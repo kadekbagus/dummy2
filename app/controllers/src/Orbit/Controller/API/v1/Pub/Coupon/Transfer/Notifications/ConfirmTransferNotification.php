@@ -5,6 +5,10 @@ use Orbit\Controller\API\v1\Pub\Coupon\Transfer\Notifications\CouponTransferNoti
 use Orbit\Helper\Util\CdnUrlGenerator;
 use Orbit\Helper\Util\LandingPageUrlGenerator;
 use Media;
+use BaseStore;
+use BaseMerchant;
+use Coupon;
+use DB;
 use Str;
 
 /**
@@ -40,7 +44,7 @@ class ConfirmTransferNotification extends CouponTransferNotification
             ->where('media_name_id', 'coupon_image')
             ->where('media_name_long', 'coupon_image_resized_default')
             ->first();
-        if (empty($img)) {
+        if (!empty($img)) {
             $cdnConfig = Config::get('orbit.cdn');
             $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
             return $imgUrl->getImageUrl($img->path, $img->cdn_url);
@@ -48,6 +52,18 @@ class ConfirmTransferNotification extends CouponTransferNotification
             $baseLandingPageUrl = Config::get('orbit.base_landing_page_url', 'https://gotomalls.com');
             return $baseLandingPageUrl . '/themes/default/images/campaign-default.png';
         }
+    }
+
+    private function getBrand($couponId)
+    {
+        $names = DB::table('promotion_retailer')
+            ->join('base_stores', 'base_stores.base_store_id', '=', 'promotion_retailer.retailer_id')
+            ->join('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
+            ->select('base_merchants.name')
+            ->where('promotion_retailer.promotion_id', $couponId)
+            ->groupBy('base_merchants.base_merchant_id')
+            ->lists('name');
+        return join(',', $names);
     }
 
     /**
@@ -58,7 +74,7 @@ class ConfirmTransferNotification extends CouponTransferNotification
     private function getCouponUrl($couponId, $couponName)
     {
         $baseLandingPageUrl = Config::get('orbit.base_landing_page_url', 'https://gotomalls.com');
-        return $baseLandingPageUrl . "/coupon/{$couponId}/" . Str::slug($couponName);
+        return $baseLandingPageUrl . "/coupons/{$couponId}/" . Str::slug($couponName);
     }
 
     /**
@@ -68,7 +84,6 @@ class ConfirmTransferNotification extends CouponTransferNotification
      */
     public function getEmailData()
     {
-        $brandName = '';
         $coupon = $this->issuedCoupon->coupon;
         return array_merge(parent::getEmailData(), [
             'header'            => trans('email-transfer.header'),
@@ -79,7 +94,7 @@ class ConfirmTransferNotification extends CouponTransferNotification
             'couponName'        => $coupon->promotion_name,
             'couponUrl'         => $this->getCouponUrl($coupon->promotion_id, $coupon->promotion_name),
             'couponImage'       => $this->getImageUrl($coupon->promotion_id),
-            'brandName'         => $brandName,
+            'brandName'         => $this->getBrand($coupon->promotion_id),
             'acceptUrl'         => $this->generateAcceptUrl(),
             'btnAccept'         => trans('email-transfer.confirm.btn_accept'),
             'declineUrl'        => $this->generateDeclineUrl(),

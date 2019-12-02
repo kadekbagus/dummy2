@@ -63,7 +63,7 @@ class TransferRequest extends FormRequest
         // Validate that issued coupon available for transferring.
         Validator::extend('available.for.transfer', function($attribute, $issuedCouponId, $parameters) {
             $couponTransfer = App::make(CouponTransferRepository::class);
-
+            $couponTransfer->setUser($this->user);
             return ! empty($couponTransfer->findIssuedCouponForTransfer($issuedCouponId));
         });
 
