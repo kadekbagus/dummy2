@@ -315,7 +315,7 @@ class UserReportEmailCommand extends Command {
                                         AND m.object_id = {$prefix}coupon_translations.coupon_translation_id
                                         AND {$prefix}coupon_translations.merchant_language_id = {$this->quote($this->validLanguage->language_id)}
                                         LIMIT 1)
-                                    END AS original_media_path
+                                    END AS cdn_url
 									"))
                          ->join('promotions', 'promotions.promotion_id', '=','activities.object_id')
 						 ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
@@ -376,7 +376,7 @@ class UserReportEmailCommand extends Command {
 	                                    FROM orb_media m
 	                                    WHERE m.media_name_long = 'news_translation_image_orig'
 	                                    AND m.object_id = {$prefix}news_translations.news_translation_id)
-	                                END AS original_media_path
+	                                END AS cdn_url
 									"))
 						->join('news', function ($q){
                             $q->on('news.news_id', '=', 'activities.object_id')
@@ -440,7 +440,7 @@ class UserReportEmailCommand extends Command {
 	                                    FROM orb_media m
 	                                    WHERE m.media_name_long = 'news_translation_image_orig'
 	                                    AND m.object_id = {$prefix}news_translations.news_translation_id)
-	                                END AS original_media_path,
+	                                END AS cdn_url,
 	                                {$prefix}news.is_having_reward
 									"))
 			            ->join('news', function ($q){

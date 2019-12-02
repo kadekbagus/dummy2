@@ -106,7 +106,7 @@ class CouponTransferRepository
     public function findIssuedCouponForTransfer($issuedCouponId)
     {
         $this->issuedCoupon = IssuedCoupon::with(['user', 'coupon' => function($couponQuery) {
-                                                $couponQuery->select('promotion_id', 'promotion_name');
+                                                $couponQuery->select('promotion_id','promotion_name');
                                             }])
                                             ->where('user_id', $this->currentUser->user_id)
                                             ->where('status', 'issued')

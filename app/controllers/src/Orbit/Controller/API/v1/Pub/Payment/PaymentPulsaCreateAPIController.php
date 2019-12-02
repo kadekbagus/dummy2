@@ -162,7 +162,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
             $payment_new->phone = $phone;
             $payment_new->country_id = $country_id;
             $payment_new->payment_method = 'midtrans';
-            $payment_new->amount = $quantity * $pulsa->price;
+            $payment_new->amount = $pulsa->price; // forced to 1 quantity
             $payment_new->currency = $currency;
             $payment_new->status = PaymentTransaction::STATUS_STARTING;
             $payment_new->timezone_name = $mallTimeZone;

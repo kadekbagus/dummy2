@@ -318,7 +318,7 @@
                       </p>
                     </td>
                     <td width="200" class="mobile mobile-align-center" align="right" valign="top">
-                      <a href="https://www.gotomalls.com/" class="btn-visit">Visit Gotomalls</a>
+                      <a href="{{ $landing_page_url }}" class="btn-visit">Visit Gotomalls</a>
                     </td>
                   </tr>
                   <tr>
@@ -368,7 +368,7 @@
                           <div class="tagline">
                             Beli pulsa termurah hanya di Gotomalls.com
                           </div>
-                          <a href="" class="btn-buy-pulsa">
+                          <a href="{{ $pulsa_page_url }}" class="btn-buy-pulsa">
                             Beli Pulsa &raquo;
                           </a>
                         </div>
@@ -399,18 +399,20 @@
                           <td width="200">
                             <table>
                               <tr>
+                              @if(!empty($mall_data))
                               @foreach($mall_data as $key => $value)
                                 <td width="64" height="64" style="padding-right: 10px;" valign="middle">
-                                  <a href="{{$value->link_url}}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
-                                    <img src="{{$value->cdn_url}}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
+                                  <a href="{{ $mall_data[$key]['link_url'] }}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
+                                    <img src="{{ $mall_data[$key]['cdn_url'] }}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
                                   </a>
                                 </td>
                               @endforeach
+                              @endif
                               </tr>
                             </table>
                           </td>
                           <td width="100" align="center">
-                            <a href="#" class="greeting-text">See All</a>
+                            <a href="{{ $mall_list_page_url }}" class="greeting-text">See All</a>
                           </td>
                         </tr>
                       </table>
@@ -431,18 +433,20 @@
                           <td width="200">
                             <table>
                               <tr>
+                              @if(!empty($store_data))
                               @foreach($store_data as $key => $value)
                                 <td width="64" height="64" style="padding-right: 10px;" valign="middle">
-                                  <a href="{{$value->link_url}}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
-                                    <img src="{{$value->cdn_url}}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
+                                  <a href="{{ $store_data[$key]['link_url'] }}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
+                                    <img src="{{ $store_data[$key]['cdn_url'] }}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
                                   </a>
                                 </td>
                               @endforeach
+                              @endif
                               </tr>
                             </table>
                           </td>
                           <td width="100" align="center">
-                            <a href="#" class="greeting-text">See All</a>
+                            <a href="{{ $store_list_page_url }}" class="greeting-text">See All</a>
                           </td>
                         </tr>
                       </table>
@@ -477,18 +481,20 @@
                           <td width="200">
                             <table>
                               <tr>
+                              @if(!empty($coupon_data))
                               @foreach($coupon_data as $key => $value)
                                 <td width="64" height="64" style="padding-right: 10px;" valign="middle">
-                                  <a href="{{$value->link_url}}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
-                                    <img src="{{$value->cdn_url}}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
+                                  <a href="{{ $coupon_data[$key]['link_url'] }}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
+                                    <img src="{{ $coupon_data[$key]['cdn_url'] }}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
                                   </a>
                                 </td>
                               @endforeach
+                              @endif
                               </tr>
                             </table>
                           </td>
                           <td width="100" align="center">
-                            <a href="#" class="greeting-text">See All</a>
+                            <a href="{{ $coupon_list_page_url }}" class="greeting-text">See All</a>
                           </td>
                         </tr>
                       </table>
@@ -509,18 +515,20 @@
                           <td width="200">
                             <table>
                               <tr>
+                              @if(!empty($promotion_data))
                               @foreach($promotion_data as $key => $value)
                                 <td width="64" height="64" style="padding-right: 10px;" valign="middle">
-                                  <a href="{{$value->link_url}}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
-                                    <img src="{{$value->cdn_url}}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
+                                  <a href="{{ $promotion_data[$key]['link_url'] }}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
+                                    <img src="{{ $promotion_data[$key]['cdn_url'] }}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
                                   </a>
                                 </td>
                               @endforeach
+                              @endif
                               </tr>
                             </table>
                           </td>
                           <td width="100" align="center">
-                            <a href="#" class="greeting-text">See All</a>
+                            <a href="{{ $promotion_list_page_url }}" class="greeting-text">See All</a>
                           </td>
                         </tr>
                       </table>
@@ -555,18 +563,20 @@
                           <td width="200">
                             <table>
                               <tr>
+                              @if(!empty($event_data))
                               @foreach($event_data as $key => $value)
                                 <td width="64" height="64" style="padding-right: 10px;" valign="middle">
-                                  <a href="{{$value->link_url}}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
-                                    <img src="{{$value->cdn_url}}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
+                                  <a href="{{ $event_data[$key]['link_url'] }}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
+                                    <img src="{{ $event_data[$key]['cdn_url'] }}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
                                   </a>
                                 </td>
                               @endforeach
+                              @endif
                               </tr>
                             </table>
                           </td>
                           <td width="100" align="center">
-                            <a href="#" class="greeting-text">See All</a>
+                            <a href="{{ $event_list_page_url }}" class="greeting-text">See All</a>
                           </td>
                         </tr>
                       </table>
@@ -587,18 +597,20 @@
                           <td width="200">
                             <table>
                               <tr>
-                              @foreach($event_data as $key => $value)
-                                <td width="64" height="64" style="padding-right: 10px;" valign="middle">
-                                  <a href="{{$value->link_url}}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
-                                    <img src="{{$value->cdn_url}}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
-                                  </a>
-                                </td>
-                              @endforeach
+                              @if(!empty($article_data))
+                                @foreach($article_data as $key => $value)
+                                  <td width="64" height="64" style="padding-right: 10px;" valign="middle">
+                                    <a href="{{ $article_data[$key]['link_url'] }}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
+                                      <img src="{{ $article_data[$key]['cdn_url'] }}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
+                                    </a>
+                                  </td>
+                                @endforeach
+                              @endif
                               </tr>
                             </table>
                           </td>
                           <td width="100" align="center">
-                            <a href="#" class="greeting-text">See All</a>
+                            <a href="{{ $article_list_page_url }}" class="greeting-text">See All</a>
                           </td>
                         </tr>
                       </table>

@@ -2,6 +2,10 @@
 
 use Illuminate\Support\Facades\Config;
 use Orbit\Controller\API\v1\Pub\Coupon\Transfer\Notifications\CouponTransferNotification;
+use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\LandingPageUrlGenerator;
+use Media;
+use Str;
 
 /**
  * Notify recipient to accept or decline a coupon transfer.
@@ -27,6 +31,36 @@ class ConfirmTransferNotification extends CouponTransferNotification
         ];
     }
 
+    private function getImageUrl($couponId)
+    {
+
+        $img = Media::select('path', 'cdn_url')
+            ->where('object_id', $couponId)
+            ->where('object_name', 'coupon')
+            ->where('media_name_id', 'coupon_image')
+            ->where('media_name_long', 'coupon_image_resized_default')
+            ->first();
+        if (empty($img)) {
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            return $imgUrl->getImageUrl($img->path, $img->cdn_url);
+        } else {
+            $baseLandingPageUrl = Config::get('orbit.base_landing_page_url', 'https://gotomalls.com');
+            return $baseLandingPageUrl . '/themes/default/images/campaign-default.png';
+        }
+    }
+
+    /**
+     * Generate coupon detail url.
+     *
+     * @return [type] [description]
+     */
+    private function getCouponUrl($couponId, $couponName)
+    {
+        $baseLandingPageUrl = Config::get('orbit.base_landing_page_url', 'https://gotomalls.com');
+        return $baseLandingPageUrl . "/coupon/{$couponId}/" . Str::slug($couponName);
+    }
+
     /**
      * Get the email data.
      *
@@ -34,11 +68,18 @@ class ConfirmTransferNotification extends CouponTransferNotification
      */
     public function getEmailData()
     {
+        $brandName = '';
+        $coupon = $this->issuedCoupon->coupon;
         return array_merge(parent::getEmailData(), [
             'header'            => trans('email-transfer.header'),
             'greeting'          => trans('email-transfer.confirm.greeting', ['recipientName' => $this->recipientName]),
             'emailSubject'      => trans('email-transfer.confirm.subject', ['ownerName' => $this->issuedCoupon->user->getFullName()]),
             'body'              => trans('email-transfer.confirm.message', ['ownerName' => $this->issuedCoupon->user->getFullName()]),
+            'couponId'          => $coupon->promotion_id,
+            'couponName'        => $coupon->promotion_name,
+            'couponUrl'         => $this->getCouponUrl($coupon->promotion_id, $coupon->promotion_name),
+            'couponImage'       => $this->getImageUrl($coupon->promotion_id),
+            'brandName'         => $brandName,
             'acceptUrl'         => $this->generateAcceptUrl(),
             'btnAccept'         => trans('email-transfer.confirm.btn_accept'),
             'declineUrl'        => $this->generateDeclineUrl(),
