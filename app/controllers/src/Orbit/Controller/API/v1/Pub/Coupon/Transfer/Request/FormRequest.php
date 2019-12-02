@@ -25,10 +25,21 @@ class FormRequest implements FormRequestInterface
     protected $roles = ['consumer'];
 
     /**
+     * controller which handle the request (and has auth capability).
+     * @var [type]
+     */
+    protected $controller;
+
+    /**
      * @todo implement bail-on-first-validation-error rule.
      * @var boolean
      */
     protected $bail = false;
+
+    public function __construct($controller = null)
+    {
+        $this->controller = $controller;
+    }
 
     /**
      * Authenticate and authorize request.
@@ -36,16 +47,20 @@ class FormRequest implements FormRequestInterface
      * @param  [type] $controller [description]
      * @return self
      */
-    public function auth($controller)
+    public function auth($controller = null)
     {
-        if (! empty($this->roles)) {
-            $controller->authorize($this->roles);
-        }
-        else {
-            $controller->checkAuth();
+        if (! empty($controller)) {
+            $this->controller = $controller;
         }
 
-        $this->setUser($controller->user);
+        if (! empty($this->roles)) {
+            $this->controller->authorize($this->roles);
+        }
+        else {
+            $this->controller->checkAuth();
+        }
+
+        $this->setUser($this->controller->user);
 
         return $this;
     }

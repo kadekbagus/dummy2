@@ -35,48 +35,6 @@ class ConfirmTransferNotification extends CouponTransferNotification
         ];
     }
 
-    private function getImageUrl($couponId)
-    {
-
-        $img = Media::select('path', 'cdn_url')
-            ->where('object_id', $couponId)
-            ->where('object_name', 'coupon')
-            ->where('media_name_id', 'coupon_image')
-            ->where('media_name_long', 'coupon_image_resized_default')
-            ->first();
-        if (!empty($img)) {
-            $cdnConfig = Config::get('orbit.cdn');
-            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
-            return $imgUrl->getImageUrl($img->path, $img->cdn_url);
-        } else {
-            $baseLandingPageUrl = Config::get('orbit.base_landing_page_url', 'https://gotomalls.com');
-            return $baseLandingPageUrl . '/themes/default/images/campaign-default.png';
-        }
-    }
-
-    private function getBrand($couponId)
-    {
-        $names = DB::table('promotion_retailer')
-            ->join('base_stores', 'base_stores.base_store_id', '=', 'promotion_retailer.retailer_id')
-            ->join('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
-            ->select('base_merchants.name')
-            ->where('promotion_retailer.promotion_id', $couponId)
-            ->groupBy('base_merchants.base_merchant_id')
-            ->lists('name');
-        return join(',', $names);
-    }
-
-    /**
-     * Generate coupon detail url.
-     *
-     * @return [type] [description]
-     */
-    private function getCouponUrl($couponId, $couponName)
-    {
-        $baseLandingPageUrl = Config::get('orbit.base_landing_page_url', 'https://gotomalls.com');
-        return $baseLandingPageUrl . "/coupons/{$couponId}/" . Str::slug($couponName);
-    }
-
     /**
      * Get the email data.
      *
