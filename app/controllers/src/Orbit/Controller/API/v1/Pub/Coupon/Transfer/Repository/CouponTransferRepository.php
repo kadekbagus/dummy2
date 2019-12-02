@@ -97,6 +97,12 @@ class CouponTransferRepository
         return $this->recipient;
     }
 
+    public function setUser($user)
+    {
+        $this->currentUser = $user;
+        return $this;
+    }
+
     /**
      * Find IssuedCoupon that will be transfered.
      *

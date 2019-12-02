@@ -71,7 +71,6 @@ class ConfirmTransferNotification extends CouponTransferNotification
             ->select('base_merchants.name')
             ->where('promotion_retailer.promotion_id', $couponId)
             ->groupBy('base_merchants.base_merchant_id')
-            ->get()
             ->lists('name');
         return join(',', $names);
     }
