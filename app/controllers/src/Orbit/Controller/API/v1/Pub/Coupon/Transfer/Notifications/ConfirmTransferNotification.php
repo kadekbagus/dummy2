@@ -55,15 +55,24 @@ class ConfirmTransferNotification extends CouponTransferNotification
 
     private function getBrand($couponId)
     {
-        $coupon = Coupon::find($couponId);
-        $baseMerchant = $coupon->linkToTenants()
-            ->baseStore()
-            ->baseMerchant();
-        $names = $baseMerchant->select('name')
-            ->groupBy('base_merchant_id')
+        // $coupon = Coupon::find($couponId);
+        // $baseMerchant = $coupon->linkToTenants()
+        //     ->baseStore()
+        //     ->baseMerchant();
+        // $names = $baseMerchant->select('name')
+        //     ->groupBy('base_merchant_id')
+        //     ->get()
+        //     ->lists('name');
+        // return join($names, ',');
+        $names = DB::table('promotion_retailer')
+            ->join('base_stores', 'base_stores.base_store_id', '=', 'promotion_retailer.retailer_id')
+            ->join('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
+            ->select('base_merchants.name')
+            ->where('promotion_retailer.promotion_id', $couponId)
+            ->groupBy('base_merchants.base_merchant_id')
             ->get()
-            ->list('name');
-        return join($names, ',');
+            ->lists('name');
+        return join(',', $names);
     }
 
     /**
