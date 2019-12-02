@@ -97,6 +97,12 @@ class CouponTransferRepository
         return $this->recipient;
     }
 
+    public function setUser($user)
+    {
+        $this->currentUser = $user;
+        return $this;
+    }
+
     /**
      * Find IssuedCoupon that will be transfered.
      *
@@ -106,11 +112,7 @@ class CouponTransferRepository
     public function findIssuedCouponForTransfer($issuedCouponId)
     {
         $this->issuedCoupon = IssuedCoupon::with(['user', 'coupon' => function($couponQuery) {
-                                                $couponQuery->select(
-                                                    'promotion_id',
-                                                    'promotion_name',
-                                                    'image'
-                                                );
+                                                $couponQuery->select('promotion_id','promotion_name');
                                             }])
                                             ->where('user_id', $this->currentUser->user_id)
                                             ->where('status', 'issued')
