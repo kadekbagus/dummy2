@@ -50,6 +50,11 @@ class ConfirmTransferNotification extends CouponTransferNotification
         }
     }
 
+    private function getBrand($couponId)
+    {
+        return '';
+    }
+
     /**
      * Generate coupon detail url.
      *
@@ -68,7 +73,6 @@ class ConfirmTransferNotification extends CouponTransferNotification
      */
     public function getEmailData()
     {
-        $brandName = '';
         $coupon = $this->issuedCoupon->coupon;
         return array_merge(parent::getEmailData(), [
             'header'            => trans('email-transfer.header'),
@@ -79,7 +83,7 @@ class ConfirmTransferNotification extends CouponTransferNotification
             'couponName'        => $coupon->promotion_name,
             'couponUrl'         => $this->getCouponUrl($coupon->promotion_id, $coupon->promotion_name),
             'couponImage'       => $this->getImageUrl($coupon->promotion_id),
-            'brandName'         => $brandName,
+            'brandName'         => $this->getBrand($coupon->promotion_id),
             'acceptUrl'         => $this->generateAcceptUrl(),
             'btnAccept'         => trans('email-transfer.confirm.btn_accept'),
             'declineUrl'        => $this->generateDeclineUrl(),
