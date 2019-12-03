@@ -129,6 +129,7 @@ return array(
 		//mall API specific service providers
         Orbit\Controller\API\v1\Pub\PromoCode\Repositories\ServiceProviders\PromoCodeServiceProvider::class,
         Orbit\Controller\API\v1\Pub\Coupon\Transfer\CouponTransferServiceProvider::class,
+        Orbit\Controller\API\v1\Pub\Coupon\Detail\CouponDetailServiceProvider::class,
     ),
 
     /*
