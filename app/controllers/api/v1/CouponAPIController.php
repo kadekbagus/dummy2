@@ -2922,14 +2922,6 @@ class CouponAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.coupon.getsearchcoupon.before.authz', array($this, $user));
 
-/*
-            if (! ACL::create($user)->isAllowed('view_coupon')) {
-                Event::fire('orbit.coupon.getsearchcoupon.authz.notallowed', array($this, $user));
-                $viewCouponLang = Lang::get('validation.orbit.actionlist.view_coupon');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewCouponLang));
-                ACL::throwAccessForbidden($message);
-            }
-*/
             // @Todo: Use ACL authentication instead
             $role = $user->role;
             $validRoles = $this->couponViewRoles;
