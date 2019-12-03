@@ -311,10 +311,6 @@ class CouponDetailAPIController extends PubControllerAPI
                 throw new OrbitCustomException('Coupon that you specify is not found', Coupon::NOT_FOUND_ERROR_CODE, NULL);
             }
 
-            $couponPaymentHelper = App::make(PaymentRepository::class);
-            $coupon = $couponPaymentHelper->addPaymentInfo($coupon, $user);
-            $coupon = $couponTimezoneHelper->addTimezoneInfo($coupon);
-
             // Set currency and payment method information
             // so frontend can load proper payment gateway UI.
             // TODO: Set currency value for all paid coupon in DB (might need data migration)
@@ -344,7 +340,6 @@ class CouponDetailAPIController extends PubControllerAPI
                 $coupon->max_quantity_per_purchase = Config::get('orbit.transaction.max_quantity_per_purchase', 5);
             }
 
-            $coupon->category_ids = $this->getCouponCategory($couponId);
             // Only campaign having status ongoing and is_started true can going to detail page
             if (! in_array($coupon->campaign_status, ['ongoing', 'expired']) || ($coupon->campaign_status == 'ongoing' && $coupon->is_started == 'false')) {
                 $mallName = 'gtm';
@@ -358,6 +353,11 @@ class CouponDetailAPIController extends PubControllerAPI
                 $customData->mall_name = $mallName;
                 throw new OrbitCustomException('Coupon is inactive', Coupon::INACTIVE_ERROR_CODE, $customData);
             }
+
+            $coupon->category_ids = $this->getCouponCategory($couponId);
+            $couponPaymentHelper = App::make(PaymentRepository::class);
+            $coupon = $couponPaymentHelper->addPaymentInfo($coupon, $user);
+            $coupon = $couponTimezoneHelper->addTimezoneInfo($coupon);
 
             // Config page_views
             $configPageViewSource = Config::get('orbit.page_view.source', FALSE);
