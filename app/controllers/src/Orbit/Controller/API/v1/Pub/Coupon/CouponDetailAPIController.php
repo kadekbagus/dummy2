@@ -189,14 +189,10 @@ class CouponDetailAPIController extends PubControllerAPI
                             "),
                             'coupon_sepulsa.terms_and_conditions',
                             'issued_coupons.url as redeem_url',
-<<<<<<< HEAD
                             'issued_coupons.user_id',
                             'issued_coupons.original_user_id',
                             'issued_coupons.transfer_status',
-                            DB::raw('payment.payment_midtrans_info'),
-=======
                             //DB::raw('payment.payment_midtrans_info'),
->>>>>>> hotfix-4.20.2-improve-coupon-detail-query
                             DB::raw("m.country as coupon_country"),
                             'promotions.promotion_type',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
@@ -451,7 +447,6 @@ class CouponDetailAPIController extends PubControllerAPI
                 }
             }
 
-<<<<<<< HEAD
             // Determine if issued coupon was transfered or not
             $coupon->is_transferred = false;
             if (! empty($coupon->original_user_id) && $coupon->original_user_id === $user->user_id
@@ -459,53 +454,8 @@ class CouponDetailAPIController extends PubControllerAPI
                 $coupon->is_transferred = true;
             }
 
-            $availableForRedeem = $coupon->available;
-            // get total redeemed
-            $totalRedeemed = IssuedCoupon::where('status', '=', 'redeemed')
-                                        ->where('promotion_id', $coupon->promotion_id)
-                                        ->count();
-            $coupon->total_redeemed = $totalRedeemed;
-
-            if ($coupon->maximum_redeem > 0) {
-                $availableForRedeem = $coupon->maximum_redeem - $totalRedeemed;
-                if ($totalRedeemed >= $coupon->maximum_redeem) {
-                    $availableForRedeem = 0;
-                }
-            }
-            $coupon->available_for_redeem = $availableForRedeem;
-
-            // unique coupon
-            $coupon->get_unique_coupon = 'true';
-            if ($coupon->is_unique_redeem === 'Y' && $role != 'Guest') {
-                $checkIssued = IssuedCoupon::where('promotion_id', $coupon->promotion_id)
-                                           ->where(function($query) use ($user) {
-                                                $query->where('user_id', $user->user_id)
-                                                      ->orWhere('original_user_id', $user->user_id);
-                                           })
-                                           ->whereNull('transfer_status')
-                                           ->whereNotIn('status', ['issued', 'deleted'])
-                                           ->first();
-
-                if (is_object($checkIssued)) {
-                    $coupon->get_unique_coupon = 'false';
-                }
-            }
-
-
-            // get total issued
-            $totalIssued = IssuedCoupon::whereIn('status', ['issued', 'redeemed'])
-                                        ->where('promotion_id', $coupon->promotion_id)
-                                        ->count();
-            $coupon->total_issued = $totalIssued;
-
-            // set maximum redeemed to maximum issued when empty
-            if ($coupon->maximum_redeem === '0') {
-                $coupon->maximum_redeem = $coupon->maximum_issued_coupon;
-            }
-=======
             $issuedCouponHelper = App::make(IssuedCouponRepository::class);
             $coupon = $issuedCouponHelper->addIssuedCouponData($coupon, $user);
->>>>>>> hotfix-4.20.2-improve-coupon-detail-query
 
             // check payment method / wallet operator
             $imageWallet = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path)";

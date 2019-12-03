@@ -69,9 +69,13 @@ class IssuedCouponRepository
     private function userHasUniqueCoupon($userId, $couponId, $role)
     {
         $checkIssued = IssuedCoupon::where('promotion_id', $couponId)
-                                    ->where('user_id', $userId)
-                                    ->whereNotIn('status', ['issued', 'deleted'])
-                                    ->first();
+                                    ->where(function($query) use ($user) {
+                                        $query->where('user_id', $user->user_id)
+                                              ->orWhere('original_user_id', $user->user_id);
+                                   })
+                                   ->whereNull('transfer_status')
+                                   ->whereNotIn('status', ['issued', 'deleted'])
+                                   ->first();
 
         return ! empty($checkIssued);
     }
