@@ -1,7 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Coupon\Detail\Repository;
 
-use Carbon\Carbon;
-use IssuedCoupon;
+use DB;
 
 /**
  * class that add tenant info such as mall id or country to
@@ -32,7 +31,7 @@ class TenantRepository
 
     }
 
-    public function addTenantInfo($coupon, $user)
+    public function addTenantInfo($coupon)
     {
         $tenantInfo = $this->getCountryAndMallId($coupon->promotion_id);
         if (empty($tenantInfo)) {

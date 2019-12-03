@@ -330,10 +330,11 @@ class CouponDetailAPIController extends PubControllerAPI
 
             $coupon->category_ids = $this->getCouponCategory($couponId);
             $couponPaymentHelper = App::make(PaymentRepository::class);
+            $couponTimezoneHelper = App::make(TenantRepository::class);
             $couponTenantHelper = App::make(TenantRepository::class);
             $coupon = $couponPaymentHelper->addPaymentInfo($coupon, $user);
             $coupon = $couponTimezoneHelper->addTimezoneInfo($coupon);
-            $coupon = $couponTimezoneHelper->addTenantInfo($coupon);
+            $coupon = $couponTenantHelper->addTenantInfo($coupon);
 
             // Config page_views
             $configPageViewSource = Config::get('orbit.page_view.source', FALSE);
