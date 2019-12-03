@@ -124,6 +124,7 @@ class CouponAddToWalletAPIController extends PubControllerAPI
                 $checkIssued = IssuedCoupon::where('promotion_id', $coupon->promotion_id)
                                            ->where('user_id', $user->user_id)
                                            ->where('status', '!=', 'deleted')
+                                           ->whereNull('transfer_status')
                                            ->first();
 
                 if (is_object($checkIssued)) {

@@ -85,9 +85,9 @@ class CouponDetailAPIController extends PubControllerAPI
                 $getCouponStatusSql = " 'false' as get_coupon_status ";
                 $issuedCouponId = " NULL as issued_coupon_id ";
             } else {
-                $getCouponStatusSql = " CASE WHEN {$prefix}issued_coupons.user_id is NULL
-                                            THEN 'false'
-                                            ELSE 'true'
+                $getCouponStatusSql = " CASE WHEN {$prefix}issued_coupons.user_id IS NOT NULL OR {$prefix}issued_coupons.original_user_id IS NOT NULL
+                                            THEN 'true'
+                                            ELSE 'false'
                                         END as get_coupon_status ";
                 $issuedCouponId = " CASE WHEN {$prefix}issued_coupons.user_id = " . $this->quote($user->user_id) . "
                                             THEN {$prefix}issued_coupons.issued_coupon_id
@@ -183,6 +183,9 @@ class CouponDetailAPIController extends PubControllerAPI
                             "),
                             'coupon_sepulsa.terms_and_conditions',
                             'issued_coupons.url as redeem_url',
+                            'issued_coupons.user_id',
+                            'issued_coupons.original_user_id',
+                            'issued_coupons.transfer_status',
                             DB::raw('payment.payment_midtrans_info'),
                             DB::raw("m.country as coupon_country"),
                             'promotions.promotion_type',
@@ -245,6 +248,7 @@ class CouponDetailAPIController extends PubControllerAPI
                                 WHERE
                                     {$prefix}issued_coupons.promotion_id = '{$couponId}' AND
                                     {$prefix}issued_coupons.user_id = '{$user->user_id}' AND
+                                    {$prefix}issued_coupons.transfer_status IS NULL AND
                                     {$prefix}issued_coupons.status IN ('issued', 'redeemed', 'reserved')
                                 ) as used_coupons_count
                                 ")
@@ -263,7 +267,7 @@ class CouponDetailAPIController extends PubControllerAPI
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                         ->leftJoin('issued_coupons', function ($q) use ($user, $prefix, $forRedeem, $selectedIssuedCouponId) {
                                 $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                                $q->on('issued_coupons.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
+                                $q->on(DB::raw("({$prefix}issued_coupons.user_id = {$this->quote($user->user_id)} OR {$prefix}issued_coupons.original_user_id"), '=', DB::raw("{$this->quote($user->user_id)})"));
 
                                 if ($forRedeem === 'Y' && ! empty($selectedIssuedCouponId)) {
                                     $q->on(DB::raw("({$prefix}issued_coupons.status = 'issued' OR {$prefix}issued_coupons.status"), '=', DB::Raw("'redeemed')"));
@@ -442,17 +446,11 @@ class CouponDetailAPIController extends PubControllerAPI
                 }
             }
 
-			// unique coupon
-            $coupon->get_unique_coupon = 'true';
-            if ($coupon->is_unique_redeem === 'Y' && $role != 'Guest') {
-                $checkIssued = IssuedCoupon::where('promotion_id', $coupon->promotion_id)
-                                           ->where('user_id', $user->user_id)
-                                           ->whereNotIn('status', ['issued', 'deleted'])
-                                           ->first();
-
-                if (is_object($checkIssued)) {
-                    $coupon->get_unique_coupon = 'false';
-                }
+            // Determine if issued coupon was transfered or not
+            $coupon->is_transferred = false;
+            if (! empty($coupon->original_user_id) && $coupon->original_user_id === $user->user_id
+                && $coupon->transfer_status === 'complete') {
+                $coupon->is_transferred = true;
             }
 
             $availableForRedeem = $coupon->available;
@@ -469,6 +467,24 @@ class CouponDetailAPIController extends PubControllerAPI
                 }
             }
             $coupon->available_for_redeem = $availableForRedeem;
+
+            // unique coupon
+            $coupon->get_unique_coupon = 'true';
+            if ($coupon->is_unique_redeem === 'Y' && $role != 'Guest') {
+                $checkIssued = IssuedCoupon::where('promotion_id', $coupon->promotion_id)
+                                           ->where(function($query) use ($user) {
+                                                $query->where('user_id', $user->user_id)
+                                                      ->orWhere('original_user_id', $user->user_id);
+                                           })
+                                           ->whereNull('transfer_status')
+                                           ->whereNotIn('status', ['issued', 'deleted'])
+                                           ->first();
+
+                if (is_object($checkIssued)) {
+                    $coupon->get_unique_coupon = 'false';
+                }
+            }
+
 
             // get total issued
             $totalIssued = IssuedCoupon::whereIn('status', ['issued', 'redeemed'])
