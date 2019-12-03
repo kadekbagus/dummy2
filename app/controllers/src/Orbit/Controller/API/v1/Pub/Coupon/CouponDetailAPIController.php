@@ -328,14 +328,14 @@ class CouponDetailAPIController extends PubControllerAPI
             }
 
             $coupon = $coupon->first();
-            $couponPaymentHelper = App::make(PaymentRepository::class);
-            $coupon = $couponPaymentHelper->addPaymentInfo($coupon, $user);
-            $coupon = $couponTimezoneHelper->addTimezoneInfo($coupon);
-
             $message = 'Request Ok';
             if (! is_object($coupon)) {
                 throw new OrbitCustomException('Coupon that you specify is not found', Coupon::NOT_FOUND_ERROR_CODE, NULL);
             }
+
+            $couponPaymentHelper = App::make(PaymentRepository::class);
+            $coupon = $couponPaymentHelper->addPaymentInfo($coupon, $user);
+            $coupon = $couponTimezoneHelper->addTimezoneInfo($coupon);
 
             // Set currency and payment method information
             // so frontend can load proper payment gateway UI.
