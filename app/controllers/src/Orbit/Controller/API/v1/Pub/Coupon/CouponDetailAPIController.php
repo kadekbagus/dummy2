@@ -207,15 +207,7 @@ class CouponDetailAPIController extends PubControllerAPI
                                             ELSE (CASE WHEN {$prefix}promotions.end_date < ('$currentTenantTime')
                                     THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status,
                                     CASE WHEN {$prefix}issued_coupons.expired_date < ('$currentTenantTime')
-                                    THEN 'true' ELSE 'false' END as is_exceeding_validity_date,
-                                    CASE WHEN (SELECT count(opr.retailer_id)
-                                                FROM {$prefix}promotion_retailer opr
-                                                    LEFT JOIN {$prefix}merchants om ON om.merchant_id = opr.retailer_id
-                                                    LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
-                                                    LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                                WHERE opr.promotion_id = {$prefix}promotions.promotion_id
-                                                AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
-                                    THEN 'true' ELSE 'false' END AS is_started
+                                    THEN 'true' ELSE 'false' END as is_exceeding_validity_date
                             "),
                             // query for getting timezone for countdown on the frontend
                             /*
