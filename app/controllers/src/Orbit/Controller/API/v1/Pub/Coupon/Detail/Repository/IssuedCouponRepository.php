@@ -58,10 +58,11 @@ class IssuedCouponRepository
             ->where('promotion_id', $couponId)
             ->where('status', 'issued')
             ->where('expired_date', '>', Carbon::now())
-            ->where(function($q){
-                $q->whereNull('transfer_status')
-                    ->orWhere('transfer_status', 'complete');
-            })->get();
+            // ->where(function($q){
+            //     $q->whereNull('transfer_status')
+            //         ->orWhere('transfer_status', 'complete');
+            // })
+            ->get();
         return ! empty($issuedCoupons);
     }
 
