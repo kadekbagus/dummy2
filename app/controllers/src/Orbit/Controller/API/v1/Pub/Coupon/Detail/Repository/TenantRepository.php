@@ -15,7 +15,7 @@ class TenantRepository
         $prefix = DB::getTablePrefix();
         return DB::select("
             SELECT
-                m.country
+                m.country,
                 CASE
                     WHEN m.object_type = 'tenant'
                 THEN
