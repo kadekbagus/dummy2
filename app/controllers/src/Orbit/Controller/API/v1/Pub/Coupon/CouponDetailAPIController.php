@@ -192,7 +192,6 @@ class CouponDetailAPIController extends PubControllerAPI
                             'issued_coupons.user_id',
                             'issued_coupons.original_user_id',
                             'issued_coupons.transfer_status',
-                            //DB::raw('payment.payment_midtrans_info'),
                             DB::raw("m.country as coupon_country"),
                             'promotions.promotion_type',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
@@ -200,8 +199,6 @@ class CouponDetailAPIController extends PubControllerAPI
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
                             DB::Raw($issuedCouponId),
-                            //DB::raw('payment.payment_transaction_id as transaction_id'),
-                            //DB::raw('payment.status as payment_status'),
 
                             // query for get status active based on timezone
                             DB::raw("
@@ -220,21 +217,6 @@ class CouponDetailAPIController extends PubControllerAPI
                                                 AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
                                     THEN 'true' ELSE 'false' END AS is_started
                             "),
-                            // query for getting timezone for countdown on the frontend
-                            /*
-                            DB::raw("
-                                (SELECT
-                                    ot.timezone_name
-                                FROM {$prefix}promotion_retailer opt
-                                    LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
-                                    LEFT JOIN {$prefix}merchants oms ON oms.merchant_id = om.parent_id
-                                    LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                WHERE opt.promotion_id = {$prefix}promotions.promotion_id
-                                ORDER BY CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) ASC
-                                LIMIT 1
-                                ) as timezone
-                            "),
-                            */
                             DB::raw("
                                 CASE WHEN reserved_issued_coupons.status = 'reserved'
                                     THEN 'true'
@@ -332,14 +314,14 @@ class CouponDetailAPIController extends PubControllerAPI
             }
 
             $coupon = $coupon->first();
-            $couponPaymentHelper = App::make(PaymentRepository::class);
-            $coupon = $couponPaymentHelper->addPaymentInfo($coupon, $user);
-            $coupon = $couponTimezoneHelper->addTimezoneInfo($coupon);
-
             $message = 'Request Ok';
             if (! is_object($coupon)) {
                 throw new OrbitCustomException('Coupon that you specify is not found', Coupon::NOT_FOUND_ERROR_CODE, NULL);
             }
+
+            $couponPaymentHelper = App::make(PaymentRepository::class);
+            $coupon = $couponPaymentHelper->addPaymentInfo($coupon, $user);
+            $coupon = $couponTimezoneHelper->addTimezoneInfo($coupon);
 
             // Set currency and payment method information
             // so frontend can load proper payment gateway UI.
