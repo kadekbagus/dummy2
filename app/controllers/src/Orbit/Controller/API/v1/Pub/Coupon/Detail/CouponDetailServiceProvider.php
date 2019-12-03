@@ -3,6 +3,7 @@
 use Illuminate\Support\ServiceProvider;
 use Orbit\Controller\API\v1\Pub\Coupon\Detail\Repository\IssuedCouponRepository;
 use Orbit\Controller\API\v1\Pub\Coupon\Detail\Repository\PaymentRepository;
+use Orbit\Controller\API\v1\Pub\Coupon\Detail\Repository\TimezoneRepository;
 use Orbit\Controller\API\v1\Pub\Coupon\Detail\Repository\TenantRepository;
 
 /**
@@ -19,6 +20,10 @@ class CouponDetailServiceProvider extends ServiceProvider
 
         $this->app->singleton(PaymentRepository::class, function($app) {
             return new PaymentRepository();
+        });
+
+        $this->app->singleton(TimezoneRepository::class, function($app) {
+            return new TimezoneRepository();
         });
 
         $this->app->singleton(TenantRepository::class, function($app) {

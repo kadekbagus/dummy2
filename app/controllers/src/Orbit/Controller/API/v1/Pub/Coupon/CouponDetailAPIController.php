@@ -31,6 +31,7 @@ use Orbit\Helper\MongoDB\Client as MongoClient;
 use Orbit\Controller\API\v1\Pub\Coupon\Detail\Repository\IssuedCouponRepository;
 use Orbit\Controller\API\v1\Pub\Coupon\Detail\Repository\PaymentRepository;
 use Orbit\Controller\API\v1\Pub\Coupon\Detail\Repository\TimezoneRepository;
+use Orbit\Controller\API\v1\Pub\Coupon\Detail\Repository\TenantRepository;
 use App;
 
 class CouponDetailAPIController extends PubControllerAPI
@@ -189,16 +190,13 @@ class CouponDetailAPIController extends PubControllerAPI
                             "),
                             'coupon_sepulsa.terms_and_conditions',
                             'issued_coupons.url as redeem_url',
-                            //DB::raw('payment.payment_midtrans_info'),
-                            DB::raw("m.country as coupon_country"),
+                            //DB::raw("m.country as coupon_country"),
                             'promotions.promotion_type',
-                            DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
+                            //DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
 
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
                             DB::Raw($issuedCouponId),
-                            //DB::raw('payment.payment_transaction_id as transaction_id'),
-                            //DB::raw('payment.status as payment_status'),
 
                             // query for get status active based on timezone
                             DB::raw("
@@ -209,21 +207,6 @@ class CouponDetailAPIController extends PubControllerAPI
                                     CASE WHEN {$prefix}issued_coupons.expired_date < ('$currentTenantTime')
                                     THEN 'true' ELSE 'false' END as is_exceeding_validity_date
                             "),
-                            // query for getting timezone for countdown on the frontend
-                            /*
-                            DB::raw("
-                                (SELECT
-                                    ot.timezone_name
-                                FROM {$prefix}promotion_retailer opt
-                                    LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
-                                    LEFT JOIN {$prefix}merchants oms ON oms.merchant_id = om.parent_id
-                                    LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                WHERE opt.promotion_id = {$prefix}promotions.promotion_id
-                                ORDER BY CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) ASC
-                                LIMIT 1
-                                ) as timezone
-                            "),
-                            */
                             DB::raw("
                                 CASE WHEN reserved_issued_coupons.status = 'reserved'
                                     THEN 'true'
@@ -270,31 +253,8 @@ class CouponDetailAPIController extends PubControllerAPI
                                 $q->on(DB::raw('reserved_issued_coupons.status'), '=', DB::Raw("'reserved'"));
                         })
 
-                        // get the last user payment in this coupon
-                        /*
-                        ->leftJoin(
-                                    DB::raw("
-                                        (
-                                            SELECT
-                                                object_id,
-                                                pt.payment_transaction_id,
-                                                payment_midtrans_info,
-                                                pt.created_at,
-                                                status
-                                            FROM {$prefix}payment_transactions as pt
-                                            INNER JOIN {$prefix}payment_transaction_details ptd ON ptd.payment_transaction_id = pt.payment_transaction_id
-                                            LEFT JOIN {$prefix}payment_midtrans pm ON pm.payment_transaction_id = pt.payment_transaction_id
-                                            WHERE 1=1
-                                            AND pt.user_id = ".$this->quote($user->user_id)."
-                                            AND ptd.object_id= ".$this->quote($couponId)."
-                                            AND ptd.object_type = 'coupon'
-                                            ORDER BY pt.created_at DESC
-                                            LIMIT 1
-                                        ) as payment")
-                                    , DB::raw('payment.object_id'), '=', 'promotions.promotion_id')
-                        */
-                        ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                        ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', 'promotion_retailer.retailer_id')
+                        //->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                        //->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', 'promotion_retailer.retailer_id')
                         ->leftJoin('coupon_sepulsa', 'coupon_sepulsa.promotion_id', '=', 'promotions.promotion_id')
                         ->with(['keywords' => function ($q) {
                                 $q->addSelect('keyword', 'object_id');
@@ -370,8 +330,10 @@ class CouponDetailAPIController extends PubControllerAPI
 
             $coupon->category_ids = $this->getCouponCategory($couponId);
             $couponPaymentHelper = App::make(PaymentRepository::class);
+            $couponTenantHelper = App::make(TenantRepository::class);
             $coupon = $couponPaymentHelper->addPaymentInfo($coupon, $user);
             $coupon = $couponTimezoneHelper->addTimezoneInfo($coupon);
+            $coupon = $couponTimezoneHelper->addTenantInfo($coupon);
 
             // Config page_views
             $configPageViewSource = Config::get('orbit.page_view.source', FALSE);
