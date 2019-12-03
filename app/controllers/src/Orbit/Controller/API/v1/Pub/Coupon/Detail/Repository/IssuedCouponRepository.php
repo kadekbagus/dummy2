@@ -66,7 +66,7 @@ class IssuedCouponRepository
         return ! empty($issuedCoupons);
     }
 
-    private function userHasUniqueCoupon($userId, $couponId, $role)
+    private function userHasUniqueCoupon($userId, $couponId)
     {
         $checkIssued = IssuedCoupon::where('promotion_id', $couponId)
                                     ->where('user_id', $userId)
