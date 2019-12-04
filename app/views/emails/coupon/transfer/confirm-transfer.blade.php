@@ -255,17 +255,21 @@
                       </p>
                     </td>
                   </tr>
-                  <tr style="margin-bottom:10px">
-                    <td width="600" class="mobile" align="center" valign="middle">
-                          <div style="display:flex; justify-content:center">
-                              <div style="margin:10px">
-                                <a href="{{ $couponUrl }}"><img src="{{ $couponImage }}" width="100"></a>
-                              </div>
-                              <div style="margin:10px">
-                                  <h3><a href="{{ $couponUrl }}">{{ $couponName}}</a></h3>
-                                  <span>{{ $brandName }}</span>
-                              </div>
-                          </div>
+                  <tr>
+                    <td height="20" align="center">&nbsp;</td>
+                  </tr>
+                  <tr>
+                    <td width="600" class="mobile center" valign="middle" style="text-align: center;">
+                      <a href="{{ $couponUrl }}" style="display: block;">
+                        <span style="display: inline-block;width:80px;height:80px;border:1px solid #ddd;">
+                          <img src="{{ $couponImage }}" style="vertical-align:middle;width:100%;height:100%;object-fit: contain;">
+                        </span>
+
+                        <span style="display: inline-block;text-align:left;color:#222;margin-left:10px;vertical-align: middle;">
+                          <h3 style="margin-bottom: 7px;margin-top: 0;font-size:16px;">{{ $couponName }}</h3>
+                          <p style="margin-top: 5px;margin-bottom:0;font-size:15px;">{{ $brandName }}</p>
+                        </span>
+                      </a>
                     </td>
                   </tr>
                   <tr>
