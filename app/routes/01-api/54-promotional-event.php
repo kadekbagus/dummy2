@@ -36,6 +36,14 @@ Route::get('/api/v1/promotional-event/search', function()
 });
 
 /**
+ * detail promotional-event
+ */
+Route::get('/api/v1/promotional-event/detail', function()
+{
+    return PromotionalEventAPIController::create()->getDetailPromotionalEvent();
+});
+
+/**
  * List/Search promotional-event by retailer
  */
 Route::get('/api/v1/promotional-event/by-retailer/search', function()

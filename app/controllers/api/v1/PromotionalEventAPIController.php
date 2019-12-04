@@ -1498,14 +1498,6 @@ class PromotionalEventAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.promotionalevent.getsearchpromotionalevent.before.authz', array($this, $user));
 
-/*
-            if (! ACL::create($user)->isAllowed('view_promotionalevent')) {
-                Event::fire('orbit.promotionalevent.getsearchpromotionalevent.authz.notallowed', array($this, $user));
-                $viewPromotionalEventLang = Lang::get('validation.orbit.actionlist.view_promotionalevent');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewPromotionalEventLang));
-                ACL::throwAccessForbidden($message);
-            }
-*/
             // @Todo: Use ACL authentication instead
             $role = $user->role;
             $validRoles = $this->promotionalEventViewRoles;
@@ -1577,13 +1569,23 @@ class PromotionalEventAPIController extends ControllerAPI
             }
 
             $promotionalevent = News::allowedForPMPUser($user, $object_type[0])
-                        ->select('news.*', 'news.news_id as campaign_id', 'news.object_type as campaign_type', 'campaign_status.order', 'news_translations.news_name as display_name', DB::raw("{$prefix}media.path as image_path"),
-                            DB::raw("COUNT(DISTINCT {$prefix}news_merchant.news_merchant_id) as total_location"),
-                            DB::raw("(select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$prefix}merchants.name) ) separator ', ')
-                                from {$prefix}news_merchant
-                                    left join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}news_merchant.merchant_id
-                                    left join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
-                                    where {$prefix}news_merchant.news_id = {$prefix}news.news_id) as campaign_location_names"),
+                        ->select('news.news_id',
+                                 'news.news_name',
+                                 'news.begin_date',
+                                 'news.end_date',
+                                 'news.updated_at',
+                                 'news.news_id as campaign_id',
+                                 'news.object_type as campaign_type',
+                                 'news.is_having_reward',
+                                 'campaign_status.order',
+                                 'news_translations.news_name as display_name',
+                                 DB::raw("{$prefix}media.path as image_path"),
+                            // DB::raw("COUNT(DISTINCT {$prefix}news_merchant.news_merchant_id) as total_location"),
+                            // DB::raw("(select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$prefix}merchants.name) ) separator ', ')
+                            //     from {$prefix}news_merchant
+                            //         left join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}news_merchant.merchant_id
+                            //         left join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
+                            //         where {$prefix}news_merchant.news_id = {$prefix}news.news_id) as campaign_location_names"),
                             DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
                                     LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                     WHERE om.merchant_id = {$prefix}news.mall_id)
@@ -1593,7 +1595,7 @@ class PromotionalEventAPIController extends ControllerAPI
                                     WHERE om.merchant_id = {$prefix}news.mall_id)
                                 THEN 5 ELSE {$prefix}campaign_status.order END) END  AS campaign_status_order")
                         )
-                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                        //->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
@@ -1740,48 +1742,48 @@ class PromotionalEventAPIController extends ControllerAPI
             });
 
             // Add new relation based on request
-            OrbitInput::get('with', function ($with) use ($promotionalevent, $object_type) {
-                $with = (array) $with;
+            // OrbitInput::get('with', function ($with) use ($promotionalevent, $object_type) {
+            //     $with = (array) $with;
 
-                foreach ($with as $relation) {
-                    if ($relation === 'tenants') {
-                        $promotionalevent->with('tenants');
-                    } elseif ($relation === 'tenants.mall') {
-                        $promotionalevent->with('tenants.mall');
-                    } elseif ($relation === 'campaignLocations') {
-                        $promotionalevent->with('campaignLocations');
-                    } elseif ($relation === 'campaignLocations.mall') {
-                        $promotionalevent->with('campaignLocations.mall');
-                    } elseif ($relation === 'translations') {
-                        $promotionalevent->with('translations');
-                    } elseif ($relation === 'translations.media') {
-                        $promotionalevent->with('translations.media');
-                    } elseif ($relation === 'genders') {
-                        $promotionalevent->with('genders');
-                    } elseif ($relation === 'ages') {
-                        $promotionalevent->with('ages');
-                    } elseif ($relation === 'keywords') {
-                        $promotionalevent->with(['keywords' => function($query) {
-                            $query->groupBy('keyword');
-                        }]);
-                    } elseif ($relation === 'product_tags') {
-                        $promotionalevent->with(['product_tags' => function($query) {
-                            $query->groupBy('product_tag');
-                        }]);
-                    } elseif ($relation === 'campaignObjectPartners') {
-                        $promotionalevent->with('campaignObjectPartners');
-                    } elseif ($relation === 'rewardDetail') {
-                        $promotionalevent->with(['rewardDetail' => function ($q) use ($object_type) {
-                            $q->where('reward_details.object_type', '=', $object_type);
-                        }]);
-                    } elseif ($relation === 'rewardTranslations') {
-                        $promotionalevent->with('rewardDetail.rewardTranslations');
-                    } elseif ($relation === 'rewardTranslationMedia') {
-                        $promotionalevent->with(['rewardDetail.rewardTranslations.rewardSignUpDesktopBackground',
-                            'rewardDetail.rewardTranslations.rewardSignUpMobileBackground']);
-                    }
-                }
-            });
+            //     foreach ($with as $relation) {
+            //         if ($relation === 'tenants') {
+            //             $promotionalevent->with('tenants');
+            //         } elseif ($relation === 'tenants.mall') {
+            //             $promotionalevent->with('tenants.mall');
+            //         } elseif ($relation === 'campaignLocations') {
+            //             $promotionalevent->with('campaignLocations');
+            //         } elseif ($relation === 'campaignLocations.mall') {
+            //             $promotionalevent->with('campaignLocations.mall');
+            //         } elseif ($relation === 'translations') {
+            //             $promotionalevent->with('translations');
+            //         } elseif ($relation === 'translations.media') {
+            //             $promotionalevent->with('translations.media');
+            //         } elseif ($relation === 'genders') {
+            //             $promotionalevent->with('genders');
+            //         } elseif ($relation === 'ages') {
+            //             $promotionalevent->with('ages');
+            //         } elseif ($relation === 'keywords') {
+            //             $promotionalevent->with(['keywords' => function($query) {
+            //                 $query->groupBy('keyword');
+            //             }]);
+            //         } elseif ($relation === 'product_tags') {
+            //             $promotionalevent->with(['product_tags' => function($query) {
+            //                 $query->groupBy('product_tag');
+            //             }]);
+            //         } elseif ($relation === 'campaignObjectPartners') {
+            //             $promotionalevent->with('campaignObjectPartners');
+            //         } elseif ($relation === 'rewardDetail') {
+            //             $promotionalevent->with(['rewardDetail' => function ($q) use ($object_type) {
+            //                 $q->where('reward_details.object_type', '=', $object_type);
+            //             }]);
+            //         } elseif ($relation === 'rewardTranslations') {
+            //             $promotionalevent->with('rewardDetail.rewardTranslations');
+            //         } elseif ($relation === 'rewardTranslationMedia') {
+            //             $promotionalevent->with(['rewardDetail.rewardTranslations.rewardSignUpDesktopBackground',
+            //                 'rewardDetail.rewardTranslations.rewardSignUpMobileBackground']);
+            //         }
+            //     }
+            // });
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
@@ -1919,6 +1921,199 @@ class PromotionalEventAPIController extends ControllerAPI
 
         $output = $this->render($httpCode);
         Event::fire('orbit.promotionalevent.getsearchpromotionalevent.before.render', array($this, &$output));
+
+        return $output;
+    }
+
+    public function getDetailPromotionalEvent()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.promotionalevent.getdetailpromotionalevent.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.promotionalevent.getdetailpromotionalevent.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.promotionalevent.getdetailpromotionalevent.before.authz', array($this, $user));
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->promotionalEventViewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.promotionalevent.getdetailpromotionalevent.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $news_id = OrbitInput::get('news_id');
+            $validator = Validator::make(
+                array(
+                    'news_id' => $news_id,
+                ),
+                array(
+                    'news_id' => 'required|',
+                ),
+                array(
+                    'in' => Lang::get('validation.orbit.empty.promotional_event_sortby'),
+                )
+            );
+
+            Event::fire('orbit.promotionalevent.getdetailpromotionalevent.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.promotionalevent.getdetailpromotionalevent.after.validation', array($this, $validator));
+
+            $object_type = 'news';
+
+            // Builder object
+            $prefix = DB::getTablePrefix();
+
+            // optimize orb_media query greatly when news_id is present
+            $mediaJoin = "";
+            $mediaOptimize = " AND (object_name = 'news_translation') ";
+            $mediaObjectIds = (array) OrbitInput::get('news_id', []);
+            if (! empty ($mediaObjectIds)) {
+                $mediaObjectIds = "'" . implode("', '", $mediaObjectIds) . "'";
+                $mediaJoin = " LEFT JOIN {$prefix}news_translations mont ON mont.news_translation_id = {$prefix}media.object_id ";
+                $mediaOptimize = " AND object_name = 'news_translation' AND mont.news_id IN ({$mediaObjectIds}) ";
+            }
+
+            $promotionalevent = News::allowedForPMPUser($user, 'news')
+                        ->with(['translations', 'translations.media', 'genders', 'ages', 'keywords', 'campaignObjectPartners', 'rewardDetail.rewardTranslations', 'product_tags',
+                                'rewardDetail.rewardTranslations.rewardSignUpDesktopBackground', 'rewardDetail.rewardTranslations.rewardSignUpMobileBackground'
+                                ])
+                        ->with(['rewardDetail' => function ($q) use ($object_type) {
+                            $q->where('reward_details.object_type', '=', $object_type);
+                        }])
+                        ->select('news.*', 'news.news_id as campaign_id', 'news.object_type as campaign_type', 'campaign_status.order', 'news_translations.news_name as display_name', DB::raw("{$prefix}media.path as image_path"),
+                            DB::raw("COUNT(DISTINCT {$prefix}news_merchant.news_merchant_id) as total_location"),
+                            DB::raw("(select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$prefix}merchants.name) ) separator ', ')
+                                from {$prefix}news_merchant
+                                    left join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}news_merchant.merchant_id
+                                    left join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
+                                    where {$prefix}news_merchant.news_id = {$prefix}news.news_id) as campaign_location_names"),
+                            DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
+                                    LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                    WHERE om.merchant_id = {$prefix}news.mall_id)
+                                THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"),
+                            DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.order ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
+                                    LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                    WHERE om.merchant_id = {$prefix}news.mall_id)
+                                THEN 5 ELSE {$prefix}campaign_status.order END) END  AS campaign_status_order")
+                        )
+                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                        ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                        ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
+                        ->leftJoin('media', function($join) use ($prefix) {
+                             $join->on('media.object_id', '=', 'news_translations.news_translation_id')
+                                 ->on(DB::raw("{$prefix}media.media_name_long = 'news_translation_image_resized_default'"), DB::raw(''), DB::raw(''))
+                                 ->on(DB::raw("{$prefix}media.object_name = 'news_translation'"), DB::raw(''), DB::raw(''));
+                         })
+                        ->excludeDeleted('news')
+                        ->where('is_having_reward', 'Y')
+                        ->where('news.news_id', $news_id)
+                        ->first();
+
+            // Add new relation based on request
+            // OrbitInput::get('with', function ($with) use ($promotionalevent, $object_type) {
+            //     $with = (array) $with;
+
+            //     foreach ($with as $relation) {
+            //         if ($relation === 'tenants') {
+            //             $promotionalevent->with('tenants');
+            //         } elseif ($relation === 'tenants.mall') {
+            //             $promotionalevent->with('tenants.mall');
+            //         } elseif ($relation === 'campaignLocations') {
+            //             $promotionalevent->with('campaignLocations');
+            //         } elseif ($relation === 'campaignLocations.mall') {
+            //             $promotionalevent->with('campaignLocations.mall');
+            //         } elseif ($relation === 'translations') {
+            //             $promotionalevent->with('translations');
+            //         } elseif ($relation === 'translations.media') {
+            //             $promotionalevent->with('translations.media');
+            //         } elseif ($relation === 'genders') {
+            //             $promotionalevent->with('genders');
+            //         } elseif ($relation === 'ages') {
+            //             $promotionalevent->with('ages');
+            //         } elseif ($relation === 'keywords') {
+            //             $promotionalevent->with(['keywords' => function($query) {
+            //                 $query->groupBy('keyword');
+            //             }]);
+            //         } elseif ($relation === 'product_tags') {
+            //             $promotionalevent->with(['product_tags' => function($query) {
+            //                 $query->groupBy('product_tag');
+            //             }]);
+            //         } elseif ($relation === 'campaignObjectPartners') {
+            //             $promotionalevent->with('campaignObjectPartners');
+            //         } elseif ($relation === 'rewardDetail') {
+            //             $promotionalevent->with(['rewardDetail' => function ($q) use ($object_type) {
+            //                 $q->where('reward_details.object_type', '=', $object_type);
+            //             }]);
+            //         } elseif ($relation === 'rewardTranslations') {
+            //             $promotionalevent->with('rewardDetail.rewardTranslations');
+            //         } elseif ($relation === 'rewardTranslationMedia') {
+            //             $promotionalevent->with(['rewardDetail.rewardTranslations.rewardSignUpDesktopBackground',
+            //                 'rewardDetail.rewardTranslations.rewardSignUpMobileBackground']);
+            //         }
+            //     }
+            // });
+
+            $this->response->data = $promotionalevent;
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.promotionalevent.getdetailpromotionalevent.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.promotionalevent.getdetailpromotionalevent.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.promotionalevent.getdetailpromotionalevent.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            Event::fire('orbit.promotionalevent.getdetailpromotionalevent.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.promotionalevent.getdetailpromotionalevent.before.render', array($this, &$output));
 
         return $output;
     }

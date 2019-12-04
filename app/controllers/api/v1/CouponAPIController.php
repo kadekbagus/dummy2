@@ -3597,17 +3597,17 @@ class CouponAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $coupon_id = OrbitInput::get('coupon_id');
+            $promotion_id = OrbitInput::get('promotion_id');
 
             $validator = Validator::make(
                 array(
-                    'coupon_id' => $coupon_id,
+                    'promotion_id' => $promotion_id,
                 ),
                 array(
-                    'coupon_id' => 'required|orbit.exist.coupon'
+                    'promotion_id' => 'required|orbit.exist.coupon'
                 ),
                 array(
-                    'orbit.exist.coupon' => 'coupon id not found',
+                    'orbit.exist.coupon' => 'coupon not found',
                 )
             );
 
@@ -3718,7 +3718,7 @@ class CouponAPIController extends ControllerAPI
                         {$mediaOptimize} ) as media
                     "), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
                 ->joinPromotionRules()
-                ->where('promotions.promotion_id', '=', $coupon_id)
+                ->where('promotions.promotion_id', '=', $promotion_id)
                 ->first();
 
             $this->response->data = $coupons;
