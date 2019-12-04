@@ -1960,10 +1960,10 @@ class PromotionalEventAPIController extends ControllerAPI
                     'news_id' => $news_id,
                 ),
                 array(
-                    'news_id' => 'required|',
+                    'news_id' => 'required|orbit.exist.promotional_event',
                 ),
                 array(
-                    'in' => Lang::get('validation.orbit.empty.promotional_event_sortby'),
+                    'orbit.exist.promotional_event' => 'promotional event not found',
                 )
             );
 
@@ -2475,6 +2475,21 @@ class PromotionalEventAPIController extends ControllerAPI
 
             return true;
         });
+
+        Validator::extend('orbit.exist.promotional_event', function ($attribute, $value, $parameters) {
+            $promotionalevent = News::where('news_id', $value)
+                                    ->where('is_having_reward', 'Y')
+                                    ->first();
+
+            if (empty($promotionalevent)) {
+                return false;
+            }
+
+            App::instance('orbit.exist.promotional_event', $promotionalevent);
+
+            return true;
+        });
+
 
         // Check the existance of news id for update with permission check
         Validator::extend('orbit.update.promotional_event', function ($attribute, $value, $parameters) {
