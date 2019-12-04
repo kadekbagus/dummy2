@@ -2019,11 +2019,7 @@ class NewsAPIController extends ControllerAPI
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $result['total_records'] = 0;
-            $result['returned_records'] = 0;
-            $result['records'] = null;
-
-            $this->response->data = $result;
+            $this->response->data = null;
             $httpCode = 403;
         } catch (QueryException $e) {
             Event::fire('orbit.news.getdetailnews.query.error', array($this, $e));
