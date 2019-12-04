@@ -67,7 +67,6 @@ class CouponTransferNotification extends CustomerNotification implements EmailNo
     protected function getImageUrl($couponId)
     {
         $couponImage = '';
-        $couponId = $this->payment->details->first()->object_id;
         $prefix = DB::getTablePrefix();
         $coupon = Coupon::select(DB::raw("{$prefix}promotions.promotion_id,
                                     {$prefix}promotions.promotion_name,
