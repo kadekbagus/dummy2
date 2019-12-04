@@ -49,14 +49,12 @@
                     <td height="15" align="center">&nbsp;</td>
                   </tr>
                   <tr>
-                    <td width="600" class="mobile center" valign="middle">
-                      <a href="{{ $couponUrl }}" style="vertical-align:middle;display: block;">
-                        <span style="display: inline-block;">
-                          <img src="{{ $couponImage }}" width="80" style="vertical-align:middle;">
-                        </span>
+                    <td width="600" class="mobile center" valign="middle" style="text-align: center;">
+                      <a href="{{ $couponUrl }}" style="display: block;">
+                        <img src="{{ $couponImage }}" width="80" style="vertical-align:middle;">
 
-                        <span style="display: inline-block;text-align:left;color:#222;margin-left:10px;">
-                          <h3 style="margin-bottom: 10px;margin-top: 0;font-size:16px;">{{ $couponName }}</h3>
+                        <span style="display: inline-block;text-align:left;color:#222;margin-left:10px;vertical-align: middle;">
+                          <h3 style="margin-bottom: 7px;margin-top: 0;font-size:16px;">{{ $couponName }}</h3>
                           <p style="margin-top: 5px;margin-bottom:0;font-size:15px;">{{ $brandName }}</p>
                         </span>
                       </a>
