@@ -63,6 +63,22 @@ class UserNotificationStoreCommand extends Command {
         $totalRecords = $storeObjectNotifications->data->total_records;
 
         if ($totalRecords > 0) {
+            // Update store object notification status to 'processing' to prevent pending
+            // items to be pushed into queue again.
+            $notificationIds = [];
+            foreach($storeObjectNotifications->data->records as $storeObjectNotification) {
+                $notificationIds[] = $storeObjectNotification->_id;
+            }
+
+            $params = [
+                'status' => 'processing',
+                'notification_ids' => json_encode($notificationIds),
+            ];
+
+            $mongoClient->setFormParam($params)
+                        ->setEndPoint('store-object-notifications')
+                        ->request('PUT');
+
             foreach ($storeObjectNotifications->data->records as $key => $storeObjectNotification) {
 
                 $objectId = $storeObjectNotification->object_id;
