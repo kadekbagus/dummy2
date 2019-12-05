@@ -71,4 +71,28 @@ class NewsSearch extends CampaignSearch
         }
     }
 
+    /**
+     * Sort by hot event (hot events should be first).
+     *
+     * @param  string $sortMode [description]
+     * @return [type]           [description]
+     */
+    public function sortByHotEvent($sortMode = 'desc')
+    {
+        $this->sort([
+            '_script' => [
+                'type' => 'number',
+                'order' => $sortMode,
+                'script' => "
+                    if (doc.containsKey('is_hot_event')) {
+                        if (doc['is_hot_event'].value == 'yes') {
+                            return 1;
+                        }
+                    }
+                    return 0;
+                ",
+            ],
+        ]);
+    }
+
 }
