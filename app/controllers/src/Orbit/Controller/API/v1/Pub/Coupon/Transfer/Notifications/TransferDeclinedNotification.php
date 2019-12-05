@@ -48,6 +48,7 @@ class TransferDeclinedNotification extends CouponTransferNotification
      */
     public function getEmailData()
     {
+        $coupon = $this->issuedCoupon->coupon;
         return array_merge(parent::getEmailData(), [
             'header'            => trans('email-transfer.header'),
             'greeting'          => trans('email-transfer.declined.greeting', ['ownerName' => $this->issuedCoupon->user->getFullName()]),
@@ -55,6 +56,11 @@ class TransferDeclinedNotification extends CouponTransferNotification
             'body'              => trans('email-transfer.declined.message', ['recipientName' => $this->recipientName]),
             'myWalletUrl'       => $this->getMyWalletUrl(),
             'btnOpenWallet'     => trans('email-transfer.declined.btn_open_my_wallet'),
+            'couponId'          => $coupon->promotion_id,
+            'couponName'        => $coupon->promotion_name,
+            'couponUrl'         => $this->getCouponUrl($coupon->promotion_id, $coupon->promotion_name),
+            'couponImage'       => $this->getImageUrl($coupon->promotion_id),
+            'brandName'         => $this->getBrand($coupon->promotion_id),
         ]);
     }
 }

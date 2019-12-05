@@ -9,9 +9,6 @@ use Exception;
 use Log;
 use Mail;
 use Config;
-use Media;
-use BaseStore;
-use BaseMerchant;
 use Coupon;
 use DB;
 use Str;
@@ -69,20 +66,51 @@ class CouponTransferNotification extends CustomerNotification implements EmailNo
 
     protected function getImageUrl($couponId)
     {
-        $img = Media::select('path', 'cdn_url')
-            ->where('object_id', $couponId)
-            ->where('object_name', 'coupon')
-            ->where('media_name_id', 'coupon_image')
-            ->where('media_name_long', 'coupon_image_resized_default')
-            ->first();
-        if (!empty($img)) {
+        $couponImage = '';
+        $prefix = DB::getTablePrefix();
+        $coupon = Coupon::select(DB::raw("{$prefix}promotions.promotion_id,
+                                    {$prefix}promotions.promotion_name,
+                                    {$prefix}campaign_account.mobile_default_language,
+                                    CASE WHEN {$prefix}media.path is null THEN med.path ELSE {$prefix}media.path END as localPath,
+                                    CASE WHEN {$prefix}media.cdn_url is null THEN med.cdn_url ELSE {$prefix}media.cdn_url END as cdnPath
+                            "))
+                            ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
+                            ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
+                            ->leftJoin('coupon_translations', function ($q) {
+                                $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id');
+                            })
+                            ->leftJoin('coupon_translations as default_translation', function ($q) {
+                                $q->on(DB::raw('default_translation.promotion_id'), '=', 'promotions.promotion_id')
+                                    ->on(DB::raw('default_translation.merchant_language_id'), '=', DB::raw('default_languages.language_id'));
+                            })
+                        ->leftJoin(DB::raw("(SELECT m.path, m.cdn_url, ct.promotion_id
+                                        FROM {$prefix}coupon_translations ct
+                                        JOIN {$prefix}media m
+                                            ON m.object_id = ct.coupon_translation_id
+                                            AND m.media_name_long = 'coupon_translation_image_orig'
+                                        GROUP BY ct.promotion_id) AS med"), DB::raw("med.promotion_id"), '=', 'promotions.promotion_id')
+                        ->leftJoin('media', function ($q) {
+                                $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
+                                $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
+                            })
+                        ->where('promotions.promotion_id', '=', $couponId)
+                        ->first();
+
+        if ($coupon) {
+            $attachmentPath = ! empty($coupon->localPath) ? $coupon->localPath : '';
+            $cdnUrl = ! empty($coupon->cdnPath) ? $coupon->cdnPath : '';
             $cdnConfig = Config::get('orbit.cdn');
             $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
-            return $imgUrl->getImageUrl($img->path, $img->cdn_url);
-        } else {
-            $baseLandingPageUrl = Config::get('orbit.base_landing_page_url', 'https://gotomalls.com');
-            return $baseLandingPageUrl . '/themes/default/images/campaign-default.png';
+            $couponImage = $imgUrl->getImageUrl($attachmentPath, $cdnUrl);
         }
+
+        // Default fallback image.
+        if (empty($couponImage)) {
+            $baseLandingPageUrl = Config::get('orbit.base_landing_page_url', 'https://gotomalls.com');
+            $couponImage = $baseLandingPageUrl . '/themes/default/images/campaign-default.png';
+        }
+
+        return $couponImage;
     }
 
     protected function getBrand($couponId)

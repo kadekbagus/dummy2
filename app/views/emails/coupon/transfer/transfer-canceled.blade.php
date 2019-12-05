@@ -38,7 +38,7 @@
 
                 <table width="600" cellpadding="0" cellspacing="0" border="0" class="container">
                   <tr>
-                    <td class="mobile" align="left" valign="top" colspan="2">
+                    <td class="mobile" align="left" valign="top">
                       <h3 class="greeting-username">{{ $greeting }}</h3>
                       <p class="greeting-text">
                         {{ $body }}
@@ -46,20 +46,24 @@
                     </td>
                   </tr>
                   <tr>
-                    <td width="300" class="mobile center" valign="middle">
-                      <a href="{{ $couponUrl }}" class="coupon-img-container">
-                        <img src="{{ $couponImage }}" width="100">
-                      </a>
-                    </td>
-                    <td width="300" class="mobile">
-                      <a href="{{ $couponUrl }}" class="coupon-info">
-                          <h3 style="margin-bottom: 10px;">{{ $couponName }}</h3>
-                          <p style="margin-top: 5px;">{{ $brandName }}</p>
+                    <td height="20" align="center">&nbsp;</td>
+                  </tr>
+                  <tr>
+                    <td width="600" class="mobile center" valign="middle" style="text-align: center;">
+                      <a href="{{ $couponUrl }}" style="display: block;">
+                        <span style="display: inline-block;width:80px;height:80px;border:1px solid #ddd;">
+                          <img src="{{ $couponImage }}" style="vertical-align:middle;width:100%;height:100%;object-fit: contain;">
+                        </span>
+
+                        <span style="display: inline-block;text-align:left;color:#222;margin-left:10px;vertical-align: middle;">
+                          <h3 style="margin-bottom: 7px;margin-top: 0;font-size:16px;">{{ $couponName }}</h3>
+                          <p style="margin-top: 5px;margin-bottom:0;font-size:15px;">{{ $brandName }}</p>
+                        </span>
                       </a>
                     </td>
                   </tr>
                   <tr>
-                    <td height="10" align="center" colspan="2">&nbsp;</td>
+                    <td height="20" align="center">&nbsp;</td>
                   </tr>
                 </table>
               </td>
