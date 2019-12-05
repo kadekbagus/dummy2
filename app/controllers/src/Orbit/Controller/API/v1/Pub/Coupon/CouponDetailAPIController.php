@@ -190,13 +190,10 @@ class CouponDetailAPIController extends PubControllerAPI
                             "),
                             'coupon_sepulsa.terms_and_conditions',
                             'issued_coupons.url as redeem_url',
-<<<<<<< HEAD
                             'issued_coupons.user_id',
                             'issued_coupons.original_user_id',
                             'issued_coupons.transfer_status',
                             //DB::raw("m.country as coupon_country"),
-=======
->>>>>>> hotfix-4.20.2-improve-coupon-detail-query
                             'promotions.promotion_type',
 
                             DB::Raw($getCouponStatusSql),
