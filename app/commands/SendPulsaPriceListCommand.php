@@ -194,7 +194,8 @@ class SendPulsaPriceListCommand extends Command {
      */
     private function getEvents()
     {
-        // $_GET['is_hot_event'] = 'yes';
+        // Sort by hot event first.
+        $_GET['sortby'] = 'hot_event';
 
         $campaignList = NewsListNewAPIController::create('raw')
             ->setUser($this->user)
