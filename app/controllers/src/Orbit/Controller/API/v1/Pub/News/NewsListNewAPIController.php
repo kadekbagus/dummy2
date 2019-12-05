@@ -161,7 +161,7 @@ class NewsListNewAPIController extends PubControllerAPI
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
-                    'sortby'   => 'in:name,location,created_date,updated_date,rating,relevance',
+                    'sortby'   => 'in:name,location,created_date,updated_date,rating,relevance,hot_event',
                     'rating_low' => 'numeric|min:0|max:5',
                     'rating_high' => 'numeric|min:0|max:5',
                 )
@@ -348,6 +348,11 @@ class NewsListNewAPIController extends PubControllerAPI
 
             // Next sorting based on Visitor's selection.
             switch ($sortBy) {
+                case 'hot_event':
+                    // for email subscription campaign recommendation.
+                    $this->searcher->sortByHotEvent($sortMode);
+                    $this->searcher->sortByCreatedDate($sortMode);
+                    break;
                 case 'relevance':
                     $this->searcher->sortByRelevance();
                     break;
