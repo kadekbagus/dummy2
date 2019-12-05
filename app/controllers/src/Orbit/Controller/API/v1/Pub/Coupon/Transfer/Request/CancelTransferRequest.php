@@ -1,10 +1,5 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Coupon\Transfer\Request;
 
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Validator;
-use OrbitShop\API\v1\OrbitShopAPI;
-use Orbit\Controller\API\v1\Pub\Coupon\Transfer\Repository\CouponTransferRepository;
-
 /**
  * Coupon Transfer Cancel Request.
  *

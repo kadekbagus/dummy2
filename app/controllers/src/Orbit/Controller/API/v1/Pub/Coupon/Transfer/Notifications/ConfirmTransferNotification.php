@@ -2,6 +2,14 @@
 
 use Illuminate\Support\Facades\Config;
 use Orbit\Controller\API\v1\Pub\Coupon\Transfer\Notifications\CouponTransferNotification;
+use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\LandingPageUrlGenerator;
+use Media;
+use BaseStore;
+use BaseMerchant;
+use Coupon;
+use DB;
+use Str;
 
 /**
  * Notify recipient to accept or decline a coupon transfer.
@@ -34,16 +42,17 @@ class ConfirmTransferNotification extends CouponTransferNotification
      */
     public function getEmailData()
     {
-        //$brandName = $this->issuedCoupon->coupon->linkToTenants()->first()->name;
-        $brandName = '';
+        $coupon = $this->issuedCoupon->coupon;
         return array_merge(parent::getEmailData(), [
             'header'            => trans('email-transfer.header'),
             'greeting'          => trans('email-transfer.confirm.greeting', ['recipientName' => $this->recipientName]),
             'emailSubject'      => trans('email-transfer.confirm.subject', ['ownerName' => $this->issuedCoupon->user->getFullName()]),
             'body'              => trans('email-transfer.confirm.message', ['ownerName' => $this->issuedCoupon->user->getFullName()]),
-            'couponName'        => $this->issuedCoupon->coupon->promotion_name,
-            'couponImage'       => $this->issuedCoupon->coupon->image,
-            'brandName'         => $brandName,
+            'couponId'          => $coupon->promotion_id,
+            'couponName'        => $coupon->promotion_name,
+            'couponUrl'         => $this->getCouponUrl($coupon->promotion_id, $coupon->promotion_name),
+            'couponImage'       => $this->getImageUrl($coupon->promotion_id),
+            'brandName'         => $this->getBrand($coupon->promotion_id),
             'acceptUrl'         => $this->generateAcceptUrl(),
             'btnAccept'         => trans('email-transfer.confirm.btn_accept'),
             'declineUrl'        => $this->generateDeclineUrl(),
