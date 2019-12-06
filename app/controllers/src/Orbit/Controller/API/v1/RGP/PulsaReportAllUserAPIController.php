@@ -95,7 +95,7 @@ class PulsaReportAllUserAPIController extends ControllerAPI
                     and ptd.object_type = 'pulsa'
                     and pt.updated_at between {$this->quote($startDate)} and {$this->quote($endDate->endOfDay())}
                     group by user_id
-                    order by {$this->quote($sortby)} {$this->quote($sortmode)}
+                    order by `{$sortby}` {$sortmode}
                     limit {$skip}, {$take}"
                 )
             );
