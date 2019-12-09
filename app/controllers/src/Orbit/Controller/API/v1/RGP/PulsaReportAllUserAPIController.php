@@ -53,15 +53,21 @@ class PulsaReportAllUserAPIController extends ControllerAPI
             $startDateInput = OrbitInput::get('start_date');
             $endDateInput = OrbitInput::get('end_date');
             $page = OrbitInput::get('page', 1);
+            $sortby = OrbitInput::get('sortby', 'total_transactions');
+            $sortmode = OrbitInput::get('sortmode', 'desc');
 
             $validator = Validator::make(
                 array(
                     'start_date' => $startDateInput,
                     'end_date' => $endDateInput,
+                    'sortby' => $sortby,
+                    'sortmode' => $sortmode,
                 ),
                 array(
                     'start_date' => 'required|date_format:Y-m-d',
                     'end_date' => 'required|date_format:Y-m-d',
+                    'sortby' => 'in:total_transactions,total_amount',
+                    'sortmode' => 'in:asc,desc',
                 )
             );
 
@@ -73,7 +79,7 @@ class PulsaReportAllUserAPIController extends ControllerAPI
 
             $startDate = new Carbon($startDateInput);
             $endDate = new Carbon($endDateInput);
-            $take = 20;
+            $take = 10;
             $skip = ($page - 1) * $take;
 
             // query
@@ -89,7 +95,7 @@ class PulsaReportAllUserAPIController extends ControllerAPI
                     and ptd.object_type = 'pulsa'
                     and pt.updated_at between {$this->quote($startDate)} and {$this->quote($endDate->endOfDay())}
                     group by user_id
-                    order by total_transactions desc
+                    order by `{$sortby}` {$sortmode}
                     limit {$skip}, {$take}"
                 )
             );
