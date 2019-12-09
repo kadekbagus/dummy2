@@ -1,10 +1,10 @@
 <?php namespace Orbit\Helper\Util;
+
 /**
  * Helpert to generate image url from cdn
  *
  * @author Shelgi Prasetyo <shelgi@dominopos.com>
  */
-
 class CdnUrlGenerator
 {
     protected $config = [
@@ -46,28 +46,44 @@ class CdnUrlGenerator
 	                // and the path of the file. So the cdn_url field in table media has aboslute
 	                // url like: https://s3-ap-southeast-1.amazonaws.com/dev-dotcool/uploads/retailers/2016/01/some-file.jpg
 	                'url_prefix' => 'https://s3-ap-southeast-1.amazonaws.com'
-	            ]
+	            ],
+
+                // Cloudfront CDN config.
+                'cloudfront' => [
+                    'name' => 'Cloudfront CDN',
+                    'bucket_name' => null,
+                    'url_prefix' => 'https://cdn.cloudfront.net',
+                ],
 	        ]
 	    )
     ];
 
     /**
+     * List of cdn url prefixes. We store them on a variable
+     * so we don't build it each time we call getImageUrl()
+     * from the same instance.
+     * @var array
+     */
+    protected $cdnUrlPrefixes = [];
+
+    /**
      * @param array $config
      * @return void
      */
-    public function __construct(array $config=[], $confgiKey = 'cdn_default')
+    public function __construct(array $config=[], $configKey = 'cdn_default')
     {
-        $this->config = $config + $this->config;
-        $this->confgiKey = $confgiKey;
+        $this->config = array_merge($this->config, $config);
+        $this->configKey = $configKey;
+        $this->buildCdnUrlPrefixes();
     }
 
     /**
      * @param array $config
      * @return imageUrl
      */
-    public static function create(array $config=[], $confgiKey = 'cdn_default')
+    public static function create(array $config=[], $configKey = 'cdn_default')
     {
-        return new Static($config, $confgiKey);
+        return new Static($config, $configKey);
     }
 
     /**
@@ -94,6 +110,33 @@ class CdnUrlGenerator
     }
 
     /**
+     * Get list of url prefixes for each providers.
+     *
+     * @return array
+     */
+    public function getCdnUrlPrefixes()
+    {
+        return $this->cdnUrlPrefixes;
+    }
+
+    /**
+     * Build cdn url prefixes for each provider.
+     *
+     * @return void
+     */
+    private function buildCdnUrlPrefixes()
+    {
+        foreach($this->getConfigValue('providers') as $providerId => $providerConfig) {
+            $this->cdnUrlPrefixes[$providerId] = array_get($providerConfig, 'url_prefix');
+
+            $bucketName = array_get($providerConfig, 'bucket_name');
+            if (! empty($bucketName)) {
+                $this->cdnUrlPrefixes[$providerId] .= "/{$bucketName}";
+            }
+        }
+    }
+
+    /**
      * Get config key and fallback to default if it is not exists
      *
      * @param string $keys
@@ -101,8 +144,8 @@ class CdnUrlGenerator
      */
     protected function getConfigValue($keys)
     {
-  		if (! empty(array_get($this->config, $this->confgiKey . '.' . $keys))) {
-  			return array_get($this->config, $this->confgiKey . '.' . $keys);
+  		if (! empty(array_get($this->config, $this->configKey . '.' . $keys))) {
+  			return array_get($this->config, $this->configKey . '.' . $keys);
   		}
 
   		return array_get($this->config, 'cdn_default' . '.' . $keys);

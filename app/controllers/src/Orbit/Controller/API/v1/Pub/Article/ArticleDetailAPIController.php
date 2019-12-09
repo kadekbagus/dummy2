@@ -24,6 +24,7 @@ use OrbitShop\API\v1\ResponseProvider;
 use \Orbit\Helper\Exception\OrbitCustomException;
 use Redis;
 use Orbit\Controller\API\v1\Article\ArticleHelper;
+use Orbit\Helper\Util\CdnUrlGenerator;
 
 
 class ArticleDetailAPIController extends PubControllerAPI
@@ -82,13 +83,20 @@ class ArticleDetailAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $cdnConfig = Config::get('orbit.cdn');
+            $usingCdn = array_get($cdnConfig, 'enable_cdn', false);
+            $usingCloudfront = array_get($cdnConfig, 'enable_cloudfront', false);
             $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
             $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
 
             $image = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path)";
             if ($usingCdn) {
                 $image = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
+
+                if ($usingCloudfront) {
+                    $cdnUrlPrefixes = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn')->getCdnUrlPrefixes();
+                    $image = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE REPLACE({$prefix}media.cdn_url, '{$cdnUrlPrefixes['S3']}', '{$cdnUrlPrefixes['cloudfront']}') END";
+                }
             }
 
             $location = $mallId;
