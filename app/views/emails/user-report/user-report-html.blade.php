@@ -314,7 +314,7 @@
                     <td width="400" class="mobile" align="left" valign="top">
                       <h3 class="greeting-username">Hi, {{$user_name}}</h3>
                       <p class="greeting-text">
-                        Thank you for joining Gotomalls. You have sucessfully created a Gotomalls account. Please click the "Activate Account" button below to verify your email address.
+                        Thank you for using Gotomalls.com. We hope you enjoy to shop with us as your shopping reference. Here the resume of your activities in Gotomalls.com for the past month. Don't forget to check some new promos information on Gotomalls this month!
                       </p>
                     </td>
                     <td width="200" class="mobile mobile-align-center" align="right" valign="top">
