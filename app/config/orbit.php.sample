@@ -5894,6 +5894,10 @@ return array(
                     'uri' => 'partner/%s/%s',
                     'changefreq' => 'weekly',
                 ),
+                'pulsa' => array(
+                    'uri' => 'pulsa/%s?country=Indonesia',
+                    'changefreq' => 'monthly',
+                ),
             ),
             'misc' => array(
                 'home' => array(
@@ -5919,6 +5923,10 @@ return array(
                 'map' => array(
                     'uri' => 'maps',
                     'changefreq' => 'weekly',
+                ),
+                'pulsa-price-list' => array(
+                    'uri' => 'pulsa-price-list?country=Indonesia',
+                    'changefreq' => 'monthly',
                 ),
             ),
         ),
