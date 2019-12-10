@@ -24,6 +24,11 @@ Route::post('/app/v1/promotional-event/update', 'IntermediateAuthController@Prom
 Route::get('/app/v1/promotional-event/search', 'IntermediateAuthController@PromotionalEvent_getSearchPromotionalEvent');
 
 /**
+ * Detail promotional-event
+ */
+Route::get('/app/v1/promotional-event/detail', 'IntermediateAuthController@PromotionalEvent_getDetailPromotionalEvent');
+
+/**
  * List and/or Search promotional-event by retailer
  */
 Route::get('/app/v1/promotional-event/by-retailer/search', 'IntermediateAuthController@PromotionalEvent_getSearchPromotionalEventByRetailer');
