@@ -27,6 +27,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use \Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\SimpleCache;
 use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 use Elasticsearch\ClientBuilder;
 use PartnerAffectedGroup;
 use PartnerCompetitor;

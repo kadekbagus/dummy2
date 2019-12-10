@@ -19,7 +19,7 @@ use Mall;
 use Lang;
 use \Exception;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
-use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 use PromotionRetailer;
 use Helper\EloquentRecordCounter as RecordCounter;
 
@@ -324,7 +324,7 @@ class CouponWalletListAPIController extends PubControllerAPI
             $count = RecordCounter::create($_coupon)->count();
 
             $cdnConfig = Config::get('orbit.cdn');
-            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            $imgUrl = CdnUrlGeneratorWithCloudfront::create(['cdn' => $cdnConfig], 'cdn');
             $localPath = '';
             $cdnPath = '';
             $listId = '';
