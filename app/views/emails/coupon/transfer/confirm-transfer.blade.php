@@ -265,7 +265,7 @@
                           <img src="{{ $couponImage }}" style="vertical-align:middle;width:100%;height:100%;object-fit: contain;">
                         </span>
 
-                        <span style="display: inline-block;text-align:left;color:#222;margin-left:10px;vertical-align: middle;">
+                        <span style="display: inline-block;text-align:left;color:#222;margin-left:10px;vertical-align: middle;max-width:250px;">
                           <h3 style="margin-bottom: 7px;margin-top: 0;font-size:16px;">{{ $couponName }}</h3>
                           <p style="margin-top: 5px;margin-bottom:0;font-size:15px;">{{ $brandName }}</p>
                         </span>
