@@ -1,16 +1,16 @@
-<?php namespace Orbit\Controller\API\v1\Pub\Coupon\Transfer\Request;
+<?php namespace Orbit\Helper\Request;
 
 use OrbitShop\API\v1\OrbitShopAPI;
+use Orbit\Helper\Request\Contracts\ValidateRequestInterface;
 use Request;
 use Validator;
 
 /**
- * Base Form Request class.
+ * Base Request Validation class.
  *
- * @todo create proper form request helper.
  * @author Budi <budi@gotomalls.com>
  */
-class FormRequest implements FormRequestInterface
+class ValidateRequest implements ValidateRequestInterface
 {
     /**
      * Current authenticated User instance.
@@ -36,9 +36,25 @@ class FormRequest implements FormRequestInterface
      */
     protected $bail = false;
 
+    /**
+     * Validator instance.
+     * @var null
+     */
+    protected $validator = null;
+
+    /**
+     * Indicate that request must be authenticated.
+     * @var boolean
+     */
+    protected $authRequest = true;
+
     public function __construct($controller = null)
     {
         $this->controller = $controller;
+
+        if ($this->authRequest) {
+            $this->auth();
+        }
     }
 
     /**
@@ -78,6 +94,15 @@ class FormRequest implements FormRequestInterface
     }
 
     /**
+     * Get validation data.
+     * @return array
+     */
+    public function getData()
+    {
+        return $this->validator->getData();
+    }
+
+    /**
      * Validate form request.
      *
      * @param  array  $data     [description]
@@ -91,14 +116,14 @@ class FormRequest implements FormRequestInterface
             $this->registerCustomValidations();
         }
 
-        $validator = Validator::make(
+        $this->validator = Validator::make(
             array_merge(Request::all(), $data),
             array_merge($this->rules(), $rules),
             array_merge($this->messages(), $messages)
         );
 
-        if ($validator->fails()) {
-            $errorMessage = $validator->messages()->first();
+        if ($this->validator->fails()) {
+            $errorMessage = $this->validator->messages()->first();
             OrbitShopAPI::throwInvalidArgument($errorMessage);
         }
     }

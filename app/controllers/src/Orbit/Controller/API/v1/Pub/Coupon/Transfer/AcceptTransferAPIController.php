@@ -2,8 +2,6 @@
 
 use Exception;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Response;
-use OrbitShop\API\v1\Exception\InvalidArgsException;
 use OrbitShop\API\v1\PubControllerAPI;
 use Orbit\Controller\API\v1\Pub\Coupon\Transfer\Repository\CouponTransferRepository;
 use Orbit\Controller\API\v1\Pub\Coupon\Transfer\Request\AcceptTransferRequest;
@@ -26,7 +24,7 @@ class AcceptTransferAPIController extends PubControllerAPI
             // @todo Should be able to type-hint from method/constructor.
             // If request valid, there should be an instance of IssuedCoupon
             // available in the container.
-            (new AcceptTransferRequest())->auth($this)->validate();
+            (new AcceptTransferRequest($this))->auth()->validate();
 
             // Accept coupon transfer...
             $couponTransfer = App::make(CouponTransferRepository::class);

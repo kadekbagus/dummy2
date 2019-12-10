@@ -1,12 +1,11 @@
-<?php namespace Orbit\Controller\API\v1\Pub\Coupon\Transfer\Request;
+<?php namespace Orbit\Helper\Request\Contracts;
 
 /**
- * Base Form Request.
+ * Form Request Interface.
  *
- * @todo  create proper form request helper.
- * @author Budi <budi@dominopos.com>
+ * @author Budi <budi@gotomalls.com>
  */
-interface FormRequestInterface
+interface ValidateRequestInterface
 {
     /**
      * Validate form request.
