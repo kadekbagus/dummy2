@@ -4844,7 +4844,7 @@ class CouponAPIController extends ControllerAPI
                 return FALSE;
             }
 
-            App::instance('orbit.empty.coupon', $coupon);
+            App::instance('orbit.exist.coupon', $coupon);
 
             return TRUE;
         });
