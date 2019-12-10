@@ -41,6 +41,11 @@ abstract class CampaignSearch extends ObjectTypeSearch
         ]);
     }
 
+    protected function getCategoryField()
+    {
+        return 'category_ids';
+    }
+
     /**
      * Filter by selected stores Categories..
      *
@@ -49,9 +54,9 @@ abstract class CampaignSearch extends ObjectTypeSearch
     public function filterByCategories($categories = [])
     {
         $arrCategories = [];
-
+        $categoryField = $this->getCategoryField();
         foreach($categories as $category) {
-            $arrCategories[] = ['match' => ['category_ids' => $category]];
+            $arrCategories[] = ['match' => [$categoryField => $category]];
         }
 
         $this->must([

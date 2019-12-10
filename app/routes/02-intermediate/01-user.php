@@ -6,6 +6,9 @@
 // PMP Account List
 Route::get('/app/v1/account/list', 'IntermediateAuthController@Account_getAccount');
 
+// PMP Account Detail
+Route::get('/app/v1/account/detail', 'IntermediateAuthController@Account_getAccountDetail');
+
 // Create new PMP Account
 Route::post('/app/v1/account/new', 'IntermediateAuthController@Account_postNewAccount');
 

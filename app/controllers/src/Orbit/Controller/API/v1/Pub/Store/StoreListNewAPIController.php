@@ -69,9 +69,9 @@ class StoreListNewAPIController extends PubControllerAPI
      */
     protected $esConfig = [];
 
-    public function __construct()
+    public function __construct($contentType = 'application/json')
     {
-        parent::__construct();
+        parent::__construct($contentType);
         $this->esConfig = Config::get('orbit.elasticsearch');
         $this->searcher = new StoreSearch($this->esConfig);
     }
@@ -140,6 +140,7 @@ class StoreListNewAPIController extends PubControllerAPI
             $ratingHigh = empty($ratingHigh) ? 5 : $ratingHigh;
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
+            $excludedIds = OrbitInput::get('excluded_ids');
 
             // store can not sorted by date, so it must be changes to default sorting (name - ascending)
             if ($sortBy === "created_date") {
@@ -206,6 +207,8 @@ class StoreListNewAPIController extends PubControllerAPI
             $this->searcher->setPaginationParams(['from' => $skip, 'size' => $take]);
 
             $this->searcher->hasAtLeastOneTenant();
+
+            $this->searcher->exclude($excludedIds);
 
             $countryData = null;
             if (! empty($mallId)) {

@@ -30,7 +30,7 @@ use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Util\CdnUrlGenerator;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
-use Orbit\Controller\API\v1\Pub\Store\StoreListAPIController;
+use Orbit\Controller\API\v1\Pub\Store\StoreListNewAPIController;
 use Elasticsearch\ClientBuilder;
 use Orbit\Helper\Elasticsearch\IndexNameBuilder;
 
@@ -205,7 +205,7 @@ class StoreAlsoLikeListAPIController extends PubControllerAPI
 
         Config::set('orbit.cache.context.store-list.enable', FALSE);
 
-        $responseSameCategory = StoreListAPIController::create('raw')
+        $responseSameCategory = StoreListNewAPIController::create('raw')
                     ->setUser($this->api->user)
                     ->getStoreList();
 
@@ -226,7 +226,7 @@ class StoreAlsoLikeListAPIController extends PubControllerAPI
             }
 
             // get store
-            $responseSameType = StoreListAPIController::create('raw')
+            $responseSameType = StoreListNewAPIController::create('raw')
                     ->setUser($this->api->user)
                     ->getStoreList();
 

@@ -49,6 +49,10 @@ class StoreSearch extends CampaignSearch
         ]);
     }
 
+    protected function getCategoryField()
+    {
+        return 'category';
+    }
 
     /**
      * Filter by user's geo-location...
@@ -456,5 +460,33 @@ class StoreSearch extends CampaignSearch
     public function sortByName($language = 'id', $sortMode = 'asc')
     {
         $this->sort(['lowercase_name' => ['order' => $sortMode]]);
+    }
+
+    /**
+     * Sibling stores are stores with a same name
+     * but linked into different location/mall.
+     *
+     * Since we only have one "master" record for each store in the elastic,
+     * we need to filter based on 'link to location' property (tenant_detail).
+     *
+     * @return void
+     */
+    public function addExcludedIdsParam()
+    {
+        if (empty($this->excludedIds)) return;
+
+        // We must not include stores that have $this->excludedIds in their 'tenant_detail'.
+        // This will opt-out the same stores when we visit from
+        // a "slave" store (the ones that we dont record on elastic).
+        $this->mustNot([
+            'nested' => [
+                'path' => 'tenant_detail',
+                'query' => [
+                    'terms' => [
+                        'tenant_detail.merchant_id' => $this->excludedIds
+                    ]
+                ],
+            ],
+        ]);
     }
 }
