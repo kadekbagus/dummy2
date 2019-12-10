@@ -360,6 +360,11 @@ return array(
         // Whether to use CDN or default URL for the uploaded files
         'enable_cdn' => FALSE,
 
+        // Enable Cloudfront cdn url replacement or not.
+        // If enabled, the current cdn url (most likely S3) will be replaced
+        // with the Cloudfront version.
+        'enable_cloudfront' => FALSE,
+
         // Do we need to upload to CDN?
         'upload_to_cdn' => FALSE,
 
@@ -395,7 +400,18 @@ return array(
                 // and the path of the file. So the cdn_url field in table media has aboslute
                 // url like: https://s3-ap-southeast-1.amazonaws.com/dev-dotcool/uploads/retailers/2016/01/some-file.jpg
                 'url_prefix' => 'https://s3-ap-southeast-1.amazonaws.com'
-            ]
+            ],
+
+            // Cloudfront CDN config.
+            'cloudfront' => [
+                'name' => 'Cloudfront CDN',
+
+                // No bucket for Cloudfront.
+                'bucket_name' => null,
+
+                // Prefix of Cloudfront CDN url, without bucket name and trailing slash.
+                'url_prefix' => 'https://cdn.cloudfront.com',
+            ],
         ]
     ),
 
@@ -5878,6 +5894,10 @@ return array(
                     'uri' => 'partner/%s/%s',
                     'changefreq' => 'weekly',
                 ),
+                'pulsa' => array(
+                    'uri' => 'pulsa/%s?country=Indonesia',
+                    'changefreq' => 'monthly',
+                ),
             ),
             'misc' => array(
                 'home' => array(
@@ -5903,6 +5923,10 @@ return array(
                 'map' => array(
                     'uri' => 'maps',
                     'changefreq' => 'weekly',
+                ),
+                'pulsa-price-list' => array(
+                    'uri' => 'pulsa-price-list?country=Indonesia',
+                    'changefreq' => 'monthly',
                 ),
             ),
         ),
