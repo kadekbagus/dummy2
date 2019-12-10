@@ -1941,11 +1941,11 @@ class NewsAPIController extends ControllerAPI
                     'object_type' => $object_type,
                 ),
                 array(
-                    'news_id' => 'required|orbit.empty.news',
+                    'news_id' => 'required|orbit.exist.news',
                     'object_type' => 'required|in:news,promotion',
                 ),
                 array(
-                    'orbit.empty.news' => 'news id not found',
+                    'orbit.exist.news' => 'news id not found',
                 )
             );
 
@@ -2405,6 +2405,20 @@ class NewsAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.news', $news);
+
+            return true;
+        });
+
+        // Check the existance of news id
+        Validator::extend('orbit.exist.news', function ($attribute, $value, $parameters) {
+            $news = News::where('news_id', $value)
+                        ->first();
+
+            if (empty($news)) {
+                return false;
+            }
+
+            App::instance('orbit.exist.news', $news);
 
             return true;
         });
