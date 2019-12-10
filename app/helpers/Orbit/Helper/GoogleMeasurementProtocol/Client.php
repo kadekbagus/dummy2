@@ -56,7 +56,6 @@ class Client
 
         $this->queryString['tid'] = $this->config['tid'];
         $this->queryString['v'] = '1';
-        $this->queryString['t'] = 'event';
         $this->queryString['cid'] = '555'; // default cid (anonymous)
         $this->userAgent = 'Mozilla/5.0 (Linux; Android 4.0.4; Galaxy Nexus Build/IMM76B) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.133 Mobile Safari/535.19';
     }
@@ -97,12 +96,18 @@ class Client
                 return;
             }
 
-            // validate other parameters (required: ec, ea)
-            if (! isset($this->queryString['ec']) || empty($this->queryString['ec'])) {
-                throw new OrbitCustomException("Event Category (ec) parameter is required", 1);
+            // validate other parameters (required: t, ec, ea)
+            if (! isset($this->queryString['t']) || empty($this->queryString['t'])) {
+                throw new OrbitCustomException("Hit Type (t) parameter is required", 1);
             }
-            if (! isset($this->queryString['ea']) || empty($this->queryString['ea'])) {
-                throw new OrbitCustomException("Event Action (ea) parameter is required", 1);
+
+            if ($this->queryString['t'] == 'event') {
+                if (! isset($this->queryString['ec']) || empty($this->queryString['ec'])) {
+                    throw new OrbitCustomException("Event Category (ec) parameter is required", 1);
+                }
+                if (! isset($this->queryString['ea']) || empty($this->queryString['ea'])) {
+                    throw new OrbitCustomException("Event Action (ea) parameter is required", 1);
+                }
             }
 
             $options = [];

@@ -179,6 +179,7 @@ class ESArticleUpdateQueue
                 $linkToMedia = array(
                     "media_name_long" => $media->media_name_long,
                     "image_url" => $media->path,
+                    "image_cdn_url" => $media->cdn_url,
                 );
 
                 $linkToMedias[] = $linkToMedia;
