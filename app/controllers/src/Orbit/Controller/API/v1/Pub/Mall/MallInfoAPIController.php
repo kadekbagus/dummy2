@@ -18,7 +18,7 @@ use stdClass;
 use Redis;
 use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
-use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 use Orbit\Helper\Util\FollowStatusChecker;
 use \Orbit\Helper\Exception\OrbitCustomException;
 use DB;
@@ -140,7 +140,7 @@ class MallInfoAPIController extends PubControllerAPI
             $area_data = $response['hits'];
             $listmall = array();
             $cdnConfig = Config::get('orbit.cdn');
-            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            $imgUrl = CdnUrlGeneratorWithCloudfront::create(['cdn' => $cdnConfig], 'cdn');
 
             $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
             $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
