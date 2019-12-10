@@ -16,7 +16,7 @@ use Mall;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
-use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 
 class MallAreaAPIController extends PubControllerAPI
 {
@@ -167,7 +167,7 @@ class MallAreaAPIController extends PubControllerAPI
             $area_data = $response['hits'];
             $listmall = array();
             $cdnConfig = Config::get('orbit.cdn');
-            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            $imgUrl = CdnUrlGeneratorWithCloudfront::create(['cdn' => $cdnConfig], 'cdn');
 
             foreach ($area_data['hits'] as $dt) {
                 $areadata['id'] = $dt['_id'];
