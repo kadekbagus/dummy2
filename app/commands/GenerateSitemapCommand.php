@@ -164,6 +164,10 @@ class GenerateSitemapCommand extends Command
                     $this->generateArticleListSitemap();
                     break;
 
+                case 'pulsa':
+                    $this->generatePulsaOperatorDetailSitemap();
+                    break;
+
                 case 'misc':
                     $this->generateMiscListSitemap();
                     break;
@@ -239,6 +243,10 @@ class GenerateSitemapCommand extends Command
 
                 case 'partner':
                     $xml = $this->generatePartnerDetailsSitemap();
+                    break;
+
+                case 'pulsa':
+                    $xml = $this->generatePulsaOperatorDetailSitemap();
                     break;
 
                 default:
@@ -608,6 +616,20 @@ class GenerateSitemapCommand extends Command
     }
 
     /**
+     * Generate sitemap for each pulsa operator page.
+     * @return void
+     */
+    protected function generatePulsaOperatorDetailSitemap()
+    {
+        // Get operator list.
+        $operatorList = TelcoOperator::select('slug')->where('status', 'active')->latest()->get();
+
+        // Append to sitemap
+        $detailUri = Config::get('orbit.sitemap.uri_properties.detail.pulsa', []);
+        $this->detailAppender($operatorList, 'pulsa', $this->urlTemplate, $detailUri);
+    }
+
+    /**
      * Single function to append urls
      *
      * @param $xml DOMDocument
@@ -652,6 +674,10 @@ class GenerateSitemapCommand extends Command
                     $updatedAt = strtotime($record->updated_at);
                     break;
 
+                case 'pulsa':
+                    $slug = $record->slug;
+                    break;
+
                 default:
                     # code...
                     break;
@@ -660,7 +686,7 @@ class GenerateSitemapCommand extends Command
             if (! empty($mall_id)) {
                 $this->urlStringPrinter(sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $id, Str::slug($name))), date('c', $updatedAt), $detailUri['changefreq']);
             } else {
-                if ($type == 'article') {
+                if (in_array($type, ['article', 'pulsa'])) {
                     $this->urlStringPrinter(sprintf(sprintf($urlTemplate, $detailUri['uri']), $slug), date('c', $updatedAt), $detailUri['changefreq']);
                 } else {
                     $this->urlStringPrinter(sprintf(sprintf($urlTemplate, $detailUri['uri']), $id, Str::slug($name)), date('c', $updatedAt), $detailUri['changefreq']);
