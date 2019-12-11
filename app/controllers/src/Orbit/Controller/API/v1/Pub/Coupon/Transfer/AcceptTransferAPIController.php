@@ -24,7 +24,7 @@ class AcceptTransferAPIController extends PubControllerAPI
             // @todo Should be able to type-hint from method/constructor.
             // If request valid, there should be an instance of IssuedCoupon
             // available in the container.
-            (new AcceptTransferRequest($this))->auth()->validate();
+            (new AcceptTransferRequest($this))->validate();
 
             // Accept coupon transfer...
             $couponTransfer = App::make(CouponTransferRepository::class);
@@ -36,9 +36,7 @@ class AcceptTransferAPIController extends PubControllerAPI
             $this->response->data = $couponTransfer->getResponseData();
 
         } catch (Exception $e) {
-            $response = $this->buildExceptionResponse($e, false);
-            $httpCode = $response['httpCode'];
-            $this->response = $response['body'];
+            return $this->handleException($e, false);
         }
 
         return $this->render($httpCode);

@@ -26,7 +26,7 @@ class CancelTransferAPIController extends PubControllerAPI
             // @todo Should be able to type-hint from method/constructor.
             // If request valid, there should be an instance of IssuedCoupon
             // available in the container.
-            (new CancelTransferRequest($this))->auth()->validate();
+            (new CancelTransferRequest($this))->validate();
 
             // Cancel coupon transfer...
             $couponTransfer = App::make(CouponTransferRepository::class);
@@ -38,9 +38,7 @@ class CancelTransferAPIController extends PubControllerAPI
             $this->response->data = $couponTransfer->getResponseData();
 
         } catch (Exception $e) {
-            $response = $this->buildExceptionResponse($e, false);
-            $httpCode = $response['httpCode'];
-            $this->response = $response['body'];
+            return $this->handleException($e, false);
         }
 
         return $this->render($httpCode);

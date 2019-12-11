@@ -37,16 +37,16 @@ class ValidateRequest implements ValidateRequestInterface
     protected $bail = false;
 
     /**
-     * Validator instance.
-     * @var null
-     */
-    protected $validator = null;
-
-    /**
      * Indicate that request must be authenticated.
      * @var boolean
      */
     protected $authRequest = true;
+
+    /**
+     * Validator instance.
+     * @var null
+     */
+    protected $validator = null;
 
     public function __construct($controller = null)
     {
@@ -86,11 +86,20 @@ class ValidateRequest implements ValidateRequestInterface
      * @param object $user
      * @return  self
      */
-    public function setUser($user)
+    private function setUser($user)
     {
         $this->user = $user;
 
         return $this;
+    }
+
+    /**
+     * Get user.
+     * @return User
+     */
+    public function user()
+    {
+        return $this->user;
     }
 
     /**
@@ -103,28 +112,56 @@ class ValidateRequest implements ValidateRequestInterface
     }
 
     /**
+     * Get the validation error message.
+     *
+     * Can be overriden when we need custom message
+     * based on custom validation rule.
+     *
+     * @return string
+     */
+    public function getValidationErrorMessage()
+    {
+        return $this->validator->messages()->first();
+    }
+
+    /**
      * Validate form request.
      *
      * @param  array  $data     [description]
      * @param  array  $rules    [description]
      * @param  array  $messages [description]
-     * @return [type]           [description]
+     * @return self
      */
     public function validate(array $data = [], array $rules = [], array $messages = [])
     {
+        // In case we have custom validation rules, register
+        // in inside following method.
         if (method_exists($this, 'registerCustomValidations')) {
             $this->registerCustomValidations();
         }
 
+        // Make validator with request data, rules, and custom messages.
         $this->validator = Validator::make(
             array_merge(Request::all(), $data),
             array_merge($this->rules(), $rules),
             array_merge($this->messages(), $messages)
         );
 
+        // If validation fails, then throw exception so controller
+        // can handle it properly.
         if ($this->validator->fails()) {
-            $errorMessage = $this->validator->messages()->first();
-            OrbitShopAPI::throwInvalidArgument($errorMessage);
+            OrbitShopAPI::throwInvalidArgument($this->getValidationErrorMessage());
         }
+    }
+
+    /**
+     * Try to get item from request param.
+     *
+     * @param  [type] $property [description]
+     * @return [type]           [description]
+     */
+    public function __get($property)
+    {
+        return Request::input($property);
     }
 }

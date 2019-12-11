@@ -79,20 +79,21 @@ class PubControllerAPI extends ControllerAPI
     }
 
     /**
-     * Build response when we catch exception.
+     * handle exception.
      *
      * @param  \Exception $e                    [description]
      * @param  boolean    $withDatabaseRollback [description]
      * @return [type]                           [description]
      */
-    protected function buildExceptionResponse($e, $withDatabaseRollback = true)
+    protected function handleException($e, $withDatabaseRollback = true)
     {
         if ($withDatabaseRollback) {
             $this->rollBack();
         }
 
+        $debug = Config::get('app.debug');
         $httpCode = 500;
-        $body = new ExceptionResponseProvider($e);
+        $this->response = new ExceptionResponseProvider($e);
 
         if ($e instanceof ACLForbiddenException) {
             $httpCode = 403;
@@ -103,16 +104,19 @@ class PubControllerAPI extends ControllerAPI
             // set custom code/message
         }
         else if ($e instanceof QueryException) {
-            if (Config::get('app.debug')) {
-                $body->message = $e->getMessage();
+            if ($debug) {
+                $this->response->message = $e->getMessage();
             } else {
-                $body->message = Lang::get('validation.orbit.queryerror');
+                $this->response->message = Lang::get('validation.orbit.queryerror');
             }
         }
         else {
             // set other code/message...
+            if ($debug) {
+                $this->response->message = $e->getFile() . ':' . $e->getLine() . ' >> ' . $e->getMessage();
+            }
         }
 
-        return compact('httpCode', 'body');
+        return $this->render($httpCode);
     }
 }

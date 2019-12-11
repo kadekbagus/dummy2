@@ -1,12 +1,32 @@
 <?php namespace Orbit\Helper\Request\Contracts;
 
 /**
- * Form Request Interface.
+ * Interface for any class that implement request validation.
+ *
  *
  * @author Budi <budi@gotomalls.com>
  */
 interface ValidateRequestInterface
 {
+    /**
+     * Authenticate user.
+     * @param  [type] $controller [description]
+     * @return [type]             [description]
+     */
+    public function auth($controller = null);
+
+    /**
+     * Get data being validated.
+     * @return [type] [description]
+     */
+    public function getData();
+
+    /**
+     * Get validation error message.
+     * @return [type] [description]
+     */
+    public function getValidationErrorMessage();
+
     /**
      * Validate form request.
      *
