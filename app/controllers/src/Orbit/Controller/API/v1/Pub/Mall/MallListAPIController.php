@@ -22,7 +22,7 @@ use DB;
 use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
 use Orbit\Helper\Util\SimpleCache;
-use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 use MallCountry;
 use MallCity;
 use Country;
@@ -354,7 +354,7 @@ class MallListAPIController extends PubControllerAPI
             $area_data = $response['hits'];
             $listmall = array();
             $cdnConfig = Config::get('orbit.cdn');
-            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            $imgUrl = CdnUrlGeneratorWithCloudfront::create(['cdn' => $cdnConfig], 'cdn');
 
             $total = $area_data['total'];
             foreach ($area_data['hits'] as $dt) {
