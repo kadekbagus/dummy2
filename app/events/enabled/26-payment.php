@@ -76,10 +76,10 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
             Log::info("Pulsa: Will try to purchase pulsa to MCash in a few seconds for {$paymentId} ...");
 
             // @notes shouldn't we use specific queue/tube for this?
-            Queue::later(
-                10,
+            Queue::push(
                 'Orbit\\Queue\\Pulsa\\GetPulsaQueue',
-                $queueData
+                $queueData,
+                'gtm_pulsa'
             );
         }
         else if ($payment->forSepulsa() || $payment->paidWith(['bank_transfer', 'echannel', 'gopay'])) {
