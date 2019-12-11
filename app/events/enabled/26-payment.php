@@ -79,7 +79,8 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
             Queue::later(
                 10,
                 'Orbit\\Queue\\Pulsa\\GetPulsaQueue',
-                $queueData
+                $queueData,
+                'gtm_pulsa'
             );
         }
         else if ($payment->forSepulsa() || $payment->paidWith(['bank_transfer', 'echannel', 'gopay'])) {
