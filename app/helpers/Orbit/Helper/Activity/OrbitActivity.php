@@ -1,6 +1,7 @@
 <?php namespace Orbit\Helper\Activity;
 
 use Activity;
+use Exception;
 
 /**
  * Activity Helper Class.
@@ -31,7 +32,7 @@ class OrbitActivity
 {
     protected $activityModel;
 
-    protected $isMobileCI = true;
+    protected $scope = 'mobileci';
 
     protected $responseSuccess = true;
 
@@ -51,12 +52,7 @@ class OrbitActivity
 
     function __construct($subject = null, $object = null, $additionalData = [])
     {
-        if ($this->isMobileCI) {
-            $this->activityModel = ActivityModel::mobileci();
-        }
-        else {
-            $this->activityModel = ActivityModel::csportal();
-        }
+        $this->activityModel = Activity::{$this->scope}();
 
         if (! empty($subject)) {
             $this->activityModel->setUser($subject);
@@ -75,36 +71,40 @@ class OrbitActivity
      * Set the subject/user of the activity.
      *
      * @param [type] $subject [description]
+     * @return  self
      */
     public function setSubject($subject = null)
     {
-        if (! empty($subject)) {
-           $this->subject = $subject;
-           $this->activityModel->setUser($subject);
-
-           return $this;
+        if (empty($subject)) {
+            throw new Exception('Empty subject!');
         }
 
-        throw new Exception('Empty subject!');
+        $this->activityModel->setUser($subject);
+
+        return $this;
     }
 
     /**
      * Set the object of the activity.
      *
      * @param [type] $object [description]
+     * @return  self
      */
     public function setObject($object = null)
     {
-        $this->object = $object;
+        if (empty($object)) {
+            throw new Exception("Empty object");
+        }
+
         $this->activityModel->setObject($object);
+
         return $this;
     }
 
     /**
      * Record the Activity!
      *
-     * @param  array  $activityData [description]
-     * @return [type]               [description]
+     * @return void
      */
     public function record()
     {
@@ -134,7 +134,7 @@ class OrbitActivity
     /**
      * Build activity data based on activityData property.
      *
-     * @return [type] [description]
+     * @return self
      */
     protected function buildActivityData()
     {
@@ -152,7 +152,7 @@ class OrbitActivity
     /**
      * Save the Activity.
      *
-     * @return [type] [description]
+     * @return void
      */
     protected function save()
     {

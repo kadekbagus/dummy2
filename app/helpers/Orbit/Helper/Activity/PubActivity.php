@@ -7,5 +7,5 @@
  */
 class PubActivity extends OrbitActivity
 {
-    protected $isMobileCI = true;
+
 }
