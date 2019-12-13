@@ -45,7 +45,7 @@ class CheckPulsaListAPIController extends PubControllerAPI
                             ->join('telco_operators', 'pulsa.telco_operator_id', '=', 'telco_operators.telco_operator_id')
                             ->join('countries', 'telco_operators.country_id', '=', 'countries.country_id')
                             ->where('countries.name', $country)
-                            ->where('status', '<>', 'deleted')
+                            ->where('pulsa.status', '<>', 'deleted')
                             ->orderBy('pulsa.pulsa_code');
 
             $listOfRec = $pulsa->get();
