@@ -25,6 +25,7 @@ use \Orbit\Helper\Exception\OrbitCustomException;
 use TotalObjectPageView;
 use Redis;
 use Orbit\Helper\Util\FollowStatusChecker;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 
 class StoreDetailAPIController extends PubControllerAPI
 {

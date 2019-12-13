@@ -97,7 +97,7 @@ class PulsaReportTotalMonthlyAPIController extends ControllerAPI
 							SELECT
 								SUM(amount) AS total_amount,
 								COUNT(pt.payment_transaction_id) AS counter,
-								DATE_FORMAT(pt.updated_at, '%Y-%m-01 00:00:00') AS view_date,
+								DATE_FORMAT(CONVERT_TZ(pt.updated_at, '+00:00', timezone_name), '%Y-%m-01 00:00:00') AS view_date,
 					            count(distinct user_id) as total_unique_user
 							FROM
 								{$prefix}payment_transactions pt
@@ -106,7 +106,7 @@ class PulsaReportTotalMonthlyAPIController extends ControllerAPI
 					            ON ptd.payment_transaction_id = pt.payment_transaction_id
 							WHERE
 								status = 'success'
-								AND ptd.object_type = 'pulsa'
+								AND ptd.object_type in ('pulsa', 'data_plan')
 							GROUP BY view_date
 							ORDER BY view_date ASC
 						) as p2
