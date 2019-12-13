@@ -2,6 +2,8 @@
 
 /**
  * A trait that allow an object/instance to record an activity.
+ *
+ * @author Budi <budi@gotomalls.com>
  */
 trait HasActivity {
 
@@ -13,10 +15,8 @@ trait HasActivity {
      * @param  array  $additionalData [description]
      * @return [type]                 [description]
      */
-    public function activity($activityClass, $additionalData = [])
+    public function record($activityClass, $additionalData = [])
     {
-        $activityClass->setSubject($this)
-                      ->mergeAdditionalData($additionalData)
-                      ->record();
+        $activityClass->setSubject($this)->record();
     }
 }

@@ -1,17 +1,20 @@
 <?php namespace Orbit\Helper\Activity;
 
-use Activity as ActivityModel;
+use Activity;
 
 /**
  * Activity Helper Class.
  *
- * A class that will simplify how controllers record activities.
+ * A class that will simplify how controllers record activities. Simplifying means
+ * making controllers as clean as possible by moving other common routines into
+ * their own classes.
  *
  * Most of the time, we would write code like this on the controllers:
  * Activity::mobileci()
  *          ->setActivityType('transaction')
  *          ->setUser($payment_update->user)
- *          ->setActivityName('transaction_status');setActivityNameLong('Transaction is Failed')
+ *          ->setActivityName('transaction_status')
+ *          ->setActivityNameLong('Transaction is Failed')
  *          ->setModuleName('Midtrans Transaction')
  *          ->setObject($payment_update)
  *          ->setNotes('Transaction is failed from Midtrans/Customer.')
@@ -20,20 +23,15 @@ use Activity as ActivityModel;
  *          ->save();
  *
  * By utilizing this helper, we could do:
- * $user->activity(new TransactionFailedActivity(null, $payment_update, ['location' => $mall]));
+ * $user->activity(new TransactionFailedActivity($payment_update, ['location' => $mall]));
  *
- * And of course, we also will be able to do this:
- * (new TransactionFailedActivity($user, $payment_update, ['location' => $mall]))->record();
- *
- * @author Budi <budi@dominopos.com>
+ * @author Budi <budi@gotomalls.com>
  */
-abstract class Activity
+class OrbitActivity
 {
     protected $activityModel;
 
     protected $isMobileCI = true;
-
-    protected $object = null;
 
     protected $responseSuccess = true;
 
@@ -69,7 +67,7 @@ abstract class Activity
         }
 
         if (! empty($additionalData)) {
-            $this->mergeAdditionalData($additionalData);
+            $this->mergeData($additionalData);
         }
     }
 
@@ -103,48 +101,34 @@ abstract class Activity
     }
 
     /**
-     * Merge additional activity data. Different with hook addAdditionalData(),
-     * this method is public so can be called directly from an object instance.
-     *
-     * @param array $activityData [description]
-     */
-    public function mergeAdditionalData($additionalData = [])
-    {
-        if (! empty($additionalData)) {
-            $this->activityData = array_merge($this->activityData, $additionalData);
-        }
-
-        return $this;
-    }
-
-    /**
      * Record the Activity!
      *
      * @param  array  $activityData [description]
      * @return [type]               [description]
      */
-    public function record($activityData = [])
+    public function record()
     {
         // Add additional data if needed.
-        $this->mergeAdditionalData($this->addAdditionalData());
+        if (method_exists($this, 'getAdditionalData')) {
+            $this->mergeData($this->getAdditionalData());
+        }
 
         // Build activity data.
-        $this->buildActivityData();
-
-        // Save it.
-        $this->saveActivity();
+        $this->buildActivityData()->save();
     }
 
     /**
-     * A hook that let child classes add custom activity data
-     * specific for their needs. By default does nothing,
-     * because it meant to be overriden when needed.
+     * Merge given data to activity data.
      *
-     * @return [type] [description]
+     * @return self
      */
-    protected function addAdditionalData()
+    public function mergeData($data = [])
     {
-        return [];
+        if (! empty($data)) {
+            $this->activityData = array_merge($this->activityData, $data);
+        }
+
+        return $this;
     }
 
     /**
@@ -161,6 +145,8 @@ abstract class Activity
         if (! $this->responseSuccess) {
             $this->activityModel->responseFailed();
         }
+
+        return $this;
     }
 
     /**
@@ -168,7 +154,7 @@ abstract class Activity
      *
      * @return [type] [description]
      */
-    protected function saveActivity()
+    protected function save()
     {
         $this->activityModel->save();
     }
