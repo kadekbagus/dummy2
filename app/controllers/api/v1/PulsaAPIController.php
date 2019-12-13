@@ -551,7 +551,7 @@ class PulsaAPIController extends ControllerAPI
             $pulsa = Pulsa::select('pulsa.pulsa_item_id', 'pulsa.pulsa_code', 'pulsa.pulsa_display_name', 'telco_operators.name', 'pulsa.value', 'pulsa.price', 'pulsa.quantity', 'pulsa.status', 'pulsa.vendor_price', 'object_type', 'is_promo')
                           ->leftJoin('telco_operators', 'telco_operators.telco_operator_id', '=', 'pulsa.telco_operator_id')
                           ->where('object_type', $object_type)
-                          ->whereNotIn('status', ['deleted']);
+                          ->whereNotIn('pulsa.status', ['deleted']);
 
             // Filter pulsa by pulsa item id
             OrbitInput::get('pulsa_item_id', function ($pulsaItemId) use ($pulsa) {
