@@ -219,7 +219,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
 
             $cdnConfig = Config::get('orbit.cdn');
             $imgUrl = CdnUrlGeneratorWithCloudfront::create(['cdn' => $cdnConfig], 'cdn');
-            $promotion->original_media_path = $imgUrl->getImageUrl($promotion->original_media_path);
+            $promotionalEvent->original_media_path = $imgUrl->getImageUrl($promotion->original_media_path);
 
             // Only campaign having status ongoing and is_started true can going to detail page
             if (! in_array($promotionalEvent->campaign_status, ['ongoing', 'expired']) || ($promotionalEvent->campaign_status == 'ongoing' && $promotionalEvent->is_started == 'false')) {
