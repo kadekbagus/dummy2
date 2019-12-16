@@ -24,6 +24,11 @@ Route::post('/app/v1/coupon/update', 'IntermediateAuthController@Coupon_postUpda
 Route::get('/app/v1/coupon/search', 'IntermediateAuthController@Coupon_getSearchCoupon');
 
 /**
+ * Detail coupon
+ */
+Route::get('/app/v1/coupon/detail', 'IntermediateAuthController@Coupon_getDetailCoupon');
+
+/**
  * List and/or Search coupon by issue retailer
  */
 Route::get('/app/v1/coupon/by-issue-retailer/search', 'IntermediateAuthController@Coupon_getSearchCouponByIssueRetailer');
