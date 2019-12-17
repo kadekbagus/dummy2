@@ -183,7 +183,9 @@ class CouponTransferRepository
             $this->issuedCoupon->original_user_id = $this->issuedCoupon->user_id;
             $this->issuedCoupon->transfer_status = 'complete';
             $this->issuedCoupon->transfer_complete_at = Carbon::now();
-            $this->issuedCoupon->user_id = $this->getNewOwner()->user_id; // change to new owner
+            $newOwner = $this->getNewOwner();
+            $this->issuedCoupon->user_id = $newOwner->user_id; // change to new owner
+            $this->issuedCoupon->user_email = $newOwner->user_email; // change to new owner
             $this->issuedCoupon->save();
 
         });
