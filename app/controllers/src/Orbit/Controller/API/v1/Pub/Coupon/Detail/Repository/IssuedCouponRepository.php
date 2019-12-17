@@ -45,7 +45,7 @@ class IssuedCouponRepository
                 $availableForRedeem = 0;
             }
         }
-        return  $availableForRedeem;
+        return  (int) $availableForRedeem;
     }
 
     /**
@@ -63,7 +63,7 @@ class IssuedCouponRepository
                     ->orWhere('transfer_status', 'complete');
             })
             ->get();
-        return ! empty($issuedCoupons);
+        return ! $issuedCoupons->isEmpty();
     }
 
     private function userHasUniqueCoupon($userId, $couponId)
@@ -105,7 +105,7 @@ class IssuedCouponRepository
         $coupon->hasRedeemableCoupon = $this->userHasRedeemableCoupon(
             $user->user_id,
             $coupon->promotion_id
-        ) && $coupon->available_for_redeem;
+        ) && ($coupon->available_for_redeem > 0);
 
         // set maximum redeemed to maximum issued when empty
         if ($coupon->maximum_redeem === '0') {
