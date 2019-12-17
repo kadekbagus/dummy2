@@ -85,10 +85,14 @@ class IssuedCouponRepository
     {
         $checkIssued = IssuedCoupon::where('promotion_id', $couponId)
             ->where(function($query) use ($userId) {
+                //original user of non transfered coupon is considered the one that is
+                //restricted to get another unique coupon after coupon is redeemed
                 $query->where('user_id', $userId)
                     ->whereNull('transfer_status')
                     ->whereNotIn('status', ['issued', 'deleted']);
             })->orWhere(function($query) use ($userId) {
+                //original user of transfered coupon is considered the one that is
+                //restricted to get another unique coupon
                 $query->where('original_user_id', $userId)
                     ->where('transfer_status', 'complete');
             })
