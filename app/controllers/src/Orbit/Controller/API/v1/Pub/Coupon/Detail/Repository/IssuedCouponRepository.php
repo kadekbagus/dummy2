@@ -66,6 +66,21 @@ class IssuedCouponRepository
         return ! $issuedCoupons->isEmpty();
     }
 
+    /**
+     * test if a user has issued ongoing coupon transfer
+     */
+    private function userHasOngoingCouponTransfer($userId, $couponId)
+    {
+        $issuedCoupons = IssuedCoupon::select('issued_coupon_id')
+            ->where('user_id', $userId)
+            ->where('promotion_id', $couponId)
+            ->where('status', 'issued')
+            ->where('expired_date', '>', Carbon::now())
+            ->where('transfer_status', 'in_progress')
+            ->get();
+        return ! $issuedCoupons->isEmpty();
+    }
+
     private function userHasUniqueCoupon($userId, $couponId)
     {
         $checkIssued = IssuedCoupon::where('promotion_id', $couponId)
@@ -106,6 +121,11 @@ class IssuedCouponRepository
             $user->user_id,
             $coupon->promotion_id
         ) && ($coupon->available_for_redeem > 0);
+
+        $coupon->hasOngoingCouponTransfer = $this->userHasOngoingCouponTransfer(
+            $user->user_id,
+            $coupon->promotion_id
+        );
 
         // set maximum redeemed to maximum issued when empty
         if ($coupon->maximum_redeem === '0') {
