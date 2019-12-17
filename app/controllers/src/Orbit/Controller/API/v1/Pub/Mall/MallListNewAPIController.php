@@ -345,13 +345,14 @@ class MallListNewAPIController extends PubControllerAPI
                     $pageView = (int) $pageViewGTM + (int) $pageViewMall;
                 }
 
-                $followStatus = false;
-                if (! empty($objectFollow)) {
-                    if (in_array($mallId, $objectFollow)) {
-                        // if mall_id is available inside $objectFollow set follow status to true
-                        $followStatus = true;
-                    }
-                }
+                /*** disable follow status on listing ***/
+                // $followStatus = false;
+                // if (! empty($objectFollow)) {
+                //     if (in_array($mallId, $objectFollow)) {
+                //         // if mall_id is available inside $objectFollow set follow status to true
+                //         $followStatus = true;
+                //     }
+                // }
 
                 if ($words === 1) {
                     // handle if user filter location with one word, ex "jakarta", data in city "jakarta selatan", "jakarta barat" etc will be dissapear
@@ -397,7 +398,8 @@ class MallListNewAPIController extends PubControllerAPI
                             }
                         }
 
-                        $areadata['follow_status'] = $followStatus;
+                        /*** disable follow status on listing ***/
+                        //$areadata['follow_status'] = $followStatus;
                         $listmall[] = $areadata;
                     }
                     $total = count($listmall);
@@ -440,7 +442,8 @@ class MallListNewAPIController extends PubControllerAPI
                         $areadata['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
                     }
 
-                    $areadata['follow_status'] = $followStatus;
+                    /*** disable follow status on listing ***/
+                    //$areadata['follow_status'] = $followStatus;
                     $listmall[] = $areadata;
                 }
             }
