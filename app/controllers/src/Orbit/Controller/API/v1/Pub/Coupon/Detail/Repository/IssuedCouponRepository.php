@@ -83,7 +83,8 @@ class IssuedCouponRepository
 
     private function userHasUniqueCoupon($userId, $couponId)
     {
-        $checkIssued = IssuedCoupon::where('promotion_id', $couponId)
+        $claimedUniqueCoupon = IssuedCoupon::select('issued_coupon_id')
+            ->where('promotion_id', $couponId)
             ->where(function ($qry) use ($userId) {
                 $qry->where(function($query) use ($userId) {
                     //original user of non transfered coupon is considered the one that is
@@ -100,7 +101,7 @@ class IssuedCouponRepository
             })
             ->first();
 
-        return ! empty($checkIssued);
+        return ! empty($claimedUniqueCoupon);
     }
 
     public function addIssuedCouponData($coupon, $user)
