@@ -45,7 +45,7 @@ class IssuedCouponRepository
                 $availableForRedeem = 0;
             }
         }
-        return  (int) $availableForRedeem;
+        return (int) $availableForRedeem;
     }
 
     /**
