@@ -275,7 +275,7 @@ class CouponDetailAPIController extends PubControllerAPI
                         ->orderBy('issued_coupons.expired_date', 'asc');
 
             OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
-                $coupon->havingRaw("mall_id = {$this->quote($mallId)}");
+                //$coupon->havingRaw("mall_id = {$this->quote($mallId)}");
                 $mall = Mall::excludeDeleted()
                         ->where('merchant_id', $mallId)
                         ->first();
