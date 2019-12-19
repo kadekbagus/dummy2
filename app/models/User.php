@@ -4,6 +4,7 @@ use Illuminate\Auth\UserTrait;
 use Illuminate\Auth\UserInterface;
 
 use Orbit\Helper\Notifications\Notifiable;
+// use Orbit\Helper\Activity\Activity;
 
 class User extends Eloquent implements UserInterface
 {
@@ -385,4 +386,8 @@ class User extends Eloquent implements UserInterface
         return $membershipNumbers->get();
     }
 
+    public function roleIs($roles = [])
+    {
+        return in_array(strtolower($this->role->role_name), $roles);
+    }
 }

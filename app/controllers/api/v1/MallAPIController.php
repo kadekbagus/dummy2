@@ -567,6 +567,9 @@ class MallAPIController extends ControllerAPI
             $newmall->video_id_6 = $video_id_6;
             $newmall->other_photo_section_title = $other_photo_section_title;
 
+            $newmall->mall_google_indoor_map = $mall_google_indoor_map;
+            $newmall->mall_google_indoor_streetview = $mall_google_indoor_streetview;
+
             $newmall->modified_by = $this->api->user->user_id;
 
             Event::fire('orbit.mall.postnewmall.before.save', array($this, $newmall));
@@ -2006,6 +2009,14 @@ class MallAPIController extends ControllerAPI
 
             OrbitInput::post('other_photo_section_title', function($other_photo_section_title) use ($updatedmall) {
                 $updatedmall->other_photo_section_title = $other_photo_section_title;
+            });
+
+            OrbitInput::post('mall_google_indoor_map', function($mall_google_indoor_map) use ($updatedmall) {
+                $updatedmall->mall_google_indoor_map = $mall_google_indoor_map;
+            });
+
+            OrbitInput::post('mall_google_indoor_streetview', function($mall_google_indoor_streetview) use ($updatedmall) {
+                $updatedmall->mall_google_indoor_streetview = $mall_google_indoor_streetview;
             });
 
             $updatedmall->modified_by = $this->api->user->user_id;
