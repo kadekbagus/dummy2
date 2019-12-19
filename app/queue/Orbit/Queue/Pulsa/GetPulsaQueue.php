@@ -131,9 +131,11 @@ class GetPulsaQueue
                 // Notify Customer.
                 $payment->user->notify(new ReceiptNotification($payment, $pulsaPurchase->getSerialNumber()));
 
+                $cid = time();
                 // send google analitics event hit
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))
                     ->setQueryString([
+                        'cid' => $cid,
                         't' => 'event',
                         'ea' => 'Purchase Pulsa Successful',
                         'ec' => 'Pulsa',
@@ -150,6 +152,7 @@ class GetPulsaQueue
                     // send google analitics transaction hit
                     GMP::create(Config::get('orbit.partners_api.google_measurement'))
                         ->setQueryString([
+                            'cid' => $cid,
                             't' => 'transaction',
                             'ti' => $payment->payment_transaction_id,
                             'tr' => $payment->amount,
@@ -160,6 +163,7 @@ class GetPulsaQueue
                     // send google analitics item hit
                     GMP::create(Config::get('orbit.partners_api.google_measurement'))
                         ->setQueryString([
+                            'cid' => $cid,
                             't' => 'item',
                             'ti' => $payment->payment_transaction_id,
                             'in' => $pulsa->pulsa_display_name,
@@ -216,8 +220,11 @@ class GetPulsaQueue
                     $this->log("Promo code {$discountCode} issued for purchase {$paymentId}");
                 }
 
+                $cid = time();
+
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))
                     ->setQueryString([
+                        'cid' => $cid,
                         't' => 'event',
                         'ea' => 'Purchase Pulsa Successful',
                         'ec' => 'Pulsa',
@@ -234,6 +241,7 @@ class GetPulsaQueue
                     // send google analitics transaction hit
                     GMP::create(Config::get('orbit.partners_api.google_measurement'))
                         ->setQueryString([
+                            'cid' => $cid,
                             't' => 'transaction',
                             'ti' => $payment->payment_transaction_id,
                             'tr' => $payment->amount,
@@ -244,6 +252,7 @@ class GetPulsaQueue
                     // send google analitics item hit
                     GMP::create(Config::get('orbit.partners_api.google_measurement'))
                         ->setQueryString([
+                            'cid' => $cid,
                             't' => 'item',
                             'ti' => $payment->payment_transaction_id,
                             'in' => $pulsa->pulsa_display_name,
@@ -261,6 +270,7 @@ class GetPulsaQueue
 
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))
                     ->setQueryString([
+                        'cid' => time(),
                         't' => 'event',
                         'ea' => 'Purchase Pulsa Retry ' . $data['retry'],
                         'ec' => 'Pulsa',
@@ -385,6 +395,7 @@ class GetPulsaQueue
 
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))
                     ->setQueryString([
+                        'cid' => time(),
                         't' => 'event',
                         'ea' => 'Purchase Pulsa Failed',
                         'ec' => 'Pulsa',

@@ -56,7 +56,7 @@ class Client
 
         $this->queryString['tid'] = $this->config['tid'];
         $this->queryString['v'] = '1';
-        $this->queryString['cid'] = '555'; // default cid (anonymous)
+
         $this->userAgent = 'Mozilla/5.0 (Linux; Android 4.0.4; Galaxy Nexus Build/IMM76B) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.133 Mobile Safari/535.19';
     }
 
@@ -108,6 +108,10 @@ class Client
                 if (! isset($this->queryString['ea']) || empty($this->queryString['ea'])) {
                     throw new OrbitCustomException("Event Action (ea) parameter is required", 1);
                 }
+            }
+
+            if (! isset($this->queryString['cid']) || empty($this->queryString['cid'])) {
+                $this->queryString['cid'] = time(); // randomize cid to prevent 500 request limit /session/day
             }
 
             $options = [];
