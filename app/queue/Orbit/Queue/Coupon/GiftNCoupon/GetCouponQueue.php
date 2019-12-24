@@ -134,6 +134,7 @@ class GetCouponQueue
 
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))
                     ->setQueryString([
+                        'cid' => time(),
                         't' => 'event',
                         'ea' => 'Purchase Coupon Successful',
                         'ec' => 'Coupon',
@@ -219,6 +220,7 @@ class GetCouponQueue
                 $objectName = $payment->details->first()->object_name;
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))
                     ->setQueryString([
+                        'cid' => time(),
                         't' => 'event',
                         'ea' => 'Purchase Coupon Failed',
                         'ec' => 'Coupon',

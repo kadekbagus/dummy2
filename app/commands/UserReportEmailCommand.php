@@ -550,7 +550,7 @@ class UserReportEmailCommand extends Command {
 	protected function getOptions()
 	{
         return array(
-             array('id', null, InputOption::VALUE_OPTIONAL, 'Store id or base store id to copy.', null),
+             array('id', null, InputOption::VALUE_OPTIONAL, 'the user id.', null),
             array('dry-run', null, InputOption::VALUE_NONE, 'Run in dry-run mode, no data will be sent', null),
         );
 	}
