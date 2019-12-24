@@ -284,7 +284,8 @@ class GetPulsaQueue
                 Queue::later(
                     $this->retryDelay,
                     'Orbit\\Queue\\Pulsa\\GetPulsaQueue',
-                    $data
+                    $data,
+                    'gtm_pulsa'
                 );
 
                 // Send notification each time we do retry...

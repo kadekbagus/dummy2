@@ -32,6 +32,7 @@ use Orbit\Controller\API\v1\Pub\Coupon\Detail\Repository\IssuedCouponRepository;
 use Orbit\Controller\API\v1\Pub\Coupon\Detail\Repository\PaymentRepository;
 use Orbit\Controller\API\v1\Pub\Coupon\Detail\Repository\TimezoneRepository;
 use Orbit\Controller\API\v1\Pub\Coupon\Detail\Repository\TenantRepository;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 use App;
 
 //TODO: redeem coupon and coupon detail on frontend both use this class.
@@ -140,7 +141,7 @@ class CouponDetailAPIController extends PubControllerAPI
                             DB::Raw("
                                     CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as promotion_name,
                                     CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN default_translation.description ELSE {$prefix}coupon_translations.description END as description,
-                                    CASE WHEN (SELECT {$image}
+                                    CASE WHEN (SELECT m.path
                                         FROM {$prefix}media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
                                         AND m.object_id = {$prefix}coupon_translations.coupon_translation_id
@@ -148,7 +149,7 @@ class CouponDetailAPIController extends PubControllerAPI
                                         LIMIT 1
                                         ) is null
                                     THEN
-                                        (SELECT {$image}
+                                        (SELECT m.path
                                         FROM {$prefix}media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
                                         AND m.object_id = default_translation.coupon_translation_id
@@ -156,7 +157,7 @@ class CouponDetailAPIController extends PubControllerAPI
                                         LIMIT 1
                                         )
                                     ELSE
-                                        (SELECT {$image}
+                                        (SELECT m.path
                                         FROM {$prefix}media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
                                         AND m.object_id = {$prefix}coupon_translations.coupon_translation_id
@@ -274,7 +275,7 @@ class CouponDetailAPIController extends PubControllerAPI
                         ->orderBy('issued_coupons.expired_date', 'asc');
 
             OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
-                $coupon->havingRaw("mall_id = {$this->quote($mallId)}");
+                //$coupon->havingRaw("mall_id = {$this->quote($mallId)}");
                 $mall = Mall::excludeDeleted()
                         ->where('merchant_id', $mallId)
                         ->first();
@@ -332,6 +333,9 @@ class CouponDetailAPIController extends PubControllerAPI
                 $customData->mall_name = $mallName;
                 throw new OrbitCustomException('Coupon is inactive', Coupon::INACTIVE_ERROR_CODE, $customData);
             }
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGeneratorWithCloudfront::create(['cdn' => $cdnConfig], 'cdn');
+            $coupon->original_media_path = $imgUrl->getImageUrl($coupon->original_media_path);
 
             $coupon->category_ids = $this->getCouponCategory($couponId);
             $couponPaymentHelper = App::make(PaymentRepository::class);

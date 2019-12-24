@@ -117,11 +117,18 @@ class Client
             // $options['verify'] = false;
 
             $response = $this->client->request('POST', $this->endpoint, $options);
+
+            if ($response->getStatusCode() != 200) {
+                \Log::info('GoogleMeasurementProtocol Client Non 200 [E]: ' . serialize($response));
+            }
+
             $response = $response->getBody()->getContents();
 
         } catch (\GuzzleHttp\Exception\ConnectException $e) {
+            \Log::info('GoogleMeasurementProtocol Client Connect [E]: ' . $e->getMessage());
             throw new OrbitCustomException('cURL connection failed', Client::CURL_CONNECT_ERROR_CODE, NULL);
         } catch (\GuzzleHttp\Exception\RequestException $e) {
+            \Log::info('GoogleMeasurementProtocol Client Request [E]: ' . $e->getMessage());
             if ($e->getCode() === 401) {
                 throw new OrbitCustomException('Unautorized access', Client::UNAUTHORIZED_ERROR_CODE, NULL);
             }

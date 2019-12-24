@@ -112,6 +112,12 @@ return array(
 			'queue'  => 'default',
 		),
 
+		'gtm_pulsa' => array(
+			'driver' => 'beanstalkd',
+			'host'   => 'localhost',
+			'queue'  => 'gtm_pulsa',
+			'ttr'    => 60,
+		),
 	),
 
 	/*
