@@ -332,32 +332,33 @@ class StoreSearch extends CampaignSearch
         $role = $params['user']->role->role_name;
         $objectFollow = [];
         if (strtolower($role) === 'consumer') {
-            $objectFollow = $this->getUserFollow($params['user'], $params['mallId'], $params['cityFilters']); // return array of base_merchant_id
+            /*** disable follow status on listing ***/
+            // $objectFollow = $this->getUserFollow($params['user'], $params['mallId'], $params['cityFilters']); // return array of base_merchant_id
 
-            if (! empty($objectFollow)) {
-                if ($params['sortBy'] === 'followed') {
-                    foreach ($objectFollow as $followId) {
-                        $scriptFieldFollow = $scriptFieldFollow .
-                            " if (doc.containsKey('base_merchant_id')) {
-                                if (! doc['base_merchant_id'].empty) {
-                                    if (doc['base_merchant_id'].value.toLowerCase() == '" . strtolower($followId) . "') {
-                                        follow = 1;
-                                    }
-                                }
-                            };";
-                    }
+            // if (! empty($objectFollow)) {
+            //     if ($params['sortBy'] === 'followed') {
+            //         foreach ($objectFollow as $followId) {
+            //             $scriptFieldFollow = $scriptFieldFollow .
+            //                 " if (doc.containsKey('base_merchant_id')) {
+            //                     if (! doc['base_merchant_id'].empty) {
+            //                         if (doc['base_merchant_id'].value.toLowerCase() == '" . strtolower($followId) . "') {
+            //                             follow = 1;
+            //                         }
+            //                     }
+            //                 };";
+            //         }
 
-                    $scriptFieldFollow = $scriptFieldFollow . " if(follow == 0) {return 0;} else {return follow;}; ";
-                    $scriptFieldFollow = str_replace("\n", '', $scriptFieldFollow);
-                }
-            }
+            //         $scriptFieldFollow = $scriptFieldFollow . " if(follow == 0) {return 0;} else {return follow;}; ";
+            //         $scriptFieldFollow = str_replace("\n", '', $scriptFieldFollow);
+            //     }
+            // }
         }
 
         // Add script fields into request body...
         $this->scriptFields([
             'average_rating' => $scripts['scriptFieldRating'],
-            'total_review' => $scripts['scriptFieldReview'],
-            'is_follow' => $scriptFieldFollow
+            'total_review' => $scripts['scriptFieldReview']
+            //'is_follow' => $scriptFieldFollow
         ]);
 
         return array_merge($scripts, compact('scriptFieldFollow', 'objectFollow'));
@@ -378,24 +379,25 @@ class StoreSearch extends CampaignSearch
     // check user follow
     public function getUserFollow($user, $mallId, $city=array())
     {
-        $follow = FollowStatusChecker::create()
-                                    ->setUserId($user->user_id)
-                                    ->setObjectType('store');
+        /*** disable follow status on listing ***/
+        // $follow = FollowStatusChecker::create()
+        //                             ->setUserId($user->user_id)
+        //                             ->setObjectType('store');
 
-        if (! empty($mallId)) {
-            $follow = $follow->setMallId($mallId);
-        }
+        // if (! empty($mallId)) {
+        //     $follow = $follow->setMallId($mallId);
+        // }
 
-        if (! empty($city)) {
-            if (! is_array($city)) {
-                $city = (array) $city;
-            }
-            $follow = $follow->setCity($city);
-        }
+        // if (! empty($city)) {
+        //     if (! is_array($city)) {
+        //         $city = (array) $city;
+        //     }
+        //     $follow = $follow->setCity($city);
+        // }
 
-        $follow = $follow->getFollowStatus();
+        // $follow = $follow->getFollowStatus();
 
-        return $follow;
+        // return $follow;
     }
 
     /**
