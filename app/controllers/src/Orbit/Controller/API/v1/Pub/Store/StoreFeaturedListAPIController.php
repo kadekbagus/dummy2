@@ -559,15 +559,6 @@ class StoreFeaturedListAPIController extends PubControllerAPI
 
             $role = $user->role->role_name;
             $objectFollow = [];
-            if (strtolower($role) === 'consumer') {
-                $objectFollow = $this->getUserFollow($user, $mallId, $cityFilters);
-                if (! empty($objectFollow)) {
-                    if ($sort_by === 'followed') {
-                        $withScore = TRUE;
-                        $jsonQuery['query']['bool']['should'][] = array('constant_score' => array('filter' => array('terms' => array('base_merchant_id' => $objectFollow)), 'boost' => 100));
-                    }
-                }
-            }
 
             $defaultSort = array('lowercase_name' => array('order' => 'asc'));
             $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
@@ -618,7 +609,6 @@ class StoreFeaturedListAPIController extends PubControllerAPI
                 $data['placement_type_orig'] = null;
                 $storeId = '';
                 $data['is_featured'] = false;
-                $data['follow_status'] = false;
                 $baseMerchantId = '';
                 foreach ($record['_source'] as $key => $value) {
 
@@ -688,12 +678,6 @@ class StoreFeaturedListAPIController extends PubControllerAPI
                 if (! empty($record['inner_hits']['tenant_detail']['hits']['total'])) {
                     if (! empty($mallId)) {
                         $data['merchant_id'] = $record['inner_hits']['tenant_detail']['hits']['hits'][0]['_source']['merchant_id'];
-                    }
-                }
-
-                if (! empty($objectFollow)) {
-                    if (in_array($baseMerchantId, $objectFollow)) {
-                        $data['follow_status'] = true;
                     }
                 }
 
