@@ -289,29 +289,30 @@ class MallSearch extends ObjectTypeSearch
         $role = $params['user']->role->role_name;
         $objectFollow = [];
         if (strtolower($role) === 'consumer') {
-            $objectFollow = $this->getUserFollow($params['user']); // return array of followed mall_id
+            /*** disable follow status on listing ***/
+            // $objectFollow = $this->getUserFollow($params['user']); // return array of followed mall_id
 
-            if (! empty($objectFollow)) {
-                if ($params['sortBy'] === 'followed') {
-                    foreach ($objectFollow as $followId) {
-                        $scriptFieldFollow = $scriptFieldFollow . ' ' .
-                        "if (doc.containsKey('merchant_id')) {
-                            if (! doc['merchant_id'].empty) {
-                                if (doc['merchant_id'].value.toLowerCase() == '" . strtolower($followId) . "') {
-                                    follow = 1;
-                                }
-                            }
-                        };";
-                    }
+            // if (! empty($objectFollow)) {
+            //     if ($params['sortBy'] === 'followed') {
+            //         foreach ($objectFollow as $followId) {
+            //             $scriptFieldFollow = $scriptFieldFollow . ' ' .
+            //             "if (doc.containsKey('merchant_id')) {
+            //                 if (! doc['merchant_id'].empty) {
+            //                     if (doc['merchant_id'].value.toLowerCase() == '" . strtolower($followId) . "') {
+            //                         follow = 1;
+            //                     }
+            //                 }
+            //             };";
+            //         }
 
-                    $scriptFieldFollow = $scriptFieldFollow . ' ' .
-                    "if (follow == 0) {
-                        return 0;
-                    } else {
-                        return follow;
-                    }; ";
-                }
-            }
+            //         $scriptFieldFollow = $scriptFieldFollow . ' ' .
+            //         "if (follow == 0) {
+            //             return 0;
+            //         } else {
+            //             return follow;
+            //         }; ";
+            //     }
+            // }
         }
         return compact('scriptFieldFollow', 'objectFollow');
     }
@@ -431,12 +432,13 @@ class MallSearch extends ObjectTypeSearch
     // check user follow
     public function getUserFollow($user)
     {
-        $follow = FollowStatusChecker::create()
-                                    ->setUserId($user->user_id)
-                                    ->setObjectType('mall')
-                                    ->getFollowStatus();
+        /*** disable follow status on listing ***/
+        // $follow = FollowStatusChecker::create()
+        //                             ->setUserId($user->user_id)
+        //                             ->setObjectType('mall')
+        //                             ->getFollowStatus();
 
-        return $follow;
+        // return $follow;
     }
 
     public function filterAdvertMalls($options = [])

@@ -310,7 +310,8 @@ class StoreListNewAPIController extends PubControllerAPI
                 'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
 
-            $objectFollow = $scriptFields['objectFollow'];
+            /*** disable follow status on listing ***/
+            //$objectFollow = $scriptFields['objectFollow'];
 
             //filter by rating number
             $this->searcher->filterByRating(
@@ -382,7 +383,8 @@ class StoreListNewAPIController extends PubControllerAPI
                 $data['placement_type'] = null;
                 $data['placement_type_orig'] = null;
                 $storeId = '';
-                $data['follow_status'] = false;
+                /*** disable follow status on listing ***/
+                //$data['follow_status'] = false;
                 $baseMerchantId = '';
                 foreach ($record['_source'] as $key => $value) {
                     if ($key === 'merchant_id') {
@@ -465,11 +467,12 @@ class StoreListNewAPIController extends PubControllerAPI
                     }
                 }
 
-                if (! empty($objectFollow)) {
-                    if (in_array($baseMerchantId, $objectFollow)) {
-                        $data['follow_status'] = true;
-                    }
-                }
+                /*** disable follow status on listing ***/
+                // if (! empty($objectFollow)) {
+                //     if (in_array($baseMerchantId, $objectFollow)) {
+                //         $data['follow_status'] = true;
+                //     }
+                // }
 
                 $data['average_rating'] = (! empty($record['fields']['average_rating'][0])) ? number_format(round($record['fields']['average_rating'][0], 1), 1) : 0;
                 $data['total_review'] = (! empty($record['fields']['total_review'][0])) ? round($record['fields']['total_review'][0], 1) : 0;
