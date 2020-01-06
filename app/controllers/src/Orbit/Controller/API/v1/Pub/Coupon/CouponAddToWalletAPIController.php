@@ -159,6 +159,7 @@ class CouponAddToWalletAPIController extends PubControllerAPI
                 // send google analytics event
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))
                     ->setQueryString([
+                        'cid' => time(),
                         't' => 'event',
                         'ea' => 'Normal Coupon Add to Wallet Successful',
                         'ec' => 'Coupon',
@@ -186,6 +187,7 @@ class CouponAddToWalletAPIController extends PubControllerAPI
                 // send google analytics event
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))
                     ->setQueryString([
+                        'cid' => time(),
                         't' => 'event',
                         'ea' => 'Normal Coupon Add to Wallet Failed',
                         'ec' => 'Coupon',
@@ -225,6 +227,7 @@ class CouponAddToWalletAPIController extends PubControllerAPI
             // send google analytics event
             GMP::create(Config::get('orbit.partners_api.google_measurement'))
                 ->setQueryString([
+                    'cid' => time(),
                     't' => 'event',
                     'ea' => 'Normal Coupon Add to Wallet Failed',
                     'ec' => 'Coupon',
@@ -254,6 +257,7 @@ class CouponAddToWalletAPIController extends PubControllerAPI
             // send google analytics event
             GMP::create(Config::get('orbit.partners_api.google_measurement'))
                 ->setQueryString([
+                    'cid' => time(),
                     't' => 'event',
                     'ea' => 'Normal Coupon Add to Wallet Failed',
                     'ec' => 'Coupon',
@@ -284,6 +288,7 @@ class CouponAddToWalletAPIController extends PubControllerAPI
             // send google analytics event
             GMP::create(Config::get('orbit.partners_api.google_measurement'))
                 ->setQueryString([
+                    'cid' => time(),
                     't' => 'event',
                     'ea' => 'Normal Coupon Add to Wallet Failed',
                     'ec' => 'Coupon',

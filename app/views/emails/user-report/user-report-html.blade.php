@@ -362,17 +362,16 @@
                 <table width="600" cellpadding="0" cellspacing="0" class="container container-pulsa-banner">
                   <tr>
                     <td class="mobile" width="600">
-                      <div style="" class="pulsa-banner-container">
-                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/themes/default/images/Pulsa-Banner-Desktop.jpg?t=1560407290" class="pulsa-banner-img">
-                        <div class="pulsa-banner-text-container" style="">
-                          <div class="tagline">
-                            Beli pulsa termurah hanya di Gotomalls.com
-                          </div>
-                          <a href="{{ $pulsa_page_url }}" class="btn-buy-pulsa">
-                            Beli Pulsa &raquo;
-                          </a>
-                        </div>
-                      </div>
+
+                    <div style="" class="pulsa-banner-container">
+                    <a href="{{ $pulsa_page_url }}">
+                    <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/pulsa-banner-email.png" class="pulsa-banner-img">
+                    </a>
+                    <div class="pulsa-banner-text-container" style="">
+                    <div class="tagline"></div>
+                    </div>
+                    </div>
+
                     </td>
                   </tr>
                   <tr>

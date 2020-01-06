@@ -923,12 +923,13 @@ class Activity extends Eloquent
             'notification_token' => $notificationToken
         ]);
 
+        // disable logging
         // Format -> JOB_ID;EXTENDED_ACTIVITY_ID;ACTIVITY_ID;MESSAGE
-        $dataLog = sprintf("%s;%s;\n", $activityQueue, $this->activity_id);
+        // $dataLog = sprintf("%s;%s;\n", $activityQueue, $this->activity_id);
 
         // Write the error log to dedicated file so it is easy to investigate and
         // easy to replay because the log is structured
-        file_put_contents(storage_path() . '/logs/activity-model.log', $dataLog, FILE_APPEND);
+        // file_put_contents(storage_path() . '/logs/activity-model.log', $dataLog, FILE_APPEND);
 
         // Save to object page views table
         Queue::push('Orbit\\Queue\\Activity\\ObjectPageViewActivityQueue', [

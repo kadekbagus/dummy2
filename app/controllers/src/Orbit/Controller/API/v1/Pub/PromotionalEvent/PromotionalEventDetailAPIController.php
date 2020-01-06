@@ -24,6 +24,7 @@ use Lang;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use TotalObjectPageView;
 use Redis;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 
 class PromotionalEventDetailAPIController extends PubControllerAPI
 {
@@ -116,17 +117,17 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                                 CASE WHEN ({$prefix}reward_detail_translations.logged_in_button_label = '' or {$prefix}reward_detail_translations.logged_in_button_label is null) THEN default_translation_button.logged_in_button_label ELSE {$prefix}reward_detail_translations.logged_in_button_label END as logged_in_button_label,
                                 CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as news_name,
                                 CASE WHEN ({$prefix}news_translations.description = '' or {$prefix}news_translations.description is null) THEN default_translation.description ELSE {$prefix}news_translations.description END as description,
-                                CASE WHEN (SELECT {$image}
+                                CASE WHEN (SELECT m.path
                                     FROM orb_media m
                                     WHERE m.media_name_long = 'news_translation_image_orig'
                                     AND m.object_id = {$prefix}news_translations.news_translation_id) is null
                                 THEN
-                                    (SELECT {$image}
+                                    (SELECT m.path
                                     FROM orb_media m
                                     WHERE m.media_name_long = 'news_translation_image_orig'
                                     AND m.object_id = default_translation.news_translation_id)
                                 ELSE
-                                    (SELECT {$image}
+                                    (SELECT m.path
                                     FROM orb_media m
                                     WHERE m.media_name_long = 'news_translation_image_orig'
                                     AND m.object_id = {$prefix}news_translations.news_translation_id)
@@ -215,6 +216,10 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             }
 
             $promotionalEvent->category_ids = $this->getNewsCategory($newsId);
+
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGeneratorWithCloudfront::create(['cdn' => $cdnConfig], 'cdn');
+            $promotionalEvent->original_media_path = $imgUrl->getImageUrl($promotion->original_media_path);
 
             // Only campaign having status ongoing and is_started true can going to detail page
             if (! in_array($promotionalEvent->campaign_status, ['ongoing', 'expired']) || ($promotionalEvent->campaign_status == 'ongoing' && $promotionalEvent->is_started == 'false')) {
