@@ -252,12 +252,20 @@
         font-size: 20px;
       }
 
+      .marketing-icon {
+        width: 90px;
+      }
+
       .marketing-section-title {
         text-align: center;
+        font-size: 22px;
       }
+
       .marketing-section-text {
         text-align: center;
+        font-size: 20px;
       }
+
       .marketing-section-img {
         text-align: center;
         margin-bottom: 20px;
