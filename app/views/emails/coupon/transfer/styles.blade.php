@@ -59,7 +59,7 @@
     .greeting-text {
       color: #333;
       line-height: 1.5em;
-      font-size: 14px;
+      font-size: 16px;
       margin-top: 10px;
     }
 
@@ -85,7 +85,6 @@
       box-shadow: 0px 0px 4px #444;
       color: #ef5350;
       text-decoration: none;
-      font-size: 14px;
       font-weight: bold;
       border: 1px solid #ef5350;
     }
@@ -110,7 +109,19 @@
       display: block;
       color: #222;
       font-size: 14px;
+    }
 
+    .coupon-image {
+      width:80px;
+      height:80px;
+    }
+
+    .coupon-name {
+      font-size:16px;
+    }
+
+    .coupon-info {
+      font-size:15px;
     }
 
     .marketing-container {
@@ -188,10 +199,10 @@
     }
 
     /* MEDIA QUERIES */
-    @media all and (max-width:639px){
-      .wrapper{ width:400px!important; padding: 0 !important; }
-      .container{ width:360px!important;  padding: 0 !important; }
-      .mobile{ width:360px!important; display:block!important; padding: 0 !important; }
+    @media all and (max-width:639px) {
+      .wrapper{ width:95% !important; padding: 0 !important; }
+      .container{ width:90% !important;  padding: 0 !important; }
+      .mobile{ width:100% !important; display:block!important; padding: 0 !important; }
       .img{ width:100% !important; height:auto !important; }
       *[class="mobileOff"] { width: 0px !important; display: none !important; }
       *[class*="mobileOn"] { display: block !important; max-height:none !important; }
@@ -204,12 +215,41 @@
 
       .mobile.center { text-align: center !important; }
 
+      img.logo {
+        height: 60px;
+      }
+
+      .greeting-username {
+        font-size: 24px;
+      }
+
+      .greeting-text {
+        font-size: 22px;
+      }
+
+      .btn {
+        font-size: 22px;
+      }
+
       .coupon-img-container {
         text-align: center;
       }
 
+      .coupon-image {
+        width:100px;
+        height:100px;
+      }
+
       .coupon-info {
         text-align: center;
+      }
+
+      .coupon-name {
+        font-size: 22px;
+      }
+
+      .coupon-location {
+        font-size: 20px;
       }
 
       .marketing-section-title {
@@ -233,6 +273,23 @@
 
       .footer-follow {
         margin-top: 20px;
+      }
+
+      .footer-address {
+        font-size: 18px;
+      }
+
+      .footer-follow {
+        font-size: 20px;
+      }
+
+      .contact-img {
+        width: 50px;
+        height: 50px;
+      }
+
+      .separator {
+        height: 50px;
       }
     }
   </style>
