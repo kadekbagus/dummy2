@@ -39,18 +39,39 @@
     /* ANDROID CENTER FIX */
     div[style*="margin: 16px 0;"] { margin: 0 !important; }
 
+    .greeting-name {
+      font-size: 26px;
+    }
+
+    .greeting-text {
+      font-size: 16px;
+    }
+
     .pulsa-promo-container {
       padding-top: 20px;
       padding-bottom: 20px;
-      width: 600px;
     }
 
     .pulsa-promo-title {
         margin: 0;
+        font-size:18px;
     }
 
     .pulsa-promo-description {
       margin: 10px 10px 20px 0;
+      font-size: 15px;
+    }
+
+    .btn-pulsa-list-url {
+      font-size:16px;
+    }
+
+    .campaign-suggestion-text {
+      font-size: 16px;
+    }
+
+    .suggestion-list-title {
+      font-size: 20px;
     }
 
     .suggestion-list-item {
@@ -63,9 +84,30 @@
       padding-left: 10px;
     }
 
-    /* Custom styles */
+    .suggestion-list-item-img {
+      width:80px;
+      height:80px;
+    }
+
+    .suggestion-list-item-title {
+      font-size: 18px;
+    }
+
+    .suggestion-list-item-location {
+      font-size: 15px;
+    }
+
+    .suggestion-list-item-price {
+      font-size: 16px;
+    }
+
+    .suggestion-list-more-url {
+      font-size: 16px;
+    }
+
     .box-shadow {
-      box-shadow:0px 0px 10px rgba(0,0,0,0.2);border-radius:8px;
+      box-shadow:0px 0px 10px rgba(0,0,0,0.2);
+      border-radius:8px;
     }
 
     .padding-h-15 {
@@ -92,9 +134,9 @@
 
     /* MEDIA QUERIES */
     @media all and (max-width:639px){
-      .wrapper{ width:320px!important; padding: 0 !important; }
-      .container{ width:300px!important;  padding: 0 !important; }
-      .mobile{ width:100%!important; display:block!important; padding: 0 !important; }
+      .wrapper{ width:95% !important; padding: 0 !important; }
+      .container{ width:90% !important;  padding: 0 !important; }
+      .mobile{ width:100% !important; display:block!important; padding: 0 !important; }
       .img{ width:100% !important; height:auto !important; }
       *[class="mobileOff"] { width: 0px !important; display: none !important; }
       *[class*="mobileOn"] { display: block !important; max-height:none !important; }
@@ -110,24 +152,72 @@
 
       .margin-h { margin-left: 10px; margin-right: 10px; }
 
-      .suggestion-list-item {
-        padding-right: 0 !important;
-        padding-left: 0 !important;
-        padding-bottom: 15px !important;
+      .greeting-name {
+        font-size: 32px;
+      }
+
+      .greeting-text {
+        font-size: 22px;
       }
 
       .pulsa-promo-container {
-        width: 300px !important;
+        width: 90% !important;
         padding-top: 20px !important;
         padding-bottom: 20px !important;
       }
 
       .pulsa-promo-title {
         margin-top: 10px;
+        font-size: 30px;
       }
 
       .pulsa-promo-description {
         margin: 10px;
+        font-size: 22px;
+      }
+
+      .btn-pulsa-list-url {
+        font-size: 22px;
+      }
+
+      .campaign-suggestion-text {
+        font-size: 22px;
+      }
+
+      .suggestion-list-title {
+        font-size: 26px;
+      }
+
+      .suggestion-list-item {
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+        padding-bottom: 15px !important;
+      }
+
+      .suggestion-list-item-img {
+        width:100px;
+        height:100px;
+      }
+
+      .suggestion-list-item-title {
+        font-size: 22px;
+      }
+
+      .suggestion-list-item-location {
+        font-size: 20px;
+      }
+
+      .suggestion-list-item-price {
+        font-size: 20px;
+      }
+
+      .suggestion-list-more-url {
+        font-size: 20px;
+      }
+
+      .contact-img {
+        width: 60px;
+        height: 60px;
       }
     }
 
@@ -157,10 +247,10 @@
                   </tr>
                   <tr>
                     <td align="center">
-                      <h1 style="font-size: 16pt;">
+                      <h1 class="greeting-name">
                         {{ trans('email-subscription.pulsa.body.greetings.customer', ['customerName' => $customerName], '', 'id') }}
                       </h1>
-                      <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;color:#888;font-size:14px;">
+                      <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;color:#888;" class="greeting-text">
                         {{ trans('email-subscription.pulsa.body.greetings.text', [], '', 'id') }}
                       </p>
                     </td>
@@ -184,13 +274,13 @@
                         </td>
                         <td width="" valign="top" class="mobile center-on-mobile">
                           <div class="">
-                            <h3 style="font-size:14pt;color:#444;" class="pulsa-promo-title">
+                            <h3 style="color:#444;" class="pulsa-promo-title">
                               {{ trans('email-subscription.pulsa.body.marketing_title', [], '', 'id') }}
                             </h3>
-                            <p style="color:#888;line-height:1.5em;font-size:14px;" class="pulsa-promo-description">
+                            <p style="color:#888;line-height:1.5em;" class="pulsa-promo-description">
                               {{ trans('email-subscription.pulsa.body.marketing_body', [], '', 'id') }}
                             </p>
-                            <a href="{{ $pulsaListUrl }}" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;font-size:14px;display:inline-block;padding:10px 12px;text-decoration:none;">
+                            <a href="{{ $pulsaListUrl }}" class="btn-pulsa-list-url" style="font-family:'Roboto', 'Arial', sans-serif;border-radius:5px;background-color:#f43d3c;color:#fff;font-weight:bold;display:inline-block;padding:10px 12px;text-decoration:none;">
                               {{ trans('email-subscription.pulsa.body.buttons.pulsa_list', [], '', 'id') }}
                             </a>
                           </div>
@@ -215,7 +305,7 @@
                     </tr>
                     <tr>
                       <td class="">
-                        <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;color:#888;font-size: 14px;">
+                        <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;color:#888;" class="campaign-suggestion-text">
                           {{ trans('email-subscription.pulsa.body.campaign_suggestion_text', [], '', 'id') }}
                         </p>
                       </td>
