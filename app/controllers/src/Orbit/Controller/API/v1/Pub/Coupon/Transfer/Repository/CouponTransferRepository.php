@@ -46,9 +46,10 @@ class CouponTransferRepository
      *
      * @param [type] $issuedCoupon [description]
      */
-    function __construct($currentUser = null)
+    function __construct($currentUser = null, $issuedCoupon = null)
     {
         $this->currentUser = $currentUser;
+        $this->issuedCoupon = $issuedCoupon;
         $this->response = (object) ['issued_coupon_id' => null];
     }
 
@@ -104,44 +105,39 @@ class CouponTransferRepository
     }
 
     /**
-     * Find IssuedCoupon that will be transfered.
+     * Determine that issued coupon is available for transfer.
      *
      * @param  [type] $issuedCouponId [description]
      * @return [type]                 [description]
      */
-    public function findIssuedCouponForTransfer($issuedCouponId)
+    public function isCouponAvailableForTransfer($issuedCouponId)
     {
-        $this->issuedCoupon = IssuedCoupon::with(['user', 'coupon' => function($couponQuery) {
-                                                $couponQuery->select('promotion_id','promotion_name');
-                                            }])
-                                            ->where('user_id', $this->currentUser->user_id)
-                                            ->where('status', 'issued')
-                                            ->where('issued_coupon_id', $issuedCouponId)
-                                            ->whereNull('transfer_start_at')
-                                            ->first();
+        if (empty($this->issuedCoupon->user)) {
+            $this->issuedCoupon->load(['user', 'coupon' => function($couponQuery) {
+                $couponQuery->select('promotion_id','promotion_name');
+            }]);
+        }
 
-        return $this->issuedCoupon;
+        return $this->issuedCoupon->user_id === $this->currentUser->user_id
+            && $this->issuedCoupon->status === 'issued'
+            && empty($this->issuedCoupon->transfer_status);
     }
 
     /**
-     * Find IssuedCoupon that will be accepted or declined.
-     * We don't filter by current logged in User.
+     * Determine that the issuedCoupon is available for acceptance or decline.
      *
-     * @param  [type] $issuedCouponId [description]
-     * @return [type]                 [description]
+     * @param  [type]  $issuedCouponId [description]
+     * @return boolean                 [description]
      */
-    public function findIssuedCouponForAcceptanceOrDecline($issuedCouponId)
+    public function isCouponAvailableForAcceptanceOrDecline($issuedCouponId)
     {
-        $this->issuedCoupon = IssuedCoupon::where('status', 'issued')
-                                            ->where('issued_coupon_id', $issuedCouponId)
-                                            ->where('transfer_status', 'in_progress')
-                                            ->first();
-
-        return $this->issuedCoupon;
+        return $this->issuedCoupon->transfer_status === 'in_progress'
+            && $this->issuedCoupon->status === 'issued';
     }
 
     /**
      * Get IssuedCoupon instance.
+     *
      * @return [type] [description]
      */
     public function getIssuedCoupon()

@@ -12,7 +12,10 @@ class CouponTransferServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->singleton(CouponTransferRepository::class, function($app) {
-            return new CouponTransferRepository($app->make('currentUser'));
+            return new CouponTransferRepository(
+                $app->make('currentUser'),
+                $app->make('issuedCoupon')
+            );
         });
     }
 }
