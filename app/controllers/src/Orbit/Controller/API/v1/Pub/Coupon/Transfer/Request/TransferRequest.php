@@ -27,7 +27,7 @@ class TransferRequest extends FormRequest
     public function rules()
     {
         return [
-            'issued_coupon_id' => 'bail|required|available.for.transfer',
+            'issued_coupon_id' => 'bail|required|issued_coupon_exists|available_for_transfer',
             'name' => 'required',
             'email'  => 'required|email|distinct_with_owner_email',
         ];
@@ -41,7 +41,8 @@ class TransferRequest extends FormRequest
     public function messages()
     {
         return [
-            'available.for.transfer' => 'COUPON_NOT_AVAILABLE_FOR_TRANSFER',
+            'issued_coupon_exists' => 'COUPON_NOT_FOUND',
+            'available_for_transfer' => 'COUPON_NOT_AVAILABLE_FOR_TRANSFER',
             'distinct_with_owner_email' => 'RECIPIENT_EMAIL_SAME_AS_OWNER_EMAIL',
         ];
     }
@@ -60,25 +61,30 @@ class TransferRequest extends FormRequest
             return true;
         });
 
-        // Validate that issued coupon available for transferring.
-        Validator::extend('available.for.transfer', function($attribute, $issuedCouponId, $parameters) {
-            $couponTransfer = App::make(CouponTransferRepository::class);
-            $couponTransfer->setUser($this->user);
-            return ! empty($couponTransfer->findIssuedCouponForTransfer($issuedCouponId));
+        Validator::extend('issued_coupon_exists', 'Orbit\Controller\API\v1\Pub\Coupon\Validators\IssuedCouponValidator@exists');
+
+        // Validate that the transfer is not completed yet.
+        Validator::extend('transfer_not_completed_yet', function($attribute, $issuedCouponId, $parameters) {
+            $issuedCoupon = App::make('issuedCoupon');
+            return ! empty($issuedCoupon) && in_array($issuedCoupon->transfer_status, ['', 'in_progress']);
         });
 
-        // Validate that requested IssuedCoupon is in available for accept state (in_progress)
-        Validator::extend('available_for_accept_or_decline', function($attribute, $issuedCouponId, $parameters) {
-            $couponTransfer = App::make(CouponTransferRepository::class);
+        // Validate that the transfer is in_progress.
+        Validator::extend('transfer_in_progress', function($attribute, $issuedCouponId, $parameters) {
+            $issuedCoupon = App::make('issuedCoupon');
+            return ! empty($issuedCoupon) && $issuedCoupon->transfer_status === 'in_progress';
+        });
 
-            return ! empty($couponTransfer->findIssuedCouponForAcceptanceOrDecline($issuedCouponId));
+        // Validate that issued coupon available for transferring.
+        Validator::extend('available_for_transfer', function($attribute, $issuedCouponId, $parameters) {
+            $couponTransfer = App::make(CouponTransferRepository::class);
+            return $couponTransfer->isCouponAvailableForTransfer($issuedCouponId);
         });
 
         // Validate that current logged in user's email = transfer_email.
         Validator::extend('match_transfer_email', function($attribute, $issuedCouponId, $parameters, $validator) {
             $validatorData = $validator->getData();
-            $couponTransfer = App::make(CouponTransferRepository::class);
-            $issuedCoupon = $couponTransfer->getIssuedCoupon();
+            $issuedCoupon = App::make('issuedCoupon');
 
             return ! empty($issuedCoupon)
                 && $issuedCoupon->transfer_email === $this->user->user_email
@@ -88,16 +94,14 @@ class TransferRequest extends FormRequest
         // Validate that request email = issued coupon transfer_email.
         Validator::extend('match_transfer_email_only', function($attribute, $issuedCouponId, $parameters, $validator) {
             $validatorData = $validator->getData();
-            $couponTransfer = App::make(CouponTransferRepository::class);
-            $issuedCoupon = $couponTransfer->getIssuedCoupon();
+            $issuedCoupon = App::make('issuedCoupon');
 
             return ! empty($issuedCoupon) && $issuedCoupon->transfer_email === $validatorData['email'];
         });
 
         // Validate that request is being requested by coupon owner.
         Validator::extend('requested_by_owner', function() {
-            $couponTransfer = App::make(CouponTransferRepository::class);
-            $issuedCoupon = $couponTransfer->getIssuedCoupon();
+            $issuedCoupon = App::make('issuedCoupon');
 
             return ! empty($issuedCoupon) && $issuedCoupon->user_id === $this->user->user_id;
         });

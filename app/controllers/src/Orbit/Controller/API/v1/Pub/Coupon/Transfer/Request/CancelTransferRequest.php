@@ -3,7 +3,6 @@
 /**
  * Coupon Transfer Cancel Request.
  *
- * @todo  create proper form request helper.
  * @todo  find a way to properly inject current user into request (might be a service)
  * @author Budi <budi@dominopos.com>
  */
@@ -17,7 +16,7 @@ class CancelTransferRequest extends TransferRequest
     public function rules()
     {
         return [
-            'issued_coupon_id' => 'required|available_for_accept_or_decline|requested_by_owner',
+            'issued_coupon_id' => 'required|issued_coupon_exists|requested_by_owner|transfer_not_completed_yet|transfer_in_progress',
         ];
     }
 
@@ -29,8 +28,17 @@ class CancelTransferRequest extends TransferRequest
     public function messages()
     {
         return [
-            'available_for_accept_or_decline' => 'NOT_AVAILABLE_FOR_CANCEL',
-            'requested_by_owner' => 'REQUESTED_BY_OTHER_USER',
+            'issued_coupon_exists' => 'COUPON_NOT_FOUND',
+
+            // Means that the transfer already completed,
+            // so we need to display proper message.
+            'transfer_not_completed_yet' => 'TRANSFER_ALREADY_COMPLETED',
+
+            // Make sure the transfer is in progress.
+            'transfer_in_progress' => 'TRANSFER_NOT_STARTED_YET_OR_ALREADY_CANCELED',
+
+            // Make sure cancelation is being requested by the coupon owner.
+            'requested_by_owner' => 'TRANSFER_INVALID_REQUEST_USER',
         ];
     }
 }
