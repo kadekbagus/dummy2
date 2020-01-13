@@ -340,6 +340,9 @@ class MallAPIController extends ControllerAPI
             $widgets = OrbitInput::post('widgets', $this->default['widgets']);
             $age_ranges = OrbitInput::post('age_ranges', $this->default['age_ranges']);
 
+            $mall_google_indoor_map = OrbitInput::post('mall_google_indoor_map');
+            $mall_google_indoor_streetview = OrbitInput::post('mall_google_indoor_streetview');
+
             $validation_data = [
                 'name'                          => $mall_name,
                 'email'                         => $email,
