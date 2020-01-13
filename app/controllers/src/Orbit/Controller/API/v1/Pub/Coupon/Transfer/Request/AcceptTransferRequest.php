@@ -22,7 +22,7 @@ class AcceptTransferRequest extends TransferRequest
     public function rules()
     {
         return [
-            'issued_coupon_id' => 'required|available_for_accept_or_decline|match_transfer_email',
+            'issued_coupon_id' => 'required|issued_coupon_exists|transfer_not_completed_yet|transfer_in_progress|match_transfer_email',
             'email' => 'required|email',
         ];
     }
@@ -35,7 +35,14 @@ class AcceptTransferRequest extends TransferRequest
     public function messages()
     {
         return [
-            'available_for_accept_or_decline' => 'NOT_AVAILABLE_FOR_ACCEPT',
+            'issued_coupon_exists' => 'COUPON_NOT_FOUND',
+
+            // Means that the transfer already completed,
+            // so we need to display proper message.
+            'transfer_not_completed_yet' => 'TRANSFER_ALREADY_COMPLETED',
+
+            // Means that the transfer is not in 'in_progress' state.
+            'transfer_in_progress' => 'TRANSFER_NOT_STARTED_YET',
 
             // means the transfer should be accepted by user that logged in with
             // same email as transfer_email.
