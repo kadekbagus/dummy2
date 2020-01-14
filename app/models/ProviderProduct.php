@@ -3,7 +3,7 @@
 /**
  * Provider Product Model.
  */
-class DigitalProduct extends Eloquent
+class ProviderProduct extends Eloquent
 {
     /**
      * Import trait ModelStatusTrait so we can use some common scope dealing
