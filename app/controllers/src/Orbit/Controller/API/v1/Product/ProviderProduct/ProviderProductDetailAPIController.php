@@ -1,4 +1,4 @@
-<?php namespace Orbit\Controller\API\v1\Product\Game;
+<?php namespace Orbit\Controller\API\v1\Product\ProviderProduct;
 
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -8,13 +8,13 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 
-use Game;
+use ProviderProduct;
 use Lang;
 use DB;
 use Validator;
 use Config;
 
-class GameDetailAPIController extends ControllerAPI
+class ProviderProductDetailAPIController extends ControllerAPI
 {
     protected $allowedRoles = ['product manager'];
 
@@ -23,7 +23,7 @@ class GameDetailAPIController extends ControllerAPI
      *
      * @author Ahmad <ahmad@dominopos.com>
      */
-    public function getDetailGame()
+    public function getDetailProviderProduct()
     {
         try {
             $httpCode = 200;
@@ -43,16 +43,16 @@ class GameDetailAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            $gameId = OrbitInput::get('game_id');
+            $provider_product_id = OrbitInput::get('provider_product_id');
 
             $prefix = DB::getTablePrefix();
 
             $validator = Validator::make(
                 array(
-                    'game_id' => $gameId,
+                    'provider_product_id' => $provider_product_id,
                 ),
                 array(
-                    'game_id' => 'required',
+                    'provider_product_id' => 'required',
                 )
             );
 
@@ -62,11 +62,10 @@ class GameDetailAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $game = Game::with(['media'])
-                        ->where('game_id', $gameId)
-                        ->firstOrFail();
+            $provider_product = ProviderProduct::where('provider_product_id', $provider_product_id)
+                                                ->firstOrFail();
 
-            $this->response->data = $game;
+            $this->response->data = $provider_product;
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
