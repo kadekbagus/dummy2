@@ -25,7 +25,7 @@ class DigitalProduct extends Eloquent
      */
     public function scopeAvailable($query)
     {
-        return $query->where('status', 'active')->where('is_displayed', 'yes');
+        return $query->active()->where('is_displayed', 'yes');
     }
 
     /**
@@ -46,5 +46,14 @@ class DigitalProduct extends Eloquent
     public function games()
     {
         return $this->belongsToMany(Game::class, 'digital_product_game')->withTimestamps();
+    }
+
+    /**
+     * Digital Product - Provider Product relation.
+     * @return [type] [description]
+     */
+    public function provider_product()
+    {
+        return $this->hasOne(ProviderProduct::class, 'provider_product_id', 'selected_provider_product_id');
     }
 }

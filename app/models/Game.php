@@ -14,4 +14,13 @@ class Game extends Eloquent
                     ->where('object_name', 'game');
     }
 
+    /**
+     * Game - Digital Product relation
+     * @return [type] [description]
+     */
+    public function digital_products()
+    {
+        return $this->belongsToMany(DigitalProduct::class, 'digital_product_game');
+    }
+
 }
