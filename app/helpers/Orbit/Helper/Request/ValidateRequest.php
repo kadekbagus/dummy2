@@ -76,7 +76,7 @@ class ValidateRequest implements ValidateRequestInterface
             $this->controller->checkAuth();
         }
 
-        $this->setUser($this->controller->user);
+        $this->setUser($this->controller->api->user);
 
         return $this;
     }
