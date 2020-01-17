@@ -1,16 +1,16 @@
-<?php namespace Orbit\Controller\API\v1\Pub\Coupon\Transfer\Request;
+<?php namespace Orbit\Helper\Request;
 
 use OrbitShop\API\v1\OrbitShopAPI;
+use Orbit\Helper\Request\Contracts\ValidateRequestInterface;
 use Request;
 use Validator;
 
 /**
- * Base Form Request class.
+ * Base Request Validation class.
  *
- * @todo create proper form request helper.
  * @author Budi <budi@gotomalls.com>
  */
-class FormRequest implements FormRequestInterface
+class ValidateRequest implements ValidateRequestInterface
 {
     /**
      * Current authenticated User instance.
@@ -36,9 +36,25 @@ class FormRequest implements FormRequestInterface
      */
     protected $bail = false;
 
+    /**
+     * Indicate that request must be authenticated.
+     * @var boolean
+     */
+    protected $authRequest = true;
+
+    /**
+     * Validator instance.
+     * @var null
+     */
+    protected $validator = null;
+
     public function __construct($controller = null)
     {
         $this->controller = $controller;
+
+        if ($this->authRequest) {
+            $this->auth();
+        }
     }
 
     /**
@@ -70,11 +86,42 @@ class FormRequest implements FormRequestInterface
      * @param object $user
      * @return  self
      */
-    public function setUser($user)
+    private function setUser($user)
     {
         $this->user = $user;
 
         return $this;
+    }
+
+    /**
+     * Get user.
+     * @return User
+     */
+    public function user()
+    {
+        return $this->user;
+    }
+
+    /**
+     * Get validation data.
+     * @return array
+     */
+    public function getData()
+    {
+        return $this->validator->getData();
+    }
+
+    /**
+     * Get the validation error message.
+     *
+     * Can be overriden when we need custom message
+     * based on custom validation rule.
+     *
+     * @return string
+     */
+    public function getValidationErrorMessage()
+    {
+        return $this->validator->messages()->first();
     }
 
     /**
@@ -83,23 +130,38 @@ class FormRequest implements FormRequestInterface
      * @param  array  $data     [description]
      * @param  array  $rules    [description]
      * @param  array  $messages [description]
-     * @return [type]           [description]
+     * @return self
      */
     public function validate(array $data = [], array $rules = [], array $messages = [])
     {
+        // In case we have custom validation rules, register
+        // in inside following method.
         if (method_exists($this, 'registerCustomValidations')) {
             $this->registerCustomValidations();
         }
 
-        $validator = Validator::make(
+        // Make validator with request data, rules, and custom messages.
+        $this->validator = Validator::make(
             array_merge(Request::all(), $data),
             array_merge($this->rules(), $rules),
             array_merge($this->messages(), $messages)
         );
 
-        if ($validator->fails()) {
-            $errorMessage = $validator->messages()->first();
-            OrbitShopAPI::throwInvalidArgument($errorMessage);
+        // If validation fails, then throw exception so controller
+        // can handle it properly.
+        if ($this->validator->fails()) {
+            OrbitShopAPI::throwInvalidArgument($this->getValidationErrorMessage());
         }
+    }
+
+    /**
+     * Try to get item from request param.
+     *
+     * @param  [type] $property [description]
+     * @return [type]           [description]
+     */
+    public function __get($property)
+    {
+        return Request::input($property);
     }
 }
