@@ -2,15 +2,8 @@
 
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Lang;
-use Illuminate\Support\Facades\Log;
-use OrbitShop\API\v1\ExceptionResponseProvider;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use OrbitShop\API\v1\OrbitShopAPI;
-use Orbit\Helper\Resource\ResourceInterface;
 
 /**
  * Base Pub API Controller.
@@ -57,96 +50,5 @@ class PubControllerAPI extends ControllerAPI
             // Run the signature check routine
             $this->api->checkSignature();
         }
-    }
-
-    /**
-     * Authorize specific user roles.
-     *
-     * @todo currentUser binding should be a dedicated service (registered in service provider)
-     * @param  array  $roles [description]
-     * @return [type]        [description]
-     */
-    public function authorize($roles = [])
-    {
-        $user = $this->getUser();
-
-        $role = $user->role->role_name;
-        if (! in_array(strtolower($role), $roles)) {
-            $message = 'You have to login to continue';
-            OrbitShopAPI::throwInvalidArgument($message);
-        }
-
-        // Bind current user into container so it is accessible
-        // from anywhere.
-        App::instance('currentUser', $user);
-    }
-
-    /**
-     * handle exception.
-     *
-     * @param  \Exception $e                    [description]
-     * @param  boolean    $withDatabaseRollback [description]
-     * @return [type]                           [description]
-     */
-    protected function handleException($e, $withDatabaseRollback = true)
-    {
-        if ($withDatabaseRollback) {
-            $this->rollBack();
-        }
-
-        $debug = Config::get('app.debug');
-        $httpCode = 500;
-        $this->response = new ExceptionResponseProvider($e);
-
-        if ($e instanceof ACLForbiddenException) {
-            $httpCode = 403;
-            // set custom code/message
-        }
-        else if ($e instanceof InvalidArgsException) {
-            $httpCode = 422;
-            // set custom code/message
-        }
-        else if ($e instanceof QueryException) {
-            if ($debug) {
-                $this->response->message = $e->getMessage();
-            } else {
-                $this->response->message = Lang::get('validation.orbit.queryerror');
-            }
-        }
-        else {
-            // set other code/message...
-            if ($debug) {
-                $this->response->message = $e->getFile() . ':' . $e->getLine() . ' >> ' . $e->getMessage();
-            }
-        }
-
-        return $this->render($httpCode);
-    }
-
-    /**
-     * Override render function to transform response data to array
-     * if it is an instance of ResourceInterface.
-     *
-     * @param  integer $httpCode [description]
-     * @return [type]            [description]
-     */
-    public function render($httpCode = 200)
-    {
-        if ($this->response->data instanceof ResourceInterface) {
-            $this->response->data = $this->response->data->toArray();
-        }
-
-        return parent::render($httpCode);
-    }
-
-    /**
-     * Register listener to log all queries being run.
-     * @return [type] [description]
-     */
-    protected function enableQueryLog()
-    {
-        DB::listen(function($query) {
-            Log::info($query);
-        });
     }
 }
