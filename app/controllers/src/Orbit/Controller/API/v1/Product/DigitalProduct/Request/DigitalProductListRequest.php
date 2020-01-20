@@ -26,7 +26,7 @@ class DigitalProductListRequest extends ValidateRequest
         return [
             'skip' => 'required|numeric',
             'take' => 'required|numeric',
-            'sortby' => 'sometimes|in:status,product_type,product_name',
+            'sortby' => 'sometimes|in:status,product_type,product_name,selling_price',
             'sortmode' => 'sometimes|in:asc,desc',
         ];
     }

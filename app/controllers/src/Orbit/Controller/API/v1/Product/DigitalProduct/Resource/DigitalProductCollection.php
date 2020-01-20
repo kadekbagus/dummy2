@@ -38,6 +38,7 @@ class DigitalProductCollection extends Resource
                 'id' => $item->digital_product_id,
                 'name' => $item->product_name,
                 'type' => $item->product_type,
+                'price' => $item->selling_price,
                 'status' => $item->status,
             ];
         }
