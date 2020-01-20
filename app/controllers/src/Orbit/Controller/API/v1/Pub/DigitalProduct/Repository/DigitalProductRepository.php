@@ -1,11 +1,8 @@
 <?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Repository;
 
 use App;
-use Carbon\Carbon;
-use Config;
 use DB;
 use DigitalProduct;
-use Log;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductCollection;
 use Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductResource;
@@ -79,23 +76,41 @@ class DigitalProductRepository
     /**
      * Find single product.
      *
+     * @todo  reduce query call (from request class to this function)
      * @param  [type] $digitalProductId [description]
      * @return [type]                   [description]
      */
-    public function findProduct($digitalProductId = null)
+    public function findProduct($digitalProductId = null, $gameSlug = null)
     {
         $digitalProductId = $digitalProductId ?: OrbitInput::get('id');
+        $gameSlug = $gameSlug ?: OrbitInput::get('game_slug');
 
         $this->digitalProduct = DigitalProduct::with([
-            'games' => function($query) {
-                $query->select('games.game_id', 'game_name');
+            'games' => function($query) use ($gameSlug) {
+                $query->select('games.game_id', 'game_name', 'games.slug', 'games.description', 'games.seo_text');
+
+                // If request has gameSlug, then we need to load the game images.
+                if (! empty($gameSlug)) {
+                    $query->where('games.slug', $gameSlug);
+
+                    $query->with(['media' => function($query) {
+                        $query->select('object_id', 'media_name_long', DB::raw($this->imageQuery));
+
+                        $imageVariants = $this->resolveImageVariants('game_image_', 'mobile_medium');
+                        if (! empty($imageVariants)) {
+                            $query->whereIn('media_name_long', $imageVariants);
+                        }
+                    }]);
+                }
             },
             'provider_product' => function($query) {
                 $query->select('provider_product_id', 'provider_name');
             }
-        ])->findOrFail($digitalProductId);
+        ])->where('digital_products.digital_product_id', $digitalProductId);
 
-        return new DigitalProductResource($this->digitalProduct);
+        $this->digitalProduct = $this->digitalProduct->firstOrFail();
+
+        return $this->digitalProduct;
     }
 
     /**
@@ -178,11 +193,6 @@ class DigitalProductRepository
         if (! empty($request->extra_field_metadata)) {
             $this->digitalProduct->extra_field_metadata = $request->extra_field_metadata;
         }
-    }
-
-    private function quote($arg)
-    {
-        return DB::connection()->getPdo()->quote($arg);
     }
 
 }

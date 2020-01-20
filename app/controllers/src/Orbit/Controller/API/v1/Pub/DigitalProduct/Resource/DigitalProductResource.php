@@ -1,16 +1,19 @@
-<?php namespace Orbit\Controller\API\v1\Product\DigitalProduct\Resource;
+<?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Resource;
 
-use DigitalProduct;
+use DB;
 use Orbit\Helper\Resource\ResourceAbstract as Resource;
 
 /**
- * Single Digital Product resource.
+ * Digital Product resource mapper.
  *
+ * @todo  create separate base resource folder on the same level as orbit\controller
  * @author Budi <budi@gotomalls.com>
  */
 class DigitalProductResource extends Resource
 {
     private $resource = null;
+
+    protected $imagePrefix = 'game_image_';
 
     public function __construct($resource)
     {
@@ -18,16 +21,13 @@ class DigitalProductResource extends Resource
     }
 
     /**
-     * Transform Digital Product object into response data array.
+     * Transform model into array for response.
      *
      * @return [type] [description]
      */
     public function toArray()
     {
-        if ( empty($this->resource)) {
-            return [];
-        }
-
+        $game = $this->resource->games->first();
         return [
             'id' => $this->resource->digital_product_id,
             'type' => $this->resource->product_type,
@@ -37,44 +37,23 @@ class DigitalProductResource extends Resource
             'provider_id' => $this->resource->selected_provider_product_id,
             'provider_name' => $this->transformProviderName(),
             'status' => $this->resource->status,
-            'displayed' => $this->resource->is_displayed,
-            'promo' => $this->resource->is_promo,
+            'displayed' => $this->resource->is_displayed === 'yes',
+            'promo' => $this->resource->is_promo === 'yes',
             'description' => $this->resource->description,
             'notes' => $this->resource->notes,
             'extra_field_metadata' => $this->resource->extra_field_metadata,
-            'games' => $this->transformGames(),
+            'game' => [
+                'id' => $game->game_id,
+                'name' => $game->game_name,
+                'slug' => $game->slug,
+                'description' => $game->description,
+                'seo_text' => $game->seo_text,
+                'images' => $this->transformImages($game),
+            ]
         ];
     }
 
-    /**
-     * Transform related games info.
-     *
-     * @return [type] [description]
-     */
-    protected function transformGames()
-    {
-        if (! isset($this->resource->games)) {
-            $this->resource->load(['games' => function($query) {
-                $query->select('games.game_id', 'game_name');
-            }]);
-        }
-
-        $games = null;
-        foreach($this->resource->games as $game) {
-            $games[] = [
-                'id' => $game->game_id,
-                'name' => $game->game_name,
-            ];
-        }
-
-        return $games;
-    }
-
-    /**
-     * Transform provider name.
-     * @return [type] [description]
-     */
-    protected function transformProviderName()
+    private function transformProviderName()
     {
         $providerName = $this->resource->provider_name;
 

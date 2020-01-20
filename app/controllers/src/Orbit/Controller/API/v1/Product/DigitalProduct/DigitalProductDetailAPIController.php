@@ -4,6 +4,7 @@ use App;
 use Exception;
 use OrbitShop\API\v1\ControllerAPI;
 use Orbit\Controller\API\v1\Product\DigitalProduct\Request\DigitalProductDetailRequest;
+use Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductResource;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\DigitalProductRepository;
 
 /**
@@ -27,7 +28,9 @@ class DigitalProductDetailAPIController extends ControllerAPI
 
             (new DigitalProductDetailRequest($this))->validate();
 
-            $this->response->data = App::make(DigitalProductRepository::class)->findProduct();
+            $this->response->data = new DigitalProductResource(
+                App::make(DigitalProductRepository::class)->findProduct()
+            );
 
         } catch (Exception $e) {
             $this->handleException($e, false);
