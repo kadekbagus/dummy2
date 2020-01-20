@@ -35,7 +35,7 @@ class DigitalProductResource extends Resource
             'code' => $this->resource->code,
             'price' => $this->resource->selling_price,
             'provider_id' => $this->resource->selected_provider_product_id,
-            'provider_name' => $this->resource->provider_name,
+            'provider_name' => $this->transformProviderName(),
             'status' => $this->resource->status,
             'displayed' => $this->resource->is_displayed,
             'promo' => $this->resource->is_promo,
@@ -68,5 +68,12 @@ class DigitalProductResource extends Resource
         }
 
         return $games;
+    }
+
+    private function transformProviderName()
+    {
+        return $this->resource->provider_product
+                ? $this->resource->provider_product->provider_name
+                : null;
     }
 }
