@@ -94,3 +94,81 @@ Event::listen('orbit.newproduct.postupdateproduct.after.save', function($control
         $product->image = $response->data[0]->variants[0]->path;
     }
 });
+
+
+// New GAME
+Event::listen('orbit.newgame.postnewgame.after.save', function($controller, $game)
+{
+    $images = Input::file(null);
+    if (! $images) {
+        return;
+    }
+
+    // This will be used on MediaAPIController
+    App::instance('orbit.upload.user', $controller->api->user);
+
+    // Use MediaAPIController class to upload the image
+    $_POST['media_name_id'] = 'game_image';
+    $_POST['object_id'] = $game->game_id;
+
+    $response = MediaAPIController::create('raw')
+        ->setEnableTransaction(false)
+        ->upload();
+
+    unset($_POST['media_name_id']);
+    unset($_POST['object_id']);
+
+
+    if ($response->code !== 0)
+    {
+        throw new \Exception($response->message, $response->code);
+    }
+
+    $game->setRelation('media', $response->data);
+    $game->media = $response->data;
+    $game->imagePath = $response->data[0]->variants[0]->path;
+});
+
+// UPDATE GAME
+Event::listen('orbit.updategame.postupdategame.after.save', function($controller, $game)
+{
+    $images = Input::file(null);
+
+    if (! empty($images)) {
+        // This will be used on MediaAPIController
+        App::instance('orbit.upload.user', $controller->api->user);
+
+        // Delete previous cover image
+        $oldImage = Media::where('object_id', $game->game_id)
+            ->where('object_name', 'game')
+            ->where('media_name_id', 'game_image')
+            ->first();
+
+        if (is_object($oldImage)) {
+            $_POST['media_id'] = $oldImage->media_id;
+            $deleteResponse = MediaAPIController::create('raw')
+                ->setEnableTransaction(false)
+                ->delete();
+            unset($_POST['media_id']);
+        }
+
+        // Use MediaAPIController class to upload the new image
+        $_POST['media_name_id'] = 'game_image';
+        $_POST['object_id'] = $game->game_id;
+
+        $response = MediaAPIController::create('raw')
+            ->setEnableTransaction(false)
+            ->upload();
+
+        unset($_POST['media_name_id']);
+        unset($_POST['object_id']);
+
+        if ($response->code !== 0)
+        {
+            throw new \Exception($response->message, $response->code);
+        }
+
+        $game->load('media');
+        $game->image = $response->data[0]->variants[0]->path;
+    }
+});
