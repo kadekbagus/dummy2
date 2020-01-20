@@ -72,8 +72,14 @@ class DigitalProductResource extends Resource
 
     private function transformProviderName()
     {
-        return $this->resource->provider_product
-                ? $this->resource->provider_product->provider_name
-                : null;
+        $providerName = $this->resource->provider_name;
+
+        if (empty($providerName)) {
+            $providerName = $this->resource->provider_product
+                                ? $this->resource->provider_product->provider_name
+                                : null;
+        }
+
+        return $providerName;
     }
 }
