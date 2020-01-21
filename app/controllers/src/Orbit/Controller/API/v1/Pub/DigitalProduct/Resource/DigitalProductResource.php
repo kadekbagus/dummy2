@@ -34,6 +34,7 @@ class DigitalProductResource extends Resource
             'name' => $this->resource->product_name,
             'code' => $this->resource->code,
             'price' => $this->resource->selling_price,
+            'provider_product_id' => $this->resource->selected_provider_product_id,
             'provider_name' => $this->transformProviderName(),
             'status' => $this->resource->status,
             'displayed' => $this->resource->is_displayed === 'yes',
