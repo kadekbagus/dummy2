@@ -23,7 +23,7 @@ class DigitalProductUpdateAPIController extends ControllerAPI
         $httpCode = 200;
 
         try {
-            $this->enableQueryLog();
+            // $this->enableQueryLog();
 
             with($request = new DigitalProductUpdateRequest($this))->validate();
 
