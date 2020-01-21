@@ -191,18 +191,9 @@ class DigitalProductRepository
         $this->digitalProduct->is_displayed = $request->displayed;
         $this->digitalProduct->is_promo = $request->promo;
         $this->digitalProduct->status = $request->status;
-
-        if (! empty($request->description)) {
-            $this->digitalProduct->description = $request->description;
-        }
-
-        if (! empty($request->notes)) {
-            $this->digitalProduct->notes = $request->notes;
-        }
-
-        if (! empty($request->extra_field_metadata)) {
-            $this->digitalProduct->extra_field_metadata = $request->extra_field_metadata;
-        }
+        $this->digitalProduct->description = $request->description;
+        $this->digitalProduct->notes = $request->notes;
+        $this->digitalProduct->extra_field_metadata = $request->extra_field_metadata;
     }
 
 }
