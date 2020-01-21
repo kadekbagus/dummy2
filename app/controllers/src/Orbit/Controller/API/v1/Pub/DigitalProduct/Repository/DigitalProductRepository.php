@@ -26,6 +26,16 @@ class DigitalProductRepository
     }
 
     /**
+     * Get the digital product object.
+     *
+     * @return [type] [description]
+     */
+    public function getDigitalProduct()
+    {
+        return $this->digitalProduct;
+    }
+
+    /**
      * Find a collection of products.
      *
      * @return [type] [description]
@@ -104,7 +114,7 @@ class DigitalProductRepository
                 }
             },
             'provider_product' => function($query) {
-                $query->select('provider_product_id', 'provider_name');
+                $query->select('provider_product_id', 'provider_name', 'provider_product_name');
             }
         ])->where('digital_products.digital_product_id', $digitalProductId);
 

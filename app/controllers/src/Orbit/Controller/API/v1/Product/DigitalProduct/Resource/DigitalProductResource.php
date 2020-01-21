@@ -34,14 +34,17 @@ class DigitalProductResource extends Resource
             'name' => $this->resource->product_name,
             'code' => $this->resource->code,
             'price' => $this->resource->selling_price,
-            'provider_id' => $this->resource->selected_provider_product_id,
-            'provider_name' => $this->transformProviderName(),
             'status' => $this->resource->status,
             'displayed' => $this->resource->is_displayed,
             'promo' => $this->resource->is_promo,
             'description' => $this->resource->description,
             'notes' => $this->resource->notes,
             'extra_field_metadata' => $this->resource->extra_field_metadata,
+            'provider_product' => [
+                'id' => $this->resource->selected_provider_product_id,
+                'provider_name' => $this->transformProviderName(),
+                'product_name' => $this->transformProviderProductName(),
+            ],
             'games' => $this->transformGames(),
         ];
     }
@@ -85,5 +88,22 @@ class DigitalProductResource extends Resource
         }
 
         return $providerName;
+    }
+
+    /**
+     * Transform provider product name.
+     * @return [type] [description]
+     */
+    protected function transformProviderProductName()
+    {
+        $providerProductName = $this->resource->provider_product_name;
+
+        if (empty($providerProductName)) {
+            $providerProductName = $this->resource->provider_product
+                                    ? $this->resource->provider_product->provider_product_name
+                                    : null;
+        }
+
+        return $providerProductName;
     }
 }
