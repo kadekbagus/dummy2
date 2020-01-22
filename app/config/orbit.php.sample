@@ -6290,4 +6290,29 @@ return array(
     'subscription' => [
         'max_campaign_to_display' => 4,
     ],
+
+    /**
+     * Config related to Digital Products.
+     */
+    'digital_product' => [
+        // List of supported product type.
+        'product_types' => [
+            'game_voucher' => 'Game Voucher',
+            'electricity' => 'Electricity',
+        ],
+
+        /**
+         * 3rd party product providers.
+         */
+        'providers' => [
+            'ayopay' => [
+                'id' => 'ayopay',
+                'name' => 'AyoPay',
+            ],
+            'unipin' => [
+                'id' => 'unipin',
+                'name' => 'UniPin',
+            ],
+        ],
+    ],
 );
