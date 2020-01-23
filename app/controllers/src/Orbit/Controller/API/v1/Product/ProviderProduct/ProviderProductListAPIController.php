@@ -89,17 +89,12 @@ class ProviderProductListAPIController extends ControllerAPI
 
             OrbitInput::get('provider_name', function($provider_name) use ($provider_product)
             {
-                $provider_product->where('provider_name', $provider_name);
+                $provider_product->where('provider_name', 'like', "%$provider_name%");
             });
 
             OrbitInput::get('product_type', function($product_type) use ($provider_product)
             {
-                $provider_product->where('product_type', $product_type);
-            });
-
-            OrbitInput::get('provider_name_like', function($provider_name) use ($provider_product)
-            {
-                $provider_product->where('provider_name', 'like', "%$provider_name%");
+                $provider_product->where('product_type', 'like', "%$product_type%");
             });
 
             OrbitInput::get('game_name_like', function($name) use ($provider_product)
