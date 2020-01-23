@@ -140,7 +140,9 @@ class DigitalProductRepository
             $this->digitalProduct->save();
 
             // Attach relationship between Digital Product and Game.
-            $this->digitalProduct->games()->attach($request->games);
+            if ($request->type === 'game_voucher') {
+                $this->digitalProduct->games()->attach($request->games);
+            }
 
             // Add provider_name into digital product object
             $this->digitalProduct->provider_name = App::make('providerProduct')->provider_name;
@@ -166,7 +168,9 @@ class DigitalProductRepository
             $this->digitalProduct->save();
 
             // Sync (detach-attach) relationship between Digital Product and Game.
-            $this->digitalProduct->games()->sync($request->games);
+            if ($request->type === 'game_voucher') {
+                $this->digitalProduct->games()->sync($request->games);
+            }
 
             // Add provider name into digital product response.
             $this->digitalProduct->provider_name = App::make('providerProduct')->provider_name;
