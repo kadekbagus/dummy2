@@ -34,7 +34,7 @@ class DigitalProductNewRequest extends ValidateRequest
             'name' => 'required',
             'code' => 'required|unique_code',
             'provider_id' => 'required|provider_product_exists',
-            'games' => 'required|array',
+            'games' => 'required_if:type,game_voucher|array',
             'price' => 'required|numeric',
             'status' => 'required|in:active,inactive',
             'displayed' => 'required|in:yes,no',
