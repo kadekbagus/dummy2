@@ -9,6 +9,8 @@ use Orbit\Helper\DigitalProduct\Response\BaseResponse;
  */
 class StatusAPIResponse extends BaseResponse
 {
+    private $voucherData = [];
+
     /**
      * Accept well-formatted xml string...
      *
@@ -19,12 +21,36 @@ class StatusAPIResponse extends BaseResponse
         if (is_string($response)) {
             $xmlResponse = simplexml_load_string($response);
 
-            if (is_object($xmlResponse)) {
-                $response = $xmlResponse;
+            if ($xmlResponse instanceof \SimpleXMLElement) {
+                $response = (object) json_decode(json_encode($xmlResponse), true);
+
+                $this->parseVoucherData($response);
             }
         }
 
         parent::__construct($response);
+    }
+
+    /**
+     * Parse voucher information from response.
+     * Voucher data format from API would be: Voucher code = QV343-Q23123-CGUC2-928SS-0ACGE,Serial Number = 127288910
+     *
+     * @param  [type] $response [description]
+     * @return [type]           [description]
+     */
+    private function parseVoucherData($response)
+    {
+        if (isset($response->voucher)) {
+            $voucherData = explode(',', $response->voucher);
+
+            foreach($voucherData as $data) {
+                $dataArr = explode('=', $data);
+
+                if (count($dataArr) === 2) {
+                    $this->voucherData[strtolower(trim($dataArr[0]))] = trim($dataArr[1]);
+                }
+            }
+        }
     }
 
     /**
@@ -34,7 +60,7 @@ class StatusAPIResponse extends BaseResponse
      */
     public function isSuccess()
     {
-        return ! empty($this->response->data)
+        return null !== $this->response->data
             && (isset($this->response->data->status) && 100 === (int) $this->response->data->status)
             && (isset($this->response->data->message) && strtolower($this->response->data->message) === 'sukses');
     }
@@ -47,7 +73,38 @@ class StatusAPIResponse extends BaseResponse
     public function isPending()
     {
         return ! empty($this->response->data)
-            && 100 === (int) $this->response->data->status;
+            && (isset($this->response->data->status) && 100 === (int) $this->response->data->status);
+    }
+
+    /**
+     * Get the voucher information from the response.
+     * @return [type] [description]
+     */
+    public function getVoucherData()
+    {
+        return $this->voucherData;
+    }
+
+    /**
+     * Get the voucher code from response/voucher data.
+     * @return [type] [description]
+     */
+    public function getVoucherCode()
+    {
+        return isset($this->voucherData['voucher code'])
+            ? $this->voucherData['voucher code']
+            : '';
+    }
+
+    /**
+     * Get serial number from the response/voucher data.
+     * @return [type] [description]
+     */
+    public function getSerialNumber()
+    {
+        return isset($this->voucherData['serial number'])
+            ? $this->voucherData['serial number']
+            : '';
     }
 
     /**
