@@ -44,8 +44,8 @@ class DigitalProductRepository
     {
         $skip = OrbitInput::get('skip', 0);
         $take = OrbitInput::get('take', 10);
-        $sortBy = OrbitInput::get('sortby', 'status');
-        $sortMode = OrbitInput::get('sortmode', 'asc');
+        $sortBy = OrbitInput::get('sortby', 'updated_at');
+        $sortMode = OrbitInput::get('sortmode', 'desc');
 
         $digitalProducts = DigitalProduct::select(
             'digital_product_id',
