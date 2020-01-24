@@ -34,9 +34,9 @@ class PurchaseAPI extends AyoPayAPI
 
     protected function mockResponseData()
     {
-        $randomResponse = shuffle($this->randomizeResponseChance);
+        shuffle($this->randomizeResponseChance);
 
-        if ($randomResponse[0] === 1) {
+        if ($this->randomizeResponseChance[0] === 1) {
             $this->mockResponse = "<?xml version='1.0'?>
                 <ayopay>
                     <trx_ayopay>46737726</trx_ayopay>

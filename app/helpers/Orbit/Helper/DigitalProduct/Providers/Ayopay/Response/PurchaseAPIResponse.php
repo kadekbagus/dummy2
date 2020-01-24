@@ -33,6 +33,7 @@ class PurchaseAPIResponse extends BaseResponse
 
     /**
      * Parse voucher information from response.
+     * Voucher data format from API would be: Voucher code = QV343-Q23123-CGUC2-928SS-0ACGE,Serial Number = 127288910
      *
      * @param  [type] $response [description]
      * @return [type]           [description]
@@ -42,8 +43,12 @@ class PurchaseAPIResponse extends BaseResponse
         if (isset($response->voucher)) {
             $voucherData = explode(',', $response->voucher);
 
-            foreach($voucherData as $key => $data) {
-                $this->voucherData[strtolower($key)] = $data;
+            foreach($voucherData as $data) {
+                $dataArr = explode('=', $data);
+
+                if (count($dataArr) === 2) {
+                    $this->voucherData[strtolower(trim($dataArr[0]))] = trim($dataArr[1]);
+                }
             }
         }
     }

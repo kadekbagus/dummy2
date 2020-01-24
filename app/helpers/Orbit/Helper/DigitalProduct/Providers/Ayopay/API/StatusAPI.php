@@ -14,6 +14,8 @@ class StatusAPI extends AyoPayAPI
 {
     protected $shouldMockResponse = true;
 
+    protected $randomizeResponseChance = [1, 1, 1, 1, 1, 0];
+
     /**
      * Build purchase api request param (body).
      * Should return text/xml string.
@@ -60,9 +62,9 @@ class StatusAPI extends AyoPayAPI
 
     protected function mockResponseData()
     {
-        $randomResponse = shuffle($this->randomizeResponseChance);
+        shuffle($this->randomizeResponseChance);
 
-        if (true) {
+        if ($this->randomizeResponseChance[0] === 1) {
             $this->mockResponse = "<?xml version="1.0"?>
                 <ayopay>
                     <trx_ayopay>IP01000533</trx_ayopay>
