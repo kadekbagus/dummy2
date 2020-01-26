@@ -1,12 +1,11 @@
 <?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct;
 
+use Exception;
 use Illuminate\Support\ServiceProvider;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\DigitalProductRepository;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\GameRepository;
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderBuilder;
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
-use ProviderProduct;
-use Request;
 
 /**
  * Service provider for digital product feature.
@@ -27,6 +26,7 @@ class DigitalProductServiceProvider extends ServiceProvider
 
         // Get concrete implementation of the purchase interface.
         // The provider we load would depends on the providerId/name, e.g. ayopay, unipin, etc..
+        // This binding requires an instance of purchase available in the container.
         $this->app->singleton(PurchaseProviderInterface::class, function($app) {
             $providerId = null;
 

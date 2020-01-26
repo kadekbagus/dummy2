@@ -125,6 +125,25 @@ class ValidateRequest implements ValidateRequestInterface
     }
 
     /**
+     * Do something when there's validation error.
+     *
+     * @return [type] [description]
+     */
+    protected function handleValidationFails()
+    {
+        OrbitShopAPI::throwInvalidArgument($this->getValidationErrorMessage());
+    }
+
+    /**
+     * Get the validation data.
+     * @return [type] [description]
+     */
+    public function validationData()
+    {
+        return Request::all();
+    }
+
+    /**
      * Validate form request.
      *
      * @param  array  $data     [description]
@@ -142,7 +161,7 @@ class ValidateRequest implements ValidateRequestInterface
 
         // Make validator with request data, rules, and custom messages.
         $this->validator = Validator::make(
-            array_merge(Request::all(), $data),
+            array_merge($this->validationData(), $data),
             array_merge($this->rules(), $rules),
             array_merge($this->messages(), $messages)
         );
@@ -150,7 +169,7 @@ class ValidateRequest implements ValidateRequestInterface
         // If validation fails, then throw exception so controller
         // can handle it properly.
         if ($this->validator->fails()) {
-            OrbitShopAPI::throwInvalidArgument($this->getValidationErrorMessage());
+            $this->handleValidationFails();
         }
     }
 

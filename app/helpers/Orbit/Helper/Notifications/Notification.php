@@ -129,20 +129,19 @@ abstract class Notification {
      */
     protected function sendEmail($customDelay = 0)
     {
-        if ($this->shouldQueue) {
+        // Check if email is being blacklisted.
+        // If so, then do nothing.
+        $this->blacklistedRecipients['email'] = $this->getBlacklistedEmails();
+        $emailData = $this->getEmailData();
+        $recipientEmail = isset($emailData['recipientEmail']) ? $emailData['recipientEmail'] : '';
 
+        if (in_array($recipientEmail, $this->blacklistedRecipients['email'])) {
+            return;
+        }
+
+        if ($this->shouldQueue) {
             // Override the delay if needed.
             $this->notificationDelay = $customDelay === 0 ? $this->notificationDelay : $customDelay;
-
-            // Check if email is being blacklisted.
-            // If so, then do nothing.
-            $this->blacklistedRecipients['email'] = $this->getBlacklistedEmails();
-            $emailData = $this->getEmailData();
-            $recipientEmail = isset($emailData['recipientEmail']) ? $emailData['recipientEmail'] : '';
-
-            if (in_array($recipientEmail, $this->blacklistedRecipients['email'])) {
-                return;
-            }
 
             Queue::later(
                 $this->notificationDelay,
@@ -153,7 +152,7 @@ abstract class Notification {
         }
         else {
             $fakeJob = new FakeJob();
-            $this->toEmail($fakeJob, $this->getEmailData());
+            $this->toEmail($fakeJob, $emailData);
         }
     }
 
