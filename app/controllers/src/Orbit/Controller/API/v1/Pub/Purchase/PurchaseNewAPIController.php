@@ -14,7 +14,7 @@ use Orbit\Controller\API\v1\Pub\Purchase\Request\PurchaseRequestBuilder;
  */
 class PurchaseNewAPIController extends PubControllerAPI
 {
-    public function postNewPurchase()
+    public function postNew()
     {
         $httpCode = 200;
 
