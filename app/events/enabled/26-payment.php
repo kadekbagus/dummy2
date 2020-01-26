@@ -29,7 +29,7 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
 
         DB::connection()->beginTransaction();
 
-        if (! $payment->forPulsa()) {
+        if (! $payment->forPulsa() && ! $payment->forDigitalProduct()) {
             $payment->cleanUp();
         }
 
@@ -37,7 +37,9 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
 
         DB::connection()->commit();
     }
-    else if ($payment->status === PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED || $payment->status === PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED) {
+    else if ($payment->status === PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED
+        || $payment->status === PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED
+        || $payment->status === PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT_FAILED) {
         // This might be occurred because there are 2 transactions with same coupon and user.
         // Only the first transaction which pending/paid should get the coupon.
         Log::info("PaidCoupon: Payment {$paymentId} success but can not issue coupon...");
@@ -78,8 +80,18 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
             // @notes shouldn't we use specific queue/tube for this?
             Queue::push(
                 'Orbit\\Queue\\Pulsa\\GetPulsaQueue',
-                $queueData,
-                'gtm_pulsa'
+                $queueData //,
+                // 'gtm_pulsa'
+            );
+        }
+        else if ($payment->forDigitalProduct()) {
+            Log::info("DigitalProduct: Will try to purchase digital product in a few seconds for {$paymentId} ...");
+
+            // @notes shouldn't we use specific queue/tube for this?
+            Queue::push(
+                'Orbit\\Queue\\DigitalProduct\\GetDigitalProductQueue',
+                $queueData //,
+                // 'gtm_pulsa'
             );
         }
         else if ($payment->forSepulsa() || $payment->paidWith(['bank_transfer', 'echannel', 'gopay'])) {
