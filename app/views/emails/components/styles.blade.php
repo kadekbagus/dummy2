@@ -198,6 +198,12 @@
       line-height:1.7em;
     }
 
+    .transaction-details {
+      color: #333;
+      text-align: left;
+      line-height: 1.5em;
+    }
+
     /* MEDIA QUERIES */
     @media all and (max-width:639px) {
       .wrapper{ width:95% !important; padding: 0 !important; }
@@ -227,8 +233,17 @@
         font-size: 22px;
       }
 
+      .transaction-details {
+        font-size: 22px;
+      }
+
       .btn {
         font-size: 22px;
+      }
+
+      .btn-block {
+        display: block;
+        margin-bottom: 15px;
       }
 
       .coupon-img-container {

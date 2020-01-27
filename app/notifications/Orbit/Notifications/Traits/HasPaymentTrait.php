@@ -17,6 +17,11 @@ trait HasPaymentTrait
 
     protected $objectType = 'pulsa';
 
+    protected $paymentMethodMapper = [
+        'gopay' => 'GOJEK',
+        'dana' => 'Dana',
+    ];
+
     /**
      * Get the transaction data.
      *
@@ -194,6 +199,8 @@ trait HasPaymentTrait
                 break;
             }
         }
+
+        return $this->objectType;
     }
 
     /**
@@ -208,5 +215,27 @@ trait HasPaymentTrait
         }
 
         return '';
+    }
+
+    /**
+     * Get the payment method, Gopay or Dana.
+     *
+     * @return [type] [description]
+     */
+    protected function getPaymentMethod()
+    {
+        $paymentMethod = '';
+
+        if (! empty($this->payment->midtrans)) {
+            $paymentInfo = json_decode(unserialize($this->payment->midtrans->payment_midtrans_info), true);
+
+            if (isset($paymentInfo['payment_type'])) {
+                $paymentMethod = $paymentInfo['payment_type'];
+                $paymentMethod = isset($this->paymentMethodMapper[$paymentMethod])
+                    ? $this->paymentMethodMapper[$paymentMethod] : '';
+            }
+        }
+
+        return $paymentMethod;
     }
 }
