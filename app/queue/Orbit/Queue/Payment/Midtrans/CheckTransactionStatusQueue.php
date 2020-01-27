@@ -16,6 +16,7 @@ use Orbit\Helper\Midtrans\API\TransactionStatus;
 
 use Orbit\Notifications\Payment\ExpiredPaymentNotification;
 use Orbit\Notifications\Pulsa\ExpiredPaymentNotification as PulsaExpiredPaymentNotification;
+// use Orbit\Notifications\DigitalProduct\ExpiredPaymentNotification as DigitalProductExpiredPaymentNotification;
 
 /**
  * Get transaction status from Midtrans and update our internal payment status if necessary.
@@ -42,7 +43,18 @@ class CheckTransactionStatusQueue
 
             DB::connection()->beginTransaction();
 
-            $payment = PaymentTransaction::onWriteConnection()->with(['details.coupon', 'details.pulsa', 'refunds', 'midtrans', 'issued_coupons', 'user', 'discount_code'])->find($data['transactionId']);
+            $payment = PaymentTransaction::onWriteConnection()->with([
+                'details.coupon',
+                'details.pulsa',
+                'details.digital_product',
+                'details.provider_product',
+                'refunds',
+                'midtrans',
+                'issued_coupons',
+                'user',
+                'discount_code'
+            ])->find($data['transactionId']);
+
             $mallId = isset($data['mall_id']) ? $data['mall_id'] : null;
             $mall = Mall::where('merchant_id', $mallId)->first();
 
@@ -66,7 +78,7 @@ class CheckTransactionStatusQueue
             else if ($payment->expired() || $payment->failed() || $payment->denied() || $payment->canceled()) {
                 Log::info("Midtrans::CheckTransactionStatusQueue: Transaction ID {$data['transactionId']} status is {$payment->status}.");
 
-                if (! $payment->forPulsa()) {
+                if (! $payment->forPulsa() && ! $payment->forDigitalProduct()) {
                     $payment->cleanUp();
                 }
 
@@ -128,9 +140,12 @@ class CheckTransactionStatusQueue
                 // @todo Should we assume the payment is failed or just let it as what it is (pending or whatever its status is)?
                 $transactionStatus = $transaction->mapToInternalStatus();
                 if ($transaction->isSuccess()) {
-                    if ($payment->forSepulsa() || $payment->paidWith(['bank_transfer', 'echannel', 'gopay'])) {
+                    if ($payment->forSepulsa() || $payment->paidWith(['bank_transfer', 'echannel', 'gopay', 'dana'])) {
                         if ($payment->forPulsa()) {
                             $transactionStatus = PaymentTransaction::STATUS_SUCCESS_NO_PULSA;
+                        }
+                        else if ($payment->forDigitalProduct()) {
+                            $transactionStatus = PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT;
                         }
                         else {
                             $transactionStatus = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
@@ -174,9 +189,12 @@ class CheckTransactionStatusQueue
 
                     $paymentDetail = $payment->details->first();
                     if ($paymentDetail->object_type === 'pulsa') {
-                        $payment->user->notify(new PulsaExpiredPaymentNotification($payment));
+                        // $payment->user->notify(new PulsaExpiredPaymentNotification($payment));
+                    }
+                    else if ($paymentDetail->object_type === 'digital_product') {
+                        // $payment->user->notify(new DigitalProductExpiredPaymentNotification($payment));
                     } else if ($paymentDetail->object_type === 'coupon') {
-                        $payment->user->notify(new ExpiredPaymentNotification($payment));
+                        // $payment->user->notify(new ExpiredPaymentNotification($payment));
                     }
                 }
 

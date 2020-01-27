@@ -2,6 +2,7 @@
 
 use App;
 use DigitalProduct;
+use ProviderProduct;
 
 /**
  * List of custom validator related to Digital Product
@@ -57,5 +58,28 @@ class DigitalProductValidator
 
         return $digitalProduct->status === 'active'
             && $digitalProduct->is_displayed === 'yes';
+    }
+
+    /**
+     * Validate that Provider Product with $providerProductId exists.
+     *
+     * @param  [type] $attributes        [description]
+     * @param  [type] $providerProductId [description]
+     * @param  [type] $parameters        [description]
+     * @return [type]                    [description]
+     */
+    public function providerProductExists($attributes, $value, $parameters)
+    {
+        $digitalProduct = App::make('digitalProduct');
+
+        if (empty ($digitalProduct)) {
+            return false;
+        }
+
+        $providerProduct = ProviderProduct::where('provider_product_id', $digitalProduct->selected_provider_product_id)->first();
+
+        App::instance('providerProduct', $providerProduct);
+
+        return ! empty($providerProduct);
     }
 }
