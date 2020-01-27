@@ -4,7 +4,7 @@ return [
     'subject' => 'Menunggu Pembayaran',
 
     'header' => [
-        'invoice'       => 'Notice',
+        'invoice'       => 'Pemberitahuan',
     ],
 
     'body' => [
@@ -20,6 +20,11 @@ return [
                         <br>
                         Terima kasih telah membeli Paket Data di Gotomalls.com. Silakan lakukan pembayaran menggunakan aplikasi GOJEK di HP Anda. Berikut ini detail transaksi Anda.',
 
+        'greeting_digital_product' => [
+            'customer_name' => 'Yth, :customerName',
+            'body' => 'Terima kasih telah membeli :productName di Gotomalls.com. Silakan lakukan pembayaran menggunakan aplikasi :paymentMethod di HP Anda. Berikut ini detail transaksi Anda.',
+        ],
+
         'transaction_labels' => [
             'transaction_id' => 'No. Transaksi: ',
             'transaction_date' => 'Tanggal Transaksi: ',
@@ -33,6 +38,7 @@ return [
             'email' => 'Email: ',
             'phone' => 'No. Telp Pelanggan: ',
             'total_amount' => 'Total: ',
+            'product' => 'Produk',
         ],
 
         'payment-info-line-1' => 'Untuk menyelesaikan transaksi ini, mohon untuk melakukan transfer ke rekening berikut sebelum <br><span style="color:#f43d3c;"><strong>:paymentExpiration</strong></span>',

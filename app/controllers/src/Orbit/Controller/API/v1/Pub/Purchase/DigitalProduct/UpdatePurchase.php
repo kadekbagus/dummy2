@@ -25,9 +25,13 @@ use Orbit\Notifications\DigitalProduct\CanceledPaymentNotification;
 use Orbit\Notifications\DigitalProduct\AbortedPaymentNotification;
 use Orbit\Notifications\DigitalProduct\ExpiredPaymentNotification;
 use Orbit\Notifications\DigitalProduct\CustomerRefundNotification;
+use User;
 
 /**
  * Digital Product Purchase
+ *
+ * @todo  use new activity helper.
+ * @author Budi <budi@gotomalls.com>
  */
 class UpdatePurchase
 {
@@ -45,7 +49,7 @@ class UpdatePurchase
             $payment_transaction_id = $request->payment_transaction_id;
             $status = $request->status;
             $mallId = $request->mall_id;
-            $fromSnap = $request->from_snap;
+            $fromSnap = $request->from_snap ?: false;
             $refundData = $request->refund_data;
 
             $paymentSuspicious = false;
@@ -194,15 +198,9 @@ class UpdatePurchase
 
                 $this->purchase->responded_at = Carbon::now('UTC');
 
-                // If payment is success and not with credit card (not realtime) or the payment for Sepulsa voucher,
-                // then we assume the status as success_no_coupon (so frontend will show preparing voucher page).
-                if ($status === PaymentTransaction::STATUS_SUCCESS) {
-                    if (isset($failed)) {
-                        $this->purchase->status = PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT_FAILED;
-                    }
-                    else if ($this->purchase->paidWith(['bank_transfer', 'echannel']) || $this->purchase->forDigitalProduct()) {
-                        $this->purchase->status = PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT;
-                    }
+                // If payment was success, set purchase to processing/purchasing product to provider.
+                if ($status === PaymentTransaction::STATUS_SUCCESS && $this->purchase->forDigitalProduct()) {
+                    $this->purchase->status = PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT;
                 }
 
                 // If new status is 'aborted', then keep it as 'starting' after cleaning up
@@ -301,7 +299,7 @@ class UpdatePurchase
                     // Send email to address that being used on checkout (can be different with user's email)
                     $paymentUser = new User;
                     $paymentUser->email = $this->purchase->user_email;
-                    // $paymentUser->notify(new PendingPaymentNotification($this->purchase), 30);
+                    $paymentUser->notify(new PendingPaymentNotification($this->purchase), 30);
                 }
 
                 // Send notification if the purchase was canceled.
@@ -368,6 +366,7 @@ class UpdatePurchase
         foreach($this->purchase->details as $detail) {
             if (! empty($detail->digital_product)) {
                 $objectName = $detail->object_name;
+                break;
             }
         }
 
