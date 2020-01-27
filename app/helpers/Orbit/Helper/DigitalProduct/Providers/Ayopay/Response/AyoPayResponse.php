@@ -3,7 +3,7 @@
 use Orbit\Helper\DigitalProduct\Response\BaseResponse;
 
 /**
- * AyoPay Purchase API Response mapper.
+ * AyoPay base Response mapper.
  *
  * @author Budi <budi@gotomalls.com>
  */
@@ -61,18 +61,6 @@ class AyoPayResponse extends BaseResponse
     public function isSuccess()
     {
         return null !== $this->response->data
-            && (isset($this->response->data->status) && 100 === (int) $this->response->data->status)
-            && (isset($this->response->data->message) && strtolower($this->response->data->message) === 'sukses');
-    }
-
-    /**
-     * Determine that the purchase is still pending.
-     *
-     * @return boolean [description]
-     */
-    public function isPending()
-    {
-        return ! empty($this->response->data)
             && (isset($this->response->data->status) && 100 === (int) $this->response->data->status);
     }
 
