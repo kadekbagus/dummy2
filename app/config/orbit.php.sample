@@ -6305,13 +6305,49 @@ return array(
          * 3rd party product providers.
          */
         'providers' => [
+            // current env
+            'env' => 'local',
+
+            // AyoPay Config
             'ayopay' => [
                 'id' => 'ayopay',
                 'name' => 'AyoPay',
+
+                // config for each env.
+                'config' => [
+                    'local' => [
+                        'base_uri' => '',
+                        'id' => '',
+                        'msg' => '',
+                    ],
+                    'sandbox' => [
+                        'base_uri' => '',
+                        'id' => '',
+                        'msg' => '',
+                    ],
+                    'production' => [
+                        'base_uri' => '',
+                        'id' => '',
+                        'msg' => '',
+                    ],
+                ],
             ],
+
+            // UniPin Config
             'unipin' => [
                 'id' => 'unipin',
                 'name' => 'UniPin',
+                'config' => [
+                    'local' => [
+                        'base_uri' => 'http://orbit-mall-api.budi:8080/mock/api/unipin',
+                        'client_key' => '',
+                        'secret_key' => '',
+                    ],
+                    'sandbox' => [
+                    ],
+                    'production' => [
+                    ],
+                ],
             ],
         ],
     ],
