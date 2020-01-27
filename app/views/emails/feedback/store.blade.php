@@ -174,8 +174,10 @@
           <tr>
             <td colspan="2" class="invoice-body" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:80px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                <strong>{{{ trans('email-feedback-store.body.feedback_labels.user') }}}</strong> {{ $feedback['user'] }}
-                <br>
+                @if (! empty($feedback['user']))
+                    <strong>{{{ trans('email-feedback-store.body.feedback_labels.user') }}}</strong> {{ $feedback['user'] }}
+                    <br>
+                @endif
                 <strong>{{{ trans('email-feedback-store.body.feedback_labels.email') }}}</strong> {{ $feedback['email'] }}
                 <br>
                 <strong>{{{ trans('email-feedback-store.body.feedback_labels.store') }}}</strong> {{ $feedback['store'] }}

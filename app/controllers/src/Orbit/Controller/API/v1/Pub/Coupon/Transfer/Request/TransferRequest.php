@@ -3,15 +3,15 @@
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Validator;
 use Orbit\Controller\API\v1\Pub\Coupon\Transfer\Repository\CouponTransferRepository;
+use Orbit\Helper\Request\ValidateRequest;
 
 /**
  * Coupon Transfer Form Request.
  *
- * @todo  create proper form request helper.
  * @todo  find a way to properly inject current user into request (might be a service)
- * @author Budi <budi@dominopos.com>
+ * @author Budi <budi@gotomalls.com>
  */
-class TransferRequest extends FormRequest
+class TransferRequest extends ValidateRequest
 {
     /**
      * Allowed roles to access this request.
