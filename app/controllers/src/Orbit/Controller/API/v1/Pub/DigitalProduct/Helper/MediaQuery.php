@@ -45,4 +45,9 @@ trait MediaQuery {
             $this->imageQuery = "CASE WHEN {$tablePrefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$tablePrefix}media.path) ELSE {$tablePrefix}media.cdn_url END as image_url";
         }
     }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
+    }
 }
