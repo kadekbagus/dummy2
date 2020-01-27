@@ -25,6 +25,7 @@ use Orbit\Notifications\DigitalProduct\CanceledPaymentNotification;
 use Orbit\Notifications\DigitalProduct\AbortedPaymentNotification;
 use Orbit\Notifications\DigitalProduct\ExpiredPaymentNotification;
 use Orbit\Notifications\DigitalProduct\CustomerRefundNotification;
+use User;
 
 /**
  * Digital Product Purchase
