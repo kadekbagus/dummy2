@@ -19,10 +19,10 @@ class AyoPayResponse extends BaseResponse
     public function __construct($response)
     {
         if (is_string($response)) {
-            $xmlResponse = simplexml_load_string($response);
+            $xmlResponse = @simplexml_load_string($response);
 
             if ($xmlResponse instanceof \SimpleXMLElement) {
-                $response = (object) json_decode(json_encode($xmlResponse), true);
+                $response = $xmlResponse;
 
                 $this->parseVoucherData($response);
             }

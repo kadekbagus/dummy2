@@ -12,7 +12,7 @@ use Orbit\Helper\DigitalProduct\Providers\Ayopay\Response\PurchaseAPIResponse;
  */
 class PurchaseAPI extends AyoPayAPI
 {
-    protected $shouldMockResponse = true;
+    // protected $shouldMockResponse = true;
 
     /**
      * Build purchase api request param (body).
@@ -22,7 +22,7 @@ class PurchaseAPI extends AyoPayAPI
      */
     protected function buildRequestParam()
     {
-        return "<?xml version='1.0'?>
+        return "<?xml version=\"1.0\"?>
             <ayopay>
                 <function>Request XML</function>
                 <id>{$this->config['id']}</id>

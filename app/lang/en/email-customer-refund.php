@@ -3,6 +3,7 @@
 return [
     'subject' => 'Coupon Not Available',
     'subject_pulsa' => 'Payment Refund',
+    'subject_digital_product' => 'Payment Refund',
 
     'header' => [
         'invoice'       => 'Notice',
@@ -18,8 +19,18 @@ return [
                         <br>
                         We are having a technical problem during your pulsa/data plan purchase. Below are the details.',
 
+        'greeting_digital_product' => [
+            'customer_name' => 'Hai, :customerName',
+            'body' => 'We are having a technical problem during your game voucher/electricity purchase. Below are the details.',
+        ],
+
         'content_1' => 'Your payment was successful, but we cannot get pulsa/data plan from the Operator.',
         'content_2' => 'We are sorry for the inconvenience. We just refunded the payment to your GOPAY account. Please help confirming once you received it.',
+
+        'content_digital_product' => [
+            'line_1' => 'Your payment was successful, but we cannot get pulsa/data plan from the Operator.',
+            'line_2' => 'We are sorry for the inconvenience. We just refunded the payment to your GOPAY/DANA account. Please help confirming once you received it.',
+        ],
 
         'content_1_data_plan' => 'Your payment was successful, but we cannot get data plan from the Operator.',
 
@@ -27,6 +38,7 @@ return [
 
         'transaction_labels' => [
             'transaction_id' => 'Transaction ID: ',
+            'transaction_date' => 'Transaction Date: ',
             'phone' => 'Phone: ',
             'amount' => 'Amount: ',
             'reason' => 'Refund Reason: ',

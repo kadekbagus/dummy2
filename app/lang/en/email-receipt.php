@@ -19,6 +19,11 @@ return [
                         Thank you for purchasing Coupon(s) in Gotomalls.com. Your payment has been verified by our system. Below are the details of your transaction
         ',
 
+        'greeting_digital_product' => [
+            'customer_name' => 'Dear :customerName,',
+            'body' => 'Thank you for purchasing :itemName in Gotomalls.com. Your payment has been verified by our system. Below is the transaction summary of your purchase',
+        ],
+
         'transaction_labels' => [
             'transaction_id' => 'Transaction ID',
             'transaction_date' => 'Transaction Date',
@@ -41,6 +46,7 @@ return [
 
     'table_customer_info' => [
         'header' => [
+            'trx_id' => 'Transaction ID',
             'customer' => 'Customer',
             'phone' => 'Phone',
             'email' => 'Email',
@@ -55,7 +61,7 @@ return [
             'subtotal'  => 'Subtotal',
         ],
         'footer' => [
-            'total'     => 'Total Amount',
+            'total'     => 'Total',
         ]
     ],
 

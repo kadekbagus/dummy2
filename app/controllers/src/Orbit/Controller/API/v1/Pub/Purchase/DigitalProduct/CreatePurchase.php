@@ -67,6 +67,7 @@ class CreatePurchase
         $purchase->status = PaymentTransaction::STATUS_STARTING;
         $purchase->timezone_name = $mallTimeZone;
         $purchase->post_data = $request->post_data ? serialize($request->post_data) : null;
+        $purchase->extra_data = $request->game_id;
 
         $purchase->utm_source = $campaignData['campaign_source'];
         $purchase->utm_medium = $campaignData['campaign_medium'];
