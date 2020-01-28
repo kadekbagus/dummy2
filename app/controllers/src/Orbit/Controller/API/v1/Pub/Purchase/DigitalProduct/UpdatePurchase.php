@@ -320,7 +320,7 @@ class UpdatePurchase
                 // Send notification if the purchase was expired
                 // Only send if previous status was pending.
                 if ($oldStatus === PaymentTransaction::STATUS_PENDING && $status === PaymentTransaction::STATUS_EXPIRED) {
-                    // $this->purchase->user->notify(new ExpiredPaymentNotification($this->purchase));
+                    $this->purchase->user->notify(new ExpiredPaymentNotification($this->purchase));
                 }
 
                 // Send notification if the purchase was aborted
