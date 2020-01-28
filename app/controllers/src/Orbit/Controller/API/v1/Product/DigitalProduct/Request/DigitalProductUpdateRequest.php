@@ -21,6 +21,7 @@ class DigitalProductUpdateRequest extends DigitalProductNewRequest
     public function rules()
     {
         return array_merge(['id' => 'required|product_exists'], parent::rules(), [
+            'type' => 'sometimes|required|in:game_voucher,electricity',
             'code' => 'required|unique_code_if_changed',
         ]);
     }

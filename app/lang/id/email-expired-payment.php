@@ -4,6 +4,7 @@ return [
     'subject' => 'Kuponmu Ketinggalan, Nih! - GoToMalls.com',
     'subject_pulsa' => 'Pulsamu Ketinggalan, Nih! – GoToMalls.com',
     'subject_data_plan' => 'Paket Datamu Ketinggalan, Nih! – GoToMalls.com',
+    'subject_digital_product' => ':productType Kamu Ketinggalan, Nih! – GoToMalls.com',
 
     'header' => [
         'email-type'       => 'Pesanan Kadaluarsa',
@@ -14,6 +15,11 @@ return [
                         <br>
                         Sepertinya ada yang ketinggalan, nih!',
 
+        'greeting_digital_product' => [
+            'customer_name' => '<strong>Hai, :customerName!</strong>',
+            'body' => 'Sepertinya ada yang ketinggalan, nih!',
+        ],
+
         'transaction_labels' => [
             'transaction_id' => 'No. Transaksi: ',
             'transaction_date' => 'Tanggal Transaksi: ',
@@ -22,6 +28,7 @@ return [
             'pulsa_name' => 'Pulsa/Paket Data: ',
             'pulsa_phone_number' => 'No. HP: ',
             'pulsa_price' => 'Harga Pulsa/Paket Data: ',
+            'product_name' => 'Produk: ',
             'coupon_quantity' => 'Jumlah: ',
             'customer_name' => 'Nama Pelanggan: ',
             'email' => 'Email: ',
