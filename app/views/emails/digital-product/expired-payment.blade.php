@@ -36,7 +36,7 @@
                   <table width="640" cellpadding="0" cellspacing="0" border="0" class="container mobile-full-width">
                     <tr>
                       <td align="center" valign="middle" height="184" class="greeting-title-container" style="border-radius: 5px 5px 0 0;">
-                          <h1 class="greeting-title">{{ trans('email-pending-payment.header.email-type', [], '', $lang) }}</h1>
+                          <h1 class="greeting-title">{{ trans('email-expired-payment.header.email-type', [], '', $lang) }}</h1>
                       </td>
                     </tr>
                   </table>
@@ -56,10 +56,7 @@
                         <p class="transaction-details">
                           <strong>{{{ trans('email-expired-payment.body.transaction_labels.product_name', [], '', $lang) }}}</strong> {{ $transaction['items'][0]['name'] }}
                           <br>
-                          <strong>{{{ trans('email-expired-payment.body.transaction_labels.transaction_id', [], '', $lang) }}}</strong> {{ $transaction['id'] }}
-                          <br>
-                          <strong>{{{ trans('email-pending-payment.body.transaction_labels.transaction_id', [], '', $lang) }}}</strong> {{ $transaction['id'] }}
-                          <br>
+                          <strong>{{{ trans('email-expired-payment.body.transaction_labels.transaction_id', [], '', 'id') }}}</strong> {{ $transaction['id'] }}
                         </p>
 
                         <p class="greeting-text">
@@ -68,7 +65,6 @@
                         </p>
 
                         <p class="greeting-text">
-                          <br>
                           {{ trans('email-expired-payment.body.payment-info-line-2', $cs, '', $lang) }}
                         </p>
 
@@ -76,7 +72,6 @@
                           <p class="greeting-text">
                             {{ trans('email-expired-payment.body.payment-info-line-3', [], '', $lang) }}
                           </p>
-                          <br>
 
                           <p class="greeting-text">
                             {{ trans('email-expired-payment.body.payment-info-line-4-digital-product', [], '', $lang) }}
