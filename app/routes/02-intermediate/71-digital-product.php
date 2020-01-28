@@ -14,3 +14,9 @@ Route::get('/app/v1/pub/game/detail', ['as' => 'game-detail', 'uses' => 'Interme
  * Digital product detail api.
  */
 Route::get('/app/v1/pub/digital-product/detail', ['as' => 'pub-digital-product-detail', 'uses' => 'IntermediatePubAuthController@DigitalProduct\DigitalProductDetail_getDetail']);
+
+
+/**
+ * Game Voucher Purchased list.
+ */
+Route::get('/app/v1/pub/game-voucher-purchased/list', ['as' => 'pub-game-voucher-purchased-list', 'uses' => 'IntermediatePubAuthController@DigitalProduct\GameVoucherPurchasedList_getGameVoucherPurchasedList']);
