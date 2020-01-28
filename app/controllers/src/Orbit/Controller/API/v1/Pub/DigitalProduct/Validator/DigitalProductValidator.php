@@ -29,14 +29,14 @@ class DigitalProductValidator
         return ! empty($digitalProduct);
     }
 
-    public function existsWithGame($attributes, $gameSlug, $parameters)
+    public function existsWithGame($attributes, $gameSlugOrId, $parameters)
     {
         if (null === App::make('digitalProduct')) {
             return false;
         }
 
-        return null !== DigitalProduct::whereHas('games', function($gameQuery) use ($gameSlug) {
-            $gameQuery->where('games.slug', $gameSlug);
+        return null !== DigitalProduct::whereHas('games', function($gameQuery) use ($gameSlugOrId) {
+            $gameQuery->where('games.slug', $gameSlugOrId)->orWhere('games.game_id', $gameSlugOrId);
         })->first();
     }
 
