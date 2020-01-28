@@ -63,7 +63,7 @@ class PendingPaymentNotification extends Base
             'productType' => $this->getObjectType(),
             'paymentMethod' => $this->getPaymentMethod(),
             'cancelUrl' => $this->getCancelUrl() . "&type=digital-product",
-            'myWalletUrl' => $this->getMyPurchasesUrl() . '/digital-product',
+            'myWalletUrl' => $this->getMyPurchasesUrl('/coupons'),
         ]);
     }
 

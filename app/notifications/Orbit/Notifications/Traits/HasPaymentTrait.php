@@ -151,9 +151,9 @@ trait HasPaymentTrait
      *
      * @return [type] [description]
      */
-    public function getMyPurchasesUrl()
+    public function getMyPurchasesUrl($path = '')
     {
-        return Config::get('orbit.transaction.my_purchases_url', 'https://gotomalls.com/my/purchases');
+        return Config::get('orbit.transaction.my_purchases_url', 'https://gotomalls.com/my/purchases') . $path;
     }
 
     /**

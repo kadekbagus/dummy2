@@ -136,10 +136,8 @@ class GetDigitalProductQueue
 
                 $this->log("Issued for payment {$paymentId}..");
 
-                $this->log(serialize($purchaseResponse->getVoucherData()));
-
                 // Notify Customer.
-                // $payment->user->notify(new ReceiptNotification($payment, $purchaseResponse->getSerialNumber()));
+                $payment->user->notify(new ReceiptNotification($payment, null));
 
                 $cid = time();
                 // send google analitics event hit
@@ -306,7 +304,7 @@ class GetDigitalProductQueue
 
             // Mark as failed if we get any exception.
             if (! empty($payment)) {
-                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED;
+                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT_FAILED;
                 $payment->save();
 
                 if (! empty($discount) && ! empty($digitalProduct)) {

@@ -15,5 +15,5 @@ class AyoPayAPI extends BaseAPI
 
     protected $endPoint = 'h2h/voucher.aspx';
 
-    protected $contentType = 'text/xml; charset=UTF-8';
+    protected $contentType = 'text/xml';
 }

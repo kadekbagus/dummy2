@@ -4,6 +4,7 @@ use Config;
 use Exception;
 use GuzzleHttp\Client as Guzzle;
 use Log;
+use Orbit\Helper\DigitalProduct\Response\BaseResponse;
 use Orbit\Helper\Exception\OrbitCustomException;
 
 /**
@@ -134,7 +135,7 @@ class BaseAPI
      */
     protected function response($response)
     {
-        return new BasicResponse($response);
+        return new BaseResponse($response);
     }
 
     /**
@@ -152,7 +153,7 @@ class BaseAPI
      *
      * @return [type] [description]
      */
-    public function request()
+    protected function request()
     {
         try {
             // Add query string if needed.
@@ -172,23 +173,26 @@ class BaseAPI
                 $response = $this->mockResponse;
             }
 
-        } catch (\GuzzleHttp\Exception\ConnectException $e) {
-            throw new OrbitCustomException('cURL connection failed', Client::CURL_CONNECT_ERROR_CODE, NULL);
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
-            if ($e->getCode() === 401) {
-                throw new OrbitCustomException('Unautorized access', Client::UNAUTHORIZED_ERROR_CODE, NULL);
-            }
-
-            $response = $e->getResponse()->getBody()->getContents();
         } catch(Exception $e) {
-            Log::info('ProviderAPI Client [E]: ' . $e->getMessage());
-
-            $response = new \stdClass;
-            $response->meta = new \stdClass;
-            $response->meta->status = false;
-            $response->meta->message = 'Internal server error.';
-            $response->result = null;
+            return $this->handleException($e);
         }
+
+        return $this->response($response);
+    }
+
+    /**
+     * Handle exception while running the request.
+     *
+     * @param  [type] $e [description]
+     * @return [type]    [description]
+     */
+    protected function handleException($e)
+    {
+        $response = (object) [
+            'status' => 500,
+            'message' => $e->getMessage(),
+            'data' => null,
+        ];
 
         return $this->response($response);
     }
