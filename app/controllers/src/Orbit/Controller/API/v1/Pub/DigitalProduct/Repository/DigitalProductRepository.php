@@ -90,18 +90,21 @@ class DigitalProductRepository
      * @param  [type] $digitalProductId [description]
      * @return [type]                   [description]
      */
-    public function findProduct($digitalProductId = null, $gameSlug = null)
+    public function findProduct($digitalProductId = null, $gameSlugOrId = null)
     {
-        $digitalProductId = $digitalProductId ?: OrbitInput::get('id');
-        $gameSlug = $gameSlug ?: OrbitInput::get('game_slug');
+        $digitalProductId = $digitalProductId ?: OrbitInput::get('product_id');
+        $gameSlugOrId = $gameSlugOrId ?: OrbitInput::get('game_id');
 
         $this->digitalProduct = DigitalProduct::with([
-            'games' => function($query) use ($gameSlug) {
+            'games' => function($query) use ($gameSlugOrId) {
                 $query->select('games.game_id', 'game_name', 'games.slug', 'games.description', 'games.seo_text');
 
                 // If request has gameSlug, then we need to load the game images.
-                if (! empty($gameSlug)) {
-                    $query->where('games.slug', $gameSlug);
+                if (! empty($gameSlugOrId)) {
+
+                    $query->where(function($query) use ($gameSlugOrId) {
+                        $query->where('games.slug', $gameSlugOrId)->orWhere('games.game_id', $gameSlugOrId);
+                    });
 
                     $query->with(['media' => function($query) {
                         $query->select('object_id', 'media_name_long', DB::raw($this->imageQuery));

@@ -28,7 +28,7 @@ class DigitalProductDetailRequest extends ValidateRequest
     {
         return [
             'product_id' => 'required|product_exists',
-            'game_slug' => 'required|product_with_game_exists',
+            'game_id' => 'required|product_with_game_exists',
         ];
     }
 
