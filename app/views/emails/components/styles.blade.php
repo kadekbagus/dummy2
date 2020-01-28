@@ -207,6 +207,7 @@
     .help-text {
       font-size: 16px;
       color: #333;
+      text-align: left;
     }
 
     .transaction-date {

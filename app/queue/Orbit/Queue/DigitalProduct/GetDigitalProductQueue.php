@@ -304,7 +304,7 @@ class GetDigitalProductQueue
 
             // Mark as failed if we get any exception.
             if (! empty($payment)) {
-                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_PULSA_FAILED;
+                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT_FAILED;
                 $payment->save();
 
                 if (! empty($discount) && ! empty($digitalProduct)) {
