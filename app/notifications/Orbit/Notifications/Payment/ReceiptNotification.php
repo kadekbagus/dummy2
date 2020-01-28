@@ -68,6 +68,15 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
     }
 
     /**
+     * Get email subject.
+     * @return [type] [description]
+     */
+    protected function getEmailSubject()
+    {
+        return trans('email-receipt.subject', [], '', 'id');
+    }
+
+    /**
      * Get the email data.
      *
      * @return [type] [description]
@@ -83,6 +92,7 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
             'cs'                => $this->getContactData(),
             'redeemUrl'         => Config::get('orbit.coupon.direct_redemption_url'),
             'transactionDateTime' => $this->payment->getTransactionDate('d F Y, H:i ') . " {$this->getLocalTimezoneName($this->payment->timezone_name)}",
+            'emailSubject'      => $this->getEmailSubject(),
         ];
     }
 
@@ -99,7 +109,7 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
             Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                $subject = trans('email-receipt.subject');
+                $subject = $data['emailSubject'];
 
                 $mail->subject($subject);
                 $mail->from($emailConfig['email'], $emailConfig['name']);
