@@ -19,7 +19,6 @@ class AyoPayResponse extends BaseResponse
     public function __construct($response)
     {
         if (is_string($response)) {
-            \Log::info($response);
             $xmlResponse = @simplexml_load_string($response);
 
             if ($xmlResponse instanceof \SimpleXMLElement) {
