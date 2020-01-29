@@ -45,7 +45,7 @@
     .greeting-title {
       font-size: 32px;
       text-transform: uppercase;
-      letter-spacing: 2px;
+      letter-spacing: 5px;
       color: #FFF;
       margin: 0;
     }
