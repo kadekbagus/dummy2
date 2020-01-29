@@ -24,18 +24,6 @@ class ExpiredPaymentNotification extends BaseNotification
 
     public function getEmailSubject()
     {
-        return trans('email-expired-payment.subject_digital_product', [], '', 'id');
-    }
-
-    /**
-     * Get email data with pulsa phone number.
-     *
-     * @return [type] [description]
-     */
-    public function getEmailData()
-    {
-        return array_merge(parent::getEmailData(), [
-            'emailSubject' => $this->getEmailSubject(),
-        ]);
+        return trans('email-expired-payment.subject_digital_product', ['productType' => $this->resolveProductType()], '', 'id');
     }
 }

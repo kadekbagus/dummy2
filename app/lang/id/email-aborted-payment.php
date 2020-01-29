@@ -4,6 +4,7 @@ return [
     'subject' => 'Kuponmu Ketinggalan, Nih! - Gotomalls.com',
     'subject_pulsa' => 'Pulsamu Ketinggalan, Nih! – GoToMalls.com',
     'subject_data_plan' => 'Paket Datamu Ketinggalan, Nih! – GoToMalls.com',
+    'subject_digital_product' => ':productType Kamu Ketinggalan, Nih! - GoToMalls.com',
 
     'header' => [
         'email-type'       => 'Pesanan Dibatalkan',
@@ -13,6 +14,11 @@ return [
         'greeting' => '<strong>Hai, :customerName !</strong>
                         <br>
                         Melalui email ini kami memberitahukan bahwa transaksi Anda baru saja dibatalkan. Berikut ini detail transaksi tersebut.',
+
+        'greeting_digital_product' => [
+            'customer_name' => '<strong>Hai, :customerName!</strong>',
+            'body' => 'Melalui email ini kami memberitahukan bahwa transaksi Anda baru saja dibatalkan. Berikut ini detail transaksi tersebut.',
+        ],
 
         'transaction_labels' => [
             'transaction_id' => 'No. Transaksi: ',
@@ -29,6 +35,7 @@ return [
             'total_amount' => 'Total: ',
             'status' => 'Status: ',
             'status_aborted' => 'Dibatalkan',
+            'product_name' => 'Produk: ',
         ],
 
         'payment-info-line-1' => 'GoToMalls.com mendeteksi bahwa kamu <strong>membatalkan</strong> transaksi pada tanggal :transactionDateTime.',
@@ -53,6 +60,7 @@ Apabila kamu mengalami kesulitan dalam pembelian paket data, silahkan <strong>ta
             'buy_coupon' => 'Beli Kupon Sekarang',
             'buy_pulsa' => 'Beli Pulsa Sekarang',
             'buy_data_plan' => 'Beli Paket Data Sekarang',
+            'buy_digital_product' => 'Beli Produk Lain',
         ]
     ],
 ];

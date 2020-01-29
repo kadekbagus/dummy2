@@ -176,10 +176,10 @@ trait HasPaymentTrait
      */
     protected function getBuyUrl()
     {
-        $buyUrl = Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com');
+        $baseUrl = Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com');
         $paymentDetail = $this->payment->details->first();
 
-        return $buyUrl . LandingPageUrlGenerator::create(
+        return $baseUrl . LandingPageUrlGenerator::create(
             $paymentDetail->object_type,
             $paymentDetail->object_id,
             $paymentDetail->object_name
@@ -237,5 +237,33 @@ trait HasPaymentTrait
         }
 
         return $paymentMethod;
+    }
+
+    /**
+     * Resolve the type of product being purchased.
+     *
+     * @return [type] [description]
+     */
+    protected function resolveProductType()
+    {
+        $productType = trans('email-payment.product_type.default', [], '', 'id');
+
+        foreach($this->payment->details as $detail) {
+            if ($detail->object_type !== 'discount') {
+
+                $productType = $detail->object_type;
+                if (isset($detail->pulsa) && ! empty($detail->pulsa)) {
+                    $productType = $detail->pulsa->object_type;
+                } else if (isset($detail->digital_product) && ! empty($detail->digital_product)) {
+                    $productType = $detail->digital_product->product_type;
+                }
+
+                $productType = trans("email-payment.product_type.{$productType}", [], '', 'id');
+
+                break;
+            }
+        }
+
+        return $productType;
     }
 }
