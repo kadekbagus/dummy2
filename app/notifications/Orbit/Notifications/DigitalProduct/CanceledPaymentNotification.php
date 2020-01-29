@@ -3,7 +3,7 @@
 use Orbit\Notifications\Payment\CanceledPaymentNotification as BaseNotification;
 
 /**
- * Email notification for Canceled Payment.
+ * Email notification for Canceled Payment (Digital Product).
  *
  * @author Budi <budi@dominopos.com>
  */
@@ -24,6 +24,6 @@ class CanceledPaymentNotification extends BaseNotification
 
     protected function getEmailSubject()
     {
-        return trans('email-canceled-payment.subject_digital_product', [], '', 'id');
+        return trans('email-canceled-payment.subject_digital_product', ['productType' => $this->resolveProductType()], '', 'id');
     }
 }

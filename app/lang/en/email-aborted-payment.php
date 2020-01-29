@@ -41,6 +41,7 @@ return [
         'payment-info-line-4' => 'You can make a new purchase of Coupon by clicking button below.',
         'payment-info-line-4-pulsa' => 'You can make a new purchase of Pulsa by clicking button below.',
         'payment-info-line-4-data-plan' => 'You can make a new purchase of Data Plan by clicking button below.',
+        'payment-info-line-4-digital-product' => 'You can make a new purchase of Game Vouchers/Electricity by clicking button below.',
 
         'regards' => 'Thank you,<br><br>Gotomalls Service Team',
 
