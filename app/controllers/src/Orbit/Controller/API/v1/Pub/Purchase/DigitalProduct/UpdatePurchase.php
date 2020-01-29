@@ -314,7 +314,7 @@ class UpdatePurchase
                             ->responseOK()
                             ->save();
 
-                    // $this->purchase->user->notify(new CanceledPaymentNotification($this->purchase));
+                    $this->purchase->user->notify(new CanceledPaymentNotification($this->purchase));
                 }
 
                 // Send notification if the purchase was expired
