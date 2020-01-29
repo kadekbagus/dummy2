@@ -49,6 +49,7 @@ class GameResource extends Resource
 
         foreach($resource->digital_products as $product) {
             $products[] = [
+                'id' => $product->digital_product_id,
                 'code' => $product->code,
                 'name' => $product->product_name,
                 'price' => $product->selling_price,
