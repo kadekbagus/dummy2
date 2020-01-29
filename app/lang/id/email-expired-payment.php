@@ -59,6 +59,7 @@ Apabila kamu mengalami kesulitan dalam pembelian paket data, silahkan <strong>ta
             'buy_coupon' => 'Beli Kupon Sekarang',
             'buy_pulsa' => 'Beli Pulsa Sekarang',
             'buy_data_plan' => 'Beli Paket Data Sekarang',
+            'buy_digital_product' => 'Beli Produk Lain Sekarang',
         ]
     ],
 ];

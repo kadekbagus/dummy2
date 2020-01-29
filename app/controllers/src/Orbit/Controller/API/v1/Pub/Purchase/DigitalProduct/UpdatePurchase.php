@@ -327,7 +327,7 @@ class UpdatePurchase
                 // Only send if previous status was starting.
                 if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_ABORTED) {
                     if ($fromSnap) {
-                        // $this->purchase->user->notify(new AbortedPaymentNotification($this->purchase));
+                        $this->purchase->user->notify(new AbortedPaymentNotification($this->purchase));
 
                         $activity->setActivityNameLong('Transaction is Aborted')
                                 ->setModuleName('Midtrans Transaction')

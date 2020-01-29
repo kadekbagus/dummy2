@@ -12,6 +12,11 @@ return [
                         <br>
                         We noticed you canceled your payment transaction on Gotomalls.com when purchasing:',
 
+        'greeting_digital_product' => [
+            'customer_name' => '<strong>Hi, :customerName!</strong>',
+            'body' => 'We noticed you canceled your payment transaction on Gotomalls.com when purchasing:',
+        ],
+
         'transaction_labels' => [
             'transaction_id' => 'Transaction ID: ',
             'transaction_date' => 'Transaction Date: ',
@@ -27,6 +32,7 @@ return [
             'total_amount' => 'Total Amount: ',
             'status' => 'Status: ',
             'status_aborted' => 'Aborted',
+            'product_name' => 'Product: ',
         ],
 
         'payment-info-line-1' => 'Did you find any problems trying to make the purchase?',
@@ -42,6 +48,7 @@ return [
             'buy_coupon' => 'Buy Coupon Now',
             'buy_pulsa' => 'Buy Pulsa Now',
             'buy_data_plan' => 'Buy Data Plan Now',
+            'buy_digital_product' => 'Buy Other Product Now',
         ]
     ],
 ];
