@@ -17,7 +17,7 @@ return [
             'help' => 'For any questions, please contact us',
 
             'buttons' => [
-                'pulsa_list' => 'Pulsa &amp; Data Plan',
+                'pulsa_list' => 'See Pulsa &amp; Data Plan',
                 'see_more_vouchers' => 'See more vouchers on Gotomalls &raquo;',
                 'see_more_events' => 'See more events on Gotomalls &raquo;',
             ],
