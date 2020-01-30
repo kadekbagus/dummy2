@@ -327,7 +327,7 @@ class GetDigitalProductQueue
                 }
 
                 // Notify customer that coupon is not available.
-                // $payment->user->notify(new CustomerPulsaNotAvailableNotification($payment));
+                $payment->user->notify(new CustomerPulsaNotAvailableNotification($payment));
 
                 $notes = $e->getMessage();
 
