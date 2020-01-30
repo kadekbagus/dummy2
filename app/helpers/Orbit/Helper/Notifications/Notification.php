@@ -1,10 +1,10 @@
 <?php namespace Orbit\Helper\Notifications;
 
-use Queue;
 use Config;
+use Log;
 use Orbit\FakeJob;
-
 use Orbit\Helper\Notifications\Exceptions\NotificationMethodsEmptyException;
+use Queue;
 
 /**
  * Base Notification class.
@@ -82,6 +82,12 @@ abstract class Notification {
     protected $blacklistedRecipients = [
         'email' => [],
     ];
+
+    /**
+     * Log ID.
+     * @var string
+     */
+    protected $logID = 'OrbitNotification';
 
     function __construct($notifiable = null)
     {
@@ -253,5 +259,16 @@ abstract class Notification {
     protected function getBlacklistedEmails()
     {
         return Config::get('orbit.blacklisted_notification_recipients.email', []);
+    }
+
+    /**
+     *
+     * @param  string $message [description]
+     * @param  string $logType [description]
+     * @return [type]          [description]
+     */
+    protected function log($message = '', $logType = 'info')
+    {
+        Log::{$logType}(($this->logID ? "{$this->logID}: " : '') . $message);
     }
 }
