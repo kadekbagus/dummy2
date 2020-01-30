@@ -208,6 +208,7 @@
       font-size: 16px;
       color: #333;
       text-align: left;
+      line-height: 1.4em;
     }
 
     .transaction-date {
