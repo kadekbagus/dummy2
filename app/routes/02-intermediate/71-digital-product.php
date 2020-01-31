@@ -20,3 +20,9 @@ Route::get('/app/v1/pub/digital-product/detail', ['as' => 'pub-digital-product-d
  * Game Voucher Purchased list.
  */
 Route::get('/app/v1/pub/game-voucher-purchased/list', ['as' => 'pub-game-voucher-purchased-list', 'uses' => 'IntermediatePubAuthController@DigitalProduct\GameVoucherPurchasedList_getGameVoucherPurchasedList']);
+
+
+/**
+ * Game Voucher Purchased detail.
+ */
+Route::get('/app/v1/pub/game-voucher-purchased/detail', ['as' => 'pub-game-voucher-purchased-detail', 'uses' => 'IntermediatePubAuthController@DigitalProduct\GameVoucherPurchasedDetail_getGameVoucherPurchasedDetail']);
