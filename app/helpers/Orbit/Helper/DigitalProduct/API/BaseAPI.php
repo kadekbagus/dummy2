@@ -105,6 +105,8 @@ class BaseAPI
     public function setQueryStrings($queryString = [])
     {
         $this->queryString = array_merge($this->queryString, $queryString);
+
+        return $this;
     }
 
     /**

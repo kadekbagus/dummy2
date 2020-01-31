@@ -45,7 +45,7 @@
     .greeting-title {
       font-size: 32px;
       text-transform: uppercase;
-      letter-spacing: 2px;
+      letter-spacing: 5px;
       color: #FFF;
       margin: 0;
     }
@@ -208,6 +208,7 @@
       font-size: 16px;
       color: #333;
       text-align: left;
+      line-height: 1.4em;
     }
 
     .transaction-date {

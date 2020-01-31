@@ -314,20 +314,20 @@ class UpdatePurchase
                             ->responseOK()
                             ->save();
 
-                    // $this->purchase->user->notify(new CanceledPaymentNotification($this->purchase));
+                    $this->purchase->user->notify(new CanceledPaymentNotification($this->purchase));
                 }
 
                 // Send notification if the purchase was expired
                 // Only send if previous status was pending.
                 if ($oldStatus === PaymentTransaction::STATUS_PENDING && $status === PaymentTransaction::STATUS_EXPIRED) {
-                    // $this->purchase->user->notify(new ExpiredPaymentNotification($this->purchase));
+                    $this->purchase->user->notify(new ExpiredPaymentNotification($this->purchase));
                 }
 
                 // Send notification if the purchase was aborted
                 // Only send if previous status was starting.
                 if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_ABORTED) {
                     if ($fromSnap) {
-                        // $this->purchase->user->notify(new AbortedPaymentNotification($this->purchase));
+                        $this->purchase->user->notify(new AbortedPaymentNotification($this->purchase));
 
                         $activity->setActivityNameLong('Transaction is Aborted')
                                 ->setModuleName('Midtrans Transaction')
@@ -345,7 +345,7 @@ class UpdatePurchase
 
             // Send refund notification to customer.
             if ($shouldNotifyRefund) {
-                // $this->purchase->user->notify(new CustomerRefundNotification($this->purchase, $refundReason));
+                $this->purchase->user->notify(new CustomerRefundNotification($this->purchase, $refundReason));
             }
 
             return $this->purchase;

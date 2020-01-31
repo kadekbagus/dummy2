@@ -31,7 +31,7 @@
                                 <table width="640" cellpadding="0" cellspacing="0" border="0" class="container mobile-full-width">
                                     <tr>
                                        <td align="center" valign="middle" height="184" class="greeting-title-container" style="border-radius: 5px 5px 0 0;">
-                                            <h1 class="greeting-title">{{ trans('email-receipt.header.invoice') }}</h1>
+                                            <h1 class="greeting-title">{{ trans('email-coupon-not-available.header.email-type', [], '', 'id') }}</h1>
                                         </td>
                                     </tr>
                                 </table>
@@ -56,9 +56,11 @@
 
                                     <tr>
                                         <td width="600" class="mobile" align="left" valign="top">
-                                            <h3 class="greeting-username">{{ trans('email-receipt.body.greeting_digital_product.customer_name', ['customerName' => $customerName], '', $lang) }}</h3>
+                                            <h3 class="greeting-username">
+                                              {{ trans('email-coupon-not-available.body.greeting_digital_product.customer_name', ['customerName' => $customerName], '', $lang) }}
+                                            </h3>
                                             <p class="greeting-text">
-                                                {{ trans('email-receipt.body.greeting_digital_product.body', ['itemName' => $transaction['items'][0]['name']], '', $lang) }}
+                                                {{ trans('email-coupon-not-available.body.greeting_digital_product.body', ['productType' => $productType], '', $lang) }}
                                             </p>
                                         </td>
                                     </tr>
@@ -74,19 +76,19 @@
                                                             <tbody>
                                                                 <tr>
                                                                     <td class="mobile inline-mobile customer-info-block">
-                                                                        <span class="customer-info-label">{{{ trans('email-receipt.table_customer_info.header.trx_id', [], '', $lang) }}}</span>
+                                                                        <span class="customer-info-label">{{{ trans('email-coupon-not-available.table_customer_info.header.trx_id', [], '', $lang) }}}</span>
                                                                         <span class="customer-info-value">{{{ $transaction['id'] }}}</span>
                                                                     </td>
                                                                     <td class="mobile inline-mobile customer-info-block">
-                                                                        <span class="customer-info-label">{{{ trans('email-receipt.table_customer_info.header.customer', [], '', $lang) }}}</span>
+                                                                        <span class="customer-info-label">{{{ trans('email-coupon-not-available.table_customer_info.header.customer', [], '', $lang) }}}</span>
                                                                         <span class="customer-info-value">{{{ $customerName }}}</span>
                                                                     </td>
                                                                     <td class="mobile inline-mobile customer-info-block">
-                                                                        <span class="customer-info-label">{{{ trans('email-receipt.table_customer_info.header.email', [], '', $lang) }}}</span>
+                                                                        <span class="customer-info-label">{{{ trans('email-coupon-not-available.table_customer_info.header.email', [], '', $lang) }}}</span>
                                                                         <span class="customer-info-value">{{{ $customerEmail }}}</span>
                                                                     </td>
                                                                     <td class="mobile inline-mobile customer-info-block">
-                                                                        <span class="customer-info-label">{{{ trans('email-receipt.table_customer_info.header.phone', [], '', $lang) }}}</span>
+                                                                        <span class="customer-info-label">{{{ trans('email-coupon-not-available.table_customer_info.header.phone', [], '', $lang) }}}</span>
                                                                         <span class="customer-info-value">{{{ $customerPhone }}}</span>
                                                                     </td>
                                                                 </tr>
@@ -96,10 +98,10 @@
                                                         <table class="no-border transaction" width="100%">
                                                             <thead class="bordered">
                                                                 <tr>
-                                                                    <th class="transaction-item-name">{{{ trans('email-receipt.table_transaction.header.item', [], '', $lang) }}}</th>
-                                                                    <th class="transaction-qty">{{{ trans('email-receipt.table_transaction.header.quantity', [], '', $lang) }}}</th>
-                                                                    <th class="transaction-amount">{{{ trans('email-receipt.table_transaction.header.price', [], '', $lang) }}}</th>
-                                                                    <th class="transaction-subtotal">{{{ trans('email-receipt.table_transaction.header.subtotal', [], '', $lang) }}}</th>
+                                                                    <th class="transaction-item-name">{{{ trans('email-coupon-not-available.table_transaction.header.item', [], '', $lang) }}}</th>
+                                                                    <th class="transaction-qty">{{{ trans('email-coupon-not-available.table_transaction.header.quantity', [], '', $lang) }}}</th>
+                                                                    <th class="transaction-amount">{{{ trans('email-coupon-not-available.table_transaction.header.price', [], '', $lang) }}}</th>
+                                                                    <th class="transaction-subtotal">{{{ trans('email-coupon-not-available.table_transaction.header.subtotal', [], '', $lang) }}}</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody class="transaction-items">
@@ -123,22 +125,18 @@
                                                             <tfoot class="transaction-footer">
                                                                 <tr>
                                                                     <td colspan="2" class="transaction-item transaction-total"></td>
-                                                                    <td class="transaction-item transaction-total"><strong>{{{ trans('email-receipt.table_transaction.footer.total', [], '', $lang) }}}</strong></td>
+                                                                    <td class="transaction-item transaction-total"><strong>{{{ trans('email-coupon-not-available.table_transaction.footer.total', [], '', $lang) }}}</strong></td>
                                                                     <td class="transaction-item transaction-total">{{{ $transaction['total'] }}}</td>
                                                                 </tr>
                                                             </tfoot>
                                                         </table>
                                                         <br>
                                                         <br>
-                                                        <p class="text-center" style="font-family:'Roboto', 'Arial', sans-serif;margin:0;text-align:center;">
-                                                            <a href="{{{ $myWalletUrl }}}" class="btn btn-block">{{{ trans('email-receipt.buttons.my_purchases', [], '', $lang) }}}</a>
-                                                        </p>
-                                                        <br>
                                                         <p class="help-text">
-                                                            {{ trans('email-receipt.body.help', ['csPhone' => $cs['phone'], 'csEmail' => $cs['email']], '', $lang) }}
+                                                            {{ trans('email-coupon-not-available.body.help', $cs, '', $lang) }}
                                                             <br>
                                                             <br>
-                                                            {{{ trans('email-receipt.body.thank_you', [], '', $lang) }}}
+                                                            {{{ trans('email-coupon-not-available.body.thank_you', [], '', $lang) }}}
                                                         </p>
                                                     </td>
                                                 </tr>

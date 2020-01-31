@@ -1,4 +1,4 @@
-<?php namespace Orbit\Notifications\Pulsa;
+<?php namespace Orbit\Notifications\DigitalProduct;
 
 use Exception;
 use Log;
@@ -10,11 +10,11 @@ use Orbit\Notifications\Traits\HasContactTrait;
 use Orbit\Notifications\Traits\HasPaymentTrait;
 
 /**
- * Notify Customers that we refunded the their payment.
+ * Notify Customer that we can not process the pulsa.
  *
  * @author Budi <budi@dominopos.com>
  */
-class CustomerRefundNotification extends CustomerNotification implements EmailNotificationInterface
+class CustomerDigitalProductNotAvailableNotification extends CustomerNotification implements EmailNotificationInterface
 {
     use HasPaymentTrait, HasContactTrait;
 
@@ -29,16 +29,15 @@ class CustomerRefundNotification extends CustomerNotification implements EmailNo
      */
     protected $notificationDelay = 3;
 
-    private $reason = '';
-
     protected $context = 'transaction';
 
-    protected $signature = 'refund-notification';
+    protected $signature = 'product-not-available-notification';
 
-    function __construct($payment = null, $reason = '')
+    protected $logID = 'CustomerDigitalProductNotAvailableNotification';
+
+    function __construct($payment = null)
     {
         $this->payment = $payment;
-        $this->reason = $reason;
     }
 
     public function getRecipientEmail()
@@ -54,8 +53,18 @@ class CustomerRefundNotification extends CustomerNotification implements EmailNo
     public function getEmailTemplates()
     {
         return [
-            'html' => 'emails.pulsa.customer-payment-refunded',
+            'html' => 'emails.digital-product.customer-digital-product-not-available',
         ];
+    }
+
+    /**
+     * Get email subject.
+     *
+     * @return [type] [description]
+     */
+    protected function getEmailSubject()
+    {
+        return trans('email-coupon-not-available.subject_digital_product', ['productType' => $this->productType], '', 'id');
     }
 
     /**
@@ -66,6 +75,7 @@ class CustomerRefundNotification extends CustomerNotification implements EmailNo
     public function getEmailData()
     {
         $this->getObjectType();
+        $this->resolveProductType();
 
         return [
             'recipientEmail'    => $this->getRecipientEmail(),
@@ -75,11 +85,9 @@ class CustomerRefundNotification extends CustomerNotification implements EmailNo
             'transaction'       => $this->getTransactionData(),
             'cs'                => $this->getContactData(),
             'transactionDateTime' => $this->payment->getTransactionDate('d F Y, H:i ') . " {$this->getLocalTimezoneName($this->payment->timezone_name)}",
-            'sender'            => $this->getSenderInfo(),
-            'subject'           => trans('email-customer-refund.subject_pulsa', [], '', 'id'),
-            'reason'            => $this->reason,
-            'pulsaPhone'        => $this->getPulsaPhone(),
+            'emailSubject'      => $this->getEmailSubject(),
             'template'          => $this->getEmailTemplates(),
+            'productType'       => $this->productType,
         ];
     }
 
@@ -94,22 +102,17 @@ class CustomerRefundNotification extends CustomerNotification implements EmailNo
     {
         try {
             Mail::send($data['template'], $data, function($mail) use ($data) {
-                $mail->subject($data['subject']);
-                $mail->from($data['sender']['email'], $data['sender']['name']);
-                $mail->to($data['recipientEmail']);
-                $mail->cc($data['cs']['email'], $data['cs']['name']);
-            });
+                $emailConfig = Config::get('orbit.registration.mobile.sender');
 
+                $mail->subject($data['emailSubject']);
+                $mail->from($emailConfig['email'], $emailConfig['name']);
+                $mail->to($data['recipientEmail']);
+            });
         } catch (Exception $e) {
-            Log::info($this->signature . ': email exception. File: ' . $e->getFile() . ', Lines:' . $e->getLine() . ', Message: ' . $e->getMessage());
-            Log::info($this->signature . ': email data: ' . serialize($data));
+            $this->log('Exception. File: ' . $e->getFile() . '(' . $e->getLine() . ') ' . $e->getMessage());
+            $this->log('Email data: ' . serialize($data));
         }
 
         $job->delete();
-    }
-
-    private function getPulsaPhone()
-    {
-        return $this->payment->extra_data;
     }
 }

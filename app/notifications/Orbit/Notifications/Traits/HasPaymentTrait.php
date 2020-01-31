@@ -1,9 +1,10 @@
 <?php namespace Orbit\Notifications\Traits;
 
-use Config;
 use Carbon\Carbon;
-use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
+use Config;
 use Discount;
+use Orbit\Helper\Notifications\AdminNotification;
+use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
 
 /**
  * A trait that indicate that the using object/model
@@ -21,6 +22,8 @@ trait HasPaymentTrait
         'gopay' => 'GOJEK',
         'dana' => 'Dana',
     ];
+
+    protected $productType = '';
 
     /**
      * Get the transaction data.
@@ -176,10 +179,10 @@ trait HasPaymentTrait
      */
     protected function getBuyUrl()
     {
-        $buyUrl = Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com');
+        $baseUrl = Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com');
         $paymentDetail = $this->payment->details->first();
 
-        return $buyUrl . LandingPageUrlGenerator::create(
+        return $baseUrl . LandingPageUrlGenerator::create(
             $paymentDetail->object_type,
             $paymentDetail->object_id,
             $paymentDetail->object_name
@@ -237,5 +240,61 @@ trait HasPaymentTrait
         }
 
         return $paymentMethod;
+    }
+
+    /**
+     * Resolve the type of product being purchased.
+     *
+     * @return [type] [description]
+     */
+    protected function resolveProductType()
+    {
+        $this->productType = trans('email-payment.product_type.default', [], '', 'id');
+        $lang = $this instanceof AdminNotification ? 'en' : 'id';
+
+        foreach($this->payment->details as $detail) {
+            if ($detail->object_type !== 'discount') {
+
+                $this->productType = $detail->object_type;
+
+                if (isset($detail->pulsa) && ! empty($detail->pulsa)) {
+                    $this->productType = $detail->pulsa->object_type;
+                } else if (isset($detail->digital_product) && ! empty($detail->digital_product)) {
+                    $this->productType = $detail->digital_product->product_type;
+                }
+
+                $this->productType = trans("email-payment.product_type.{$this->productType}", [], '', $lang);
+
+                break;
+            }
+        }
+
+        return $this->productType;
+    }
+
+    /**
+     * Get the provider name;
+     * @return [type] [description]
+     */
+    protected function getProviderName()
+    {
+        $providerName = '';
+
+        foreach($this->payment->details as $detail) {
+            if ($detail->object_type !== 'discount') {
+
+                if (isset($detail->pulsa) && ! empty($detail->pulsa)) {
+                    $providerName = 'MCash';
+                } else if (isset($detail->coupon) && ! empty($detail->coupon)) {
+                    $providerName = 'GiftN';
+                } else if (isset($detail->provider_product) && ! empty($detail->provider_product)) {
+                    $providerName = $detail->provider_product->provider_name;
+                }
+
+                break;
+            }
+        }
+
+        return ucwords($providerName);
     }
 }

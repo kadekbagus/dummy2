@@ -33,6 +33,10 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
 
     protected $shouldQueue = true;
 
+    protected $context = 'transaction';
+
+    protected $signature = 'receipt-notification';
+
     function __construct($payment = null)
     {
         $this->payment = $payment;

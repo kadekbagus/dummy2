@@ -15,12 +15,9 @@ use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInte
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
 use Orbit\Notifications\DigitalProduct\ReceiptNotification;
-use Orbit\Notifications\Pulsa\CustomerPulsaNotAvailableNotification;
-use Orbit\Notifications\Pulsa\CustomerPulsaPendingNotification;
-use Orbit\Notifications\Pulsa\PulsaNotAvailableNotification;
-use Orbit\Notifications\Pulsa\PulsaPendingNotification;
-use Orbit\Notifications\Pulsa\PulsaRetryNotification;
-use Orbit\Notifications\Pulsa\PulsaSuccessWithoutSerialNumberNotification;
+use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotification;
+use Orbit\Notifications\DigitalProduct\DigitalProductNotAvailableNotification;
+use Orbit\Notifications\DigitalProduct\PulsaRetryNotification;
 use PaymentTransaction;
 use Queue;
 use User;
@@ -119,19 +116,19 @@ class GetDigitalProductQueue
                 'product_code' => $providerProduct->code,
             ];
 
-            $purchaseResponse = App::make(PurchaseProviderInterface::class)->purchase($purchaseData);
+            $purchase = App::make(PurchaseProviderInterface::class)->purchase($purchaseData);
 
             // Append noted
             $notes = $payment->notes;
             if (empty($notes)) {
-                $notes = '[' . json_encode($purchaseResponse->getData()) .']';
+                $notes = '[' . json_encode($purchase->getData()) .']';
             } else {
-                $notes = substr_replace($notes, "," . json_encode($purchaseResponse->getData()), -1, 0);
+                $notes = substr_replace($notes, "," . json_encode($purchase->getData()), -1, 0);
             }
 
             $payment->notes = $notes;
 
-            if ($purchaseResponse->isSuccess()) {
+            if ($purchase->isSuccess()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
 
                 $this->log("Issued for payment {$paymentId}..");
@@ -205,13 +202,13 @@ class GetDigitalProductQueue
                     $this->log("Promo code {$discountCode} issued for purchase {$paymentId}");
                 }
 
-                $this->log("Purchase Data" . serialize($purchaseData));
-                $this->log("Purchase Response: " . serialize($purchaseResponse->getData()));
+                $this->log("Purchase Data: " . serialize($purchaseData));
+                $this->log("Purchase Response: " . serialize($purchase->getData()));
             }
-            else if ($purchaseResponse->isPending()) {
+            else if ($purchase->isPending()) {
                 $this->log("Purchase is PENDING for payment {$paymentId}.");
                 $this->log("Purchase Data: " . serialize($purchaseData));
-                $this->log("Purchase Response: " . serialize($purchaseResponse->getData()));
+                $this->log("Purchase Response: " . serialize($purchase->getData()));
 
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
 
@@ -279,8 +276,8 @@ class GetDigitalProductQueue
             else {
                 $this->log("Purchase failed for payment {$paymentId}.");
                 $this->log("Purchase Data: " . serialize($purchaseData));
-                $this->log("Purchase Response: " . serialize($purchaseResponse->getData()));
-                throw new Exception($purchaseResponse->getFailureMessage());
+                $this->log("Purchase Response: " . serialize($purchase->getData()));
+                throw new Exception($purchase->getFailureMessage());
             }
 
             $payment->save();
@@ -326,11 +323,11 @@ class GetDigitalProductQueue
                 foreach($adminEmails as $email) {
                     $admin              = new User;
                     $admin->email       = $email;
-                    // $admin->notify(new PulsaNotAvailableNotification($payment, $e->getMessage()));
+                    $admin->notify(new DigitalProductNotAvailableNotification($payment, $e->getMessage()));
                 }
 
                 // Notify customer that coupon is not available.
-                // $payment->user->notify(new CustomerPulsaNotAvailableNotification($payment));
+                $payment->user->notify(new CustomerPulsaNotAvailableNotification($payment));
 
                 $notes = $e->getMessage();
 
@@ -417,12 +414,7 @@ class GetDigitalProductQueue
         Log::info("{$this->objectType}: {$message}");
     }
 
-    public function logGMP($payment, $digitalProductName)
-    {
-
-    }
-
-    // else if ($purchaseResponse->shouldRetry($data['retry'])) {
+    // else if ($purchase->shouldRetry($data['retry'])) {
     //     $data['retry']++;
 
     //     GMP::create(Config::get('orbit.partners_api.google_measurement'))
@@ -441,7 +433,7 @@ class GetDigitalProductQueue
     //         ->request();
 
     //     $this->log("Purchase Data: " . serialize($purchaseData));
-    //     $this->log("Purchase response: " . serialize($purchaseResponse->getData()));
+    //     $this->log("Purchase response: " . serialize($purchase->getData()));
     //     $this->log("Retry #{$data['retry']} for Pulsa Purchase will be run in {$this->retryDelay} minutes...");
 
     //     // Retry purchase in a few minutes...
@@ -457,18 +449,18 @@ class GetDigitalProductQueue
     //     foreach($adminEmails as $email) {
     //         $admin              = new User;
     //         $admin->email       = $email;
-    //         $admin->notify(new PulsaRetryNotification($payment, $purchaseResponse->getMessage()));
+    //         $admin->notify(new PulsaRetryNotification($payment, $purchase->getMessage()));
     //     }
     // }
-    // else if ($purchaseResponse->maxRetryReached($data['retry'])) {
+    // else if ($purchase->maxRetryReached($data['retry'])) {
     //     $this->log("Purchase Data: " . serialize($purchaseData));
-    //     $this->log("Purchase response: " . serialize($purchaseResponse->getData()));
+    //     $this->log("Purchase response: " . serialize($purchase->getData()));
     //     throw new Exception("Pulsa purchase is FAILED, MAX RETRY REACHED ({$data['retry']}).");
     // }
-    // else if ($purchaseResponse->isOutOfStock()) {
+    // else if ($purchase->isOutOfStock()) {
     //     $this->log("Pulsa {$productCode} -- {$digitalProduct->product_name} is OUT OF STOCK.");
     //     $this->log("PulsaPurchase Data" . serialize($purchaseData));
-    //     $this->log("PulsaPurchase Response: " . serialize($purchaseResponse->getData()));
-    //     throw new Exception("Pulsa {$productCode} -- {$digitalProduct->product_name} is OUT OF STOCK (STATUS: {$purchaseResponse->getData()->status}).");
+    //     $this->log("PulsaPurchase Response: " . serialize($purchase->getData()));
+    //     throw new Exception("Pulsa {$productCode} -- {$digitalProduct->product_name} is OUT OF STOCK (STATUS: {$purchase->getData()->status}).");
     // }
 }

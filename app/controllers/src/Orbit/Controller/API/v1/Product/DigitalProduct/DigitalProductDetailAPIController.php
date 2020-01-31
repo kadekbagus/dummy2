@@ -26,10 +26,12 @@ class DigitalProductDetailAPIController extends ControllerAPI
         try {
             // $this->enableQueryLog();
 
-            (new DigitalProductDetailRequest($this))->validate();
+            with($request = new DigitalProductDetailRequest($this))->validate();
 
             $this->response->data = new DigitalProductResource(
-                App::make(DigitalProductRepository::class)->findProduct()
+                App::make(DigitalProductRepository::class)->findProduct(
+                    $request->id
+                )
             );
 
         } catch (Exception $e) {

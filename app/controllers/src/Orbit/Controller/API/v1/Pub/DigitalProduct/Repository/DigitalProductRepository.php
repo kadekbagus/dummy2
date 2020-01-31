@@ -190,7 +190,10 @@ class DigitalProductRepository
      */
     private function createModelFromRequest($request)
     {
-        $this->digitalProduct->product_type = $request->type;
+        if ($request->type) {
+            $this->digitalProduct->product_type = $request->type;
+        }
+
         $this->digitalProduct->product_name = $request->name;
         $this->digitalProduct->code = $request->code;
         $this->digitalProduct->selected_provider_product_id = $request->provider_id;

@@ -11,6 +11,8 @@ class ReceiptNotification extends BaseReceiptNotification
 {
     protected $serialNumber = null;
 
+    protected $signature = 'digital-product-receipt-notification';
+
     function __construct($payment = null, $serialNumber = null)
     {
         parent::__construct($payment);

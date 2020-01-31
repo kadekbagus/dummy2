@@ -12,7 +12,7 @@ use Orbit\Helper\DigitalProduct\Providers\Ayopay\Response\StatusAPIResponse;
  */
 class StatusAPI extends AyoPayAPI
 {
-    protected $shouldMockResponse = true;
+    // protected $shouldMockResponse = true;
 
     protected $randomizeResponseChance = [1, 1, 1, 1, 1, 0];
 
@@ -24,7 +24,7 @@ class StatusAPI extends AyoPayAPI
      */
     protected function buildRequestParam()
     {
-        $xmlFormat = "<?xml version="1.0"?>
+        $xmlFormat = "<?xml version=\"1.0\"?>
             <ayopay>
                 <function>Requery XML</function>
                 <id>{$this->config['id']}</id>
@@ -32,6 +32,8 @@ class StatusAPI extends AyoPayAPI
                 <pwd>{$this->generatePassword()}</pwd>
                 <productcode>{$this->requestData['product_code']}</productcode>
             </ayopay>";
+
+        return $xmlFormat;
     }
 
     /**
