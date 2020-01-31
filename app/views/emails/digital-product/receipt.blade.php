@@ -56,7 +56,9 @@
 
                                     <tr>
                                         <td width="600" class="mobile" align="left" valign="top">
-                                            <h3 class="greeting-username">{{ trans('email-receipt.body.greeting_digital_product.customer_name', ['customerName' => $customerName], '', $lang) }}</h3>
+                                            <h3 class="greeting-username">
+                                                {{ trans('email-receipt.body.greeting_digital_product.customer_name', ['customerName' => $customerName], '', $lang) }}
+                                            </h3>
                                             <p class="greeting-text">
                                                 {{ trans('email-receipt.body.greeting_digital_product.body', ['itemName' => $transaction['items'][0]['name']], '', $lang) }}
                                             </p>
