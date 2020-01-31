@@ -80,6 +80,7 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
                                                 'payment_transactions.payment_method',
                                                 'payment_transactions.extra_data',
                                                 'payment_transactions.created_at',
+                                                'payment_transactions.external_payment_transaction_id',
                                                 'payment_transaction_details.object_name as product_name',
                                                 'payment_transaction_details.object_type',
                                                 'payment_transaction_details.price',
@@ -98,7 +99,10 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
                                             ->where('payment_transactions.payment_method', '!=', 'normal')
                                             ->whereNotIn('payment_transactions.status', array('starting', 'denied', 'abort'))
                                             ->where('digital_products.product_type', 'game_voucher')
-                                            ->where('payment_transactions.payment_transaction_id', '=', $payment_transaction_id)
+                                            ->where(function($query) use($payment_transaction_id) {
+                                                $query->where('payment_transactions.payment_transaction_id', '=', $payment_transaction_id)
+                                                      ->orWhere('payment_transactions.external_payment_transaction_id', '=', $payment_transaction_id);
+                                              })
                                             ->first();
 
             if (! $game_voucher) {
