@@ -86,7 +86,8 @@ class GameVoucherPurchasedListAPIController extends PubControllerAPI
                                                 DB::raw($gameLogo)
                                                 )
                                             ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
-                                            ->join('games', 'games.game_id', '=', 'payment_transactions.extra_data')
+                                            ->join('digital_products', 'digital_products.digital_product_id', '=', 'payment_transaction_details.object_id')
+                                            ->leftJoin('games', 'games.game_id', '=', 'payment_transactions.extra_data')
                                             ->leftJoin('media', function($join) use ($prefix) {
                                                 $join->on('games.game_id', '=', 'media.object_id')
                                                      ->on('media.media_name_long', '=', DB::raw("'game_image_orig'"));
@@ -95,6 +96,7 @@ class GameVoucherPurchasedListAPIController extends PubControllerAPI
                                             ->where('payment_transaction_details.object_type', 'digital_product')
                                             ->where('payment_transactions.payment_method', '!=', 'normal')
                                             ->whereNotIn('payment_transactions.status', array('starting', 'denied', 'abort'))
+                                            ->where('digital_products.product_type', 'game_voucher')
                                             ->groupBy('payment_transactions.payment_transaction_id');
 
 
