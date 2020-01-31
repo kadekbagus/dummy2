@@ -40,7 +40,7 @@ class DigitalProductPurchaseRequest extends ValidateRequest
             'first_name' => 'required',
             'last_name' => 'required',
             'email' => 'required|email',
-            'phone' => 'required',
+            'phone' => '',
         ];
     }
 
