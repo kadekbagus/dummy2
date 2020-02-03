@@ -85,6 +85,7 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
                                                 'payment_transaction_details.object_type',
                                                 'payment_transaction_details.price',
                                                 'payment_transaction_details.quantity',
+                                                'payment_midtrans.payment_midtrans_info',
                                                 DB::raw($gameLogo)
                                                 )
                                             ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
@@ -94,6 +95,7 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
                                                 $join->on('games.game_id', '=', 'media.object_id')
                                                      ->on('media.media_name_long', '=', DB::raw("'game_image_orig'"));
                                             })
+                                            ->leftJoin('payment_midtrans', 'payment_midtrans.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                                             ->where('payment_transactions.user_id', $user->user_id)
                                             ->where('payment_transaction_details.object_type', 'digital_product')
                                             ->where('payment_transactions.payment_method', '!=', 'normal')
