@@ -314,8 +314,8 @@ class RegistrationAPIController extends IntermediateBaseController
                 if (! empty($password)) {
                     $new_user->user_password = Hash::make($password);
                 }
-                $new_user->user_firstname = $firstname;
-                $new_user->user_lastname = $lastname;
+                $new_user->user_firstname = strip_tags($firstname);
+                $new_user->user_lastname = strip_tags($lastname);
                 $new_user->status = isset($userStatus) ? $userStatus : 'pending';
                 $new_user->user_role_id = $customerRole->role_id;
                 $new_user->user_ip = $_SERVER['REMOTE_ADDR'];
@@ -343,7 +343,7 @@ class RegistrationAPIController extends IntermediateBaseController
                 $extended_user->save();
 
                 // Add phone for signup
-                $user_detail->phone = $phone;
+                $user_detail->phone = strip_tags($phone);
 
                 // Save the user details
                 $user_detail = $new_user->userdetail()->save($user_detail);

@@ -25,4 +25,19 @@ class UserExtended extends Eloquent
     {
         return $this->media()->where('media_name_id', 'user_profile_picture');
     }
+
+    public function getNameAttribute($value)
+    {
+        return strip_tags($value);
+    }
+
+    public function getAboutAttribute($value)
+    {
+        return strip_tags($value);
+    }
+
+    public function getLocationAttribute($value)
+    {
+        return strip_tags($value);
+    }
 }
