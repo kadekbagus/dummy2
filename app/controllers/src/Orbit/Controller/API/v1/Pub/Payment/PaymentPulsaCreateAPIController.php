@@ -164,7 +164,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
             $payment_new->user_id = $user_id;
             $payment_new->phone = $phone;
             $payment_new->country_id = $country_id;
-            $payment_new->payment_method = App::make('paymentMethod');
+            $payment_new->payment_method = $paymentMethod;
             $payment_new->amount = $pulsa->price; // forced to 1 quantity
             $payment_new->currency = $currency;
             $payment_new->status = PaymentTransaction::STATUS_STARTING;
