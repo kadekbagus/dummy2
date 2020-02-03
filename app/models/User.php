@@ -100,6 +100,71 @@ class User extends Eloquent implements UserInterface
         return $this->user_firstname . ' ' . $this->user_lastname;
     }
 
+    public function getUserFirstnameAttribute($value)
+    {
+        return strip_tags($value);
+    }
+
+    public function getUserLastnameAttribute($value)
+    {
+        return strip_tags($value);
+    }
+
+    /**
+     * Called by ProfileHelper.php
+     *
+     * @param  [type] $value [description]
+     * @return [type]        [description]
+     */
+    public function getNameAttribute($value)
+    {
+        return strip_tags($value);
+    }
+
+    /**
+     * Called by ProfileHelper.php
+     *
+     * @param  [type] $value [description]
+     * @return [type]        [description]
+     */
+    public function getUserNameAttribute($value)
+    {
+        return strip_tags($value);
+    }
+
+    /**
+     * Called by UserCIAPIController.php
+     *
+     * @param  [type] $value [description]
+     * @return [type]        [description]
+     */
+    public function getAboutAttribute($value)
+    {
+        return strip_tags($value);
+    }
+
+    /**
+     * Called by UserCIAPIController.php
+     *
+     * @param  [type] $value [description]
+     * @return [type]        [description]
+     */
+    public function getUserLocAttribute($value)
+    {
+        return strip_tags($value);
+    }
+
+    /**
+     * Called by ProfileHelper.php
+     *
+     * @param  [type] $value [description]
+     * @return [type]        [description]
+     */
+    public function getLocationAttribute($value)
+    {
+        return strip_tags($value);
+    }
+
     /** This enables $user->full_name. */
     public function getFullNameAttribute()
     {
