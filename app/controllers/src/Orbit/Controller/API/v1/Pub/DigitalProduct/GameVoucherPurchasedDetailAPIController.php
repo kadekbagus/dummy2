@@ -86,6 +86,7 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
                                                 'payment_transaction_details.price',
                                                 'payment_transaction_details.quantity',
                                                 'payment_midtrans.payment_midtrans_info',
+                                                'digital_products.digital_product_id as item_id',
                                                 DB::raw($gameLogo)
                                                 )
                                             ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
@@ -110,6 +111,8 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
             if (! $game_voucher) {
                 OrbitShopAPI::throwInvalidArgument('purchased detail not found');
             }
+
+            $game_voucher->payment_midtrans_info = json_decode(unserialize($game_voucher->payment_midtrans_info));
 
             $this->response->data = $game_voucher;
         } catch (ACLForbiddenException $e) {
