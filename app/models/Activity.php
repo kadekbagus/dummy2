@@ -462,7 +462,7 @@ class Activity extends Eloquent
                     break;
 
                 case 'PaymentTransaction':
-                    if ($object->payment_method === 'midtrans') {
+                    if (in_array($object->payment_method, ['midtrans', 'midtrans-qris'])) {
                         $this->object_display_name = $object->details->count() > 0 ?
                                                         $object->details->first()->object_name :
                                                         'Can not get payment detail record.';
@@ -474,6 +474,14 @@ class Activity extends Eloquent
                             $this->object_display_name = $paymentProvider->payment_name;
                         }
                     }
+                    break;
+
+                case 'Pulsa':
+                    $this->object_display_name = $object->pulsa_display_name;
+                    break;
+
+                case 'DigitalProduct':
+                    $this->object_display_name = $object->product_name;
                     break;
 
                 default:
