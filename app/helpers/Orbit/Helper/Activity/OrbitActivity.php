@@ -32,7 +32,7 @@ class OrbitActivity
 {
     protected $activityModel;
 
-    protected $scope = 'mobileci';
+    protected $scope = 'mobileCI';
 
     protected $responseSuccess = true;
 
@@ -63,7 +63,7 @@ class OrbitActivity
         }
 
         if (! empty($additionalData)) {
-            $this->mergeData($additionalData);
+            $this->mergeActivityData($additionalData);
         }
     }
 
@@ -110,7 +110,7 @@ class OrbitActivity
     {
         // Add additional data if needed.
         if (method_exists($this, 'getAdditionalData')) {
-            $this->mergeData($this->getAdditionalData());
+            $this->mergeActivityData($this->getAdditionalActivityData());
         }
 
         // Build activity data.
@@ -122,7 +122,7 @@ class OrbitActivity
      *
      * @return self
      */
-    public function mergeData($data = [])
+    public function mergeActivityData($data = [])
     {
         if (! empty($data)) {
             $this->activityData = array_merge($this->activityData, $data);

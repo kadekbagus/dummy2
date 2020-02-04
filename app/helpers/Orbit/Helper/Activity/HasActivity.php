@@ -15,7 +15,7 @@ trait HasActivity {
      * @param  array  $additionalData [description]
      * @return [type]                 [description]
      */
-    public function record($activityClass, $additionalData = [])
+    public function activity($activityClass, $additionalData = [])
     {
         $activityClass->setSubject($this)->record();
     }
