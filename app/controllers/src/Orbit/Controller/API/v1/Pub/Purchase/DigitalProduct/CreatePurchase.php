@@ -61,7 +61,7 @@ class CreatePurchase
         $purchase->user_id = $currentUser->user_id;
         $purchase->phone = $request->phone;
         $purchase->country_id = $countryId;
-        $purchase->payment_method = 'midtrans';
+        $purchase->payment_method = $request->payment_method;
         $purchase->amount = $digitalProduct->selling_price;
         $purchase->currency = $request->currency;
         $purchase->status = PaymentTransaction::STATUS_STARTING;
