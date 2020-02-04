@@ -2643,5 +2643,23 @@ return array(
             'object_type' => null,
             'parameter_name' => null,
         ),
+
+        '287' => array(
+            'name' => 'view_game_voucher_purchase_page',
+            'name_long' => 'View Game Voucher Purchase Page',
+            'module_name' => 'Game Voucher',
+            'type' => 'view',
+            'object_type' => null,
+            'parameter_name' => null,
+        ),
+
+        '288' => array(
+            'name' => 'click_buy_game_voucher',
+            'name_long' => 'Click Buy Game Voucher',
+            'module_name' => 'Game Voucher',
+            'type' => 'click',
+            'object_type' => 'DigitalProduct',
+            'parameter_name' => 'object_id',
+        ),
     ),
 );
