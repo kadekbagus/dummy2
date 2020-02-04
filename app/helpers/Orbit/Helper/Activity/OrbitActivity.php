@@ -48,6 +48,7 @@ class OrbitActivity
         'activityName' => 'setActivityName',
         'activityNameLong' => 'setActivityNameLong',
         'subject' => 'setUser',
+        'currentUrl' => 'setCurrentUrl',
     ];
 
     function __construct($subject = null, $object = null, $additionalData = [])

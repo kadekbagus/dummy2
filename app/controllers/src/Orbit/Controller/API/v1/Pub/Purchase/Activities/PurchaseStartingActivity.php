@@ -1,7 +1,5 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Purchase\Activities;
 
-use Orbit\Helper\Activity\PubActivity;
-
 /**
  * Purchase Starting Activity.
  *
