@@ -109,35 +109,8 @@ class OrbitActivity
     public function record()
     {
         // Add additional data if needed.
-        if (method_exists($this, 'getAdditionalData')) {
-            $this->mergeActivityData($this->getAdditionalActivityData());
-        }
+        $this->mergeActivityData($this->getAdditionalActivityData());
 
-        // Build activity data.
-        $this->buildActivityData()->save();
-    }
-
-    /**
-     * Merge given data to activity data.
-     *
-     * @return self
-     */
-    public function mergeActivityData($data = [])
-    {
-        if (! empty($data)) {
-            $this->activityData = array_merge($this->activityData, $data);
-        }
-
-        return $this;
-    }
-
-    /**
-     * Build activity data based on activityData property.
-     *
-     * @return self
-     */
-    protected function buildActivityData()
-    {
         foreach($this->activityData as $activityKey => $activityData) {
             $this->activityModel->{$this->activityMapFunction[$activityKey]}($activityData);
         }
@@ -146,16 +119,28 @@ class OrbitActivity
             $this->activityModel->responseFailed();
         }
 
-        return $this;
+        // Save the activity
+        $this->activityModel->save();
     }
 
     /**
-     * Save the Activity.
+     * Return an array of additional activity data that will be merged before saving.
+     * Meant to be overriden by child classes.
+     *
+     * @return array
+     */
+    protected function getAdditionalActivityData()
+    {
+        return [];
+    }
+
+    /**
+     * Merge given data to activity data.
      *
      * @return void
      */
-    protected function save()
+    private function mergeActivityData($data = [])
     {
-        $this->activityModel->save();
+        $this->activityData = array_merge($this->activityData, $data);
     }
 }
