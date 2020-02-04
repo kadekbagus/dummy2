@@ -1,8 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Request;
 
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Validator;
-use Orbit\Controller\API\v1\Pub\Coupon\Transfer\Repository\GameRepository;
+use Validator;
 use Orbit\Helper\Request\ValidateRequest;
 
 /**
