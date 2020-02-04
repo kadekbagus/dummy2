@@ -79,7 +79,10 @@ class GameRepository
                     'product_type',
                     'selected_provider_product_id',
                     'code', 'product_name', 'selling_price',
-                    'digital_products.status', 'is_displayed', 'is_promo'
+                    'digital_products.status', 'is_displayed', 'is_promo',
+                    'description',
+                    'notes',
+                    'extra_field_metadata'
                 )->available();
 
                 // Isn't it better to just put provider name on digital_products?

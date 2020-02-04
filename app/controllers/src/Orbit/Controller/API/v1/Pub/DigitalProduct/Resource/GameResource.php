@@ -57,6 +57,9 @@ class GameResource extends Resource
                 'displayed' => $product->is_displayed === 'yes',
                 'promo' => $product->is_promo === 'yes',
                 'status' => $product->status,
+                'description' => $product->description,
+                'notes' => $product->notes,
+                'extra_field_metadata' => $product->extra_field_metadata,
                 // 'provider' => $product->provider_product
                 //     ? $product->provider_product->provider_name
                 //     : null,
