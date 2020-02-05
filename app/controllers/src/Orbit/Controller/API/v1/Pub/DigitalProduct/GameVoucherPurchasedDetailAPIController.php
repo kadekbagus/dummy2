@@ -23,10 +23,10 @@ use PromotionRetailer;
 use PaymentTransaction;
 use Helper\EloquentRecordCounter as RecordCounter;
 
-class GameVoucherPurchasedListAPIController extends PubControllerAPI
+class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
 {
 
-    public function getGameVoucherPurchasedList()
+    public function getGameVoucherPurchasedDetail()
     {
         $httpCode = 200;
         $activity = Activity::mobileci()->setActivityType('view');
@@ -43,16 +43,17 @@ class GameVoucherPurchasedListAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($message);
             }
 
-            $sort_by = OrbitInput::get('sortby', 'product_name');
-            $sort_mode = OrbitInput::get('sortmode','asc');
+            $payment_transaction_id = OrbitInput::get('payment_transaction_id');
             $language = OrbitInput::get('language', 'id');
 
             $validator = Validator::make(
                 array(
                     'language' => $language,
+                    'payment_transaction_id' => $payment_transaction_id,
                 ),
                 array(
                     'language' => 'required',
+                    'payment_transaction_id' => 'required',
                 )
             );
 
@@ -79,10 +80,13 @@ class GameVoucherPurchasedListAPIController extends PubControllerAPI
                                                 'payment_transactions.payment_method',
                                                 'payment_transactions.extra_data',
                                                 'payment_transactions.created_at',
+                                                'payment_transactions.external_payment_transaction_id',
                                                 'payment_transaction_details.object_name as product_name',
                                                 'payment_transaction_details.object_type',
                                                 'payment_transaction_details.price',
                                                 'payment_transaction_details.quantity',
+                                                'payment_midtrans.payment_midtrans_info',
+                                                'digital_products.digital_product_id as item_id',
                                                 DB::raw($gameLogo)
                                                 )
                                             ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
@@ -92,61 +96,36 @@ class GameVoucherPurchasedListAPIController extends PubControllerAPI
                                                 $join->on('games.game_id', '=', 'media.object_id')
                                                      ->on('media.media_name_long', '=', DB::raw("'game_image_orig'"));
                                             })
+                                            ->leftJoin('payment_midtrans', 'payment_midtrans.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                                             ->where('payment_transactions.user_id', $user->user_id)
                                             ->where('payment_transaction_details.object_type', 'digital_product')
                                             ->where('payment_transactions.payment_method', '!=', 'normal')
                                             ->whereNotIn('payment_transactions.status', array('starting', 'denied', 'abort'))
                                             ->where('digital_products.product_type', 'game_voucher')
-                                            ->groupBy('payment_transactions.payment_transaction_id');
+                                            ->where(function($query) use($payment_transaction_id) {
+                                                $query->where('payment_transactions.payment_transaction_id', '=', $payment_transaction_id)
+                                                      ->orWhere('payment_transactions.external_payment_transaction_id', '=', $payment_transaction_id);
+                                              })
+                                            ->first();
 
+            if (! $game_voucher) {
+                OrbitShopAPI::throwInvalidArgument('purchased detail not found');
+            }
 
-            $game_voucher = $game_voucher->orderBy(DB::raw("{$prefix}payment_transactions.created_at"), 'desc');
+            $game_voucher->payment_midtrans_info = json_decode(unserialize($game_voucher->payment_midtrans_info));
 
-            $_game_voucher = clone $game_voucher;
-
-            $take = PaginationNumber::parseTakeFromGet('coupon');
-            $game_voucher->take($take);
-
-            $skip = PaginationNumber::parseSkipFromGet();
-            $game_voucher->skip($skip);
-
-            $listpulsa = $game_voucher->get();
-            $count = RecordCounter::create($_game_voucher)->count();
-
-            // if (empty($skip)) {
-            //     $activityNotes = sprintf('Page viewed: Landing Page Pulsa Wallet List Page');
-            //     $activity->setUser($user)
-            //         ->setActivityName('view_landing_page_pulsa_wallet_list')
-            //         ->setActivityNameLong('View GoToMalls Pulsa Wallet List')
-            //         ->setObject(NULL)
-            //         ->setLocation($mall)
-            //         ->setModuleName('Pulsa')
-            //         ->setNotes($activityNotes)
-            //         ->responseOK()
-            //         ->save();
-            // }
-
-            $this->response->data = new stdClass();
-            $this->response->data->total_records = $count;
-            $this->response->data->returned_records = count($listpulsa);
-            $this->response->data->records = $listpulsa;
+            $this->response->data = $game_voucher;
         } catch (ACLForbiddenException $e) {
-
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
         } catch (InvalidArgsException $e) {
-
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $result['total_records'] = 0;
-            $result['returned_records'] = 0;
-            $result['records'] = null;
-
-            $this->response->data = $result;
+            $this->response->data = null;
             $httpCode = 403;
         } catch (QueryException $e) {
 

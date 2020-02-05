@@ -17,6 +17,11 @@ class PurchaseProviderBuilder
         $this->providerId = $providerId;
     }
 
+    public static function create($providerId)
+    {
+        return new static($providerId);
+    }
+
     public function build($config = [])
     {
         switch ($this->providerId) {

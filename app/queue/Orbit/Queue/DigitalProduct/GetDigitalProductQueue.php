@@ -205,71 +205,10 @@ class GetDigitalProductQueue
                 $this->log("Purchase Data: " . serialize($purchaseData));
                 $this->log("Purchase Response: " . serialize($purchase->getData()));
             }
-            else if ($purchase->isPending()) {
-                $this->log("Purchase is PENDING for payment {$paymentId}.");
-                $this->log("Purchase Data: " . serialize($purchaseData));
-                $this->log("Purchase Response: " . serialize($purchase->getData()));
 
-                $payment->status = PaymentTransaction::STATUS_SUCCESS;
+            // Pending?
 
-                if (! empty($discount)) {
-                    // Mark promo code as issued.
-                    $discountCode = $discount->discount_code;
-                    $promoCodeReservation = App::make(ReservationInterface::class);
-                    $promoData = (object) [
-                        'promo_code' => $discountCode,
-                        'object_id' => $digitalProductId,
-                        'object_type' => 'digital_product'
-                    ];
-                    $promoCodeReservation->markAsIssued($payment->user, $promoData);
-                    $this->log("Promo code {$discountCode} issued for purchase {$paymentId}");
-                }
-
-                $cid = time();
-
-                GMP::create(Config::get('orbit.partners_api.google_measurement'))
-                    ->setQueryString([
-                        'cid' => $cid,
-                        't' => 'event',
-                        'ea' => 'Purchase Digital Product Successful',
-                        'ec' => 'digital_product',
-                        'el' => $digitalProductName,
-                        'cs' => $payment->utm_source,
-                        'cm' => $payment->utm_medium,
-                        'cn' => $payment->utm_campaign,
-                        'ck' => $payment->utm_term,
-                        'cc' => $payment->utm_content
-                    ])
-                    ->request();
-
-                if (! is_null($detail) && ! is_null($digitalProduct)) {
-                    // send google analitics transaction hit
-                    GMP::create(Config::get('orbit.partners_api.google_measurement'))
-                        ->setQueryString([
-                            'cid' => $cid,
-                            't' => 'transaction',
-                            'ti' => $payment->payment_transaction_id,
-                            'tr' => $payment->amount,
-                            'cu' => $payment->currency,
-                        ])
-                        ->request();
-
-                    // send google analitics item hit
-                    GMP::create(Config::get('orbit.partners_api.google_measurement'))
-                        ->setQueryString([
-                            'cid' => $cid,
-                            't' => 'item',
-                            'ti' => $payment->payment_transaction_id,
-                            'in' => $digitalProduct->product_name,
-                            'ip' => $detail->price,
-                            'iq' => $detail->quantity,
-                            'ic' => $productCode,
-                            'iv' => 'digital_product',
-                            'cu' => $payment->currency,
-                        ])
-                        ->request();
-                }
-            }
+            // Retry?
 
             // Not used at the moment, moved below.
 
@@ -413,6 +352,72 @@ class GetDigitalProductQueue
     {
         Log::info("{$this->objectType}: {$message}");
     }
+
+    // else if ($purchase->isPending()) {
+    //     $this->log("Purchase is PENDING for payment {$paymentId}.");
+    //     $this->log("Purchase Data: " . serialize($purchaseData));
+    //     $this->log("Purchase Response: " . serialize($purchase->getData()));
+
+    //     $payment->status = PaymentTransaction::STATUS_SUCCESS;
+
+    //     if (! empty($discount)) {
+    //         // Mark promo code as issued.
+    //         $discountCode = $discount->discount_code;
+    //         $promoCodeReservation = App::make(ReservationInterface::class);
+    //         $promoData = (object) [
+    //             'promo_code' => $discountCode,
+    //             'object_id' => $digitalProductId,
+    //             'object_type' => 'digital_product'
+    //         ];
+    //         $promoCodeReservation->markAsIssued($payment->user, $promoData);
+    //         $this->log("Promo code {$discountCode} issued for purchase {$paymentId}");
+    //     }
+
+    //     $cid = time();
+
+    //     GMP::create(Config::get('orbit.partners_api.google_measurement'))
+    //         ->setQueryString([
+    //             'cid' => $cid,
+    //             't' => 'event',
+    //             'ea' => 'Purchase Digital Product Successful',
+    //             'ec' => 'digital_product',
+    //             'el' => $digitalProductName,
+    //             'cs' => $payment->utm_source,
+    //             'cm' => $payment->utm_medium,
+    //             'cn' => $payment->utm_campaign,
+    //             'ck' => $payment->utm_term,
+    //             'cc' => $payment->utm_content
+    //         ])
+    //         ->request();
+
+    //     if (! is_null($detail) && ! is_null($digitalProduct)) {
+    //         // send google analitics transaction hit
+    //         GMP::create(Config::get('orbit.partners_api.google_measurement'))
+    //             ->setQueryString([
+    //                 'cid' => $cid,
+    //                 't' => 'transaction',
+    //                 'ti' => $payment->payment_transaction_id,
+    //                 'tr' => $payment->amount,
+    //                 'cu' => $payment->currency,
+    //             ])
+    //             ->request();
+
+    //         // send google analitics item hit
+    //         GMP::create(Config::get('orbit.partners_api.google_measurement'))
+    //             ->setQueryString([
+    //                 'cid' => $cid,
+    //                 't' => 'item',
+    //                 'ti' => $payment->payment_transaction_id,
+    //                 'in' => $digitalProduct->product_name,
+    //                 'ip' => $detail->price,
+    //                 'iq' => $detail->quantity,
+    //                 'ic' => $productCode,
+    //                 'iv' => 'digital_product',
+    //                 'cu' => $payment->currency,
+    //             ])
+    //             ->request();
+    //     }
+    // }
 
     // else if ($purchase->shouldRetry($data['retry'])) {
     //     $data['retry']++;

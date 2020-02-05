@@ -476,6 +476,14 @@ class Activity extends Eloquent
                     }
                     break;
 
+                case 'Pulsa':
+                    $this->object_display_name = $object->pulsa_display_name;
+                    break;
+
+                case 'DigitalProduct':
+                    $this->object_display_name = $object->product_name;
+                    break;
+
                 default:
                     $this->object_display_name = NULL;
                     break;

@@ -6,6 +6,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Orbit\Notifications\Payment\BeforeExpiredPaymentNotification;
 use Orbit\Notifications\Pulsa\ReminderPaymentNotification as PulsaReminderPaymentNotification;
+use Orbit\Notifications\DigitalProduct\ReminderPaymentNotification as DigitalProductReminderPaymentNotification;
 
 /**
  * @author Budi <budi@dominopos.com>
@@ -62,7 +63,7 @@ class SendEmailBeforePaymentExpiredCommand extends Command {
      */
     public function processTransactions($transactionIds = [], $withinDays)
     {
-        $payments = PaymentTransaction::with(['details.pulsa', 'user', 'midtrans'])
+        $payments = PaymentTransaction::with(['details.pulsa', 'details.digital_product', 'details.provider_product', 'user', 'midtrans'])
                                         ->where('status', PaymentTransaction::STATUS_PENDING)
                                         // Limit the date so command will not process old pending transactions...
                                         ->where(DB::raw("DATE(created_at)"), '>=', Carbon::now()->subDays($withinDays)->format('Y-m-d'))
@@ -83,6 +84,9 @@ class SendEmailBeforePaymentExpiredCommand extends Command {
                     $number++;
                     if ($payment->forPulsa()) {
                         $payment->user->notify(new PulsaReminderPaymentNotification($payment));
+                    }
+                    else if ($payment->forDigitalProduct()) {
+                        $payment->user->notify(new DigitalProductReminderPaymentNotification($payment));
                     }
                     else {
                         $payment->user->notify(new BeforeExpiredPaymentNotification($payment));

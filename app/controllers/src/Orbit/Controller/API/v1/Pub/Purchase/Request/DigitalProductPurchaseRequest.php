@@ -40,7 +40,8 @@ class DigitalProductPurchaseRequest extends ValidateRequest
             'first_name' => 'required',
             'last_name' => 'required',
             'email' => 'required|email',
-            'phone' => 'required',
+            'phone' => '',
+            'payment_method' => 'required|in:midtrans,midtrans-qris,dana,stripe',
         ];
     }
 
