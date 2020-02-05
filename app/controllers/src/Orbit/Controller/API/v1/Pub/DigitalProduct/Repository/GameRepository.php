@@ -80,7 +80,7 @@ class GameRepository
                     'description',
                     'notes',
                     'extra_field_metadata'
-                )->available();
+                )->displayed();
 
                 // Isn't it better to just put provider name on digital_products?
                 // $query->with(['provider_product' => function($providerProductQuery) {
