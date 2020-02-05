@@ -98,7 +98,7 @@ class User extends Eloquent implements UserInterface
 
     public function getFullName()
     {
-        return $this->user_firstname . ' ' . $this->user_lastname;
+        return strip_tags($this->user_firstname . ' ' . $this->user_lastname);
     }
 
     public function getUserFirstnameAttribute($value)
