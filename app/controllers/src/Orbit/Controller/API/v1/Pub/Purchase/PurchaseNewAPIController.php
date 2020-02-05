@@ -10,6 +10,9 @@ use Orbit\Controller\API\v1\Pub\Purchase\Request\PurchaseRequestBuilder;
 /**
  * Handle new purchase request.
  *
+ * @todo  Move the 'create purchase handler' into a builder/factory class.
+ * @todo  Support other (older) type of product: coupon and pulsa/data plan.
+ *
  * @author Budi <budi@gotomalls.com>
  */
 class PurchaseNewAPIController extends PubControllerAPI
@@ -27,8 +30,6 @@ class PurchaseNewAPIController extends PubControllerAPI
             with($request = $requestBuilder->build($this))->validate();
 
             // Then create a new Purchase
-            DB::beginTransaction();
-
             $purchase = null;
             switch ($request->object_type) {
                 // case 'pulsa':
@@ -49,12 +50,7 @@ class PurchaseNewAPIController extends PubControllerAPI
                     break;
             }
 
-            DB::commit();
-
             $this->response->data = $purchase;
-
-            // Record activity...
-            // App::make('currentUser')->activity(new TransactionStartingActivity($purchaseRepository->getPurchase()));
 
         } catch(Exception $e) {
             return $this->handleException($e);

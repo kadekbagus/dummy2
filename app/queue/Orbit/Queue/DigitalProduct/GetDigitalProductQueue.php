@@ -12,12 +12,14 @@ use IssuedCoupon;
 use Log;
 use Mall;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedProductActivity;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
-use Orbit\Notifications\DigitalProduct\ReceiptNotification;
 use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotification;
 use Orbit\Notifications\DigitalProduct\DigitalProductNotAvailableNotification;
 use Orbit\Notifications\DigitalProduct\PulsaRetryNotification;
+use Orbit\Notifications\DigitalProduct\ReceiptNotification;
 use PaymentTransaction;
 use Queue;
 use User;
@@ -58,11 +60,6 @@ class GetDigitalProductQueue
         if (! isset($data['retry'])) {
             $data['retry'] = 0;
         }
-
-        $activity = Activity::mobileci()
-                            ->setActivityType('transaction')
-                            ->setActivityName('transaction_status')
-                            ->setCurrentUrl($data['current_url']);
 
         try {
             DB::connection()->beginTransaction();
@@ -181,14 +178,7 @@ class GetDigitalProductQueue
                         ->request();
                 }
 
-                $activity->setActivityNameLong('Transaction is Successful')
-                        ->setModuleName('Midtrans Transaction')
-                        ->setObject($payment)
-                        ->setObjectDisplayName($digitalProductName)
-                        ->setNotes($digitalProduct->product_type)
-                        ->setLocation($mall)
-                        ->responseOK()
-                        ->save();
+                $payment->user->activity(new PurchaseSuccessActivity($payment, $this->objectType));
 
                 if (! empty($discount)) {
                     // Mark promo code as issued.
@@ -287,14 +277,7 @@ class GetDigitalProductQueue
                     ])
                     ->request();
 
-                $activity->setActivityNameLong('Transaction is Success - Failed Getting ' . $this->objectType)
-                         ->setModuleName('Midtrans Transaction')
-                         ->setObject($payment)
-                         ->setObjectDisplayName($digitalProductName)
-                         ->setNotes($notes)
-                         ->setLocation($mall)
-                         ->responseFailed()
-                         ->save();
+                $payment->user->activity(new PurchaseFailedProductActivity($payment, $this->objectType, $notes));
             }
             else {
                 DB::connection()->rollBack();
@@ -352,120 +335,4 @@ class GetDigitalProductQueue
     {
         Log::info("{$this->objectType}: {$message}");
     }
-
-    // else if ($purchase->isPending()) {
-    //     $this->log("Purchase is PENDING for payment {$paymentId}.");
-    //     $this->log("Purchase Data: " . serialize($purchaseData));
-    //     $this->log("Purchase Response: " . serialize($purchase->getData()));
-
-    //     $payment->status = PaymentTransaction::STATUS_SUCCESS;
-
-    //     if (! empty($discount)) {
-    //         // Mark promo code as issued.
-    //         $discountCode = $discount->discount_code;
-    //         $promoCodeReservation = App::make(ReservationInterface::class);
-    //         $promoData = (object) [
-    //             'promo_code' => $discountCode,
-    //             'object_id' => $digitalProductId,
-    //             'object_type' => 'digital_product'
-    //         ];
-    //         $promoCodeReservation->markAsIssued($payment->user, $promoData);
-    //         $this->log("Promo code {$discountCode} issued for purchase {$paymentId}");
-    //     }
-
-    //     $cid = time();
-
-    //     GMP::create(Config::get('orbit.partners_api.google_measurement'))
-    //         ->setQueryString([
-    //             'cid' => $cid,
-    //             't' => 'event',
-    //             'ea' => 'Purchase Digital Product Successful',
-    //             'ec' => 'digital_product',
-    //             'el' => $digitalProductName,
-    //             'cs' => $payment->utm_source,
-    //             'cm' => $payment->utm_medium,
-    //             'cn' => $payment->utm_campaign,
-    //             'ck' => $payment->utm_term,
-    //             'cc' => $payment->utm_content
-    //         ])
-    //         ->request();
-
-    //     if (! is_null($detail) && ! is_null($digitalProduct)) {
-    //         // send google analitics transaction hit
-    //         GMP::create(Config::get('orbit.partners_api.google_measurement'))
-    //             ->setQueryString([
-    //                 'cid' => $cid,
-    //                 't' => 'transaction',
-    //                 'ti' => $payment->payment_transaction_id,
-    //                 'tr' => $payment->amount,
-    //                 'cu' => $payment->currency,
-    //             ])
-    //             ->request();
-
-    //         // send google analitics item hit
-    //         GMP::create(Config::get('orbit.partners_api.google_measurement'))
-    //             ->setQueryString([
-    //                 'cid' => $cid,
-    //                 't' => 'item',
-    //                 'ti' => $payment->payment_transaction_id,
-    //                 'in' => $digitalProduct->product_name,
-    //                 'ip' => $detail->price,
-    //                 'iq' => $detail->quantity,
-    //                 'ic' => $productCode,
-    //                 'iv' => 'digital_product',
-    //                 'cu' => $payment->currency,
-    //             ])
-    //             ->request();
-    //     }
-    // }
-
-    // else if ($purchase->shouldRetry($data['retry'])) {
-    //     $data['retry']++;
-
-    //     GMP::create(Config::get('orbit.partners_api.google_measurement'))
-    //         ->setQueryString([
-    //             'cid' => time(),
-    //             't' => 'event',
-    //             'ea' => 'Purchase Digital Product Retry ' . $data['retry'],
-    //             'ec' => 'digital_product',
-    //             'el' => $digitalProductName,
-    //             'cs' => $payment->utm_source,
-    //             'cm' => $payment->utm_medium,
-    //             'cn' => $payment->utm_campaign,
-    //             'ck' => $payment->utm_term,
-    //             'cc' => $payment->utm_content
-    //         ])
-    //         ->request();
-
-    //     $this->log("Purchase Data: " . serialize($purchaseData));
-    //     $this->log("Purchase response: " . serialize($purchase->getData()));
-    //     $this->log("Retry #{$data['retry']} for Pulsa Purchase will be run in {$this->retryDelay} minutes...");
-
-    //     // Retry purchase in a few minutes...
-    //     $this->retryDelay = $this->retryDelay * 60; // seconds
-    //     Queue::later(
-    //         $this->retryDelay,
-    //         'Orbit\\Queue\\DigitalProduct\\GetDigitalProductQueue',
-    //         $data //,
-    //         // 'gtm_pulsa'
-    //     );
-
-    //     // Send notification each time we do retry...
-    //     foreach($adminEmails as $email) {
-    //         $admin              = new User;
-    //         $admin->email       = $email;
-    //         $admin->notify(new PulsaRetryNotification($payment, $purchase->getMessage()));
-    //     }
-    // }
-    // else if ($purchase->maxRetryReached($data['retry'])) {
-    //     $this->log("Purchase Data: " . serialize($purchaseData));
-    //     $this->log("Purchase response: " . serialize($purchase->getData()));
-    //     throw new Exception("Pulsa purchase is FAILED, MAX RETRY REACHED ({$data['retry']}).");
-    // }
-    // else if ($purchase->isOutOfStock()) {
-    //     $this->log("Pulsa {$productCode} -- {$digitalProduct->product_name} is OUT OF STOCK.");
-    //     $this->log("PulsaPurchase Data" . serialize($purchaseData));
-    //     $this->log("PulsaPurchase Response: " . serialize($purchase->getData()));
-    //     throw new Exception("Pulsa {$productCode} -- {$digitalProduct->product_name} is OUT OF STOCK (STATUS: {$purchase->getData()->status}).");
-    // }
 }
