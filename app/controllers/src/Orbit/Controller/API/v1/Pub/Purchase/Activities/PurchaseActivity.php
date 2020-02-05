@@ -37,6 +37,7 @@ class PurchaseActivity extends PubActivity
         $this->mergeActivityData([
             'currentUrl' => $this->getCurrentUtmUrl(),
             'location' => $this->getLocation(),
+            'notes' => $this->objectName,
         ]);
     }
 
