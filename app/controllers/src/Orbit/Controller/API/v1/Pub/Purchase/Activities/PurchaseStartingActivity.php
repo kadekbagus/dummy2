@@ -7,12 +7,17 @@
  */
 class PurchaseStartingActivity extends PurchaseActivity
 {
+    public function __construct($purchase, $objectType = '')
+    {
+        parent::__construct($purchase);
+        $this->objectType = $objectType;
+    }
+
     protected function getAdditionalActivityData()
     {
         return [
             'activityNameLong' => 'Transaction is Starting',
-            'location' => $this->getLocation(),
-            'notes' => $this->getNotes(),
+            'notes' => $this->objectType,
         ];
     }
 }

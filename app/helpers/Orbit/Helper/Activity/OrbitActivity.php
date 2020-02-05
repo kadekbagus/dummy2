@@ -140,7 +140,7 @@ class OrbitActivity
      *
      * @return void
      */
-    private function mergeActivityData($data = [])
+    protected function mergeActivityData($data = [])
     {
         $this->activityData = array_merge($this->activityData, $data);
     }

@@ -15,21 +15,29 @@ class PurchaseActivity extends PubActivity
         'moduleName' => 'Midtrans Transaction',
     ];
 
-    protected $location = null;
-
-    private $purchase = null;
-
-    private $product = null;
+    protected $objectName = '';
 
     protected $objectType = '';
 
-    public function __construct($purchase, $product, $location = null)
+    protected $location = null;
+
+    protected $purchase = null;
+
+    protected $product = null;
+
+    public function __construct($purchase, $product = null, $location = null)
     {
         parent::__construct(null, $purchase);
 
         $this->purchase = $purchase;
         $this->product = $product;
         $this->location = $location;
+
+        // Merge common/basic purchase activity data.
+        $this->mergeActivityData([
+            'currentUrl' => $this->getCurrentUtmUrl(),
+            'location' => $this->getLocation(),
+        ]);
     }
 
     protected function getLocation()
@@ -39,6 +47,10 @@ class PurchaseActivity extends PubActivity
 
     protected function getNotes()
     {
+        if (empty($this->product)) {
+            return '';
+        }
+
         $notes = '';
 
         if (isset($this->product->product_type)) {
@@ -50,5 +62,12 @@ class PurchaseActivity extends PubActivity
         }
 
         return $notes;
+    }
+
+    protected function getCurrentUtmUrl()
+    {
+        return isset($this->purchase->current_utm_url)
+            ? $this->purchase->current_utm_url
+            : null;
     }
 }

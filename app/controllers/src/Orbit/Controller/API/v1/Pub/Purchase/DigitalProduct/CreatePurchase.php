@@ -159,7 +159,8 @@ class CreatePurchase
         DB::commit();
 
         // Record activity
-        $currentUser->activity(new PurchaseStartingActivity($purchase, $digitalProduct, $mall));
+        $objectType = ucwords(str_replace('_', ' ', $digitalProduct->product_type));
+        $currentUser->activity(new PurchaseStartingActivity($purchase, $objectType));
 
         return $purchase;
     }
