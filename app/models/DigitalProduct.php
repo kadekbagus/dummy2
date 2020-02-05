@@ -18,6 +18,17 @@ class DigitalProduct extends Eloquent
     protected $primaryKey = 'digital_product_id';
 
     /**
+     * Filter that make sure only select displayed digital product.
+     *
+     * @param  [type] $query [description]
+     * @return [type]        [description]
+     */
+    public function scopeDisplayed($query)
+    {
+        return $query->where('is_displayed', 'yes');
+    }
+
+    /**
      * Filter/scope that make sure Digital Product is available.
      *
      * @param  [type] $query [description]
