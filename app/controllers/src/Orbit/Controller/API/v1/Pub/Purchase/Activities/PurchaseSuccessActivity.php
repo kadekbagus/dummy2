@@ -9,19 +9,13 @@ use Orbit\Helper\Activity\PubActivity;
  */
 class PurchaseSuccessActivity extends PurchaseActivity
 {
-    private $productType = '';
-
     public function __construct($purchase, $productType = null)
     {
         parent::__construct($purchase);
-        $this->productType = $productType;
-    }
 
-    protected function getAdditionalActivityData()
-    {
-        return [
+        $this->mergeActivityData([
             'activityNameLong' => 'Transaction is Successful',
-            'notes' => $this->productType,
-        ];
+            'notes' => $productType,
+        ]);
     }
 }
