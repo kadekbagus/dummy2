@@ -7,7 +7,7 @@ use Orbit\Helper\Activity\PubActivity;
  *
  * @author Budi <budi@gotomalls.com>
  */
-class PurchaseExpiredActivity extends PurchaseActivityWithObjectName
+class PurchaseExpiredActivity extends PurchaseActivity
 {
     protected $responseSuccess = false;
 
