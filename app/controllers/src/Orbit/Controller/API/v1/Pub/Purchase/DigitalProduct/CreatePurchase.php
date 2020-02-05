@@ -2,9 +2,11 @@
 
 use App;
 use Country;
+use DB;
 use Discount;
 use Log;
 use Mall;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseStartingActivity;
 use Orbit\Helper\Util\CampaignSourceParser;
 use PaymentMidtrans;
 use PaymentTransaction;
@@ -54,6 +56,8 @@ class CreatePurchase
         $campaignData = CampaignSourceParser::create()
                             ->setUrls($urlForTracking)
                             ->getCampaignSource();
+
+        DB::beginTransaction();
 
         $purchase = new PaymentTransaction;
         $purchase->user_email = $request->email;
@@ -151,6 +155,12 @@ class CreatePurchase
 
             $purchase->promo_code = $reservedPromoCode->discount_code;
         }
+
+        DB::commit();
+
+        // Record activity
+        $objectType = ucwords(str_replace('_', ' ', $digitalProduct->product_type));
+        $currentUser->activity(new PurchaseStartingActivity($purchase, $objectType));
 
         return $purchase;
     }
