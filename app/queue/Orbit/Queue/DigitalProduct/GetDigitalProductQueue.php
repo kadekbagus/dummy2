@@ -124,6 +124,8 @@ class GetDigitalProductQueue
             }
 
             $payment->notes = $notes;
+            $detail->payload = $purchase->getData();
+            $detail->save();
 
             if ($purchase->isSuccess()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
