@@ -79,8 +79,6 @@ class GetDigitalProductQueue
             // Register payment into container, so can be accessed by other classes.
             App::instance('purchase', $payment);
 
-            $activity->setUser($payment->user);
-
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired() || $payment->canceled()
                 || $payment->status === PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT_FAILED
@@ -124,6 +122,8 @@ class GetDigitalProductQueue
             }
 
             $payment->notes = $notes;
+            $detail->payload = $purchase->getData();
+            $detail->save();
 
             if ($purchase->isSuccess()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
@@ -256,7 +256,7 @@ class GetDigitalProductQueue
                 }
 
                 // Notify customer that coupon is not available.
-                $payment->user->notify(new CustomerPulsaNotAvailableNotification($payment));
+                $payment->user->notify(new CustomerDigitalProductNotAvailableNotification($payment));
 
                 $notes = $e->getMessage();
 

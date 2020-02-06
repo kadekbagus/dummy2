@@ -18,6 +18,8 @@ class AyoPayResponse extends BaseResponse
      */
     public function __construct($response)
     {
+        $this->rawResponse = $response;
+
         if (is_string($response)) {
             $xmlResponse = @simplexml_load_string($response);
 
@@ -104,6 +106,16 @@ class AyoPayResponse extends BaseResponse
     public function shouldRetry($retry = 1)
     {
         return false;
+    }
+
+    /**
+     * Just return the raw response from API.
+     *
+     * @return [type] [description]
+     */
+    public function getData()
+    {
+        return $this->rawResponse;
     }
 
     /**
