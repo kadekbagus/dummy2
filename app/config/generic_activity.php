@@ -2661,5 +2661,13 @@ return array(
             'object_type' => 'DigitalProduct',
             'parameter_name' => 'object_id',
         ),
+        '289' => array(
+            'name' => 'click_game_list',
+            'name_long' => 'Click Game In Listing',
+            'module_name' => 'Game Voucher',
+            'type' => 'click',
+            'object_type' => 'DigitalProduct',
+            'parameter_name' => 'object_id',
+        ),
     ),
 );
