@@ -72,6 +72,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
             $user_name = (!empty($last_name) ? $first_name.' '.$last_name : $first_name);
             $mallId = OrbitInput::post('mall_id', null);
             $promoCode = OrbitInput::post('promo_code', null);
+            $paymentMethod = OrbitInput::post('payment_method');
 
             $validator = Validator::make(
                 array(
@@ -87,6 +88,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                     'object_type'  => $object_type,
                     'quantity'   => $quantity,
                     'promo_code' => $promoCode,
+                    'payment_method' => $paymentMethod,
                 ),
                 array(
                     'first_name' => 'required',
@@ -101,6 +103,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                     'object_id'  => 'required|orbit.exists.pulsa',
                     'quantity'   => 'required|min:1',
                     'promo_code' => 'orbit.reserved.promo',
+                    'payment_method' => 'required|in:midtrans,midtrans-qris,dana,stripe',
                 ),
                 array(
                     'orbit.exists.pulsa' => 'REQUESTED_ITEM_NOT_FOUND',
@@ -161,7 +164,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
             $payment_new->user_id = $user_id;
             $payment_new->phone = $phone;
             $payment_new->country_id = $country_id;
-            $payment_new->payment_method = 'midtrans';
+            $payment_new->payment_method = $paymentMethod;
             $payment_new->amount = $pulsa->price; // forced to 1 quantity
             $payment_new->currency = $currency;
             $payment_new->status = PaymentTransaction::STATUS_STARTING;

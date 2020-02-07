@@ -49,12 +49,17 @@ class GameResource extends Resource
 
         foreach($resource->digital_products as $product) {
             $products[] = [
+                'id' => $product->digital_product_id,
+                'type' => $product->product_type,
                 'code' => $product->code,
                 'name' => $product->product_name,
                 'price' => $product->selling_price,
                 'displayed' => $product->is_displayed === 'yes',
                 'promo' => $product->is_promo === 'yes',
                 'status' => $product->status,
+                'description' => $product->description,
+                'notes' => $product->notes,
+                'extra_field_metadata' => $product->extra_field_metadata,
                 // 'provider' => $product->provider_product
                 //     ? $product->provider_product->provider_name
                 //     : null,

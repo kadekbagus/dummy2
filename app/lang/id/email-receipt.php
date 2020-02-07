@@ -18,6 +18,11 @@ return [
                         <br>
                         Terima kasih telah melakukan pembelian :itemName di Gotomalls.com. Pembayaran Anda telah diverifikasi oleh sistem kami. Berikut ini detail pembelian Anda.',
 
+        'greeting_digital_product' => [
+            'customer_name' => 'Hi :customerName,',
+            'body' => 'Terima kasih telah melakukan pembelian :itemName di Gotomalls.com. Pembayaran Anda telah diverifikasi oleh sistem kami. Berikut ini detail dari pembelian Anda.',
+        ],
+
         'transaction_labels' => [
             'transaction_id' => 'No. Transaksi',
             'transaction_date' => 'Tanggal Transaksi',
@@ -40,6 +45,7 @@ return [
 
     'table_customer_info' => [
         'header' => [
+            'trx_id' => 'No. Transaksi',
             'customer' => 'Pelanggan',
             'phone' => 'Telp',
             'email' => 'Email',
