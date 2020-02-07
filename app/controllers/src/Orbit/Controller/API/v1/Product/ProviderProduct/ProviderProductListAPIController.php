@@ -78,6 +78,7 @@ class ProviderProductListAPIController extends ControllerAPI
                                     {$prefix}provider_products.provider_name,
                                     {$prefix}provider_products.product_type,
                                     {$prefix}provider_products.price,
+                                    {$prefix}provider_products.status,
                                     {$prefix}provider_products.created_at,
                                     {$prefix}provider_products.updated_at"
                                 ));
