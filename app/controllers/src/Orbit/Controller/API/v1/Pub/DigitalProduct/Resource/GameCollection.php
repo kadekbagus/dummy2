@@ -1,25 +1,15 @@
 <?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Resource;
 
-use Game;
-use Orbit\Helper\Resource\ResourceAbstract as Resource;
+use Orbit\Helper\Resource\ResourceCollection;
 
 /**
  * Resource Collection of Game.
  *
  * @author Budi <budi@gotomalls.com>
  */
-class GameCollection extends Resource
+class GameCollection extends ResourceCollection
 {
-    private $collection = null;
-
-    private $total = 0;
-
-    public function __construct($collection, $total = 0)
-    {
-        $this->collection = $collection;
-        $this->total = $total;
-        $this->setImagePrefix('game_image_');
-    }
+    protected $imagePrefix = 'game_image_';
 
     /**
      * Transform collection to array as response data.

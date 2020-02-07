@@ -1,36 +1,36 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct;
 
-use Activity;
 use App;
 use Carbon\Carbon;
 use Config;
 use Country;
 use DB;
-use Discount;
 use Event;
 use Log;
 use Mall;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
-use Orbit\Helper\Util\CampaignSourceParser;
-use PaymentMidtrans;
-use PaymentTransaction;
-use PaymentTransactionDetail;
-use PaymentTransactionDetailNormalPaypro;
-use Request;
-use Queue;
-use Orbit\Helper\Midtrans\API\TransactionStatus;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseAbortedActivity;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseCanceledActivity;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseExpiredActivity;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedActivity;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchasePendingActivity;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseProcessingProductActivity;
 use Orbit\Helper\Midtrans\API\TransactionCancel;
-use Orbit\Notifications\DigitalProduct\PendingPaymentNotification;
-use Orbit\Notifications\DigitalProduct\CanceledPaymentNotification;
+use Orbit\Helper\Midtrans\API\TransactionStatus;
+use Orbit\Helper\Util\CampaignSourceParser;
 use Orbit\Notifications\DigitalProduct\AbortedPaymentNotification;
-use Orbit\Notifications\DigitalProduct\ExpiredPaymentNotification;
+use Orbit\Notifications\DigitalProduct\CanceledPaymentNotification;
 use Orbit\Notifications\DigitalProduct\CustomerRefundNotification;
+use Orbit\Notifications\DigitalProduct\ExpiredPaymentNotification;
+use Orbit\Notifications\DigitalProduct\PendingPaymentNotification;
+use PaymentTransaction;
+use Queue;
+use Request;
 use User;
 
 /**
- * Digital Product Purchase
+ * Digital Product Purchase Update handler.
  *
- * @todo  use new activity helper.
  * @author Budi <budi@gotomalls.com>
  */
 class UpdatePurchase
@@ -38,8 +38,6 @@ class UpdatePurchase
     protected $objectType = 'digital_product';
 
     protected $purchase = null;
-
-    protected $shouldUpdate = false;
 
     public function update($request)
     {
@@ -52,11 +50,12 @@ class UpdatePurchase
             $fromSnap = $request->from_snap ?: false;
             $refundData = $request->refund_data;
 
+            $shouldUpdate = false;
             $paymentSuspicious = false;
             $paymentDenied = false;
             $shouldNotifyRefund = false;
             $refundReason = '';
-            $currentUtmUrl = $this->generateUtmUrl($payment_transaction_id);
+            $currentUtmUrl = $this->generateUtmUrl();
 
             $this->purchase = PaymentTransaction::onWriteConnection()->with([
                 'details.digital_product',
@@ -66,6 +65,8 @@ class UpdatePurchase
                 'user',
                 'discount_code'
             ])->findOrFail($payment_transaction_id);
+
+            $this->resolveObjectType();
 
             $oldStatus = $this->purchase->status;
 
@@ -135,7 +136,7 @@ class UpdatePurchase
                     }
                     else {
                         $this->log("New status {$status} for payment {$payment_transaction_id} will be set!");
-                        $this->shouldUpdate = true;
+                        $shouldUpdate = true;
                     }
                 }
             }
@@ -149,14 +150,14 @@ class UpdatePurchase
                     $transactionStatus = TransactionStatus::create()->getStatus($payment_transaction_id);
                     if ($transactionStatus->notFound()) {
                         $this->log("Transaction {$payment_transaction_id} not found! Aborting payment...");
-                        $this->shouldUpdate = true;
+                        $shouldUpdate = true;
                     }
                     else {
                         $this->log("Transaction {$payment_transaction_id} found! Payment can not be aborted/canceled.");
                     }
                 }
                 else {
-                    $this->shouldUpdate = true;
+                    $shouldUpdate = true;
                 }
             }
             else {
@@ -168,13 +169,7 @@ class UpdatePurchase
             }
 
             // If old status is not final, then we should update...
-            if ($this->shouldUpdate) {
-                $activity = Activity::mobileci()
-                                        ->setActivityType('transaction')
-                                        ->setUser($this->purchase->user)
-                                        ->setActivityName('transaction_status')
-                                        ->setCurrentUrl($currentUtmUrl);
-
+            if ($shouldUpdate) {
                 $mall = Mall::where('merchant_id', $mallId)->first();
 
                 $this->purchase->status = $status;
@@ -221,48 +216,16 @@ class UpdatePurchase
                 // Try not doing any expensive operation above.
                 DB::commit();
 
+                $this->purchase->current_utm_url = $currentUtmUrl;
+
                 // Log activity...
                 // Should be done before issuing coupon for the sake of activity ordering,
                 // or at the end before returning the response??
                 if ($this->purchase->failed() || $this->purchase->denied()) {
-                    $activity->setActivityNameLong('Transaction is Failed')
-                            ->setModuleName('Midtrans Transaction')
-                            ->setObject($this->purchase)
-                            ->setObjectDisplayName($objectName)
-                            ->setNotes('Transaction is failed from Midtrans/Customer.')
-                            ->setLocation($mall)
-                            ->responseFailed()
-                            ->save();
-                }
-                else if ($this->purchase->expired()) {
-                    $activity->setActivityNameLong('Transaction is Expired')
-                            ->setModuleName('Midtrans Transaction')
-                            ->setObject($this->purchase)
-                            ->setObjectDisplayName($objectName)
-                            ->setNotes('Transaction is expired from Midtrans.')
-                            ->setLocation($mall)
-                            ->responseFailed()
-                            ->save();
+                    $this->purchase->user->activity(new PurchaseFailedActivity($this->purchase));
                 }
                 else if ($this->purchase->status === PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT) {
-                    $activity->setActivityNameLong('Transaction is Success - Getting ' . $this->objectType)
-                            ->setModuleName('Midtrans Transaction')
-                            ->setObject($this->purchase)
-                            ->setObjectDisplayName($objectName)
-                            ->setNotes($objectName)
-                            ->setLocation($mall)
-                            ->responseOK()
-                            ->save();
-                }
-                else if ($this->purchase->status === PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT_FAILED) {
-                    $activity->setActivityNameLong('Transaction is Success - Failed Getting ' . $this->objectType)
-                            ->setModuleName('Midtrans Transaction')
-                            ->setObject($this->purchase)
-                            ->setObjectDisplayName($objectName)
-                            ->setNotes("Failed to get {$this->objectType}. Can not get {$this->objectType} for this transaction.")
-                            ->setLocation($mall)
-                            ->responseFailed()
-                            ->save();
+                    $this->purchase->user->activity(new PurchaseProcessingProductActivity($this->purchase, $objectName, $this->objectType));
                 }
 
                 Event::fire('orbit.payment.postupdatepayment.after.commit', [$this->purchase, $mall]);
@@ -286,41 +249,30 @@ class UpdatePurchase
 
                     $this->log('First time TransactionStatus check for Payment: ' . $payment_transaction_id . ' is scheduled to run after ' . $delay . ' seconds.');
 
-                    $activity->setActivityNameLong('Transaction is Pending')
-                            ->setModuleName('Midtrans Transaction')
-                            ->setObject($this->purchase)
-                            ->setObjectDisplayName($objectName)
-                            ->setNotes($objectName)
-                            ->setLocation($mall)
-                            ->responseOK()
-                            ->save();
-
                     // Notify customer for pending payment (to complete the payment).
                     // Send email to address that being used on checkout (can be different with user's email)
                     $paymentUser = new User;
                     $paymentUser->email = $this->purchase->user_email;
                     $paymentUser->notify(new PendingPaymentNotification($this->purchase), 30);
+
+                    // Record activity of pending purchase...
+                    $this->purchase->user->activity(new PurchasePendingActivity($this->purchase, $objectName));
                 }
 
                 // Send notification if the purchase was canceled.
                 // Only send if previous status was pending.
                 if ($oldStatus === PaymentTransaction::STATUS_PENDING && $status === PaymentTransaction::STATUS_CANCELED) {
-                    $activity->setActivityNameLong('Transaction Canceled')
-                            ->setModuleName('Midtrans Transaction')
-                            ->setObject($this->purchase)
-                            ->setObjectDisplayName($objectName)
-                            ->setNotes($objectName)
-                            ->setLocation($mall)
-                            ->responseOK()
-                            ->save();
-
                     $this->purchase->user->notify(new CanceledPaymentNotification($this->purchase));
+
+                    $this->purchase->user->activity(new PurchaseCanceledActivity($this->purchase, $objectName));
                 }
 
                 // Send notification if the purchase was expired
                 // Only send if previous status was pending.
                 if ($oldStatus === PaymentTransaction::STATUS_PENDING && $status === PaymentTransaction::STATUS_EXPIRED) {
                     $this->purchase->user->notify(new ExpiredPaymentNotification($this->purchase));
+
+                    $this->purchase->user->activity(new PurchaseExpiredActivity($this->purchase, $objectName));
                 }
 
                 // Send notification if the purchase was aborted
@@ -329,13 +281,7 @@ class UpdatePurchase
                     if ($fromSnap) {
                         $this->purchase->user->notify(new AbortedPaymentNotification($this->purchase));
 
-                        $activity->setActivityNameLong('Transaction is Aborted')
-                                ->setModuleName('Midtrans Transaction')
-                                ->setObject($this->purchase)
-                                ->setNotes('Digital Product Transaction aborted by customer.')
-                                ->setLocation($mall)
-                                ->responseFailed()
-                                ->save();
+                        $this->purchase->user->activity(new PurchaseAbortedActivity($this->purchase, $objectName));
                     }
                 }
             }
@@ -351,6 +297,7 @@ class UpdatePurchase
             return $this->purchase;
 
         } catch (Exception $e) {
+            // rethrow exception so main controller can handle it.
             throw $e;
         }
     }
@@ -360,6 +307,26 @@ class UpdatePurchase
         Log::info("{$this->objectType}: {$message}");
     }
 
+    /**
+     * Resolve object type of item that being purchased.
+     *
+     * @return [type] [description]
+     */
+    private function resolveObjectType()
+    {
+        foreach($this->purchase->details as $detail) {
+            if (! empty($detail->digital_product)) {
+                $this->objectType = ucwords(str_replace('_', ' ', $detail->digital_product->product_type));
+                break;
+            }
+        }
+    }
+
+    /**
+     * Resolve object name.
+     *
+     * @return [type] [description]
+     */
     private function resolveObjectName()
     {
         $objectName = 'unknown object name';

@@ -1,10 +1,7 @@
 <?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Repository;
 
-use Carbon\Carbon;
-use Config;
 use DB;
 use Game;
-use Log;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Helper\MediaQuery;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Resource\GameCollection;
@@ -83,7 +80,7 @@ class GameRepository
                     'description',
                     'notes',
                     'extra_field_metadata'
-                )->available();
+                )->displayed();
 
                 // Isn't it better to just put provider name on digital_products?
                 // $query->with(['provider_product' => function($providerProductQuery) {

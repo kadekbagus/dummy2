@@ -4,7 +4,7 @@ use Illuminate\Auth\UserTrait;
 use Illuminate\Auth\UserInterface;
 
 use Orbit\Helper\Notifications\Notifiable;
-// use Orbit\Helper\Activity\Activity;
+use Orbit\Helper\Activity\HasActivity;
 
 class User extends Eloquent implements UserInterface
 {
@@ -13,6 +13,7 @@ class User extends Eloquent implements UserInterface
     use UserRoleTrait;
 
     use Notifiable;
+    use HasActivity;
 
     const USER_ALREADY_ACTIVE_ERROR_CODE = 1401;
 
@@ -97,7 +98,7 @@ class User extends Eloquent implements UserInterface
 
     public function getFullName()
     {
-        return $this->user_firstname . ' ' . $this->user_lastname;
+        return strip_tags($this->user_firstname . ' ' . $this->user_lastname);
     }
 
     public function getUserFirstnameAttribute($value)

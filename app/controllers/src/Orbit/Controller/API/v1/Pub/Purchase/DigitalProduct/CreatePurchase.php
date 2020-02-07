@@ -2,9 +2,11 @@
 
 use App;
 use Country;
+use DB;
 use Discount;
 use Log;
 use Mall;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseStartingActivity;
 use Orbit\Helper\Util\CampaignSourceParser;
 use PaymentMidtrans;
 use PaymentTransaction;
@@ -55,13 +57,15 @@ class CreatePurchase
                             ->setUrls($urlForTracking)
                             ->getCampaignSource();
 
+        DB::beginTransaction();
+
         $purchase = new PaymentTransaction;
         $purchase->user_email = $request->email;
         $purchase->user_name = trim($request->first_name . ' ' . $request->last_name);
         $purchase->user_id = $currentUser->user_id;
         $purchase->phone = $request->phone;
         $purchase->country_id = $countryId;
-        $purchase->payment_method = 'midtrans';
+        $purchase->payment_method = $request->payment_method;
         $purchase->amount = $digitalProduct->selling_price;
         $purchase->currency = $request->currency;
         $purchase->status = PaymentTransaction::STATUS_STARTING;
@@ -151,6 +155,12 @@ class CreatePurchase
 
             $purchase->promo_code = $reservedPromoCode->discount_code;
         }
+
+        DB::commit();
+
+        // Record activity
+        $objectType = ucwords(str_replace('_', ' ', $digitalProduct->product_type));
+        $currentUser->activity(new PurchaseStartingActivity($purchase, $objectType));
 
         return $purchase;
     }

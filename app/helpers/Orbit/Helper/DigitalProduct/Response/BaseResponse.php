@@ -9,8 +9,22 @@ use OrbitShop\API\v1\ResponseProvider;
  */
 class BaseResponse
 {
+    /**
+     * To store the raw response from API.
+     * @var null
+     */
+    protected $rawResponse = null;
+
+    /**
+     * To store the parsed data from API.
+     * @var null
+     */
     protected $response = null;
 
+    /**
+     * Number of maximum retry.
+     * @var integer
+     */
     protected $maxRetry = 3;
 
     function __construct($response = null)
@@ -19,6 +33,10 @@ class BaseResponse
 
         if (is_object($response)) {
             $this->response->setData($response);
+
+            if (isset($response->message)) {
+                $this->response->setMessage($response->message);
+            }
         }
 
         if (is_string($response)) {
