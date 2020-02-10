@@ -202,6 +202,7 @@
       color: #333;
       text-align: left;
       line-height: 1.5em;
+      font-size: 16px;
     }
 
     .help-text {
