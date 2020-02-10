@@ -97,7 +97,7 @@
                     </tr>
                     <tr>
                       <td width="600" class="mobile" align="left" valign="top">
-                        <p class="greeting-text">{{ trans('email-pending-payment.body.payment-info-line-3') }}</p>
+                        <p class="greeting-text">{{ trans('email-pending-payment.body.payment-info-line-3', [], '', $lang) }}</p>
                       </td>
                     </tr>
                     <tr>
