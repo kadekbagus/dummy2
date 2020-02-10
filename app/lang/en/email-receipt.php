@@ -20,7 +20,7 @@ return [
         ',
 
         'greeting_digital_product' => [
-            'customer_name' => 'Dear :customerName,',
+            'customer_name' => 'Dear, :customerName',
             'body' => 'Thank you for purchasing :itemName in Gotomalls.com. Your payment has been verified by our system. Below is the transaction summary of your purchase',
         ],
 
