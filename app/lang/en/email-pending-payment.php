@@ -22,7 +22,7 @@ return [
 
         'greeting_digital_product' => [
             'customer_name' => 'Dear, :customerName',
-            'body' => 'Thank you for purchasing :productType in Gotomalls.com. Please perform the payment using your :paymentMethod App. Below are your transaction details.',
+            'body' => 'Thank you for purchasing :productName in Gotomalls.com. Please perform the payment using your :paymentMethod App. Below are your transaction details.',
         ],
 
         'transaction_labels' => [
