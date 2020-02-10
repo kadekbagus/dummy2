@@ -39,6 +39,7 @@ return [
 
         'redeem' => 'To see your purchased item and redeem/collect at the stores, please click the button below.',
         'redeem_giftncoupon' => 'Click on the link(s) below to redeem your coupon at the store',
+        'view_my_purchases' => 'To see your purchased item, please click the button below:',
 
         'help' => 'Please contact our customer service at <a style="color:#f43d3c;text-decoration:none;" href="tel::csPhone">:csPhone</a> or email at <a style="color:#f43d3c;text-decoration:none;" href="mailto::csEmail">:csEmail</a> if you find any difficulties.',
         'thank_you' => 'Thank you and have a nice day.',
@@ -67,6 +68,6 @@ return [
 
     'buttons' => [
         'redeem' => 'Go to My Wallet',
-        'my_purchases' => 'Got to My Purchases',
+        'my_purchases' => 'Go to My Purchases',
     ],
 ];
