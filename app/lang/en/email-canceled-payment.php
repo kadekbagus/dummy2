@@ -8,12 +8,12 @@ return [
     ],
 
     'body' => [
-        'greeting' => '<strong>Hi, :customerName!</strong>
+        'greeting' => '<strong>Hi, :customerName</strong>
                         <br>
                         We confirm that your transaction has been canceled.  Below are the transaction details:',
 
         'greeting_digital_product' => [
-            'customer_name' => '<strong>Hi, :customerName!</strong>',
+            'customer_name' => '<strong>Hi, :customerName</strong>',
             'body' => 'We confirm that your transaction has been canceled.  Below are the transaction details:',
         ],
 
@@ -41,7 +41,7 @@ return [
         'payment-info-line-4' => 'You can make a new purchase of Coupon by clicking button below.',
         'payment-info-line-4-pulsa' => 'You can make a new purchase of Pulsa by clicking button below.',
         'payment-info-line-4-data-plan' => 'You can make a new purchase of Data Plan by clicking button below.',
-        'payment-info-line-4-digital-product' => 'You can make a new purchase of Game Vouchers/Electricity by clicking button below.',
+        'payment-info-line-4-digital-product' => 'You can make a new purchase of :productType by clicking button below.',
 
         'regards' => 'Thank you,<br><br>Gotomalls Service Team',
 
@@ -49,7 +49,7 @@ return [
             'buy_coupon' => 'Buy Coupon Now',
             'buy_pulsa' => 'Buy Pulsa Now',
             'buy_data_plan' => 'Buy Data Plan Now',
-            'buy_digital_product' => 'Buy Other Product Now',
+            'buy_digital_product' => 'Buy :productType Now',
         ]
     ],
 ];
