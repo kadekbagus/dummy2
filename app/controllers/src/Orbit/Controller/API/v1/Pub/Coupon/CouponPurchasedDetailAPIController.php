@@ -18,7 +18,7 @@ use Mall;
 use Lang;
 use \Exception;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
-use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 use PromotionRetailer;
 use PaymentTransaction;
 use PaymentTransactionDetail;
@@ -205,7 +205,7 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
             // get Imahe from local when image cdn is null
             if ($coupon->cdnPath == null) {
                 $cdnConfig = Config::get('orbit.cdn');
-                $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+                $imgUrl = CdnUrlGeneratorWithCloudfront::create(['cdn' => $cdnConfig], 'cdn');
                 $localPath = (! empty($coupon->localPath)) ? $coupon->localPath : '';
                 $cdnPath = (! empty($coupon->cdnPath)) ? $coupon->cdnPath : '';
                 $coupon->cdnPath = $imgUrl->getImageUrl($localPath, $cdnPath);
