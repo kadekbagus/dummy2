@@ -2758,5 +2758,14 @@ return array(
             'object_type' => 'DigitalProduct',
             'parameter_name' => 'object_id'
         ),
+        // view payment page game
+        '300' => array(
+            'name' => 'view_payment_page_game_voucher',
+            'name_long' => 'Voucher Game View Payment Page (Midtrans Payment Page)',
+            'module_name' => 'Game Voucher',
+            'type' => 'view',
+            'object_type' => 'DigitalProduct',
+            'parameter_name' => 'object_id'
+        ),
     ),
 );
