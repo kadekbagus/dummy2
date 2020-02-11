@@ -22,7 +22,7 @@ return [
 
         'greeting_digital_product' => [
             'customer_name' => 'Yth, :customerName',
-            'body' => 'Terima kasih telah membeli :productName di Gotomalls.com. Silakan lakukan pembayaran menggunakan aplikasi :paymentMethod di HP Anda. Berikut ini detail transaksi Anda.',
+            'body' => 'Terima kasih telah membeli :productName di Gotomalls.com. Silakan lakukan pembayaran menggunakan aplikasi :paymentMethod di HP Anda sebelum <span style="color:#f43d3c;"><strong></strong>:paymentExpiration</span>. Berikut ini detail transaksi Anda.',
         ],
 
         'transaction_labels' => [

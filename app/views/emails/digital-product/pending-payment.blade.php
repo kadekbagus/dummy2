@@ -46,12 +46,13 @@
                         <h3 class="greeting-username">
                           {{ trans('email-pending-payment.body.greeting_digital_product.customer_name', [
                               'customerName' => $customerName,
-                              'paymentMethod' => 'GOJEK'
-                            ], '', $lang) }}</h3>
+                            ], '', $lang) }}
+                        </h3>
                         <p class="greeting-text">
                           {{ trans('email-pending-payment.body.greeting_digital_product.body', [
                             'productName' => $transaction['items'][0]['name'],
                             'paymentMethod' => $paymentMethod,
+                            'paymentExpiration' => $paymentExpiration,
                             ], '', $lang) }}
                         </p>
                       </td>

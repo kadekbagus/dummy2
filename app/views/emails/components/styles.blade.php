@@ -216,6 +216,7 @@
       color: #333;
       margin-top: 10px;
       padding-top: 20px;
+      font-size: 14px;
     }
 
     .customer-info-block {
