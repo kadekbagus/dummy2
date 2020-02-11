@@ -74,7 +74,7 @@
                           </p>
 
                           <p class="greeting-text">
-                            {{ trans('email-canceled-payment.body.payment-info-line-4-digital-product', [], '', $lang) }}
+                            {{ trans('email-canceled-payment.body.payment-info-line-4-digital-product', ['productType' => $productType], '', $lang) }}
                           </p>
                         @endif
                       </td>
