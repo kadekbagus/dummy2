@@ -462,7 +462,7 @@ class Activity extends Eloquent
                     break;
 
                 case 'PaymentTransaction':
-                    if ($object->payment_method === 'midtrans') {
+                    if (in_array($object->payment_method, ['midtrans', 'midtrans-qris'])) {
                         $this->object_display_name = $object->details->count() > 0 ?
                                                         $object->details->first()->object_name :
                                                         'Can not get payment detail record.';
@@ -474,6 +474,14 @@ class Activity extends Eloquent
                             $this->object_display_name = $paymentProvider->payment_name;
                         }
                     }
+                    break;
+
+                case 'Pulsa':
+                    $this->object_display_name = $object->pulsa_display_name;
+                    break;
+
+                case 'DigitalProduct':
+                    $this->object_display_name = $object->product_name;
                     break;
 
                 default:
@@ -923,12 +931,13 @@ class Activity extends Eloquent
             'notification_token' => $notificationToken
         ]);
 
+        // disable logging
         // Format -> JOB_ID;EXTENDED_ACTIVITY_ID;ACTIVITY_ID;MESSAGE
-        $dataLog = sprintf("%s;%s;\n", $activityQueue, $this->activity_id);
+        // $dataLog = sprintf("%s;%s;\n", $activityQueue, $this->activity_id);
 
         // Write the error log to dedicated file so it is easy to investigate and
         // easy to replay because the log is structured
-        file_put_contents(storage_path() . '/logs/activity-model.log', $dataLog, FILE_APPEND);
+        // file_put_contents(storage_path() . '/logs/activity-model.log', $dataLog, FILE_APPEND);
 
         // Save to object page views table
         Queue::push('Orbit\\Queue\\Activity\\ObjectPageViewActivityQueue', [

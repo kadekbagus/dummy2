@@ -32,7 +32,13 @@ class BeforeExpiredPaymentNotification extends CustomerNotification implements E
 {
     use HasPaymentTrait, HasContactTrait;
 
-    protected $shouldQueue = false;
+    protected $shouldQueue = true;
+
+    protected $context = 'transaction';
+
+    protected $signature = 'payment-reminder-notification';
+
+    protected $logID = 'PaymentReminderNotification';
 
     function __construct($payment = null)
     {
@@ -71,6 +77,7 @@ class BeforeExpiredPaymentNotification extends CustomerNotification implements E
     public function getEmailData()
     {
         $this->getObjectType();
+        $this->resolveProductType();
 
         return [
             'recipientEmail'    => $this->getRecipientEmail(),
@@ -87,6 +94,8 @@ class BeforeExpiredPaymentNotification extends CustomerNotification implements E
             'transactionDateTime' => $this->payment->getTransactionDate('d F Y, H:i ') . $this->getLocalTimezoneName($this->payment->timezone_name),
             'emailSubject'      => $this->getEmailSubject(),
             'template'          => $this->getEmailTemplates(),
+            'productType'       => $this->productType,
+            'paymentMethod'     => $this->getPaymentMethod(),
         ];
     }
 
@@ -110,7 +119,7 @@ class BeforeExpiredPaymentNotification extends CustomerNotification implements E
                 $mail->to($data['recipientEmail']);
             });
         } catch (Exception $e) {
-            Log::debug('Notification: BeforeExpiredPaymentNotification email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
+            $this->log('Exception on ' . $e->getFile() . '(' . $e->getLine() . ') ' . $e->getMessage());
 
             // Rethrow exception to the caller command/class.
             throw new Exception("Error");

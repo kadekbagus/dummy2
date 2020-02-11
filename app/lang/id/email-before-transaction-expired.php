@@ -16,6 +16,11 @@ return [
                         <br>
                         Pulsa/Paket Data Anda sedang menunggu. Batas waktu pembayaran Anda adalah hari ini.',
 
+        'greeting_digital_product' => [
+            'customer_name' => 'Yth, :customerName',
+            'body' => ':productType Data Anda sedang menunggu. Batas waktu pembayaran Anda adalah hari ini.  Silakan lakukan pembayaran menggunakan aplikasi :paymentMethod di HP Anda. Berikut ini detail transaksi Anda.',
+        ],
+
         'transaction_labels' => [
             'transaction_id' => 'ID Transaksi: ',
             'transaction_date' => 'Tanggal Transaksi: ',
@@ -29,6 +34,7 @@ return [
             'email' => 'Email: ',
             'phone' => 'Telp/HP: ',
             'total_amount' => 'Jumlah Total: ',
+            'product' => 'Produk: ',
         ],
 
         'payment-info-line-1' => 'Untuk menyelesaikan transaksi, silakan lakukan pembayaran dengan transfer ke bank berikut sebelum <br><span style="color:#f43d3c;"><strong>:paymentExpiration</strong></span>.',

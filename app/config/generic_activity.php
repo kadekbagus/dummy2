@@ -2643,5 +2643,129 @@ return array(
             'object_type' => null,
             'parameter_name' => null,
         ),
+
+        '287' => array(
+            'name' => 'view_game_voucher_purchase_page',
+            'name_long' => 'View Game Voucher Purchase Page',
+            'module_name' => 'Game Voucher',
+            'type' => 'view',
+            'object_type' => null,
+            'parameter_name' => null,
+        ),
+
+        '288' => array(
+            'name' => 'click_buy_game_voucher',
+            'name_long' => 'Click Buy Game Voucher',
+            'module_name' => 'Game Voucher',
+            'type' => 'click',
+            'object_type' => 'DigitalProduct',
+            'parameter_name' => 'object_id',
+        ),
+        '289' => array(
+            'name' => 'click_game_list',
+            'name_long' => 'Click Game In Listing',
+            'module_name' => 'Game Voucher',
+            'type' => 'click',
+            'object_type' => 'DigitalProduct',
+            'parameter_name' => 'object_id',
+        ),
+        '290' => array(
+            'name' => 'click_go_to_my_wallet_from_game_voucher_transaction_detail',
+            'name_long' => 'Click Go to My Wallet from Game Voucher Transaction Detail',
+            'module_name' => 'Game Voucher',
+            'type' => 'click',
+            'object_type' => 'DigitalProduct',
+            'parameter_name' => 'object_id'
+        ),
+        // Back to purchase history from pulsa transaction detail.
+        '291' => array(
+            'name' => 'click_back_to_purchase_history_from_game_voucher_transaction_detail',
+            'name_long' => 'Click Back to Purchase History from Game Voucher Transaction Detail',
+            'module_name' => 'Game Voucher',
+            'type' => 'click',
+            'object_type' => 'DigitalProduct',
+            'parameter_name' => 'object_id'
+        ),
+        // Back to buy pulsa from pulsa transaction detail.
+        '292' => array(
+            'name' => 'click_back_to_buy_game_voucher_from_game_voucher_transaction_detail',
+            'name_long' => 'Click Back to Buy Game Voucher from Game Voucher Transaction Detail',
+            'module_name' => 'Game Voucher',
+            'type' => 'click',
+            'object_type' => 'DigitalProduct',
+            'parameter_name' => 'object_id'
+        ),
+        // View pulsa transaction detail of successful
+        '293' => array(
+            'name' => 'view_game_voucher_transaction_page_payment_successful',
+            'name_long' => 'View Game Voucher Transaction Page Payment Success',
+            'module_name' => 'Game Voucher',
+            'type' => 'view',
+            'object_type' => 'DigitalProduct',
+            'parameter_name' => 'object_id'
+        ),
+        // View pulsa transaction detail of waiting payment
+        '294' => array(
+            'name' => 'view_game_voucher_transaction_page_payment_waiting',
+            'name_long' => 'View Game Voucher Transaction Page Payment Waiting',
+            'module_name' => 'Game Voucher',
+            'type' => 'view',
+            'object_type' => 'DigitalProduct',
+            'parameter_name' => 'object_id'
+        ),
+        // View pulsa transaction detail of failed
+        '295' => array(
+            'name' => 'view_game_voucher_transaction_page_payment_failed',
+            'name_long' => 'View Game Voucher Transaction Page Payment Failed',
+            'module_name' => 'Game Voucher',
+            'type' => 'view',
+            'object_type' => 'DigitalProduct',
+            'parameter_name' => 'object_id'
+        ),
+        // View pulsa transaction detail of successful payment but failed to get pulsa
+        '296' => array(
+            'name' => 'view_game_voucher_transaction_page_payment_successful_game_voucher_failed',
+            'name_long' => 'View Game Voucher Transaction Page Payment Success Game Voucher Failed',
+            'module_name' => 'Game Voucher',
+            'type' => 'view',
+            'object_type' => 'DigitalProduct',
+            'parameter_name' => 'object_id'
+        ),
+        // View pulsa transaction detail of expired
+        '297' => array(
+            'name' => 'view_game_voucher_transaction_page_payment_expired',
+            'name_long' => 'View Game Voucher Transaction Page Payment Expired',
+            'module_name' => 'Game Voucher',
+            'type' => 'view',
+            'object_type' => 'DigitalProduct',
+            'parameter_name' => 'object_id'
+        ),
+        // pulsa payment transaction canceled
+        '298' => array(
+            'name' => 'view_game_voucher_transaction_page_payment_canceled',
+            'name_long' => 'View Game Voucher Transaction Page Payment Canceled',
+            'module_name' => 'Game Voucher',
+            'type' => 'view',
+            'object_type' => 'DigitalProduct',
+            'parameter_name' => 'object_id'
+        ),
+        // click cancel payment from transaction detail page
+        '299' => array(
+            'name' => 'click_cancel_payment_game_voucher',
+            'name_long' => 'Click Cancel Payment Game Voucher',
+            'module_name' => 'Game Voucher',
+            'type' => 'click',
+            'object_type' => 'DigitalProduct',
+            'parameter_name' => 'object_id'
+        ),
+        // view payment page game
+        '300' => array(
+            'name' => 'view_payment_page_game_voucher',
+            'name_long' => 'Voucher Game View Payment Page (Midtrans Payment Page)',
+            'module_name' => 'Game Voucher',
+            'type' => 'view',
+            'object_type' => 'DigitalProduct',
+            'parameter_name' => 'object_id'
+        ),
     ),
 );

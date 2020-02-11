@@ -36,6 +36,14 @@ Route::get('/api/v1/coupon/search', function()
 });
 
 /**
+ * Detail coupon
+ */
+Route::get('/api/v1/coupon/detail', function()
+{
+    return CouponAPIController::create()->getDetailCoupon();
+});
+
+/**
  * List/Search coupon by issue retailer
  */
 Route::get('/api/v1/coupon/by-issue-retailer/search', function()

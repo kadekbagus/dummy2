@@ -314,7 +314,7 @@
                     <td width="400" class="mobile" align="left" valign="top">
                       <h3 class="greeting-username">Hi, {{$user_name}}</h3>
                       <p class="greeting-text">
-                        Thank you for joining Gotomalls. You have sucessfully created a Gotomalls account. Please click the "Activate Account" button below to verify your email address.
+                        Thank you for using Gotomalls.com. We hope you enjoy to shop with us as your shopping reference. Here the resume of your activities in Gotomalls.com for the past month. Don't forget to check some new promos information on Gotomalls this month!
                       </p>
                     </td>
                     <td width="200" class="mobile mobile-align-center" align="right" valign="top">
@@ -362,17 +362,16 @@
                 <table width="600" cellpadding="0" cellspacing="0" class="container container-pulsa-banner">
                   <tr>
                     <td class="mobile" width="600">
-                      <div style="" class="pulsa-banner-container">
-                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/themes/default/images/Pulsa-Banner-Desktop.jpg?t=1560407290" class="pulsa-banner-img">
-                        <div class="pulsa-banner-text-container" style="">
-                          <div class="tagline">
-                            Beli pulsa termurah hanya di Gotomalls.com
-                          </div>
-                          <a href="{{ $pulsa_page_url }}" class="btn-buy-pulsa">
-                            Beli Pulsa &raquo;
-                          </a>
-                        </div>
-                      </div>
+
+                    <div style="" class="pulsa-banner-container">
+                    <a href="{{ $pulsa_page_url }}">
+                    <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/pulsa-banner-email.png" class="pulsa-banner-img">
+                    </a>
+                    <div class="pulsa-banner-text-container" style="">
+                    <div class="tagline"></div>
+                    </div>
+                    </div>
+
                     </td>
                   </tr>
                   <tr>

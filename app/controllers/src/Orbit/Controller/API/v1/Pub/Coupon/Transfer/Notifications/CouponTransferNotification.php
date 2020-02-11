@@ -122,7 +122,15 @@ class CouponTransferNotification extends CustomerNotification implements EmailNo
             ->where('promotion_retailer.promotion_id', $couponId)
             ->groupBy('base_merchants.base_merchant_id')
             ->lists('name');
-        return join(',', $names);
+
+        $brandNames = join(',', $names);
+
+        if (count($names) > 3) {
+            $otherBrandCount = count($names) - 3;
+            $brandNames = join(', ', array_splice($names, 3)) . " and {$otherBrandCount} other.";
+        }
+
+        return $brandNames;
     }
 
     /**

@@ -16,11 +16,6 @@ use Orbit\Notifications\Payment\ExpiredPaymentNotification as Base;
  */
 class ExpiredPaymentNotification extends Base
 {
-    function __construct($payment = null)
-    {
-        parent::__construct($payment);
-    }
-
     /**
      * Get the email templates.
      * Can be overriden in each receipt class if needed.

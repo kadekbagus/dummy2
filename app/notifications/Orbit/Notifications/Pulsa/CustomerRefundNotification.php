@@ -31,6 +31,10 @@ class CustomerRefundNotification extends CustomerNotification implements EmailNo
 
     private $reason = '';
 
+    protected $context = 'transaction';
+
+    protected $signature = 'refund-notification';
+
     function __construct($payment = null, $reason = '')
     {
         $this->payment = $payment;
@@ -97,8 +101,8 @@ class CustomerRefundNotification extends CustomerNotification implements EmailNo
             });
 
         } catch (Exception $e) {
-            Log::info('PulsaRefundNotification: email exception. File: ' . $e->getFile() . ', Lines:' . $e->getLine() . ', Message: ' . $e->getMessage());
-            Log::info('PulsaRefundNotification: email data: ' . serialize($data));
+            Log::info($this->signature . ': email exception. File: ' . $e->getFile() . ', Lines:' . $e->getLine() . ', Message: ' . $e->getMessage());
+            Log::info($this->signature . ': email data: ' . serialize($data));
         }
 
         $job->delete();

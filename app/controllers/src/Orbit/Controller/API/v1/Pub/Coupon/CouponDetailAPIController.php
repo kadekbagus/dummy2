@@ -34,6 +34,11 @@ use Orbit\Controller\API\v1\Pub\Coupon\Detail\Repository\TimezoneRepository;
 use Orbit\Controller\API\v1\Pub\Coupon\Detail\Repository\TenantRepository;
 use App;
 
+//TODO: redeem coupon and coupon detail on frontend both use this class.
+//this should be separated to avoid unnecessary table join and redundant data because
+//redeem coupon does not need too many coupon detail data and also better code organization
+//readability due to separation of concern
+
 class CouponDetailAPIController extends PubControllerAPI
 {
     public function getCouponItem()
@@ -269,7 +274,7 @@ class CouponDetailAPIController extends PubControllerAPI
                         ->orderBy('issued_coupons.expired_date', 'asc');
 
             OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
-                $coupon->havingRaw("mall_id = {$this->quote($mallId)}");
+                //$coupon->havingRaw("mall_id = {$this->quote($mallId)}");
                 $mall = Mall::excludeDeleted()
                         ->where('merchant_id', $mallId)
                         ->first();

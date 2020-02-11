@@ -4,13 +4,18 @@ return [
     'subject' => 'Gotomalls Expired Payment Transaction',
 
     'header' => [
-        'email-type'       => 'Notice',
+        'email-type'       => 'Expired Order',
     ],
 
     'body' => [
-        'greeting' => '<strong>Hi, :customerName!</strong>
+        'greeting' => '<strong>Hi, :customerName</strong>
                         <br>
                         We noticed your payment transaction on Gotomalls.com was not completed:',
+
+        'greeting_digital_product' => [
+            'customer_name' => '<strong>Hi, :customerName</strong>',
+            'body' => 'We noticed your payment transaction on Gotomalls.com was not completed:',
+        ],
 
         'transaction_labels' => [
             'transaction_id' => 'Transaction ID: ',
@@ -20,6 +25,7 @@ return [
             'pulsa_name' => 'Pulsa/Data Plan: ',
             'pulsa_phone_number' => 'Phone Number: ',
             'pulsa_price' => 'Price: ',
+            'product_name' => 'Product: ',
             'coupon_quantity' => 'Quantity: ',
             'customer_name' => 'Customer Name: ',
             'email' => 'Email: ',
@@ -35,6 +41,7 @@ return [
         'payment-info-line-4' => 'You can make a new purchase of Coupon by clicking button below.',
         'payment-info-line-4-pulsa' => 'You can make a new purchase of Pulsa by clicking button below.',
         'payment-info-line-4-data-plan' => 'You can make a new purchase of Data Plan by clicking button below.',
+        'payment-info-line-4-digital-product' => 'You can make a new purchase of :productType by clicking button below.',
 
         'regards' => 'Thank you,<br><br>Gotomalls Service Team',
 
@@ -42,6 +49,7 @@ return [
             'buy_coupon' => 'Buy Coupon Now',
             'buy_pulsa' => 'Buy Pulsa Now',
             'buy_data_plan' => 'Buy Data Plan Now',
+            'buy_digital_product' => 'Buy :productType Now',
         ]
     ],
 ];

@@ -67,6 +67,7 @@ class ExpiredPaymentNotification extends PaymentNotification implements EmailNot
     public function getEmailData()
     {
         $this->getObjectType();
+        $this->resolveProductType();
 
         return [
             'recipientEmail'    => $this->getRecipientEmail(),

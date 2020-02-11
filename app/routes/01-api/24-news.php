@@ -36,6 +36,15 @@ Route::get('/api/v1/news/{search}', function()
 })->where('search', '(list|search)');
 
 /**
+ * Detail news
+ */
+Route::get('/api/v1/news/detail', function()
+{
+    return NewsAPIController::create()->getDetailNews();
+});
+
+
+/**
  * Upload news image
  */
 Route::post('/api/v1/news-image/upload', function()

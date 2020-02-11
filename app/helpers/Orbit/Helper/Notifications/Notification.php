@@ -1,10 +1,10 @@
 <?php namespace Orbit\Helper\Notifications;
 
-use Queue;
 use Config;
+use Log;
 use Orbit\FakeJob;
-
 use Orbit\Helper\Notifications\Exceptions\NotificationMethodsEmptyException;
+use Queue;
 
 /**
  * Base Notification class.
@@ -83,6 +83,12 @@ abstract class Notification {
         'email' => [],
     ];
 
+    /**
+     * Log ID.
+     * @var string
+     */
+    protected $logID = 'OrbitNotification';
+
     function __construct($notifiable = null)
     {
         $this->setNotifiable($notifiable);
@@ -129,20 +135,19 @@ abstract class Notification {
      */
     protected function sendEmail($customDelay = 0)
     {
-        if ($this->shouldQueue) {
+        // Check if email is being blacklisted.
+        // If so, then do nothing.
+        $this->blacklistedRecipients['email'] = $this->getBlacklistedEmails();
+        $emailData = $this->getEmailData();
+        $recipientEmail = isset($emailData['recipientEmail']) ? $emailData['recipientEmail'] : '';
 
+        if (in_array($recipientEmail, $this->blacklistedRecipients['email'])) {
+            return;
+        }
+
+        if ($this->shouldQueue) {
             // Override the delay if needed.
             $this->notificationDelay = $customDelay === 0 ? $this->notificationDelay : $customDelay;
-
-            // Check if email is being blacklisted.
-            // If so, then do nothing.
-            $this->blacklistedRecipients['email'] = $this->getBlacklistedEmails();
-            $emailData = $this->getEmailData();
-            $recipientEmail = isset($emailData['recipientEmail']) ? $emailData['recipientEmail'] : '';
-
-            if (in_array($recipientEmail, $this->blacklistedRecipients['email'])) {
-                return;
-            }
 
             Queue::later(
                 $this->notificationDelay,
@@ -153,7 +158,7 @@ abstract class Notification {
         }
         else {
             $fakeJob = new FakeJob();
-            $this->toEmail($fakeJob, $this->getEmailData());
+            $this->toEmail($fakeJob, $emailData);
         }
     }
 
@@ -254,5 +259,16 @@ abstract class Notification {
     protected function getBlacklistedEmails()
     {
         return Config::get('orbit.blacklisted_notification_recipients.email', []);
+    }
+
+    /**
+     *
+     * @param  string $message [description]
+     * @param  string $logType [description]
+     * @return [type]          [description]
+     */
+    protected function log($message = '', $logType = 'info')
+    {
+        Log::{$logType}(($this->logID ? "{$this->logID}: " : '') . $message);
     }
 }
