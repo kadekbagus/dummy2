@@ -40,18 +40,18 @@ return [
 
         'payment-info-line-1' => 'Gotomalls.com mendeteksi bahwa kamu <strong>membatalkan</strong> transaksi pada tanggal :transactionDateTime.',
         'payment-info-line-2' => 'Apakah terdapat kendala dalam melakukan transaksi pembelianmu?
-Bantu Gotomalls.com dengan memberikan feedback dan membalas email ini dengan keluhan atau alasanmu tidak menyelesaikan pembelian ini, ya.
+Bantu Gotomalls.com dengan memberikan feedback dan membalas email ini dengan keluhan atau alasanmu tidak menyelesaikan pembelian ini.
 Apabila kamu mengalami kesulitan, silahkan <strong>tanyakan keluhanmu</strong> melalui email <a style="text-decoration: none;color:#f43d3c;" href="mailto::email">:email</a> dan Gotomalls.com akan siap membantu.',
 
         'payment-info-line-1-pulsa' => 'Gotomalls.com mendeteksi bahwa kamu <strong>membatalkan</strong> transaksi pulsa pada tanggal :transactionDateTime.',
         'payment-info-line-2-pulsa' => 'Apakah terdapat kendala dalam melakukan transaksi pembelian pulsamu?
-Bantu Gotomalls.com dengan memberikan feedback dan membalas email ini dengan keluhan atau alasanmu tidak menyelesaikan pembelian pulsa ini, ya.
+Bantu Gotomalls.com dengan memberikan feedback dan membalas email ini dengan keluhan atau alasanmu tidak menyelesaikan pembelian pulsa ini.
 Apabila kamu mengalami kesulitan dalam pembelian pulsa, silahkan <strong>tanyakan keluhanmu</strong> melalui email <a style="text-decoration: none;color:#f43d3c;" href="mailto::email">:email</a> dan Gotomalls.com akan siap membantu.',
 
 
         'payment-info-line-1-data-plan' => 'Gotomalls.com mendeteksi bahwa kamu <strong>membatalkan</strong> transaksi paket data pada tanggal :transactionDateTime.',
         'payment-info-line-2-data-plan' => 'Apakah terdapat kendala dalam melakukan transaksi pembelian paket datamu?
-Bantu Gotomalls.com dengan memberikan feedback dan membalas email ini dengan keluhan atau alasanmu tidak menyelesaikan pembelian paket data ini, ya.
+Bantu Gotomalls.com dengan memberikan feedback dan membalas email ini dengan keluhan atau alasanmu tidak menyelesaikan pembelian paket data ini.
 Apabila kamu mengalami kesulitan dalam pembelian paket data, silahkan <strong>tanyakan keluhanmu</strong> melalui email <a style="text-decoration: none;color:#f43d3c;" href="mailto::email">:email</a> dan Gotomalls.com akan siap membantu.',
 
         'regards' => 'Terima kasih.<br><br>Salam,<br>Gotomalls.com Customer Service Team',
