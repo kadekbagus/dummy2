@@ -67,7 +67,7 @@ class LandingPageUrlGenerator
     /**
      * @var string digital product url
      */
-    protected $digitalProductUrl = '/game-vouchers?country=Indonesia';
+    protected $digitalProductUrl = '/game-voucher?country=Indonesia';
 
     /**
      * Set the eventUrl

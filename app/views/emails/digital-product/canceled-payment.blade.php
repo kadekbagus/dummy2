@@ -23,9 +23,11 @@
 
       <?php
         $langs = ['id', 'en'];
+        $originalProductType = $productType;
       ?>
 
       @foreach($langs as $lang)
+        <?php $productType = trans("email-payment.product_type.{$originalProductType}", [], '', $lang); ?>
         <tr>
           <td align="center" valign="top">
 
@@ -56,7 +58,7 @@
                         <p class="transaction-details">
                           <strong>{{{ trans('email-canceled-payment.body.transaction_labels.product_name', [], '', $lang) }}}</strong> {{ $transaction['items'][0]['name'] }}
                           <br>
-                          <strong>{{{ trans('email-canceled-payment.body.transaction_labels.transaction_id', [], '', 'id') }}}</strong> {{ $transaction['id'] }}
+                          <strong>{{{ trans('email-canceled-payment.body.transaction_labels.transaction_id', [], '', $lang) }}}</strong> {{ $transaction['id'] }}
                         </p>
 
                         <p class="greeting-text">
@@ -74,7 +76,7 @@
                           </p>
 
                           <p class="greeting-text">
-                            {{ trans('email-canceled-payment.body.payment-info-line-4-digital-product', [], '', $lang) }}
+                            {{ trans('email-canceled-payment.body.payment-info-line-4-digital-product', ['productType' => $productType], '', $lang) }}
                           </p>
                         @endif
                       </td>
@@ -85,7 +87,7 @@
                     <tr>
                       <td width="600" class="mobile" align="center" valign="middle">
                         <a href="{{{ $buyUrl }}}" class="btn btn-block">
-                          {{{ trans('email-canceled-payment.body.buttons.buy_digital_product', [], '', $lang) }}}
+                          {{{ trans('email-canceled-payment.body.buttons.buy_digital_product', ['productType' => $productType], '', $lang) }}}
                         </a>
                       </td>
                     </tr>

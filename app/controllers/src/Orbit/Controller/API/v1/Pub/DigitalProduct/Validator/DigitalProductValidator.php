@@ -36,8 +36,10 @@ class DigitalProductValidator
         }
 
         return null !== DigitalProduct::whereHas('games', function($gameQuery) use ($gameSlugOrId) {
-            $gameQuery->where('games.slug', $gameSlugOrId)->orWhere('games.game_id', $gameSlugOrId);
-        })->first();
+            $gameQuery->active()->where(function($query) use ($gameSlugOrId) {
+                $query->where('games.slug', $gameSlugOrId)->orWhere('games.game_id', $gameSlugOrId);
+            });
+        })->available()->first();
     }
 
     /**

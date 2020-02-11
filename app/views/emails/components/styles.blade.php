@@ -202,6 +202,7 @@
       color: #333;
       text-align: left;
       line-height: 1.5em;
+      font-size: 16px;
     }
 
     .help-text {
@@ -215,6 +216,7 @@
       color: #333;
       margin-top: 10px;
       padding-top: 20px;
+      font-size: 14px;
     }
 
     .customer-info-block {
@@ -222,6 +224,7 @@
       text-align: center;
       color: #333;
       font-size: 15px;
+      vertical-align: top;
     }
 
     .customer-info-label {
@@ -231,6 +234,9 @@
 
     .customer-info-value {
         display: block;
+        padding-left: 10px;
+        padding-right: 10px;
+        word-break: break-all;
     }
 
     .transaction-item-name,
