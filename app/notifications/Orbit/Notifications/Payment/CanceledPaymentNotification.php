@@ -67,6 +67,7 @@ class CanceledPaymentNotification extends CustomerNotification implements EmailN
     public function getEmailData()
     {
         $this->getObjectType();
+        $this->resolveProductType();
 
         return [
             'recipientEmail'    => $this->getRecipientEmail(),
