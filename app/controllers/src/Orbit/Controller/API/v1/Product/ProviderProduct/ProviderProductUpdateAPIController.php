@@ -74,7 +74,7 @@ class ProviderProductUpdateAPIController extends ControllerAPI
                 ),
                 array(
                     'provider_product_id.required' => 'Provider product id is required',
-                    'code.orbit.exist.slug_but_me' => 'Code already used',
+                    'code.orbit.exist.code_but_me' => 'Code already used',
                 )
             );
 
