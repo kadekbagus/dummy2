@@ -23,7 +23,7 @@ class PurchaseUpdateAPIController extends PubControllerAPI
         $httpCode = 200;
 
         try {
-            $this->enableQueryLog();
+            // $this->enableQueryLog();
 
             with($request = new DigitalProductUpdatePurchaseRequest($this))->validate();
 
