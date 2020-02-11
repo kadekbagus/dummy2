@@ -47,6 +47,7 @@
                                     <?php $langs = ['id', 'en']; ?>
 
                                     @foreach($langs as $lang)
+                                    <?php $productType = trans("email-payment.product_type.{$productType}", [], '', $lang); ?>
 
                                     @if ($lang !== 'id')
                                     <tr>
