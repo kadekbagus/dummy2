@@ -113,18 +113,18 @@ class GameVoucherPurchasedListAPIController extends PubControllerAPI
             $listpulsa = $game_voucher->get();
             $count = RecordCounter::create($_game_voucher)->count();
 
-            // if (empty($skip)) {
-            //     $activityNotes = sprintf('Page viewed: Landing Page Pulsa Wallet List Page');
-            //     $activity->setUser($user)
-            //         ->setActivityName('view_landing_page_pulsa_wallet_list')
-            //         ->setActivityNameLong('View GoToMalls Pulsa Wallet List')
-            //         ->setObject(NULL)
-            //         ->setLocation($mall)
-            //         ->setModuleName('Pulsa')
-            //         ->setNotes($activityNotes)
-            //         ->responseOK()
-            //         ->save();
-            // }
+            if (empty($skip)) {
+                $activityNotes = sprintf('Page viewed: Landing Page Game Voucher Wallet List Page');
+                $activity->setUser($user)
+                    ->setActivityName('view_landing_page_game_voucher_wallet_list')
+                    ->setActivityNameLong('View GoToMalls Game Voucher Wallet List')
+                    ->setObject(NULL)
+                    ->setLocation($mall)
+                    ->setModuleName('GameVoucher')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
