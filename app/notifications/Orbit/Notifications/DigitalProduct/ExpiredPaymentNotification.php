@@ -3,7 +3,7 @@
 use Orbit\Notifications\Payment\ExpiredPaymentNotification as BaseNotification;
 
 /**
- * Email notification for Expired Payment (Pulsa).
+ * Email notification for Expired Payment (Digital Product).
  *
  * @author Budi <budi@dominopos.com>
  */
@@ -25,5 +25,12 @@ class ExpiredPaymentNotification extends BaseNotification
     public function getEmailSubject()
     {
         return trans('email-expired-payment.subject_digital_product', ['productType' => $this->resolveProductType()], '', 'id');
+    }
+
+    public function getEmailData()
+    {
+        return array_merge(parent::getEmailData(), [
+            'productType' => $this->productType,
+        ]);
     }
 }

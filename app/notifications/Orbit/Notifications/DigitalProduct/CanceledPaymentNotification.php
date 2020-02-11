@@ -26,4 +26,11 @@ class CanceledPaymentNotification extends BaseNotification
     {
         return trans('email-canceled-payment.subject_digital_product', ['productType' => $this->resolveProductType()], '', 'id');
     }
+
+    public function getEmailData()
+    {
+        return array_merge(parent::getEmailData(), [
+            'productType' => $this->productType,
+        ]);
+    }
 }

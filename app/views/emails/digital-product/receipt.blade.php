@@ -95,6 +95,8 @@
                                                             </tbody>
                                                         </table>
                                                         <br>
+                                                        <br>
+                                                        <br>
                                                         <table class="no-border transaction" width="100%">
                                                             <thead class="bordered">
                                                                 <tr>
@@ -132,9 +134,15 @@
                                                         </table>
                                                         <br>
                                                         <br>
+                                                        <br>
+                                                        <p class="help-text">
+                                                            {{ trans('email-receipt.body.view_my_purchases', [], '', $lang) }}
+                                                        </p>
+                                                        <br>
                                                         <p class="text-center" style="font-family:'Roboto', 'Arial', sans-serif;margin:0;text-align:center;">
                                                             <a href="{{{ $myWalletUrl }}}" class="btn btn-block">{{{ trans('email-receipt.buttons.my_purchases', [], '', $lang) }}}</a>
                                                         </p>
+                                                        <br>
                                                         <br>
                                                         <p class="help-text">
                                                             {{ trans('email-receipt.body.help', ['csPhone' => $cs['phone'], 'csEmail' => $cs['email']], '', $lang) }}

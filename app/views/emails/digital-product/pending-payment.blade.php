@@ -46,8 +46,8 @@
                         <h3 class="greeting-username">
                           {{ trans('email-pending-payment.body.greeting_digital_product.customer_name', [
                               'customerName' => $customerName,
-                              'paymentMethod' => 'GOJEK'
-                            ], '', $lang) }}</h3>
+                            ], '', $lang) }}
+                        </h3>
                         <p class="greeting-text">
                           {{ trans('email-pending-payment.body.greeting_digital_product.body', [
                             'productName' => $transaction['items'][0]['name'],
@@ -97,7 +97,7 @@
                     </tr>
                     <tr>
                       <td width="600" class="mobile" align="left" valign="top">
-                        <p class="greeting-text">{{ trans('email-pending-payment.body.payment-info-line-3') }}</p>
+                        <p class="greeting-text">{{ trans('email-pending-payment.body.payment-info-line-3', [], '', $lang) }}</p>
                       </td>
                     </tr>
                     <tr>
