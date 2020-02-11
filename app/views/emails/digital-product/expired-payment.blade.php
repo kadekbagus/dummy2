@@ -56,7 +56,7 @@
                         <p class="transaction-details">
                           <strong>{{{ trans('email-expired-payment.body.transaction_labels.product_name', [], '', $lang) }}}</strong> {{ $transaction['items'][0]['name'] }}
                           <br>
-                          <strong>{{{ trans('email-expired-payment.body.transaction_labels.transaction_id', [], '', 'id') }}}</strong> {{ $transaction['id'] }}
+                          <strong>{{{ trans('email-expired-payment.body.transaction_labels.transaction_id', [], '', $lang) }}}</strong> {{ $transaction['id'] }}
                         </p>
 
                         <p class="greeting-text">
@@ -74,7 +74,7 @@
                           </p>
 
                           <p class="greeting-text">
-                            {{ trans('email-expired-payment.body.payment-info-line-4-digital-product', [], '', $lang) }}
+                            {{ trans('email-expired-payment.body.payment-info-line-4-digital-product', ['productType' => $productType], '', $lang) }}
                           </p>
                         @endif
                       </td>
