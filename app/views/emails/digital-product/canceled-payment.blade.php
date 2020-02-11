@@ -56,7 +56,7 @@
                         <p class="transaction-details">
                           <strong>{{{ trans('email-canceled-payment.body.transaction_labels.product_name', [], '', $lang) }}}</strong> {{ $transaction['items'][0]['name'] }}
                           <br>
-                          <strong>{{{ trans('email-canceled-payment.body.transaction_labels.transaction_id', [], '', 'id') }}}</strong> {{ $transaction['id'] }}
+                          <strong>{{{ trans('email-canceled-payment.body.transaction_labels.transaction_id', [], '', $lang) }}}</strong> {{ $transaction['id'] }}
                         </p>
 
                         <p class="greeting-text">
