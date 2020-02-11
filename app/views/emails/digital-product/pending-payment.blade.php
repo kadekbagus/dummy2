@@ -52,7 +52,6 @@
                           {{ trans('email-pending-payment.body.greeting_digital_product.body', [
                             'productName' => $transaction['items'][0]['name'],
                             'paymentMethod' => $paymentMethod,
-                            'paymentExpiration' => $paymentExpiration,
                             ], '', $lang) }}
                         </p>
                       </td>
