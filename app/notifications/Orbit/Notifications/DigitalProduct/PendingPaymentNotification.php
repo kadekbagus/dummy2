@@ -62,8 +62,8 @@ class PendingPaymentNotification extends Base
         return array_merge(parent::getEmailData(), [
             'productType' => $this->getObjectType(),
             'paymentMethod' => $this->getPaymentMethod(),
-            'cancelUrl' => $this->getCancelUrl() . "&type=digital-product",
-            'myWalletUrl' => $this->getMyPurchasesUrl('/coupons'),
+            'cancelUrl' => $this->getCancelUrl() . "&type=game-voucher",
+            'myWalletUrl' => $this->getMyPurchasesUrl('/game-voucher'),
         ]);
     }
 
