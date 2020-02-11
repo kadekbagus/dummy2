@@ -85,7 +85,7 @@
                     <tr>
                       <td width="600" class="mobile" align="center" valign="middle">
                         <a href="{{{ $buyUrl }}}" class="btn btn-block">
-                          {{{ trans('email-expired-payment.body.buttons.buy_digital_product', [], '', $lang) }}}
+                          {{{ trans('email-expired-payment.body.buttons.buy_digital_product', ['productType' => $productType], '', $lang) }}}
                         </a>
                       </td>
                     </tr>
