@@ -23,7 +23,7 @@ trait HasPaymentTrait
         'dana' => 'Dana',
     ];
 
-    protected $productType = '';
+    protected $productType = 'default';
 
     /**
      * Get the transaction data.
@@ -249,9 +249,6 @@ trait HasPaymentTrait
      */
     protected function resolveProductType()
     {
-        $this->productType = trans('email-payment.product_type.default', [], '', 'id');
-        $lang = $this instanceof AdminNotification ? 'en' : 'id';
-
         foreach($this->payment->details as $detail) {
             if ($detail->object_type !== 'discount') {
 
@@ -262,8 +259,6 @@ trait HasPaymentTrait
                 } else if (isset($detail->digital_product) && ! empty($detail->digital_product)) {
                     $this->productType = $detail->digital_product->product_type;
                 }
-
-                $this->productType = trans("email-payment.product_type.{$this->productType}", [], '', $lang);
 
                 break;
             }

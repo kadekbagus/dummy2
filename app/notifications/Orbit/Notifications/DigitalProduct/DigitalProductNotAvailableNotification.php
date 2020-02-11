@@ -58,7 +58,8 @@ class DigitalProductNotAvailableNotification extends AdminNotification
      */
     public function getEmailSubject()
     {
-        return trans('email-coupon-not-available-admin.subject_digital_product', ['productType' => $this->productType], '', 'en');
+        $productType = trans("email-payment.product_type.{$this->productType}", [], '', 'id');
+        return trans('email-coupon-not-available-admin.subject_digital_product', ['productType' => $productType], '', 'en');
     }
 
     /**

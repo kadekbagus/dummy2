@@ -23,9 +23,11 @@
 
       <?php
         $langs = ['id', 'en'];
+        $originalProductType = $productType;
       ?>
 
       @foreach($langs as $lang)
+        <?php $productType = trans("email-payment.product_type.{$originalProductType}", [], '', $lang); ?>
         <tr>
           <td align="center" valign="top">
 
