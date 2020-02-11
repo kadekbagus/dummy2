@@ -4,7 +4,7 @@ return [
     'subject' => 'Gotomalls Expired Payment Transaction',
 
     'header' => [
-        'email-type'       => 'Notice',
+        'email-type'       => 'Expired Order',
     ],
 
     'body' => [

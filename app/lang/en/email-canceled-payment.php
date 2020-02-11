@@ -4,7 +4,7 @@ return [
     'subject' => 'Transaction Canceled',
 
     'header' => [
-        'email-type'       => 'Notice',
+        'email-type'       => 'Order Canceled',
     ],
 
     'body' => [
