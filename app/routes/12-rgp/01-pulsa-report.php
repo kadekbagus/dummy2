@@ -28,3 +28,7 @@ Route::get('/app/v1/rgp/user-transactions', function()
     return Orbit\Controller\API\v1\RGP\PulsaReportAllUserAPIController::create()->get();
 });
 
+Route::get('/app/v1/rgp/check-ayopay-balance', function()
+{
+    return Orbit\Controller\API\v1\RGP\CheckAyoPayBalanceAPIController::create()->get();
+});
