@@ -160,7 +160,7 @@ class BaseAPI
         try {
             // Add query string if needed.
             if (! empty($this->queryString)) {
-                $options['query'] = $this->queryString;
+                $this->options['query'] = $this->queryString;
             }
 
             // Set header...
