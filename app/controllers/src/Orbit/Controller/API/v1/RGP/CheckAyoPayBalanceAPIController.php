@@ -68,7 +68,7 @@ class CheckAyoPayBalanceAPIController extends ControllerAPI
 			);
 
 			$balance = 'N/A';
-			if ($result->count() > 0) {
+			if (count($result) > 0) {
 				$xmlPayload = $result[0]->payload;
 				$payload = @simplexml_load_string($xmlPayload);
 				if ($payload instanceof \SimpleXMLElement) {
