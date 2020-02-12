@@ -16,6 +16,9 @@ use RgpUser;
 
 class PulsaReportTotalDailyAPIController extends ControllerAPI
 {
+	/**
+     * Get all users daily total transactions for the chart
+     */
 	public function get()
 	{
 		try {
