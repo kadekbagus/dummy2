@@ -11,12 +11,15 @@ class ReceiptNotification extends BaseReceiptNotification
 {
     protected $serialNumber = null;
 
+    protected $voucherCode = null;
+
     protected $signature = 'digital-product-receipt-notification';
 
-    function __construct($payment = null, $serialNumber = null)
+    function __construct($payment = null, $serialNumber = null, $voucherCode = null)
     {
         parent::__construct($payment);
         $this->serialNumber = $serialNumber;
+        $this->voucherCode = $voucherCode;
     }
 
     public function getEmailTemplates()
@@ -25,6 +28,16 @@ class ReceiptNotification extends BaseReceiptNotification
             'html' => 'emails.digital-product.receipt',
         ];
     }
+
+    // protected function getSerialNumber()
+    // {
+    //     $serialNumber = parent::getSerialNumber();
+    //     $serialNumber .= isset($this->voucherCode)  && ! empty($this->voucherCode)
+    //         ? "<br>Voucher Code: {$this->voucherCode}"
+    //         : '';
+
+    //     return $serialNumber;
+    // }
 
     /**
      * Only send email notification at the moment.

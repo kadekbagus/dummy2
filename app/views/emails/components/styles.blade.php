@@ -260,7 +260,7 @@
       mso-table-lspace:0pt !important;
       mso-table-rspace:0pt !important;
       word-wrap: break-word;
-      text-align:left;
+      text-align:center;
       font-size: 15px;
       color: #333;
     }
