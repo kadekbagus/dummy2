@@ -80,6 +80,7 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
                                                 'payment_transactions.payment_method',
                                                 'payment_transactions.extra_data',
                                                 'payment_transactions.created_at',
+                                                DB::raw("convert_tz({$prefix}payment_transactions.created_at, '+00:00', {$prefix}payment_transactions.timezone_name) as date_tz"),
                                                 'payment_transactions.external_payment_transaction_id',
                                                 'payment_transaction_details.object_name as product_name',
                                                 'payment_transaction_details.object_type',
