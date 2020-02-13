@@ -131,7 +131,11 @@ class GetDigitalProductQueue
                 $this->log("Issued for payment {$paymentId}..");
 
                 // Notify Customer.
-                $payment->user->notify(new ReceiptNotification($payment, $purchase->getSerialNumber()));
+                $payment->user->notify(new ReceiptNotification(
+                    $payment,
+                    $purchase->getSerialNumber(),
+                    $purchase->getVoucherCode()
+                ));
 
                 $cid = time();
                 // send google analitics event hit
