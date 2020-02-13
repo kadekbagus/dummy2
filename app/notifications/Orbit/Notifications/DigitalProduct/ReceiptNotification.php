@@ -29,15 +29,15 @@ class ReceiptNotification extends BaseReceiptNotification
         ];
     }
 
-    // protected function getSerialNumber()
-    // {
-    //     $serialNumber = parent::getSerialNumber();
-    //     $serialNumber .= isset($this->voucherCode)  && ! empty($this->voucherCode)
-    //         ? "<br>Voucher Code: {$this->voucherCode}"
-    //         : '';
+    protected function getSerialNumber()
+    {
+        $serialNumber = parent::getSerialNumber();
+        $serialNumber .= isset($this->voucherCode)  && ! empty($this->voucherCode)
+            ? "<br>Voucher Code: {$this->voucherCode}"
+            : '';
 
-    //     return $serialNumber;
-    // }
+        return $serialNumber;
+    }
 
     /**
      * Only send email notification at the moment.
