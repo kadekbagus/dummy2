@@ -60,7 +60,7 @@
                                                 {{ trans('email-receipt.body.greeting_digital_product.customer_name', ['customerName' => $customerName], '', $lang) }}
                                             </h3>
                                             <p class="greeting-text">
-                                                {{ trans('email-receipt.body.greeting_digital_product.body', ['itemName' => $transaction['items'][0]['name']], '', $lang) }}
+                                                {{ trans('email-receipt.body.greeting_digital_product.body', ['itemName' => $transaction['items'][0]['shortName']], '', $lang) }}
                                             </p>
                                         </td>
                                     </tr>
