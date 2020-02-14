@@ -31,4 +31,14 @@ class GameListRequest extends ValidateRequest
         ];
     }
 
+    /**
+     * Get custom validation messages.
+     *
+     * @return array
+     */
+    public function messages()
+    {
+        return [];
+    }
+
 }
