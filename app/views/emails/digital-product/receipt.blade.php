@@ -31,7 +31,7 @@
                                 <table width="640" cellpadding="0" cellspacing="0" border="0" class="container mobile-full-width">
                                     <tr>
                                        <td align="center" valign="middle" height="184" class="greeting-title-container" style="border-radius: 5px 5px 0 0;">
-                                            <h1 class="greeting-title">{{ trans('email-receipt.header.invoice') }}</h1>
+                                            <h1 class="greeting-title">{{ trans('email-receipt.header.invoice', [], '', 'id') }}</h1>
                                         </td>
                                     </tr>
                                 </table>
