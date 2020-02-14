@@ -275,6 +275,18 @@
       font-size: 15px;
     }
 
+    .voucher-code-label {
+      text-align: center;
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .voucher-code {
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+    }
+
     /* MEDIA QUERIES */
     @media all and (max-width:639px) {
       .wrapper{ width:95% !important; padding: 0 !important; }

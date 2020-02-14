@@ -40,6 +40,8 @@ return [
         'redeem_giftncoupon' => 'Klik link berikut untuk melakukan redeem di toko',
         'view_my_purchases' => 'Untuk melihat pembelian Anda, dapat melalui tombol di bawah ini:',
 
+        'voucher_code' => 'Kode Voucher Game:',
+
         'help' => 'Jika menemui kendala terkait pembelian, silakan hubungi layanan bantuan kami di nomor <a style="color:#f43d3c;text-decoration:none;" href="tel::csPhone">:csPhone</a> atau surel di <a style="color:#f43d3c;text-decoration:none;" href="mailto::csEmail">:csEmail</a>.',
         'thank_you' => 'Terima kasih dan kami tunggu pembelian berikutnya!',
     ],

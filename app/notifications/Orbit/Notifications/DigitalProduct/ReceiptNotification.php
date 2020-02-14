@@ -29,17 +29,6 @@ class ReceiptNotification extends BaseReceiptNotification
         ];
     }
 
-    protected function getSerialNumber()
-    {
-        $serialNumber = isset($this->voucherCode)  && ! empty($this->voucherCode)
-            ? "<br><br><strong>Voucher Code: {$this->voucherCode}</strong>"
-            : '';
-
-        $serialNumber .= parent::getSerialNumber();
-
-        return $serialNumber;
-    }
-
     /**
      * Only send email notification at the moment.
      *
@@ -56,6 +45,7 @@ class ReceiptNotification extends BaseReceiptNotification
     {
         return array_merge(parent::getEmailData(), [
             'myWalletUrl' => $this->getMyPurchasesUrl('/coupons'),
+            'voucherCode' => $this->voucherCode,
         ]);
     }
 }

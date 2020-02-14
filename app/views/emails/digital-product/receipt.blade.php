@@ -132,6 +132,21 @@
                                                                 </tr>
                                                             </tfoot>
                                                         </table>
+
+                                                        @if (isset($voucherCode) && ! empty($voucherCode))
+                                                            <br>
+                                                            <br>
+                                                            <br>
+                                                            <br>
+                                                            <br>
+                                                            <div class="voucher-code-label">
+                                                                {{ trans('email-receipt.body.voucher_code', [], '', $lang) }}
+                                                            </div>
+                                                            <div class="voucher-code">
+                                                                {{ $voucherCode }}
+                                                            </div>
+                                                        @endif
+
                                                         <br>
                                                         <br>
                                                         <br>
