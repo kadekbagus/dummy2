@@ -42,7 +42,7 @@ class GameRepository
             if (! empty($imageVariants)) {
                 $query->whereIn('media_name_long', $imageVariants);
             }
-        }])->active();
+        }])->active()->orderBy('game_name', 'ASC');
 
         $total = clone $games;
         $total = $total->count();
