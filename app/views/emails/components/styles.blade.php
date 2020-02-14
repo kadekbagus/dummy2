@@ -265,6 +265,10 @@
       color: #333;
     }
 
+    .transaction-item.item-name {
+      text-align: left;
+    }
+
     .transaction-total {
       border-bottom: 0;
       font-size: 15px;
