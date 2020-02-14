@@ -42,7 +42,10 @@ class GameRepository
             if (! empty($imageVariants)) {
                 $query->whereIn('media_name_long', $imageVariants);
             }
-        }])->active();
+        }])->active()
+
+        //OM-5547, game listing is order by aphabetical name
+        ->orderBy('game_name', 'ASC');
 
         $total = clone $games;
         $total = $total->count();
