@@ -31,10 +31,11 @@ class ReceiptNotification extends BaseReceiptNotification
 
     protected function getSerialNumber()
     {
-        $serialNumber = parent::getSerialNumber();
-        $serialNumber .= isset($this->voucherCode)  && ! empty($this->voucherCode)
-            ? "<br>Voucher Code: {$this->voucherCode}"
+        $serialNumber = isset($this->voucherCode)  && ! empty($this->voucherCode)
+            ? "<br><br><strong>Voucher Code: {$this->voucherCode}</strong>"
             : '';
+
+        $serialNumber .= parent::getSerialNumber();
 
         return $serialNumber;
     }
