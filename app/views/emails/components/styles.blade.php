@@ -437,5 +437,13 @@
       .transaction-total {
         font-size: 20px;
       }
+
+      .voucher-code-label {
+        font-size: 20px;
+      }
+
+      .voucher-code {
+        font-size: 28px;
+      }
     }
   </style>
