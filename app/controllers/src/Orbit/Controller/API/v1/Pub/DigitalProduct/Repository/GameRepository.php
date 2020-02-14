@@ -30,6 +30,8 @@ class GameRepository
     {
         $skip = OrbitInput::get('skip', 0);
         $take = OrbitInput::get('take', 10);
+        $sortBy = OrbitInput::get('sortby', 'game_name');
+        $sortMode = OrbitInput::get('sortmode', 'asc');
         $imageVariants = $this->resolveImageVariants('game_image_', 'mobile_thumb');
 
         $games = Game::with(['media' => function($query) use ($imageVariants) {
@@ -45,7 +47,7 @@ class GameRepository
         }])->active()
 
         //OM-5547, game listing is order by aphabetical name
-        ->orderBy('game_name', 'ASC');
+        ->orderBy($sortBy, $sortMode);
 
         $total = clone $games;
         $total = $total->count();
