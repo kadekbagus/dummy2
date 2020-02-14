@@ -267,6 +267,7 @@
 
     .transaction-item.item-name {
       text-align: left;
+      word-break: break-all;
     }
 
     .transaction-total {
