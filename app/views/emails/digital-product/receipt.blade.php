@@ -31,7 +31,7 @@
                                 <table width="640" cellpadding="0" cellspacing="0" border="0" class="container mobile-full-width">
                                     <tr>
                                        <td align="center" valign="middle" height="184" class="greeting-title-container" style="border-radius: 5px 5px 0 0;">
-                                            <h1 class="greeting-title">{{ trans('email-receipt.header.invoice') }}</h1>
+                                            <h1 class="greeting-title">{{ trans('email-receipt.header.invoice', [], '', 'id') }}</h1>
                                         </td>
                                     </tr>
                                 </table>
@@ -60,7 +60,7 @@
                                                 {{ trans('email-receipt.body.greeting_digital_product.customer_name', ['customerName' => $customerName], '', $lang) }}
                                             </h3>
                                             <p class="greeting-text">
-                                                {{ trans('email-receipt.body.greeting_digital_product.body', ['itemName' => $transaction['items'][0]['name']], '', $lang) }}
+                                                {{ trans('email-receipt.body.greeting_digital_product.body', ['itemName' => $transaction['items'][0]['shortName']], '', $lang) }}
                                             </p>
                                         </td>
                                     </tr>
@@ -109,7 +109,7 @@
                                                             <tbody class="transaction-items">
                                                                 @foreach($transaction['items'] as $item)
                                                                 <tr class="transaction-item">
-                                                                    <td class="transaction-item">{{ $item['name'] }}</td>
+                                                                    <td class="transaction-item item-name">{{ $item['name'] }}</td>
                                                                     <td class="transaction-item" style="text-align: center;">{{{ $item['quantity'] }}}</td>
                                                                     <td class="transaction-item">{{{ $item['price'] }}}</td>
                                                                     <td class="transaction-item">{{{ $item['total'] }}}</td>
@@ -132,6 +132,21 @@
                                                                 </tr>
                                                             </tfoot>
                                                         </table>
+
+                                                        @if (isset($voucherCode) && ! empty($voucherCode))
+                                                            <br>
+                                                            <br>
+                                                            <br>
+                                                            <br>
+                                                            <br>
+                                                            <div class="voucher-code-label">
+                                                                {{ trans('email-receipt.body.voucher_code', [], '', $lang) }}
+                                                            </div>
+                                                            <div class="voucher-code">
+                                                                {{ $voucherCode }}
+                                                            </div>
+                                                        @endif
+
                                                         <br>
                                                         <br>
                                                         <br>

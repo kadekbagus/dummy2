@@ -27,6 +27,9 @@ class GameListAPIController extends PubControllerAPI
 
             $this->authorize(['guest', 'consumer']);
 
+            //TODO: need cleaner way to inject this
+            (new GameListRequest($this))->validate();
+
             $this->response->data = App::make(GameRepository::class)->findGames();
 
         } catch (Exception $e) {
