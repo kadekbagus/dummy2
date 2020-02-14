@@ -2767,5 +2767,14 @@ return array(
             'object_type' => 'DigitalProduct',
             'parameter_name' => 'object_id'
         ),
+        // user clicking game voucher banner in home page
+        '301' => array(
+            'name' => 'click_home_game_voucher_link',
+            'name_long' => 'Click Home Game Voucher Link',
+            'module_name' => 'Game Voucher',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null
+        ),
     ),
 );

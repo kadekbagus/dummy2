@@ -260,14 +260,31 @@
       mso-table-lspace:0pt !important;
       mso-table-rspace:0pt !important;
       word-wrap: break-word;
-      text-align:left;
+      text-align:center;
       font-size: 15px;
       color: #333;
+    }
+
+    .transaction-item.item-name {
+      text-align: left;
+      word-break: break-all;
     }
 
     .transaction-total {
       border-bottom: 0;
       font-size: 15px;
+    }
+
+    .voucher-code-label {
+      text-align: center;
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .voucher-code {
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
     }
 
     /* MEDIA QUERIES */
@@ -419,6 +436,14 @@
 
       .transaction-total {
         font-size: 20px;
+      }
+
+      .voucher-code-label {
+        font-size: 20px;
+      }
+
+      .voucher-code {
+        font-size: 28px;
       }
     }
   </style>
