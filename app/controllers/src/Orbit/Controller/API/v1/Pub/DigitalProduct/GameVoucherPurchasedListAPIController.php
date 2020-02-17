@@ -83,6 +83,7 @@ class GameVoucherPurchasedListAPIController extends PubControllerAPI
                                                 'payment_transaction_details.object_type',
                                                 'payment_transaction_details.price',
                                                 'payment_transaction_details.quantity',
+                                                'digital_products.code as digital_product_code',
                                                 DB::raw($gameLogo)
                                                 )
                                             ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
