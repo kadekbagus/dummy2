@@ -22,6 +22,7 @@ use Orbit\Helper\Util\CdnUrlGenerator;
 use PromotionRetailer;
 use PaymentTransaction;
 use Helper\EloquentRecordCounter as RecordCounter;
+use SimpleXMLElement;
 
 class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
 {
@@ -88,7 +89,7 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
                                                 'payment_transaction_details.quantity',
                                                 'payment_midtrans.payment_midtrans_info',
                                                 'digital_products.digital_product_id as item_id',
-                                                'digital_products.code as digital_product_code',
+                                                'payment_transaction_details.payload',
                                                 DB::raw($gameLogo)
                                                 )
                                             ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
@@ -115,6 +116,7 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
             }
 
             $game_voucher->payment_midtrans_info = json_decode(unserialize($game_voucher->payment_midtrans_info));
+            $game_voucher->digital_product_code = isset($game_voucher->payload) ? $this->getVoucherCode($game_voucher->payload) : null;
 
             $this->response->data = $game_voucher;
         } catch (ACLForbiddenException $e) {
@@ -159,5 +161,21 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    protected function getVoucherCode($data)
+    {
+        $voucherCode = null;
+        $voucherString = 'Voucher Code=';
+        $voucherXml = new SimpleXMLElement($data);
+
+        if (isset($voucherXml->voucher)) {
+            if (strpos($voucherXml->voucher, $voucherString) !== false) {
+                $voucherData = explode($voucherString, $voucherXml->voucher);
+                $voucherCode = $voucherData[1];
+            }
+        }
+
+        return $voucherCode;
     }
 }
