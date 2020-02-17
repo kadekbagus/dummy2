@@ -2776,5 +2776,14 @@ return array(
             'object_type' => null,
             'parameter_name' => null
         ),
+        // user clicking game voucher announcement
+        '302' => array(
+            'name' => 'click_announcement_game_voucher',
+            'name_long' => 'Click Announcement Game Voucher',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null
+        ),
     ),
 );
