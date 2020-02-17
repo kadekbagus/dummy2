@@ -48,6 +48,7 @@ class ProviderProductListAPIController extends ControllerAPI
 
             $sortBy = OrbitInput::get('sortby');
             $status = OrbitInput::get('status');
+            $from = OrbitInput::get('from', NULL);
 
             $validator = Validator::make(
                 array(
@@ -83,34 +84,39 @@ class ProviderProductListAPIController extends ControllerAPI
                                     {$prefix}provider_products.updated_at"
                                 ));
 
+            if (isset($from)) {
+                $provider_product->leftJoin('digital_products', 'digital_products.selected_provider_product_id', '=', 'provider_products.provider_product_id')
+                                 ->whereNull('digital_products.digital_product_id');
+            }
+
             OrbitInput::get('provider_product_id', function($provider_product_id) use ($provider_product)
             {
-                $provider_product->where('provider_product_id', $provider_product_id);
+                $provider_product->where('provider_products.provider_product_id', $provider_product_id);
             });
 
             OrbitInput::get('provider_product_name', function($provider_product_name) use ($provider_product)
             {
-                $provider_product->where('provider_product_name', 'like', "%$provider_product_name%");
+                $provider_product->where('provider_products.provider_product_name', 'like', "%$provider_product_name%");
             });
 
             OrbitInput::get('provider_name', function($provider_name) use ($provider_product)
             {
-                $provider_product->where('provider_name', 'like', "%$provider_name%");
+                $provider_product->where('provider_products.provider_name', 'like', "%$provider_name%");
             });
 
             OrbitInput::get('product_type', function($product_type) use ($provider_product)
             {
-                $provider_product->where('product_type', 'like', "%$product_type%");
+                $provider_product->where('provider_products.product_type', 'like', "%$product_type%");
             });
 
             OrbitInput::get('game_name_like', function($name) use ($provider_product)
             {
-                $provider_product->where('game_name', 'like', "%$name%");
+                $provider_product->where('provider_products.game_name', 'like', "%$name%");
             });
 
             OrbitInput::get('status', function($status) use ($provider_product)
             {
-                $provider_product->where('status', $status);
+                $provider_product->where('provider_products.status', $status);
             });
 
             // Clone the query builder which still does not include the take,
