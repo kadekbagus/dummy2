@@ -16,6 +16,11 @@ return [
                         <br>
                         Your Pulsa/Data Plan is still waiting for you. The payment limit will expire <span style="color:#f43d3c">today</span>!',
 
+        'greeting_digital_product' => [
+            'customer_name' => 'Dear, :customerName',
+            'body' => 'Your :productType is still waiting for you. The payment limit will expire <span style="color:#f43d3c">today</span>! Please perform the payment using your :paymentMethod App. Below are your transaction details.',
+        ],
+
         'transaction_labels' => [
             'transaction_id' => 'Transaction ID: ',
             'transaction_date' => 'Transaction Date: ',
@@ -29,6 +34,7 @@ return [
             'email' => 'Email: ',
             'phone' => 'Phone: ',
             'total_amount' => 'Total Amount: ',
+            'product' => 'Product: ',
         ],
 
         'payment-info-line-1' => 'Please perform the payment transfer to the following bank account before <br><span style="color:#f43d3c;"><strong>:paymentExpiration</strong></span> to complete your transaction.',

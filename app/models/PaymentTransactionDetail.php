@@ -87,6 +87,16 @@ class PaymentTransactionDetail extends Eloquent
         return $this->belongsTo('Discount', 'object_id', 'discount_id');
     }
 
+    public function digital_product()
+    {
+        return $this->belongsTo('DigitalProduct', 'object_id', 'digital_product_id');
+    }
+
+    public function provider_product()
+    {
+        return $this->belongsTo('ProviderProduct');
+    }
+
     /**
      * Determine if the payment is for Sepulsa Deals.
      *

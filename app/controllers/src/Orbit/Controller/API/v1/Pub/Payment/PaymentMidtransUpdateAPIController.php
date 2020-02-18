@@ -1,36 +1,35 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Payment;
 
-use OrbitShop\API\v1\PubControllerAPI;
-use OrbitShop\API\v1\OrbitShopAPI;
-use Helper\EloquentRecordCounter as RecordCounter;
-use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use Activity;
+use Carbon\Carbon as Carbon;
+use Config;
+use DB;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
-use DB;
-use Validator;
-use Queue;
-use Log;
-use Config;
+use Event;
 use Exception;
+use Helper\EloquentRecordCounter as RecordCounter;
+use IssuedCoupon;
+use Log;
+use Mall;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use OrbitShop\API\v1\OrbitShopAPI;
+use OrbitShop\API\v1\PubControllerAPI;
+use Orbit\Controller\API\v1\Pub\Payment\PaymentHelper;
+use Orbit\Controller\API\v1\Pub\Purchase\PurchaseUpdateAPIController;
+use Orbit\Helper\Midtrans\API\TransactionCancel;
+use Orbit\Helper\Midtrans\API\TransactionStatus;
+use Orbit\Notifications\Payment\AbortedPaymentNotification;
+use Orbit\Notifications\Payment\CanceledPaymentNotification;
+use Orbit\Notifications\Payment\DeniedPaymentNotification;
+use Orbit\Notifications\Payment\ExpiredPaymentNotification;
+use Orbit\Notifications\Payment\PendingPaymentNotification;
+use Orbit\Notifications\Payment\SuspiciousPaymentNotification;
 use PaymentTransaction;
 use PaymentTransactionDetail;
-use IssuedCoupon;
+use Queue;
 use User;
-use Carbon\Carbon as Carbon;
-use Orbit\Controller\API\v1\Pub\Payment\PaymentHelper;
-use Event;
-use Activity;
-
-use Orbit\Helper\Midtrans\API\TransactionStatus;
-use Orbit\Helper\Midtrans\API\TransactionCancel;
-
-use Orbit\Notifications\Payment\SuspiciousPaymentNotification;
-use Orbit\Notifications\Payment\DeniedPaymentNotification;
-use Orbit\Notifications\Payment\PendingPaymentNotification;
-use Orbit\Notifications\Payment\CanceledPaymentNotification;
-use Orbit\Notifications\Payment\ExpiredPaymentNotification;
-use Orbit\Notifications\Payment\AbortedPaymentNotification;
-use Mall;
+use Validator;
 
 /**
  * Controller for update payment with midtrans
@@ -85,11 +84,15 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             $shouldUpdate = false;
             $currentUtmUrl = $this->generateUtmUrl($payment_transaction_id);
 
-            $payment_update = PaymentTransaction::onWriteConnection()->with(['details.coupon', 'details.pulsa', 'midtrans', 'refunds', 'issued_coupons', 'user', 'discount_code'])->findOrFail($payment_transaction_id);
+            $payment_update = PaymentTransaction::onWriteConnection()->with(['details.coupon', 'details.pulsa', 'details.digital_product', 'midtrans', 'refunds', 'issued_coupons', 'user', 'discount_code'])->findOrFail($payment_transaction_id);
 
             if ($payment_update->forPulsa()) {
                 $this->commit();
                 return (new PaymentPulsaUpdateAPIController())->postPaymentPulsaUpdate();
+            }
+            else if ($payment_update->forDigitalProduct()) {
+                $this->commit();
+                return (new PurchaseUpdateAPIController())->postUpdate();
             }
 
             $oldStatus = $payment_update->status;

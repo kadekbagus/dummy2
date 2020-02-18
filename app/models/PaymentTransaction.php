@@ -59,6 +59,18 @@ class PaymentTransaction extends Eloquent
     const STATUS_SUCCESS_REFUND = 'success_refund';
 
     /**
+     * Indicate that the payment is success but still waiting/processing product purchase from vendor/provider.
+     * @todo  should ONLY use this instead of different status for each type (STATUS_SUCCESS_NO_PULSA, STATUS_SUCCESS_NO_COUPON)
+     */
+    const STATUS_SUCCESS_NO_PRODUCT = 'success_no_product';
+
+    /**
+     * Indicate that payment is success but product purchase from vendor/provider is failed.
+     * @todo should ONLY use this for all instead of different status for each type (STATUS_SUCCESS_NO_PULSA_FAILED, STATUS_SUCCESS_NO_COUPON_FAILED)
+     */
+    const STATUS_SUCCESS_NO_PRODUCT_FAILED = 'success_no_product_failed';
+
+    /**
      * Payment - Coupon Sepulsa relation.
      *
      * @return [type] [description]
@@ -125,7 +137,7 @@ class PaymentTransaction extends Eloquent
 
     public function details()
     {
-        return $this->hasMany('PaymentTransactionDetail');
+        return $this->hasMany('PaymentTransactionDetail')->oldest();
     }
 
     public function discount()
@@ -163,6 +175,8 @@ class PaymentTransaction extends Eloquent
             self::STATUS_SUCCESS_NO_COUPON_FAILED,
             self::STATUS_SUCCESS_NO_PULSA,
             self::STATUS_SUCCESS_NO_PULSA_FAILED,
+            self::STATUS_SUCCESS_NO_PRODUCT,
+            self::STATUS_SUCCESS_NO_PRODUCT_FAILED,
             self::STATUS_SUCCESS_REFUND,
         ]);
     }
@@ -256,6 +270,24 @@ class PaymentTransaction extends Eloquent
     {
         foreach($this->details as $detail) {
             if (! empty($detail->pulsa)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Determine if the payment is for Digital Product
+     *
+     * @author Budi <budi@dominopos.com>
+     *
+     * @return [type] [description]
+     */
+    public function forDigitalProduct()
+    {
+        foreach($this->details as $detail) {
+            if (! empty($detail->digital_product)) {
                 return true;
             }
         }
@@ -517,5 +549,43 @@ class PaymentTransaction extends Eloquent
         }
 
         return $refundList;
+    }
+
+    /**
+     * Resolve purchased object type.
+     *
+     * @return [type] [description]
+     */
+    public function getProductType()
+    {
+        $productType = null;
+        $availableProductType = [
+            'coupon',
+            'pulsa',
+            'data_plan',
+            'digital_product',
+        ];
+
+        foreach($this->details as $detail) {
+            if (in_array($detail->object_type, $availableProductType)) {
+                $productType = $detail->object_type;
+                break;
+            }
+        }
+
+        return $productType;
+    }
+
+    public function getProviderProduct()
+    {
+        $providerProduct = null;
+        foreach($this->details as $detail) {
+            if (! empty($detail->provider_product)) {
+                $providerProduct = $detail->provider_product;
+                break;
+            }
+        }
+
+        return $providerProduct;
     }
 }

@@ -45,7 +45,7 @@
     .greeting-title {
       font-size: 32px;
       text-transform: uppercase;
-      letter-spacing: 2px;
+      letter-spacing: 5px;
       color: #FFF;
       margin: 0;
     }
@@ -198,6 +198,95 @@
       line-height:1.7em;
     }
 
+    .transaction-details {
+      color: #333;
+      text-align: left;
+      line-height: 1.5em;
+      font-size: 16px;
+    }
+
+    .help-text {
+      font-size: 16px;
+      color: #333;
+      text-align: left;
+      line-height: 1.4em;
+    }
+
+    .transaction-date {
+      color: #333;
+      margin-top: 10px;
+      padding-top: 20px;
+      font-size: 14px;
+    }
+
+    .customer-info-block {
+      line-height: 1.4em;
+      text-align: center;
+      color: #333;
+      font-size: 15px;
+      vertical-align: top;
+    }
+
+    .customer-info-label {
+        display: block;
+        font-weight: bold;
+    }
+
+    .customer-info-value {
+        display: block;
+        padding-left: 10px;
+        padding-right: 10px;
+        word-break: break-all;
+    }
+
+    .transaction-item-name,
+    .transaction-qty,
+    .transaction-amount,
+    .transaction-subtotal {
+      text-align:center;
+      padding:8px;
+      border-top:1px solid #999;
+      border-bottom:1px solid #999;
+      padding-left:0;
+      width: 25%;
+      font-size: 15px;
+    }
+
+    .transaction-item {
+      border-bottom:1px solid #999;
+      vertical-align:top;
+      padding:15px 8px;
+      padding-left:0;
+      mso-table-lspace:0pt !important;
+      mso-table-rspace:0pt !important;
+      word-wrap: break-word;
+      text-align:center;
+      font-size: 15px;
+      color: #333;
+    }
+
+    .transaction-item.item-name {
+      text-align: left;
+      word-break: break-all;
+    }
+
+    .transaction-total {
+      border-bottom: 0;
+      font-size: 15px;
+    }
+
+    .voucher-code-label {
+      text-align: center;
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .voucher-code {
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+    }
+
     /* MEDIA QUERIES */
     @media all and (max-width:639px) {
       .wrapper{ width:95% !important; padding: 0 !important; }
@@ -227,8 +316,17 @@
         font-size: 22px;
       }
 
+      .transaction-details {
+        font-size: 22px;
+      }
+
       .btn {
         font-size: 22px;
+      }
+
+      .btn-block {
+        display: block;
+        margin-bottom: 15px;
       }
 
       .coupon-img-container {
@@ -298,6 +396,54 @@
 
       .separator {
         height: 50px;
+      }
+
+      .help-text {
+        font-size: 22px;
+      }
+
+      .mobile.inline-mobile {
+        width: auto !important;
+        display: inline-block !important;
+      }
+
+      .mobile.inline-mobile.customer-info-block {
+        width: 49% !important;
+        margin-bottom: 15px;
+        font-size: 22px;
+        line-height: 1.2em;
+        text-align: left;
+      }
+
+      .customer-info-label {
+        font-size: 20px;
+      }
+
+      .customer-info-value {
+        font-size: 20px;
+      }
+
+      .transaction-item-name,
+      .transaction-qty,
+      .transaction-amount,
+      .transaction-subtotal {
+        font-size: 20px;
+      }
+
+      .transaction-item {
+        font-size: 20px;
+      }
+
+      .transaction-total {
+        font-size: 20px;
+      }
+
+      .voucher-code-label {
+        font-size: 20px;
+      }
+
+      .voucher-code {
+        font-size: 28px;
       }
     }
   </style>

@@ -16,6 +16,9 @@ use RgpUser;
 
 class PulsaReportAllUserAPIController extends ControllerAPI
 {
+    /**
+     * Get all users total transactions for the table
+     */
     public function get()
     {
         try {

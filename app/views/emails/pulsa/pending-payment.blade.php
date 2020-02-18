@@ -206,7 +206,7 @@
               </p>
               <br>
 
-              @include('emails.pending-payment.payment-info', compact('paymentInfo', 'paymentExpiration', 'myWalletUrl', 'cancelUrl'))
+              @include('emails.pending-payment.payment-info-pulsa', compact('paymentInfo', 'paymentExpiration', 'myWalletUrl', 'cancelUrl'))
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>
@@ -263,7 +263,7 @@
               </p>
               <br>
 
-              @include('emails.pending-payment.payment-info-en', compact('paymentInfo', 'paymentExpiration', 'myWalletUrl', 'cancelUrl'))
+              @include('emails.pending-payment.payment-info-pulsa-en', compact('paymentInfo', 'paymentExpiration', 'myWalletUrl', 'cancelUrl'))
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                 <br>

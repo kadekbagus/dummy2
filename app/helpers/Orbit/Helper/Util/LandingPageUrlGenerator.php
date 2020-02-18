@@ -65,6 +65,11 @@ class LandingPageUrlGenerator
     protected $pulsaUrl = '/pulsa?country=Indonesia';
 
     /**
+     * @var string digital product url
+     */
+    protected $digitalProductUrl = '/game-voucher?country=Indonesia';
+
+    /**
      * Set the eventUrl
      *
      * @param string $eventUrl
@@ -192,6 +197,9 @@ class LandingPageUrlGenerator
             case 'pulsa':
             case 'data_plan':
                 $url = $this->pulsaUrl;
+                break;
+            case 'digital_product':
+                $url = $this->digitalProductUrl;
                 break;
         }
 

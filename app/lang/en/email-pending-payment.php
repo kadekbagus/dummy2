@@ -20,6 +20,11 @@ return [
                         <br>
                         Thank you for purchasing Data Plan in Gotomalls.com. Please perform the payment using your GOJEK App (GoPay). Below are your transaction details. ',
 
+        'greeting_digital_product' => [
+            'customer_name' => 'Dear, :customerName',
+            'body' => 'Thank you for purchasing :productName in Gotomalls.com. Please perform the payment using your :paymentMethod App. Below are your transaction details.',
+        ],
+
         'transaction_labels' => [
             'transaction_id' => 'Transaction ID: ',
             'transaction_date' => 'Transaction Date: ',
@@ -33,6 +38,7 @@ return [
             'email' => 'Email: ',
             'phone' => 'Phone: ',
             'total_amount' => 'Total Amount: ',
+            'product' => 'Product',
         ],
 
         'payment-info-line-1' => 'Please perform the payment transfer to the following bank account before <br><span style="color:#f43d3c;"><strong>:paymentExpiration</strong></span> to complete your transaction.',
