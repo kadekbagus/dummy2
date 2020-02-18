@@ -133,21 +133,22 @@
                                                             </tfoot>
                                                         </table>
 
-                                                        @if (isset($voucherCode) && ! empty($voucherCode))
+                                                        @if (isset($voucherData) && ! empty($voucherData))
                                                             <br>
                                                             <br>
                                                             <br>
-                                                            <br>
-                                                            <br>
-                                                            <div class="voucher-code-label">
+                                                            <div class="voucher-data-label">
                                                                 {{ trans('email-receipt.body.voucher_code', [], '', $lang) }}
                                                             </div>
-                                                            <div class="voucher-code">
-                                                                {{ $voucherCode }}
+                                                            <div class="voucher-data-container">
+                                                                @foreach($voucherData as $voucherDataKey => $data)
+                                                                    <div class="voucher-data-item">
+                                                                        {{ $voucherDataKey }}: {{ $data }}
+                                                                    </div>
+                                                                @endforeach
                                                             </div>
                                                         @endif
 
-                                                        <br>
                                                         <br>
                                                         <br>
                                                         <p class="help-text">

@@ -47,10 +47,10 @@ class AyoPayResponse extends BaseResponse
 
             foreach($voucherData as $data) {
                 $dataArr = explode('=', $data);
+                $voucherDataKey = trim($dataArr[0]);
 
-                if (count($dataArr) === 2) {
-                    $this->voucherData[strtolower(trim($dataArr[0]))] = trim($dataArr[1]);
-                }
+                $this->voucherData[$voucherDataKey] = isset($dataArr[1])
+                    ? trim($dataArr[1]) : null;
             }
         }
     }
