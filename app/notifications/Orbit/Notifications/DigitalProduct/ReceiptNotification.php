@@ -11,12 +11,15 @@ class ReceiptNotification extends BaseReceiptNotification
 {
     protected $serialNumber = null;
 
+    protected $voucherCode = null;
+
     protected $signature = 'digital-product-receipt-notification';
 
-    function __construct($payment = null, $serialNumber = null)
+    function __construct($payment = null, $serialNumber = null, $voucherCode = null)
     {
         parent::__construct($payment);
         $this->serialNumber = $serialNumber;
+        $this->voucherCode = $voucherCode;
     }
 
     public function getEmailTemplates()
@@ -42,6 +45,7 @@ class ReceiptNotification extends BaseReceiptNotification
     {
         return array_merge(parent::getEmailData(), [
             'myWalletUrl' => $this->getMyPurchasesUrl('/coupons'),
+            'voucherCode' => $this->voucherCode,
         ]);
     }
 }

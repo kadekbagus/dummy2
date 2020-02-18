@@ -47,6 +47,7 @@ trait HasPaymentTrait
         foreach($this->payment->details as $item) {
             $detailItem = [
                 'name'      => $item->object_name,
+                'shortName' => $item->object_name,
                 'quantity'  => $item->quantity,
                 'price'     => $item->getPrice(),
                 'total'     => $item->getTotal(),
@@ -214,7 +215,7 @@ trait HasPaymentTrait
     protected function getSerialNumber()
     {
         if (isset($this->serialNumber) && ! empty($this->serialNumber)) {
-            return "<br>SN: {$this->serialNumber}";
+            return "<br><br>SN: {$this->serialNumber}";
         }
 
         return '';
