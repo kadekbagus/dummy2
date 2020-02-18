@@ -168,6 +168,10 @@ class GenerateSitemapCommand extends Command
                     $this->generatePulsaOperatorDetailSitemap();
                     break;
 
+                case 'game-voucher':
+                    $this->generateGameVoucherDetailSitemap();
+                    break;
+
                 case 'misc':
                     $this->generateMiscListSitemap();
                     break;
@@ -247,6 +251,10 @@ class GenerateSitemapCommand extends Command
 
                 case 'pulsa':
                     $xml = $this->generatePulsaOperatorDetailSitemap();
+                    break;
+
+                case 'game-voucher':
+                    $xml = $this->generateGameVoucherDetailSitemap();
                     break;
 
                 default:
@@ -630,6 +638,20 @@ class GenerateSitemapCommand extends Command
     }
 
     /**
+     * Generate sitemap for game voucher detail page.
+     * @return void
+     */
+    protected function generateGameVoucherDetailSitemap()
+    {
+        // Get game list
+        $games = Game::select('slug')->active()->latest()->get();
+
+        // Generate detail sitemap
+        $detailUri = Config::get('orbit.sitemap.uri_properties.detail.game-voucher', []);
+        $this->detailAppender($games, 'game-voucher', $this->urlTemplate, $detailUri);
+    }
+
+    /**
      * Single function to append urls
      *
      * @param $xml DOMDocument
@@ -678,6 +700,10 @@ class GenerateSitemapCommand extends Command
                     $slug = $record->slug;
                     break;
 
+                case 'game-voucher':
+                    $slug = $record->slug;
+                    break;
+
                 default:
                     # code...
                     break;
@@ -686,7 +712,7 @@ class GenerateSitemapCommand extends Command
             if (! empty($mall_id)) {
                 $this->urlStringPrinter(sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $id, Str::slug($name))), date('c', $updatedAt), $detailUri['changefreq']);
             } else {
-                if (in_array($type, ['article', 'pulsa'])) {
+                if (in_array($type, ['article', 'pulsa', 'game-voucher'])) {
                     $this->urlStringPrinter(sprintf(sprintf($urlTemplate, $detailUri['uri']), $slug), date('c', $updatedAt), $detailUri['changefreq']);
                 } else {
                     $this->urlStringPrinter(sprintf(sprintf($urlTemplate, $detailUri['uri']), $id, Str::slug($name)), date('c', $updatedAt), $detailUri['changefreq']);
