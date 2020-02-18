@@ -172,7 +172,7 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
         if (isset($voucherXml->voucher)) {
             if (strpos($voucherXml->voucher, $voucherString) !== false) {
                 $voucherData = explode($voucherString, $voucherXml->voucher);
-                $voucherCode = $voucherData[1];
+                $voucherCode = $voucherData[0]."\n".$voucherData[1];
             }
         }
 
