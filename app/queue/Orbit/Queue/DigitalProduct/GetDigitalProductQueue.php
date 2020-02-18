@@ -133,8 +133,7 @@ class GetDigitalProductQueue
                 // Notify Customer.
                 $payment->user->notify(new ReceiptNotification(
                     $payment,
-                    $purchase->getSerialNumber(),
-                    $purchase->getVoucherCode()
+                    $purchase->getVoucherData()
                 ));
 
                 $cid = time();

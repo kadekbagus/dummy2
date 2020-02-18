@@ -275,16 +275,28 @@
       font-size: 15px;
     }
 
-    .voucher-code-label {
-      text-align: center;
+    .voucher-data-label {
+      text-align: left;
       font-size: 16px;
       margin-bottom: 8px;
+      font-weight: bold;
+      color: #222;
     }
 
-    .voucher-code {
-      text-align: center;
-      font-size: 22px;
-      font-weight: bold;
+    .voucher-data-container {
+      text-align: left;
+      font-size: 16px;
+      padding: 5px 14px;
+      border-radius: 5px;
+      background: #f3f3f3;
+      color: #222;
+    }
+
+    .voucher-data-item {
+      font-size: 16px;
+      margin: 10px 0;
+      text-align: left;
+      color: #222;
     }
 
     /* MEDIA QUERIES */
@@ -438,12 +450,16 @@
         font-size: 20px;
       }
 
-      .voucher-code-label {
+      .voucher-data-label {
         font-size: 20px;
       }
 
-      .voucher-code {
-        font-size: 28px;
+      .voucher-data-container {
+        font-size: 24px;
+      }
+
+      .voucher-data-item {
+        font-size: 24px;
       }
     }
   </style>
