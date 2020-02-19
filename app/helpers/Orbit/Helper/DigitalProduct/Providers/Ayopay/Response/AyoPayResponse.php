@@ -47,10 +47,10 @@ class AyoPayResponse extends BaseResponse
 
             foreach($voucherData as $data) {
                 $dataArr = explode('=', $data);
+                $voucherDataKey = trim($dataArr[0]);
 
-                if (count($dataArr) === 2) {
-                    $this->voucherData[strtolower(trim($dataArr[0]))] = trim($dataArr[1]);
-                }
+                $this->voucherData[$voucherDataKey] = isset($dataArr[1])
+                    ? trim($dataArr[1]) : null;
             }
         }
     }
@@ -88,13 +88,30 @@ class AyoPayResponse extends BaseResponse
 
     /**
      * Get serial number from the response/voucher data.
-     * @return [type] [description]
+     * At first on the example (and confluence), ayopay will return something like this:
+     * Voucher code = QV343-Q23123-CGUC2-928SS-0ACGE,Serial Number = 127288910
+     *
+     * but somehow, on testing it can return like below:
+     * Serial Number1=T201801036,Voucher Code=E8skSlHzJB3zh1DipuOe
+     *
+     * Since we don't know exactly what key returned by the ayopay api,
+     * we just guessing by the first 13 letters from voucher data key.
+     * If match 'serial number', then assume it is the right serial number.
+     *
+     * @return string the voucher serial number
      */
     public function getSerialNumber()
     {
-        return isset($this->voucherData['serial number'])
-            ? $this->voucherData['serial number']
-            : '';
+        $serialNumber = '';
+
+        foreach($this->voucherData as $voucherDataKey => $voucherData) {
+            if (substr($voucherDataKey, 0, 13) === 'serial number') {
+                $serialNumber = $voucherData;
+                break;
+            }
+        }
+
+        return $serialNumber;
     }
 
     /**

@@ -9,14 +9,14 @@ use Orbit\Notifications\Payment\ReceiptNotification as BaseReceiptNotification;
  */
 class ReceiptNotification extends BaseReceiptNotification
 {
-    protected $serialNumber = null;
+    protected $voucherData = '';
 
     protected $signature = 'digital-product-receipt-notification';
 
-    function __construct($payment = null, $serialNumber = null)
+    function __construct($payment = null, $voucherData = [])
     {
         parent::__construct($payment);
-        $this->serialNumber = $serialNumber;
+        $this->voucherData = $voucherData;
     }
 
     public function getEmailTemplates()
@@ -42,6 +42,7 @@ class ReceiptNotification extends BaseReceiptNotification
     {
         return array_merge(parent::getEmailData(), [
             'myWalletUrl' => $this->getMyPurchasesUrl('/coupons'),
+            'voucherData' => $this->voucherData,
         ]);
     }
 }

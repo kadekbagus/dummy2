@@ -5861,6 +5861,10 @@ return array(
                     'uri' => 'articles',
                     'changefreq' => 'daily',
                 ),
+                'game-voucher' => array(
+                    'uri' => 'game-voucher?country=Indonesia',
+                    'changefreq' => 'daily',
+                ),
             ),
             'detail' => array(
                 'promotion' => array(
@@ -5897,6 +5901,10 @@ return array(
                 ),
                 'pulsa' => array(
                     'uri' => 'pulsa/%s?country=Indonesia',
+                    'changefreq' => 'monthly',
+                ),
+                'game-voucher' => array(
+                    'uri' => 'game-voucher/%s?country=Indonesia',
                     'changefreq' => 'monthly',
                 ),
             ),

@@ -260,14 +260,43 @@
       mso-table-lspace:0pt !important;
       mso-table-rspace:0pt !important;
       word-wrap: break-word;
-      text-align:left;
+      text-align:center;
       font-size: 15px;
       color: #333;
+    }
+
+    .transaction-item.item-name {
+      text-align: left;
+      word-break: break-all;
     }
 
     .transaction-total {
       border-bottom: 0;
       font-size: 15px;
+    }
+
+    .voucher-data-label {
+      text-align: left;
+      font-size: 16px;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #222;
+    }
+
+    .voucher-data-container {
+      text-align: left;
+      font-size: 16px;
+      padding: 5px 14px;
+      border-radius: 5px;
+      background: #f3f3f3;
+      color: #222;
+    }
+
+    .voucher-data-item {
+      font-size: 16px;
+      margin: 10px 0;
+      text-align: left;
+      color: #222;
     }
 
     /* MEDIA QUERIES */
@@ -419,6 +448,18 @@
 
       .transaction-total {
         font-size: 20px;
+      }
+
+      .voucher-data-label {
+        font-size: 20px;
+      }
+
+      .voucher-data-container {
+        font-size: 24px;
+      }
+
+      .voucher-data-item {
+        font-size: 24px;
       }
     }
   </style>

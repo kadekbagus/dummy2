@@ -22,6 +22,7 @@ use Orbit\Helper\Util\CdnUrlGenerator;
 use PromotionRetailer;
 use PaymentTransaction;
 use Helper\EloquentRecordCounter as RecordCounter;
+use SimpleXMLElement;
 
 class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
 {
@@ -80,6 +81,7 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
                                                 'payment_transactions.payment_method',
                                                 'payment_transactions.extra_data',
                                                 'payment_transactions.created_at',
+                                                DB::raw("convert_tz({$prefix}payment_transactions.created_at, '+00:00', {$prefix}payment_transactions.timezone_name) as date_tz"),
                                                 'payment_transactions.external_payment_transaction_id',
                                                 'payment_transaction_details.object_name as product_name',
                                                 'payment_transaction_details.object_type',
@@ -87,6 +89,7 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
                                                 'payment_transaction_details.quantity',
                                                 'payment_midtrans.payment_midtrans_info',
                                                 'digital_products.digital_product_id as item_id',
+                                                'payment_transaction_details.payload',
                                                 DB::raw($gameLogo)
                                                 )
                                             ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
@@ -113,6 +116,7 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
             }
 
             $game_voucher->payment_midtrans_info = json_decode(unserialize($game_voucher->payment_midtrans_info));
+            $game_voucher->digital_product_code = isset($game_voucher->payload) ? $this->getVoucherCode($game_voucher->payload) : null;
 
             $this->response->data = $game_voucher;
         } catch (ACLForbiddenException $e) {
@@ -157,5 +161,21 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    protected function getVoucherCode($data)
+    {
+        $voucherCode = null;
+        $voucherString = ',';
+        $voucherXml = new SimpleXMLElement($data);
+
+        if (isset($voucherXml->voucher)) {
+            if (strpos($voucherXml->voucher, $voucherString) !== false) {
+                $voucherData = explode($voucherString, $voucherXml->voucher);
+                $voucherCode = $voucherData[0]."\n".$voucherData[1];
+            }
+        }
+
+        return $voucherCode;
     }
 }
