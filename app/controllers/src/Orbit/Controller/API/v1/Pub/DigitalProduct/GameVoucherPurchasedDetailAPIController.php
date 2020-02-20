@@ -166,7 +166,7 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
     protected function getVoucherCode($data)
     {
         $voucherCode = null;
-        $voucherString = 'Voucher Code=';
+        $voucherString = ',';
         $voucherXml = new SimpleXMLElement($data);
 
         if (isset($voucherXml->voucher)) {
