@@ -64,7 +64,8 @@ class CustomerDigitalProductNotAvailableNotification extends CustomerNotificatio
      */
     protected function getEmailSubject()
     {
-        return trans('email-coupon-not-available.subject_digital_product', ['productType' => $this->productType], '', 'id');
+        $productType = trans("email-payment.product_type.{$this->productType}", [], '', 'id');
+        return trans('email-coupon-not-available.subject_digital_product', ['productType' => $productType], '', 'id');
     }
 
     /**
