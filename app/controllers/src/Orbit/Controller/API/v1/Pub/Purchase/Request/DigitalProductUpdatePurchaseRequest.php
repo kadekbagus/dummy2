@@ -15,7 +15,7 @@ class DigitalProductUpdatePurchaseRequest extends ValidateRequest
      * Allowed roles to access this request.
      * @var array
      */
-    protected $roles = ['consumer'];
+    protected $roles = ['consumer', 'guest'];
 
     /**
      * Get validation rules.
