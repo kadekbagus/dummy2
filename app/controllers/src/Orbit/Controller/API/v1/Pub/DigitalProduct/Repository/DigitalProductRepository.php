@@ -206,4 +206,28 @@ class DigitalProductRepository
         $this->digitalProduct->extra_field_metadata = $request->extra_field_metadata;
     }
 
+    /**
+     * Update status specific digital product.
+     *
+     * @param  [type] $request [description]
+     * @return [type]          [description]
+     */
+    public function updateStatus($digitalProductId, $request)
+    {
+        DB::transaction(function() use ($digitalProductId, $request)
+        {
+            $this->digitalProduct = DigitalProduct::findOrFail($digitalProductId);
+
+            if ($this->digitalProduct->status == 'active') {
+                $this->digitalProduct->status = 'inactive';
+            } else {
+                $this->digitalProduct->status = 'active';
+            }
+
+            $this->digitalProduct->save();
+
+        });
+
+        return new DigitalProductResource($this->digitalProduct);
+    }
 }

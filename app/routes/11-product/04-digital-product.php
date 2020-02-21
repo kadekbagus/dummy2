@@ -11,3 +11,6 @@ Route::get('/app/v1/digital-product/detail', ['as' => 'digital-product-detail', 
 
 // route for Digital Product update
 Route::post('/app/v1/digital-product/update', ['as' => 'digital-product-update', 'uses' => 'IntermediateProductAuthController@DigitalProduct\DigitalProductUpdate_postUpdate']);
+
+// route for Digital Product update status
+Route::post('/app/v1/digital-product/update-status', ['as' => 'digital-product-update-status', 'uses' => 'IntermediateProductAuthController@DigitalProduct\DigitalProductUpdateStatus_postUpdateStatus']);
