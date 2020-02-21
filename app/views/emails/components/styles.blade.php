@@ -68,7 +68,7 @@
       padding: 10px 40px;
       border-radius: 5px;
       box-shadow: 0px 0px 4px #444;
-      color: #FFF;
+      color: #ffffff !important;
       text-decoration: none;
       font-size: 14px;
       font-weight: bold;
@@ -83,7 +83,7 @@
       padding: 10px 40px;
       border-radius: 5px;
       box-shadow: 0px 0px 4px #444;
-      color: #ef5350;
+      color: #ef5350 !important;
       text-decoration: none;
       font-weight: bold;
       border: 1px solid #ef5350;
