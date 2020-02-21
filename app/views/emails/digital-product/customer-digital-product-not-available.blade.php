@@ -44,15 +44,18 @@
                                         <td height="20" align="center">&nbsp;</td>
                                     </tr>
 
-                                    <?php $langs = ['id', 'en']; ?>
+                                    <?php
+                                        $langs = ['id', 'en'];
+                                        $originalProductType = $productType;
+                                    ?>
 
                                     @foreach($langs as $lang)
-                                    <?php $productType = trans("email-payment.product_type.{$productType}", [], '', $lang); ?>
+                                    <?php $productType = trans("email-payment.product_type.{$originalProductType}", [], '', $lang); ?>
 
                                     @if ($lang !== 'id')
-                                    <tr>
-                                        <td><hr style="border:0; height: 1px;background-color: #999;"></td>
-                                    </tr>
+                                        <tr>
+                                            <td><hr style="border:0; height: 1px;background-color: #999;"></td>
+                                        </tr>
                                     @endif
 
                                     <tr>
