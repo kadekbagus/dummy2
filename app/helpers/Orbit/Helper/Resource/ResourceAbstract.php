@@ -2,6 +2,9 @@
 
 /**
  * Resource helper.
+ * A helper which maps/format an Eloquent Model/Collection into
+ * orbit api response data. This helps limiting what data/properties
+ * should be returned to the client.
  *
  * @author Budi <budi@gotomalls.com>
  */
