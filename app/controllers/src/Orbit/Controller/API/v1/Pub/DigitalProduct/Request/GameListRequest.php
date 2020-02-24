@@ -1,6 +1,5 @@
 <?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Request;
 
-use Validator;
 use Orbit\Helper\Request\ValidateRequest;
 
 /**
@@ -30,15 +29,4 @@ class GameListRequest extends ValidateRequest
             'sortmode' => 'in:asc,desc',
         ];
     }
-
-    /**
-     * Get custom validation messages.
-     *
-     * @return array
-     */
-    public function messages()
-    {
-        return [];
-    }
-
 }
