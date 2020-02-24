@@ -112,6 +112,16 @@ class ValidateRequest implements ValidateRequestInterface
     }
 
     /**
+     * Default implementation, just return empty message.
+     *
+     * @return array
+     */
+    public function messages()
+    {
+        return [];
+    }
+
+    /**
      * Get the validation error message.
      *
      * Can be overriden when we need custom message
@@ -174,7 +184,7 @@ class ValidateRequest implements ValidateRequestInterface
     }
 
     /**
-     * Try to get item from request param.
+     * Proxy request input so it is accessible directly from $this.
      *
      * @param  [type] $property [description]
      * @return [type]           [description]

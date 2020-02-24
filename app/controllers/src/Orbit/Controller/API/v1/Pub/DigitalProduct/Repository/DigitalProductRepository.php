@@ -128,6 +128,7 @@ class DigitalProductRepository
      * Save new digital product.
      *
      * @param  Orbit\Controller\API\v1\Product\DigitalProduct\Request\DigitalProductNewRequest $request
+     *
      * @return Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductResource newly created digital product
      */
     public function save($request)
@@ -155,7 +156,9 @@ class DigitalProductRepository
     /**
      * Update specific digital product.
      *
+     * @param  string $digitalProductId the digital product id that will be updated.
      * @param  Orbit\Controller\API\v1\Product\DigitalProduct\Request\DigitalProductUpdateRequest $request
+     *
      * @return Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductResource updated digital product
      */
     public function update($digitalProductId, $request)
