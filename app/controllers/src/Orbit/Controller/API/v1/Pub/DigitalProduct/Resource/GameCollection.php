@@ -3,7 +3,7 @@
 use Orbit\Helper\Resource\ResourceCollection;
 
 /**
- * Resource Collection of Game.
+ * A collection of Game.
  *
  * @author Budi <budi@gotomalls.com>
  */
@@ -12,20 +12,14 @@ class GameCollection extends ResourceCollection
     protected $imagePrefix = 'game_image_';
 
     /**
-     * Transform collection to array as response data.
+     * Transform collection to array.
      *
-     * @return [type] [description]
+     * @return array
      */
     public function toArray()
     {
-        $data = [
-            'returned_records' => $this->collection->count(),
-            'total_records' => $this->total,
-            'records' => [],
-        ];
-
         foreach($this->collection as $item) {
-            $data['records'][] = [
+            $this->data['records'][] = [
                 'id' => $item->game_id,
                 'name' => $item->game_name,
                 'slug' => $item->slug,
@@ -34,6 +28,6 @@ class GameCollection extends ResourceCollection
             ];
         }
 
-        return $data;
+        return $this->data;
     }
 }

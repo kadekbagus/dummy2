@@ -25,8 +25,6 @@ class GameListAPIController extends PubControllerAPI
         try {
             // $this->enableQueryLog();
 
-            $this->authorize(['guest', 'consumer']);
-
             //TODO: need cleaner way to inject this
             (new GameListRequest($this))->validate();
 

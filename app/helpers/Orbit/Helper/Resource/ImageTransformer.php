@@ -8,32 +8,26 @@
  */
 trait ImageTransformer {
 
-    private $imagePrefix = '';
-
     /**
-     * Set image prefix of media name.
-     * Will be used to make shorter version of variant name by replacing the prefix, e.g.
-     * 'game_image_desktop_thumb' --> 'desktop_thumb'
-     *
-     * @param string $imagePrefix [description]
+     * The image prefix that will be used to transform image/media.
+     * @var null
      */
-    protected function setImagePrefix($imagePrefix = '')
-    {
-        $this->imagePrefix = $imagePrefix;
-    }
+    protected $imagePrefix = null;
 
     /**
      * Transform a collection of media into key-value array of variant-url.
      *
-     * @param  [type] $item [description]
-     * @return [type]       [description]
+     * @param  Illuminate\Database\Eloquent\Model the model instance
+     * @return array list of images
      */
-    protected function transformImages($item)
+    protected function transformImages($item, $imagePrefix = '')
     {
         $images = null;
 
+        $imagePrefix = ! empty($imagePrefix) ? $imagePrefix : $this->imagePrefix;
+
         foreach($item->media as $media) {
-            $variant = str_replace($this->imagePrefix, '', $media->media_name_long);
+            $variant = str_replace($imagePrefix, '', $media->media_name_long);
             $images[$variant] = $media->image_url;
         }
 
