@@ -11,7 +11,7 @@ use Validator;
  * @todo  find a way to properly inject current user into request (might be a service)
  * @author Budi <budi@gotomalls.com>
  */
-class DigitalProductDetailRequest extends ValidateRequest
+class DetailRequest extends ValidateRequest
 {
     protected $roles = ['product manager'];
 

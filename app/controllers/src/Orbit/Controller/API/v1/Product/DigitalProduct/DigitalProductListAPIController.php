@@ -1,11 +1,10 @@
 <?php namespace Orbit\Controller\API\v1\Product\DigitalProduct;
 
-use App;
 use Exception;
 use OrbitShop\API\v1\ControllerAPI;
-use Orbit\Controller\API\v1\Product\DigitalProduct\Request\DigitalProductListRequest;
+use Orbit\Controller\API\v1\Product\DigitalProduct\Request\ListRequest;
 use Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductCollection;
-use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\DigitalProductRepository;
+use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\DigitalProductRepository as Repository;
 
 /**
  * Get list of digital product.
@@ -17,21 +16,19 @@ class DigitalProductListAPIController extends ControllerAPI
     /**
      * Handle Digital Product list request.
      *
-     * @param  DigitalProductRepository $digitalProductRepo
-     * @param  DigitalProductListRequest $request
+     * @param  DigitalProductRepository $repo
+     * @param  ListRequest $request
      *
      * @return Illuminate\Http\Response
      */
-    public function getList(
-        DigitalProductRepository $digitalProductRepo,
-        DigitalProductListRequest $request)
+    public function getList(Repository $repo, ListRequest $request)
     {
         $httpCode = 200;
 
         try {
 
             // Fetch the digital products
-            $digitalProducts = $digitalProductRepo->findProducts();
+            $digitalProducts = $repo->findProducts();
             $total = clone $digitalProducts;
             $total = $total->count();
             $digitalProducts = $digitalProducts->skip($request->skip)
