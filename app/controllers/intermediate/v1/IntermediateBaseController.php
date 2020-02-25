@@ -330,23 +330,22 @@ class IntermediateBaseController extends Controller
             }
         } elseif ($theClass === 'IntermediateProductAuthController') {
             $namespace = 'Orbit\Controller\API\v1\Product\\';
-            if ($userId = $this->authCheck()) {
-                $user = User::findOnWriteConnection($userId);
 
-                // This will query the database if the apikey has not been set up yet
-                $apikey = $user->apikey;
+            $user = App::make('currentUser');
 
-                if (empty($apikey)) {
-                    // Create new one
-                    $apikey = $user->createAPiKey();
-                }
+            // This will query the database if the apikey has not been set up yet
+            $apikey = $user->apikey;
 
-                // Generate the signature
-                $_GET['apikey'] = $apikey->api_key;
-                $_GET['apitimestamp'] = time();
-                $signature = Generator::genSignature($apikey->api_secret_key);
-                $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = $signature;
+            if (empty($apikey)) {
+                // Create new one
+                $apikey = $user->createAPiKey();
             }
+
+            // Generate the signature
+            $_GET['apikey'] = $apikey->api_key;
+            $_GET['apitimestamp'] = time();
+            $signature = Generator::genSignature($apikey->api_secret_key);
+            $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = $signature;
         }
 
         // Call the API class
@@ -364,8 +363,13 @@ class IntermediateBaseController extends Controller
             $method = 'Bar';
         }
 
-        if ($theClass === 'IntermediatePubAuthController') {
-            // Handle pub request.
+        $supportedDependenciesInjection = [
+            'IntermediatePubAuthController',
+            'IntermediateProductAuthController'
+        ];
+
+        if (in_array($theClass, $supportedDependenciesInjection)) {
+            // Handle the request.
             return $this->handleRequest($class, $method, $user);
         }
 
@@ -465,7 +469,11 @@ class IntermediateBaseController extends Controller
         // Instantiate the class and set the user, just like old behaviour.
         // We don't have to worry about old behaviour since it will not be affected
         // in any way.
-        $controller = $class::create()->setUser($user);
+        $controller = $class::create();
+
+        if (method_exists($controller, 'setUser')) {
+            $controller->setUser($user);
+        }
 
         // Then, call actual handler/method on the controller and pass the
         // resolved dependencies as its parameters.

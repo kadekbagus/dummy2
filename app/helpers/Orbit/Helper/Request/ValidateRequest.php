@@ -1,5 +1,7 @@
 <?php namespace Orbit\Helper\Request;
 
+use App;
+use DominoPOS\OrbitACL\ACL;
 use OrbitShop\API\v1\OrbitShopAPI;
 use Orbit\Helper\Request\Contracts\ValidateRequestInterface;
 use Request;
@@ -22,13 +24,7 @@ class ValidateRequest implements ValidateRequestInterface
      * Allowed roles to access this request.
      * @var array
      */
-    protected $roles = ['consumer'];
-
-    /**
-     * controller which handle the request (and has auth capability).
-     * @var [type]
-     */
-    protected $controller;
+    protected $roles = [];
 
     /**
      * @todo implement bail-on-first-validation-error rule.
@@ -48,35 +44,46 @@ class ValidateRequest implements ValidateRequestInterface
      */
     protected $validator = null;
 
-    public function __construct($controller = null)
+    public function __construct()
     {
-        $this->controller = $controller;
+        // New behaviour:
+        // Current User instance should be available on container,
+        // because we **should** do authentication/user fetching
+        // on the intermediate controller beforeFilter() hooks.
+        $this->user = App::make('currentUser');
 
-        if ($this->authRequest) {
-            $this->auth();
-        }
+        // Check if user authorized to make this request.
+        $this->authorize();
+
+        // Optionally, we can call validate() directly,
+        // so we don't have to call it on each controller@method.
+        $this->validate();
     }
 
     /**
-     * Authenticate and authorize request.
+     * Determine if this request need authorization.
      *
-     * @param  [type] $controller [description]
-     * @return self
+     * @return bool
      */
-    public function auth($controller = null)
+    protected function needAuthorization()
     {
-        if (! empty($controller)) {
-            $this->controller = $controller;
-        }
+        return $this->authRequest && ! empty($this->roles);
+    }
 
-        if (! empty($this->roles)) {
-            $this->controller->authorize($this->roles);
+    /**
+     * Check if User is authorized for this request
+     * based on their role.
+     *
+     * @return self|Illuminate\Http\Response on exception
+     */
+    protected function authorize()
+    {
+        if ($this->needAuthorization()) {
+            $userRole = $this->user->role->role_name;
+            if (! in_array(strtolower($userRole), $this->roles)) {
+                return $this->handleAuthorizationFails();
+            }
         }
-        else {
-            $this->controller->checkAuth();
-        }
-
-        $this->setUser($this->controller->api->user);
 
         return $this;
     }
@@ -86,7 +93,7 @@ class ValidateRequest implements ValidateRequestInterface
      * @param object $user
      * @return  self
      */
-    private function setUser($user)
+    public function setUser($user)
     {
         $this->user = $user;
 
@@ -129,7 +136,7 @@ class ValidateRequest implements ValidateRequestInterface
      *
      * @return string
      */
-    public function getValidationErrorMessage()
+    protected function getValidationErrorMessage()
     {
         return $this->validator->messages()->first();
     }
@@ -145,10 +152,21 @@ class ValidateRequest implements ValidateRequestInterface
     }
 
     /**
+     * Handle failed authorization.
+     *
+     * @param  string $message [description]
+     * @return [type]          [description]
+     */
+    protected function handleAuthorizationFails()
+    {
+        ACL::throwAccessForbidden();
+    }
+
+    /**
      * Get the validation data.
      * @return [type] [description]
      */
-    public function validationData()
+    protected function validationData()
     {
         return Request::all();
     }

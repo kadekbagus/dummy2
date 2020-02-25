@@ -7,7 +7,9 @@
 use App;
 use Config;
 use DB;
+use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
+use DominoPOS\OrbitACL\Exception\ACLUnauthenticatedException;
 use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Routing\Controller;
@@ -131,6 +133,10 @@ abstract class ControllerAPI extends Controller
         if ((int)$expires > 0)
         {
             $this->expiresTime = $expires;
+        }
+
+        if (isset($this->logQuery) && $this->logQuery) {
+            $this->enableQueryLog();
         }
     }
 
@@ -397,7 +403,7 @@ abstract class ControllerAPI extends Controller
     /**
      * Authorize specific user roles.
      *
-     * @todo currentUser binding should be a dedicated service (registered in service provider)
+     * @todo this method should be removed, since it is moved to the ValidateRequest helper.
      * @param  array  $roles [description]
      * @return [type]        [description]
      */
@@ -409,8 +415,7 @@ abstract class ControllerAPI extends Controller
 
         $role = $user->role->role_name;
         if (! in_array(strtolower($role), $roles)) {
-            $message = 'You have to login to continue';
-            OrbitShopAPI::throwInvalidArgument($message);
+            ACL::throwAccessForbidden();
         }
 
         // Bind current user into container so it is accessible
@@ -421,12 +426,14 @@ abstract class ControllerAPI extends Controller
     /**
      * handle exception.
      *
-     * @param  \Exception $e                    [description]
-     * @param  boolean    $withDatabaseRollback [description]
-     * @return [type]                           [description]
+     * @param  Exception $e the exception.
+     * @param  boolean $withDatabaseRollback indicate that we should rollback any DB changes or not.
+     *
+     * @return Illuminate\Http\Response
      */
     protected function handleException($e, $withDatabaseRollback = true)
     {
+        // Rollback DB changes if needed.
         if ($withDatabaseRollback) {
             $this->rollBack();
         }
@@ -435,13 +442,14 @@ abstract class ControllerAPI extends Controller
         $httpCode = 500;
         $this->response = new ExceptionResponseProvider($e);
 
-        if ($e instanceof ACLForbiddenException) {
+        if ($e instanceof ACLUnauthenticatedException) {
+            $httpCode = 401;
+        }
+        else if ($e instanceof ACLForbiddenException) {
             $httpCode = 403;
-            // set custom code/message
         }
         else if ($e instanceof InvalidArgsException) {
             $httpCode = 422;
-            // set custom code/message
         }
         else if ($e instanceof QueryException) {
             if ($debug) {

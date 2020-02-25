@@ -1,22 +1,15 @@
 <?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Request;
 
-use Validator;
 use Orbit\Helper\Request\ValidateRequest;
+use Validator;
 
 /**
  * Game detail Request
  *
- * @todo  find a way to properly inject current user into request (might be a service)
  * @author Budi <budi@gotomalls.com>
  */
 class GameDetailRequest extends ValidateRequest
 {
-    /**
-     * Allowed roles to access this request.
-     * @var array
-     */
-    protected $roles = ['guest', 'consumer'];
-
     /**
      * Get validation rules.
      *

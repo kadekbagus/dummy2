@@ -1,10 +1,10 @@
 <?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct;
 
 use Exception;
-use Illuminate\Support\Facades\App;
 use OrbitShop\API\v1\PubControllerAPI;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\GameRepository;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Request\GameDetailRequest;
+use Orbit\Controller\API\v1\Pub\DigitalProduct\Resource\GameResource;
 
 /**
  * Get detail of a Game.
@@ -18,16 +18,17 @@ class GameDetailAPIController extends PubControllerAPI
      *
      * @return Illuminate\Http\Response
      */
-    public function getDetail()
+    public function getDetail(
+        GameRepository $gameRepo,
+        GameDetailRequest $request)
     {
         $httpCode = 200;
 
         try {
-            // $this->enableQueryLog();
 
-            (new GameDetailRequest($this))->validate();
-
-            $this->response->data = App::make(GameRepository::class)->findGame();
+            $this->response->data = new GameResource(
+                $gameRepo->findGame($request->slug)
+            );
 
         } catch (Exception $e) {
             return $this->handleException($e, false);

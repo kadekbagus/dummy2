@@ -18,17 +18,19 @@ class GameListAPIController extends PubControllerAPI
      *
      * @return Illuminate\Http\Response
      */
-    public function getList()
+    public function getList(GameRepository $gameRepo, GameListRequest $request)
     {
         $httpCode = 200;
 
         try {
-            // $this->enableQueryLog();
 
-            //TODO: need cleaner way to inject this
-            (new GameListRequest($this))->validate();
+            $games = $gameRepo->findGames();
+            $total = clone $games;
 
-            $this->response->data = App::make(GameRepository::class)->findGames();
+            $total = $total->count();
+            $games = $games->skip($skip)->take($take)->get();
+
+            $this->response->data = new GameCollection($games, $total);
 
         } catch (Exception $e) {
             return $this->handleException($e, false);

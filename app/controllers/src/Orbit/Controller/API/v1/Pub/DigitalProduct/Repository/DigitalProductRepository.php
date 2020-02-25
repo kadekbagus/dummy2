@@ -39,12 +39,10 @@ class DigitalProductRepository
     /**
      * Find a collection of products.
      *
-     * @return Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductCollection
+     * @return Illuminate\Database\Eloquent\Builder
      */
     public function findProducts()
     {
-        $skip = OrbitInput::get('skip', 0);
-        $take = OrbitInput::get('take', 10);
         $sortBy = OrbitInput::get('sortby', 'updated_at');
         $sortMode = OrbitInput::get('sortmode', 'desc');
 
@@ -71,14 +69,7 @@ class DigitalProductRepository
             }
         });
 
-        $total = clone $digitalProducts;
-        $total = $total->count();
-
-        $digitalProducts->orderBy($sortBy, $sortMode);
-
-        $digitalProducts = $digitalProducts->skip($skip)->take($take)->get();
-
-        return new DigitalProductCollection($digitalProducts, $total);
+        return $digitalProducts;
     }
 
     /**

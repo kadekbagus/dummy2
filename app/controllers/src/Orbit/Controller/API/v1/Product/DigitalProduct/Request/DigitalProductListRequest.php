@@ -5,7 +5,6 @@ use Orbit\Helper\Request\ValidateRequest;
 /**
  * Digital Product List Request
  *
- * @todo  find a way to properly inject current user into request (might be a service)
  * @author Budi <budi@gotomalls.com>
  */
 class DigitalProductListRequest extends ValidateRequest
@@ -24,20 +23,10 @@ class DigitalProductListRequest extends ValidateRequest
     public function rules()
     {
         return [
-            'skip' => 'required|numeric',
-            'take' => 'required|numeric',
+            'skip' => 'required|integer',
+            'take' => 'required|integer',
             'sortby' => 'sometimes|in:status,product_type,product_name,selling_price,updated_at',
             'sortmode' => 'sometimes|in:asc,desc',
         ];
-    }
-
-    /**
-     * Get custom validation messages.
-     *
-     * @return array
-     */
-    public function messages()
-    {
-        return [];
     }
 }

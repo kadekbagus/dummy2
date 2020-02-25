@@ -10,12 +10,6 @@ use Orbit\Helper\Request\ValidateRequest;
 class GameListRequest extends ValidateRequest
 {
     /**
-     * Allowed roles to access this request.
-     * @var array
-     */
-    protected $roles = ['guest', 'consumer'];
-
-    /**
      * Get validation rules.
      *
      * @return array array of rules for this request.

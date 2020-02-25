@@ -26,45 +26,27 @@ class GameRepository
     /**
      * Get collection based on requested filter.
      *
-     * @return [type] [description]
+     * @return Illuminate\Database\Eloquent\Builder
      */
     public function findGames()
     {
-        $skip = OrbitInput::get('skip', 0);
-        $take = OrbitInput::get('take', 10);
         $sortBy = OrbitInput::get('sortby', 'game_name');
         $sortMode = OrbitInput::get('sortmode', 'asc');
 
-        $games = Game::with($this->buildMediaRelation())->active()
+        $return Game::with($this->buildMediaRelation())->active()
             //OM-5547, game listing is order by aphabetical name
             ->orderBy($sortBy, $sortMode);
-
-        $total = clone $games;
-        $total = $total->count();
-        $games = $games->skip($skip)->take($take)->get();
-        $games = new GameCollection($games, $total);
-
-        // Call the transform/array method via __invoke,
-        // which is a shorthand for $games->toArray();
-        return $games();
-
-        // Can also return an instance of ResourceInterface (GameCollection)
-        // as it will run toArray() automatically
-        // when rendering the response via render()
-        // return new GameCollection($games, $total);
     }
 
     /**
      * Find a Game based on the slug.
      *
-     * @param  [type] $gameSlug [description]
-     * @return [type]           [description]
+     * @param  string $gameSlug the game slug
+     * @return Illuminate\Database\Eloquent\Builder
      */
-    public function findGame($gameSlug = null)
+    public function findGame($gameSlug)
     {
-        $gameSlug = $gameSlug ?: OrbitInput::get('slug');
-
-        $game = Game::with(
+        return Game::with(
             [
                 'digital_products' => function($query) {
                     $query->select(
@@ -78,14 +60,5 @@ class GameRepository
             ]
             + $this->buildMediaRelation()
         )->active()->where('slug', $gameSlug)->first();
-
-        $game = new GameResource($game);
-
-        // call the transform/toArray method via __invoke()
-        return $game();
-
-        // Can also return instance of ResourceInterface (GameResource)
-        // as it will run toArray() when rendering the response via render()
-        // return new GameResource($game);
     }
 }

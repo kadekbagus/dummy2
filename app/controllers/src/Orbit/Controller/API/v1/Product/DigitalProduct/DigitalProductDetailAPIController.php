@@ -17,21 +17,21 @@ class DigitalProductDetailAPIController extends ControllerAPI
     /**
      * Handle Digital Product detail request.
      *
+     * @param  DigitalProductRepository $digitalProductRepo
+     * @param  DigitalProductListRequest $request
+     *
      * @return Illuminate\Http\Response
      */
-    public function getDetail()
+    public function getDetail(
+        DigitalProductRepository $digitalProductRepo,
+        DigitalProductDetailRequest $request)
     {
         $httpCode = 200;
 
         try {
-            // $this->enableQueryLog();
-
-            with($request = new DigitalProductDetailRequest($this))->validate();
 
             $this->response->data = new DigitalProductResource(
-                App::make(DigitalProductRepository::class)->findProduct(
-                    $request->id
-                )
+                $digitalProductRepo->findProduct($request->id)
             );
 
         } catch (Exception $e) {
