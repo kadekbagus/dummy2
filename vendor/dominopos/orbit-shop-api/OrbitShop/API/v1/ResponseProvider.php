@@ -120,4 +120,18 @@ class ResponseProvider
             return $this->$method($value);
         }
     }
+
+    /**
+     * Return response as array.
+     * @return array
+     */
+    public function toArray()
+    {
+        return [
+            'code' => $this->code,
+            'status' => $this->status,
+            'message' => $this->message,
+            'data' => $this->data,
+        ];
+    }
 }
