@@ -27,7 +27,7 @@ use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
 use Mall;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
-use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
 use Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController;
