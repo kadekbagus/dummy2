@@ -41,11 +41,12 @@ class UserReportMailQueue
             $dataView['promotion_list_page_url'] = $dataView['landing_page_url'].'/promotions';
             $dataView['event_list_page_url'] = $dataView['landing_page_url'].'/events';
             $dataView['article_list_page_url'] = $dataView['landing_page_url'].'/articles';
+            $dataView['contact'] = Config::get('orbit.contact_information.customer_service');
 
             $mailViews = array(
-                            'html' => 'emails.user-report.user-report-html',
-                            'text' => 'emails.user-report.user-report-text'
-                            );
+                'html' => 'emails.user-report.user-report-html',
+                'text' => 'emails.user-report.user-report-text',
+            );
 
             $this->sendUserReportEmail($mailViews, $dataView);
 
@@ -93,7 +94,7 @@ class UserReportMailQueue
             $from = $emailconf['email'];
             $name = $emailconf['name'];
             $email = $data['user_email'];
-            $subject = 'Gotomalls User Monthly Report';
+            $subject = trans('email-report.subject');
 
             $message->from($from, $name);
             $message->subject($subject);
