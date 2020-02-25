@@ -32,10 +32,6 @@ class IntermediatePubAuthController extends IntermediateBaseController
                 // Get user, or generate guest user for new session
                 $user = UserGetter::getLoggedInUserOrGuest($this->session);
 
-                if (empty($user)) {
-                    ACL::throwUnauthenticatedRequest();
-                }
-
                 // Register User instance in the container,
                 // so it will be accessible from anywhere
                 // without doing any re-check/DB call.

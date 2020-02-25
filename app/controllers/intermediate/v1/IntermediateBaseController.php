@@ -445,26 +445,6 @@ class IntermediateBaseController extends Controller
     }
 
     /**
-     * Check the authentication status from Pub Controllers.
-     *
-     * @author Ahmad <ahmad@dominopos.com>
-     * @return string - User ID
-     */
-    protected function authCheckPub()
-    {
-        $userId = $this->session->read('user_id');
-
-        if (empty($userId)) {
-            $userId = $this->session->read('guest_user_id');
-            if (empty($userId)) {
-                return FALSE;
-            }
-        }
-
-        return $userId;
-    }
-
-    /**
      * Handle the request.
      *
      * First, we would resolve dependencies defined in the controller method
