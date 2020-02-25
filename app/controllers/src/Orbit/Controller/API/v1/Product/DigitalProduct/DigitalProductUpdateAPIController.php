@@ -3,8 +3,9 @@
 use App;
 use Exception;
 use OrbitShop\API\v1\ControllerAPI;
-use Orbit\Controller\API\v1\Product\DigitalProduct\Request\DigitalProductUpdateRequest;
-use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\DigitalProductRepository;
+use Orbit\Controller\API\v1\Product\DigitalProduct\Request\UpdateRequest;
+use Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductResource;
+use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\DigitalProductRepository as Repository;
 
 /**
  * Handle digital product update.
@@ -18,18 +19,14 @@ class DigitalProductUpdateAPIController extends ControllerAPI
      *
      * @return Illuminate\Http\Response
      */
-    public function postUpdate()
+    public function postUpdate(Repository $repo, UpdateRequest $request)
     {
         $httpCode = 200;
 
         try {
-            // $this->enableQueryLog();
 
-            with($request = new DigitalProductUpdateRequest($this))->validate();
-
-            $this->response->data = App::make(DigitalProductRepository::class)->update(
-                $request->id,
-                $request
+            $this->response->data = new DigitalProductResource(
+                $repo->update($request->id, $request)
             );
 
         } catch (Exception $e) {

@@ -136,7 +136,7 @@ class ValidateRequest implements ValidateRequestInterface
      *
      * @return string
      */
-    protected function getValidationErrorMessage()
+    public function getValidationErrorMessage()
     {
         return $this->validator->messages()->first();
     }

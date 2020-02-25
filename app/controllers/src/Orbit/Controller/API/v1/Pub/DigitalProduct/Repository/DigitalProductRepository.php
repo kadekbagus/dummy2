@@ -203,9 +203,9 @@ class DigitalProductRepository
      * @param  [type] $request [description]
      * @return [type]          [description]
      */
-    public function updateStatus($digitalProductId, $request)
+    public function updateStatus($digitalProductId)
     {
-        DB::transaction(function() use ($digitalProductId, $request)
+        DB::transaction(function() use ($digitalProductId)
         {
             $this->digitalProduct = DigitalProduct::findOrFail($digitalProductId);
 
@@ -219,6 +219,6 @@ class DigitalProductRepository
 
         });
 
-        return new DigitalProductResource($this->digitalProduct);
+        return $this->digitalProduct;
     }
 }
