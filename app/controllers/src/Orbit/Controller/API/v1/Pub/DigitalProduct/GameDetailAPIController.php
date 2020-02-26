@@ -1,4 +1,6 @@
-<?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct;
+<?php
+
+namespace Orbit\Controller\API\v1\Pub\DigitalProduct;
 
 use Exception;
 use OrbitShop\API\v1\PubControllerAPI;
@@ -18,16 +20,14 @@ class GameDetailAPIController extends PubControllerAPI
      *
      * @return Illuminate\Http\Response
      */
-    public function getDetail(
-        GameRepository $gameRepo,
-        GameDetailRequest $request)
+    public function getDetail(GameRepository $repo, GameDetailRequest $request)
     {
         $httpCode = 200;
 
         try {
 
             $this->response->data = new GameResource(
-                $gameRepo->findGame($request->slug)
+                $repo->findGame($request->slug)
             );
 
         } catch (Exception $e) {

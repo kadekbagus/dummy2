@@ -1,11 +1,13 @@
-<?php namespace Orbit\Controller\API\v1\Product\DigitalProduct;
+<?php
+
+namespace Orbit\Controller\API\v1\Product\DigitalProduct;
 
 use App;
 use Exception;
 use OrbitShop\API\v1\ControllerAPI;
 use Orbit\Controller\API\v1\Product\DigitalProduct\Request\CreateRequest;
-use Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductResource as Resource;
-use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\DigitalProductRepository as Repository;
+use Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductResource;
+use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\DigitalProductRepository;
 
 /**
  * Handle digital product creation.
@@ -19,8 +21,10 @@ class DigitalProductNewAPIController extends ControllerAPI
      *
      * @return Illuminate\Http\Response
      */
-    public function postNew(Repository $repo, CreateRequest $request)
-    {
+    public function postNew(
+        DigitalProductRepository $repo,
+        CreateRequest $request
+    ) {
         $httpCode = 200;
 
         try {

@@ -1,11 +1,13 @@
-<?php namespace Orbit\Controller\API\v1\Product\DigitalProduct;
+<?php
+
+namespace Orbit\Controller\API\v1\Product\DigitalProduct;
 
 use App;
 use Exception;
 use OrbitShop\API\v1\ControllerAPI;
 use Orbit\Controller\API\v1\Product\DigitalProduct\Request\UpdateRequest;
 use Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductResource;
-use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\DigitalProductRepository as Repository;
+use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\DigitalProductRepository;
 
 /**
  * Handle digital product update.
@@ -19,8 +21,10 @@ class DigitalProductUpdateAPIController extends ControllerAPI
      *
      * @return Illuminate\Http\Response
      */
-    public function postUpdate(Repository $repo, UpdateRequest $request)
-    {
+    public function postUpdate(
+        DigitalProductRepository $repo,
+        UpdateRequest $request
+    ) {
         $httpCode = 200;
 
         try {

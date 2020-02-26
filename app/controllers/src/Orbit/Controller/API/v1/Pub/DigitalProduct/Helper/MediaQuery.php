@@ -86,7 +86,7 @@ trait MediaQuery {
      *
      * @param array a relationship query to media.
      */
-    protected function buildMediaRelation()
+    protected function buildMediaQuery()
     {
         return [
             'media' => function($query) {

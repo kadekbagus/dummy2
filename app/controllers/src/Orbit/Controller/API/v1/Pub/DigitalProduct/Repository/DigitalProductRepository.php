@@ -1,11 +1,11 @@
-<?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Repository;
+<?php
+
+namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Repository;
 
 use App;
 use DB;
 use DigitalProduct;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
-use Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductCollection;
-use Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductResource;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Helper\MediaQuery;
 
 /**
@@ -99,7 +99,7 @@ class DigitalProductRepository
                             ->orWhere('games.game_id', $gameSlugOrId);
                     });
 
-                    $query->with($this->buildMediaRelation());
+                    $query->with($this->buildMediaQuery());
                 }
             },
             'provider_product' => function($query) {
@@ -141,7 +141,7 @@ class DigitalProductRepository
             $this->digitalProduct->provider_name = App::make('providerProduct')->provider_name;
         });
 
-        return new DigitalProductResource($this->digitalProduct);
+        return $this->digitalProduct;
     }
 
     /**
@@ -171,7 +171,7 @@ class DigitalProductRepository
             $this->digitalProduct->provider_name = App::make('providerProduct')->provider_name;
         });
 
-        return new DigitalProductResource($this->digitalProduct);
+        return $this->digitalProduct;
     }
 
     /**

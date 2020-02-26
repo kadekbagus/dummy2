@@ -1,4 +1,7 @@
-<?php namespace OrbitShop\API\v1;
+<?php
+
+namespace OrbitShop\API\v1;
+
 /**
  * Base API Controller.
  *
@@ -11,6 +14,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use DominoPOS\OrbitACL\Exception\ACLUnauthenticatedException;
 use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Routing\Controller;
 use Lang;
@@ -404,17 +408,20 @@ abstract class ControllerAPI extends Controller
      * Authorize specific user roles.
      *
      * @todo this method should be removed, since it is moved to the ValidateRequest helper.
-     * @param  array  $roles [description]
+     * @param  array  $allowedRoles [description]
      * @return [type]        [description]
      */
-    public function authorize($roles = [])
+    public function authorize($allowedRoles = [])
     {
         $this->checkAuth();
 
         $user = $this->api->user;
+        $userRole = $user->role->role_name;
 
-        $role = $user->role->role_name;
-        if (! in_array(strtolower($role), $roles)) {
+        if (
+            ! empty($allowedRoles)
+            && ! in_array(strtolower($userRole), $allowedRoles)
+        ) {
             ACL::throwAccessForbidden();
         }
 
@@ -427,7 +434,7 @@ abstract class ControllerAPI extends Controller
      * handle exception.
      *
      * @param  Exception $e the exception.
-     * @param  boolean $withDatabaseRollback indicate that we should rollback any DB changes or not.
+     * @param  bool $withDatabaseRollback indicate that we should rollback any DB changes or not.
      *
      * @return Illuminate\Http\Response
      */
@@ -451,17 +458,28 @@ abstract class ControllerAPI extends Controller
         else if ($e instanceof InvalidArgsException) {
             $httpCode = 422;
         }
+        else if ($e instanceof ModelNotFoundException) {
+            $httpCode = 404;
+            $this->response->code = 404;
+        }
         else if ($e instanceof QueryException) {
             if ($debug) {
                 $this->response->message = $e->getMessage();
             } else {
-                $this->response->message = Lang::get('validation.orbit.queryerror');
+                $this->response->message = Lang::get(
+                    'validation.orbit.queryerror'
+                );
             }
         }
         else {
             // set other code/message...
             if ($debug) {
-                $this->response->message = $e->getFile() . ':' . $e->getLine() . ' >> ' . $e->getMessage();
+                $this->response->message = sprintf(
+                    '%s(%s): %s',
+                    $e->getFile(),
+                    $e->getLine(),
+                    $e->getMessage()
+                );
             }
         }
 

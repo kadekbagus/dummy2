@@ -1,4 +1,6 @@
-<?php namespace Orbit\Helper\Resource;
+<?php
+
+namespace Orbit\Helper\Resource;
 
 /**
  * Resource helper.

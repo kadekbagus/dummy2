@@ -4,6 +4,7 @@ use Config;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use DominoPOS\OrbitACL\Exception\ACLUnauthenticatedException;
 use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\ServiceProvider;
 use Log;
 use OrbitShop\API\v1\ExceptionResponseProvider;
@@ -31,9 +32,15 @@ class ErrorServiceProvider extends ServiceProvider
 
             if ($e instanceof ACLUnauthenticatedException) {
                 $httpCode = 401;
+                $response['code'] = 401;
             }
             else if ($e instanceof ACLForbiddenException) {
                 $httpCode = 403;
+                $response['code'] = 403;
+            }
+            else if ($e instanceof ModelNotFoundException) {
+                $httpCode = 404;
+                $response['code'] = 404;
             }
             else {
                 if (! Config::get('app.debug')) {

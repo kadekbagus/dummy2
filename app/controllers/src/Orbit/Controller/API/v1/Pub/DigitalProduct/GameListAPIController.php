@@ -1,10 +1,12 @@
-<?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct;
+<?php
+
+namespace Orbit\Controller\API\v1\Pub\DigitalProduct;
 
 use Exception;
-use Illuminate\Support\Facades\App;
 use OrbitShop\API\v1\PubControllerAPI;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\GameRepository;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Request\GameListRequest;
+use Orbit\Controller\API\v1\Pub\DigitalProduct\Resource\GameCollection;
 
 /**
  * Get list of Game.
@@ -18,17 +20,17 @@ class GameListAPIController extends PubControllerAPI
      *
      * @return Illuminate\Http\Response
      */
-    public function getList(GameRepository $gameRepo, GameListRequest $request)
+    public function getList(GameRepository $repo, GameListRequest $request)
     {
         $httpCode = 200;
 
         try {
 
-            $games = $gameRepo->findGames();
+            $games = $repo->findGames();
             $total = clone $games;
 
+            $games = $games->skip($request->skip)->take($request->take)->get();
             $total = $total->count();
-            $games = $games->skip($skip)->take($take)->get();
 
             $this->response->data = new GameCollection($games, $total);
 
