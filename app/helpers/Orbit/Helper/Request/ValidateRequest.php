@@ -204,8 +204,8 @@ class ValidateRequest implements ValidateRequestInterface
     /**
      * Proxy request input so it is accessible directly from $this.
      *
-     * @param  [type] $property [description]
-     * @return [type]           [description]
+     * @param  string $property request property.
+     * @return mixed
      */
     public function __get($property)
     {

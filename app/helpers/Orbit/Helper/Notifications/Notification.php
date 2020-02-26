@@ -5,6 +5,7 @@ use Log;
 use Orbit\FakeJob;
 use Orbit\Helper\Notifications\Exceptions\NotificationMethodsEmptyException;
 use Queue;
+use User;
 
 /**
  * Base Notification class.
@@ -91,6 +92,16 @@ abstract class Notification {
 
     function __construct($notifiable = null)
     {
+        // If notifiable is a string (assume an email address),
+        // then create a temporary User instance and set it
+        // as the receipient.
+        if (is_string($notifiable)) {
+            $tempUser = new User;
+            $tempUser->email = $notifiable;
+
+            $notifiable = $tempUser;
+        }
+
         $this->setNotifiable($notifiable);
     }
 
