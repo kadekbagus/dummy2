@@ -138,7 +138,7 @@ class DigitalProductRepository
             }
 
             // Add provider_name into digital product object
-            $this->digitalProduct->provider_name = App::make('providerProduct')->provider_name;
+            $this->digitalProduct->provider_product = App::make('providerProduct');
         });
 
         return $this->digitalProduct;
@@ -168,7 +168,7 @@ class DigitalProductRepository
             }
 
             // Add provider name into digital product response.
-            $this->digitalProduct->provider_name = App::make('providerProduct')->provider_name;
+            $this->digitalProduct->provider_product = App::make('providerProduct');
         });
 
         return $this->digitalProduct;
