@@ -12,7 +12,6 @@ use User;
  * This helper inspired by Laravel 5's Notification feature.
  *
  * @todo  use a single sender class for each notification method.
- * @todo  support bulk recipients.
  * @todo  separate queue name for each notification method.
  *
  * @author Budi <budi@dominopos.com>
@@ -90,7 +89,22 @@ abstract class Notification {
      */
     protected $logID = 'OrbitNotification';
 
+    /**
+     * Construct the notification.
+     *
+     * @param string|array|User $notifiable the target recipients.
+     */
     function __construct($notifiable = null)
+    {
+        $this->setNotifiable($notifiable);
+    }
+
+    /**
+     * Set the notifiable instance/object.
+     *
+     * @param string|array|User the recipient
+     */
+    public function setNotifiable($notifiable)
     {
         // If notifiable is a string (assume an email address),
         // then create a temporary User instance and set it
@@ -102,16 +116,6 @@ abstract class Notification {
             $notifiable = $tempUser;
         }
 
-        $this->setNotifiable($notifiable);
-    }
-
-    /**
-     * Set the notifiable instance/object.
-     *
-     * @param [type] $notifiable [description]
-     */
-    public function setNotifiable($notifiable)
-    {
         $this->notifiable = $notifiable;
 
         return $this;
@@ -221,7 +225,17 @@ abstract class Notification {
                 continue;
             }
 
-            $this->{$this->notificationMethodsActions[$method]}($customDelay);
+            if (is_array($this->notifiable)) {
+
+                $tempNotifiables = $this->notifiable;
+                foreach($tempNotifiables as $notifiable) {
+                    $this->setNotifiable($notifiable);
+                    $this->{$this->notificationMethodsActions[$method]}($customDelay);
+                }
+            }
+            else {
+                $this->{$this->notificationMethodsActions[$method]}($customDelay);
+            }
         }
     }
 

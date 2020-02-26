@@ -27,7 +27,7 @@ class FeedbackNewAPIController extends PubControllerAPI
         try {
 
             $csEmails = Config::get('orbit.feedback.cs_email', ['cs@gotomalls.com']);
-            $csEmails = ! is_array($csEmails) ? [$csEmails] : $csEmails;
+            $csEmails = ! is_array($csEmails) ? explode(',', $csEmails) : $csEmails;
 
             $notifData = array_merge(
                 $request->getData(),
@@ -37,13 +37,11 @@ class FeedbackNewAPIController extends PubControllerAPI
                 ]
             );
 
-            foreach($csEmails as $email) {
-                if ($request->is_mall === 'Y') {
-                    (new MallFeedbackNotification($email, $notifData))->send();
-                }
-                else {
-                    (new StoreFeedbackNotification($email, $notifData))->send();
-                }
+            if ($request->is_mall === 'Y') {
+                (new MallFeedbackNotification($csEmails, $notifData))->send();
+            }
+            else {
+                (new StoreFeedbackNotification($csEmails, $notifData))->send();
             }
 
         } catch (Exception $e) {
