@@ -29,7 +29,10 @@ class DigitalProductDetailAPIController extends PubControllerAPI
             with($request = new DigitalProductDetailRequest($this))->validate();
 
             $this->response->data = new DigitalProductResource(
-                App::make(DigitalProductRepository::class)->findProduct()
+                App::make(DigitalProductRepository::class)->findProduct(
+                    $request->product_id,
+                    $request->game_id
+                )
             );
 
         } catch (Exception $e) {

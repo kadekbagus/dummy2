@@ -6,13 +6,15 @@ use Orbit\Helper\Request\ValidateRequest;
 use Validator;
 
 /**
- * Digital Product Update Request
+ * Digital Product Detail Request
  *
  * @todo  find a way to properly inject current user into request (might be a service)
  * @author Budi <budi@gotomalls.com>
  */
-class DigitalProductUpdateStatusRequest extends DigitalProductNewRequest
+class DetailRequest extends ValidateRequest
 {
+    protected $roles = ['product manager'];
+
     /**
      * Get validation rules.
      *
@@ -20,7 +22,9 @@ class DigitalProductUpdateStatusRequest extends DigitalProductNewRequest
      */
     public function rules()
     {
-        return array_merge(['id' => 'required']);
+        return [
+            'id' => 'required|product_exists',
+        ];
     }
 
     /**
@@ -30,11 +34,13 @@ class DigitalProductUpdateStatusRequest extends DigitalProductNewRequest
      */
     public function messages()
     {
-        return array_merge(parent::messages());
+        return [
+            'product_exists' => 'PRODUCT_DOES_NOT_EXISTS',
+        ];
     }
 
     protected function registerCustomValidations()
     {
-        parent::registerCustomValidations();
+        Validator::extend('product_exists', 'Orbit\Controller\API\v1\Pub\DigitalProduct\Validator\DigitalProductValidator@exists');
     }
 }

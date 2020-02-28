@@ -1,7 +1,7 @@
 <?php namespace Orbit\Controller\API\v1\Product\DigitalProduct\Resource;
 
 use DigitalProduct;
-use Orbit\Helper\Resource\ResourceAbstract as Resource;
+use Orbit\Helper\Resource\Resource;
 
 /**
  * Single Digital Product resource.
@@ -10,60 +10,49 @@ use Orbit\Helper\Resource\ResourceAbstract as Resource;
  */
 class DigitalProductResource extends Resource
 {
-    private $resource = null;
-
-    public function __construct($resource)
-    {
-        $this->resource = $resource;
-    }
-
     /**
      * Transform Digital Product object into response data array.
      *
-     * @return [type] [description]
+     * @return array
      */
     public function toArray()
     {
-        if ( empty($this->resource)) {
-            return [];
-        }
-
         return [
-            'id' => $this->resource->digital_product_id,
-            'type' => $this->resource->product_type,
-            'name' => $this->resource->product_name,
-            'code' => $this->resource->code,
-            'price' => $this->resource->selling_price,
-            'status' => $this->resource->status,
-            'displayed' => $this->resource->is_displayed,
-            'promo' => $this->resource->is_promo,
-            'description' => $this->resource->description,
-            'notes' => $this->resource->notes,
-            'extra_field_metadata' => $this->resource->extra_field_metadata,
+            'id' => $this->digital_product_id,
+            'type' => $this->product_type,
+            'name' => $this->product_name,
+            'code' => $this->code,
+            'price' => $this->selling_price,
+            'status' => $this->status,
+            'displayed' => $this->is_displayed,
+            'promo' => $this->is_promo,
+            'description' => $this->description,
+            'notes' => $this->notes,
+            'extra_field_metadata' => $this->extra_field_metadata,
             'provider_product' => [
-                'id' => $this->resource->selected_provider_product_id,
-                'provider_name' => $this->transformProviderName(),
-                'product_name' => $this->transformProviderProductName(),
+                'id' => $this->selected_provider_product_id,
+                'provider_name' => $this->getProviderName(),
+                'product_name' => $this->getProviderProductName(),
             ],
             'games' => $this->transformGames(),
         ];
     }
 
     /**
-     * Transform related games info.
+     * Transform related games.
      *
-     * @return [type] [description]
+     * @return array
      */
     protected function transformGames()
     {
-        if (! isset($this->resource->games)) {
+        if (! isset($this->games)) {
             $this->resource->load(['games' => function($query) {
                 $query->select('games.game_id', 'game_name');
             }]);
         }
 
         $games = null;
-        foreach($this->resource->games as $game) {
+        foreach($this->games as $game) {
             $games[] = [
                 'id' => $game->game_id,
                 'name' => $game->game_name,
@@ -74,16 +63,16 @@ class DigitalProductResource extends Resource
     }
 
     /**
-     * Transform provider name.
-     * @return [type] [description]
+     * Get provider name (e.g. ayopay, unipin, etc)
+     * @return string
      */
-    protected function transformProviderName()
+    protected function getProviderName()
     {
-        $providerName = $this->resource->provider_name;
+        $providerName = $this->provider_name;
 
         if (empty($providerName)) {
-            $providerName = $this->resource->provider_product
-                                ? $this->resource->provider_product->provider_name
+            $providerName = $this->provider_product
+                                ? $this->provider_product->provider_name
                                 : null;
         }
 
@@ -91,16 +80,16 @@ class DigitalProductResource extends Resource
     }
 
     /**
-     * Transform provider product name.
-     * @return [type] [description]
+     * Get provider product name.
+     * @return string
      */
-    protected function transformProviderProductName()
+    protected function getProviderProductName()
     {
-        $providerProductName = $this->resource->provider_product_name;
+        $providerProductName = $this->provider_product_name;
 
         if (empty($providerProductName)) {
-            $providerProductName = $this->resource->provider_product
-                                    ? $this->resource->provider_product->provider_product_name
+            $providerProductName = $this->provider_product
+                                    ? $this->provider_product->provider_product_name
                                     : null;
         }
 

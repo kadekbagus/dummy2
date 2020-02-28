@@ -1,6 +1,7 @@
-<?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Request;
+<?php
 
-use Validator;
+namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Request;
+
 use Orbit\Helper\Request\ValidateRequest;
 
 /**
@@ -10,12 +11,6 @@ use Orbit\Helper\Request\ValidateRequest;
  */
 class GameListRequest extends ValidateRequest
 {
-    /**
-     * Allowed roles to access this request.
-     * @var array
-     */
-    protected $roles = ['guest', 'consumer'];
-
     /**
      * Get validation rules.
      *
@@ -30,15 +25,4 @@ class GameListRequest extends ValidateRequest
             'sortmode' => 'in:asc,desc',
         ];
     }
-
-    /**
-     * Get custom validation messages.
-     *
-     * @return array
-     */
-    public function messages()
-    {
-        return [];
-    }
-
 }
