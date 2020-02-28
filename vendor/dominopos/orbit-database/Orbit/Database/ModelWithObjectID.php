@@ -1,4 +1,7 @@
-<?php namespace Orbit\Database;
+<?php
+
+namespace Orbit\Database;
+
 /**
  * @author Yudi Rahono
  * @author William Shallum
@@ -6,12 +9,12 @@
  * @desc Extends original model to support unique ID and some other goodies.
  */
 use Illuminate\Database\Eloquent\Model;
+use Orbit\Database\ExtendedQueryBuilder;
 use Orbit\Database\Relation\BelongToManyWithObjectID;
 
 class ModelWithObjectID extends Model
 {
     public $incrementing = false;
-
 
     public static function boot()
     {
@@ -116,5 +119,19 @@ class ModelWithObjectID extends Model
         $readPdo = NULL;
 
         return $result;
+    }
+
+    /**
+     * Override default behaviour of creating new Builder instance.
+     *
+     * @see Illuminate\Database\Eloquent\Model:1819
+     */
+    protected function newBaseQueryBuilder()
+    {
+        $conn = $this->getConnection();
+
+        $grammar = $conn->getQueryGrammar();
+
+        return new ExtendedQueryBuilder($conn, $grammar, $conn->getPostProcessor());
     }
 }

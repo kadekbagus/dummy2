@@ -211,7 +211,6 @@ class GenerateSitemapCommand extends Command
             } else {
                 $this->urlStringPrinter(sprintf($this->urlTemplate, $uri['uri']), date('c', $updatedAt), $uri['changefreq']);
             }
-
         }
     }
 
@@ -734,6 +733,8 @@ class GenerateSitemapCommand extends Command
         foreach ($listUris as $key => $uri) {
             if ($key === 'home') {
                 $this->urlStringPrinter(sprintf($this->urlTemplate, $uri['uri']), date('c', $this->getLastPromotionUpdatedAt()), $uri['changefreq']);
+            } if ($key === 'nearest-mall-by-city') {
+                $this->generateNearestMallListByCitySitemap($uri);
             } else {
                 $this->urlStringPrinter(sprintf($this->urlTemplate, $uri['uri']), date('c'), $uri['changefreq']);
             }
@@ -837,6 +838,67 @@ class GenerateSitemapCommand extends Command
     }
 
     /**
+     * Generate nearest Malls by City.
+     *
+     * @param array $config
+     */
+    protected function generateNearestMallListByCitySitemap($config)
+    {
+        $countryOption = $this->option('nearest-countries');
+        $countryOption = array_filter(explode(',', $countryOption));
+
+        $langOption = $this->option('nearest-langs');
+        $langOption = array_filter(explode(',', $langOption));
+
+        if (empty($countryOption) || empty($langOption)) {
+            return;
+        }
+
+        $countries = Country::with([
+                'cities' => function($query) {
+                    $query->orderBy('country_id');
+                }
+            ])
+            // If country option is not set to all, then just filter only
+            // those selected countries.
+            ->when(
+                ! in_array('all', $countryOption),
+                function($query) use ($countryOption) {
+                    return $query->whereIn('name', $countryOption);
+                }
+            )->get();
+
+        // If nearest-langs is set to all, then set it with available
+        // values from config.
+        if (in_array('all', $langOption)) {
+            $langOption = array_keys($config);
+        }
+
+        foreach($langOption as $lang) {
+            foreach($countries as $country) {
+
+                $countryName = Str::slug($country->name);
+
+                foreach($country->cities as $city) {
+
+                    $uri = sprintf(
+                        $config[$lang]['uri'],
+                        $lang,
+                        $countryName,
+                        Str::slug($city->city)
+                    );
+
+                    $this->urlStringPrinter(
+                        sprintf($this->urlTemplate, $uri),
+                        date('c'),
+                        $config[$lang]['changefreq']
+                    );
+                }
+            }
+        }
+    }
+
+    /**
      * Get the console command arguments.
      *
      * @return array
@@ -858,6 +920,16 @@ class GenerateSitemapCommand extends Command
                 array('sleep', NULL, InputOption::VALUE_OPTIONAL, 'Sleep value.', 500000),
                 array('format-output', 0, InputOption::VALUE_NONE, 'Format sitemap XML file output.'),
                 array('country', 0, InputOption::VALUE_OPTIONAL, 'Filter sitemap by country ID.'),
+                array(
+                    'nearest-countries',  null, InputOption::VALUE_OPTIONAL,
+                    'List of countries for the sitemap. Use "all" to generate link for all country.',
+                    'Indonesia'
+                ),
+                array(
+                    'nearest-langs',  null, InputOption::VALUE_OPTIONAL,
+                    'List of sitemap lang that will be generated. Use "all" to generate all lang set in config (orbit>sitemap)',
+                    'id'
+                ),
             );
     }
 }
