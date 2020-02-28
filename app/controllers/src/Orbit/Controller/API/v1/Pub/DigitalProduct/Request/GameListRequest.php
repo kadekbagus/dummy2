@@ -23,6 +23,7 @@ class GameListRequest extends ValidateRequest
             'take' => 'integer',
             'sortby' => 'in:game_id,game_name',
             'sortmode' => 'in:asc,desc',
+            'game_name' => 'sometimes|required|min:3',
         ];
     }
 }

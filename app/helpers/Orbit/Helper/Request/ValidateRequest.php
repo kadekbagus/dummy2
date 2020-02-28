@@ -1,4 +1,6 @@
-<?php namespace Orbit\Helper\Request;
+<?php
+
+namespace Orbit\Helper\Request;
 
 use App;
 use DominoPOS\OrbitACL\ACL;
@@ -179,8 +181,11 @@ class ValidateRequest implements ValidateRequestInterface
      * @param  array  $messages [description]
      * @return self
      */
-    public function validate(array $data = [], array $rules = [], array $messages = [])
-    {
+    public function validate(
+        array $data = [],
+        array $rules = [],
+        array $messages = []
+    ) {
         // In case we have custom validation rules, register
         // in inside following method.
         if (method_exists($this, 'registerCustomValidations')) {
@@ -202,7 +207,7 @@ class ValidateRequest implements ValidateRequestInterface
     }
 
     /**
-     * Proxy request input so it is accessible directly from $this.
+     * Proxy Request input so it is accessible directly from $this.
      *
      * @param  string $property request property.
      * @return mixed
@@ -210,5 +215,17 @@ class ValidateRequest implements ValidateRequestInterface
     public function __get($property)
     {
         return Request::input($property);
+    }
+
+    /**
+     * Proxy Request methods so it is accessible from $this.
+     *
+     * @param  string $method
+     * @param  mixed $args
+     * @return mixed
+     */
+    public function __call($method, $args)
+    {
+        return Request::{$method}($args);
     }
 }

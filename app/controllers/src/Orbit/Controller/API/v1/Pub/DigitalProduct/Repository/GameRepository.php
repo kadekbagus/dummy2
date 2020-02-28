@@ -32,11 +32,18 @@ class GameRepository
     {
         $sortBy = OrbitInput::get('sortby', 'game_name');
         $sortMode = OrbitInput::get('sortmode', 'asc');
+        $gameName = OrbitInput::get('game_name');
 
-        return Game::with($this->buildMediaQuery())
+        $games = Game::with($this->buildMediaQuery())
             ->active()
             //OM-5547, game listing is order by aphabetical name
             ->orderBy($sortBy, $sortMode);
+
+        if (! empty($gameName)) {
+            $games->where('game_name', 'like', "%{$gameName}%");
+        }
+
+        return $games;
     }
 
     /**

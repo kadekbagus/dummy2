@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\ServiceProvider;
 use Log;
 use OrbitShop\API\v1\ExceptionResponseProvider;
+use OrbitShop\API\v1\Exception\InvalidArgsException;
 use Orbit\Helper\Util\CorsHeader;
 use Response;
 use View;
@@ -42,12 +43,14 @@ class ErrorServiceProvider extends ServiceProvider
                 $httpCode = 404;
                 $response['code'] = 404;
             }
+            else if ($e instanceof InvalidArgsException) {
+                $httpCode = 422;
+            }
             else {
                 if (! Config::get('app.debug')) {
                     return View::make('errors.general');
                 }
             }
-
 
             // Allow Cross-Domain Request
             // http://enable-cors.org/index.html
