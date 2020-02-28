@@ -5937,6 +5937,13 @@ return array(
                     'uri' => 'pulsa-price-list?country=Indonesia',
                     'changefreq' => 'monthly',
                 ),
+                'nearest-mall-by-city' => array(
+                    'id' => [
+                        'uri' => '%s/mall-terdekat/%s/%s',
+                        'changefreq' => 'daily',
+                    ],
+                    // Other lang goes here...
+                ),
             ),
         ),
     ),
