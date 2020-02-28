@@ -845,18 +845,33 @@ class GenerateSitemapCommand extends Command
     protected function generateNearestMallListByCitySitemap($config)
     {
         $countryOption = $this->option('nearest-countries');
-        $countryOption = array_filter(explode(',', $countryOption));
+        $countryOption = array_map(function($country) {
+                return strtolower(trim($country));
+            }, explode(',', $countryOption));
+
+        $cityOption = $this->option('nearest-cities');
+        $cityOption = array_map(function($city) {
+                return strtolower(trim($city));
+            }, explode(',', $cityOption));
 
         $langOption = $this->option('nearest-langs');
-        $langOption = array_filter(explode(',', $langOption));
-
-        if (empty($countryOption) || empty($langOption)) {
-            return;
-        }
+        $langOption = array_map(function($lang) {
+                return strtolower(trim($lang));
+            }, explode(',', $langOption));
 
         $countries = Country::with([
-                'cities' => function($query) {
-                    $query->orderBy('country_id');
+                'cities' => function($query) use ($cityOption) {
+
+                    $query->orderBy('country_id')
+                        ->when(
+                            ! in_array('all', $cityOption),
+                            function($query) use ($cityOption) {
+                                $query->whereIn(
+                                    DB::raw('LOWER(city)'),
+                                    $cityOption
+                                );
+                            }
+                        );
                 }
             ])
             // If country option is not set to all, then just filter only
@@ -864,7 +879,10 @@ class GenerateSitemapCommand extends Command
             ->when(
                 ! in_array('all', $countryOption),
                 function($query) use ($countryOption) {
-                    return $query->whereIn('name', $countryOption);
+                    return $query->whereIn(
+                        DB::raw('LOWER(name)'),
+                        $countryOption
+                    );
                 }
             )->get();
 
@@ -924,6 +942,11 @@ class GenerateSitemapCommand extends Command
                     'nearest-countries',  null, InputOption::VALUE_OPTIONAL,
                     'List of countries for the sitemap. Use "all" to generate link for all country.',
                     'Indonesia'
+                ),
+                array(
+                    'nearest-cities',  null, InputOption::VALUE_OPTIONAL,
+                    'List of cities for the sitemap.',
+                    'all'
                 ),
                 array(
                     'nearest-langs',  null, InputOption::VALUE_OPTIONAL,
