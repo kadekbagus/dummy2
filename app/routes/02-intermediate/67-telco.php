@@ -21,4 +21,4 @@ Route::get('/app/v1/telco/list', 'IntermediateProductAuthController@Pulsa\TelcoO
 /**
  * Get detail telco
  */
-Route::get('/app/v1/telco/detail', 'IntermediateAuthController@TelcoOperator_getDetailTelcoOperator');
+Route::get('/app/v1/telco/detail', 'IntermediateProductAuthController@Pulsa\TelcoOperatorDetail_getDetail');

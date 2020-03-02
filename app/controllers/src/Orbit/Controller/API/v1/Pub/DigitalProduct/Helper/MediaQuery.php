@@ -1,4 +1,6 @@
-<?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Helper;
+<?php
+
+namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Helper;
 
 use Config;
 use DB;
