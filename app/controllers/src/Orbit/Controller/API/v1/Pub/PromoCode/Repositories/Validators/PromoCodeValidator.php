@@ -31,6 +31,7 @@ class PromoCodeValidator implements ValidatorInterface
         Validator::extend('coupon_exists', CouponExistsValidator::class . '@validate');
 
         Validator::extend('pulsa_exists', PulsaExistsValidator::class . '@validate');
+        Validator::extend('game_voucher_exists', GameVoucherExistsValidator::class . '@validate');
     }
 
     public function validate()
@@ -51,10 +52,10 @@ class PromoCodeValidator implements ValidatorInterface
             ),
             array(
                 'promo_code' => 'required|alpha_dash|active_discount|available_discount',
-                'object_id' => 'required|alpha_dash|coupon_exists|pulsa_exists',
+                'object_id' => 'required|alpha_dash|coupon_exists|pulsa_exists|game_voucher_exists',
 
                 //for now only accepting coupon and pulsa
-                'object_type' => 'required|in:coupon,pulsa',
+                'object_type' => 'required|in:coupon,pulsa,game_voucher',
 
                 'quantity' => 'required|integer|min:1',
             ),
@@ -68,6 +69,7 @@ class PromoCodeValidator implements ValidatorInterface
                 'object_id.alpha_dash' => 'Object Id must be alpha numeric and dash and underscore characters',
                 'object_id.coupon_exists' => 'Object Id must be Id of valid active coupon',
                 'object_id.pulsa_exists' => 'Object Id must be Id of valid active pulsa',
+                'object_id.game_exists' => 'Object Id must be Id of valid active game voucher',
 
                 'object_type.required' => 'Object Type is required',
                 'object_type.in' => 'Object Type must be coupon or pulsa',
