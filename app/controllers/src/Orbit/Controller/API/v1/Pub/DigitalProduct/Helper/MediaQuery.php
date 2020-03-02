@@ -91,8 +91,10 @@ trait MediaQuery {
         return [
             'media' => function($query) {
                 $query->select(
+                    'media_id',
                     'object_id',
                     'media_name_long',
+                    'path',
                     DB::raw($this->imageQuery)
                 );
 

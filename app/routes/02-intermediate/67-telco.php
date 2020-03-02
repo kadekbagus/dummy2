@@ -16,7 +16,7 @@ Route::post('/app/v1/telco/update', 'IntermediateAuthController@TelcoOperator_po
 /**
  * Get search telco
  */
-Route::get('/app/v1/telco/list', 'IntermediateAuthController@TelcoOperator_getSearchTelcoOperator');
+Route::get('/app/v1/telco/list', 'IntermediateProductAuthController@Pulsa\TelcoOperatorList_getList');
 
 /**
  * Get detail telco

@@ -132,6 +132,10 @@ class ModelWithObjectID extends Model
 
         $grammar = $conn->getQueryGrammar();
 
-        return new ExtendedQueryBuilder($conn, $grammar, $conn->getPostProcessor());
+        return new ExtendedQueryBuilder(
+            $conn,
+            $grammar,
+            $conn->getPostProcessor()
+        );
     }
 }

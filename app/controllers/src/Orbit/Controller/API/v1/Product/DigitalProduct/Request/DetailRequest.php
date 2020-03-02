@@ -1,4 +1,6 @@
-<?php namespace Orbit\Controller\API\v1\Product\DigitalProduct\Request;
+<?php
+
+namespace Orbit\Controller\API\v1\Product\DigitalProduct\Request;
 
 use App;
 use DigitalProduct;

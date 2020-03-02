@@ -1,21 +1,23 @@
 <?php
 
-namespace Orbit\Controller\API\v1\Product\DigitalProduct\Request;
+namespace Orbit\Controller\API\v1\Product\Pulsa\Request;
 
 use Orbit\Helper\Request\ValidateRequest;
 
 /**
- * Digital Product List Request
+ * Telco Operator List Request
  *
  * @author Budi <budi@gotomalls.com>
  */
-class ListRequest extends ValidateRequest
+class TelcoListRequest extends ValidateRequest
 {
     /**
      * Allowed roles to access this request.
      * @var array
      */
     protected $roles = ['product manager'];
+
+    protected $paginationConfig = 'orbit.pagination.telco';
 
     /**
      * Get validation rules.
@@ -25,9 +27,9 @@ class ListRequest extends ValidateRequest
     public function rules()
     {
         return [
-            'skip' => 'required|integer',
-            'take' => 'required|integer',
-            'sortby' => 'sometimes|in:status,product_type,product_name,selling_price,updated_at',
+            'skip' => 'sometimes|required|min:0',
+            'take' => 'sometimes|required|min:1',
+            'sortby' => 'sometimes|in:name,country_name,status',
             'sortmode' => 'sometimes|in:asc,desc',
         ];
     }

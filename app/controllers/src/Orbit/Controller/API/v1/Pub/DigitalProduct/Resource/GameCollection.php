@@ -1,4 +1,6 @@
-<?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Resource;
+<?php
+
+namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Resource;
 
 use Orbit\Helper\Resource\ResourceCollection;
 

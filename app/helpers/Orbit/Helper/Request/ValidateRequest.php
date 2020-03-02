@@ -46,8 +46,16 @@ class ValidateRequest implements ValidateRequestInterface
      */
     protected $validator = null;
 
+    /**
+     * Pagination config.
+     * @var string|array string first, then array after load.
+     */
+    protected $pagination = null;
+
     public function __construct()
     {
+        $this->loadPaginationConfig();
+
         // New behaviour:
         // Current User instance should be available on container,
         // because we **should** do authentication/user fetching
@@ -60,6 +68,32 @@ class ValidateRequest implements ValidateRequestInterface
         // Optionally, we can call validate() directly,
         // so we don't have to call it on each controller@method.
         $this->validate();
+    }
+
+    /**
+     * Load pagination config.
+     */
+    protected function loadPaginationConfig()
+    {
+        $this->pagination = ! empty($this->pagination)
+            ? Config::get($this->pagination)
+            : ['max_record' => 100, 'per_page' => 10];
+    }
+
+    /**
+     * Get the max take value for listing request.
+     *
+     * @return int $take the requested (or max) take value.
+     */
+    public function getTake()
+    {
+        $take = $this->take ?: $this->pagination['per_page'];
+
+        if ($take > $this->pagination['max_record']) {
+            $take = $this->pagination['max_record'];
+        }
+
+        return $take;
     }
 
     /**

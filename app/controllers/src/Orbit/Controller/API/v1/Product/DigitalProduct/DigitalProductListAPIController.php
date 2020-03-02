@@ -1,4 +1,6 @@
-<?php namespace Orbit\Controller\API\v1\Product\DigitalProduct;
+<?php
+
+namespace Orbit\Controller\API\v1\Product\DigitalProduct;
 
 use Exception;
 use OrbitShop\API\v1\ControllerAPI;

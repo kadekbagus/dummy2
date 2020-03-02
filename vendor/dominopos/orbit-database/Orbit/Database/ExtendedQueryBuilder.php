@@ -39,9 +39,10 @@ class ExtendedQueryBuilder extends Builder
      * @todo create an extended Illuminate DB builder
      *       which add this functionality.
      *
-     * @param  bool the condition
+     * @param  bool $conditionIsMet the condition
      * @return  Closure $callback the callback that will be run
      *                            if condition is met.
+     *
      * @return Illuminate\Database\Query\Builder
      */
     public function when($conditionIsMet, $callback)

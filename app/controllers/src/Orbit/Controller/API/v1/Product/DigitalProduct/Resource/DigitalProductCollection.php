@@ -1,4 +1,6 @@
-<?php namespace Orbit\Controller\API\v1\Product\DigitalProduct\Resource;
+<?php
+
+namespace Orbit\Controller\API\v1\Product\DigitalProduct\Resource;
 
 use Config;
 use Orbit\Helper\Resource\ResourceCollection;
@@ -24,7 +26,8 @@ class DigitalProductCollection extends ResourceCollection
     {
         parent::__construct($collection, $total);
 
-        $this->productTypes = array_merge($this->productTypes,
+        $this->productTypes = array_merge(
+            $this->productTypes,
             Config::get('orbit.digital_product.product_types', [])
         );
     }
@@ -36,14 +39,8 @@ class DigitalProductCollection extends ResourceCollection
      */
     public function toArray()
     {
-        $data = [
-            'returned_records' => $this->collection->count(),
-            'total_records' => $this->total,
-            'records' => [],
-        ];
-
         foreach($this->collection as $item) {
-            $data['records'][] = [
+            $this->data['records'][] = [
                 'id' => $item->digital_product_id,
                 'name' => $item->product_name,
                 'type' => $this->transformProductType($item->product_type),
@@ -52,7 +49,7 @@ class DigitalProductCollection extends ResourceCollection
             ];
         }
 
-        return $data;
+        return $this->data;
     }
 
     /**

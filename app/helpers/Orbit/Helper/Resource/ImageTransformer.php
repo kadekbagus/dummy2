@@ -50,4 +50,26 @@ trait ImageTransformer {
 
         return $images;
     }
+
+    /**
+     * Transform a collection of media into array of media for older api.
+     *
+     * @param  Illuminate\Database\Eloquent\Model $item the model/resource
+     *
+     * @return array
+     */
+    protected function transformImagesOld($item)
+    {
+        $images = [];
+        foreach($item->media as $media) {
+            $images[] = [
+                'media_id' => $media->media_id,
+                'path' => $media->path,
+                'media_name_long' => $media->media_name_long,
+                'object_id' => $media->object_id,
+            ];
+        }
+
+        return $images;
+    }
 }

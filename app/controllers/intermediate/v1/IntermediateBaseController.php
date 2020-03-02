@@ -365,11 +365,11 @@ class IntermediateBaseController extends Controller
 
         $supportedDependenciesInjection = [
             'IntermediatePubAuthController',
-            'IntermediateProductAuthController'
+            'IntermediateProductAuthController',
         ];
 
         if (in_array($theClass, $supportedDependenciesInjection)) {
-            // Handle the request.
+            // Handle the request with Reflection.
             return $this->handleRequest($class, $method, $user);
         }
 
