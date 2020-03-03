@@ -112,7 +112,7 @@ class CreatePurchase
             Log::info("Trying to make pulsa purchase with promo code {$promoCode}...");
 
             // TODO: Move to PromoReservation helper?
-            $reservedPromoCodes = $user->discountCodes()->with(['discount'])
+            $reservedPromoCodes = $currentUser->discountCodes()->with(['discount'])
                 ->where('discount_code', $promoCode)
                 ->whereNull('payment_transaction_id')
                 ->reserved()
