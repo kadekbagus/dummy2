@@ -39,6 +39,7 @@ class PulsaRepository
         $status = OrbitInput::get('status');
         $sortBy = $sortByMapping[OrbitInput::get('sortby', 'status')];
         $sortMode = OrbitInput::get('sortmode', 'asc');
+        $keyword = OrbitInput::get('keyword');
 
         return TelcoOperator::select(
                 'telco_operator_id',
@@ -53,6 +54,13 @@ class PulsaRepository
             ->with($this->buildMediaQuery())
             ->when(! empty($status), function($query) use ($status) {
                 return $query->where('status', $status);
+            })
+            ->when(! empty($keyword), function($query) use ($keyword) {
+                return $query->where(
+                    'telco_operators.name',
+                    'like',
+                    "%{$keyword}%"
+                );
             })
             ->orderBy($sortBy, $sortMode);
     }
