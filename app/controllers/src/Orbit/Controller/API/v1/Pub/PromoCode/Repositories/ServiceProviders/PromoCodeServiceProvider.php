@@ -12,6 +12,7 @@ use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\RepositoryExecu
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\PromoCodeRepository;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\PromoCodeRule;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\CouponPromoCodeRule;
+use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\GameVoucherPromoCodeRule;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\PulsaPromoCodeRule;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\PromoCodeReservation;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\ResponseRenderer;
@@ -29,8 +30,11 @@ class PromoCodeServiceProvider extends ServiceProvider
         $this->app->bind(RepositoryInterface::class, PromoCodeRepository::class);
         $this->app->bind(RuleInterface::class, function () {
             return new PromoCodeRule(
-                new CouponPromoCodeRule(),
-                new PulsaPromoCodeRule()
+                [
+                    'coupon' => new CouponPromoCodeRule(),
+                    'pulsa' => new PulsaPromoCodeRule(),
+                    'game_voucher' => new GameVoucherPromoCodeRule(),
+                ]
             );
         });
         $this->app->bind(ReservationInterface::class, PromoCodeReservation::class);
