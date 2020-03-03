@@ -65,14 +65,14 @@ class PromoCodeValidator implements ValidatorInterface
                 'promo_code.active_discount' => 'PROMO_CODE_NOT_ACTIVE',
                 'promo_code.available_discount' => 'PROMO_CODE_NOT_AVAILABLE',
 
-                'object_id.required' => 'Object Id is required',
+                'object_id.required' => 'OBJECT_ID_IS_REQUIRED',
                 'object_id.alpha_dash' => 'Object Id must be alpha numeric and dash and underscore characters',
                 'object_id.coupon_exists' => 'Object Id must be Id of valid active coupon',
                 'object_id.pulsa_exists' => 'Object Id must be Id of valid active pulsa',
                 'object_id.game_exists' => 'Object Id must be Id of valid active game voucher',
 
                 'object_type.required' => 'Object Type is required',
-                'object_type.in' => 'Object Type must be coupon or pulsa',
+                'object_type.in' => 'Object Type must be coupon or pulsa or game voucher',
 
                 'quantity.required' => 'Quantity is required',
                 'quantity.integer' => 'Quantity must be integer value',
