@@ -16,8 +16,8 @@ use DominoPOS\OrbitUploader\Uploader as OrbitUploader;
 
 class PulsaAPIController extends ControllerAPI
 {
-    protected $viewPulsaRoles = ['super admin'];
-    protected $modifyPulsaRoles = ['super admin'];
+    protected $viewPulsaRoles = ['super admin', 'product manager'];
+    protected $modifyPulsaRoles = ['super admin', 'product manager'];
     protected $returnBuilder = FALSE;
     protected $defaultLanguage = 'en';
 
