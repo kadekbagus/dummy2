@@ -11,18 +11,18 @@
 /**
  * Pulsa update
  */
-Route::post('/api/v1/pulsa/update', function()
-{
-    return PulsaAPIController::create()->postUpdatePulsa();
-});
+// Route::post('/api/v1/pulsa/update', function()
+// {
+//     return PulsaAPIController::create()->postUpdatePulsa();
+// });
 
 /**
  * Pulsa status update
  */
-Route::post('/api/v1/pulsa/update-status', function()
-{
-    return PulsaAPIController::create()->postUpdatePulsaStatus();
-});
+// Route::post('/api/v1/pulsa/update-status', function()
+// {
+//     return PulsaAPIController::create()->postUpdatePulsaStatus();
+// });
 
 /**
  * Pulsa list
