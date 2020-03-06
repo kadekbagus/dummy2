@@ -75,41 +75,54 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
             }
 
             $game_voucher = PaymentTransaction::select('payment_transactions.payment_transaction_id',
-                                                'payment_transactions.amount',
-                                                'payment_transactions.currency',
-                                                'payment_transactions.status',
-                                                'payment_transactions.payment_method',
-                                                'payment_transactions.extra_data',
-                                                'payment_transactions.created_at',
-                                                DB::raw("convert_tz({$prefix}payment_transactions.created_at, '+00:00', {$prefix}payment_transactions.timezone_name) as date_tz"),
-                                                'payment_transactions.external_payment_transaction_id',
-                                                'payment_transaction_details.object_name as product_name',
-                                                'payment_transaction_details.object_type',
-                                                'payment_transaction_details.price',
-                                                'payment_transaction_details.quantity',
-                                                'payment_midtrans.payment_midtrans_info',
-                                                'digital_products.digital_product_id as item_id',
-                                                'payment_transaction_details.payload',
-                                                DB::raw($gameLogo)
-                                                )
-                                            ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
-                                            ->join('digital_products', 'digital_products.digital_product_id', '=', 'payment_transaction_details.object_id')
-                                            ->leftJoin('games', 'games.game_id', '=', 'payment_transactions.extra_data')
-                                            ->leftJoin('media', function($join) use ($prefix) {
-                                                $join->on('games.game_id', '=', 'media.object_id')
-                                                     ->on('media.media_name_long', '=', DB::raw("'game_image_orig'"));
+                                            'payment_transactions.amount',
+                                            'payment_transactions.currency',
+                                            'payment_transactions.status',
+                                            'payment_transactions.payment_method',
+                                            'payment_transactions.extra_data',
+                                            'payment_transactions.created_at',
+                                            DB::raw("convert_tz({$prefix}payment_transactions.created_at, '+00:00', {$prefix}payment_transactions.timezone_name) as date_tz"),
+                                            'payment_transactions.external_payment_transaction_id',
+                                            'payment_transaction_details.object_name as product_name',
+                                            'payment_transaction_details.object_type',
+                                            'payment_transaction_details.price',
+                                            'payment_transaction_details.quantity',
+                                            'payment_midtrans.payment_midtrans_info',
+                                            'digital_products.digital_product_id as item_id',
+                                            'payment_transaction_details.payload',
+                                            DB::raw($gameLogo)
+                                            )
+
+                                        ->with(['discount_code' => function($discountCodeQuery) {
+                                            $discountCodeQuery->select('payment_transaction_id', 'discount_code_id', 'discount_id', 'discount_code as used_discount_code')->with(['discount' => function($discountDetailQuery) {
+                                                $discountDetailQuery->select('discount_id', 'discount_code as parent_discount_code', 'discount_title', 'value_in_percent as percent_discount');
+                                            }]);
+                                        }])
+                                        ->with(['discount' => function($discountQuery) {
+                                            $discountQuery->select('payment_transaction_id', 'object_id', 'price as discount_amount')->with(['discount' => function($discountQuery) {
+                                                $discountQuery->select('discount_id', 'discount_code as parent_discount_code', 'discount_title', 'value_in_percent as percent_discount');
+                                            }]);
+                                        }])
+
+                                        ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
+                                        ->join('digital_products', 'digital_products.digital_product_id', '=', 'payment_transaction_details.object_id')
+                                        ->leftJoin('games', 'games.game_id', '=', 'payment_transactions.extra_data')
+                                        ->leftJoin('media', function($join) use ($prefix) {
+                                            $join->on('games.game_id', '=', 'media.object_id')
+                                                    ->on('media.media_name_long', '=', DB::raw("'game_image_orig'"));
+                                        })
+                                        ->leftJoin('payment_midtrans', 'payment_midtrans.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
+                                        ->where('payment_transactions.user_id', $user->user_id)
+                                        ->where('payment_transaction_details.object_type', 'digital_product')
+                                        ->where('payment_transactions.payment_method', '!=', 'normal')
+                                        ->whereNotIn('payment_transactions.status', array('starting', 'denied', 'abort'))
+                                        ->where('digital_products.product_type', 'game_voucher')
+                                        ->where(function($query) use($payment_transaction_id) {
+                                            $query->where('payment_transactions.payment_transaction_id', '=', $payment_transaction_id)
+                                                    ->orWhere('payment_transactions.external_payment_transaction_id', '=', $payment_transaction_id);
                                             })
-                                            ->leftJoin('payment_midtrans', 'payment_midtrans.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
-                                            ->where('payment_transactions.user_id', $user->user_id)
-                                            ->where('payment_transaction_details.object_type', 'digital_product')
-                                            ->where('payment_transactions.payment_method', '!=', 'normal')
-                                            ->whereNotIn('payment_transactions.status', array('starting', 'denied', 'abort'))
-                                            ->where('digital_products.product_type', 'game_voucher')
-                                            ->where(function($query) use($payment_transaction_id) {
-                                                $query->where('payment_transactions.payment_transaction_id', '=', $payment_transaction_id)
-                                                      ->orWhere('payment_transactions.external_payment_transaction_id', '=', $payment_transaction_id);
-                                              })
-                                            ->first();
+
+                                        ->first();
 
             if (! $game_voucher) {
                 OrbitShopAPI::throwInvalidArgument('purchased detail not found');
