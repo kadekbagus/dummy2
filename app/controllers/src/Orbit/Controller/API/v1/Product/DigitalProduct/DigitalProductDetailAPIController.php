@@ -1,11 +1,10 @@
 <?php namespace Orbit\Controller\API\v1\Product\DigitalProduct;
 
-use App;
 use Exception;
 use OrbitShop\API\v1\ControllerAPI;
-use Orbit\Controller\API\v1\Product\DigitalProduct\Request\DigitalProductDetailRequest;
+use Orbit\Controller\API\v1\Product\DigitalProduct\Request\DetailRequest;
 use Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductResource;
-use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\DigitalProductRepository;
+use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\DigitalProductRepository as Repository;
 
 /**
  * Handle digital product detail.
@@ -17,21 +16,19 @@ class DigitalProductDetailAPIController extends ControllerAPI
     /**
      * Handle Digital Product detail request.
      *
+     * @param  DigitalProductRepository $repo
+     * @param  DetailRequest $request
+     *
      * @return Illuminate\Http\Response
      */
-    public function getDetail()
+    public function getDetail(Repository $repo, DetailRequest $request)
     {
         $httpCode = 200;
 
         try {
-            // $this->enableQueryLog();
-
-            with($request = new DigitalProductDetailRequest($this))->validate();
 
             $this->response->data = new DigitalProductResource(
-                App::make(DigitalProductRepository::class)->findProduct(
-                    $request->id
-                )
+                $repo->findProduct($request->id)
             );
 
         } catch (Exception $e) {

@@ -1,9 +1,12 @@
-<?php namespace Orbit\Controller\API\v1\Product\DigitalProduct;
+<?php
+
+namespace Orbit\Controller\API\v1\Product\DigitalProduct;
 
 use App;
 use Exception;
 use OrbitShop\API\v1\ControllerAPI;
-use Orbit\Controller\API\v1\Product\DigitalProduct\Request\DigitalProductNewRequest;
+use Orbit\Controller\API\v1\Product\DigitalProduct\Request\CreateRequest;
+use Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductResource;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\DigitalProductRepository;
 
 /**
@@ -18,16 +21,17 @@ class DigitalProductNewAPIController extends ControllerAPI
      *
      * @return Illuminate\Http\Response
      */
-    public function postNew()
-    {
+    public function postNew(
+        DigitalProductRepository $repo,
+        CreateRequest $request
+    ) {
         $httpCode = 200;
 
         try {
-            // $this->enableQueryLog();
 
-            with($request = new DigitalProductNewRequest($this))->validate();
-
-            $this->response->data = App::make(DigitalProductRepository::class)->save($request);
+            $this->response->data = new DigitalProductResource(
+                $repo->save($request)
+            );
 
         } catch (Exception $e) {
             $this->handleException($e, false);
