@@ -33,17 +33,17 @@ class PulsaCreateRepository {
     private function createModelFromRequest($request)
     {
         $this->pulsa->telco_operator_id = $request->telco_operator_id;
-        $this->pulsa->object_type = $request->object_type;
+        $this->pulsa->object_type = ($request->object_type) ? $request->object_type : 'pulsa';
         $this->pulsa->pulsa_code = $request->pulsa_code;
         $this->pulsa->pulsa_display_name = $request->pulsa_display_name;
         $this->pulsa->description = $request->description;
         $this->pulsa->value = $request->value;
         $this->pulsa->price = $request->price;
         $this->pulsa->quantity = $request->quantity;
-        $this->pulsa->status = isset($request->status) ? $request->status : 'inactive';
+        $this->pulsa->status = ($request->status) ? $request->status : 'inactive';
         $this->pulsa->vendor_price = $request->vendor_price;
-        $this->pulsa->displayed = isset($request->displayed) ? $request->displayed : 'yes';
-        $this->pulsa->is_promo = isset($request->promo) ? $request->promo : 'no';
+        $this->pulsa->displayed = ($request->displayed) ? $request->displayed : 'yes';
+        $this->pulsa->is_promo = ($request->promo) ? $request->promo : 'no';
     }
 
 }
