@@ -6,12 +6,12 @@
 /**
  * Create new pulsa
  */
-Route::post('/app/v1/pulsa/new', 'IntermediateAuthController@Pulsa_postNewPulsa');
+// Route::post('/app/v1/pulsa/new', 'IntermediateAuthController@Pulsa_postNewPulsa');
 
 /**
  * Update pulsa
  */
-Route::post('/app/v1/pulsa/update', 'IntermediateAuthController@Pulsa_postUpdatePulsa');
+// Route::post('/app/v1/pulsa/update', 'IntermediateAuthController@Pulsa_postUpdatePulsa');
 
 /**
  * Update pulsa status
@@ -21,9 +21,9 @@ Route::post('/app/v1/pulsa/update-status', 'IntermediateAuthController@Pulsa_pos
 /**
  * Get search pulsa
  */
-Route::get('/app/v1/pulsa/list', 'IntermediateAuthController@Pulsa_getSearchPulsa');
+// Route::get('/app/v1/pulsa/list', 'IntermediateAuthController@Pulsa_getSearchPulsa');
 
 /**
  * Get detail pulsa
  */
-Route::get('/app/v1/pulsa/detail', 'IntermediateAuthController@Pulsa_getDetailPulsa');
+// Route::get('/app/v1/pulsa/detail', 'IntermediateAuthController@Pulsa_getDetailPulsa');
