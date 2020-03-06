@@ -16,7 +16,7 @@
 /**
  * Update pulsa status
  */
-Route::post('/app/v1/pulsa/update-status', 'IntermediateAuthController@Pulsa_postUpdatePulsaStatus');
+// Route::post('/app/v1/pulsa/update-status', 'IntermediateAuthController@Pulsa_postUpdatePulsaStatus');
 
 /**
  * Get search pulsa

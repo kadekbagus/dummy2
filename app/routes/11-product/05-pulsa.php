@@ -15,4 +15,4 @@ Route::post('/app/v1/pulsa/new', ['as' => 'pulsa-new', 'uses' => 'IntermediatePr
 Route::post('/app/v1/pulsa/update', ['as' => 'pulsa-update', 'uses' => 'IntermediateProductAuthController@Pulsa\PulsaUpdate_postUpdate']);
 
 // Route for pulsa update status
-// Route::post('/app/v1/pulsa/update-status', ['as' => 'pulsa-update-status', 'uses' => 'IntermediateProductAuthController@Pulsa\PulsaNew_postUpdateStatus']);
+Route::post('/app/v1/pulsa/update-status', ['as' => 'pulsa-update-status', 'uses' => 'IntermediateProductAuthController@Pulsa\PulsaUpdateStatus_postUpdateStatus']);
