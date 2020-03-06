@@ -1,4 +1,6 @@
-<?php namespace Orbit\Controller\API\v1\Product\DigitalProduct\Request;
+<?php
+
+namespace Orbit\Controller\API\v1\Product\DigitalProduct\Request;
 
 use App;
 use DigitalProduct;
@@ -7,12 +9,11 @@ use ProviderProduct;
 use Validator;
 
 /**
- * Digital Product List Request
+ * Create new Digital Product Request
  *
- * @todo  find a way to properly inject current user into request (might be a service)
  * @author Budi <budi@gotomalls.com>
  */
-class DigitalProductNewRequest extends ValidateRequest
+class CreateRequest extends ValidateRequest
 {
     /**
      * Allowed roles to access this request.

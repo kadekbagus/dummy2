@@ -1,5 +1,9 @@
-<?php namespace Orbit\Helper\Request;
+<?php
 
+namespace Orbit\Helper\Request;
+
+use App;
+use DominoPOS\OrbitACL\ACL;
 use OrbitShop\API\v1\OrbitShopAPI;
 use Orbit\Helper\Request\Contracts\ValidateRequestInterface;
 use Request;
@@ -22,13 +26,7 @@ class ValidateRequest implements ValidateRequestInterface
      * Allowed roles to access this request.
      * @var array
      */
-    protected $roles = ['consumer'];
-
-    /**
-     * controller which handle the request (and has auth capability).
-     * @var [type]
-     */
-    protected $controller;
+    protected $roles = [];
 
     /**
      * @todo implement bail-on-first-validation-error rule.
@@ -48,35 +46,80 @@ class ValidateRequest implements ValidateRequestInterface
      */
     protected $validator = null;
 
-    public function __construct($controller = null)
-    {
-        $this->controller = $controller;
+    /**
+     * Pagination config.
+     * @var string|array string first, then array after load.
+     */
+    protected $pagination = null;
 
-        if ($this->authRequest) {
-            $this->auth();
-        }
+    public function __construct()
+    {
+        $this->loadPaginationConfig();
+
+        // New behaviour:
+        // Current User instance should be available on container,
+        // because we **should** do authentication/user fetching
+        // on the intermediate controller beforeFilter() hooks.
+        $this->user = App::make('currentUser');
+
+        // Check if user authorized to make this request.
+        $this->authorize();
+
+        // Optionally, we can call validate() directly,
+        // so we don't have to call it on each controller@method.
+        $this->validate();
     }
 
     /**
-     * Authenticate and authorize request.
-     *
-     * @param  [type] $controller [description]
-     * @return self
+     * Load pagination config.
      */
-    public function auth($controller = null)
+    protected function loadPaginationConfig()
     {
-        if (! empty($controller)) {
-            $this->controller = $controller;
+        $this->pagination = ! empty($this->pagination)
+            ? Config::get($this->pagination)
+            : ['max_record' => 100, 'per_page' => 10];
+    }
+
+    /**
+     * Get the max take value for listing request.
+     *
+     * @return int $take the requested (or max) take value.
+     */
+    public function getTake()
+    {
+        $take = $this->take ?: $this->pagination['per_page'];
+
+        if ($take > $this->pagination['max_record']) {
+            $take = $this->pagination['max_record'];
         }
 
-        if (! empty($this->roles)) {
-            $this->controller->authorize($this->roles);
-        }
-        else {
-            $this->controller->checkAuth();
-        }
+        return $take;
+    }
 
-        $this->setUser($this->controller->api->user);
+    /**
+     * Determine if this request need authorization.
+     *
+     * @return bool
+     */
+    protected function needAuthorization()
+    {
+        return $this->authRequest && ! empty($this->roles);
+    }
+
+    /**
+     * Check if User is authorized for this request
+     * based on their role.
+     *
+     * @return self|Illuminate\Http\Response on exception
+     */
+    protected function authorize()
+    {
+        if ($this->needAuthorization()) {
+            $userRole = $this->user->role->role_name;
+            if (! in_array(strtolower($userRole), $this->roles)) {
+                return $this->handleAuthorizationFails();
+            }
+        }
 
         return $this;
     }
@@ -86,7 +129,7 @@ class ValidateRequest implements ValidateRequestInterface
      * @param object $user
      * @return  self
      */
-    private function setUser($user)
+    public function setUser($user)
     {
         $this->user = $user;
 
@@ -109,6 +152,16 @@ class ValidateRequest implements ValidateRequestInterface
     public function getData()
     {
         return $this->validator->getData();
+    }
+
+    /**
+     * Default implementation, just return empty message.
+     *
+     * @return array
+     */
+    public function messages()
+    {
+        return [];
     }
 
     /**
@@ -135,10 +188,21 @@ class ValidateRequest implements ValidateRequestInterface
     }
 
     /**
+     * Handle failed authorization.
+     *
+     * @param  string $message [description]
+     * @return [type]          [description]
+     */
+    protected function handleAuthorizationFails()
+    {
+        ACL::throwAccessForbidden();
+    }
+
+    /**
      * Get the validation data.
      * @return [type] [description]
      */
-    public function validationData()
+    protected function validationData()
     {
         return Request::all();
     }
@@ -151,8 +215,11 @@ class ValidateRequest implements ValidateRequestInterface
      * @param  array  $messages [description]
      * @return self
      */
-    public function validate(array $data = [], array $rules = [], array $messages = [])
-    {
+    public function validate(
+        array $data = [],
+        array $rules = [],
+        array $messages = []
+    ) {
         // In case we have custom validation rules, register
         // in inside following method.
         if (method_exists($this, 'registerCustomValidations')) {
@@ -174,13 +241,25 @@ class ValidateRequest implements ValidateRequestInterface
     }
 
     /**
-     * Try to get item from request param.
+     * Proxy Request input so it is accessible directly from $this.
      *
-     * @param  [type] $property [description]
-     * @return [type]           [description]
+     * @param  string $property request property.
+     * @return mixed
      */
     public function __get($property)
     {
         return Request::input($property);
+    }
+
+    /**
+     * Proxy Request methods so it is accessible from $this.
+     *
+     * @param  string $method
+     * @param  mixed $args
+     * @return mixed
+     */
+    public function __call($method, $args)
+    {
+        return Request::{$method}($args);
     }
 }

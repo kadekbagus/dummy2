@@ -1,39 +1,37 @@
 <?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Resource;
 
 use Game;
-use Orbit\Helper\Resource\ResourceAbstract as Resource;
+use Orbit\Helper\Resource\Resource;
 
 /**
- * Resource Collection of Game.
+ * A Game resource.
  *
  * @author Budi <budi@gotomalls.com>
  */
 class GameResource extends Resource
 {
-    private $resource = null;
-
-    public function __construct($resource)
-    {
-        $this->resource = $resource;
-        $this->setImagePrefix('game_image_');
-    }
+    protected $imagePrefix = 'game_image_';
 
     /**
-     * Transform Game into response data array.
+     * Transform a Game.
      *
-     * @return [type] [description]
+     * @return array
      */
     public function toArray()
     {
+        if ( empty($this->resource)) {
+            return [];
+        }
+
         return [
-            'id' => $this->resource->game_id,
-            'name' => $this->resource->game_name,
-            'slug' => $this->resource->slug,
-            'status' => $this->resource->status,
-            'description' => $this->resource->description,
-            'seo_text' => $this->resource->seo_text,
+            'id' => $this->game_id,
+            'name' => $this->game_name,
+            'slug' => $this->slug,
+            'status' => $this->status,
+            'description' => $this->description,
+            'seo_text' => $this->seo_text,
             'images' => $this->transformImages($this->resource),
-            'products' => $this->transformProducts($this->resource),
+            'products' => $this->transformProducts($this->digital_products),
         ];
     }
 
@@ -43,11 +41,11 @@ class GameResource extends Resource
      * @param  [type] $resource [description]
      * @return [type]           [description]
      */
-    protected function transformProducts($resource)
+    protected function transformProducts($digitalProducts)
     {
         $products = null;
 
-        foreach($resource->digital_products as $product) {
+        foreach($digitalProducts as $product) {
             $products[] = [
                 'id' => $product->digital_product_id,
                 'type' => $product->product_type,
@@ -60,9 +58,6 @@ class GameResource extends Resource
                 'description' => $product->description,
                 'notes' => $product->notes,
                 'extra_field_metadata' => $product->extra_field_metadata,
-                // 'provider' => $product->provider_product
-                //     ? $product->provider_product->provider_name
-                //     : null,
             ];
         }
 

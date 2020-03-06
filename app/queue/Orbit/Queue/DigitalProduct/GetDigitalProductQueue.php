@@ -143,7 +143,7 @@ class GetDigitalProductQueue
                         'cid' => $cid,
                         't' => 'event',
                         'ea' => 'Purchase Digital Product Successful',
-                        'ec' => 'digital_product',
+                        'ec' => 'game_voucher',
                         'el' => $digitalProductName,
                         'cs' => $payment->utm_source,
                         'cm' => $payment->utm_medium,
@@ -175,7 +175,7 @@ class GetDigitalProductQueue
                             'ip' => $detail->price,
                             'iq' => $detail->quantity,
                             'ic' => $productCode,
-                            'iv' => 'digital_product',
+                            'iv' => 'game_voucher',
                             'cu' => $payment->currency,
                         ])
                         ->request();
@@ -192,7 +192,7 @@ class GetDigitalProductQueue
                         'object_type' => 'digital_product'
                     ];
                     $promoCodeReservation->markAsIssued($payment->user, $promoData);
-                    $this->log("Promo code {$discountCode} issued for purchase {$paymentId}");
+                    $this->log("Promo code {$discount->discount_code} issued for purchase {$paymentId}");
                 }
 
                 $this->log("Purchase Data: " . serialize($purchaseData));
@@ -270,7 +270,7 @@ class GetDigitalProductQueue
                         'cid' => time(),
                         't' => 'event',
                         'ea' => 'Purchase Digital Product Failed',
-                        'ec' => 'digital_product',
+                        'ec' => 'game_voucher',
                         'el' => $digitalProductName,
                         'cs' => $payment->utm_source,
                         'cm' => $payment->utm_medium,

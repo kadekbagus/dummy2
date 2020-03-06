@@ -1,4 +1,6 @@
-<?php namespace Orbit\Controller\API\v1\Product\DigitalProduct\Request;
+<?php
+
+namespace Orbit\Controller\API\v1\Product\DigitalProduct\Request;
 
 use App;
 use DigitalProduct;
@@ -8,10 +10,9 @@ use Validator;
 /**
  * Digital Product Update Request
  *
- * @todo  find a way to properly inject current user into request (might be a service)
  * @author Budi <budi@gotomalls.com>
  */
-class DigitalProductUpdateRequest extends DigitalProductNewRequest
+class UpdateRequest extends DigitalProductNewRequest
 {
     /**
      * Get validation rules.
@@ -20,10 +21,16 @@ class DigitalProductUpdateRequest extends DigitalProductNewRequest
      */
     public function rules()
     {
-        return array_merge(['id' => 'required|product_exists'], parent::rules(), [
-            'type' => 'sometimes|required|in:game_voucher,electricity',
-            'code' => 'required|unique_code_if_changed',
-        ]);
+        return array_merge(
+            [
+                'id' => 'required|product_exists'
+            ],
+            parent::rules(),
+            [
+                'type' => 'sometimes|required|in:game_voucher,electricity',
+                'code' => 'required|unique_code_if_changed',
+            ]
+        );
     }
 
     /**
@@ -33,10 +40,13 @@ class DigitalProductUpdateRequest extends DigitalProductNewRequest
      */
     public function messages()
     {
-        return array_merge(parent::messages(), [
-            'product_exists' => 'PRODUCT_DOES_NOT_EXISTS',
-            'unique_code_if_changed' => 'PRODUCT_CODE_ALREADY_EXISTS',
-        ]);
+        return array_merge(
+            parent::messages(),
+            [
+                'product_exists' => 'PRODUCT_DOES_NOT_EXISTS',
+                'unique_code_if_changed' => 'PRODUCT_CODE_ALREADY_EXISTS',
+            ]
+        );
     }
 
     protected function registerCustomValidations()

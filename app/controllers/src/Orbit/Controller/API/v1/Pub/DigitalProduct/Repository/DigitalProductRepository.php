@@ -1,13 +1,12 @@
-<?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Repository;
+<?php
+
+namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Repository;
 
 use App;
 use DB;
 use DigitalProduct;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
-use Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductCollection;
-use Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductResource;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Helper\MediaQuery;
-use User;
 
 /**
  * Digital Product repository.
@@ -17,6 +16,8 @@ use User;
 class DigitalProductRepository
 {
     use MediaQuery;
+
+    protected $imagePrefix = 'game_image_';
 
     private $digitalProduct = null;
 
@@ -38,21 +39,16 @@ class DigitalProductRepository
     /**
      * Find a collection of products.
      *
-     * @return [type] [description]
+     * @return Illuminate\Database\Eloquent\Builder
      */
     public function findProducts()
     {
-        $skip = OrbitInput::get('skip', 0);
-        $take = OrbitInput::get('take', 10);
         $sortBy = OrbitInput::get('sortby', 'updated_at');
         $sortMode = OrbitInput::get('sortmode', 'desc');
 
         $digitalProducts = DigitalProduct::select(
-            'digital_product_id',
-            'product_name',
-            'selling_price',
-            'product_type',
-            'status'
+            'digital_product_id', 'product_name',
+            'selling_price', 'product_type', 'status'
         );
 
         OrbitInput::get('product_type', function($productType) use ($digitalProducts) {
@@ -73,51 +69,44 @@ class DigitalProductRepository
             }
         });
 
-        $total = clone $digitalProducts;
-        $total = $total->count();
-
-        $digitalProducts->orderBy($sortBy, $sortMode);
-
-        $digitalProducts = $digitalProducts->skip($skip)->take($take)->get();
-
-        return new DigitalProductCollection($digitalProducts, $total);
+        return $digitalProducts;
     }
 
     /**
-     * Find single product.
+     * Find a single Digital Product.
      *
      * @todo  reduce query call (from request class to this function)
-     * @param  [type] $digitalProductId [description]
-     * @return [type]                   [description]
+     * @param  string $digitalProductId
+     * @param  string|null $gameSlugOrId game slug or id that linked to the product.
+     *
+     * @return Illuminate\Database\Eloquent\Model digital product instance.
      */
-    public function findProduct($digitalProductId = null, $gameSlugOrId = null)
+    public function findProduct($digitalProductId, $gameSlugOrId = null)
     {
-        $digitalProductId = $digitalProductId ?: OrbitInput::get('product_id');
-        $gameSlugOrId = $gameSlugOrId ?: OrbitInput::get('game_id');
-
         $this->digitalProduct = DigitalProduct::with([
             'games' => function($query) use ($gameSlugOrId) {
-                $query->select('games.game_id', 'game_name', 'games.slug', 'games.description', 'games.seo_text');
+                $query->select(
+                    'games.game_id', 'game_name', 'games.slug',
+                    'games.description', 'games.seo_text'
+                );
 
-                // If request has gameSlug, then we need to load the game images.
+                // If request has game slug/id,
+                // then we need to load the game images.
                 if (! empty($gameSlugOrId)) {
 
                     $query->where(function($query) use ($gameSlugOrId) {
-                        $query->where('games.slug', $gameSlugOrId)->orWhere('games.game_id', $gameSlugOrId);
+                        $query->where('games.slug', $gameSlugOrId)
+                            ->orWhere('games.game_id', $gameSlugOrId);
                     });
 
-                    $query->with(['media' => function($query) {
-                        $query->select('object_id', 'media_name_long', DB::raw($this->imageQuery));
-
-                        $imageVariants = $this->resolveImageVariants('game_image_', 'mobile_medium');
-                        if (! empty($imageVariants)) {
-                            $query->whereIn('media_name_long', $imageVariants);
-                        }
-                    }]);
+                    $query->with($this->buildMediaQuery());
                 }
             },
             'provider_product' => function($query) {
-                $query->select('provider_product_id', 'provider_name', 'provider_product_name');
+                $query->select(
+                    'provider_product_id', 'provider_name',
+                    'provider_product_name'
+                );
             }
         ])->where('digital_products.digital_product_id', $digitalProductId);
 
@@ -129,8 +118,9 @@ class DigitalProductRepository
     /**
      * Save new digital product.
      *
-     * @param  [type] $request [description]
-     * @return [type]          [description]
+     * @param  Orbit\Controller\API\v1\Product\DigitalProduct\Request\DigitalProductNewRequest $request
+     *
+     * @return Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductResource newly created digital product
      */
     public function save($request)
     {
@@ -148,17 +138,19 @@ class DigitalProductRepository
             }
 
             // Add provider_name into digital product object
-            $this->digitalProduct->provider_name = App::make('providerProduct')->provider_name;
+            $this->digitalProduct->provider_product = App::make('providerProduct');
         });
 
-        return new DigitalProductResource($this->digitalProduct);
+        return $this->digitalProduct;
     }
 
     /**
      * Update specific digital product.
      *
-     * @param  [type] $request [description]
-     * @return [type]          [description]
+     * @param  string $digitalProductId the digital product id that will be updated.
+     * @param  Orbit\Controller\API\v1\Product\DigitalProduct\Request\DigitalProductUpdateRequest $request
+     *
+     * @return Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductResource updated digital product
      */
     public function update($digitalProductId, $request)
     {
@@ -176,17 +168,16 @@ class DigitalProductRepository
             }
 
             // Add provider name into digital product response.
-            $this->digitalProduct->provider_name = App::make('providerProduct')->provider_name;
+            $this->digitalProduct->provider_product = App::make('providerProduct');
         });
 
-        return new DigitalProductResource($this->digitalProduct);
+        return $this->digitalProduct;
     }
 
     /**
      * Fill digital product properties from request params
      *
-     * @param  [type] $request [description]
-     * @return [type]          [description]
+     * @param  Orbit\Helper\Request\ValidateRequest $request current request instance
      */
     private function createModelFromRequest($request)
     {
@@ -212,9 +203,9 @@ class DigitalProductRepository
      * @param  [type] $request [description]
      * @return [type]          [description]
      */
-    public function updateStatus($digitalProductId, $request)
+    public function updateStatus($digitalProductId)
     {
-        DB::transaction(function() use ($digitalProductId, $request)
+        DB::transaction(function() use ($digitalProductId)
         {
             $this->digitalProduct = DigitalProduct::findOrFail($digitalProductId);
 
@@ -228,6 +219,6 @@ class DigitalProductRepository
 
         });
 
-        return new DigitalProductResource($this->digitalProduct);
+        return $this->digitalProduct;
     }
 }

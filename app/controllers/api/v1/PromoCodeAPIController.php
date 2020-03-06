@@ -94,7 +94,7 @@ class PromoCodeAPIController extends ControllerAPI
                 'max_per_transaction' => 'required',
                 'max_per_user'        => 'required',
                 'max_redemption'      => 'required',
-                'type'                => 'in:coupon,pulsa',
+                'type'                => 'in:coupon,pulsa,game_voucher',
                 'status'              => 'in:active,inactive',
             ];
             $validator_message = [
