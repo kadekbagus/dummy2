@@ -1,6 +1,6 @@
 <?php
 
-namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Repository;
+namespace Orbit\Controller\API\v1\Product\Repository;
 
 use DB;
 use Game;
