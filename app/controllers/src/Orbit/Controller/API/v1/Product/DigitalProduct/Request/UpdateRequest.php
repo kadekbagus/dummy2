@@ -27,7 +27,7 @@ class UpdateRequest extends CreateRequest
             'type' => 'sometimes|required|in:game_voucher,electricity',
             'name' => 'sometimes|required',
             'code' => 'sometimes|required|unique_code_if_changed',
-            'provider_id' => 'sometimes|required',
+            'provider_id' => 'sometimes|required|orbit.exists.provider_product',
             'games' => 'sometimes|required_if:type,game_voucher|array',
             'price' => 'sometimes|required|numeric',
             'status' => 'sometimes|required|in:active,inactive',
@@ -64,6 +64,11 @@ class UpdateRequest extends CreateRequest
         Validator::extend(
             'provider_product_exists',
             DigitalProductValidator::class . '@providerProductExists'
+        );
+
+        Validator::extend(
+            'orbit.exists.provider_product',
+            DigitalProductValidator::class . '@existsIfChanged'
         );
 
         Validator::extend(

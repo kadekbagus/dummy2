@@ -100,4 +100,22 @@ class DigitalProductValidator
 
         return ! empty($providerProduct);
     }
+
+    /**
+     * Determine if given provider product id exists in database.
+     *
+     * @param  [type] $attributes [description]
+     * @param  [type] $id         [description]
+     * @param  [type] $parameters [description]
+     * @return [type]             [description]
+     */
+    public function existsIfChanged($attributes, $id, $parameters)
+    {
+        $providerProduct = ProviderProduct::where('provider_product_id', $id)
+            ->first();
+
+        App::instance('providerProduct', $providerProduct);
+
+        return ! empty($providerProduct);
+    }
 }

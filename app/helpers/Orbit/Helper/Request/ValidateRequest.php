@@ -241,7 +241,7 @@ class ValidateRequest implements ValidateRequestInterface
     }
 
     /**
-     * Extend default Request::has ability with a callback then will be run
+     * Extend default Request::has ability with a callback that will be run
      * if request has the given $key.
      *
      * @param  string  $key      the key
