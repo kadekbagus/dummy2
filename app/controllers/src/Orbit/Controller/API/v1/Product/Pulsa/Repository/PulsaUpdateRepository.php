@@ -39,7 +39,7 @@ class PulsaUpdateRepository {
         ($request->description) ? $this->pulsa->description = $request->description : null;
         ($request->value) ? $this->pulsa->value = $request->value : null;
         ($request->price) ? $this->pulsa->price = $request->price : null;
-        ($request->quantity) ? $this->pulsa->quantity = $request->quantity : null;
+        $this->pulsa->quantity = $request->quantity;
         ($request->status) ? $this->pulsa->status = $request->status : null;
         ($request->vendor_price) ? $this->pulsa->vendor_price = $request->vendor_price : null;
         ($request->displayed) ? $this->pulsa->displayed = $request->displayed : null;

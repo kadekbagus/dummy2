@@ -26,6 +26,8 @@ class PulsaListRepository {
             'price'              => 'pulsa.price',
             'quantity'           => 'pulsa.quantity',
             'status'             => 'pulsa.status',
+            'created_at'         => 'pulsa.created_at',
+            'updated_at'         => 'pulsa.updated_at',
             'name'               => 'telco_operators.name',
             'is_promo'           => 'pulsa.is_promo',
         );
@@ -36,7 +38,7 @@ class PulsaListRepository {
 
         $prefix = DB::getTablePrefix();
 
-        $pulsa = Pulsa::select('pulsa.pulsa_item_id', 'pulsa.pulsa_code', 'pulsa.pulsa_display_name', 'telco_operators.name', 'pulsa.value', 'pulsa.price', 'pulsa.quantity', 'pulsa.status', 'pulsa.vendor_price', 'object_type', 'is_promo')
+        $pulsa = Pulsa::select('pulsa.pulsa_item_id', 'pulsa.pulsa_code', 'pulsa.pulsa_display_name', 'telco_operators.name', 'pulsa.value', 'pulsa.price', 'pulsa.quantity', 'pulsa.status', 'pulsa.vendor_price', 'object_type', 'is_promo', 'pulsa.created_at', 'pulsa.updated_at')
                       ->leftJoin('telco_operators', 'telco_operators.telco_operator_id', '=', 'pulsa.telco_operator_id')
                       ->where('object_type', $object_type)
                       ->whereNotIn('pulsa.status', ['deleted']);
