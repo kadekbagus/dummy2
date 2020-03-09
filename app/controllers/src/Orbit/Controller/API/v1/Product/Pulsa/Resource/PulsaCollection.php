@@ -31,6 +31,8 @@ class PulsaCollection extends ResourceCollection
                 'value' => $item->value,
                 'vendor_price' => $item->vendor_price,
                 'price' => $item->price,
+                'created_at' => $item->created_at->toDateTimeString(),
+                'updated_at' => $item->updated_at->toDateTimeString(),
             ];
         }
 
