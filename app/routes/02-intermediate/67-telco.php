@@ -6,12 +6,12 @@
 /**
  * Create new telco
  */
-Route::post('/app/v1/telco/new', 'IntermediateAuthController@TelcoOperator_postNewTelcoOperator');
+Route::post('/app/v1/telco/new', 'IntermediateProductAuthController@Pulsa\TelcoOperatorNew_postNewTelcoOperator');
 
 /**
  * Update telco
  */
-Route::post('/app/v1/telco/update', 'IntermediateAuthController@TelcoOperator_postUpdateTelcoOperator');
+Route::post('/app/v1/telco/update', 'IntermediateProductAuthController@Pulsa\TelcoOperatorUpdate_postUpdateTelcoOperator');
 
 /**
  * Get search telco
