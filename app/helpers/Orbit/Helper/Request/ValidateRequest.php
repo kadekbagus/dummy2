@@ -241,6 +241,20 @@ class ValidateRequest implements ValidateRequestInterface
     }
 
     /**
+     * Extend default Request::has ability with a callback then will be run
+     * if request has the given $key.
+     *
+     * @param  string  $key      the key
+     * @param  Closure $callback the callback that will be run
+     */
+    public function has($key, $callback)
+    {
+        if (Request::has($key)) {
+            $callback(Request::input($key));
+        }
+    }
+
+    /**
      * Proxy Request input so it is accessible directly from $this.
      *
      * @param  string $property request property.

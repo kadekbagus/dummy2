@@ -1,4 +1,6 @@
-<?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Validator;
+<?php
+
+namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Validator;
 
 use App;
 use DigitalProduct;
@@ -22,7 +24,10 @@ class DigitalProductValidator
      */
     public function exists($attributes, $digitalProductId, $parameters)
     {
-        $digitalProduct = DigitalProduct::where('digital_product_id', $digitalProductId)->first();
+        $digitalProduct = DigitalProduct::where(
+            'digital_product_id',
+            $digitalProductId
+        )->first();
 
         App::instance('digitalProduct', $digitalProduct);
 
@@ -35,11 +40,19 @@ class DigitalProductValidator
             return false;
         }
 
-        return null !== DigitalProduct::whereHas('games', function($gameQuery) use ($gameSlugOrId) {
-            $gameQuery->active()->where(function($query) use ($gameSlugOrId) {
-                $query->where('games.slug', $gameSlugOrId)->orWhere('games.game_id', $gameSlugOrId);
-            });
-        })->available()->first();
+        return DigitalProduct::whereHas(
+            'games',
+            function($gameQuery) use ($gameSlugOrId)
+            {
+                $gameQuery->active()->where(
+                    function($query) use ($gameSlugOrId)
+                    {
+                        $query->where('games.slug', $gameSlugOrId)
+                            ->orWhere('games.game_id', $gameSlugOrId);
+                    }
+                );
+            }
+        )->available()->first() !== null;
     }
 
     /**
@@ -78,7 +91,10 @@ class DigitalProductValidator
             return false;
         }
 
-        $providerProduct = ProviderProduct::where('provider_product_id', $digitalProduct->selected_provider_product_id)->first();
+        $providerProduct = ProviderProduct::where(
+            'provider_product_id',
+            $digitalProduct->selected_provider_product_id
+        )->first();
 
         App::instance('providerProduct', $providerProduct);
 

@@ -1,11 +1,12 @@
 <?php
 
-namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Repository;
+namespace Orbit\Controller\API\v1\Product\Repository;
 
 use App;
 use DB;
 use DigitalProduct;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductResource;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Helper\MediaQuery;
 
 /**
@@ -118,9 +119,9 @@ class DigitalProductRepository
     /**
      * Save new digital product.
      *
-     * @param  Orbit\Controller\API\v1\Product\DigitalProduct\Request\DigitalProductNewRequest $request
+     * @param  ..\Request\CreateRequest $request
      *
-     * @return Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductResource newly created digital product
+     * @return ..\Resource\DigitalProductResource newly created digital product
      */
     public function save($request)
     {
@@ -141,37 +142,39 @@ class DigitalProductRepository
             $this->digitalProduct->provider_product = App::make('providerProduct');
         });
 
-        return $this->digitalProduct;
+        return new DigitalProductResource($this->digitalProduct);
     }
 
     /**
      * Update specific digital product.
      *
-     * @param  string $digitalProductId the digital product id that will be updated.
-     * @param  Orbit\Controller\API\v1\Product\DigitalProduct\Request\DigitalProductUpdateRequest $request
+     * @param  string $id the digital product id
+     * @param  ..\Request\UpdateRequest $request
      *
-     * @return Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductResource updated digital product
+     * @return ..\Resource\DigitalProductResource updated digital product
      */
-    public function update($digitalProductId, $request)
+    public function update($id, $request)
     {
-        DB::transaction(function() use ($digitalProductId, $request)
+        DB::transaction(function() use ($id, $request)
         {
-            $this->digitalProduct = DigitalProduct::findOrFail($digitalProductId);
+            $this->digitalProduct = DigitalProduct::findOrFail($id);
 
             $this->createModelFromRequest($request);
 
             $this->digitalProduct->save();
 
-            // Sync (detach-attach) relationship between Digital Product and Game.
-            if ($request->type === 'game_voucher') {
-                $this->digitalProduct->games()->sync($request->games);
-            }
+            // Sync relationship between Digital Product and Game.
+            $request->has('games', function($games) {
+                if ($this->digitalProduct->product_type === 'game_voucher') {
+                    $this->digitalProduct->games()->sync($games);
+                }
+            });
 
             // Add provider name into digital product response.
             $this->digitalProduct->provider_product = App::make('providerProduct');
         });
 
-        return $this->digitalProduct;
+        return new DigitalProductResource($this->digitalProduct);
     }
 
     /**
@@ -181,20 +184,49 @@ class DigitalProductRepository
      */
     private function createModelFromRequest($request)
     {
-        if ($request->type) {
-            $this->digitalProduct->product_type = $request->type;
-        }
+        $request->has('type', function($type) {
+            $this->digitalProduct->product_type = $type;
+        });
 
-        $this->digitalProduct->product_name = $request->name;
-        $this->digitalProduct->code = $request->code;
-        $this->digitalProduct->selected_provider_product_id = $request->provider_id;
-        $this->digitalProduct->selling_price = $request->price;
-        $this->digitalProduct->is_displayed = $request->displayed;
-        $this->digitalProduct->is_promo = $request->promo;
-        $this->digitalProduct->status = $request->status;
-        $this->digitalProduct->description = $request->description;
-        $this->digitalProduct->notes = $request->notes;
-        $this->digitalProduct->extra_field_metadata = $request->extra_field_metadata;
+        $request->has('name', function($name) {
+            $this->digitalProduct->product_name = $name;
+        });
+
+        $request->has('code', function($code) {
+            $this->digitalProduct->code = $code;
+        });
+
+        $request->has('provider_id', function($providerId) {
+            $this->digitalProduct->selected_provider_product_id = $providerId;
+        });
+
+        $request->has('price', function($price) {
+            $this->digitalProduct->selling_price = $price;
+        });
+
+        $request->has('displayed', function($displayed) {
+            $this->digitalProduct->is_displayed = $displayed;
+        });
+
+        $request->has('promo', function($promo) {
+            $this->digitalProduct->is_promo = $promo;
+        });
+
+        $request->has('status', function($status) {
+            $this->digitalProduct->status = $status;
+        });
+
+        $request->has('description', function($description) {
+            $this->digitalProduct->description = $description;
+        });
+
+        $request->has('notes', function($notes) {
+            $this->digitalProduct->notes = $notes;
+        });
+
+        $request->has('extra_field_metadata', function($extraFieldMetadata) {
+            $this->digitalProduct->extra_field_metadata = $extraFieldMetadata;
+        });
     }
 
     /**

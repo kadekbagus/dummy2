@@ -1,4 +1,6 @@
-<?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Request;
+<?php
+
+namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Request;
 
 use Validator;
 use Orbit\Helper\Request\ValidateRequest;

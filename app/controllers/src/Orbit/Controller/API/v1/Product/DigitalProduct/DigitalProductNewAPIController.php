@@ -6,8 +6,7 @@ use App;
 use Exception;
 use OrbitShop\API\v1\ControllerAPI;
 use Orbit\Controller\API\v1\Product\DigitalProduct\Request\CreateRequest;
-use Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductResource;
-use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\DigitalProductRepository;
+use Orbit\Controller\API\v1\Product\Repository\DigitalProductRepository as Repo;
 
 /**
  * Handle digital product creation.
@@ -21,20 +20,16 @@ class DigitalProductNewAPIController extends ControllerAPI
      *
      * @return Illuminate\Http\Response
      */
-    public function postNew(
-        DigitalProductRepository $repo,
-        CreateRequest $request
-    ) {
+    public function postNew(Repo $repo, CreateRequest $request)
+    {
         $httpCode = 200;
 
         try {
 
-            $this->response->data = new DigitalProductResource(
-                $repo->save($request)
-            );
+            $this->response->data = $repo->save($request);
 
         } catch (Exception $e) {
-            $this->handleException($e, false);
+            return $this->handleException($e, false);
         }
 
         return $this->render($httpCode);
