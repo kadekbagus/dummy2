@@ -4,6 +4,7 @@ namespace Orbit\Controller\API\v1\Product\DigitalProduct\Request;
 
 use App;
 use DigitalProduct;
+use Orbit\Controller\API\v1\Pub\DigitalProduct\Validator\DigitalProductValidator;
 use Orbit\Helper\Request\ValidateRequest;
 use Validator;
 
@@ -12,7 +13,7 @@ use Validator;
  *
  * @author Budi <budi@gotomalls.com>
  */
-class UpdateRequest extends DigitalProductNewRequest
+class UpdateRequest extends CreateRequest
 {
     /**
      * Get validation rules.
@@ -53,23 +54,30 @@ class UpdateRequest extends DigitalProductNewRequest
     {
         parent::registerCustomValidations();
 
-        Validator::extend('product_exists', 'Orbit\Controller\API\v1\Pub\DigitalProduct\Validator\DigitalProductValidator@exists');
+        Validator::extend(
+            'product_exists',
+            DigitalProductValidator::class . '@exists'
+        );
 
-        Validator::extend('unique_code_if_changed', function($attributes, $productCode, $parameters) {
-            $this->productCode = $productCode;
-            $digitalProduct = App::make('digitalProduct');
+        Validator::extend(
+            'unique_code_if_changed',
+            function($attributes, $productCode, $parameters) {
+                $this->productCode = $productCode;
+                $digitalProduct = App::make('digitalProduct');
 
-            if (empty($digitalProduct)) {
-                return false;
+                if (empty($digitalProduct)) {
+                    return false;
+                }
+
+                // If no change, then assume valid.
+                if ($digitalProduct->code === $productCode) {
+                    return true;
+                }
+
+                // If changed, then check for duplication.
+                return DigitalProduct::select('code')
+                    ->where('code', $productCode)->first() === null;
             }
-
-            // If no change, then assume valid.
-            if ($digitalProduct->code === $productCode) {
-                return true;
-            }
-
-            // If changed, then check for duplication.
-            return null === DigitalProduct::select('code')->where('code', $productCode)->first();
-        });
+        );
     }
 }
