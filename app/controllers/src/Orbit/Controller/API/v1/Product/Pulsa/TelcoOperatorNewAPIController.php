@@ -1,4 +1,5 @@
 <?php
+namespace Orbit\Controller\API\v1\Product\Pulsa;
 /**
  * An API controller for managing TelcoOperator.
  */
@@ -12,6 +13,12 @@ use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
 use DominoPOS\OrbitUploader\Uploader as OrbitUploader;
+use Validator;
+use Config;
+use Lang;
+use TelcoOperator;
+use Event;
+use Pulsa;
 
 
 class TelcoOperatorNewAPIController extends ControllerAPI
