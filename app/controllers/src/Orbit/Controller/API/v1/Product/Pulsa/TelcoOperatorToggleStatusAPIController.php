@@ -29,7 +29,7 @@ class TelcoOperatorToggleStatusAPIController extends ControllerAPI
 
         try {
 
-            $this->response->data = $repo->telcoToggleStatus($request->id, $request);
+            $this->response->data = $repo->telcoToggleStatus($request->id);
 
         } catch (Exception $e) {
             return $this->handleException($e, true);
