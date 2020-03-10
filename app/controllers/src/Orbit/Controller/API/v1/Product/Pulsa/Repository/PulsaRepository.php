@@ -37,10 +37,8 @@ class PulsaRepository
             'updated_at' => 'telco_operators.updated_at',
         ];
 
-        $status = OrbitInput::get('status');
         $sortBy = $sortByMapping[OrbitInput::get('sortby', 'updated_at')];
         $sortMode = OrbitInput::get('sortmode', 'asc');
-        $keyword = OrbitInput::get('keyword');
 
         return TelcoOperator::select(
                 'telco_operator_id',
@@ -54,15 +52,11 @@ class PulsaRepository
                 'countries.country_id', '=', 'telco_operators.country_id'
             )
             ->with($this->buildMediaQuery())
-            ->when(! empty($status), function($query) use ($status) {
+            ->whenHas('status', function($query, $status) {
                 return $query->where('status', $status);
             })
-            ->when(! empty($keyword), function($query) use ($keyword) {
-                return $query->where(
-                    'telco_operators.name',
-                    'like',
-                    "%{$keyword}%"
-                );
+            ->whenHas('keyword', function($query, $keyword) {
+                return $query->where('telco_operators.name', 'like', "%{$keyword}%");
             })
             ->orderBy($sortBy, $sortMode);
     }
@@ -103,12 +97,7 @@ class PulsaRepository
 
         $telco = TelcoOperator::findOrFail($id);
 
-        if ($telco->status === 'active') {
-            $telco->status = 'inactive';
-        }
-        else {
-            $telco->status = 'active';
-        }
+        $telco->status = $telco->status === 'active' ? 'inactive' : 'active';
 
         $telco->save();
 

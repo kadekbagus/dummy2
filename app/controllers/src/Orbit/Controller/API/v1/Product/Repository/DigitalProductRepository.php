@@ -44,33 +44,23 @@ class DigitalProductRepository
      */
     public function findProducts()
     {
-        $sortBy = OrbitInput::get('sortby', 'updated_at');
-        $sortMode = OrbitInput::get('sortmode', 'desc');
-
-        $digitalProducts = DigitalProduct::select(
-            'digital_product_id', 'product_name',
-            'selling_price', 'product_type', 'status'
-        );
-
-        OrbitInput::get('product_type', function($productType) use ($digitalProducts) {
-            if (! empty($productType)) {
-                $digitalProducts->where('product_type', $productType);
-            }
-        });
-
-        OrbitInput::get('keyword', function($keyword) use ($digitalProducts) {
-            if (! empty($keyword)) {
-                $digitalProducts->where('product_name', 'like', "%{$keyword}%");
-            }
-        });
-
-        OrbitInput::get('status', function($status) use ($digitalProducts) {
-            if (! empty($status)) {
-                $digitalProducts->where('status', $status);
-            }
-        });
-
-        return $digitalProducts;
+        return DigitalProduct::select(
+                'digital_product_id', 'product_name',
+                'selling_price', 'product_type', 'status'
+            )
+            ->whenHas('product_type', function($query, $productType) {
+                $query->where('product_type', $productType);
+            })
+            ->whenHas('keyword', function($query, $keyword) {
+                $query->where('product_name', 'like', "%{$keyword}%");
+            })
+            ->whenHas('status', function($query, $status) {
+                $query->where('status', $status);
+            })
+            ->orderBy(
+                OrbitInput::get('sortby', 'updated_at'),
+                OrbitInput::get('sortmode', 'desc')
+            );
     }
 
     /**
@@ -85,31 +75,32 @@ class DigitalProductRepository
     public function findProduct($digitalProductId, $gameSlugOrId = null)
     {
         $this->digitalProduct = DigitalProduct::with([
-            'games' => function($query) use ($gameSlugOrId) {
-                $query->select(
-                    'games.game_id', 'game_name', 'games.slug',
-                    'games.description', 'games.seo_text'
-                );
+                'games' => function($query) use ($gameSlugOrId) {
+                    $query->select(
+                        'games.game_id', 'game_name', 'games.slug',
+                        'games.description', 'games.seo_text'
+                    );
 
-                // If request has game slug/id,
-                // then we need to load the game images.
-                if (! empty($gameSlugOrId)) {
+                    // If request has game slug/id,
+                    // then we need to load the game images.
+                    $query->when(
+                        $gameSlugOrId,
+                        function($gameQuery, $gameSlugOrId) use ($query) {
+                            $query->with($this->buildMediaQuery());
 
-                    $query->where(function($query) use ($gameSlugOrId) {
-                        $query->where('games.slug', $gameSlugOrId)
-                            ->orWhere('games.game_id', $gameSlugOrId);
-                    });
-
-                    $query->with($this->buildMediaQuery());
+                            $gameQuery->where('games.slug', $gameSlugOrId)
+                                ->orWhere('games.game_id', $gameSlugOrId);
+                        }
+                    );
+                },
+                'provider_product' => function($query) {
+                    $query->select(
+                        'provider_product_id', 'provider_name',
+                        'provider_product_name'
+                    );
                 }
-            },
-            'provider_product' => function($query) {
-                $query->select(
-                    'provider_product_id', 'provider_name',
-                    'provider_product_name'
-                );
-            }
-        ])->where('digital_products.digital_product_id', $digitalProductId);
+            ])
+            ->where('digital_products.digital_product_id', $digitalProductId);
 
         $this->digitalProduct = $this->digitalProduct->firstOrFail();
 
