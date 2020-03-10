@@ -90,4 +90,31 @@ class PulsaRepository
             ->where('telco_operator_id', $telcoOperatorId)
             ->firstOrFail();
     }
+
+    /**
+     * Toggle telco operator status.
+     *
+     * @param  string $id      telco id
+     * @param  ValidateRequest $request request
+     * @return Model          model
+     */
+    public function telcoToggleStatus($id, $request)
+    {
+        DB::beginTransaction();
+
+        $telco = TelcoOperator::findOrFail($id);
+
+        if ($telco->status === 'active') {
+            $telco->status = 'inactive';
+        }
+        else {
+            $telco->status = 'active';
+        }
+
+        $telco->save();
+
+        DB::commit();
+
+        return $telco;
+    }
 }
