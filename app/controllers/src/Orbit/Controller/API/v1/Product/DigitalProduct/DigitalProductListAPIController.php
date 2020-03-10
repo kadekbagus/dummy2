@@ -6,7 +6,7 @@ use Exception;
 use OrbitShop\API\v1\ControllerAPI;
 use Orbit\Controller\API\v1\Product\DigitalProduct\Request\ListRequest;
 use Orbit\Controller\API\v1\Product\DigitalProduct\Resource\DigitalProductCollection;
-use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\DigitalProductRepository as Repository;
+use Orbit\Controller\API\v1\Product\Repository\DigitalProductRepository as Repo;
 
 /**
  * Get list of digital product.
@@ -23,7 +23,7 @@ class DigitalProductListAPIController extends ControllerAPI
      *
      * @return Illuminate\Http\Response
      */
-    public function getList(Repository $repo, ListRequest $request)
+    public function getList(Repo $repo, ListRequest $request)
     {
         $httpCode = 200;
 

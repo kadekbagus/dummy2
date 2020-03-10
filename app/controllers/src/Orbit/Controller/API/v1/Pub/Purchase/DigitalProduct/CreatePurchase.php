@@ -1,4 +1,6 @@
-<?php namespace Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct;
+<?php
+
+namespace Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct;
 
 use App;
 use Country;
@@ -16,6 +18,10 @@ use Request;
 
 /**
  * Digital Product Purchase
+ *
+ * @todo Create a proper base purchase creator/updater.
+ *
+ * @author Budi <budi@gotomalls.com>
  */
 class CreatePurchase
 {
