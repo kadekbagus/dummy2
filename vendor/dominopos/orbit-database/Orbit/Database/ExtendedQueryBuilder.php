@@ -3,6 +3,7 @@
 namespace Orbit\Database;
 
 use Illuminate\Database\Query\Builder;
+use Request;
 
 /**
  * Extended laravel query builder with small additions.
@@ -39,18 +40,30 @@ class ExtendedQueryBuilder extends Builder
      * @todo create an extended Illuminate DB builder
      *       which add this functionality.
      *
-     * @param  bool $conditionIsMet the condition
+     * @param  mixed $value the conditional value check.
      * @return  Closure $callback the callback that will be run
      *                            if condition is met.
      *
      * @return Illuminate\Database\Query\Builder
      */
-    public function when($conditionIsMet, $callback)
+    public function when($value, $callback)
     {
-        if ($conditionIsMet) {
-            return $callback($this) ?: $this;
+        if ($value) {
+            return $callback($this, $value) ?: $this;
         }
 
         return $this;
+    }
+
+    /**
+     * Shortcut for when() with request input as conditional check param.
+     *
+     * @param  [type] $inputName [description]
+     * @param  [type] $callback  [description]
+     * @return [type]            [description]
+     */
+    public function whenHas($inputName, $callback)
+    {
+        return $this->when(Request::input($inputName), $callback);
     }
 }
