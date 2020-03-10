@@ -18,6 +18,13 @@ class PulsaRepository
 
     protected $imagePrefix = '';
 
+    private $sortByMapping = [
+        'name' => 'telco_operators.name',
+        'country_name' => 'countries.name',
+        'status' => 'telco_operators.status',
+        'updated_at' => 'telco_operators.updated_at',
+    ];
+
     public function __construct()
     {
         $this->setupImageUrlQuery();
@@ -30,16 +37,6 @@ class PulsaRepository
      */
     public function getTelcoList()
     {
-        $sortByMapping = [
-            'name' => 'telco_operators.name',
-            'country_name' => 'countries.name',
-            'status' => 'telco_operators.status',
-            'updated_at' => 'telco_operators.updated_at',
-        ];
-
-        $sortBy = $sortByMapping[OrbitInput::get('sortby', 'updated_at')];
-        $sortMode = OrbitInput::get('sortmode', 'asc');
-
         return TelcoOperator::select(
                 'telco_operator_id',
                 'telco_operators.name as name',
@@ -53,12 +50,15 @@ class PulsaRepository
             )
             ->with($this->buildMediaQuery())
             ->whenHas('status', function($query, $status) {
-                return $query->where('status', $status);
+                $query->where('status', $status);
             })
             ->whenHas('keyword', function($query, $keyword) {
-                return $query->where('telco_operators.name', 'like', "%{$keyword}%");
+                $query->where('telco_operators.name', 'like', "%{$keyword}%");
             })
-            ->orderBy($sortBy, $sortMode);
+            ->orderBy(
+                $this->sortByMapping[OrbitInput::get('sortby', 'updated_at')],
+                OrbitInput::get('sortmode', 'desc')
+            );
     }
 
     /**
@@ -79,7 +79,12 @@ class PulsaRepository
                 'telco_operators.status',
                 'telco_operators.seo_text'
             )
-            ->leftJoin('countries', 'countries.country_id', '=', 'telco_operators.country_id')
+            ->leftJoin(
+                'countries',
+                'countries.country_id',
+                '=',
+                'telco_operators.country_id'
+            )
             ->with($this->buildMediaQuery())
             ->where('telco_operator_id', $telcoOperatorId)
             ->firstOrFail();
