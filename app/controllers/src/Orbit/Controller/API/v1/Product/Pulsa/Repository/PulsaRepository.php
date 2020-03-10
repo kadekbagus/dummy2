@@ -32,7 +32,7 @@ class PulsaRepository
     {
         $sortByMapping = [
             'name' => 'telco_operators.name',
-            'country_name' => 'country_name',
+            'country_name' => 'countries.name',
             'status' => 'telco_operators.status',
         ];
 
