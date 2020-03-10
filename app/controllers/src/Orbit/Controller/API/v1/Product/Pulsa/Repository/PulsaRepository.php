@@ -95,10 +95,9 @@ class PulsaRepository
      * Toggle telco operator status.
      *
      * @param  string $id      telco id
-     * @param  ValidateRequest $request request
      * @return Model          model
      */
-    public function telcoToggleStatus($id, $request)
+    public function telcoToggleStatus($id)
     {
         DB::beginTransaction();
 
