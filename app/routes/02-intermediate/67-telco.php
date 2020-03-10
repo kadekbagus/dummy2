@@ -22,3 +22,8 @@ Route::get('/app/v1/telco/list', 'IntermediateProductAuthController@Pulsa\TelcoO
  * Get detail telco
  */
 Route::get('/app/v1/telco/detail', 'IntermediateProductAuthController@Pulsa\TelcoOperatorDetail_getDetail');
+
+/**
+ * Toggle telco status
+ */
+Route::post('/app/v1/telco/toggle-status', 'IntermediateProductAuthController@Pulsa\TelcoOperatorToggleStatus_postToggleStatus');
