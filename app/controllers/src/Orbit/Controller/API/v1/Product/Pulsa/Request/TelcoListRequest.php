@@ -29,7 +29,7 @@ class TelcoListRequest extends ValidateRequest
         return [
             'skip' => 'sometimes|required|min:0',
             'take' => 'sometimes|required|min:1',
-            'sortby' => 'sometimes|in:name,country_name,status',
+            'sortby' => 'sometimes|in:name,country_name,status,updated_at',
             'sortmode' => 'sometimes|in:asc,desc',
         ];
     }
