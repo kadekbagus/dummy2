@@ -34,10 +34,11 @@ class PulsaRepository
             'name' => 'telco_operators.name',
             'country_name' => 'countries.name',
             'status' => 'telco_operators.status',
+            'updated_at' => 'telco_operators.updated_at',
         ];
 
         $status = OrbitInput::get('status');
-        $sortBy = $sortByMapping[OrbitInput::get('sortby', 'status')];
+        $sortBy = $sortByMapping[OrbitInput::get('sortby', 'updated_at')];
         $sortMode = OrbitInput::get('sortmode', 'asc');
         $keyword = OrbitInput::get('keyword');
 
@@ -45,7 +46,8 @@ class PulsaRepository
                 'telco_operator_id',
                 'telco_operators.name as name',
                 'countries.name as country_name',
-                'telco_operators.status'
+                'telco_operators.status',
+                'telco_operators.updated_at'
             )
             ->leftJoin(
                 'countries',
