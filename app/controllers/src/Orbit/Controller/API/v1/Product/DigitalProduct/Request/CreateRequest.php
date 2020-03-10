@@ -52,7 +52,9 @@ class CreateRequest extends ValidateRequest
     {
         return [
             'unique_code' => 'PRODUCT_CODE_ALREADY_EXISTS',
-            'provider_product_exists' => 'PROVIDER_PRODUCT_DOES_NOT_EXISTS',
+            'provider_product_exists' => trans(
+                'validation.orbit.exists.provider_product'
+            ),
         ];
     }
 

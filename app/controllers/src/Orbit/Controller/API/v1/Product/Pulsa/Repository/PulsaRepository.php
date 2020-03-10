@@ -18,6 +18,13 @@ class PulsaRepository
 
     protected $imagePrefix = '';
 
+    private $sortByMapping = [
+        'name' => 'telco_operators.name',
+        'country_name' => 'countries.name',
+        'status' => 'telco_operators.status',
+        'updated_at' => 'telco_operators.updated_at',
+    ];
+
     public function __construct()
     {
         $this->setupImageUrlQuery();
@@ -30,39 +37,28 @@ class PulsaRepository
      */
     public function getTelcoList()
     {
-        $sortByMapping = [
-            'name' => 'telco_operators.name',
-            'country_name' => 'country_name',
-            'status' => 'telco_operators.status',
-        ];
-
-        $status = OrbitInput::get('status');
-        $sortBy = $sortByMapping[OrbitInput::get('sortby', 'status')];
-        $sortMode = OrbitInput::get('sortmode', 'asc');
-        $keyword = OrbitInput::get('keyword');
-
         return TelcoOperator::select(
                 'telco_operator_id',
                 'telco_operators.name as name',
                 'countries.name as country_name',
-                'telco_operators.status'
+                'telco_operators.status',
+                'telco_operators.updated_at'
             )
             ->leftJoin(
                 'countries',
                 'countries.country_id', '=', 'telco_operators.country_id'
             )
             ->with($this->buildMediaQuery())
-            ->when(! empty($status), function($query) use ($status) {
-                return $query->where('status', $status);
+            ->whenHas('status', function($query, $status) {
+                $query->where('status', $status);
             })
-            ->when(! empty($keyword), function($query) use ($keyword) {
-                return $query->where(
-                    'telco_operators.name',
-                    'like',
-                    "%{$keyword}%"
-                );
+            ->whenHas('keyword', function($query, $keyword) {
+                $query->where('telco_operators.name', 'like', "%{$keyword}%");
             })
-            ->orderBy($sortBy, $sortMode);
+            ->orderBy(
+                $this->sortByMapping[OrbitInput::get('sortby', 'updated_at')],
+                OrbitInput::get('sortmode', 'desc')
+            );
     }
 
     /**
@@ -83,9 +79,35 @@ class PulsaRepository
                 'telco_operators.status',
                 'telco_operators.seo_text'
             )
-            ->leftJoin('countries', 'countries.country_id', '=', 'telco_operators.country_id')
+            ->leftJoin(
+                'countries',
+                'countries.country_id',
+                '=',
+                'telco_operators.country_id'
+            )
             ->with($this->buildMediaQuery())
             ->where('telco_operator_id', $telcoOperatorId)
             ->firstOrFail();
+    }
+
+    /**
+     * Toggle telco operator status.
+     *
+     * @param  string $id      telco id
+     * @return Model          model
+     */
+    public function telcoToggleStatus($id)
+    {
+        DB::beginTransaction();
+
+        $telco = TelcoOperator::findOrFail($id);
+
+        $telco->status = $telco->status === 'active' ? 'inactive' : 'active';
+
+        $telco->save();
+
+        DB::commit();
+
+        return $telco;
     }
 }

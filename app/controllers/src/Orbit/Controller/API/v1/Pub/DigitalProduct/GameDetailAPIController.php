@@ -4,7 +4,7 @@ namespace Orbit\Controller\API\v1\Pub\DigitalProduct;
 
 use Exception;
 use OrbitShop\API\v1\PubControllerAPI;
-use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\GameRepository;
+use Orbit\Controller\API\v1\Product\Repository\GameRepository;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Request\GameDetailRequest;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Resource\GameResource;
 
