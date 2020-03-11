@@ -19,7 +19,7 @@ use Lang;
 use TelcoOperator;
 use Event;
 use Pulsa;
-
+use Str;
 
 class TelcoOperatorNewAPIController extends ControllerAPI
 {
@@ -114,6 +114,7 @@ class TelcoOperatorNewAPIController extends ControllerAPI
             $newTelco->identification_prefix_numbers = $identificationPrefixNumbers;
             $newTelco->status = $status;
             $newTelco->seo_text = $seoText;
+            $newTelco->slug = Str::slug($name);
 
             $newTelco->save();
 
