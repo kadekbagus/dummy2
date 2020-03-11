@@ -43,7 +43,7 @@ class PulsaCreateRepository {
         $this->pulsa->status = ($request->status) ? $request->status : 'inactive';
         $this->pulsa->vendor_price = $request->vendor_price;
         $this->pulsa->displayed = ($request->displayed) ? $request->displayed : 'yes';
-        $this->pulsa->is_promo = ($request->promo) ? $request->promo : 'no';
+        $this->pulsa->is_promo = ($request->is_promo) ? $request->is_promo : 'no';
     }
 
 }
