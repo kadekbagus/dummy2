@@ -11,10 +11,9 @@ use Orbit\Helper\Request\Validators\MallExistsValidator;
 /**
  * Validation for new feedback request.
  *
- * @todo  find a way to properly inject current user into request (might be a service)
  * @author Budi <budi@gotomalls.com>
  */
-class NewFeedbackRequest extends ValidateRequest
+class CreateRequest extends ValidateRequest
 {
     /**
      * Allowed roles to access this request.
@@ -77,20 +76,6 @@ class NewFeedbackRequest extends ValidateRequest
         }
 
         return $errorMessage;
-    }
-
-    /**
-     * Register additional data after validation.
-     * Useful if we have to add/remove some data after validation.
-     *
-     * @return void
-     */
-    public function getDataAfterValidation()
-    {
-        return array_merge($this->getData(), [
-            'user' => trim($this->user()->full_name),
-            'date' => Carbon::now()->format('d F Y'),
-        ]);
     }
 
     /**

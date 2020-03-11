@@ -12221,8 +12221,7 @@ class UploadAPIController extends ControllerAPI
         });
 
         Validator::extend('orbit.empty.telco', function ($attribute, $value, $parameters){
-            $telco = TelcoOperator::where('status', 'active')
-                        ->where('telco_operator_id', $value)
+            $telco = TelcoOperator::where('telco_operator_id', $value)
                         ->first();
 
             if (empty($telco)) {

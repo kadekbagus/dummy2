@@ -18,15 +18,17 @@ class UserGetter
      * @param DominoPOS\OrbitSession\Session $session
      * @return User $user
      */
-    public static function getLoggedInUser($session)
+    public static function getLoggedInUser($session, $roles = ['Consumer'])
     {
         $userId = $session->read('user_id');
 
         // @todo: Why we query membership also? do we need it on every page?
         $user = User::with('userDetail')
             ->where('user_id', $userId)
-            ->whereHas('role', function($q) {
-                $q->where('role_name', 'Consumer');
+            ->whereHas('role', function($q) use ($roles) {
+                if (! empty($roles)) {
+                    $q->whereIn('role_name', $roles);
+                }
             })
             ->first();
 

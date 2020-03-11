@@ -1,4 +1,6 @@
-<?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Validator;
+<?php
+
+namespace Orbit\Controller\API\v1\Pub\DigitalProduct\Validator;
 
 use App;
 use Game;
@@ -16,7 +18,6 @@ class GameValidator
      * @param  [type] $attributes       [description]
      * @param  [type] $digitalProductId [description]
      * @param  [type] $parameters       [description]
-     * @param  [type] $validator        [description]
      * @return [type]                   [description]
      */
     public function exists($attributes, $slug, $parameters)

@@ -192,7 +192,7 @@ class GetDigitalProductQueue
                         'object_type' => 'digital_product'
                     ];
                     $promoCodeReservation->markAsIssued($payment->user, $promoData);
-                    $this->log("Promo code {$discountCode} issued for purchase {$paymentId}");
+                    $this->log("Promo code {$discount->discount_code} issued for purchase {$paymentId}");
                 }
 
                 $this->log("Purchase Data: " . serialize($purchaseData));

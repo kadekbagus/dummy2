@@ -6,19 +6,24 @@
 /**
  * Create new telco
  */
-Route::post('/app/v1/telco/new', 'IntermediateAuthController@TelcoOperator_postNewTelcoOperator');
+Route::post('/app/v1/telco/new', 'IntermediateProductAuthController@Pulsa\TelcoOperatorNew_postNewTelcoOperator');
 
 /**
  * Update telco
  */
-Route::post('/app/v1/telco/update', 'IntermediateAuthController@TelcoOperator_postUpdateTelcoOperator');
+Route::post('/app/v1/telco/update', 'IntermediateProductAuthController@Pulsa\TelcoOperatorUpdate_postUpdateTelcoOperator');
 
 /**
  * Get search telco
  */
-Route::get('/app/v1/telco/list', 'IntermediateAuthController@TelcoOperator_getSearchTelcoOperator');
+Route::get('/app/v1/telco/list', 'IntermediateProductAuthController@Pulsa\TelcoOperatorList_getList');
 
 /**
  * Get detail telco
  */
-Route::get('/app/v1/telco/detail', 'IntermediateAuthController@TelcoOperator_getDetailTelcoOperator');
+Route::get('/app/v1/telco/detail', 'IntermediateProductAuthController@Pulsa\TelcoOperatorDetail_getDetail');
+
+/**
+ * Toggle telco status
+ */
+Route::post('/app/v1/telco/toggle-status', 'IntermediateProductAuthController@Pulsa\TelcoOperatorToggleStatus_postToggleStatus');

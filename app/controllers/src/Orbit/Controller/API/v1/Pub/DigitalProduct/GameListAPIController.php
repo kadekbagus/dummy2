@@ -1,10 +1,12 @@
-<?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct;
+<?php
+
+namespace Orbit\Controller\API\v1\Pub\DigitalProduct;
 
 use Exception;
-use Illuminate\Support\Facades\App;
 use OrbitShop\API\v1\PubControllerAPI;
-use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\GameRepository;
+use Orbit\Controller\API\v1\Product\Repository\GameRepository;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Request\GameListRequest;
+use Orbit\Controller\API\v1\Pub\DigitalProduct\Resource\GameCollection;
 
 /**
  * Get list of Game.
@@ -18,19 +20,19 @@ class GameListAPIController extends PubControllerAPI
      *
      * @return Illuminate\Http\Response
      */
-    public function getList()
+    public function getList(GameRepository $repo, GameListRequest $request)
     {
         $httpCode = 200;
 
         try {
-            // $this->enableQueryLog();
 
-            $this->authorize(['guest', 'consumer']);
+            $games = $repo->findGames();
+            $total = clone $games;
 
-            //TODO: need cleaner way to inject this
-            (new GameListRequest($this))->validate();
+            $games = $games->skip($request->skip)->take($request->take)->get();
+            $total = $total->count();
 
-            $this->response->data = App::make(GameRepository::class)->findGames();
+            $this->response->data = new GameCollection($games, $total);
 
         } catch (Exception $e) {
             return $this->handleException($e, false);
