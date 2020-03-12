@@ -3,39 +3,39 @@
 /**
  * Pulsa create
  */
-Route::post('/api/v1/pulsa/new', function()
-{
-    return PulsaAPIController::create()->postNewPulsa();
-});
+// Route::post('/api/v1/pulsa/new', function()
+// {
+//     return PulsaAPIController::create()->postNewPulsa();
+// });
 
 /**
  * Pulsa update
  */
-Route::post('/api/v1/pulsa/update', function()
-{
-    return PulsaAPIController::create()->postUpdatePulsa();
-});
+// Route::post('/api/v1/pulsa/update', function()
+// {
+//     return PulsaAPIController::create()->postUpdatePulsa();
+// });
 
 /**
  * Pulsa status update
  */
-Route::post('/api/v1/pulsa/update-status', function()
-{
-    return PulsaAPIController::create()->postUpdatePulsaStatus();
-});
+// Route::post('/api/v1/pulsa/update-status', function()
+// {
+//     return PulsaAPIController::create()->postUpdatePulsaStatus();
+// });
 
 /**
  * Pulsa list
  */
-Route::get('/api/v1/pulsa/list', function()
-{
-    return PulsaAPIController::create()->getSearchPulsa();
-});
+// Route::get('/api/v1/pulsa/list', function()
+// {
+//     return PulsaAPIController::create()->getSearchPulsa();
+// });
 
 /**
  * Pulsa Detail
  */
-Route::get('/api/v1/pulsa/detail', function()
-{
-    return PulsaAPIController::create()->getDetailPulsa();
-});
+// Route::get('/api/v1/pulsa/detail', function()
+// {
+//     return PulsaAPIController::create()->getDetailPulsa();
+// });

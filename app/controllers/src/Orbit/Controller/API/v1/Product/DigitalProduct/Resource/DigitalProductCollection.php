@@ -1,21 +1,22 @@
-<?php namespace Orbit\Controller\API\v1\Product\DigitalProduct\Resource;
+<?php
+
+namespace Orbit\Controller\API\v1\Product\DigitalProduct\Resource;
 
 use Config;
-use DigitalProduct;
-use Orbit\Helper\Resource\ResourceAbstract as Resource;
-use Str;
+use Orbit\Helper\Resource\ResourceCollection;
 
 /**
  * Resource Collection of Digital Product.
  *
  * @author Budi <budi@gotomalls.com>
  */
-class DigitalProductCollection extends Resource
+class DigitalProductCollection extends ResourceCollection
 {
-    private $collection = null;
-
-    private $total = 0;
-
+    /**
+     * List of default product type. Will be merged with the ones
+     * set on config/orbit.php.
+     * @var array
+     */
     private $productTypes = [
         'game_voucher' => 'Game Voucher',
         'electricity' => 'Electricity',
@@ -23,26 +24,23 @@ class DigitalProductCollection extends Resource
 
     public function __construct($collection, $total = 0)
     {
-        $this->collection = $collection;
-        $this->total = $total;
-        $this->productTypes = array_merge($this->productTypes, Config::get('orbit.digital_product.product_types', []));
+        parent::__construct($collection, $total);
+
+        $this->productTypes = array_merge(
+            $this->productTypes,
+            Config::get('orbit.digital_product.product_types', [])
+        );
     }
 
     /**
      * Transform collection to array as response data.
      *
-     * @return [type] [description]
+     * @return array
      */
     public function toArray()
     {
-        $data = [
-            'returned_records' => $this->collection->count(),
-            'total_records' => $this->total,
-            'records' => [],
-        ];
-
         foreach($this->collection as $item) {
-            $data['records'][] = [
+            $this->data['records'][] = [
                 'id' => $item->digital_product_id,
                 'name' => $item->product_name,
                 'type' => $this->transformProductType($item->product_type),
@@ -51,7 +49,7 @@ class DigitalProductCollection extends Resource
             ];
         }
 
-        return $data;
+        return $this->data;
     }
 
     /**

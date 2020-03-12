@@ -1,4 +1,6 @@
-<?php namespace Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct;
+<?php
+
+namespace Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct;
 
 use App;
 use Carbon\Carbon;
@@ -30,6 +32,8 @@ use User;
 
 /**
  * Digital Product Purchase Update handler.
+ *
+ * @todo Create a proper base purchase creator/updater.
  *
  * @author Budi <budi@gotomalls.com>
  */

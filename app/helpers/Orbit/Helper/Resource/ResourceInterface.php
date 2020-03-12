@@ -1,4 +1,6 @@
-<?php namespace Orbit\Helper\Resource;
+<?php
+
+namespace Orbit\Helper\Resource;
 
 /**
  * Interface that must be implemented for any resource type.

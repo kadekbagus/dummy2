@@ -1,10 +1,12 @@
-<?php namespace Orbit\Controller\API\v1\Product\DigitalProduct;
+<?php
+
+namespace Orbit\Controller\API\v1\Product\DigitalProduct;
 
 use App;
 use Exception;
 use OrbitShop\API\v1\ControllerAPI;
-use Orbit\Controller\API\v1\Product\DigitalProduct\Request\DigitalProductUpdateRequest;
-use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\DigitalProductRepository;
+use Orbit\Controller\API\v1\Product\DigitalProduct\Request\UpdateRequest;
+use Orbit\Controller\API\v1\Product\Repository\DigitalProductRepository as Repo;
 
 /**
  * Handle digital product update.
@@ -18,22 +20,16 @@ class DigitalProductUpdateAPIController extends ControllerAPI
      *
      * @return Illuminate\Http\Response
      */
-    public function postUpdate()
+    public function postUpdate(Repo $repo, UpdateRequest $request)
     {
         $httpCode = 200;
 
         try {
-            // $this->enableQueryLog();
 
-            with($request = new DigitalProductUpdateRequest($this))->validate();
-
-            $this->response->data = App::make(DigitalProductRepository::class)->update(
-                $request->id,
-                $request
-            );
+            $this->response->data = $repo->update($request->id, $request);
 
         } catch (Exception $e) {
-            $this->handleException($e, false);
+            return $this->handleException($e, false);
         }
 
         return $this->render($httpCode);
