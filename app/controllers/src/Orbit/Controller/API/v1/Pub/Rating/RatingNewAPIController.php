@@ -7,6 +7,12 @@ use OrbitShop\API\v1\PubControllerAPI;
 use Orbit\Controller\API\v1\Pub\Rating\Request\CreateRequest;
 use Orbit\Controller\API\v1\Rating\Repository\RatingRepository as Repository;
 
+/**
+ * Controller which handle rating/review update.
+ * Fully rewritten using new Repository/Request and DataBuilder helpers.
+ *
+ * @author Budi <budi@gotomalls.com>
+ */
 class RatingNewAPIController extends PubControllerAPI
 {
     /**

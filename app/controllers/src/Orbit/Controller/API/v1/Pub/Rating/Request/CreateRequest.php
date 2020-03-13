@@ -32,10 +32,10 @@ class CreateRequest extends ValidateRequest implements RequestWithUpload
 
     // Indicate that is current object being reviewed
     // is a promotional event or not.
-    private $isPromotionalEvent = false;
+    protected $isPromotionalEvent = false;
 
     // Location of the object being reviewed (which mall/store, etc).
-    private $location = null;
+    protected $location = null;
 
     public function __construct()
     {
@@ -97,7 +97,7 @@ class CreateRequest extends ValidateRequest implements RequestWithUpload
     {
         $validationData = parent::validationData();
         $validationData['review'] = str_replace(
-            ["\r", "\n"], '', $validationData['review']
+            ["\r", "\n"], '', trim($validationData['review'])
         );
 
         if ($this->isReply()) {
@@ -183,7 +183,7 @@ class CreateRequest extends ValidateRequest implements RequestWithUpload
     /**
      * Determine if current rating is for a promotional event or not.
      */
-    private function resolvePromotionalEvent()
+    protected function resolvePromotionalEvent()
     {
         if ($this->object_type === 'news') {
             $this->isPromotionalEvent = News::select(
@@ -197,7 +197,7 @@ class CreateRequest extends ValidateRequest implements RequestWithUpload
     /**
      * Resolve rating location (store, mall, country)
      */
-    public function resolveReviewLocation()
+    protected function resolveReviewLocation()
     {
         if (! $this->isPromotionalEvent()) {
 

@@ -236,6 +236,14 @@ class ValidateRequest implements ValidateRequestInterface
     }
 
     /**
+     * An after validation hook.
+     */
+    protected function afterValidation()
+    {
+        // Do nothing.
+    }
+
+    /**
      * Validate form request.
      *
      * @param  array  $data     [description]
@@ -263,6 +271,9 @@ class ValidateRequest implements ValidateRequestInterface
         if ($this->validator->fails()) {
             $this->handleValidationFails();
         }
+
+        // Run an after validation hook. Can be overridden when needed.
+        $this->afterValidation();
     }
 
     /**

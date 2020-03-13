@@ -1,6 +1,5 @@
 <?php
 
-// TODO: move to app/models ?
 use Orbit\Controller\API\v1\Rating\RatingModelInterface;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 
@@ -32,7 +31,7 @@ class MongoRating implements RatingModelInterface
     public function update($id, $data = [])
     {
         $this->rating = $this->mongo->setFormParam($data)
-            ->setEndPoint("reviews/{$id}")
+            ->setEndPoint("reviews")
             ->request('PUT');
 
         return $this->rating;
@@ -78,6 +77,38 @@ class MongoRating implements RatingModelInterface
         return $this->find($ratingId)->isNotEmpty();
     }
 
+    public function getImages()
+    {
+        $images = [];
+
+        if ($this->isEmpty()) {
+            return $images;
+        }
+
+        if (isset($this->rating->data->images)) {
+            $ratingImages = $this->rating->data->images;
+
+            // Loop thru number of image...
+            foreach($ratingImages as $key => $imageList) {
+
+                // For each image, loop thru its variants...
+                foreach($imageList as $keyVar => $image) {
+                    $images[$key][$keyVar] = [
+                        'media_id' => $image->media_id,
+                        'variant_name' => $image->variant_name,
+                        'url' => $image->url,
+                        'cdn_url' => $image->cdn_url,
+                        'metadata' => $image->metadata,
+                        'approval_status' => $image->approval_status,
+                        'rejection_message' => $image->rejection_message,
+                    ];
+                }
+            }
+        }
+
+        return $images;
+    }
+
     /**
      * Determine if current rating instance is empty or not.
      *
@@ -88,9 +119,17 @@ class MongoRating implements RatingModelInterface
         if (! empty($this->rating) && isset($this->rating->data)) {
             $ratingData = $this->rating->data;
 
-            if (! empty($ratingData) && $ratingData->returned_records > 0) {
-                return false;
+            if (! empty($ratingData) && isset($ratingData->returned_records)) {
+
+                if ($ratingData->returned_records > 0) {
+                    return false;
+                }
+                else {
+                    return true;
+                }
             }
+
+            return false;
         }
 
         return true;

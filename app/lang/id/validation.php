@@ -532,6 +532,7 @@ return array(
             'review_object_location_store' => 'Hanya dapat review toko/gerai :store di :mall sekali.',
             'review_object_location_campaign' => 'Hanya dapat review objek :campaign di :store (:mall) sekali.'
         ),
+        'same_user' => 'User tidak sesuai.',
     ),
 
     /*

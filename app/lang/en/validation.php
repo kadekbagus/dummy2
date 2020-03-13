@@ -152,6 +152,7 @@ return array(
             'base_store'             => 'The mall unit on this floor already use',
             'payment_name'           => 'Payment name already exist',
             'provider_product'       => 'Provider Product does not exists.',
+            'rating'                 => 'Rating does not exists.',
         ),
         'access' => array(
             'forbidden'              => 'You do not have permission to :action',
@@ -535,6 +536,7 @@ return array(
             'review_object_location_store' => 'Cannot review same store :store at :mall more than once.',
             'review_object_location_campaign' => 'Cannot review same object :campaign at :store (:mall) more than once.',
         ),
+        'same_user' => 'User does not match.',
     ),
 
     /*
