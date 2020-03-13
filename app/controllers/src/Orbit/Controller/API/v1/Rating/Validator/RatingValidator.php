@@ -17,7 +17,7 @@ class RatingValidator
         return App::make(RatingModelInterface::class)->exists($ratingId);
     }
 
-    public function uniqueLocation($attributes, $objectId, $parameters, $validator)
+    public function uniqueRating($attributes, $objectId, $parameters, $validator)
     {
         $validatorData = $validator->getData();
 

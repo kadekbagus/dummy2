@@ -84,7 +84,7 @@ class CreateRequest extends ValidateRequest implements RequestWithUpload
     {
         Validator::extend(
             'orbit.unique.review_object_location',
-            RatingValidator::class . '@uniqueLocation'
+            RatingValidator::class . '@uniqueRating'
         );
     }
 
