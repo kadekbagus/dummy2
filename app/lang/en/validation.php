@@ -530,6 +530,10 @@ return array(
         ),
         'unique' => array(
             'verification_number' => 'The verification number already used by other',
+            'review_object_location' => 'Cannot review same object more than once.',
+            'review_object_location_mall' => 'Cannot review same mall :mall more than once.',
+            'review_object_location_store' => 'Cannot review same store :store at :mall more than once.',
+            'review_object_location_campaign' => 'Cannot review same object :campaign at :store (:mall) more than once.',
         ),
     ),
 
