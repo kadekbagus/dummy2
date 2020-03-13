@@ -311,7 +311,7 @@ class GetDigitalProductQueue
         foreach($payment->details as $detail) {
             if (! empty($detail->digital_product)) {
                 $digitalProduct = $detail->digital_product;
-                $this->resolveObjectName($payment, $digitalProduct);
+                $this->resolvePurchasedItem($payment, $digitalProduct);
 
                 break;
             }
