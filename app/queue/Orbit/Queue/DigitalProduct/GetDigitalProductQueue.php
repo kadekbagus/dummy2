@@ -5,6 +5,7 @@ use App;
 use Carbon\Carbon;
 use Config;
 use DB;
+use Event;
 use Exception;
 use Game;
 use Log;
