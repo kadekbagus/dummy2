@@ -1,8 +1,9 @@
-<?php namespace Orbit\Helper\Request\Contracts;
+<?php
+
+namespace Orbit\Helper\Request\Contracts;
 
 /**
  * Interface for any class that implement request validation.
- *
  *
  * @author Budi <budi@gotomalls.com>
  */
@@ -16,5 +17,5 @@ interface ValidateRequestInterface
      * @param  array  $messages [description]
      * @return [type]           [description]
      */
-    public function validate(array $data = [], array $rules = [], array $messages = []);
+    public function validate($data = [], $rules = [], $messages = []);
 }
