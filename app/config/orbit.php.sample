@@ -962,6 +962,7 @@ return array(
             'am_portal' => 'X-OMS-AMP',
             'pp_portal' => 'X-OMS-PP',
             'rgp_portal' => 'X-OMS-RGP',
+            'bpp_portal' => 'X-OMS-BPP',
         ],
 
         /**
@@ -983,6 +984,7 @@ return array(
             'am_portal' => '11',
             'pp_portal' => '12',
             'rgp_portal' => '13',
+            'bpp_portal' => '14',
         ],
 
         /**
@@ -1523,6 +1525,33 @@ return array(
                     'httponly'  => TRUE
                 ),
             ),
+
+            'bpp_portal' => array(
+                'expire' => 3600,   // 1 hour
+                // From HTTP Headers
+                'header'  => array(
+                    'name'      => 'X-OMS-BPP'
+                ),
+                // From Query String
+                'query_string' => array(
+                    'name'      => 'X-OMS-BPP'
+                ),
+                // From Cookie
+                'cookie'    => array(
+                    'name'      => 'X-OMS-BPP',
+                    // Expire time, should be set equals or higher than
+                    // SessionConifg.expire
+                    'expire' => 62208000,   // two years
+                    // Path of the cookie
+                    'path'      => '/',
+                    // domain
+                    'domain'    => NULL,
+                    // secure transfer via HTTPS only
+                    'secure'    => FALSE,
+                    // Deny access from client side script
+                    'httponly'  => TRUE
+                ),
+            ),
         ),
     ),
 
@@ -1582,6 +1611,7 @@ return array(
                 'Set-X-OMS-AMP',
                 'Set-X-OMS-PP',
                 'Set-X-OMS-RGP',
+                'Set-X-OMS-BPP',
             ],
 
             // No need protocol, just enter domain name
