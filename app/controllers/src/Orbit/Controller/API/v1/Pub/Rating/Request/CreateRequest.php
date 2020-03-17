@@ -42,10 +42,10 @@ class CreateRequest extends ValidateRequest implements RequestWithUpload
     {
         return [
             'review'      => 'required|trim:newline,strip_tags|max:1000',
-            'object_id'   => 'required|orbit.rating.unique',
+            'object_id'   => 'required|orbit.rating.unique|orbit.rating.promotional_event',
             'object_type' => 'required',
-            'rating'      => 'required',
-            'location_id' => 'orbit.rating.location',
+            'rating'      => 'required_without:is_reply',
+            'location_id' => 'required_without:is_reply|orbit.rating.location',
             'is_reply'    => 'sometimes|required',
             'parent_id'   => 'required_with:is_reply',
             'user_id_replied' => 'required_with:is_reply',
@@ -70,6 +70,11 @@ class CreateRequest extends ValidateRequest implements RequestWithUpload
         Validator::extend(
             'orbit.rating.location',
             RatingValidator::class . '@ratingLocation'
+        );
+
+        Validator::extend(
+            'orbit.rating.promotional_event',
+            RatingValidator::class . '@promotionalEvent'
         );
 
         Validator::extend('trim', CommonValidator::class . '@trimInput');
@@ -123,9 +128,11 @@ class CreateRequest extends ValidateRequest implements RequestWithUpload
      */
     protected function resolvePromotionalEvent()
     {
-        $promotionalEvent = App::make('promotionalEvent');
-        $this->isPromotionalEvent = ! empty($promotionalEvent)
-            && $promotionalEvent->is_having_reward === 'Y';
+        if (App::bound('promotionalEvent')) {
+            $promotionalEvent = App::make('promotionalEvent');
+            $this->isPromotionalEvent = ! empty($promotionalEvent)
+                && $promotionalEvent->is_having_reward === 'Y';
+        }
     }
 
     /**
