@@ -12,6 +12,8 @@ class MongoRating implements RatingModelInterface
 {
     private $mongo = null;
 
+    private $endPoint = 'reviews';
+
     private $rating = null;
 
     function __construct(MongoClient $mongo)
@@ -22,7 +24,7 @@ class MongoRating implements RatingModelInterface
     public function save($data = [])
     {
         $this->rating = $this->mongo->setFormParam($data)
-            ->setEndPoint('reviews')
+            ->setEndPoint($this->endPoint)
             ->request('POST');
 
         return $this->rating;
@@ -31,7 +33,7 @@ class MongoRating implements RatingModelInterface
     public function update($id, $data = [])
     {
         $this->rating = $this->mongo->setFormParam($data)
-            ->setEndPoint("reviews")
+            ->setEndPoint($this->endPoint)
             ->request('PUT');
 
         return $this->rating;
@@ -45,7 +47,7 @@ class MongoRating implements RatingModelInterface
      */
     public function find($id)
     {
-        $this->rating = $this->mongo->setEndPoint("reviews/{$id}")
+        $this->rating = $this->mongo->setEndPoint("{$this->endPoint}/{$id}")
             ->request('GET');
 
         return $this;
@@ -60,7 +62,7 @@ class MongoRating implements RatingModelInterface
     public function findByQuery($searchQuery = [])
     {
         $this->rating = $this->mongo->setQueryString($searchQuery)
-            ->setEndPoint('reviews')
+            ->setEndPoint($this->endPoint)
             ->request('GET');
 
         return $this;
@@ -77,6 +79,10 @@ class MongoRating implements RatingModelInterface
         return $this->find($ratingId)->isNotEmpty();
     }
 
+    /**
+     * Get rating images...
+     * @return array $images array of rating images.
+     */
     public function getImages()
     {
         $images = [];

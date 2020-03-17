@@ -28,6 +28,8 @@ class RatingRepository
     /**
      * Save rating from pub/landing page request.
      *
+     * @todo separate handler for main rating and a reply.
+     *
      * @param  ValidateRequest $request
      * @return Object rating object from Mongo (or any db storage).
      */
@@ -41,15 +43,17 @@ class RatingRepository
 
         // Add location info into rating data.
         $location = $request->getLocation();
-        if (! $request->isPromotionalEvent() && ! empty($location)) {
+        if (! empty($location)) {
             $ratingData['merchant_name'] = $location->name;
             $ratingData['country'] = $location->country;
         }
 
         // Fire necessary events...
-        Event::fire('orbit.rating.postrating.after.commit', [
-            $ratingData, $request->user()
-        ]);
+        if (! $request->isReply()) {
+            Event::fire('orbit.rating.postrating.after.commit', [
+                $ratingData, $request->user()
+            ]);
+        }
 
         return $rating->data;
     }

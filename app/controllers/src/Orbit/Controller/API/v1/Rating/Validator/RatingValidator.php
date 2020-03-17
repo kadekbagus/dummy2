@@ -42,6 +42,12 @@ class RatingValidator
     public function unique($attributes, $objectId, $parameters, $validator)
     {
         $validatorData = $validator->getData();
+
+        // If reply, skip the validation (assume unique).
+        if (isset($validatorData['is_reply'])) {
+            return true;
+        }
+
         $locationId = isset($validatorData['location_id'])
             ? $validatorData['location_id'] : null;
 
@@ -85,8 +91,7 @@ class RatingValidator
     }
 
     /**
-     * Validate that rating location is valid and needed. For a reply and
-     * promotional event, rating location is not required.
+     * Validate that rating location is valid and needed.
      *
      * @param  [type] $attributes [description]
      * @param  [type] $locationId [description]
@@ -95,35 +100,37 @@ class RatingValidator
      * @return [type]             [description]
      */
     public function ratingLocation(
-        $attributes,
+        $attribute,
         $locationId,
         $paramters,
         $validator
     ) {
         $data = $validator->getData();
-        $locationRequired = true;
 
-        if (isset($data['is_reply'])) {
-            $locationRequired = false;
+        if (App::bound('promotionalEvent')) {
+            if (App::make('promotionalEvent')->is_having_reward !== 'Y') {
+                if (isset($data['location_id']) && empty($data['location_id'])) {
+                    return false;
+                }
+            }
         }
 
-        $promotionalEvent = [];
+        return true;
+    }
+
+    public function promotionalEvent($attribute, $objectId, $params, $validator)
+    {
+        $data = $validator->getData();
+
         if (isset($data['object_id']) && isset($data['object_type'])) {
             if ($data['object_type'] === 'news') {
                 $promotionalEvent = News::select('news_id', 'is_having_reward')
                     ->where('news_id', $data['object_id'])->first();
 
                 if (! empty($promotionalEvent)) {
-                    $locationRequired =
-                        $promotionalEvent->is_having_reward !== 'Y';
+                    App::make('promotionalEvent', $promotionalEvent);
                 }
             }
-        }
-
-        App::instance('promotionalEvent', $promotionalEvent);
-
-        if ($locationRequired && empty(trim($locationId))) {
-            return false;
         }
 
         return true;
