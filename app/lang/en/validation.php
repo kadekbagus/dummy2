@@ -537,6 +537,10 @@ return array(
             'review_object_location_campaign' => 'Cannot review same object :campaign at :store (:mall) more than once.',
         ),
         'same_user' => 'User does not match.',
+        'rating' => array(
+            'unique' => 'Cannot review same object more than once.',
+            'location' => 'Location is required for a review.',
+        ),
     ),
 
     /*

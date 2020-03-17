@@ -19,36 +19,46 @@ class NewRatingDataBuilder extends DataBuilder
         $timestamp = date("Y-m-d H:i:s");
         $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
         $dateTime = $date->toDateTimeString();
+        $review = strip_tags($this->request->review);
 
         $ratingData = [
-            'object_id'          => $this->request->object_id,
-            'object_type'        => $this->request->object_type,
-            'user_id'            => $user->user_id,
-            'rating'             => $this->request->rating,
-            'review'             => $this->request->review,
-            'status'             => $this->request->status ?: 'active',
-            'approval_status'    => $this->request->approval_status ?: 'approved',
-            'created_at'         => $dateTime,
-            'updated_at'         => $dateTime,
-            'is_reply'           => $this->request->isReply() ? 'y' : 'n',
+            'object_id'         => $this->request->object_id,
+            'object_type'       => $this->request->object_type,
+            'user_id'           => $user->user_id,
+            'rating'            => $this->request->rating,
+            'review'            => $review,
+            'status'            => $this->request->status ?: 'active',
+            'approval_status'   => $this->request->approval_status ?: 'approved',
+            'created_at'        => $dateTime,
+            'updated_at'        => $dateTime,
+            'is_reply'          => 'n',
         ];
 
+        // If reply, then adjust rating data...
         if ($this->request->isReply()) {
+            $ratingData['rating'] = 0;
+            $ratingData['is_reply'] = 'y';
             $ratingData['parent_id'] = $this->request->parent_id;
             $ratingData['user_id_replied'] = $this->request->user_id_replied;
             $ratingData['review_id_replied'] = $this->request->review_id_replied;
         }
 
-        $location = $this->request->getLocation();
-        if (! empty($location)) {
-            $ratingData = array_merge($ratingData, [
-                'location_id'     => $location->location_id,
-                'store_id'        => $this->request->location_id,
-                'store_name'      => $location->store_name,
-                'mall_name'       => $location->mall_name,
-                'city'            => $location->city,
-                'country_id'      => $location->country_id,
-            ]);
+        // If not promotional event, then add location info into rating data.
+        if (! $this->request->isPromotionalEvent()) {
+
+            // Resolve rating location...
+            $location = $this->request->getLocation();
+
+            if (! empty($location)) {
+                $ratingData = array_merge($ratingData, [
+                    'location_id'   => $location->location_id,
+                    'store_id'      => $this->request->location_id,
+                    'store_name'    => $location->store_name,
+                    'mall_name'     => $location->mall_name,
+                    'city'          => $location->city,
+                    'country_id'    => $location->country_id,
+                ]);
+            }
         }
 
         $images = $this->request->getUploadedFiles();

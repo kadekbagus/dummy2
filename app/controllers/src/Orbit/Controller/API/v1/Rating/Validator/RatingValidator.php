@@ -3,6 +3,7 @@
 namespace Orbit\Controller\API\v1\Rating\Validator;
 
 use App;
+use News;
 use Orbit\Controller\API\v1\Rating\RatingModelInterface;
 
 /**
@@ -38,14 +39,20 @@ class RatingValidator
      * @param  [type] $validator  [description]
      * @return [type]             [description]
      */
-    public function uniqueRating($attributes, $objectId, $parameters, $validator)
+    public function unique($attributes, $objectId, $parameters, $validator)
     {
         $validatorData = $validator->getData();
+        $locationId = isset($validatorData['location_id'])
+            ? $validatorData['location_id'] : null;
+
+        if (empty($locationId)) {
+            return false;
+        }
 
         $rating = App::make(RatingModelInterface::class)->findByQuery([
             'user_id' => App::make('currentUser')->user_id,
             'object_id' => $objectId,
-            'store_id' => $validatorData['location_id'],
+            'store_id' => $locationId,
             'status' => 'active',
         ]);
 
@@ -75,5 +82,50 @@ class RatingValidator
         $rating = $rating->getRating();
 
         return $rating->data->user_id === $user->user_id;
+    }
+
+    /**
+     * Validate that rating location is valid and needed. For a reply and
+     * promotional event, rating location is not required.
+     *
+     * @param  [type] $attributes [description]
+     * @param  [type] $locationId [description]
+     * @param  [type] $paramters  [description]
+     * @param  [type] $validator  [description]
+     * @return [type]             [description]
+     */
+    public function ratingLocation(
+        $attributes,
+        $locationId,
+        $paramters,
+        $validator
+    ) {
+        $data = $validator->getData();
+        $locationRequired = true;
+
+        if (isset($data['is_reply'])) {
+            $locationRequired = false;
+        }
+
+        $promotionalEvent = [];
+        if (isset($data['object_id']) && isset($data['object_type'])) {
+            if ($data['object_type'] === 'news') {
+                $promotionalEvent = News::select('news_id', 'is_having_reward')
+                    ->where('news_id', $data['object_id'])->first();
+
+                if (! empty($promotionalEvent)) {
+                    $locationRequired =
+                        $promotionalEvent->is_having_reward !== 'Y';
+                }
+            }
+        }
+
+        App::instance('promotionalEvent', $promotionalEvent);
+
+        if ($locationRequired && empty(trim($locationId))) {
+            return false;
+        }
+
+        return true;
     }
 }

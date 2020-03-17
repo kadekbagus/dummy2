@@ -533,6 +533,10 @@ return array(
             'review_object_location_campaign' => 'Hanya dapat review objek :campaign di :store (:mall) sekali.'
         ),
         'same_user' => 'User tidak sesuai.',
+        'rating' => array(
+            'unique' => 'Hanya dapat review objek yang sama satu kali.',
+            'location' => 'Atribut location_id harus diisi.',
+        ),
     ),
 
     /*
