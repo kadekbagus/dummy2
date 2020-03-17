@@ -12,6 +12,8 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
  * controller rather than to use UploadAPIController that duplicates same processes
  * we should create one uniformed controller to handle media everywhere
  *
+ * @todo support max files.
+ *
  * @author Ahmad <ahmad@dominopos.com>
  */
 class MediaAPIController extends ControllerAPI

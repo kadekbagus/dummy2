@@ -13,6 +13,8 @@ use Validator;
 /**
  * Base Request Validation class.
  *
+ * @todo Extends Laravel's core Request class!
+ *
  * @author Budi <budi@gotomalls.com>
  */
 class ValidateRequest implements ValidateRequestInterface

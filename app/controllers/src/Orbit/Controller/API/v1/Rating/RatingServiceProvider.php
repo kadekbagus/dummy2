@@ -15,6 +15,8 @@ use Orbit\Helper\MongoDB\Client as MongoClient;
  */
 class RatingServiceProvider extends ServiceProvider
 {
+    protected $defer = true;
+
     public function register()
     {
         // Provide rating model implementation.

@@ -12,6 +12,7 @@ use Orbit\Controller\API\v1\Rating\Validator\RatingValidator;
 use Orbit\Helper\Request\Contracts\RequestWithUpload;
 use Orbit\Helper\Request\Helpers\InteractsWithUpload;
 use Orbit\Helper\Request\ValidateRequest;
+use Orbit\Helper\Request\Validators\CommonValidator;
 use Validator;
 
 /**
@@ -37,45 +38,24 @@ class CreateRequest extends ValidateRequest implements RequestWithUpload
     // Location of the object being reviewed (which mall/store, etc).
     protected $location = null;
 
-    public function __construct()
-    {
-        // Resolve promotional event status.
-        $this->resolvePromotionalEvent();
-
-        // Resolve review location information.
-        $this->resolveReviewLocation();
-
-        parent::__construct();
-    }
-
     public function rules()
     {
-        $rules = [
-            'review'      => 'required|max:1000',
-            'object_id'   => 'required|orbit.unique.review_object_location',
+        return [
+            'review'      => 'required|trim:newline,strip_tags|max:1000',
+            'object_id'   => 'required|orbit.rating.unique',
             'object_type' => 'required',
             'rating'      => 'required',
-            'location_id' => 'required',
-            'is_reply'    => 'sometimes|required|in:true',
+            'location_id' => 'orbit.rating.location',
+            'is_reply'    => 'sometimes|required',
             'parent_id'   => 'required_with:is_reply',
             'user_id_replied' => 'required_with:is_reply',
             'review_id_replied' => 'required_with:is_reply',
         ];
-
-        // Remove location_id rule if it is Promotional Event.
-        if ($this->isPromotionalEvent() || $this->isReply()) {
-            unset($rules['location_id']);
-        }
-
-        return $rules;
     }
 
     public function messages()
     {
         return [
-            // Uncomment following line to enable specific duplicate rating
-            // validation error message.
-            // 'orbit.unique.review_object_location' => 'DUPLICATE_RATING_REVIEW',
             'max' => 'REVIEW_FAILED_MAX_CHAR_EXCEEDED',
         ];
     }
@@ -83,72 +63,17 @@ class CreateRequest extends ValidateRequest implements RequestWithUpload
     protected function registerCustomValidations()
     {
         Validator::extend(
-            'orbit.unique.review_object_location',
-            RatingValidator::class . '@uniqueRating'
-        );
-    }
-
-    /**
-     * Trim and clean up review text before validating.
-     *
-     * @return array
-     */
-    protected function validationData()
-    {
-        $validationData = parent::validationData();
-        $validationData['review'] = str_replace(
-            ["\r", "\n"], '', trim($validationData['review'])
+            'orbit.rating.unique',
+            RatingValidator::class . '@unique'
         );
 
-        if ($this->isReply()) {
-            $validationData['rating'] = 0;
-        }
+        Validator::extend(
+            'orbit.rating.location',
+            RatingValidator::class . '@ratingLocation'
+        );
 
-        return $validationData;
+        Validator::extend('trim', CommonValidator::class . '@trimInput');
     }
-
-    /**
-     * Display specific validation error message.
-     *
-     * @return string $errorMessage validation error message.
-     */
-    // public function getValidationErrorMessage()
-    // {
-    //     $errorMessage = parent::getValidationErrorMessage();
-
-    //     if ($errorMessage === 'DUPLICATE_RATING_REVIEW') {
-    //         $duplicateRating = App::make('duplicateRating')->data->records[0];
-
-    //         if ($this->object_type === 'mall') {
-    //             $errorMessage = trans(
-    //                 'validation.orbit.unique.review_object_location_mall',
-    //                 ['mall' => $duplicateRating->mall_name]
-    //             );
-    //         }
-    //         else if ($this->object_type === 'store') {
-    //             $errorMessage = trans(
-    //                 'validation.orbit.unique.review_object_location_store',
-    //                 [
-    //                     'store' => $duplicateRating->store_name,
-    //                     'mall' => $duplicateRating->mall_name,
-    //                 ]
-    //             );
-    //         }
-    //         else {
-    //             $errorMessage = trans(
-    //                 'validation.orbit.unique.review_object_location_campaign',
-    //                 [
-    //                     'campaign' => $this->object_name
-    //                         ? "'{$this->object_name}'" : '',
-    //                     'store' => $duplicateRating->store_name,
-    //                     'mall' => $duplicateRating->mall_name,
-    //                 ]
-    //             );
-    //         }
-    //     }
-
-    //     return $errorMessage;
-    // }
 
     /**
      * Determine if current review is a Reply or not.
@@ -157,7 +82,7 @@ class CreateRequest extends ValidateRequest implements RequestWithUpload
      */
     public function isReply()
     {
-        return ! empty($this->is_reply);
+        return $this->is_reply;
     }
 
     /**
@@ -177,25 +102,36 @@ class CreateRequest extends ValidateRequest implements RequestWithUpload
      */
     public function getLocation()
     {
-        return $this->location;
+        return ! empty($this->location)
+            ? $this->location
+            : $this->resolveReviewLocation();
+    }
+
+    /**
+     * After completing validation, try resolving promotional event status
+     * and location information.
+     */
+    protected function afterValidation()
+    {
+        $this->resolvePromotionalEvent();
     }
 
     /**
      * Determine if current rating is for a promotional event or not.
+     * Here we assume there is an instance of promotional event exists in the
+     * container (from the validation steps).
      */
     protected function resolvePromotionalEvent()
     {
-        if ($this->object_type === 'news') {
-            $this->isPromotionalEvent = News::select(
-                    'news_id', 'is_having_reward'
-                )
-                ->findOrFail($this->object_id)
-                ->is_having_reward === 'Y';
-        }
+        $promotionalEvent = App::make('promotionalEvent');
+        $this->isPromotionalEvent = ! empty($promotionalEvent)
+            && $promotionalEvent->is_having_reward === 'Y';
     }
 
     /**
      * Resolve rating location (store, mall, country)
+     *
+     * @return CampaignLocation $location the campaign location
      */
     protected function resolveReviewLocation()
     {
@@ -222,24 +158,36 @@ class CreateRequest extends ValidateRequest implements RequestWithUpload
                 ->where('merchants.merchant_id', '=', $this->location_id)
                 ->first();
         }
+
+        return $this->location;
     }
 
     /**
-     * Override default implementation of handling file upload, specific for
-     * rating.
+     * Implement file upload handling specific for Rating.
      */
     public function handleUpload()
     {
+        $maxFiles = 4;
         $uploadMedias = Event::fire(
             'orbit.rating.postnewmedia',
             [$this->user, ['object_id' => $this->object_id]]
         );
 
-        $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
-        $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
-
         if (count($uploadMedias[0]) > 0) {
+            $defaultUrlPrefix = Config::get(
+                'orbit.cdn.providers.default.url_prefix', null
+            );
+
+            $urlPrefix = ! empty($defaultUrlPrefix)
+                ? $defaultUrlPrefix . '/' : '';
+
             foreach ($uploadMedias[0] as $key => $medias) {
+
+                // Limit the number of files that will be recorded.
+                if ($key >= $maxFiles) {
+                    break;
+                }
+
                 foreach ($medias->variants as $keyVar => $variant) {
                     $this->uploads[$key][$keyVar]['media_id'] = $variant->media_id ;
                     $this->uploads[$key][$keyVar]['variant_name'] = $variant->media_name_long ;
