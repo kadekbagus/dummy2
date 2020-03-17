@@ -19,12 +19,12 @@ class MongoRating implements RatingModelInterface
     function __construct(MongoClient $mongo)
     {
         $this->mongo = $mongo;
-        $this->mongo->setEndPoint($this->endPoint);
     }
 
     public function save($data = [])
     {
         $this->rating = $this->mongo->setFormParam($data)
+            ->setEndPoint($this->endPoint)
             ->request('POST');
 
         return $this->rating;
@@ -33,6 +33,7 @@ class MongoRating implements RatingModelInterface
     public function update($id, $data = [])
     {
         $this->rating = $this->mongo->setFormParam($data)
+            ->setEndPoint($this->endPoint)
             ->request('PUT');
 
         return $this->rating;
@@ -61,6 +62,7 @@ class MongoRating implements RatingModelInterface
     public function findByQuery($searchQuery = [])
     {
         $this->rating = $this->mongo->setQueryString($searchQuery)
+            ->setEndPoint($this->endPoint)
             ->request('GET');
 
         return $this;
