@@ -43,22 +43,17 @@ class NewRatingDataBuilder extends DataBuilder
             $ratingData['review_id_replied'] = $this->request->review_id_replied;
         }
 
-        // If not promotional event, then add location info into rating data.
-        if (! $this->request->isPromotionalEvent()) {
-
-            // Resolve rating location...
-            $location = $this->request->getLocation();
-
-            if (! empty($location)) {
-                $ratingData = array_merge($ratingData, [
-                    'location_id'   => $location->location_id,
-                    'store_id'      => $this->request->location_id,
-                    'store_name'    => $location->store_name,
-                    'mall_name'     => $location->mall_name,
-                    'city'          => $location->city,
-                    'country_id'    => $location->country_id,
-                ]);
-            }
+        // Resolve rating location...
+        $location = $this->request->getLocation();
+        if (! empty($location)) {
+            $ratingData = array_merge($ratingData, [
+                'location_id'   => $location->location_id,
+                'store_id'      => $this->request->location_id,
+                'store_name'    => $location->store_name,
+                'mall_name'     => $location->mall_name,
+                'city'          => $location->city,
+                'country_id'    => $location->country_id,
+            ]);
         }
 
         $images = $this->request->getUploadedFiles();

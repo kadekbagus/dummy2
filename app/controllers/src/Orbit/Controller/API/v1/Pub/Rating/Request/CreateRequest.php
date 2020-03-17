@@ -12,6 +12,7 @@ use Orbit\Controller\API\v1\Rating\Validator\RatingValidator;
 use Orbit\Helper\Request\Contracts\RequestWithUpload;
 use Orbit\Helper\Request\Helpers\InteractsWithUpload;
 use Orbit\Helper\Request\ValidateRequest;
+use Orbit\Helper\Request\Validators\CommonValidator;
 use Validator;
 
 /**

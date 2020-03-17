@@ -12,6 +12,7 @@ use Orbit\Controller\API\v1\Rating\Validator\RatingValidator;
 use Orbit\Helper\Request\Contracts\RequestWithUpload;
 use Orbit\Helper\Request\Helpers\InteractsWithUpload;
 use Orbit\Helper\Request\ValidateRequest;
+use Orbit\Helper\Request\Validators\CommonValidator;
 use Validator;
 
 /**
@@ -31,10 +32,12 @@ class UpdateRequest extends ValidateRequest implements RequestWithUpload
 
     protected $location = null;
 
+    private $rating = null;
+
     public function rules()
     {
         return [
-            'review'      => 'required|max:1000',
+            'review'      => 'required|trim:newlines,strip_tags|max:1000',
             'rating_id'   => 'required|orbit.exists.rating|orbit.same_user',
             'rating'      => 'required',
         ];
@@ -56,21 +59,8 @@ class UpdateRequest extends ValidateRequest implements RequestWithUpload
         Validator::extend(
             'orbit.same_user', RatingValidator::class . '@sameUser'
         );
-    }
 
-    /**
-     * Trim and clean up review text before validating.
-     *
-     * @return array
-     */
-    protected function validationData()
-    {
-        $validationData = parent::validationData();
-        $validationData['review'] = str_replace(
-            ["\r", "\n"], '', trim($validationData['review'])
-        );
-
-        return $validationData;
+        Validator::extend('trim', CommonValidator::class . '@trimInput');
     }
 
     public function isPromotionalEvent()
@@ -80,24 +70,26 @@ class UpdateRequest extends ValidateRequest implements RequestWithUpload
 
     public function getLocation()
     {
-        return $this->location;
+        return ! empty($this->location)
+            ? $this->location
+            : $this->resolveReviewLocation();
     }
 
     /**
      * Determine if current rating is for a promotional event or not.
      */
-    protected function resolvePromotionalEvent($rating)
+    protected function resolvePromotionalEvent()
     {
-        if ($rating->data->object_type === 'news') {
+        if ($this->rating->data->object_type === 'news') {
             $this->isPromotionalEvent = News::select(
                     'news_id', 'is_having_reward'
                 )
-                ->findOrFail($rating->data->object_id)
+                ->findOrFail($this->rating->data->object_id)
                 ->is_having_reward === 'Y';
         }
     }
 
-    protected function resolveReviewLocation($rating)
+    protected function resolveReviewLocation()
     {
         if (! $this->isPromotionalEvent()) {
             $prefix = DB::getTablePrefix();
@@ -115,18 +107,18 @@ class UpdateRequest extends ValidateRequest implements RequestWithUpload
                     'merchants.parent_id'
                 )
                 ->where(
-                    'merchants.merchant_id', '=', $rating->data->location_id
+                    'merchants.merchant_id', '=', $this->rating->data->location_id
                 )->first();
         }
+
+        return $this->location;
     }
 
     protected function afterValidation()
     {
-        $rating = App::make('currentRating')->getRating();
+        $this->rating = App::make('currentRating')->getRating();
 
-        $this->resolvePromotionalEvent($rating);
-
-        $this->resolveReviewLocation($rating);
+        $this->resolvePromotionalEvent();
     }
 
     /**
@@ -135,14 +127,12 @@ class UpdateRequest extends ValidateRequest implements RequestWithUpload
      */
     public function handleUpload()
     {
-        $rating = App::make('currentRating');
-
         $maxImages = 4;
-        $oldImages = $rating->getImages();
+        $oldImages = App::make('currentRating')->getImages();
 
         $uploadMedias = Event::fire('orbit.rating.postnewmedia', [
             $this->user,
-            ['object_id' => $rating->getRating()->data->object_id]
+            ['object_id' => $this->rating->data->object_id]
         ]);
 
         $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
