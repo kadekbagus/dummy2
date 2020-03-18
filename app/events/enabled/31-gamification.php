@@ -97,7 +97,7 @@ Event::listen(
  * @param User $user - Instance of activated user
  */
 
-Event::listen('orbit.rating.postrating.after.commit', function($ctrl, $body, $user) {
+Event::listen('orbit.rating.postrating.after.commit', function($body, $user) {
     if (isset($body['country']) && !isset($body['country_id'])) {
         $body['country_id'] = $body['country'];
     }

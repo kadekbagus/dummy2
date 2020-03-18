@@ -89,6 +89,7 @@ class IntermediateBaseController extends Controller
 
         // CSRF protection
         $csrfProtection = Config::get('orbit.security.csrf.protect');
+        App::setLocale(Request::input('language', 'en'));
 
         if (Request::isMethod('post') && $csrfProtection === TRUE) {
             $csrfMode = Config::get('orbit.security.csrf.mode');
