@@ -68,7 +68,7 @@
       padding: 10px 40px;
       border-radius: 5px;
       box-shadow: 0px 0px 4px #444;
-      color: #FFF;
+      color: #ffffff !important;
       text-decoration: none;
       font-size: 14px;
       font-weight: bold;
@@ -83,7 +83,7 @@
       padding: 10px 40px;
       border-radius: 5px;
       box-shadow: 0px 0px 4px #444;
-      color: #ef5350;
+      color: #ef5350 !important;
       text-decoration: none;
       font-weight: bold;
       border: 1px solid #ef5350;
@@ -299,6 +299,80 @@
       color: #222;
     }
 
+    .btn.btn-visit {
+      display: inline-block;
+      padding-top: 10px;
+      padding-bottom: 10px;
+      padding-right: 15px;
+      padding-left: 15px;
+      border-radius: 5px;
+      margin-top: 50px;
+      color: #ffffff !important;
+    }
+
+    .statistic-item {
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    .statistic-title {
+      font-size: 17px;
+      margin-bottom: 10px;
+      color: #222;
+      text-align: center;
+    }
+
+    .statistic-value {
+      font-size: 26px;
+      font-weight: bold;
+      color: #2196F3;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .statistic-value.number-of-views {
+      text-align: right;
+    }
+
+    .pulsa-banner-img {
+      width: 100%;
+      height: auto;
+      max-height:140px;
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+
+    .campaigns-title {
+      font-size: 17px;
+      color: #222;
+      margin: 10px 0;
+    }
+
+    .campaigns-desc {
+      color: #333;
+      line-height: 1.5em;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+
+    .campaigns-views {
+      font-size: 20px;
+      margin-top: 10px;
+    }
+
+    .see-all {
+      font-size: 16px;
+      color: #ef5350 !important;
+    }
+
+    .campaigns-item-container,
+    .campaigns-item-separator {
+      border-top: 1px solid #ddd;
+      padding-top: 20px;
+      padding-bottom: 20px;
+    }
+
     /* MEDIA QUERIES */
     @media all and (max-width:639px) {
       .wrapper{ width:95% !important; padding: 0 !important; }
@@ -414,6 +488,10 @@
         font-size: 22px;
       }
 
+      .help-text.user-report-help-text {
+        font-size: 20px;
+      }
+
       .mobile.inline-mobile {
         width: auto !important;
         display: inline-block !important;
@@ -460,6 +538,64 @@
 
       .voucher-data-item {
         font-size: 24px;
+      }
+
+      .mobile.mobile-align-center { text-align: center !important; }
+
+      .mobile.hide-on-mobile {display: none !important;}
+
+      .btn.btn-visit {
+        margin-top: 20px;
+        margin-bottom: 20px;
+      }
+
+      .mobile.statistic-item {
+        display: inline-block !important;
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+      }
+
+      .mobile.statistic-item td {
+        width: 49% !important;
+      }
+
+      .statistic-title {
+        font-size: 24px;
+        margin-bottom: 10px;
+        text-align: center;
+      }
+
+      .statistic-value {
+        font-size: 36px;
+        text-align: center;
+      }
+
+      .mobile.campaigns-item-container {
+        padding-top: 20px !important;
+        padding-bottom: 20px !important;
+      }
+
+      .campaigns-title {
+        font-size: 24px;
+      }
+
+      .campaigns-desc {
+        font-size: 20px;
+      }
+
+      .campaigns-views {
+        font-size: 30px;
+      }
+
+      .see-all {
+        font-size: 20px;
+      }
+
+      .campaigns-item-container,
+      .campaigns-item-separator {
+        border-top: 1px solid #ddd;
+        padding-top: 20px;
+        padding-bottom: 20px;
       }
     }
   </style>

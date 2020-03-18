@@ -5,10 +5,7 @@
  * @author kadek <kadek@dominopos.com>
  */
 use DominoPOS\OrbitACL\ACL;
-use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
-use OrbitShop\API\v1\ResponseProvider;
-use DominoPOS\OrbitSession\Session;
-use DominoPOS\OrbitSession\SessionConfig;
+use Orbit\Helper\Session\UserGetter;
 
 class IntermediateProductAuthController extends IntermediateBaseController
 {
@@ -27,24 +24,20 @@ class IntermediateProductAuthController extends IntermediateBaseController
             {
                 $this->session->start();
 
-                if (! $this->authCheck()) {
-                    $message = Lang::get('validation.orbit.access.needtologin');
-                    ACL::throwAccessForbidden($message);
+                // Get user, or generate guest user for new session
+                $user = UserGetter::getLoggedInUser($this->session, $this->allowedRoles);
+
+                if (empty($user)) {
+                    ACL::throwUnauthenticatedRequest();
                 }
-            } catch (ACLForbiddenException $e) {
-                $response = new ResponseProvider();
-                $response->code = $e->getCode();
-                $response->status = 'error';
-                $response->message = $e->getMessage();
 
-                return $this->render($response);
+                // Register User instance in the container,
+                // so it will be accessible from anywhere
+                // without doing any re-check/DB call.
+                App::instance('currentUser', $user);
+
             } catch (Exception $e) {
-                $response = new ResponseProvider();
-                $response->code = $e->getCode();
-                $response->status = 'error';
-                $response->message = $e->getMessage();
-
-                return $this->render($response);
+                return $this->handleException($e);
             }
         });
     }

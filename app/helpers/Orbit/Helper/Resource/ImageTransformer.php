@@ -1,40 +1,73 @@
-<?php namespace Orbit\Helper\Resource;
+<?php
+
+namespace Orbit\Helper\Resource;
 
 /**
  * Trait that enables the host to transform list of images
- * to simpler format images->variant = image_url
+ * to simpler format:
+ *
+ * $images['variant'] = 'image_url';
  *
  * @author Budi <budi@gotomalls.com>
  */
 trait ImageTransformer {
 
-    private $imagePrefix = '';
-
     /**
-     * Set image prefix of media name.
-     * Will be used to make shorter version of variant name by replacing the prefix, e.g.
-     * 'game_image_desktop_thumb' --> 'desktop_thumb'
-     *
-     * @param string $imagePrefix [description]
+     * The image prefix that will be used to transform image/media.
+     * @var null
      */
-    protected function setImagePrefix($imagePrefix = '')
-    {
-        $this->imagePrefix = $imagePrefix;
-    }
+    protected $imagePrefix = null;
 
     /**
      * Transform a collection of media into key-value array of variant-url.
      *
-     * @param  [type] $item [description]
-     * @return [type]       [description]
+     * @param  Illuminate\Database\Eloquent\Model $item the model instance
+     * @param  string $imagePrefix the custom image prefix
+     *
+     * @return array list of images
      */
-    protected function transformImages($item)
+    protected function transformImages($item, $imagePrefix = '')
     {
         $images = null;
 
+        if ($item->media->count() > 0)
+        {
+            $images = [];
+            $imagePrefix = ! empty($imagePrefix)
+                ? $imagePrefix
+                : $this->imagePrefix;
+
+            foreach($item->media as $media) {
+                $variant = str_replace(
+                    $imagePrefix,
+                    '',
+                    $media->media_name_long
+                );
+
+                $images[$variant] = $media->image_url;
+            }
+        }
+
+        return $images;
+    }
+
+    /**
+     * Transform a collection of media into array of media for older api.
+     *
+     * @param  Illuminate\Database\Eloquent\Model $item the model/resource
+     *
+     * @return array
+     */
+    protected function transformImagesOld($item)
+    {
+        $images = [];
         foreach($item->media as $media) {
-            $variant = str_replace($this->imagePrefix, '', $media->media_name_long);
-            $images[$variant] = $media->image_url;
+            $images[] = [
+                'media_id' => $media->media_id,
+                'path' => $media->path,
+                'media_name_long' => $media->media_name_long,
+                'object_id' => $media->object_id,
+            ];
         }
 
         return $images;

@@ -4,15 +4,19 @@
  *
  * @author Rio Astamal <me@rioastamal.net>
  */
-use OrbitShop\API\v1\ResponseProvider;
-use OrbitShop\API\v1\Helper\Generator;
-use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use DominoPOS\OrbitACL\ACL;
-use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
+use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
+use DominoPOS\OrbitACL\Exception\ACLUnauthenticatedException;
 use DominoPOS\OrbitSession\Session as OrbitSession;
 use DominoPOS\OrbitSession\SessionConfig;
-use Orbit\Helper\Util\CorsHeader;
+use Illuminate\Database\QueryException;
+use OrbitShop\API\v1\ExceptionResponseProvider;
+use OrbitShop\API\v1\Exception\InvalidArgsException;
+use OrbitShop\API\v1\Helper\Generator;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use OrbitShop\API\v1\ResponseProvider;
 use Orbit\Helper\Session\AppOriginProcessor;
+use Orbit\Helper\Util\CorsHeader;
 
 class IntermediateBaseController extends Controller
 {
@@ -52,6 +56,14 @@ class IntermediateBaseController extends Controller
     protected $appOrigin = NULL;
 
     /**
+     * Array of allowed user roles to access current api/request.
+     * Will be used on beforeFilter() hooks to authenticate the user.
+     *
+     * @var array
+     */
+    protected $allowedRoles = [];
+
+    /**
      * Class constructor
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -77,6 +89,7 @@ class IntermediateBaseController extends Controller
 
         // CSRF protection
         $csrfProtection = Config::get('orbit.security.csrf.protect');
+        App::setLocale(Request::input('language', 'en'));
 
         if (Request::isMethod('post') && $csrfProtection === TRUE) {
             $csrfMode = Config::get('orbit.security.csrf.mode');
@@ -205,6 +218,7 @@ class IntermediateBaseController extends Controller
         $theClass = get_class($this);
         $namespace = '';
 
+        $user = null;
         if ($theClass === 'IntermediateAuthController') {
             if ($userId = $this->authCheck()) {
                 $user = User::findOnWriteConnection($userId);
@@ -242,21 +256,22 @@ class IntermediateBaseController extends Controller
             }
         } elseif ($theClass === 'IntermediatePubAuthController') {
             $namespace = 'Orbit\Controller\API\v1\Pub\\';
-            if ($userId = $this->authCheckPub()) {
-                $user = User::findOnWriteConnection($userId);
-                // This will query the database if the apikey has not been set up yet
-                $apikey = $user->apikey;
 
-                if (empty($apikey)) {
-                    // Create new one
-                    $apikey = $user->createAPiKey();
-                }
-                // Generate the signature
-                $_GET['apikey'] = $apikey->api_key;
-                $_GET['apitimestamp'] = time();
-                $signature = Generator::genSignature($apikey->api_secret_key);
-                $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = $signature;
-            }
+            // Current user should be available in the container,
+            // no need to fetch it from DB again.
+            $user = App::make('currentUser');
+
+            // Fetch apikey, or create a new one if doesn't exists.
+            $apikey = empty($user->apikey)
+                ? $user->createAPiKey()
+                : $user->apikey;
+
+            // Generate the signature
+            $_GET['apikey'] = $apikey->api_key;
+            $_GET['apitimestamp'] = time();
+            $signature = Generator::genSignature($apikey->api_secret_key);
+            $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = $signature;
+
         } elseif ($theClass === 'IntermediateMerchantAuthController') {
             $namespace = 'Orbit\Controller\API\v1\Merchant\\';
             if ($userId = $this->authCheck()) {
@@ -316,23 +331,22 @@ class IntermediateBaseController extends Controller
             }
         } elseif ($theClass === 'IntermediateProductAuthController') {
             $namespace = 'Orbit\Controller\API\v1\Product\\';
-            if ($userId = $this->authCheck()) {
-                $user = User::findOnWriteConnection($userId);
 
-                // This will query the database if the apikey has not been set up yet
-                $apikey = $user->apikey;
+            $user = App::make('currentUser');
 
-                if (empty($apikey)) {
-                    // Create new one
-                    $apikey = $user->createAPiKey();
-                }
+            // This will query the database if the apikey has not been set up yet
+            $apikey = $user->apikey;
 
-                // Generate the signature
-                $_GET['apikey'] = $apikey->api_key;
-                $_GET['apitimestamp'] = time();
-                $signature = Generator::genSignature($apikey->api_secret_key);
-                $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = $signature;
+            if (empty($apikey)) {
+                // Create new one
+                $apikey = $user->createAPiKey();
             }
+
+            // Generate the signature
+            $_GET['apikey'] = $apikey->api_key;
+            $_GET['apitimestamp'] = time();
+            $signature = Generator::genSignature($apikey->api_secret_key);
+            $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = $signature;
         }
 
         // Call the API class
@@ -350,9 +364,14 @@ class IntermediateBaseController extends Controller
             $method = 'Bar';
         }
 
-        if ($theClass === 'IntermediatePubAuthController') {
-            // set PubControllerAPI user property, so user will be available inside controllers
-            return $class::create()->setUser($user)->$method();
+        $supportedDependenciesInjection = [
+            'IntermediatePubAuthController',
+            'IntermediateProductAuthController',
+        ];
+
+        if (in_array($theClass, $supportedDependenciesInjection)) {
+            // Handle the request with Reflection.
+            return $this->handleRequest($class, $method, $user);
         }
 
         return $class::create()->$method();
@@ -431,22 +450,87 @@ class IntermediateBaseController extends Controller
     }
 
     /**
-     * Check the authentication status from Pub Controllers.
+     * Handle the request.
      *
-     * @author Ahmad <ahmad@dominopos.com>
-     * @return string - User ID
+     * First, we would resolve dependencies defined in the controller method
+     * which assigned to handle the request. Then, call the actual handler/method
+     * with the resolved dependencies as parameters.
+     *
+     * @param  string|Controller $class the controller
+     * @param  string $method the method that handles the request
+     * @param  User $user   current User instance (logged in or guest)
+     *
+     * @return Illuminate\Http\Response
      */
-    protected function authCheckPub()
+    protected function handleRequest($class, $method, $user)
     {
-        $userId = $this->session->read('user_id');
+        // Resolve the dependencies...
+        $dependencies = $this->resolveDependencies($class, $method);
 
-        if (empty($userId)) {
-            $userId = $this->session->read('guest_user_id');
-            if (empty($userId)) {
-                return FALSE;
-            }
+        // Instantiate the class and set the user, just like old behaviour.
+        // We don't have to worry about old behaviour since it will not be affected
+        // in any way.
+        $controller = $class::create();
+
+        if (method_exists($controller, 'setUser')) {
+            $controller->setUser($user);
         }
 
-        return $userId;
+        // Then, call actual handler/method on the controller and pass the
+        // resolved dependencies as its parameters.
+        return call_user_func_array([$controller, $method], $dependencies);
+    }
+
+    /**
+     * Resolve any dependencies defined in the method parameters.
+     *
+     * @todo  support primitive types?
+     *
+     * @param  string|Controller $class  controller name
+     * @param  string $method the method that handles the request
+     *
+     * @return array $dependecies list of resolved dependencies
+     */
+    protected function resolveDependencies($class, $method)
+    {
+        // Get the method details...
+        $reflectionMethod = new ReflectionMethod($class, $method);
+
+        // Get its parameter definition...
+        $reflectionParams = $reflectionMethod->getParameters();
+
+        // For each parameter, try to resolve it from container.
+        $dependencies = [];
+        foreach($reflectionParams as $reflectionParam) {
+
+            // Get parameter details.
+            $param = new ReflectionParameter(
+                [$class, $method], $reflectionParam->name
+            );
+
+            // Get the class/type of the parameter.
+            $dependencyClass = $param->getClass();
+
+            // Then, resolve it from container.
+            $dependencies[] = App::make($dependencyClass->name);
+        }
+
+        return $dependencies;
+    }
+
+    /**
+     * Handle exception, mostly for handling authorization exception.
+     *
+     * At this moment, will be called by child classes, e.g.
+     * IntermediatePubAuthController->beforeFilter() hooks
+     *
+     * @see  Orbit\Controller\API\v1\ErrorServiceProvider
+     * @param  Exception $e the exception.
+     * @throws Exception $e the exception.
+     */
+    protected function handleException($e)
+    {
+        // Re-throw to global exception handling.
+        throw $e;
     }
 }

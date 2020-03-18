@@ -4,11 +4,10 @@ use Activity;
 use App;
 use Carbon\Carbon;
 use Config;
-use Coupon;
 use DB;
 use Event;
 use Exception;
-use IssuedCoupon;
+use Game;
 use Log;
 use Mall;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
@@ -25,9 +24,9 @@ use Queue;
 use User;
 
 /**
- * A job to get/issue Hot Deals Coupon after payment completed.
+ * A job to get/issue Digital Product after payment completed.
  * At this point, we assume the payment was completed (paid) so anything wrong
- * while trying to issue the coupon will make the status success_no_coupon_failed.
+ * while trying to issue the will make the status success_no_product_failed.
  *
  * @author Budi <budi@dominopos.com>
  */
@@ -40,6 +39,12 @@ class GetDigitalProductQueue
     protected $retryDelay = 3;
 
     private $objectType = 'digital_product';
+
+    /**
+     * Purchased object's name (e.g the game name: Ragnarok M, Candy Crush, etc)
+     * @var string
+     */
+    private $purchasedItem = '';
 
     /**
      * Issue hot deals coupon.
@@ -143,7 +148,7 @@ class GetDigitalProductQueue
                         'cid' => $cid,
                         't' => 'event',
                         'ea' => 'Purchase Digital Product Successful',
-                        'ec' => 'digital_product',
+                        'ec' => 'game_voucher',
                         'el' => $digitalProductName,
                         'cs' => $payment->utm_source,
                         'cm' => $payment->utm_medium,
@@ -175,13 +180,15 @@ class GetDigitalProductQueue
                             'ip' => $detail->price,
                             'iq' => $detail->quantity,
                             'ic' => $productCode,
-                            'iv' => 'digital_product',
+                            'iv' => 'game_voucher',
                             'cu' => $payment->currency,
                         ])
                         ->request();
                 }
 
-                $payment->user->activity(new PurchaseSuccessActivity($payment, $this->objectType));
+                $payment->user->activity(
+                    new PurchaseSuccessActivity($payment, $this->purchasedItem)
+                );
 
                 if (! empty($discount)) {
                     // Mark promo code as issued.
@@ -192,7 +199,7 @@ class GetDigitalProductQueue
                         'object_type' => 'digital_product'
                     ];
                     $promoCodeReservation->markAsIssued($payment->user, $promoData);
-                    $this->log("Promo code {$discountCode} issued for purchase {$paymentId}");
+                    $this->log("Promo code {$discount->discount_code} issued for purchase {$paymentId}");
                 }
 
                 $this->log("Purchase Data: " . serialize($purchaseData));
@@ -270,7 +277,7 @@ class GetDigitalProductQueue
                         'cid' => time(),
                         't' => 'event',
                         'ea' => 'Purchase Digital Product Failed',
-                        'ec' => 'digital_product',
+                        'ec' => 'game_voucher',
                         'el' => $digitalProductName,
                         'cs' => $payment->utm_source,
                         'cm' => $payment->utm_medium,
@@ -280,7 +287,13 @@ class GetDigitalProductQueue
                     ])
                     ->request();
 
-                $payment->user->activity(new PurchaseFailedProductActivity($payment, $this->objectType, $notes));
+                $payment->user->activity(
+                    new PurchaseFailedProductActivity(
+                        $payment,
+                        $this->objectType,
+                        $notes
+                    )
+                );
             }
             else {
                 DB::connection()->rollBack();
@@ -299,6 +312,8 @@ class GetDigitalProductQueue
         foreach($payment->details as $detail) {
             if (! empty($detail->digital_product)) {
                 $digitalProduct = $detail->digital_product;
+                $this->resolvePurchasedItem($payment, $digitalProduct);
+
                 break;
             }
         }
@@ -308,6 +323,30 @@ class GetDigitalProductQueue
         }
 
         return $digitalProduct;
+    }
+
+    /**
+     * Resolve purchased item name/game name (e.g Ragnarok M, Candy Crush)
+     * based on purchased digital product type.
+     *
+     * @param  [type] $payment        [description]
+     * @param  [type] $digitalProduct [description]
+     * @return [type]                 [description]
+     */
+    private function resolvePurchasedItem($payment, $digitalProduct)
+    {
+        switch ($digitalProduct->product_type) {
+            case 'game_voucher':
+                $this->purchasedItem = Game::findOrFail($payment->extra_data)
+                    ->game_name;
+                break;
+
+            case 'electricity':
+                break;
+
+            default:
+                break;
+        }
     }
 
     private function getProviderProduct($payment)

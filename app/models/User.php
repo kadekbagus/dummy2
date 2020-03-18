@@ -454,6 +454,12 @@ class User extends Eloquent implements UserInterface
 
     public function roleIs($roles = [])
     {
-        return in_array(strtolower($this->role->role_name), $roles);
+        return empty($roles)
+            || in_array(strtolower($this->role->role_name), $roles);
+    }
+
+    public function statusIs($status = [])
+    {
+        return empty($status) || in_array($this->status, $status);
     }
 }

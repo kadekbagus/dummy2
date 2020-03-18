@@ -17,8 +17,9 @@ class StoreFeedbackNotification extends AdminNotification
 
     protected $feedback = [];
 
-    function __construct($feedback = [])
+    function __construct($notifiable = null, $feedback = [])
     {
+        parent::__construct($notifiable);
         $this->feedback = $feedback;
     }
 

@@ -4,9 +4,11 @@
  *
  * @author Rio Astamal <me@rioastamal.net>
  */
-use Zend\Permissions\Acl\Acl as ZendACL;
+use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
+use DominoPOS\OrbitACL\Exception\ACLUnauthenticatedException;
 use Illuminate\Support\Facades\Config;
 use Permission;
+use Zend\Permissions\Acl\Acl as ZendACL;
 
 class ACL
 {
@@ -202,8 +204,20 @@ class ACL
      * @return void
      * @throw DominoPOS\OrbitACL\Exception\ACLForbiddenException
      */
-    public static function throwAccessForbidden($message=NULL)
+    public static function throwAccessForbidden($message = "You don't have permission to access specified resource.")
     {
-        throw new Exception\ACLForbiddenException($message);
+        throw new ACLForbiddenException($message);
+    }
+
+    /**
+     * Throw an unauthenticated user request.
+     *
+     * @author Budi <budi@gotomalls.com>
+     * @param  string $message exception message.
+     * @throws  ACLUnauthenticatedException
+     */
+    public static function throwUnauthenticatedRequest($message = 'You have to login to continue.')
+    {
+        throw new ACLUnauthenticatedException($message);
     }
 }

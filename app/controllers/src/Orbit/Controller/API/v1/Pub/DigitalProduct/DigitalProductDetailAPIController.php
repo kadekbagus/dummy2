@@ -1,9 +1,11 @@
-<?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct;
+<?php
+
+namespace Orbit\Controller\API\v1\Pub\DigitalProduct;
 
 use Exception;
 use Illuminate\Support\Facades\App;
 use OrbitShop\API\v1\PubControllerAPI;
-use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\DigitalProductRepository;
+use Orbit\Controller\API\v1\Product\Repository\DigitalProductRepository as Repo;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Request\DigitalProductDetailRequest;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Resource\DigitalProductResource;
 
@@ -19,17 +21,13 @@ class DigitalProductDetailAPIController extends PubControllerAPI
      *
      * @return Illuminate\Http\Response
      */
-    public function getDetail()
+    public function getDetail(Repo $repo, DigitalProductDetailRequest $request)
     {
         $httpCode = 200;
 
         try {
-            // $this->enableQueryLog();
-
-            with($request = new DigitalProductDetailRequest($this))->validate();
-
             $this->response->data = new DigitalProductResource(
-                App::make(DigitalProductRepository::class)->findProduct()
+                $repo->findProduct($request->product_id, $request->game_id)
             );
 
         } catch (Exception $e) {

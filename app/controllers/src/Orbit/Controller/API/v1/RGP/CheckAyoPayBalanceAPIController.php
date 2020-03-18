@@ -60,7 +60,7 @@ class CheckAyoPayBalanceAPIController extends ControllerAPI
                     left join {$prefix}payment_transaction_details pt
                         on p.payment_transaction_id = pt.payment_transaction_id
                     where object_type = 'digital_product'
-                        and status = 'success'
+                        and payload is not null
                     order by p.created_at desc
                     limit 1
                     ;"

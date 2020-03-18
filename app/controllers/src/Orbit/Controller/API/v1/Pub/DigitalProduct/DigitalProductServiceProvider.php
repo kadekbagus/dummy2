@@ -1,9 +1,11 @@
-<?php namespace Orbit\Controller\API\v1\Pub\DigitalProduct;
+<?php
+
+namespace Orbit\Controller\API\v1\Pub\DigitalProduct;
 
 use Exception;
 use Illuminate\Support\ServiceProvider;
-use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\DigitalProductRepository;
-use Orbit\Controller\API\v1\Pub\DigitalProduct\Repository\GameRepository;
+use Orbit\Controller\API\v1\Product\Repository\DigitalProductRepository;
+use Orbit\Controller\API\v1\Product\Repository\GameRepository;
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderBuilder;
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
 

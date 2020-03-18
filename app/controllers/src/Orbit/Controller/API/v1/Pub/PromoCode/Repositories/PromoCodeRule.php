@@ -9,13 +9,11 @@ use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\RuleInterface;
  */
 class PromoCodeRule implements RuleInterface
 {
-    private $couponRule;
-    private $pulsaRule;
+    private $rules;
 
-    public function __construct($couponRule, $pulsaRule)
+    public function __construct($rules)
     {
-        $this->couponRule = $couponRule;
-        $this->pulsaRule = $pulsaRule;
+        $this->rules = $rules;
     }
 
     /**---------------------------------------------
@@ -30,13 +28,8 @@ class PromoCodeRule implements RuleInterface
      */
     public function getEligibleStatus($user, $promoData)
     {
-        if ($promoData->object_type === 'coupon')
-        {
-            return $this->couponRule->getEligibleStatus($user, $promoData);
-        } else {
-            //assume pulsa
-            return $this->pulsaRule->getEligibleStatus($user, $promoData);
-        }
+        $rule = $this->rules[$promoData->object_type];
+        return $rule->getEligibleStatus($user, $promoData);
     }
 
 }

@@ -1,4 +1,5 @@
 <?php
+
 class TelcoOperator extends Eloquent
 {
     protected $table = 'telco_operators';
