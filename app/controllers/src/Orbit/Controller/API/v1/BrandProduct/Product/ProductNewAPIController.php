@@ -14,11 +14,12 @@ use Validator;
 use Lang;
 use Config;
 use Event;
-use BaseMerchant;
 use BrandProduct;
 use DB;
 use Exception;
 use App;
+use BrandProductVideo;
+use BrandProductCategory;
 
 class ProductNewAPIController extends ControllerAPI
 {
@@ -42,6 +43,9 @@ class ProductNewAPIController extends ControllerAPI
             $tnc = OrbitInput::post('tnc');
             $status = OrbitInput::post('status', 'inactive');
             $maxReservationTime = OrbitInput::post('max_reservation_time', 48);
+            $youtubeIds = OrbitInput::post('youtube_ids');
+            $youtubeIds = (array) $youtubeIds;
+            $categoryId = OrbitInput::post('category_id');
 
             // Begin database transaction
             $this->beginTransaction();
@@ -66,9 +70,7 @@ class ProductNewAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            Event::fire('orbit.newbrandproduct.postnewproduct.after.validation', array($this, $validator));
-
-            $newBrandProduct = new BrandProduct;
+            $newBrandProduct = new BrandProduct();
             $newBrandProduct->brand_id = $brandId;
             $newBrandProduct->product_name = $productName;
             $newBrandProduct->product_description = $productDescription;
@@ -76,19 +78,32 @@ class ProductNewAPIController extends ControllerAPI
             $newBrandProduct->status = $status;
             $newBrandProduct->max_reservation_time = $maxReservationTime;
             $newBrandProduct->created_by = $userId;
-
-            Event::fire('orbit.newbrandproduct.postnewproduct.before.save', array($this, $newBrandProduct));
-
             $newBrandProduct->save();
 
-            Event::fire('orbit.newbrandproduct.postnewproduct.after.save', array($this, $newBrandProduct));
+            // save brand_product_categories
+            $newBrandProductCategories = new BrandProductCategory();
+            $newBrandProductCategories->brand_product_id = $newBrandProduct->brand_product_id;
+            $newBrandProductCategories->cetegory_id = $categoryId;
+            $newBrandProductCategories->save();
+
+            // save brand_product_videos
+            $brandProductVideos = array();
+            foreach ($youtubeIds as $youtube_id) {
+                $newBrandProductVideo = new BrandProductVideo();
+                $newBrandProductVideo->brand_product_id = $newBrandProduct->brand_product_id;
+                $newBrandProductVideo->youtube_id = $youtube_id;
+                $newBrandProductVideo->save();
+                $brandProductVideos[] = $newBrandProductVideo;
+            }
+            $newBrandProduct->brand_product_video = $brandProductVideos;
+
+
+            Event::fire('orbit.brandproduct.postnewbrandproduct.after.save', array($this, $newBrandProduct));
 
             $this->response->data = $newBrandProduct;
 
             // Commit the changes
             $this->commit();
-
-            Event::fire('orbit.newbrandproduct.postnewproduct.after.commit', array($this, $newBrandProduct));
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
