@@ -45,6 +45,10 @@ Route::post('/app/v1/logout/pp', 'IntermediateLoginController@getLogout');
 Route::post('/app/v1/login/rgp', 'IntermediateLoginController@postLoginRGP');
 Route::post('/app/v1/logout/rgp', 'IntermediateLoginController@getLogoutRGP');
 
+Route::post('/app/v1/login/bpp', 'IntermediateLoginController@postLoginBPP');
+Route::post('/app/v1/logout/bpp', 'IntermediateLoginController@getLogoutBPP');
+
+
 Route::group(['before' => 'orbit-settings'], function() {
     // Route::post('/app/v1/customer/login', 'IntermediateLoginController@postLoginMobileCI');
 });
