@@ -83,7 +83,7 @@ class ProductNewAPIController extends ControllerAPI
             // save brand_product_categories
             $newBrandProductCategories = new BrandProductCategory();
             $newBrandProductCategories->brand_product_id = $newBrandProduct->brand_product_id;
-            $newBrandProductCategories->cetegory_id = $categoryId;
+            $newBrandProductCategories->category_id = $categoryId;
             $newBrandProductCategories->save();
 
             // save brand_product_videos

@@ -1,6 +1,6 @@
 <?php
 
-class BrandProduct extends Eloquent
+class BrandProductCategory extends Eloquent
 {
     protected $primaryKey = 'brand_product_category_id';
 
