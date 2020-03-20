@@ -20,16 +20,17 @@ use BrandProductReservation;
 use Exception;
 use App;
 
-class ReservationListAPIController extends ControllerAPI
+class ReservationDetailAPIController extends ControllerAPI
 {
 
     /**
      * List brand product reservation for BPP
-     * @todo: add status param validation
+     *
+     * @todo: Add validation
      *
      * @author Ahmad <ahmad@dominopos.com>
      */
-    public function getSearchReservation()
+    public function getReservationDetail()
     {
         try {
             $httpCode = 200;
@@ -39,6 +40,7 @@ class ReservationListAPIController extends ControllerAPI
             $userType = $user->user_type;
             $brandId = $user->base_merchant_id;
             $merchantId = $user->merchant_id;
+            $brandProductReservationId = OrbitInput::get('brand_product_reservation_id');
 
             $reservations = BrandProductReservation::select(
                     'brand_product_reservation_id',
@@ -62,6 +64,7 @@ class ReservationListAPIController extends ControllerAPI
                     }
                 ])
                 ->leftJoin('brand_product_reservation_details', 'brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
+                ->where('brand_product_reservations.brand_product_reservation_id', $brandProductReservationId)
                 ->where('brand_id', $brandId)
                 ->where('option_type', 'merchant');
 
@@ -69,66 +72,9 @@ class ReservationListAPIController extends ControllerAPI
                 $reservations->where('brand_product_reservation_details.option_id', $merchantId);
             }
 
-            OrbitInput::get('product_name_like', function($keyword) use ($reservations)
-            {
-                $reservations->where('product_name', 'like', "%$keyword%");
-            });
+            $reservations->firstOrFail();
 
-            OrbitInput::get('status', function($status) use ($reservations)
-            {
-                $reservations->where('status', $status);
-            });
-
-            // Clone the query builder which still does not include the take,
-            // skip, and order by
-            $_reservations = clone $reservations;
-
-            // @todo: change the parseTakeFromGet to brand_product_reservation
-            $take = PaginationNumber::parseTakeFromGet('merchant');
-            $reservations->take($take);
-
-            $skip = PaginationNumber::parseSkipFromGet();
-            $reservations->skip($skip);
-
-            // Default sort by
-            $sortBy = 'created_at';
-            // Default sort mode
-            $sortMode = 'desc';
-
-            OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
-            {
-                // Map the sortby request to the real column name
-                $sortByMapping = array(
-                    'created_at' => 'brand_product_reservations.created_at',
-                );
-
-                if (array_key_exists($_sortBy, $sortByMapping)) {
-                    $sortBy = $sortByMapping[$_sortBy];
-                }
-            });
-
-            OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
-            {
-                if (strtolower($_sortMode) !== 'desc') {
-                    $sortMode = 'asc';
-                }
-            });
-            $reservations->orderBy($sortBy, $sortMode);
-
-            $totalItems = RecordCounter::create($_reservations)->count();
-            $listOfItems = $reservations->get();
-
-            $data = new stdclass();
-            $data->total_records = $totalItems;
-            $data->returned_records = count($listOfItems);
-            $data->records = $listOfItems;
-
-            if ($totalItems === 0) {
-                $data->records = NULL;
-                $this->response->message = "There is no reservations that matched your search criteria";
-            }
-
-            $this->response->data = $data;
+            $this->response->data = $reservations;
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
