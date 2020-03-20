@@ -26,6 +26,8 @@ class ReservationDetailAPIController extends ControllerAPI
     /**
      * List brand product reservation for BPP
      *
+     * @todo: Add validation
+     *
      * @author Ahmad <ahmad@dominopos.com>
      */
     public function getReservationDetail()
@@ -38,6 +40,7 @@ class ReservationDetailAPIController extends ControllerAPI
             $userType = $user->user_type;
             $brandId = $user->base_merchant_id;
             $merchantId = $user->merchant_id;
+            $brandProductReservationId = OrbitInput::get('brand_product_reservation_id');
 
             $reservations = BrandProductReservation::select(
                     'brand_product_reservation_id',
@@ -61,6 +64,7 @@ class ReservationDetailAPIController extends ControllerAPI
                     }
                 ])
                 ->leftJoin('brand_product_reservation_details', 'brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
+                ->where('brand_product_reservations.brand_product_reservation_id', $brandProductReservationId)
                 ->where('brand_id', $brandId)
                 ->where('option_type', 'merchant');
 

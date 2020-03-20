@@ -25,6 +25,7 @@ class ReservationListAPIController extends ControllerAPI
 
     /**
      * List brand product reservation for BPP
+     * @todo: add status param validation
      *
      * @author Ahmad <ahmad@dominopos.com>
      */
