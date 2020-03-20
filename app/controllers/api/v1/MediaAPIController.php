@@ -36,6 +36,13 @@ class MediaAPIController extends ControllerAPI
     protected $inputName = '';
 
     /**
+     * for bypass role checking (used on bpp)
+     *
+     *
+     * @var string */
+    protected $skipRoleChecking = false;
+
+    /**
      * This uploader receive multiple file input and will make 4 variant for each image
      * (original, desktop thumbnail, mobile thumbnail, and medium quality image)
      *
@@ -60,10 +67,13 @@ class MediaAPIController extends ControllerAPI
                 $this->checkAuth();
                 $user = $this->api->user;
             }
-            $role = $user->role;
-            if (! in_array(strtolower($role->role_name), $this->uploadRoles)) {
-                $message = 'Your role are not allowed to access this resource.';
-                ACL::throwAccessForbidden($message);
+
+            if (! $this->skipRoleChecking) {
+                $role = $user->role;
+                if (! in_array(strtolower($role->role_name), $this->uploadRoles)) {
+                    $message = 'Your role are not allowed to access this resource.';
+                    ACL::throwAccessForbidden($message);
+                }
             }
 
             // Check config for media image upload
@@ -689,5 +699,18 @@ class MediaAPIController extends ControllerAPI
         }
 
         return $objectId;
+    }
+
+    /**
+     * Set custom file input name that will be read by Input class.
+     *
+     * @param string $inputName the name of input that will be read.
+     * @return MediaAPIController current instance.
+     */
+    public function setSkipRoleChecking($skip = true)
+    {
+        $this->skipRoleChecking = $skip;
+
+        return $this;
     }
 }
