@@ -43,7 +43,7 @@ class ReservationDetailAPIController extends ControllerAPI
             $brandProductReservationId = OrbitInput::get('brand_product_reservation_id');
 
             $reservations = BrandProductReservation::select(
-                    'brand_product_reservation_id',
+                    'brand_product_reservations.brand_product_reservation_id',
                     'selling_price',
                     'created_at',
                     'expired_at',
