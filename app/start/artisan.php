@@ -336,3 +336,6 @@ Artisan::add(new UserReportEmailCommand);
 
 // List all active user
 Artisan::add(new GetListActiveUserCommand);
+
+// Create BPP user
+Artisan::add(new CreateUserBPPCommand);

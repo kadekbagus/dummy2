@@ -3,6 +3,7 @@
 use Orbit\Helper\Session\AppOriginProcessor;
 use Orbit\Helper\Net\GuestUserGenerator;
 use User;
+use BppUser;
 
 /**
  * Helper for getting user by session
@@ -95,6 +96,27 @@ class UserGetter
         $guest = static::getLoggedInGuest($session);
         if (! is_object($user)) {
             $user = $guest;
+        }
+
+        return $user;
+    }
+
+    /**
+     * Get current logged in user BPP.
+     *
+     * @author kadek <kadek@dominopos.com>
+     * @param DominoPOS\OrbitSession\Session $session
+     * @return User $user
+     */
+    public static function getLoggedInUserBpp($session)
+    {
+        $userId = $session->read('user_id');
+
+        // @todo: Why we query membership also? do we need it on every page?
+        $user = BppUser::where('bpp_user_id', $userId)->first();
+
+        if (! is_object($user)) {
+            $user = NULL;
         }
 
         return $user;
