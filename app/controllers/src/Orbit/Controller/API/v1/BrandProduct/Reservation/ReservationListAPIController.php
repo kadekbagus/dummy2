@@ -10,6 +10,8 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Validator;
+use Helper\EloquentRecordCounter as RecordCounter;
+use Orbit\Helper\Util\PaginationNumber;
 
 use Lang;
 use Config;
@@ -22,6 +24,7 @@ class ReservationListAPIController extends ControllerAPI
 
     /**
      * List brand product reservation for BPP
+     * @todo: add store level filter
      *
      * @author Ahmad <ahmad@dominopos.com>
      */
@@ -33,32 +36,6 @@ class ReservationListAPIController extends ControllerAPI
             $user = App::make('currentUser');
             $userId = $user->bpp_user_id;
             $brandId = $user->base_merchant_id;
-
-            $sortBy = OrbitInput::get('sortby');
-
-            // Begin database transaction
-            $this->beginTransaction();
-
-            $validator = Validator::make(
-                array(
-                    'sortby' => $sortBy,
-                    'status' => $status,
-                ),
-                array(
-                    'sortby' => 'in:name,status,created_at,updated_at',
-                    'status' => 'in:active,inactive',
-                ),
-                array(
-                    'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: name, status',
-                    'status.in' => 'The sort by argument you specified is not valid, the valid values are: active, inactive',
-                )
-            );
-
-            // Run the validation
-            if ($validator->fails()) {
-                $errorMessage = $validator->messages()->first();
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
 
             $reservations = BrandProductReservation::select(
                     'brand_product_reservation_id',
