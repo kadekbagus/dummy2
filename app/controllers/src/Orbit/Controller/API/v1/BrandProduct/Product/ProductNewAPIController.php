@@ -97,7 +97,6 @@ class ProductNewAPIController extends ControllerAPI
             }
             $newBrandProduct->brand_product_video = $brandProductVideos;
 
-
             Event::fire('orbit.brandproduct.postnewbrandproduct.after.save', array($this, $newBrandProduct));
 
             $this->response->data = $newBrandProduct;
