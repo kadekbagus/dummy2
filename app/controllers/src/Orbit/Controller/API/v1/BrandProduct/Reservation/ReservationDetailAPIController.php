@@ -45,7 +45,7 @@ class ReservationDetailAPIController extends ControllerAPI
             $reservations = BrandProductReservation::select(
                     'brand_product_reservations.brand_product_reservation_id',
                     'selling_price',
-                    'created_at',
+                    'brand_product_reservations.created_at',
                     'expired_at',
                     'status',
                     'quantity',
