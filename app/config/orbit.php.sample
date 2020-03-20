@@ -169,6 +169,10 @@ return array(
                  'type'  => 'basic'
             ],
 
+            'products' => [
+                'index' => 'products',
+                'type' => 'basic',
+            ],
         ],
 
         // index list will be include in suggestion
@@ -177,7 +181,8 @@ return array(
             'news_suggestions',
             'promotion_suggestions',
             'store_suggestions',
-            'mall_suggestions'
+            'mall_suggestions',
+            'product_suggestions',
         ],
 
         // index list will be include in suggestion in mall level
@@ -265,6 +270,12 @@ return array(
             'articles' => [
                  'title' => '^3',
                  'body'  => '^5',
+            ],
+
+            'products' => [
+                'product_name' => '^10',
+                'brand_name' => '^8',
+                'description' => '^5',
             ],
         ]
     ],
@@ -5757,6 +5768,11 @@ return array(
             'article-list' => [
                 'enable' => FALSE,
                 'cache_ttl' => 60
+            ],
+
+            'product-list' => [
+                'enable' => TRUE,
+                'cache_ttl' => 60,
             ],
         ],
 

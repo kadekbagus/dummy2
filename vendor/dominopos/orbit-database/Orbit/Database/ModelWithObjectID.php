@@ -129,7 +129,6 @@ class ModelWithObjectID extends Model
     protected function newBaseQueryBuilder()
     {
         $conn = $this->getConnection();
-
         $grammar = $conn->getQueryGrammar();
 
         return new ExtendedQueryBuilder(

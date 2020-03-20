@@ -1,5 +1,7 @@
 <?php namespace Orbit\Helper\Resource;
 
+use Countable;
+
 /**
  * Base class for a collection of resource.
  *
@@ -32,8 +34,16 @@ class ResourceCollection extends ResourceAbstract
         $this->total = $total;
 
         // Set initial collection data.
+        $recordCount = 0;
+        if ($collection instanceof Countable) {
+            $recordCount = $collection->count();
+        }
+        else if (is_array($collection)) {
+            $recordCount = count($collection);
+        }
+
         $this->data = [
-            'returned_records' => $collection->count(),
+            'returned_records' => $recordCount,
             'total_records' => $total,
             'records' => [],
         ];
