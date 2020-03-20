@@ -10,6 +10,8 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Validator;
+use Helper\EloquentRecordCounter as RecordCounter;
+use Orbit\Helper\Util\PaginationNumber;
 
 use Lang;
 use Config;
