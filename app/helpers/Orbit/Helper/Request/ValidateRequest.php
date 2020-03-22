@@ -252,9 +252,9 @@ class ValidateRequest implements ValidateRequestInterface
      */
     public function has($key, $callback = null)
     {
-        if (Request::has($key)) {
-            $callback(Request::input($key));
-        }
+        return ! empty($callback) && Request::has($key)
+            ? $callback(Request::input($key))
+            : Request::has($key);
     }
 
     /**
