@@ -28,12 +28,19 @@ class ResourceCollection extends ResourceAbstract
      */
     protected $data = [];
 
+    /**
+     * Build the collection instance.
+     *
+     * @param array|Countable  $collection the collection
+     * @param integer $total               total record.
+     */
     public function __construct($collection, $total = 0)
     {
         $this->collection = $collection;
         $this->total = $total;
 
-        // Set initial collection data.
+        // We need to determine the collection count by checking its type.
+        // Collection can be an instance of Countable or an array.
         $recordCount = 0;
         if ($collection instanceof Countable) {
             $recordCount = $collection->count();
@@ -42,6 +49,7 @@ class ResourceCollection extends ResourceAbstract
             $recordCount = count($collection);
         }
 
+        // Set initial collection data.
         $this->data = [
             'returned_records' => $recordCount,
             'total_records' => $total,
