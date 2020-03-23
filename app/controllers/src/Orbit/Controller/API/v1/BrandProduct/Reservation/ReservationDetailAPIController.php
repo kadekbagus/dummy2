@@ -87,7 +87,7 @@ class ReservationDetailAPIController extends ControllerAPI
                 ])
                 ->leftJoin('brand_product_reservation_details', 'brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
                 ->where('brand_product_reservations.brand_product_reservation_id', $brandProductReservationId)
-                ->where('brand_product_reservationsbrand_id', $brandId)
+                ->where('brand_product_reservations.brand_id', $brandId)
                 ->where('option_type', 'merchant');
 
             if (! empty($merchantId)) {
