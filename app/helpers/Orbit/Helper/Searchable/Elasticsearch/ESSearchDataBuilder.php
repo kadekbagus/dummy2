@@ -13,20 +13,21 @@ use Orbit\Helper\Searchable\Elasticsearch\Filters\SortByName;
 use Orbit\Helper\Searchable\Elasticsearch\Filters\SortByRating;
 use Orbit\Helper\Searchable\Elasticsearch\Filters\SortByRelevance;
 use Orbit\Helper\Searchable\Elasticsearch\Filters\SortByUpdatedDate;
-use Orbit\Helper\Searchable\Helper\Cacheable;
-use Orbit\Helper\Searchable\Helper\InteractsWithCache;
 
 /**
  * Base Search Query Builder.
+ *
+ * @todo Create a campaign-specific filters/sortings which can be used
+ *       by child classes to compose their searchable abilities.
+ *       (e.g. filter by partner)
+ *
+ * @todo Filter by parther.
  *
  * @author Budi <budi@gotomalls.com>
  */
 abstract class ESSearchDataBuilder extends ESQueryBuilder
 {
-    // use InteractsWithCache;
-
-    // Inject basic filters and sorting scripts.
-    // Can be overridden by child classes.
+    // Compose basic filtering and sorting abilities.
     use ScriptFilter,
         ExcludeFilter,
         RatingFilter,
@@ -48,8 +49,7 @@ abstract class ESSearchDataBuilder extends ESQueryBuilder
     /**
      * Make sure child builder implement the filter by keyword.
      *
-     * @param  string $keyword [description]
-     * @return [type]          [description]
+     * @param  string $keyword the search keyword
      */
     abstract public function filterByKeyword($keyword = '');
 
@@ -64,12 +64,97 @@ abstract class ESSearchDataBuilder extends ESQueryBuilder
     /**
      * Sort by Nearest..
      *
-     * @return [type] [description]
+     * @param string $ul user location.
      */
-    abstract public function sortByNearest($ul = null);
+    // abstract public function sortByNearest($ul = null);
 
+    /**
+     * Filter by country.
+     *
+     * @param string $country country name
+     */
+    abstract public function filterByCountry($country);
+
+    /**
+     * Filter by cities.
+     *
+     * @param  array  $cities array of city name
+     */
+    abstract public function filterByCities($cities = []);
+
+    /**
+     * Add object specific filter/sort.
+     */
+    abstract protected function addCustomParam();
+
+    /**
+     * Basic supported sort queries... can be overridden when needed.
+     */
+    public function addSortQuery()
+    {
+        $sortBy = $this->request->sortby ?: 'created_date';
+        $sortMode = $this->request->sortmode ?: 'desc';
+
+        switch ($sortBy) {
+            case 'name':
+                $this->sortByName($sortMode);
+                break;
+
+            // case 'nearest':
+            //     $this->sortByNearest($this->request->ul);
+            //     break;
+
+            // case 'rating':
+            //     if (method_exists($this, 'addReviewFollowScript')) {
+            //         $ratingScript = $this->addReviewFollowScript();
+            //     }
+
+            //     $this->sortByRating($ratingScript);
+            //     break;
+
+            case 'created_date':
+            default:
+                // Default sort by latest.
+                $this->sortByCreatedDate();
+                break;
+        }
+    }
+
+    /**
+     * Build search param/query.
+     *
+     * @return  array query params.
+     */
     public function build()
     {
+        // Set result limit
         $this->setLimit($this->request->skip, $this->request->take);
+
+        // Filter by country
+        $this->request->has('country', function($country) {
+            $this->filterByCountry($country);
+        });
+
+        // Filter by cities
+        $this->request->has('cities', function($cities) {
+            $this->filterByCities($cities);
+        });
+
+        // Filter by keyword
+        $this->request->has('keyword', function($keyword) {
+            $this->filterByKeyword($keyword);
+        });
+
+        // Set additional params depends on the object.
+        $this->addCustomParam();
+
+        // Add sort query
+        $this->addSortQuery();
+
+        // Build search params
+        $this->buildSearchParam();
+
+        // Return final ES query
+        return $this->searchParam;
     }
 }

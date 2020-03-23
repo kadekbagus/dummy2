@@ -363,18 +363,23 @@ abstract class ESQueryBuilder
      *
      * @todo  Find a cleaner way to do this.
      *
-     * @return array $searchParam final query param that will be sent to ES.
+     * @return self instance
      */
     public function buildSearchParam()
     {
         $this->buildExcludedIdsQuery();
 
+        if (empty($this->searchParam['body']['query'])) {
+            unset($this->searchParam['body']['query']);
+        }
+
+        // Encode to json
         $this->searchParam['body'] = json_encode($this->searchParam['body']);
 
-        return $this->searchParam;
+        return $this;
     }
 
-    // Child classes must provide implemetation of build();
-    // Later will be extending DataBuilder helper.
+    // Child classes must provide implementation of build(),
+    // because later it will implement DataBuilder interface (helper).
     abstract public function build();
 }

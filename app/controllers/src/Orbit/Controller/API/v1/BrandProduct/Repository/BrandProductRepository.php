@@ -32,19 +32,16 @@ class BrandProductRepository
 
     public function get($brandProductId)
     {
-        return BrandProduct::with(
-            array_merge(
-                $this->buildMediaQuery(),
-                [
-                    'categories' => function($query) {
-                        $query->select('category_id', 'category_name');
-                    },
-                    'videos' => function($query) {
-                        $query->select('brand_product_video_id', 'video_url');
-                    },
-                    'product_variants.variants.options',
-                ]
-            ))
+        return BrandProduct::with([
+                'media' => $this->buildMediaQuery(),
+                'categories' => function($query) {
+                    $query->select('category_id', 'category_name');
+                },
+                'videos' => function($query) {
+                    $query->select('brand_product_video_id', 'video_url');
+                },
+                'brand_product_variants',
+            ])
             ->findOrFail($brandProductId);
     }
 
@@ -103,7 +100,7 @@ class BrandProductRepository
     {
         $reservation = null;
 
-        DB::transaction(function() use ($reservationId, $reservation)) {
+        DB::transaction(function() use ($reservationId, $reservation) {
             $reservation = ProductReservation::findOrFail($reservationId);
             $reservation->status = ProductReservation::STATUS_ACCEPTED;
             $reservation->save();
@@ -122,7 +119,7 @@ class BrandProductRepository
     {
         $reservation = null;
 
-        DB::transaction(function() use ($reservationId, $reservation)) {
+        DB::transaction(function() use ($reservationId, $reservation) {
             $reservation = ProductReservation::findOrFail($reservationId);
             $reservation->status = ProductReservation::STATUS_DECLINED;
             $reservation->save();

@@ -29,7 +29,7 @@ class BrandProductDetailAPIController extends PubControllerAPI
         try {
 
             $this->response->data = new BrandProductResource(
-                $brandProduct->get($request)
+                $repo->get($request->brand_product_id)
             );
 
         } catch (Exception $e) {

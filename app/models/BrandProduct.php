@@ -4,15 +4,13 @@ use Orbit\Controller\API\v1\Pub\BrandProduct\DataBuilder\SearchDataBuilder;
 use Orbit\Helper\Searchable\Searchable;
 
 /**
- * Brand Product Model
+ * Brand Product Model with Searchable feature.
  *
  * @author Budi <budi@gotomalls.com>
  */
 class BrandProduct extends Eloquent
 {
-    // Provide Searchable feature.
-    // To disable Searchable feature and its initialization, just comment
-    // following line.
+    // Enable Searchable feature.
     use Searchable;
 
     protected $primaryKey = 'brand_product_id';
@@ -20,13 +18,34 @@ class BrandProduct extends Eloquent
     protected $table = 'brand_products';
 
     /**
-     * Get builder instance.
-     * Must be implemented by Model with searchable feature.
+     * Get search query builder instance, which helps building
+     * final search query based on $request param.
      *
-     * @return builder instance.
+     * @see Searchable\Searchable@search
+     *
+     * @return null|DataBuilder $builder builder instance or null if we don't
+     *                                   need one.
      */
     public function getSearchQueryBuilder($request)
     {
         return new SearchDataBuilder($request);
+    }
+
+    public function videos()
+    {
+        return $this->hasMany(BrandProductVideo::class);
+    }
+
+    public function categories()
+    {
+        return $this->belongsToMany(
+            Category::class,
+            'brand_product_categories'
+        );
+    }
+
+    public function brand_product_variants()
+    {
+        return $this->hasMany(BrandProductVariant::class);
     }
 }

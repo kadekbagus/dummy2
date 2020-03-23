@@ -2,6 +2,8 @@
 
 /**
  * Brand Product Variant
+ *
+ * @author Budi <budi@gotomalls.com>
  */
 class BrandProductVariant extends Eloquent
 {
@@ -9,8 +11,8 @@ class BrandProductVariant extends Eloquent
 
     protected $primaryKey = 'brand_product_variant_id';
 
-    public function options()
+    public function variants()
     {
-        return $this->hasMany(VariantOption::class);
+        return $this->hasMany(Variant::class);
     }
 }

@@ -18,7 +18,7 @@ class DetailRequest extends ValidateRequest
     public function rules()
     {
         return [
-            'product_id' => 'required|orbit.exists.brand_product',
+            'brand_product_id' => 'required',
         ];
     }
 

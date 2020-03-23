@@ -90,23 +90,21 @@ trait MediaQuery {
      */
     protected function buildMediaQuery()
     {
-        return [
-            'media' => function($query) {
-                $query->select(
-                    'media_id',
-                    'object_id',
-                    'media_name_long',
-                    'path',
-                    DB::raw($this->imageQuery)
-                );
+        return function($query) {
+            $query->select(
+                'media_id',
+                'object_id',
+                'media_name_long',
+                'path',
+                DB::raw($this->imageQuery)
+            );
 
-                $imageVariants = $this->resolveImageVariants();
+            $imageVariants = $this->resolveImageVariants();
 
-                if (! empty($imageVariants)) {
-                    $query->whereIn('media_name_long', $imageVariants);
-                }
+            if (! empty($imageVariants)) {
+                $query->whereIn('media_name_long', $imageVariants);
             }
-        ];
+        };
     }
 
     protected function quote($arg)

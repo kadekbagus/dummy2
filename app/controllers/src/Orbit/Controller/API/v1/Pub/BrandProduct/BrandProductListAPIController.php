@@ -19,8 +19,7 @@ class BrandProductListAPIController extends PubControllerAPI
     /**
      * Handle product list request.
      *
-     * @param  Repository     $productRepo     [description]
-     * @param  BrandProductES $productProvider [description]
+     * @param  BrandProduct   $brandProduct    [description]
      * @param  ListRequest    $request         [description]
      * @return [type]                          [description]
      */
@@ -29,7 +28,8 @@ class BrandProductListAPIController extends PubControllerAPI
         try {
             $brandProducts = $brandProduct->search($request);
 
-            // Map product list from elastic search to a client-ready data.
+            // Map product list result from search provider
+            // to a client-ready data.
             $this->response->data = new BrandProductCollection(
                 $brandProducts['hits'],
                 $brandProducts['total']

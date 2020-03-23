@@ -20,6 +20,7 @@ class ListRequest extends ValidateRequest
             'take' => 'required|integer',
             'category_id' => 'sometimes|array',
             'cities' => 'sometimes|array',
+            'store_id' => 'sometimes',
         ];
     }
 }

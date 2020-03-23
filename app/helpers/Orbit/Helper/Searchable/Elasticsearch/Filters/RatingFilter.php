@@ -183,8 +183,29 @@ trait RatingFilter
         "((counter>0) && (rating/counter >= rateLow) && (rating/counter <= rateHigh));";
     }
 
+    protected function buildRatingParamsFromRequest()
+    {
+        $params = [
+            'mallId' => null,
+            'countryData' => null,
+            'cityFilters' => null,
+        ];
+
+        $this->request->has('mall_id', function($mallId) use ($params) {
+            $params['mallId'] = $mallId;
+        });
+
+        $this->request->has('country', function($country) use ($params) {
+            $params['countryData'] = Country::select('country_id')
+                ->where('name', $country)->first();
+        });
+
+        return $params;
+    }
+
     public function addReviewFollowScript($params = [])
     {
+        $params = $this->buildRatingParamsFromRequest();
         $scripts = $this->getReviewRatingScript($params);
         // Add script fields into request body...
         $this->scriptFields([
