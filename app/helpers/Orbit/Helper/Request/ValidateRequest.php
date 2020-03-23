@@ -238,6 +238,9 @@ class ValidateRequest implements ValidateRequestInterface
         if ($this->validator->fails()) {
             $this->handleValidationFails();
         }
+
+        // Register current request in the container.
+        App::instance('currentRequest', $this);
     }
 
     /**
@@ -247,11 +250,11 @@ class ValidateRequest implements ValidateRequestInterface
      * @param  string  $key      the key
      * @param  Closure $callback the callback that will be run
      */
-    public function has($key, $callback)
+    public function has($key, $callback = null)
     {
-        if (Request::has($key)) {
-            $callback(Request::input($key));
-        }
+        return ! empty($callback) && Request::has($key)
+            ? $callback(Request::input($key))
+            : Request::has($key);
     }
 
     /**
