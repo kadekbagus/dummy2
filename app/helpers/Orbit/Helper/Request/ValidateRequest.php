@@ -259,11 +259,7 @@ class ValidateRequest implements ValidateRequestInterface
      * @param  array  $messages [description]
      * @return self
      */
-    public function validate(
-        array $data = [],
-        array $rules = [],
-        array $messages = []
-    ) {
+    public function validate($data = [], $rules = [], $messages = []) {
         // In case we have custom validation rules, register
         // in inside following method.
         if (method_exists($this, 'registerCustomValidations')) {
