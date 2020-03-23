@@ -48,4 +48,20 @@ class BrandProduct extends Eloquent
     {
         return $this->hasMany(BrandProductVariant::class);
     }
+
+    public function media()
+    {
+        return $this->hasMany('Media', 'object_id', 'brand_product_id')
+                    ->where('object_name', 'brand_product');
+    }
+
+    public function BrandProductMainPhotos()
+    {
+        return $this->media()->where('media_name_id', 'brand_product_main_photo');
+    }
+
+    public function BrandProductPhotos()
+    {
+    	return $this->media()->where('media_name_id', 'brand_product_photos');
+    }
 }

@@ -1695,6 +1695,8 @@ return array(
                     'partner_custom_photos' => 'partner',
                     'partner_banners' => 'partner_banner',
                     'game_image' => 'game',
+                    'brand_product_main_photo' => 'brand_product',
+                    'brand_product_photos' => 'brand_product',
                 ],
 
                 // Allowed Mimetype
