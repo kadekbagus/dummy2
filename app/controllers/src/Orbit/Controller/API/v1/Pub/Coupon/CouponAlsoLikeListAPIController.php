@@ -27,7 +27,7 @@ use Advert;
 use Lang;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
-use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
 use Elasticsearch\ClientBuilder;

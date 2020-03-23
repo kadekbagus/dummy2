@@ -30,12 +30,13 @@ use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\SimpleCache;
-use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 use Elasticsearch\ClientBuilder;
 use PartnerAffectedGroup;
 use PartnerCompetitor;
 use Country;
 use Redis;
+use BaseStore;
 
 class PromotionFeaturedListAPIController extends PubControllerAPI
 {
@@ -214,7 +215,14 @@ class PromotionFeaturedListAPIController extends PubControllerAPI
                     $withMallId = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.parent_id' => $mallId))))));
                     $jsonQuery['query']['bool']['filter'][] = $withMallId;
                 }
-             });
+            });
+
+            OrbitInput::get('store_id', function($storeId) use (&$jsonQuery) {
+                if (! empty($storeId)) {
+                    $withStoreId = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.merchant_id' => $storeId))))));
+                    $jsonQuery['query']['bool']['filter'][] = $withStoreId;
+                }
+            });
 
             OrbitInput::get('sponsor_provider_ids', function($sponsorProviderIds) use (&$jsonQuery) {
                 if (! empty($sponsorProviderIds) && is_array($sponsorProviderIds)) {
@@ -222,6 +230,25 @@ class PromotionFeaturedListAPIController extends PubControllerAPI
                     $jsonQuery['query']['bool']['filter'][] = $withSponsorProviderIds;
                 }
              });
+
+            OrbitInput::get('brand_id', function($brandId) use (&$jsonQuery) {
+                if (! empty($brandId)) {
+                    $baseStore = BaseStore::select('base_merchant_id')->where('base_store_id', '=', $brandId)->first();
+                    if ($baseStore) {
+                        $tenantIds = [];
+                        $stores = BaseStore::select('base_store_id')->where('base_merchant_id', '=', $baseStore->base_merchant_id)->get();
+                        if (count($stores)) {
+                            foreach($stores as $key=>$value) {
+                                $tenantIds[] = $value->base_store_id;
+                            }
+                        }
+                        $withBrandId = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('terms' => array('link_to_tenant.merchant_id' => $tenantIds))))));
+                        $jsonQuery['query']['bool']['filter'][] = $withBrandId;
+                    }
+                }
+             });
+
+
 
             // filter by category_id
             // OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag) {
@@ -324,13 +351,13 @@ class PromotionFeaturedListAPIController extends PubControllerAPI
             if (! empty($mallId)) {
                 $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('mall_rating.rating_" . $mallId . "')) { if (! doc['mall_rating.rating_" . $mallId . "'].empty) { counter = counter + doc['mall_rating.review_" . $mallId . "'].value; rating = rating + (doc['mall_rating.rating_" . $mallId . "'].value * doc['mall_rating.review_" . $mallId . "'].value);}};";
                 $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('mall_rating.review_" . $mallId . "')) { if (! doc['mall_rating.review_" . $mallId . "'].empty) { review = review + doc['mall_rating.review_" . $mallId . "'].value;}}; ";
-            } else if (! empty($cityFilters)) {
+            } else if (! empty($countryData) && ! empty($cityFilters)) {
                 $countryId = $countryData->country_id;
                 foreach ((array) $cityFilters as $cityFilter) {
                     $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { if (! doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value * doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value);}}; ";
                     $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { if (! doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value;}}; ";
                 }
-            } else if (! empty($countryFilter)) {
+            } else if (! empty($countryData) && ! empty($countryFilter)) {
                 $countryId = $countryData->country_id;
                 $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { if (! doc['location_rating.rating_" . $countryId . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);}}; ";
                 $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "')) { if (! doc['location_rating.review_" . $countryId . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "'].value;}}; ";
@@ -580,7 +607,7 @@ class PromotionFeaturedListAPIController extends PubControllerAPI
 
             $listOfRec = array();
             $cdnConfig = Config::get('orbit.cdn');
-            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            $imgUrl = CdnUrlGeneratorWithCloudfront::create(['cdn' => $cdnConfig], 'cdn');
 
             foreach ($records['hits'] as $record) {
                 $data = array();

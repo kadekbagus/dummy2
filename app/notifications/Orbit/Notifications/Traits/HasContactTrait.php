@@ -7,21 +7,30 @@ use Illuminate\Support\Facades\Config;
  *
  * @author Budi <budi@dominopos.com>
  */
-trait HasContactTrait 
+trait HasContactTrait
 {
+    protected $contact = null;
+
     /**
      * Get the transaction data.
      *
      * @todo  return transaction as object instead of array. (need to adjust the view/email templates)
-     * 
+     *
      * @return [type] [description]
      */
     protected function getContactData()
     {
-        return [
-            'phone' => Config::get('orbit.contact_information.customer_service.phone'),
-            'email' => Config::get('orbit.contact_information.customer_service.email'),
-        ];
+        return Config::get('orbit.contact_information.customer_service');
+    }
+
+    /**
+     * Get email sender information.
+     *
+     * @return [type] [description]
+     */
+    protected function getSenderInfo()
+    {
+        return Config::get('orbit.registration.mobile.sender');
     }
 
 }

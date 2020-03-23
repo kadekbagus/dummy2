@@ -24,6 +24,16 @@ Route::post('/api/v1/pub/rating/update', function()
 Route::post('/app/v1/pub/rating/update', ['as' => 'rating-update', 'uses' => 'IntermediatePubAuthController@Rating\RatingUpdate_postUpdateRating']);
 
 /**
+ * Post update rating reply
+ */
+Route::post('/api/v1/pub/rating-reply/update', function()
+{
+    return Orbit\Controller\API\v1\Pub\Rating\RatingReplyUpdateAPIController::create()->postUpdateRatingReply();
+});
+
+Route::post('/app/v1/pub/rating-reply/update', ['as' => 'rating-reply-update', 'uses' => 'IntermediatePubAuthController@Rating\RatingReplyUpdate_postUpdateRatingReply']);
+
+/**
  * List rating and review
  */
 Route::get('/api/v1/pub/rating/list', function()
@@ -32,6 +42,16 @@ Route::get('/api/v1/pub/rating/list', function()
 });
 
 Route::get('/app/v1/pub/rating/list', ['as' => 'rating-list', 'uses' => 'IntermediatePubAuthController@Rating\RatingList_getRatingList']);
+
+/**
+ * Get rating and review detail
+ */
+Route::get('/api/v1/pub/rating/detail', function()
+{
+    return Orbit\Controller\API\v1\Pub\Rating\RatingDetailAPIController::create()->getDetail();
+});
+
+Route::get('/app/v1/pub/rating/detail', ['as' => 'pub-review-detail', 'uses' => 'IntermediatePubAuthController@Rating\RatingDetail_getDetail']);
 
 /**
  * List reply of rating and review
@@ -113,3 +133,27 @@ Route::post('/api/v1/review/reply/delete', function()
 });
 
 Route::post('/app/v1/review/reply/delete', 'IntermediateAuthController@RatingReview_postDeleteReply');
+
+
+/**
+ * Delete Review
+ */
+Route::post('/api/v1/review/delete', function()
+{
+    return RatingReviewAPIController::create()->postDeleteReview();
+});
+
+Route::post('/app/v1/review/delete', 'IntermediateAuthController@RatingReview_postDeleteReview');
+
+
+
+
+/**
+ * Reply to a Review
+ */
+Route::post('/api/v1/review/imageapproval', function()
+{
+    return ReviewRatingImageApprovalAPIController::create()->postReplyReviewRating();
+});
+
+Route::post('/app/v1/review/imageapproval', 'IntermediateAuthController@ReviewRatingImageApproval_postImageApproval');

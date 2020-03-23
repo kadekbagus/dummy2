@@ -17,9 +17,10 @@ use Exception;
 use PromotionRetailer;
 use PaymentTransaction;
 use BaseStore;
+use IssuedCoupon;
 
 /**
- * Controller which handle saving the redeem location before we redirect 
+ * Controller which handle saving the redeem location before we redirect
  * customer to Sepulsa redeem page.
  *
  * @author Budi <budi@dominopos.com>
@@ -55,6 +56,7 @@ class CouponSaveRedeemLocationAPIController extends PubControllerAPI
             }
 
             $couponId = OrbitInput::post('coupon_id');
+            $issuedCouponId = OrbitInput::post('issued_coupon_id');
             $storeId = OrbitInput::post('store_id');
             $mallId = OrbitInput::post('current_mall');
             $paymentId = OrbitInput::post('transaction_id');
@@ -103,9 +105,10 @@ class CouponSaveRedeemLocationAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $payment = PaymentTransaction::with(['details.normal_paypro_detail', 'issued_coupon.coupon'])->findOrFail($paymentId);
+            $payment = PaymentTransaction::with(['details.normal_paypro_detail'])->findOrFail($paymentId);
+            $issuedCoupon = IssuedCoupon::where('issued_coupon_id', $issuedCouponId)->first();
 
-            if (empty($payment->issued_coupon)) {
+            if (empty($issuedCoupon)) {
                 $errorMessage = 'Can not find issued coupon related to this coupon.';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
@@ -131,10 +134,14 @@ class CouponSaveRedeemLocationAPIController extends PubControllerAPI
                 $payment->save();
             }
 
+            // Save redeem location in issued_coupon record.
+            $issuedCoupon->redeem_retailer_id = $storeId;
+            $issuedCoupon->save();
+
             $this->commit();
 
             $this->response->data = new stdClass();
-            $this->response->data->redeem_url = $payment->issued_coupon->url;
+            $this->response->data->redeem_url = $issuedCoupon->url;
 
         } catch (ACLForbiddenException $e) {
 

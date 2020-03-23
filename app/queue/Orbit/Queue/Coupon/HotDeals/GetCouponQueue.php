@@ -12,11 +12,17 @@ use User;
 use PaymentTransaction;
 use IssuedCoupon;
 use Coupon;
+use Mall;
+use Activity;
 
 // Notifications
 use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
 use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification;
 use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
+
+use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
+use App;
+use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
 
 /**
  * A job to get/issue Hot Deals Coupon after payment completed.
@@ -37,6 +43,15 @@ class GetCouponQueue
     public function fire($job, $data)
     {
         $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
+        $mallId = isset($data['mall_id']) ? $data['mall_id'] : null;
+        $mall = Mall::where('merchant_id', $mallId)->first();
+        $payment = null;
+        $discount = null;
+
+        $activity = Activity::mobileci()
+                            ->setActivityType('transaction')
+                            ->setActivityName('transaction_status')
+                            ->setCurrentUrl($data['current_url']);
 
         try {
             DB::connection()->beginTransaction();
@@ -45,7 +60,9 @@ class GetCouponQueue
 
             Log::info("PaidCoupon: Getting coupon PaymentID: {$paymentId}");
 
-            $payment = PaymentTransaction::with(['details.coupon', 'user', 'issued_coupons'])->findOrFail($paymentId);
+            $payment = PaymentTransaction::with(['details.coupon', 'user', 'midtrans', 'issued_coupons', 'discount_code'])->findOrFail($paymentId);
+
+            $activity->setUser($payment->user);
 
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired()) {
@@ -53,6 +70,8 @@ class GetCouponQueue
                 Log::info("PaidCoupon: Payment {$paymentId} was denied/canceled. We should not issue any coupon.");
 
                 $payment->cleanUp();
+
+                $payment->resetDiscount();
 
                 DB::connection()->commit();
 
@@ -62,7 +81,7 @@ class GetCouponQueue
             }
 
             // It means we can not get related issued coupon.
-            if (empty($payment->issued_coupons)) {
+            if ($payment->issued_coupons->count() === 0) {
                 throw new Exception("Related IssuedCoupon not found. Might be put to stock again by system queue before customer completes the payment.", 1);
             }
 
@@ -89,7 +108,21 @@ class GetCouponQueue
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
                 $payment->save();
 
-                $payment->details->first()->coupon->updateAvailability();
+                $coupon = $this->getCoupon($payment);
+                $discount = $payment->discount_code;
+                $coupon->updateAvailability();
+
+                if (! empty($discount)) {
+                    $discountCode = $discount->discount_code;
+                    $promoCodeReservation = App::make(ReservationInterface::class);
+                    $promoData = (object) [
+                        'promo_code' => $discountCode,
+                        'object_id' => $coupon->promotion_id,
+                        'object_type' => 'coupon'
+                    ];
+                    $promoCodeReservation->markAsIssued($payment->user, $promoData);
+                    Log::info("PaidCoupon: Promo code {$discountCode} issued for payment {$paymentId}...");
+                }
 
                 // Commit the changes ASAP.
                 DB::connection()->commit();
@@ -98,6 +131,53 @@ class GetCouponQueue
 
                 // Notify Customer.
                 $payment->user->notify(new ReceiptNotification($payment));
+
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                    ->setQueryString([
+                        'cid' => time(),
+                        't' => 'event',
+                        'ea' => 'Purchase Coupon Successful',
+                        'ec' => 'Coupon',
+                        'el' => $coupon->promotion_name,
+                        'cs' => $payment->utm_source,
+                        'cm' => $payment->utm_medium,
+                        'cn' => $payment->utm_campaign,
+                        'ck' => $payment->utm_term,
+                        'cc' => $payment->utm_content
+                    ])
+                    ->request();
+
+                // Log Activity
+                $activity->setActivityNameLong('Transaction is Successful')
+                        ->setModuleName('Midtrans Transaction')
+                        ->setObject($payment)
+                        ->setCoupon($coupon)
+                        ->setNotes(Coupon::TYPE_HOT_DEALS)
+                        ->setLocation($mall)
+                        ->responseOK()
+                        ->save();
+
+                Activity::mobileci()
+                        ->setUser($payment->user)
+                        ->setActivityType('click')
+                        ->setActivityName('coupon_added_to_wallet')
+                        ->setActivityNameLong('Coupon Added To Wallet')
+                        ->setModuleName('Coupon')
+                        ->setObject($coupon)
+                        ->setNotes(Coupon::TYPE_HOT_DEALS)
+                        ->setLocation($mall)
+                        ->responseOK()
+                        ->save();
+
+                $rewardObject = (object) [
+                    'object_id' => $coupon->promotion_id,
+                    'object_type' => 'coupon',
+                    'object_name' => $coupon->promotion_name,
+                    'country_id' => $payment->country_id,
+                ];
+
+                Event::fire('orbit.purchase.coupon.success', [$payment->user, $rewardObject]);
+
             }
             else {
                 // Commit the changes ASAP.
@@ -113,6 +193,19 @@ class GetCouponQueue
                 $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
                 $payment->save();
 
+                if (! empty($discount)) {
+                    $discountCode = $discount->discount_code;
+                    // Mark promo code as available if purchase was failed.
+                    $promoCodeReservation = App::make(ReservationInterface::class);
+                    $promoData = (object) [
+                        'promo_code' => $discountCode,
+                        'object_id' => $coupon->promotion_id,
+                        'object_type' => 'coupon'
+                    ];
+                    $promoCodeReservation->markAsAvailable($payment->user, $promoData);
+                    Log::info("PaidCoupon: Promo code {$discountCode} reverted back/marked as available...");
+                }
+
                 DB::connection()->commit();
 
                 // Notify admin for this failure.
@@ -124,6 +217,42 @@ class GetCouponQueue
 
                 // Notify customer that coupon is not available.
                 $payment->user->notify(new HotDealsCouponNotAvailableNotification($payment));
+
+                $objectName = $payment->details->first()->object_name;
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                    ->setQueryString([
+                        'cid' => time(),
+                        't' => 'event',
+                        'ea' => 'Purchase Coupon Failed',
+                        'ec' => 'Coupon',
+                        'el' => $objectName,
+                        'cs' => $payment->utm_source,
+                        'cm' => $payment->utm_medium,
+                        'cn' => $payment->utm_campaign,
+                        'ck' => $payment->utm_term,
+                        'cc' => $payment->utm_content
+                    ])
+                    ->request();
+
+                $activity->setActivityNameLong('Transaction is Success - Failed Getting Coupon')
+                         ->setModuleName('Midtrans Transaction')
+                         ->setObject($payment)
+                         ->setNotes($e->getMessage())
+                         ->setLocation($mall)
+                         ->responseFailed()
+                         ->save();
+
+                 Activity::mobileci()
+                         ->setUser($payment->user)
+                         ->setActivityType('click')
+                         ->setActivityName('coupon_added_to_wallet')
+                         ->setActivityNameLong('Coupon Added to Wallet Failed')
+                         ->setModuleName('Coupon')
+                         ->setObject($payment->details->first()->coupon)
+                         ->setNotes($e->getMessage())
+                         ->setLocation($mall)
+                         ->responseFailed()
+                         ->save();
             }
             else {
                 DB::connection()->rollBack();
@@ -134,5 +263,18 @@ class GetCouponQueue
         }
 
         $job->delete();
+    }
+
+    private function getCoupon($payment)
+    {
+        $coupon = null;
+        foreach($payment->details as $detail) {
+            if (! empty($detail->coupon)) {
+                $coupon = $detail->coupon;
+                break;
+            }
+        }
+
+        return $coupon;
     }
 }

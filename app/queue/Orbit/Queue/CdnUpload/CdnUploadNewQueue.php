@@ -32,6 +32,8 @@ class CdnUploadNewQueue
      *    'bucket_name' => Bucket name in the S3
      * ]
      */
+    protected $retryDelay = 3;
+
     public function fire($job, $data)
     {
         $prefix = DB::getTablePrefix();
@@ -47,6 +49,10 @@ class CdnUploadNewQueue
 
         $mongoConfig = Config::get('database.mongodb');
         $mongoClient = MongoClient::create($mongoConfig);
+
+        if (! isset($data['retry'])) {
+            $data['retry'] = 0;
+        }
 
         try {
             $sdk = new Aws\Sdk(Config::get('orbit.aws-sdk', []));
@@ -178,6 +184,20 @@ class CdnUploadNewQueue
                 'message' => $message
             ];
         } catch (Aws\S3\Exception\S3Exception $e) {
+            $data['retry']++;
+
+            if ($data['retry'] <= 3) {
+                $this->retryDelay = $this->retryDelay * 60; // seconds
+
+                Log::info(sprintf('S3Exception Retry cdn upload Object_id: %s retry number:%s', $objectId, $data['retry']));
+
+                Queue::later(
+                    $this->retryDelay,
+                    'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue',
+                    $data
+                );
+            }
+
             $message = sprintf('Upload file to S3; Status: FAIL; Object_id: %s; Message: %s',
                                 $objectId,
                                 $e->getMessage());
@@ -190,6 +210,22 @@ class CdnUploadNewQueue
             }
 
             Log::info($message);
+        } catch (\Exception $e) {
+            $data['retry']++;
+
+            if ($data['retry'] <= 3) {
+                $this->retryDelay = $this->retryDelay * 60; // seconds
+
+                Log::info(sprintf('Retry cdn upload Object_id: %s retry number:%s', $objectId, $data['retry']));
+
+                Queue::later(
+                    $this->retryDelay,
+                    'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue',
+                    $data
+                );
+            }
+
+            Log::info($e->getMessage());
         }
 
         // Bury the job for later inspection

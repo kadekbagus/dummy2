@@ -8,6 +8,7 @@ use Queue;
 use Exception;
 use Coupon;
 use PromotionRetailer;
+use CouponTranslation;
 
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
@@ -30,11 +31,11 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
 {
     use HasPaymentTrait, HasContactTrait;
 
-    protected $payment = null;
-
-    protected $contact = null;
-
     protected $shouldQueue = true;
+
+    protected $context = 'transaction';
+
+    protected $signature = 'receipt-notification';
 
     function __construct($payment = null)
     {
@@ -66,8 +67,17 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
     public function getEmailTemplates()
     {
         return [
-            'html' => 'emails.receipt.hot-deals',
+            'html' => 'emails.hot-deals.receipt',
         ];
+    }
+
+    /**
+     * Get email subject.
+     * @return [type] [description]
+     */
+    protected function getEmailSubject()
+    {
+        return trans('email-receipt.subject', [], '', 'id');
     }
 
     /**
@@ -85,6 +95,8 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
             'transaction'       => $this->getTransactionData(),
             'cs'                => $this->getContactData(),
             'redeemUrl'         => Config::get('orbit.coupon.direct_redemption_url'),
+            'transactionDateTime' => $this->payment->getTransactionDate('d F Y, H:i ') . " {$this->getLocalTimezoneName($this->payment->timezone_name)}",
+            'emailSubject'      => $this->getEmailSubject(),
         ];
     }
 
@@ -101,7 +113,7 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
             Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                $subject = trans('email-receipt.subject');
+                $subject = $data['emailSubject'];
 
                 $mail->subject($subject);
                 $mail->from($emailConfig['email'], $emailConfig['name']);
@@ -128,6 +140,7 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
         $prefix = DB::getTablePrefix();
         $coupon = Coupon::select(DB::raw("{$prefix}promotions.promotion_id,
                                     {$prefix}promotions.promotion_name,
+                                    {$prefix}campaign_account.mobile_default_language,
                                     CASE WHEN {$prefix}media.path is null THEN med.path ELSE {$prefix}media.path END as localPath,
                                     CASE WHEN {$prefix}media.cdn_url is null THEN med.cdn_url ELSE {$prefix}media.cdn_url END as cdnPath
                             "))
@@ -154,6 +167,11 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
                         ->first();
 
         if ($coupon) {
+            $couponTranslations = CouponTranslation::select(DB::raw("{$prefix}languages.name as lang, {$prefix}coupon_translations.promotion_name"))
+                                                    ->join('languages', 'coupon_translations.merchant_language_id', '=', 'languages.language_id')
+                                                    ->where('promotion_id', $couponId)
+                                                    ->get();
+
             //$launchUrl = LandingPageUrlGenerator::create('coupon', $coupon->promotion_id, $coupon->promotion_name)->generateUrl(true);
             $couponCountry = PromotionRetailer::select(DB::raw("malls.country"))
                             ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
@@ -166,14 +184,24 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
             $launchUrl = '/my/coupons?country='.$couponCountry->country;
 
             $headings = new \stdClass();
-            $headings->en = $coupon->promotion_name;
+            $headings->{$coupon->mobile_default_language} = $coupon->promotion_name;
+            foreach($couponTranslations as $couponTranslation) {
+                if (empty($couponTranslation->promotion_name)) {
+                    $headings->{$couponTranslation->lang} = $coupon->promotion_name;
+                }
+                else {
+                    $headings->{$couponTranslation->lang} = $couponTranslation->promotion_name;
+                }
+            }
+
             $contents = new \stdClass();
             $contents->en = 'Your voucher is ready! Click here to redeem';
+            $contents->id = 'Voucher Anda sudah siap! Klik di sini untuk menukar';
 
             $notificationData = new \stdClass();
             $notificationData->title = $coupon->promotion_name;
             $notificationData->launch_url = $launchUrl;
-            $notificationData->default_language = 'en';
+            $notificationData->default_language = $coupon->mobile_default_language;
             $notificationData->headings = $headings;
             $notificationData->contents = $contents;
             $notificationData->type = 'coupon';
@@ -190,7 +218,7 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
             $imageUrl = $imgUrl->getImageUrl($attachmentPath, $cdnUrl);
 
             $bodyInApps = [
-                'user_id'       => $userId,
+                'user_ids'      => [$userId],
                 'token'         => null,
                 'notifications' => $notificationData,
                 'send_status'   => 'sent',

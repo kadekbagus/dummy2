@@ -25,6 +25,7 @@ use \Orbit\Helper\Exception\OrbitCustomException;
 use TotalObjectPageView;
 use Redis;
 use Orbit\Helper\MongoDB\Client as MongoClient;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 
 class NewsDetailAPIController extends PubControllerAPI
 {
@@ -117,25 +118,29 @@ class NewsDetailAPIController extends PubControllerAPI
                             DB::Raw("
                                 CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as news_name,
                                 CASE WHEN ({$prefix}news_translations.description = '' or {$prefix}news_translations.description is null) THEN default_translation.description ELSE {$prefix}news_translations.description END as description,
-                                CASE WHEN (SELECT {$image}
+                                CASE WHEN (SELECT m.path
                                     FROM orb_media m
                                     WHERE m.media_name_long = 'news_translation_image_orig'
                                     AND m.object_id = {$prefix}news_translations.news_translation_id) is null
                                 THEN
-                                    (SELECT {$image}
+                                    (SELECT m.path
                                     FROM orb_media m
                                     WHERE m.media_name_long = 'news_translation_image_orig'
                                     AND m.object_id = default_translation.news_translation_id)
                                 ELSE
-                                    (SELECT {$image}
+                                    (SELECT m.path
                                     FROM orb_media m
                                     WHERE m.media_name_long = 'news_translation_image_orig'
                                     AND m.object_id = {$prefix}news_translations.news_translation_id)
                                 END AS original_media_path
                             "),
                             'news.object_type',
+                            'news.begin_date',
                             'news.end_date',
                             'news.is_exclusive',
+                            'news.is_hot_event',
+                            'news.hot_event_link',
+                            DB::raw("default_translation.news_name as default_name"),
                             // query for get status active based on timezone
                             DB::raw("
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -197,6 +202,12 @@ class NewsDetailAPIController extends PubControllerAPI
             if (! is_object($news)) {
                 throw new OrbitCustomException('News that you specify is not found', News::NOT_FOUND_ERROR_CODE, NULL);
             }
+
+            $news->category_ids = $this->getNewsCategory($newsId);
+
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGeneratorWithCloudfront::create(['cdn' => $cdnConfig], 'cdn');
+            $news->original_media_path = $imgUrl->getImageUrl($news->original_media_path);
 
             $mall = null;
             if (! empty($mallId)) {
@@ -368,5 +379,24 @@ class NewsDetailAPIController extends PubControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    /**
+     * Get news/promotion categories.
+     *
+     * @param  string $newsId [description]
+     * @return [type]         [description]
+     */
+    private function getNewsCategory($newsId = '')
+    {
+        return News::select('categories.category_id')
+                     ->leftJoin('news_merchant', 'news.news_id', '=', 'news_merchant.news_id')
+                     ->leftJoin('category_merchant', 'news_merchant.merchant_id', '=', 'category_merchant.merchant_id')
+                     ->join('categories', 'category_merchant.category_id', '=', 'categories.category_id')
+                     ->where('categories.merchant_id', 0)
+                     ->where('categories.status', 'active')
+                     ->where('news.news_id', $newsId)
+                     ->groupBy('categories.category_id')
+                     ->get()->lists('category_id');
     }
 }

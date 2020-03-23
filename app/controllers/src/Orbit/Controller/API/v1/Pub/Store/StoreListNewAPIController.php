@@ -27,7 +27,7 @@ use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\SimpleCache;
-use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 use Elasticsearch\ClientBuilder;
 use Lang;
 use PartnerAffectedGroup;
@@ -35,7 +35,7 @@ use PartnerCompetitor;
 use Orbit\Controller\API\v1\Pub\Store\StoreHelper;
 use Country;
 use Orbit\Helper\Util\FollowStatusChecker;
-
+use UserDetail;
 use StoreSearch;
 
 /**
@@ -69,15 +69,16 @@ class StoreListNewAPIController extends PubControllerAPI
      */
     protected $esConfig = [];
 
-    public function __construct()
+    public function __construct($contentType = 'application/json')
     {
-        parent::__construct();
+        parent::__construct($contentType);
         $this->esConfig = Config::get('orbit.elasticsearch');
         $this->searcher = new StoreSearch($this->esConfig);
     }
 
     /**
      *
+     * @todo refactor as this is similar to promotion, coupon or store listing
      *
      * @return [type] [description]
      */
@@ -132,9 +133,14 @@ class StoreListNewAPIController extends PubControllerAPI
             $viewType = OrbitInput::get('view_type', 'grid');
             $withCache = FALSE;
             $withAdvert = (bool) OrbitInput::get('with_advert', true);
-
+            $gender = OrbitInput::get('gender', 'all');
+            $ratingLow = OrbitInput::get('rating_low', 0);
+            $ratingHigh = OrbitInput::get('rating_high', 5);
+            $ratingLow = empty($ratingLow) ? 0 : $ratingLow;
+            $ratingHigh = empty($ratingHigh) ? 5 : $ratingHigh;
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
+            $excludedIds = OrbitInput::get('excluded_ids');
 
             // store can not sorted by date, so it must be changes to default sorting (name - ascending)
             if ($sortBy === "created_date") {
@@ -150,10 +156,14 @@ class StoreListNewAPIController extends PubControllerAPI
                 array(
                     'language' => $language,
                     'sortby'   => $sortBy,
+                    'rating_low' => $ratingLow,
+                    'rating_high' => $ratingHigh,
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
                     'sortby'   => 'in:name,location,updated_date,rating,followed,relevance',
+                    'rating_low' => 'numeric|min:0|max:5',
+                    'rating_high' => 'numeric|min:0|max:5',
                 )
             );
 
@@ -198,6 +208,8 @@ class StoreListNewAPIController extends PubControllerAPI
 
             $this->searcher->hasAtLeastOneTenant();
 
+            $this->searcher->exclude($excludedIds);
+
             $countryData = null;
             if (! empty($mallId)) {
                 $mall = Mall::where('merchant_id', '=', $mallId)->first();
@@ -230,8 +242,25 @@ class StoreListNewAPIController extends PubControllerAPI
                 $this->searcher->filterByCategories($categoryIds);
             }
 
+            // Filter by gender
+            if (! empty($gender)) {
+                $filterGender = 'all';
+                if ($gender === 'mygender') {
+                    $userGender = UserDetail::select('gender')->where('user_id', '=', $user->user_id)->first();
+                    if ($userGender) {
+                        if (strtolower($userGender->gender) == 'm') {
+                            $filterGender = 'male';
+                        } else if (strtolower($userGender->gender) == 'f') {
+                            $filterGender = 'female';
+                        }
+                    }
+                }
+                $cacheKey['gender'] = $filterGender;
+                $this->searcher->filterByGender(strtolower($filterGender));
+            }
+
             // Filter by keyword
-            $keyword = OrbitInput::get('keyword');
+            $keyword = $this->searcher->escape(OrbitInput::get('keyword'));
             if (! empty($keyword)) {
                 $this->searcher->filterByKeyword($keyword);
             }
@@ -281,7 +310,17 @@ class StoreListNewAPIController extends PubControllerAPI
                 'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
 
-            $objectFollow = $scriptFields['objectFollow'];
+            /*** disable follow status on listing ***/
+            //$objectFollow = $scriptFields['objectFollow'];
+
+            //filter by rating number
+            $this->searcher->filterByRating(
+                $ratingLow,
+                $ratingHigh,
+                compact(
+                    'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
+                )
+            );
 
             // Force sort by relevance if visitor provide any keyword/searching.
             if (! empty($keyword)) {
@@ -293,14 +332,17 @@ class StoreListNewAPIController extends PubControllerAPI
                 case 'relevance':
                     $this->searcher->sortByRelevance();
                     break;
+                case 'location':
+                    $this->searcher->sortByNearest($ul);
+                    break;
                 case 'rating':
-                    $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
+                    $this->searcher->sortByRating($scriptFields['scriptFieldRating'], $sortMode);
                     break;
                 case 'followed':
                     $this->searcher->sortByFavorite($scriptFields['scriptFieldFollow']);
                     break;
                 default:
-                    $this->searcher->sortByName();
+                    $this->searcher->sortByName($language, $sortMode);
                     break;
             }
 
@@ -316,10 +358,11 @@ class StoreListNewAPIController extends PubControllerAPI
 
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-                $response = $recordCache->get($serializedCacheKey, function() {
-                    return $this->searcher->getResult();
+                $response = $recordCache->get($serializedCacheKey, function() use ($serializedCacheKey, $recordCache) {
+                    $resp = $this->searcher->getResult();
+                    $recordCache->put($serializedCacheKey, $resp);
+                    return $resp;
                 });
-                $recordCache->put($serializedCacheKey, $response);
             } else {
                 $response = $this->searcher->getResult();
             }
@@ -328,7 +371,7 @@ class StoreListNewAPIController extends PubControllerAPI
 
             $listOfRec = [];
             $cdnConfig = Config::get('orbit.cdn');
-            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            $imgUrl = CdnUrlGeneratorWithCloudfront::create(['cdn' => $cdnConfig], 'cdn');
             $innerHitsCount = 0;
 
             foreach ($records['hits'] as $record) {
@@ -340,7 +383,8 @@ class StoreListNewAPIController extends PubControllerAPI
                 $data['placement_type'] = null;
                 $data['placement_type_orig'] = null;
                 $storeId = '';
-                $data['follow_status'] = false;
+                /*** disable follow status on listing ***/
+                //$data['follow_status'] = false;
                 $baseMerchantId = '';
                 foreach ($record['_source'] as $key => $value) {
                     if ($key === 'merchant_id') {
@@ -423,11 +467,12 @@ class StoreListNewAPIController extends PubControllerAPI
                     }
                 }
 
-                if (! empty($objectFollow)) {
-                    if (in_array($baseMerchantId, $objectFollow)) {
-                        $data['follow_status'] = true;
-                    }
-                }
+                /*** disable follow status on listing ***/
+                // if (! empty($objectFollow)) {
+                //     if (in_array($baseMerchantId, $objectFollow)) {
+                //         $data['follow_status'] = true;
+                //     }
+                // }
 
                 $data['average_rating'] = (! empty($record['fields']['average_rating'][0])) ? number_format(round($record['fields']['average_rating'][0], 1), 1) : 0;
                 $data['total_review'] = (! empty($record['fields']['total_review'][0])) ? round($record['fields']['total_review'][0], 1) : 0;

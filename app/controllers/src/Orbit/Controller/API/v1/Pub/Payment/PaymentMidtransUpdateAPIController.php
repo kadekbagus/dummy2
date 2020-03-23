@@ -1,37 +1,44 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Payment;
 
-/**
- * @author kadek <kadek@dominopos.com>
- * @desc Controller for update payment with midtrans
- * @todo  Remove unused log commands.
- */
-
-use OrbitShop\API\v1\PubControllerAPI;
-use OrbitShop\API\v1\OrbitShopAPI;
-use Helper\EloquentRecordCounter as RecordCounter;
-use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use Activity;
+use Carbon\Carbon as Carbon;
+use Config;
+use DB;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
-use DB;
-use Validator;
-use Queue;
-use Log;
-use Config;
+use Event;
 use Exception;
+use Helper\EloquentRecordCounter as RecordCounter;
+use IssuedCoupon;
+use Log;
+use Mall;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use OrbitShop\API\v1\OrbitShopAPI;
+use OrbitShop\API\v1\PubControllerAPI;
+use Orbit\Controller\API\v1\Pub\Payment\PaymentHelper;
+use Orbit\Controller\API\v1\Pub\Purchase\PurchaseUpdateAPIController;
+use Orbit\Helper\Midtrans\API\TransactionCancel;
+use Orbit\Helper\Midtrans\API\TransactionStatus;
+use Orbit\Notifications\Payment\AbortedPaymentNotification;
+use Orbit\Notifications\Payment\CanceledPaymentNotification;
+use Orbit\Notifications\Payment\DeniedPaymentNotification;
+use Orbit\Notifications\Payment\ExpiredPaymentNotification;
+use Orbit\Notifications\Payment\PendingPaymentNotification;
+use Orbit\Notifications\Payment\SuspiciousPaymentNotification;
 use PaymentTransaction;
 use PaymentTransactionDetail;
-use IssuedCoupon;
+use Queue;
 use User;
-use Carbon\Carbon as Carbon;
-use Orbit\Controller\API\v1\Pub\Payment\PaymentHelper;
-use Event;
+use Validator;
 
-use Orbit\Helper\Midtrans\API\TransactionStatus;
-use Orbit\Helper\Midtrans\API\TransactionCancel;
-
-use Orbit\Notifications\Payment\SuspiciousPaymentNotification;
-use Orbit\Notifications\Payment\DeniedPaymentNotification;
-
+/**
+ * Controller for update payment with midtrans
+ *
+ * @author kadek <kadek@dominopos.com>
+ * @author  budi <budi@dominopos.com>
+ *
+ * @todo  Remove unused log commands.
+ */
 class PaymentMidtransUpdateAPIController extends PubControllerAPI
 {
 
@@ -44,6 +51,8 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
             $payment_transaction_id = OrbitInput::post('payment_transaction_id');
             $status = OrbitInput::post('status');
+            $mallId = OrbitInput::post('mall_id', null);
+            $fromSnap = OrbitInput::post('from_snap', false);
 
             $paymentHelper = PaymentHelper::create();
             $paymentHelper->registerCustomValidation();
@@ -54,7 +63,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 ),
                 array(
                     'payment_transaction_id'   => 'required|orbit.exist.payment_transaction_id',
-                    'status'                   => 'required|in:pending,success,failed,expired,dont-update,denied,suspicious'
+                    'status'                   => 'required|in:pending,success,canceled,failed,expired,denied,suspicious,abort,refund,partial_refund'
                 ),
                 array(
                     'orbit.exist.payment_transaction_id' => 'payment transaction id not found'
@@ -73,8 +82,18 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             $paymentSuspicious = false;
             $paymentDenied = false;
             $shouldUpdate = false;
+            $currentUtmUrl = $this->generateUtmUrl($payment_transaction_id);
 
-            $payment_update = PaymentTransaction::with(['details.coupon', 'midtrans', 'issued_coupon.coupon', 'issued_coupons'])->findOrFail($payment_transaction_id);
+            $payment_update = PaymentTransaction::onWriteConnection()->with(['details.coupon', 'details.pulsa', 'details.digital_product', 'midtrans', 'refunds', 'issued_coupons', 'user', 'discount_code'])->findOrFail($payment_transaction_id);
+
+            if ($payment_update->forPulsa()) {
+                $this->commit();
+                return (new PaymentPulsaUpdateAPIController())->postPaymentPulsaUpdate();
+            }
+            else if ($payment_update->forDigitalProduct()) {
+                $this->commit();
+                return (new PurchaseUpdateAPIController())->postUpdate();
+            }
 
             $oldStatus = $payment_update->status;
 
@@ -86,10 +105,12 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 PaymentTransaction::STATUS_EXPIRED,
                 PaymentTransaction::STATUS_FAILED,
                 PaymentTransaction::STATUS_DENIED,
+                PaymentTransaction::STATUS_CANCELED,
+                PaymentTransaction::STATUS_ABORTED,
             ];
 
             // Assume status as success if it is success_no_coupon/success_no_coupon_failed,
-            // because Midtrans and landing_page doesn't send those status. (They only know 'success')
+            // because Midtrans and landing_page don't send those status. (They only know 'success')
             $tmpOldStatus = $oldStatus;
             if (in_array($oldStatus, [PaymentTransaction::STATUS_SUCCESS_NO_COUPON, PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED])) {
                 $tmpOldStatus = PaymentTransaction::STATUS_SUCCESS;
@@ -97,8 +118,8 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
             // If old status was marked as final and doesnt match with the new one, then
             // ask Midtrans for the correct one.
+            $tmpNewStatus = $status;
             if (in_array($oldStatus, $finalStatus) && $tmpOldStatus !== $status) {
-                $tmpNewStatus = $status;
                 Log::info("PaidCoupon: Payment {$payment_transaction_id} was marked as FINAL, but there is new request to change status to " . $tmpNewStatus);
                 Log::info("PaidCoupon: Getting correct status from Midtrans for payment {$payment_transaction_id}...");
 
@@ -112,11 +133,36 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 }
                 else {
                     Log::info("PaidCoupon: New status {$status} for payment {$payment_transaction_id} will be set!");
-                    $shouldUpdate = true;
+
+                    // If midtrans trx has refund properties,
+                    // then try creating child transaction(s) with negative amount...
+                    if ($transactionStatus->wasRefunded()) {
+                        $payment_update->recordRefund($transactionStatus->getData());
+                    }
+                    else {
+                        $shouldUpdate = true;
+                    }
                 }
             }
             else if (! in_array($oldStatus, $finalStatus)) {
-                $shouldUpdate = true;
+                if ($status === PaymentTransaction::STATUS_ABORTED) {
+                    // If status is aborted, then check if the transaction is in pending (exists) or not in Midtrans.
+                    // If doesn't exist, assume the payment is starting and we can abort it.
+                    // Otherwise, assume it is pending and we should not update the statusad.
+                    Log::info("PaidCoupon: Request to abort payment {$payment_transaction_id}...");
+                    Log::info("PaidCoupon: Checking transaction {$payment_transaction_id} status in Midtrans...");
+                    $transactionStatus = TransactionStatus::create()->getStatus($payment_transaction_id);
+                    if ($transactionStatus->notFound()) {
+                        Log::info("PaidCoupon: Transaction {$payment_transaction_id} not found! Aborting payment...");
+                        $shouldUpdate = true;
+                    }
+                    else {
+                        Log::info("PaidCoupon: Transaction {$payment_transaction_id} found! Payment can not be aborted/canceled.");
+                    }
+                }
+                else {
+                    $shouldUpdate = true;
+                }
             }
             else {
                 Log::info("PaidCoupon: Payment {$payment_transaction_id} is good. Nothing to do.");
@@ -124,6 +170,14 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
             // If old status is not final, then we should update...
             if ($shouldUpdate) {
+                $activity = Activity::mobileci()
+                                        ->setActivityType('transaction')
+                                        ->setUser($payment_update->user)
+                                        ->setActivityName('transaction_status')
+                                        ->setCurrentUrl($currentUtmUrl);
+
+                $mall = Mall::where('merchant_id', $mallId)->first();
+
                 // Supicious payment will be treated as pending payment.
                 if ($status === PaymentTransaction::STATUS_SUSPICIOUS) {
                     // Flag to send suspicious payment notification.
@@ -163,27 +217,9 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
                 // Link this payment to reserved IssuedCoupon.
                 if ($payment_update->issued_coupons->count() === 0) {
-
-                    // Link to IssuedCoupon if the payment is not denied/failed/expired.
-                    if (! in_array($status, [PaymentTransaction::STATUS_DENIED, PaymentTransaction::STATUS_EXPIRED, PaymentTransaction::STATUS_FAILED])) {
-                        $reservedCoupons = IssuedCoupon::where('user_id', $payment_update->user_id)
-                                      ->where('promotion_id', $payment_update->details->first()->object_id)
-                                      ->where('status', IssuedCoupon::STATUS_RESERVED)
-                                      ->whereNull('transaction_id')
-                                      ->get(); // Can update transaction_id directly here, but for now just get the record.
-
-                        if (! empty($reservedCoupons)) {
-                            foreach($reservedCoupons as $reservedCoupon) {
-                                $reservedCoupon->transaction_id = $payment_transaction_id;
-                                $reservedCoupon->save();
-                            }
-                        }
-                        else {
-                            Log::info("PaidCoupon: Can not link coupon, it is being reserved by the same user {$payment_update->user_name} ({$payment_update->user_id}).");
-                            $payment_update->status = PaymentTransaction::STATUS_FAILED;
-                            $failed = true;
-                        }
-                    }
+                    Log::info("PaidCoupon: Can not link issued coupons to this payment! Must be removed by CheckReservedQueue.");
+                    $payment_update->status = PaymentTransaction::STATUS_FAILED;
+                    $failed = true;
                 }
 
                 // If payment is success and not with credit card (not realtime) or the payment for Sepulsa voucher,
@@ -192,8 +228,19 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                     if (isset($failed)) {
                         $payment_update->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
                     }
-                    else if ($payment_update->paidWith(['bank_transfer', 'echannel']) || $payment_update->forSepulsa()) {
+                    else if ($payment_update->paidWith(['bank_transfer', 'echannel', 'gopay']) || $payment_update->forSepulsa()) {
                         $payment_update->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
+                    }
+                }
+
+                // If new status is 'aborted', then keep it as 'starting' after cleaning up
+                // any related (issued) coupons.
+                if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_ABORTED) {
+                    $payment_update->cleanUp();
+
+                    // If not from closing snap window, then keep status to starting.
+                    if (! $fromSnap) {
+                        $payment_update->status = PaymentTransaction::STATUS_STARTING;
                     }
                 }
 
@@ -204,32 +251,118 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 // Try not doing any expensive operation above.
                 $this->commit();
 
-                // Try to cancel the payment...
-                if ($payment_update->status === PaymentTransaction::STATUS_FAILED && isset($failed)) {
-                    $transactionCancel = TransactionCancel::create()->cancel($payment_transaction_id);
-                    if ($transactionCancel->isSuccess()) {
-                        Log::info("PaidCoupon: Transaction canceled!");
-                    }
-                    else {
-                        Log::info("PaidCoupon: Transaction can not be canceled!");
-                    }
+                // Log activity...
+                // Should be done before issuing coupon for the sake of activity ordering,
+                // or at the end before returning the response??
+                if ($payment_update->failed() || $payment_update->denied()) {
+                    $activity->setActivityNameLong('Transaction is Failed')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setObject($payment_update)
+                            ->setNotes('Transaction is failed from Midtrans/Customer.')
+                            ->setLocation($mall)
+                            ->responseFailed()
+                            ->save();
+                }
+                else if ($payment_update->expired()) {
+                    $activity->setActivityNameLong('Transaction is Expired')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setObject($payment_update)
+                            ->setNotes('Transaction is expired from Midtrans.')
+                            ->setLocation($mall)
+                            ->responseFailed()
+                            ->save();
+                }
+                else if ($payment_update->status === PaymentTransaction::STATUS_SUCCESS_NO_COUPON) {
+                    $activity->setActivityNameLong('Transaction is Success - Getting Coupon')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setNotes($payment_update->details->first()->coupon->promotion_type)
+                            ->setObject($payment_update)
+                            ->setLocation($mall)
+                            ->responseOK()
+                            ->save();
+                }
+                else if ($payment_update->status === PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED) {
+                    $activity->setActivityNameLong('Transaction is Success - Failed Getting Coupon')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setObject($payment_update)
+                            ->setNotes('Failed to get coupon. Can not get reserved coupons for this transaction.')
+                            ->setLocation($mall)
+                            ->responseFailed()
+                            ->save();
                 }
 
-                Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment_update]);
+                Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment_update, $mall]);
 
                 $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
 
-                // If status before is starting and now is pending, we should trigger job transaction status check.
-                // The job will be run forever until the transaction status is success, failed, expired or reached the maximum number of check.
+                // If previous status was starting and now is pending, we should trigger job transaction status check.
+                // The job will be run forever until the transaction status is success, failed, expired or reached the maximum number of allowed check.
                 if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_PENDING) {
                     $delay = Config::get('orbit.partners_api.midtrans.transaction_status_timeout', 60);
+                    $queueData = ['transactionId' => $payment_transaction_id, 'check' => 0, 'current_url' => $currentUtmUrl];
+                    if (! empty($mall)) {
+                        $queueData['mall_id'] = $mall->merchant_id;
+                    }
+
                     Queue::later(
                         $delay,
                         'Orbit\\Queue\\Payment\\Midtrans\\CheckTransactionStatusQueue',
-                        ['transactionId' => $payment_transaction_id, 'check' => 0]
+                        $queueData
                     );
 
                     Log::info('PaidCoupon: First time TransactionStatus check for Payment: ' . $payment_transaction_id . ' is scheduled to run after ' . $delay . ' seconds.');
+
+                    $activity->setActivityNameLong('Transaction is Pending')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setObject($payment_update)
+                            ->setNotes($payment_update->details->first()->coupon->promotion_type)
+                            ->setLocation($mall)
+                            ->responseOK()
+                            ->save();
+
+                    // Notify customer for pending payment (to complete the payment).
+                    // Send email to address that being used on checkout (can be different with user's email)
+                    if ($payment_update->paidWith(['bank_transfer', 'echannel', 'gopay'])) {
+                        $paymentUser = new User;
+                        $paymentUser->email = $payment_update->user_email;
+                        $paymentUser->notify(new PendingPaymentNotification($payment_update), 30);
+                    }
+                }
+
+                // Send notification if the purchase was canceled.
+                // Only send if previous status was pending.
+                if ($oldStatus === PaymentTransaction::STATUS_PENDING && $status === PaymentTransaction::STATUS_CANCELED) {
+                    $activity->setActivityNameLong('Transaction Canceled')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setObject($payment_update)
+                            ->setNotes($payment_update->details->first()->coupon->promotion_type)
+                            ->setLocation($mall)
+                            ->responseOK()
+                            ->save();
+
+                    $payment_update->user->notify(new CanceledPaymentNotification($payment_update));
+                }
+
+                // Send notification if the purchase was expired.
+                // Only send if previous status was pending.
+                if ($oldStatus === PaymentTransaction::STATUS_PENDING && $status === PaymentTransaction::STATUS_EXPIRED) {
+                    $payment_update->user->notify(new ExpiredPaymentNotification($payment_update));
+                }
+
+                // Send notification if the purchase was aborted.
+                // Only send if previous status was starting.
+                if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_ABORTED) {
+                    if ($fromSnap) {
+                        $payment_update->user->notify(new AbortedPaymentNotification($payment_update));
+
+                        $activity->setActivityNameLong('Transaction is Aborted')
+                                ->setModuleName('Midtrans Transaction')
+                                ->setObject($payment_update)
+                                ->setNotes('Coupon Transaction aborted by customer.')
+                                ->setLocation($mall)
+                                ->responseFailed()
+                                ->save();
+                    }
                 }
 
                 // If previous status was success and now is denied, then send notification to admin.
@@ -301,5 +434,20 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
         }
 
         return $this->render($httpCode);
+    }
+
+    private function generateUtmUrl($payment_transaction_id)
+    {
+        $utmUrl = '';
+        $paymentTransaction = PaymentTransaction::where('payment_transaction_id', '=', $payment_transaction_id)->first();
+        $utm_source = (isset($paymentTransaction->utm_source)) ? $paymentTransaction->utm_source : '';
+        $utm_medium = (isset($paymentTransaction->utm_medium)) ? $paymentTransaction->utm_medium : '';
+        $utm_term = (isset($paymentTransaction->utm_term)) ? $paymentTransaction->utm_term : '';
+        $utm_content = (isset($paymentTransaction->utm_content)) ? $paymentTransaction->utm_content : '';
+        $utm_campaign = (isset($paymentTransaction->utm_campaign)) ? $paymentTransaction->utm_campaign : '';
+
+        $utmUrl = '?utm_source='.$utm_source.'&utm_medium='.$utm_medium.'&utm_term='.$utm_term.'&utm_content='.$utm_content.'&utm_campaign='.$utm_campaign;
+
+        return $utmUrl;
     }
 }

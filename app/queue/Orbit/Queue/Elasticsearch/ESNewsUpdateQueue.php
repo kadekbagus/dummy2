@@ -94,6 +94,18 @@ class ESNewsUpdateQueue
                     ->first();
 
         if (! is_object($news)) {
+
+            $fakeJob = new FakeJob();
+
+            $esNewsDelete = new \Orbit\Queue\Elasticsearch\ESNewsDeleteQueue();
+            $doESNewsDelete = $esNewsDelete->fire($fakeJob, ['news_id' => $newsId]);
+
+            $esAdvertNewsDelete = new \Orbit\Queue\Elasticsearch\ESAdvertNewsDeleteQueue();
+            $doESAdvertNewsDelete = $esAdvertNewsDelete->fire($fakeJob, ['news_id' => $newsId]);
+
+            $esNewsSuggestionDelete = new \Orbit\Queue\Elasticsearch\ESNewsSuggestionDeleteQueue();
+            $doESNewsSuggestionDelete = $esNewsSuggestionDelete->fire($fakeJob, ['news_id' => $newsId]);
+
             $job->delete();
 
             return [
@@ -453,7 +465,8 @@ class ESNewsUpdateQueue
                 'mall_rating'           => $mallRating,
                 'avg_general_rating'    => $averageGeneralRating,
                 'total_general_reviews' => $totalGeneralReviews,
-                'sponsor_provider'      => $sponsorProviderES
+                'sponsor_provider'      => $sponsorProviderES,
+                'is_hot_event'          => $news->is_hot_event,
             ];
 
             $body = array_merge($body, $translationBody);

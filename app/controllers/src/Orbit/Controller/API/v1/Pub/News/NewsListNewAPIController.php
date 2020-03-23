@@ -30,13 +30,13 @@ use Mall;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use Orbit\Helper\Util\SimpleCache;
-use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 use Elasticsearch\ClientBuilder;
 use Carbon\Carbon as Carbon;
 use stdClass;
 use Country;
 use UserSponsor;
-
+use UserDetail;
 use NewsSearch;
 use AdvertStoreSearch as AdvertSearch;
 
@@ -65,15 +65,17 @@ class NewsListNewAPIController extends PubControllerAPI
      */
     protected $esConfig = [];
 
-    public function __construct()
+    public function __construct($contentType = 'application/json')
     {
-        parent::__construct();
+        parent::__construct($contentType);
         $this->esConfig = Config::get('orbit.elasticsearch');
         $this->searcher = new NewsSearch($this->esConfig);
     }
 
     /**
      * GET - get active news in all mall, and also provide for searching
+     *
+     * @todo refactor as this is similar to promotion, coupon or store listing
      *
      * @author Firmansyayh <firmansyah@dominopos.com>
      * @author Rio Astamal <rio@dominopos.com>
@@ -138,6 +140,12 @@ class NewsListNewAPIController extends PubControllerAPI
             $viewType = OrbitInput::get('view_type', 'grid');
             $myCCFilter = OrbitInput::get('my_cc_filter', false);
             $withAdvert = (bool) OrbitInput::get('with_advert', true);
+            $gender = OrbitInput::get('gender', 'all');
+            $ratingLow = OrbitInput::get('rating_low', 0);
+            $ratingHigh = OrbitInput::get('rating_high', 5);
+            $ratingLow = empty($ratingLow) ? 0 : $ratingLow;
+            $ratingHigh = empty($ratingHigh) ? 5 : $ratingHigh;
+            $isHotEvent = OrbitInput::get('is_hot_event', 'no');
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -148,10 +156,14 @@ class NewsListNewAPIController extends PubControllerAPI
                 array(
                     'language' => $language,
                     'sortby'   => $sortBy,
+                    'rating_low' => $ratingLow,
+                    'rating_high' => $ratingHigh,
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
-                    'sortby'   => 'in:name,location,created_date,updated_date,rating,relevance',
+                    'sortby'   => 'in:name,location,created_date,updated_date,rating,relevance,hot_event',
+                    'rating_low' => 'numeric|min:0|max:5',
+                    'rating_high' => 'numeric|min:0|max:5',
                 )
             );
 
@@ -167,7 +179,9 @@ class NewsListNewAPIController extends PubControllerAPI
                 'no_total_record' => $no_total_records,
                 'take' => $take, 'skip' => $skip,
                 'country' => $countryFilter, 'cities' => $cityFilters,
-                'my_cc_filter' => $myCCFilter
+                'my_cc_filter' => $myCCFilter,
+                'rating_low' => $ratingLow,
+                'rating_high' => $ratingHigh,
             ];
 
             // Run the validation
@@ -199,8 +213,14 @@ class NewsListNewAPIController extends PubControllerAPI
             // Only search active promotions..
             $this->searcher->isActive(compact('dateTimeEs'));
 
+            if ($isHotEvent === 'yes') {
+                $this->searcher->isHotEvent();
+            }
+
             // Filter by given keyword...
             $keyword = OrbitInput::get('keyword');
+            $forbiddenCharacter = array('>', '<', '(', ')', '{', '}', '[', ']', '^', '"', '~', '/');
+            $keyword = str_replace($forbiddenCharacter, '', $keyword);
             if (! empty($keyword)) {
                 $cacheKey['keyword'] = $keyword;
                 $this->searcher->filterByKeyword($keyword);
@@ -251,6 +271,23 @@ class NewsListNewAPIController extends PubControllerAPI
                 $this->searcher->filterByCategories($categoryIds);
             }
 
+            // Filter by gender
+            if (! empty($gender)) {
+                $filterGender = 'all';
+                if ($gender === 'mygender') {
+                    $userGender = UserDetail::select('gender')->where('user_id', '=', $user->user_id)->first();
+                    if ($userGender) {
+                        if (strtolower($userGender->gender) == 'm') {
+                            $filterGender = 'male';
+                        } else if (strtolower($userGender->gender) == 'f') {
+                            $filterGender = 'female';
+                        }
+                    }
+                }
+                $cacheKey['gender'] = $filterGender;
+                $this->searcher->filterByGender(strtolower($filterGender));
+            }
+
             // Filter by partner...
             $partnerId = OrbitInput::get('partner_id', null);
             if (! empty($partnerId)) {
@@ -291,6 +328,15 @@ class NewsListNewAPIController extends PubControllerAPI
                 $this->searcher->filterWithAdvert(compact('dateTimeEs', 'mallId', 'advertType', 'locationId', 'list_type', 'advertSorting'));
             }
 
+            //filter by rating number
+            $this->searcher->filterByRating(
+                $ratingLow,
+                $ratingHigh,
+                compact(
+                    'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
+                )
+            );
+
             // Add script fields...
             $scriptFields = $this->searcher->addReviewFollowScript(compact(
                 'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
@@ -302,11 +348,19 @@ class NewsListNewAPIController extends PubControllerAPI
 
             // Next sorting based on Visitor's selection.
             switch ($sortBy) {
+                case 'hot_event':
+                    // for email subscription campaign recommendation.
+                    $this->searcher->sortByHotEvent($sortMode);
+                    $this->searcher->sortByCreatedDate($sortMode);
+                    break;
                 case 'relevance':
                     $this->searcher->sortByRelevance();
                     break;
+                case 'location':
+                    $this->searcher->sortByNearest($ul);
+                    break;
                 case 'rating':
-                    $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
+                    $this->searcher->sortByRating($scriptFields['scriptFieldRating'], $sortMode);
                     break;
                 case 'created_date':
                     $this->searcher->sortByCreatedDate($sortMode);
@@ -335,7 +389,7 @@ class NewsListNewAPIController extends PubControllerAPI
             OrbitInput::get('excluded_ids', function($excludedIds) use (&$withAdvert) {
                 $jsonExcludedIds = [];
                 foreach ($excludedIds as $excludedId) {
-                    $jsonExcludedIds[] = array('term' => ['_id' => $excludedId]);
+                    $jsonExcludedIds[] = $excludedId;
                 }
 
                 if (count($jsonExcludedIds) > 0) {
@@ -359,7 +413,7 @@ class NewsListNewAPIController extends PubControllerAPI
 
             $listOfRec = array();
             $cdnConfig = Config::get('orbit.cdn');
-            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            $imgUrl = CdnUrlGeneratorWithCloudfront::create(['cdn' => $cdnConfig], 'cdn');
 
             foreach ($records['hits'] as $record) {
                 $data = array();
@@ -547,7 +601,7 @@ class NewsListNewAPIController extends PubControllerAPI
             }
 
 
-            if (OrbitInput::get('from_homepage', '') !== 'y') {
+            if (OrbitInput::get('from_homepage', '') !== 'y' && $this->contentType !== 'raw') {
                 if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
                     if (is_object($mall)) {
                         $activityNotes = sprintf('Page viewed: View mall event list');

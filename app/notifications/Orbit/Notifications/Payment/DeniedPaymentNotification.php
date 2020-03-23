@@ -1,41 +1,43 @@
 <?php namespace Orbit\Notifications\Payment;
 
+use Config;
+use Exception;
+use Log;
+use Mail;
+use Orbit\Helper\Notifications\AdminNotification;
 use Orbit\Helper\Notifications\Notification;
 use Orbit\Helper\Util\JobBurier;
-
-use Mail;
-use Config;
-use Log;
+use Orbit\Notifications\Traits\HasPaymentTrait;
 use Queue;
-use Exception;
 
 /**
  * Notification for denied payment.
- * Denied means the payment was rejected by payment gateway/provider or 
+ * Denied means the payment was rejected by payment gateway/provider or
  * canceled by customer (after paying).
  *
  * @author Budi <budi@dominopos.com>
- * 
+ *
  */
-class DeniedPaymentNotification extends Notification
+class DeniedPaymentNotification extends AdminNotification
 {
-    protected $payment = null;
+    use HasPaymentTrait;
+
+    protected $shouldQueue = true;
 
     function __construct($payment = null)
     {
-        $this->payment      = $payment;
-        $this->queueName    = Config::get('orbit.registration.mobile.queue_name');
+        $this->payment = $payment;
     }
 
     /**
      * Get the email data.
-     * 
+     *
      * @return [type] [description]
      */
-    protected function getEmailData()
+    public function getEmailData()
     {
         return [
-            'recipientEmail'    => $this->getEmailAddress(),
+            'recipientEmail'    => $this->getRecipientEmail(),
             'paymentId'         => $this->payment->payment_transaction_id,
             'externalPaymentId' => $this->payment->external_payment_transaction_id,
             'paymentMethod'     => $this->payment->payment_method,
@@ -43,13 +45,17 @@ class DeniedPaymentNotification extends Notification
         ];
     }
 
+    public function getEmailTemplates()
+    {
+        return [
+            'html' => 'emails.payment.denied',
+        ];
+    }
+
     public function toEmail($job, $data)
     {
         try {
-
-            $emailTemplate = 'emails.payment.denied';
-
-            Mail::send($emailTemplate, $data, function($mail) use ($data) {
+            Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
                 $subject = 'Payment was Denied';
@@ -65,22 +71,5 @@ class DeniedPaymentNotification extends Notification
         }
 
         $job->delete();
-    }
-
-    /**
-     * Send notification.
-     * 
-     * @return [type] [description]
-     */
-    public function send($delay = 1)
-    {
-        Queue::later(
-            $delay,
-            "Orbit\Notifications\Payment\DeniedPaymentNotification@toEmail", 
-            $this->getEmailData(),
-            $this->queueName
-        );
-
-        // Other notification method can be added here...
     }
 }

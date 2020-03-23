@@ -60,6 +60,16 @@ class LandingPageUrlGenerator
     protected $promotionalEventUrl = '/promotional-events/id/name-slug';
 
     /**
+     * @var string pulsa url
+     */
+    protected $pulsaUrl = '/pulsa?country=Indonesia';
+
+    /**
+     * @var string digital product url
+     */
+    protected $digitalProductUrl = '/game-voucher?country=Indonesia';
+
+    /**
      * Set the eventUrl
      *
      * @param string $eventUrl
@@ -183,6 +193,13 @@ class LandingPageUrlGenerator
                 break;
             case 'promotional-event':
                 $url = str_replace(['id', 'name-slug'], [$this->objectId, Str::slug($this->objectName)], $this->promotionalEventUrl);
+                break;
+            case 'pulsa':
+            case 'data_plan':
+                $url = $this->pulsaUrl;
+                break;
+            case 'digital_product':
+                $url = $this->digitalProductUrl;
                 break;
         }
 

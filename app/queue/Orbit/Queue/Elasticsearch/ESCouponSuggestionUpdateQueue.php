@@ -68,13 +68,15 @@ class ESCouponSuggestionUpdateQueue
                     ->leftJoin('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                     ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                     ->leftJoin('issued_coupons', function($q) {
-                        $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id')
-                            ->where('issued_coupons.status', '=', "available");
+                        $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                     })
                     ->where('promotions.promotion_id', $couponId)
                     ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
                     ->whereRaw("{$prefix}promotions.is_visible = 'Y'")
-                    ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
+                    ->where(function($q) use($prefix) {
+                        $q->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
+                            ->orWhereNull('promotion_rules.rule_type');
+                    })
                     ->whereRaw("{$prefix}promotions.status = 'active'")
                     ->having('campaign_status', '=', 'ongoing')
                     ->having('available', '>', 0)
@@ -219,7 +221,7 @@ class ESCouponSuggestionUpdateQueue
             // Safely delete the object
             $job->delete();
 
-            $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; Coupon ID: %s; Coupon Name: %s',
+            $message = sprintf('[Job ID: `%s`] Elasticsearch Suggestion Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; Coupon ID: %s; Coupon Name: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['coupon_suggestions']['index'],
                                 $esConfig['indices']['coupon_suggestions']['type'],
@@ -232,10 +234,10 @@ class ESCouponSuggestionUpdateQueue
                 'message' => $message
             ];
         } catch (Exception $e) {
-            $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
+            $message = sprintf('[Job ID: `%s`] Elasticsearch Suggestion Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
-                                $esConfig['indices']['coupons']['index'],
-                                $esConfig['indices']['coupons']['type'],
+                                $esConfig['indices']['coupon_suggestions']['index'],
+                                $esConfig['indices']['coupon_suggestions']['type'],
                                 $e->getCode(),
                                 $e->getMessage());
             Log::info($message);
@@ -248,8 +250,8 @@ class ESCouponSuggestionUpdateQueue
         })->bury();
 
         return [
-                'status' => 'fail',
-                'message' => $message
-            ];
+            'status' => 'fail',
+            'message' => $message
+        ];
     }
 }

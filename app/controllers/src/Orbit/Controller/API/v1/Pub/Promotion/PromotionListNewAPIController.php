@@ -31,13 +31,13 @@ use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\SimpleCache;
-use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 use Elasticsearch\ClientBuilder;
 use PartnerAffectedGroup;
 use PartnerCompetitor;
 use Country;
 use UserSponsor;
-
+use UserDetail;
 use PromotionSearch;
 use AdvertStoreSearch as AdvertSearch;
 
@@ -74,6 +74,8 @@ class PromotionListNewAPIController extends PubControllerAPI
 
     /**
      * GET - get active promotion in all mall, and also provide for searching
+     *
+     * @todo refactor as this is similar to news, coupon or store listing
      *
      * @author Firmansyayh <firmansyah@dominopos.com>
      *
@@ -135,6 +137,11 @@ class PromotionListNewAPIController extends PubControllerAPI
             $viewType = OrbitInput::get('view_type', 'grid');
             $myCCFilter = OrbitInput::get('my_cc_filter', false);
             $withAdvert = (bool) OrbitInput::get('with_advert', true);
+            $gender = OrbitInput::get('gender', 'all');
+            $ratingLow = OrbitInput::get('rating_low', 0);
+            $ratingHigh = OrbitInput::get('rating_high', 5);
+            $ratingLow = empty($ratingLow) ? 0 : $ratingLow;
+            $ratingHigh = empty($ratingHigh) ? 5 : $ratingHigh;
 
              // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -145,10 +152,14 @@ class PromotionListNewAPIController extends PubControllerAPI
                 array(
                     'language' => $language,
                     'sortby'   => $sortBy,
+                    'rating_low' => $ratingLow,
+                    'rating_high' => $ratingHigh,
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
                     'sortby'   => 'in:relevance,name,location,created_date,updated_date,rating',
+                    'rating_low' => 'numeric|min:0|max:5',
+                    'rating_high' => 'numeric|min:0|max:5',
                 )
             );
 
@@ -164,7 +175,9 @@ class PromotionListNewAPIController extends PubControllerAPI
                 'no_total_record' => $no_total_records,
                 'take' => $take, 'skip' => $skip,
                 'country' => $countryFilter, 'cities' => $cityFilters,
-                'my_cc_filter' => $myCCFilter
+                'my_cc_filter' => $myCCFilter,
+                'rating_low' => $ratingLow,
+                'rating_high' => $ratingHigh,
             ];
 
             // Run the validation
@@ -199,6 +212,8 @@ class PromotionListNewAPIController extends PubControllerAPI
 
             // Filter by given keyword...
             $keyword = OrbitInput::get('keyword');
+            $forbiddenCharacter = array('>', '<', '(', ')', '{', '}', '[', ']', '^', '"', '~', '/');
+            $keyword = str_replace($forbiddenCharacter, '', $keyword);
             if (! empty($keyword)) {
                 $cacheKey['keyword'] = $keyword;
                 $this->searcher->filterByKeyword($keyword);
@@ -248,6 +263,23 @@ class PromotionListNewAPIController extends PubControllerAPI
                 $this->searcher->filterByCategories($categoryIds);
             });
 
+            // Filter by gender
+            if (! empty($gender)) {
+                $filterGender = 'all';
+                if ($gender === 'mygender') {
+                    $userGender = UserDetail::select('gender')->where('user_id', '=', $user->user_id)->first();
+                    if ($userGender) {
+                        if (strtolower($userGender->gender) == 'm') {
+                            $filterGender = 'male';
+                        } else if (strtolower($userGender->gender) == 'f') {
+                            $filterGender = 'female';
+                        }
+                    }
+                }
+                $cacheKey['gender'] = $filterGender;
+                $this->searcher->filterByGender(strtolower($filterGender));
+            }
+
             // Filter by partner...
             OrbitInput::get('partner_id', function($partnerId) {
                 $cacheKey['partner_id'] = $partnerId;
@@ -289,10 +321,20 @@ class PromotionListNewAPIController extends PubControllerAPI
                 $this->searcher->filterWithAdvert(compact('dateTimeEs', 'mallId', 'advertType', 'locationId', 'list_type', 'advertSorting'));
             }
 
+            //filter by rating number
+            $this->searcher->filterByRating(
+                $ratingLow,
+                $ratingHigh,
+                compact(
+                    'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
+                )
+            );
+
             // Add script fiedls...
             $scriptFields = $this->searcher->addReviewFollowScript(compact(
                 'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
+
 
             if (! empty($keyword)) {
                 $sortBy = 'relevance';
@@ -303,8 +345,11 @@ class PromotionListNewAPIController extends PubControllerAPI
                 case 'relevance':
                     $this->searcher->sortByRelevance();
                     break;
+                case 'location':
+                    $this->searcher->sortByNearest($ul);
+                    break;
                 case 'rating':
-                    $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
+                    $this->searcher->sortByRating($scriptFields['scriptFieldRating'], $sortMode);
                     break;
                 case 'created_date':
                     $this->searcher->sortByCreatedDate($sortMode);
@@ -332,7 +377,7 @@ class PromotionListNewAPIController extends PubControllerAPI
             OrbitInput::get('excluded_ids', function($excludedIds) use (&$withAdvert) {
                 $jsonExcludedIds = [];
                 foreach ($excludedIds as $excludedId) {
-                    $jsonExcludedIds[] = array('term' => ['_id' => $excludedId]);
+                    $jsonExcludedIds[] = $excludedId;
                 }
 
                 if (count($jsonExcludedIds) > 0) {
@@ -344,10 +389,11 @@ class PromotionListNewAPIController extends PubControllerAPI
 
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-                $response = $recordCache->get($serializedCacheKey, function() {
-                    return $this->searcher->getResult();
+                $response = $recordCache->get($serializedCacheKey, function() use($serializedCacheKey, $recordCache) {
+                    $resp = $this->searcher->getResult();
+                    $recordCache->put($serializedCacheKey, $resp);
+                    return $resp;
                 });
-                $recordCache->put($serializedCacheKey, $response);
             } else {
                 $response = $this->searcher->getResult();
             }
@@ -356,7 +402,7 @@ class PromotionListNewAPIController extends PubControllerAPI
 
             $listOfRec = array();
             $cdnConfig = Config::get('orbit.cdn');
-            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            $imgUrl = CdnUrlGeneratorWithCloudfront::create(['cdn' => $cdnConfig], 'cdn');
 
             foreach ($records['hits'] as $record) {
                 $data = array();

@@ -18,9 +18,10 @@ use Mall;
 use Lang;
 use \Exception;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
-use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 use PromotionRetailer;
 use PaymentTransaction;
+use PaymentTransactionDetail;
 use Helper\EloquentRecordCounter as RecordCounter;
 
 class CouponPurchasedDetailAPIController extends PubControllerAPI
@@ -83,12 +84,19 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
+            $totalQty = PaymentTransactionDetail::where('payment_transaction_id', $payment_transaction_id)
+                ->where('object_type', 'coupon')
+                ->sum('quantity');
+
             $coupon = PaymentTransaction::select(DB::raw("
                                     {$prefix}payment_transactions.payment_transaction_id,
                                     {$prefix}payment_transactions.external_payment_transaction_id,
                                     {$prefix}payment_transactions.user_name,
                                     {$prefix}payment_transactions.user_email,
+                                    {$prefix}payment_transactions.currency,
                                     {$prefix}payment_transactions.amount,
+                                    {$prefix}promotions.price_selling,
+                                    {$totalQty} as qty,
                                     {$prefix}payment_transactions.status,
                                     {$prefix}payment_midtrans.payment_midtrans_info,
                                     {$prefix}promotions.promotion_id  as coupon_id,
@@ -106,9 +114,19 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
                                                     WHERE opr.promotion_id = {$prefix}promotions.promotion_id
                                                     GROUP BY opr.promotion_id
                                                     ORDER BY om.name
-                                                ) as link_to_tenant
+                                                ) as link_to_tenant,
+                                    {$prefix}issued_coupons.expired_date
                             "))
-
+                            ->with(['discount_code' => function($discountCodeQuery) {
+                                $discountCodeQuery->select('payment_transaction_id', 'discount_code_id', 'discount_id', 'discount_code as used_discount_code')->with(['discount' => function($discountDetailQuery) {
+                                    $discountDetailQuery->select('discount_id', 'discount_code as parent_discount_code', 'discount_title', 'value_in_percent as percent_discount');
+                                }]);
+                            }])
+                            ->with(['discount' => function($discountQuery) {
+                                $discountQuery->select('payment_transaction_id', 'object_id', 'price as discount_amount')->with(['discount' => function($discountQuery) {
+                                    $discountQuery->select('discount_id', 'discount_code as parent_discount_code', 'discount_title', 'value_in_percent as percent_discount');
+                                }]);
+                            }])
                             ->leftJoin('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                             ->leftJoin('payment_midtrans', 'payment_midtrans.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                             ->join('promotions', 'promotions.promotion_id', '=', 'payment_transaction_details.object_id')
@@ -127,7 +145,7 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
                                 $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
-                            ->join('issued_coupons', function ($join) {
+                            ->leftJoin('issued_coupons', function ($join) {
                                 $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                                 $join->where('issued_coupons.status', '!=', 'deleted');
                             })
@@ -161,10 +179,33 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument('purchased detail not found');
             }
 
+            $coupon->redeem_codes = null;
+            if ($coupon->coupon_type === 'gift_n_coupon') {
+                $coupon->redeem_codes = PaymentTransaction::select([
+                    'issued_coupons.url',
+                    'issued_coupons.issued_coupon_id',
+                    'issued_coupons.transfer_status',
+                ])->join('issued_coupons', function ($q) {
+                    $q->on('issued_coupons.transaction_id', '=', 'payment_transactions.payment_transaction_id');
+                })
+                // payment_transaction_id is value of payment_transaction_id or external_payment_transaction_id
+                ->where(function($query) use($payment_transaction_id) {
+                        $query->where('payment_transactions.payment_transaction_id', '=', $payment_transaction_id)
+                              ->orWhere('payment_transactions.external_payment_transaction_id', '=', $payment_transaction_id);
+                })
+                ->where('issued_coupons.status', '=', 'issued')
+                ->get();
+            }
+
+            // Fallback to IDR by default?
+            if (empty($coupon->currency)) {
+                $coupon->currency = 'IDR';
+            }
+
             // get Imahe from local when image cdn is null
             if ($coupon->cdnPath == null) {
                 $cdnConfig = Config::get('orbit.cdn');
-                $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+                $imgUrl = CdnUrlGeneratorWithCloudfront::create(['cdn' => $cdnConfig], 'cdn');
                 $localPath = (! empty($coupon->localPath)) ? $coupon->localPath : '';
                 $cdnPath = (! empty($coupon->cdnPath)) ? $coupon->cdnPath : '';
                 $coupon->cdnPath = $imgUrl->getImageUrl($localPath, $cdnPath);

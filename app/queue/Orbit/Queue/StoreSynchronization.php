@@ -48,6 +48,7 @@ use ProductTagObject;
 use BaseStoreProductTag;
 use BaseMerchantProductTag;
 use CouponRetailerRedeem;
+use BaseStoreTranslation;
 
 class StoreSynchronization
 {
@@ -177,154 +178,22 @@ class StoreSynchronization
                         $tenant = new Tenant;
                     }
 
-                    // mall notification for new store
-                    $activeStore = Tenant::where('merchant_id', $base_store_id)->where('status', 'active')->first();
-                    if (!is_object($activeStore))
-                    {
-                        $baseMerchant = BaseMerchant::where('base_merchant_id', $base_merchant_id)->first();
+                    $baseMerchant = BaseMerchant::where('base_merchant_id', $base_merchant_id)->first();
 
-                        if (! is_object($baseMerchant)) {
-                            $baseMerchant = new stdclass();
-                            $baseMerchant->name = 'store';
-                        }
-
-                        $mongoConfig = Config::get('database.mongodb');
-                        $mongoClient = MongoClient::create($mongoConfig);
-                        $timestamp = date("Y-m-d H:i:s");
-                        $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
-                        $dateTime = $date->toDateTimeString();
-                        $follower = null;
-                        $tokens = null;
-                        $userIds = null;
-                        $headings = null;
-                        $contents = null;
-                        $attachmentPath = null;
-                        $attachmentRealPath = null;
-                        $cdnUrl = null;
-                        $cdnBucketName = null;
-
-                        // get user_ids
-                        $userFollowSearch = ['object_id' => $store->merchant_id, 'object_type' => 'mall'];
-                        $userFollow = $mongoClient->setQueryString($userFollowSearch)
-                                                  ->setEndPoint('user-follows')
-                                                  ->request('GET');
-
-                        // if there is follower
-                        if (count($userFollow->data->records) !== 0)
-                        {
-                            foreach ($userFollow->data->records as $key => $value) {
-                                $follower[] = $value->user_id;
-                            }
-                            $userIds = array_values(array_unique($follower));
-
-                            // get tokens
-                            $tokenSearch = ['user_ids' => json_encode($userIds), 'notification_provider' => 'onesignal'];
-                            $tokenData = $mongoClient->setQueryString($tokenSearch)
-                                                     ->setEndPoint('user-notification-tokens')
-                                                     ->request('GET');
-
-                            if ($tokenData->data->total_records > 0) {
-                                foreach ($tokenData->data->records as $key => $value) {
-                                    $tokens[] = $value->notification_token;
-                                }
-                                $tokens = array_values(array_unique($tokens));
-                            }
-
-                            $launchUrl = LandingPageUrlGenerator::create('store', $base_store_id, $baseMerchant->name)->generateUrl();
-
-                            $dataNotification = [
-                                'title' => $baseMerchant->name,
-                                'launch_url' => $launchUrl,
-                                'attachment_path' => $attachmentPath,
-                                'attachment_realpath' => $attachmentRealPath,
-                                'cdn_url' => $cdnUrl,
-                                'cdn_bucket_name' => $cdnBucketName,
-                                'default_language' => null,
-                                'headings' => $headings,
-                                'contents' => $contents,
-                                'type' => 'store',
-                                'status' => 'pending',
-                                'sent_at' => null,
-                                'notification_tokens' => json_encode($tokens),
-                                'user_ids' => json_encode($userIds),
-                                'vendor_notification_id' => null,
-                                'vendor_type' => 'onesignal',
-                                'is_automatic' => true,
-                                'mime_type' => 'image/jpeg',
-                                'target_audience_ids' => null,
-                                'created_at' => $dateTime
-                            ];
-
-                            // check notification exist or not
-                            $dataNotificationSearch = ['title' => $baseMerchant->name, 'launch_url' => $launchUrl, 'type' => 'store'];
-                            $notificationSearch = $mongoClient->setQueryString($dataNotificationSearch)
-                                                              ->setEndPoint('notifications')
-                                                              ->request('GET');
-
-                            if (count($notificationSearch->data->records) === 0)
-                            {
-                                $notification = $mongoClient->setFormParam($dataNotification)
-                                                            ->setEndPoint('notifications')
-                                                            ->request('POST');
-
-                                $notificationId = $notification->data->_id;
-
-                                // search mall object notification
-                                $dataMallObjectNotificationSearch = ['mall_id' => $store->merchant_id, 'status' => 'pending'];
-                                $mallObjectNotificationSearch = $mongoClient->setQueryString($dataMallObjectNotificationSearch)
-                                                                            ->setEndPoint('mall-object-notifications')
-                                                                            ->request('GET');
-
-                                if (count($mallObjectNotificationSearch->data->records) === 0)
-                                {
-                                    // insert data if not exist
-                                    $insertMallObjectNotification = [
-                                        'notification_ids' => (array)$notificationId,
-                                        'mall_id' => $store->merchant_id,
-                                        'user_ids' => $userIds,
-                                        'tokens' => $tokens,
-                                        'status' => 'pending',
-                                        'start_at' => null,
-                                        'created_at' => $dateTime
-                                    ];
-
-                                    $mallObjectNotification = $mongoClient->setFormParam($insertMallObjectNotification)
-                                                                          ->setEndPoint('mall-object-notifications')
-                                                                          ->request('POST');
-                                } else {
-                                    $_tokens = null;
-                                    $_userIds = null;
-                                    $_notificationIds = (array) $mallObjectNotificationSearch->data->records[0]->notification_ids;
-                                    $_userIds = (array) $mallObjectNotificationSearch->data->records[0]->user_ids;
-                                    $_tokens = (array) $mallObjectNotificationSearch->data->records[0]->tokens;
-                                    $_notificationIds[] = $notificationId;
-                                    if (!empty($userIds)) {
-                                       foreach ($userIds as $key => $uservalue) {
-                                           $_userIds[] = $uservalue;
-                                       }
-                                       $_userIds = array_values(array_unique($_userIds));
-                                    }
-                                    if (!empty($tokens)) {
-                                       foreach ($tokens as $key => $tokenvalue) {
-                                           $_tokens[] = $tokenvalue;
-                                       }
-                                       $_tokens = array_values(array_unique($_tokens));
-                                    }
-                                    $updateMallObjectNotification = [
-                                       '_id' => $mallObjectNotificationSearch->data->records[0]->_id,
-                                       'notification_ids' => array_values(array_unique($_notificationIds)),
-                                       'mall_id' => $store->merchant_id,
-                                       'user_ids' => json_encode($_userIds),
-                                       'tokens' => json_encode($_tokens),
-                                    ];
-
-                                    $mallObjectNotification = $mongoClient->setFormParam($updateMallObjectNotification)
-                                                                         ->setEndPoint('mall-object-notifications')
-                                                                         ->request('PUT');
-                                }
-                            }
-                        }
+                    if (! is_object($baseMerchant)) {
+                        $baseMerchant = new stdclass();
+                        $baseMerchant->name = 'store';
+                        $baseMerchant->gender = 'A';
                     }
+
+
+                    // Push notification
+                    $queueName = Config::get('queue.connections.gtm_notification.queue', 'gtm_notification');
+
+                    Queue::push('Orbit\\Queue\\Notification\\StoreSynchronizationMallNotificationQueue', [
+                        'base_store_id' => $base_store_id,
+                    ], $queueName);
+
 
                     //country
                     $countryId = $store->country_id;
@@ -332,6 +201,7 @@ class StoreSynchronization
 
                     $storeName = $store->name;
                     $countryName = $countryNames->name;
+                    $baseStore = BaseStore::where('base_store_id', '=', $base_store_id)->first();
 
                     $tenant->merchant_id = $base_store_id;
                     $tenant->name = $store->name;
@@ -344,7 +214,7 @@ class StoreSynchronization
                     $tenant->parent_id = $store->merchant_id;
                     $tenant->is_mall = 'no';
                     $tenant->is_subscribed = 'Y';
-                    $tenant->url = $store->url;
+                    $tenant->url = $baseStore->url;
                     $tenant->floor_id = empty($store->floor_id) ? 0 : $store->floor_id;
                     $tenant->floor = $store->object_name;
                     $tenant->unit = $store->unit;
@@ -352,6 +222,21 @@ class StoreSynchronization
                     $tenant->masterbox_number = $store->verification_number;
                     $tenant->mobile_default_language = $store->mobile_default_language;
                     $tenant->is_payment_acquire = $store->is_payment_acquire;
+                    $tenant->gender = $baseMerchant->gender;
+                    $tenant->facebook_url = $baseStore->facebook_url;
+                    $tenant->instagram_url = $baseStore->instagram_url;
+                    $tenant->twitter_url = $baseStore->twitter_url;
+                    $tenant->youtube_url = $baseStore->youtube_url;
+                    $tenant->line_url = $baseStore->line_url;
+                    $tenant->other_photo_section_title = $baseMerchant->other_photo_section_title;
+                    $tenant->video_id_1 = $baseStore->video_id_1;
+                    $tenant->video_id_2 = $baseStore->video_id_2;
+                    $tenant->video_id_3 = $baseStore->video_id_3;
+                    $tenant->video_id_4 = $baseStore->video_id_4;
+                    $tenant->video_id_5 = $baseStore->video_id_5;
+                    $tenant->video_id_6 = $baseStore->video_id_6;
+                    $tenant->disable_ads = $baseStore->disable_ads;
+                    $tenant->disable_ymal = $baseStore->disable_ymal;
                     $tenant->save();
 
                     // handle inactive store
@@ -547,13 +432,14 @@ class StoreSynchronization
                     // delete translation
                     $delete_translation = MerchantTranslation::where('merchant_id', $base_store_id)->delete(true);
                     // insert translation
-                    $base_translations = BaseMerchantTranslation::where('base_merchant_id', $base_merchant_id)->get();
+                    $base_translations = BaseStoreTranslation::where('base_store_id', $base_store_id)->get();
                     $translations = array();
                     foreach ($base_translations as $base_translation) {
                         $translations[] = [ 'merchant_translation_id' => ObjectID::make(),
                                             'merchant_id' => $base_store_id,
                                             'merchant_language_id' => $base_translation->language_id,
                                             'description' => $base_translation->description,
+                                            'custom_title' => $base_translation->custom_title,
                                             'created_by' => 0,
                                             'modified_by' => 0,
                                            "created_at" => date("Y-m-d H:i:s"),
@@ -698,7 +584,26 @@ class StoreSynchronization
                                 ->get();
                     $map_image = $this->updateMedia('map', $map, $base_store_id);
 
-                    $images = array_merge($logo_image, $pic_image, $map_image);
+                    // copy banner from base_store directory to retailer directory
+                    $bannerStore = Media::where('object_name', 'base_store')
+                                        ->where('media_name_id', 'base_store_banner')
+                                        ->where('object_id', $base_store_id)
+                                        ->get();
+
+                    $bannerMerchant = Media::where('object_name', 'base_merchant')
+                                        ->where('media_name_id', 'base_merchant_banner')
+                                        ->where('object_id', $base_merchant_id)
+                                        ->get();
+
+                    // if banner store exist use banner store, if not use merchant banner
+                    if (count($bannerStore)) {
+                        $banner = $bannerStore;
+                    } else {
+                        $banner = $bannerMerchant;
+                    }
+                    $banner_image = $this->updateMedia('banner', $banner, $base_store_id);
+
+                    $images = array_merge($logo_image, $pic_image, $map_image, $banner_image);
 
                     // get presync data
                     $presync = PreSync::where('sync_id', $sync_id)
@@ -821,6 +726,11 @@ class StoreSynchronization
 
                 case 'map':
                     $nameid = "retailer_map";
+                    break;
+
+                case 'banner':
+                    $filename = $store_id . '-' . $dt->file_name;
+                    $nameid = "retailer_banner";
                     break;
 
                 default:

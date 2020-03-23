@@ -41,18 +41,25 @@ return array(
         'label_coupons'     => 'Kupon',
         'label_events'      => 'Event',
         'subject'           => 'Selamat Datang di Gotomalls!',
+        'header'            => 'Selamat Datang di Gotomalls!',
         'greeting'          => 'Halo',
-        'message_part1'     => 'Terimakasih sudah bergabung di GoToMalls.com',
+        'message_part1'     => 'Terimakasih sudah bergabung di GoToMalls.com. Akun Gotomalls milikmu telah berhasil dibuat. Ikuti langkah terakhir proses registrasi ini dengan meng-klik “Aktivasi Akun” dibawah untuk memverifikasi alamat email dan menyelesaikan proses registrasimu.',
         'message_part2'     => 'Untuk mengaktifkan akun Anda, silakan klik tombol/tautan berikut ini:',
         'button_activation' => 'Aktifkan Akun',
         'message_part3'     => 'Kami sangat menyarankan bagi Anda untuk melengkapi nomor telepon dengan mengikuti langkah berikut:',
-        'list_1'            => 'Buka GoToMalls.com',
-        'list_2'            => 'Klik tombol menu yang ada di sudut kanan atas',
-        'list_3'            => 'Klik Sign In dan silakan login menggunakan Facebook, akun Google atau alamat email',
-        'list_4'            => "Klik tombol \"Akun Saya\" yang ada di bawah foto profil",
-        'list_5'            => 'Anda dapat memperbarui foto profil dan nomor telepon disini',
+        'list_1_title'      => 'Daftar Promo Terlengkap',
+        'list_1_body'       => 'Dapatkan informasi seputar promo, diskon dan penawaran menarik lainnya di mall dan brand favoritmu di seluruh Indonesia. Jangan sampai kamu melewatkan promo terbarunya! Hanya di Gotomalls, situs direktori shopping no #1 di Indonesia! Cek langsung promo – promo menarik nya di
+                                <a style="text-decoration: none;color:#f43d3c;" href=":promotionListUrl">:promotionListLabel</a>.',
+        'list_2_title'      => 'Kupon dan Tiket Termurah',
+        'list_2_body'       => 'Gotomalls menyediakan tiket wahana hiburan, konser, stand up komedi, event olahraga dan tiket event – event seru lainnya di Indonesia. Kamu bisa beli tiket event favorit kamu di Gotomalls dengan harga terbaik dengan mudah, aman dan nyaman. Cek langsung tiket eventnya di
+                                <a style="text-decoration: none;color:#f43d3c;" href=":eventListUrl">:eventListLabel</a>.',
+        'list_3_title'      => 'Pulsa dan Paket Data Termurah',
+        'list_3_body'       => 'Gotomalls punya segudang promo pulsa dan paket data yang bisa kamu akses dan beli langsung di website Gotomalls. Kamu bisa gunakan kesempatan ini untuk digunakan secara pribadi, ataupun sebagai bisnis pulsa kamu. Ada ratusan user yang menggunakan Gotomalls sebagai sumber bisnis pulsa mereka memanfaatkan promo – promo yang tersedia.  Promo pulsa di Gotomalls akan selalu ada, cek langsung promonya di
+                                <a style="text-decoration: none;color:#f43d3c;" href=":purchasePulsaUrl">:purchasePulsaLabel</a>.',
         'message_part4'     => 'Selamat bersenang-senang dengan Gotomalls!',
         'team_name'         => 'GoToMalls Indonesia',
+        'ignore_email'      => 'Abaikan email ini jika Kamu tidak pernah membuat akun di Gotomalls.com. Besar kemungkinan orang lain tidak sengaja atau secara kebetulan menulis alamat e-mail Anda di sistem Gotomalls.',
+        'find_follow'       => 'Ikuti dan Temukan Kami',
     ),
 
     'reset_password' => array(

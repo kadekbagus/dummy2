@@ -25,7 +25,7 @@ use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\SimpleCache;
-use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 use Elasticsearch\ClientBuilder;
 use Lang;
 use PartnerAffectedGroup;
@@ -338,13 +338,13 @@ class StoreFeaturedListAPIController extends PubControllerAPI
             if (! empty($mallId)) {
                 $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('mall_rating.rating_" . $mallId . "')) { if (! doc['mall_rating.rating_" . $mallId . "'].empty) { counter = counter + doc['mall_rating.review_" . $mallId . "'].value; rating = rating + (doc['mall_rating.rating_" . $mallId . "'].value * doc['mall_rating.review_" . $mallId . "'].value);}};";
                 $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('mall_rating.review_" . $mallId . "')) { if (! doc['mall_rating.review_" . $mallId . "'].empty) { review = review + doc['mall_rating.review_" . $mallId . "'].value;}}; ";
-            } else if (! empty($cityFilters)) {
+            } else if (! empty($countryData) && ! empty($cityFilters)) {
                 $countryId = $countryData->country_id;
                 foreach ((array) $cityFilters as $cityFilter) {
                     $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { if (! doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value * doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value);}}; ";
                     $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { if (! doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value;}}; ";
                 }
-            } else if (! empty($countryFilter)) {
+            } else if (! empty($countryData) && ! empty($countryFilter)) {
                 $countryId = $countryData->country_id;
                 $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { if (! doc['location_rating.rating_" . $countryId . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);}}; ";
                 $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "')) { if (! doc['location_rating.review_" . $countryId . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "'].value;}}; ";
@@ -559,15 +559,6 @@ class StoreFeaturedListAPIController extends PubControllerAPI
 
             $role = $user->role->role_name;
             $objectFollow = [];
-            if (strtolower($role) === 'consumer') {
-                $objectFollow = $this->getUserFollow($user, $mallId, $cityFilters);
-                if (! empty($objectFollow)) {
-                    if ($sort_by === 'followed') {
-                        $withScore = TRUE;
-                        $jsonQuery['query']['bool']['should'][] = array('constant_score' => array('filter' => array('terms' => array('base_merchant_id' => $objectFollow)), 'boost' => 100));
-                    }
-                }
-            }
 
             $defaultSort = array('lowercase_name' => array('order' => 'asc'));
             $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
@@ -605,7 +596,7 @@ class StoreFeaturedListAPIController extends PubControllerAPI
 
             $listOfRec = array();
             $cdnConfig = Config::get('orbit.cdn');
-            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            $imgUrl = CdnUrlGeneratorWithCloudfront::create(['cdn' => $cdnConfig], 'cdn');
             $innerHitsCount = 0;
 
             foreach ($records['hits'] as $record) {
@@ -618,7 +609,6 @@ class StoreFeaturedListAPIController extends PubControllerAPI
                 $data['placement_type_orig'] = null;
                 $storeId = '';
                 $data['is_featured'] = false;
-                $data['follow_status'] = false;
                 $baseMerchantId = '';
                 foreach ($record['_source'] as $key => $value) {
 
@@ -688,12 +678,6 @@ class StoreFeaturedListAPIController extends PubControllerAPI
                 if (! empty($record['inner_hits']['tenant_detail']['hits']['total'])) {
                     if (! empty($mallId)) {
                         $data['merchant_id'] = $record['inner_hits']['tenant_detail']['hits']['hits'][0]['_source']['merchant_id'];
-                    }
-                }
-
-                if (! empty($objectFollow)) {
-                    if (in_array($baseMerchantId, $objectFollow)) {
-                        $data['follow_status'] = true;
                     }
                 }
 

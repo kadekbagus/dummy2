@@ -28,6 +28,17 @@ use \Orbit\Helper\Exception\OrbitCustomException;
 use TotalObjectPageView;
 use Redis;
 use Orbit\Helper\MongoDB\Client as MongoClient;
+use Orbit\Controller\API\v1\Pub\Coupon\Detail\Repository\IssuedCouponRepository;
+use Orbit\Controller\API\v1\Pub\Coupon\Detail\Repository\PaymentRepository;
+use Orbit\Controller\API\v1\Pub\Coupon\Detail\Repository\TimezoneRepository;
+use Orbit\Controller\API\v1\Pub\Coupon\Detail\Repository\TenantRepository;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
+use App;
+
+//TODO: redeem coupon and coupon detail on frontend both use this class.
+//this should be separated to avoid unnecessary table join and redundant data because
+//redeem coupon does not need too many coupon detail data and also better code organization
+//readability due to separation of concern
 
 class CouponDetailAPIController extends PubControllerAPI
 {
@@ -51,6 +62,8 @@ class CouponDetailAPIController extends PubControllerAPI
             $mallId = OrbitInput::get('mall_id', null);
             $partnerToken = OrbitInput::get('token', null);
             $notificationId = OrbitInput::get('notification_id', null);
+            $forRedeem = OrbitInput::get('for_redeem', 'N');
+            $selectedIssuedCouponId = OrbitInput::get('issued_coupon_id', null);
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -83,9 +96,9 @@ class CouponDetailAPIController extends PubControllerAPI
                 $getCouponStatusSql = " 'false' as get_coupon_status ";
                 $issuedCouponId = " NULL as issued_coupon_id ";
             } else {
-                $getCouponStatusSql = " CASE WHEN {$prefix}issued_coupons.user_id is NULL
-                                            THEN 'false'
-                                            ELSE 'true'
+                $getCouponStatusSql = " CASE WHEN {$prefix}issued_coupons.user_id IS NOT NULL OR {$prefix}issued_coupons.original_user_id IS NOT NULL
+                                            THEN 'true'
+                                            ELSE 'false'
                                         END as get_coupon_status ";
                 $issuedCouponId = " CASE WHEN {$prefix}issued_coupons.user_id = " . $this->quote($user->user_id) . "
                                             THEN {$prefix}issued_coupons.issued_coupon_id
@@ -120,30 +133,42 @@ class CouponDetailAPIController extends PubControllerAPI
                                         ->setEndPoint('user-notifications') // express endpoint
                                         ->request('PUT');
             }
+            $couponTimezoneHelper = App::make(TimezoneRepository::class);
+            $currentTenantTime = $couponTimezoneHelper->getTenantCurrentTime($couponId);
 
             $coupon = Coupon::select(
                             'promotions.promotion_id as promotion_id',
                             DB::Raw("
                                     CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as promotion_name,
                                     CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN default_translation.description ELSE {$prefix}coupon_translations.description END as description,
-                                    CASE WHEN (SELECT {$image}
+                                    CASE WHEN (SELECT m.path
                                         FROM {$prefix}media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
-                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id) is null
+                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id
+                                        AND {$prefix}coupon_translations.merchant_language_id = {$this->quote($valid_language->language_id)}
+                                        LIMIT 1
+                                        ) is null
                                     THEN
-                                        (SELECT {$image}
+                                        (SELECT m.path
                                         FROM {$prefix}media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
-                                        AND m.object_id = default_translation.coupon_translation_id)
+                                        AND m.object_id = default_translation.coupon_translation_id
+                                        AND default_translation.merchant_language_id = {$this->quote($valid_language->language_id)}
+                                        LIMIT 1
+                                        )
                                     ELSE
-                                        (SELECT {$image}
+                                        (SELECT m.path
                                         FROM {$prefix}media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
-                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id)
+                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id
+                                        AND {$prefix}coupon_translations.merchant_language_id = {$this->quote($valid_language->language_id)}
+                                        LIMIT 1)
                                     END AS original_media_path
                                 "),
+                            'promotions.begin_date',
                             'promotions.end_date',
-                            'promotions.coupon_validity_in_date',
+                            DB::raw("default_translation.promotion_name as default_name"),
+                            DB::raw("{$prefix}issued_coupons.expired_date as coupon_validity_in_date"),
                             'promotions.is_exclusive',
                             'promotions.available',
                             'promotions.is_unique_redeem',
@@ -152,63 +177,58 @@ class CouponDetailAPIController extends PubControllerAPI
                             'promotions.promotion_type as coupon_type',
                             'promotions.price_old',
                             'promotions.price_selling as price_new',
-                            'coupon_sepulsa.how_to_buy_and_redeem',
+                            'promotions.max_quantity_per_purchase',
+                            'promotions.max_quantity_per_user',
+                            'promotions.currency',
+                            DB::raw("
+                                CASE WHEN ({$prefix}promotions.promotion_type = 'sepulsa') THEN
+                                    {$prefix}coupon_sepulsa.how_to_buy_and_redeem
+                                ELSE
+                                    CASE WHEN (
+                                        {$prefix}coupon_translations.how_to_buy_and_redeem = '' OR
+                                        {$prefix}coupon_translations.how_to_buy_and_redeem is null
+                                    ) THEN
+                                        default_translation.how_to_buy_and_redeem
+                                    ELSE
+                                        {$prefix}coupon_translations.how_to_buy_and_redeem
+                                    END
+                                END as how_to_buy_and_redeem
+                            "),
                             'coupon_sepulsa.terms_and_conditions',
                             'issued_coupons.url as redeem_url',
-                            DB::raw('payment.payment_midtrans_info'),
+                            'issued_coupons.user_id',
+                            'issued_coupons.original_user_id',
+                            'issued_coupons.transfer_status',
+                            //DB::raw("m.country as coupon_country"),
                             'promotions.promotion_type',
-                            DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
 
-                            // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
                             DB::Raw($issuedCouponId),
-                            DB::raw('payment.payment_transaction_id as transaction_id'),
-                            DB::raw('payment.status as payment_status'),
 
                             // query for get status active based on timezone
                             DB::raw("
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                                             THEN {$prefix}campaign_status.campaign_status_name
-                                            ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
-                                                                                        FROM {$prefix}promotion_retailer opr
-                                                                                            LEFT JOIN {$prefix}merchants om ON om.merchant_id = opr.retailer_id
-                                                                                            LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
-                                                                                            LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                                                                        WHERE opr.promotion_id = {$prefix}promotions.promotion_id)
+                                            ELSE (CASE WHEN {$prefix}promotions.end_date < ('$currentTenantTime')
                                     THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status,
-                                    CASE WHEN {$prefix}promotions.coupon_validity_in_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
-                                                                                        FROM {$prefix}promotion_retailer opr
-                                                                                            LEFT JOIN {$prefix}merchants om ON om.merchant_id = opr.retailer_id
-                                                                                            LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
-                                                                                            LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                                                                        WHERE opr.promotion_id = {$prefix}promotions.promotion_id)
-                                    THEN 'true' ELSE 'false' END as is_exceeding_validity_date,
-                                    CASE WHEN (SELECT count(opr.retailer_id)
-                                                FROM {$prefix}promotion_retailer opr
-                                                    LEFT JOIN {$prefix}merchants om ON om.merchant_id = opr.retailer_id
-                                                    LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
-                                                    LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                                WHERE opr.promotion_id = {$prefix}promotions.promotion_id
-                                                AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
-                                    THEN 'true' ELSE 'false' END AS is_started
-                            "),
-                            // query for getting timezone for countdown on the frontend
-                            DB::raw("
-                                (SELECT
-                                    ot.timezone_name
-                                FROM {$prefix}promotion_retailer opt
-                                    LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
-                                    LEFT JOIN {$prefix}merchants oms ON oms.merchant_id = om.parent_id
-                                    LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                WHERE opt.promotion_id = {$prefix}promotions.promotion_id
-                                ORDER BY CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) ASC
-                                LIMIT 1
-                                ) as timezone
+                                    CASE WHEN {$prefix}issued_coupons.expired_date < ('$currentTenantTime')
+                                    THEN 'true' ELSE 'false' END as is_exceeding_validity_date
                             "),
                             DB::raw("
                                 CASE WHEN reserved_issued_coupons.status = 'reserved'
                                     THEN 'true'
-                                ELSE 'false' END as is_reserved")
+                                ELSE 'false' END as is_reserved"),
+                            DB::raw("
+                                (SELECT
+                                    count({$prefix}issued_coupons.issued_coupon_id) as issued_coupons_per_user
+                                FROM {$prefix}issued_coupons
+                                WHERE
+                                    {$prefix}issued_coupons.promotion_id = '{$couponId}' AND
+                                    {$prefix}issued_coupons.user_id = '{$user->user_id}' AND
+                                    {$prefix}issued_coupons.transfer_status IS NULL AND
+                                    {$prefix}issued_coupons.status IN ('issued', 'redeemed', 'reserved')
+                                ) as used_coupons_count
+                                ")
                         )
                         ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                         ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
@@ -222,10 +242,18 @@ class CouponDetailAPIController extends PubControllerAPI
                               ->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id');
                         })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-                        ->leftJoin('issued_coupons', function ($q) use ($user) {
+                        ->leftJoin('issued_coupons', function ($q) use ($user, $prefix, $forRedeem, $selectedIssuedCouponId) {
                                 $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                                $q->on('issued_coupons.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
-                                $q->on('issued_coupons.status', '=', DB::Raw("'issued'"));
+                                $q->on(DB::raw("({$prefix}issued_coupons.user_id = {$this->quote($user->user_id)} OR {$prefix}issued_coupons.original_user_id"), '=', DB::raw("{$this->quote($user->user_id)})"));
+
+                                if ($forRedeem === 'Y' && ! empty($selectedIssuedCouponId)) {
+                                    $q->on(DB::raw("({$prefix}issued_coupons.status = 'issued' OR {$prefix}issued_coupons.status"), '=', DB::Raw("'redeemed')"));
+                                }
+                                else {
+                                    $q->on('issued_coupons.status', '=', DB::raw("'issued'"));
+                                }
+
+                                $q->on('issued_coupons.expired_date', '>=', DB::Raw("CONVERT_TZ(NOW(), '+00:00', 'Asia/jakarta')"));
                             })
                         ->leftJoin('issued_coupons as reserved_issued_coupons', function ($q) use ($user) {
                                 $q->on(DB::raw('reserved_issued_coupons.promotion_id'), '=', 'promotions.promotion_id');
@@ -233,30 +261,6 @@ class CouponDetailAPIController extends PubControllerAPI
                                 $q->on(DB::raw('reserved_issued_coupons.status'), '=', DB::Raw("'reserved'"));
                         })
 
-                        // get the last user payment in this coupon
-                        ->leftJoin(
-                                    DB::raw("
-                                        (
-                                            SELECT
-                                                object_id,
-                                                pt.payment_transaction_id,
-                                                payment_midtrans_info,
-                                                pt.created_at,
-                                                status
-                                            FROM {$prefix}payment_transactions as pt
-                                            INNER JOIN {$prefix}payment_transaction_details ptd ON ptd.payment_transaction_id = pt.payment_transaction_id
-                                            LEFT JOIN {$prefix}payment_midtrans pm ON pm.payment_transaction_id = pt.payment_transaction_id
-                                            WHERE 1=1
-                                            AND pt.user_id = ".$this->quote($user->user_id)."
-                                            AND ptd.object_id= ".$this->quote($couponId)."
-                                            AND ptd.object_type = 'coupon'
-                                            ORDER BY pt.created_at DESC
-                                            LIMIT 1
-                                        ) as payment")
-                                    , DB::raw('payment.object_id'), '=', 'promotions.promotion_id')
-
-                        ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                        ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', 'promotion_retailer.retailer_id')
                         ->leftJoin('coupon_sepulsa', 'coupon_sepulsa.promotion_id', '=', 'promotions.promotion_id')
                         ->with(['keywords' => function ($q) {
                                 $q->addSelect('keyword', 'object_id');
@@ -267,25 +271,53 @@ class CouponDetailAPIController extends PubControllerAPI
                                 $pt->groupBy('product_tag');
                             }])
                         ->where('promotions.promotion_id', $couponId)
-                        ->where('promotions.is_visible', 'Y');
+                        ->where('promotions.is_visible', 'Y')
+                        ->orderBy('issued_coupons.expired_date', 'asc');
 
             OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
-                $coupon->havingRaw("mall_id = {$this->quote($mallId)}");
+                //$coupon->havingRaw("mall_id = {$this->quote($mallId)}");
                 $mall = Mall::excludeDeleted()
                         ->where('merchant_id', $mallId)
                         ->first();
             });
 
-            $coupon = $coupon->first();
+            if ($forRedeem === 'Y' && ! empty($selectedIssuedCouponId)) {
+                $coupon->where('issued_coupons.issued_coupon_id', $selectedIssuedCouponId);
+            }
 
+            $coupon = $coupon->first();
             $message = 'Request Ok';
             if (! is_object($coupon)) {
                 throw new OrbitCustomException('Coupon that you specify is not found', Coupon::NOT_FOUND_ERROR_CODE, NULL);
             }
 
+            // Set currency and payment method information
+            // so frontend can load proper payment gateway UI.
+            // TODO: Set currency value for all paid coupon in DB (might need data migration)
+            if (! empty($coupon->coupon_country) && $coupon->coupon_country !== 'Indonesia') {
+                $coupon->currency = 'SGD';
+                $coupon->payment_method = 'stripe';
+            }
+            else {
+                $coupon->currency = 'IDR';
+                $coupon->payment_method = 'midtrans';
+            }
+
+            // calculate remaining coupon for the user.
+            // 9999 means unlimited quantity per user.
+            $coupon->available_coupons_count = 9999;
+            if (! empty($coupon->max_quantity_per_user)) {
+                $coupon->available_coupons_count = $coupon->max_quantity_per_user - $coupon->used_coupons_count;
+            }
+
             $mall = null;
             if (! empty($mallId)) {
                 $mall = Mall::excludeDeleted()->where('merchant_id', '=', $mallId)->first();
+            }
+
+            // Use default max quantity per purchase for old data (that doesn't have max_quantity_per_purchase set)
+            if (empty($coupon->max_quantity_per_purchase)) {
+                $coupon->max_quantity_per_purchase = Config::get('orbit.transaction.max_quantity_per_purchase', 5);
             }
 
             // Only campaign having status ongoing and is_started true can going to detail page
@@ -301,6 +333,17 @@ class CouponDetailAPIController extends PubControllerAPI
                 $customData->mall_name = $mallName;
                 throw new OrbitCustomException('Coupon is inactive', Coupon::INACTIVE_ERROR_CODE, $customData);
             }
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGeneratorWithCloudfront::create(['cdn' => $cdnConfig], 'cdn');
+            $coupon->original_media_path = $imgUrl->getImageUrl($coupon->original_media_path);
+
+            $coupon->category_ids = $this->getCouponCategory($couponId);
+            $couponPaymentHelper = App::make(PaymentRepository::class);
+            $couponTimezoneHelper = App::make(TimezoneRepository::class);
+            $couponTenantHelper = App::make(TenantRepository::class);
+            $coupon = $couponPaymentHelper->addPaymentInfo($coupon, $user);
+            $coupon = $couponTimezoneHelper->addTimezoneInfo($coupon);
+            $coupon = $couponTenantHelper->addTenantInfo($coupon);
 
             // Config page_views
             $configPageViewSource = Config::get('orbit.page_view.source', FALSE);
@@ -364,44 +407,15 @@ class CouponDetailAPIController extends PubControllerAPI
                 }
             }
 
-			// unique coupon
-            $coupon->get_unique_coupon = 'true';
-            if ($coupon->is_unique_redeem === 'Y' && $role != 'Guest') {
-                $checkIssued = IssuedCoupon::where('promotion_id', $coupon->promotion_id)
-                                           ->where('user_id', $user->user_id)
-                                           ->whereNotIn('status', ['issued', 'deleted'])
-                                           ->first();
-
-                if (is_object($checkIssued)) {
-                    $coupon->get_unique_coupon = 'false';
-                }
+            // Determine if issued coupon was transfered or not
+            $coupon->is_transferred = false;
+            if (! empty($coupon->original_user_id) && $coupon->original_user_id === $user->user_id
+                && $coupon->transfer_status === 'complete') {
+                $coupon->is_transferred = true;
             }
 
-            $availableForRedeem = $coupon->available;
-            // get total redeemed
-            $totalRedeemed = IssuedCoupon::where('status', '=', 'redeemed')
-                                        ->where('promotion_id', $coupon->promotion_id)
-                                        ->count();
-            $coupon->total_redeemed = $totalRedeemed;
-
-            if ($coupon->maximum_redeem > 0) {
-                $availableForRedeem = $coupon->maximum_redeem - $totalRedeemed;
-                if ($totalRedeemed >= $coupon->maximum_redeem) {
-                    $availableForRedeem = 0;
-                }
-            }
-            $coupon->available_for_redeem = $availableForRedeem;
-
-            // get total issued
-            $totalIssued = IssuedCoupon::whereIn('status', ['issued', 'redeemed'])
-                                        ->where('promotion_id', $coupon->promotion_id)
-                                        ->count();
-            $coupon->total_issued = $totalIssued;
-
-            // set maximum redeemed to maximum issued when empty
-            if ($coupon->maximum_redeem === '0') {
-                $coupon->maximum_redeem = $coupon->maximum_issued_coupon;
-            }
+            $issuedCouponHelper = App::make(IssuedCouponRepository::class);
+            $coupon = $issuedCouponHelper->addIssuedCouponData($coupon, $user);
 
             // check payment method / wallet operator
             $imageWallet = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path)";
@@ -430,34 +444,6 @@ class CouponDetailAPIController extends PubControllerAPI
             } else {
                 $notes = $coupon->promotion_type;
             }
-
-            if (is_object($mall)) {
-                $activityNotes = $notes; //sprintf('Page viewed: View mall coupon detail');
-                $activity->setUser($user)
-                    ->setActivityName('view_mall_coupon_detail')
-                    ->setActivityNameLong('View mall coupon detail')
-                    ->setObject($coupon)
-                    ->setCoupon($coupon)
-                    ->setLocation($mall)
-                    ->setModuleName('Coupon')
-                    ->setNotes($activityNotes)
-                    ->responseOK()
-                    ->save();
-            } else {
-                $activityNotes = $notes; //sprintf('Page viewed: Landing Page Coupon Detail Page');
-                $activity->setUser($user)
-                    ->setActivityName('view_landing_page_coupon_detail')
-                    ->setActivityNameLong('View GoToMalls Coupon Detail')
-                    ->setObject($coupon)
-                    ->setCoupon($coupon)
-                    ->setLocation($mall)
-                    ->setModuleName('Coupon')
-                    ->setNotes($activityNotes)
-                    ->responseOK()
-                    ->save();
-            }
-
-
 
             // add facebook share url dummy page
             $coupon->facebook_share_url = SocMedAPIController::getSharedUrl('coupon', $coupon->promotion_id, $coupon->promotion_name, $country, $cities);
@@ -516,7 +502,6 @@ class CouponDetailAPIController extends PubControllerAPI
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 500;
-
         }
 
         return $this->render($httpCode);
@@ -525,5 +510,25 @@ class CouponDetailAPIController extends PubControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    /**
+     * Get coupon categories.
+     *
+     * @param  string $couponId [description]
+     * @return [type]           [description]
+     */
+    private function getCouponCategory($couponId = '')
+    {
+        return Coupon::select('category_merchant.category_id')
+                       ->leftJoin('promotion_retailer', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
+                       ->leftJoin('merchants', 'promotion_retailer.retailer_id', '=', 'merchants.merchant_id')
+                       ->leftJoin('category_merchant', 'merchants.merchant_id', '=', 'category_merchant.merchant_id')
+                       ->join('categories', 'category_merchant.category_id', '=', 'categories.category_id')
+                       ->where('categories.merchant_id', 0)
+                       ->where('categories.status', 'active')
+                       ->where('promotions.promotion_id', $couponId)
+                       ->groupBy('categories.category_id')
+                       ->get()->lists('category_id');
     }
 }

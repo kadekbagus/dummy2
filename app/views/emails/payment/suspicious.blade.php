@@ -3,7 +3,7 @@
         <title>Suspicious Payment</title>
     </head>
     <body>
-        <h1>Pending Payment</h1>
+        <h1>Suspicious Payment</h1>
         <p>
             Hello Admin! We have a pending transaction that need validation from Midtrans Admin Portal (MAP). Below is the transaction detail:
             <ul>

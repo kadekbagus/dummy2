@@ -487,6 +487,20 @@ class Mall extends Eloquent
                     ->where('media_name_id', 'mall_icon');
     }
 
+    public function mediaPhotos()
+    {
+        return $this->hasMany('Media', 'object_id', 'merchant_id')
+                    ->where('media_name_id', 'mall_photos')
+                    ->where('object_name', 'mall');
+    }
+
+    public function mediaOtherPhotos()
+    {
+        return $this->hasMany('Media', 'object_id', 'merchant_id')
+                    ->where('media_name_id', 'mall_other_photos')
+                    ->where('object_name', 'mall');
+    }
+
     /**
      * Mall has many partner
      *

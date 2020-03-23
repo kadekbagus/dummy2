@@ -45,9 +45,8 @@ class NewsAPIController extends ControllerAPI
      * @param string     `link_object_type`      (optional) - Link object type. Valid value: tenant, tenant_category.
      * @param array      `retailer_ids`          (optional) - Retailer IDs
      * @param integer    `id_language_default`   (optional) - ID language default
-     * @param string     `is_all_gender`         (optional) - Is all gender. Valid value: Y, N.
+     * @param string     `is_all_gender`         (optional) - Is all gender. Valid value: F, M. Y(mean is all gender is Yes)
      * @param string     `is_all_age`            (optional) - Is all retailer age group. Valid value: Y, N.
-     * @param string     `gender_ids`            (optional) - for Male, Female. Unknown. Valid value: M, F, U.
      * @param string     `age_range_ids`         (optional) - Age Range IDs
      * @param string     `translations`          (optional) - For Translations
      *
@@ -108,6 +107,9 @@ class NewsAPIController extends ControllerAPI
             $is_exclusive = OrbitInput::post('is_exclusive', 'N');
             $is_sponsored = OrbitInput::post('is_sponsored', 'N');
             $sponsor_ids = OrbitInput::post('sponsor_ids');
+            $gender = OrbitInput::post('gender', 'A');
+            $isHotEvent = OrbitInput::post('is_hot_event', 'no');
+            $hotEventLink = OrbitInput::post('hot_event_link');
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -127,6 +129,8 @@ class NewsAPIController extends ControllerAPI
                 'link_object_type'    => $link_object_type,
                 'id_language_default' => $id_language_default,
                 'sticky_order'        => $sticky_order,
+                'is_hot_event'        => $isHotEvent,
+                'hot_event_link'      => $hotEventLink,
             ];
             $validator_validation = [
                 'news_name'           => 'required|max:255',
@@ -137,6 +141,8 @@ class NewsAPIController extends ControllerAPI
                 'end_date'            => 'required|date|orbit.empty.hour_format',
                 'id_language_default' => 'required|orbit.empty.language_default',
                 'sticky_order'        => 'in:0,1',
+                'is_hot_event'        => 'sometimes|required|in:yes,no',
+                'hot_event_link'      => 'required_if:is_hot_event,yes|max:500',
             ];
             $validator_message = [
                 'sticky_order.in' => 'The sticky order value must 0 or 1',
@@ -173,6 +179,11 @@ class NewsAPIController extends ControllerAPI
                 }
             }
 
+            // A means all gender
+            if ($gender === 'A') {
+                $gender = 'Y';
+            }
+
             Event::fire('orbit.news.postnewnews.after.validation', array($this, $validator));
 
             // Get data status like ongoing, stopped etc
@@ -189,11 +200,16 @@ class NewsAPIController extends ControllerAPI
             $newnews->end_date = $end_date;
             $newnews->link_object_type = $link_object_type;
             $newnews->is_all_age = 'Y';
-            $newnews->is_all_gender = 'Y';
+            $newnews->is_all_gender = $gender;
             $newnews->created_by = $this->api->user->user_id;
             $newnews->sticky_order = $sticky_order;
             $newnews->is_exclusive = $is_exclusive;
             $newnews->is_sponsored = $is_sponsored;
+            $newnews->is_hot_event = $isHotEvent;
+
+            if ($isHotEvent === 'yes' && ! empty($hotEventLink)) {
+                $newnews->hot_event_link = $hotEventLink;
+            }
 
             // Check for english content
             $dataTranslations = @json_decode($translations);
@@ -424,9 +440,6 @@ class NewsAPIController extends ControllerAPI
             // Commit the changes
             $this->commit();
 
-            // Push notification
-            Event::fire('orbit.news.postupdatenews-storenotificationupdate.after.commit', array($this, $newnews, $id_language_default));
-
             // Successfull Creation
             $activityNotes = sprintf('News Created: %s', $newnews->news_name);
             $activity->setUser($user)
@@ -547,7 +560,6 @@ class NewsAPIController extends ControllerAPI
      * @param integer    `id_language_default`   (optional) - ID language default
      * @param string     `is_all_gender`         (optional) - Is all gender. Valid value: Y, N.
      * @param string     `is_all_age`            (optional) - Is all retailer age group. Valid value: Y, N.
-     * @param string     `gender_ids`            (optional) - for Male, Female. Unknown. Valid value: M, F, U.
      * @param string     `age_range_ids`         (optional) - Age Range IDs
      * @return Illuminate\Support\Facades\Response
      */
@@ -600,6 +612,8 @@ class NewsAPIController extends ControllerAPI
             $is_exclusive = OrbitInput::post('is_exclusive');
             $is_sponsored = OrbitInput::post('is_sponsored', 'N');
             $sponsor_ids = OrbitInput::post('sponsor_ids');
+            $isHotEvent = OrbitInput::post('is_hot_event', 'no');
+            $hotEventLink = OrbitInput::post('hot_event_link');
 
             $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
             $status = 'inactive';
@@ -616,6 +630,8 @@ class NewsAPIController extends ControllerAPI
                 'end_date'            => $end_date,
                 'id_language_default' => $id_language_default,
                 'partner_exclusive'    => $is_exclusive,
+                'is_hot_event'        => $isHotEvent,
+                'hot_event_link'      => $hotEventLink,
             );
 
             // Validate news_name only if exists in POST.
@@ -634,6 +650,8 @@ class NewsAPIController extends ControllerAPI
                     'end_date'            => 'date||orbit.empty.hour_format',
                     'id_language_default' => 'required|orbit.empty.language_default',
                     'partner_exclusive'   => 'in:Y,N|orbit.empty.exclusive_partner',
+                    'is_hot_event'        => 'required|in:yes,no',
+                    'hot_event_link'      => 'required_if:is_hot_event,yes|max:500',
                 ),
                 array(
                    'news_name_exists_but_me' => Lang::get('validation.orbit.exists.news_name'),
@@ -688,7 +706,7 @@ class NewsAPIController extends ControllerAPI
             // this is for send email to marketing, before and after list
             $beforeUpdatedNews = News::selectRaw("{$prefix}news.*,
                                                         DATE_FORMAT({$prefix}news.end_date, '%d/%m/%Y %H:%i') as end_date")
-                                    ->with('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords', 'product_tags', 'campaign_status')
+                                    ->with('translations.language', 'translations.media', 'ages.ageRange', 'keywords', 'product_tags', 'campaign_status')
                                     ->excludeDeleted()
                                     ->where('news_id', $news_id)
                                     ->first();
@@ -751,6 +769,14 @@ class NewsAPIController extends ControllerAPI
                     $link_object_type = NULL;
                 }
                 $updatednews->link_object_type = $link_object_type;
+            });
+
+            OrbitInput::post('gender', function($gender) use ($updatednews) {
+                if ($gender === 'A') {
+                    $gender = 'Y';
+                }
+
+                $updatednews->is_all_gender = $gender;
             });
 
             OrbitInput::post('is_exclusive', function($is_exclusive) use ($updatednews) {
@@ -884,6 +910,10 @@ class NewsAPIController extends ControllerAPI
                 $errorMessage = Lang::get('validation.orbit.empty.default_language_desc', ['type' => $object_type]);
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            $updatednews->is_hot_event = $isHotEvent;
+            $updatednews->hot_event_link = $isHotEvent === 'yes'
+                ? $hotEventLink : null;
 
             $updatednews->modified_by = $this->api->user->user_id;
             $updatednews->touch();
@@ -1051,15 +1081,22 @@ class NewsAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.news.postupdatenews.after.save', array($this, $updatednews));
-            Event::fire('orbit.news.postupdatenews-mallnotification.after.save', array($this, $updatednews));
             $this->response->data = $updatednews;
             // $this->response->data->translation_default = $updatednews_default_language;
 
             // Commit the changes
             $this->commit();
 
+
             // Push notification
-            Event::fire('orbit.news.postupdatenews-storenotificationupdate.after.commit', array($this, $updatednews));
+            $queueName = Config::get('queue.connections.gtm_notification.queue', 'gtm_notification');
+
+            Queue::push('Orbit\\Queue\\Notification\\NewsMallNotificationQueue', [
+                'news_id' => $updatednews->news_id,
+            ], $queueName);
+            Queue::push('Orbit\\Queue\\Notification\\NewsStoreNotificationQueue', [
+                'news_id' => $updatednews->news_id,
+            ], $queueName);
 
             // Successfull Update
             $activityNotes = sprintf('News updated: %s', $updatednews->news_name);
@@ -1431,14 +1468,6 @@ class NewsAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.news.getsearchnews.before.authz', array($this, $user));
 
-/*
-            if (! ACL::create($user)->isAllowed('view_news')) {
-                Event::fire('orbit.news.getsearchnews.authz.notallowed', array($this, $user));
-                $viewNewsLang = Lang::get('validation.orbit.actionlist.view_news');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewNewsLang));
-                ACL::throwAccessForbidden($message);
-            }
-*/
             // @Todo: Use ACL authentication instead
             $role = $user->role;
             $validRoles = $this->newsViewRoles;
@@ -1510,12 +1539,19 @@ class NewsAPIController extends ControllerAPI
                 $mediaOptimize = " AND object_name = 'news_translation' AND mont.news_id IN ({$mediaObjectIds}) ";
             }
 
-
             $filterName = OrbitInput::get('news_name_like', '');
 
             // Builder object
             $news = News::allowedForPMPUser($user, $object_type[0])
-                        ->select('news.*', 'news.news_id as campaign_id', 'news.object_type as campaign_type', 'campaign_status.order', 'news_translations.news_name as display_name',
+                        ->select('news.news_id',
+                                 'news.news_name',
+                                 'news.begin_date',
+                                 'news.end_date',
+                                 'news.updated_at',
+                                 'news.news_id as campaign_id',
+                                 'news.object_type as campaign_type',
+                                 // 'campaign_status.order',
+                                 'news_translations.news_name as display_name',
                             DB::raw("(SELECT {$prefix}media.path FROM {$prefix}media
                                     {$mediaJoin}
                                     WHERE media_name_long = 'news_translation_image_resized_default'
@@ -1523,11 +1559,11 @@ class NewsAPIController extends ControllerAPI
                                     {$prefix}media.object_id = {$prefix}news_translations.news_translation_id
                                     LIMIT 1) AS image_path"),
                             DB::raw("COUNT(DISTINCT {$prefix}news_merchant.news_merchant_id) as total_location"),
-                            DB::raw("(SELECT GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$prefix}merchants.name) ) separator ', ')
-                                FROM {$prefix}news_merchant
-                                    LEFT JOIN {$prefix}merchants ON {$prefix}merchants.merchant_id = {$prefix}news_merchant.merchant_id
-                                    LEFT JOIN {$prefix}merchants pm ON {$prefix}merchants.parent_id = pm.merchant_id
-                                    where {$prefix}news_merchant.news_id = {$prefix}news.news_id) as campaign_location_names"),
+                            // DB::raw("(SELECT GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$prefix}merchants.name) ) separator ', ')
+                            //     FROM {$prefix}news_merchant
+                            //         LEFT JOIN {$prefix}merchants ON {$prefix}merchants.merchant_id = {$prefix}news_merchant.merchant_id
+                            //         LEFT JOIN {$prefix}merchants pm ON {$prefix}merchants.parent_id = pm.merchant_id
+                            //         where {$prefix}news_merchant.news_id = {$prefix}news.news_id) as campaign_location_names"),
                             DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
                                     LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = om.timezone_id
                                     WHERE om.merchant_id = {$prefix}news.mall_id)
@@ -1536,6 +1572,7 @@ class NewsAPIController extends ControllerAPI
                                     LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = om.timezone_id
                                     WHERE om.merchant_id = {$prefix}news.mall_id)
                                 THEN 5 ELSE {$prefix}campaign_status.order END) END  AS campaign_status_order")
+                            // DB::raw("IF({$prefix}news.is_all_gender = 'Y', 'A', {$prefix}news.is_all_gender) as gender")
                         )
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
@@ -1558,20 +1595,6 @@ class NewsAPIController extends ControllerAPI
             {
                 $news->whereIn('news.news_id', (array)$newsIds);
             });
-
-
-            // to do : enable filter for mall
-            // Filter news by mall Ids
-            // OrbitInput::get('mall_id', function ($mallIds) use ($news)
-            // {
-            //     $news->whereIn('news.mall_id', (array)$mallIds);
-            // });
-
-            // Filter news by mall Ids / dupes, same as above
-            // OrbitInput::get('merchant_id', function ($mallIds) use ($news)
-            // {
-            //     $news->whereIn('news.mall_id', (array)$mallIds);
-            // });
 
             // Filter news by news name
             OrbitInput::get('news_name', function($newsname) use ($news)
@@ -1704,39 +1727,33 @@ class NewsAPIController extends ControllerAPI
             });
 
             // Add new relation based on request
-            OrbitInput::get('with', function ($with) use ($news) {
-                $with = (array) $with;
+            // OrbitInput::get('with', function ($with) use ($news) {
+            //     $with = (array) $with;
 
-                foreach ($with as $relation) {
-                    if ($relation === 'tenants') {
-                        $news->with('tenants');
-                    } elseif ($relation === 'tenants.mall') {
-                        $news->with('tenants.mall');
-                    } elseif ($relation === 'campaignLocations') {
-                        $news->with('campaignLocations');
-                    } elseif ($relation === 'campaignLocations.mall') {
-                        $news->with('campaignLocations.mall');
-                    } elseif ($relation === 'translations') {
-                        $news->with('translations');
-                    } elseif ($relation === 'translations.media') {
-                        $news->with('translations.media');
-                    } elseif ($relation === 'genders') {
-                        $news->with('genders');
-                    } elseif ($relation === 'ages') {
-                        $news->with('ages');
-                    } elseif ($relation === 'keywords') {
-                        $news->with(['keywords' => function($query) {
-                            $query->groupBy('keyword');
-                        }]);
-                    } elseif ($relation === 'product_tags') {
-                        $news->with(['product_tags' => function($query) {
-                            $query->groupBy('product_tag');
-                        }]);
-                    } elseif ($relation === 'campaignObjectPartners') {
-                        $news->with('campaignObjectPartners');
-                    }
-                }
-            });
+            //     foreach ($with as $relation) {
+            //         if ($relation === 'tenants') {
+            //             $news->with('tenants');
+            //         } elseif ($relation === 'tenants.mall') {
+            //             $news->with('tenants.mall');
+            //         } elseif ($relation === 'campaignLocations') {
+            //             $news->with('campaignLocations');
+            //         } elseif ($relation === 'campaignLocations.mall') {
+            //             $news->with('campaignLocations.mall');
+            //         } elseif ($relation === 'translations') {
+            //             $news->with('translations');
+            //         } elseif ($relation === 'translations.media') {
+            //             $news->with('translations.media');
+            //         } elseif ($relation === 'ages') {
+            //             $news->with('ages');
+            //         } elseif ($relation === 'keywords') {
+            //             $news->with('keywords');
+            //         } elseif ($relation === 'product_tags') {
+            //             $news->with('product_tags');
+            //         } elseif ($relation === 'campaignObjectPartners') {
+            //             $news->with('campaignObjectPartners');
+            //         }
+            //     }
+            // });
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
@@ -1882,6 +1899,153 @@ class NewsAPIController extends ControllerAPI
 
         $output = $this->render($httpCode);
         Event::fire('orbit.news.getsearchnews.before.render', array($this, &$output));
+
+        return $output;
+    }
+
+    public function getDetailNews()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.news.getdetailnews.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.news.getdetailnews.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.news.getdetailnews.before.authz', array($this, $user));
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->newsViewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.news.getdetailnews.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $news_id = OrbitInput::get('news_id');
+            $object_type = OrbitInput::get('object_type');
+
+            $validator = Validator::make(
+                array(
+                    'news_id' => $news_id,
+                    'object_type' => $object_type,
+                ),
+                array(
+                    'news_id' => 'required|orbit.exist.news',
+                    'object_type' => 'required|in:news,promotion',
+                ),
+                array(
+                    'orbit.exist.news' => 'news id not found',
+                )
+            );
+
+            Event::fire('orbit.news.getdetailnews.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.news.getdetailnews.after.validation', array($this, $validator));
+
+            $prefix = DB::getTablePrefix();
+
+            // optimize orb_media query greatly when news_id is present
+            $mediaJoin = "";
+            $mediaOptimize = " AND (object_name = 'news_translation') ";
+            $mediaObjectIds = (array) OrbitInput::get('news_id', []);
+
+            $filterName = OrbitInput::get('news_name_like', '');
+
+            $obj = (array) $object_type;
+
+            // Builder object
+            $news = News::allowedForPMPUser($user, $obj[0])
+                        ->with(['tenants', 'tenants.mall', 'campaignLocations', 'campaignLocations.mall', 'translations', 'translations.media', 'ages', 'keywords', 'product_tags', 'campaignObjectPartners'])
+                        ->select('news.*', 'news.news_id as campaign_id', 'news.object_type as campaign_type', 'campaign_status.order', 'news_translations.news_name as display_name',
+                            DB::raw("(SELECT {$prefix}media.path FROM {$prefix}media
+                                    {$mediaJoin}
+                                    WHERE media_name_long = 'news_translation_image_resized_default'
+                                    {$mediaOptimize} AND
+                                    {$prefix}media.object_id = {$prefix}news_translations.news_translation_id
+                                    LIMIT 1) AS image_path"),
+                            DB::raw("COUNT(DISTINCT {$prefix}news_merchant.news_merchant_id) as total_location"),
+                            DB::raw("(SELECT GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$prefix}merchants.name) ) separator ', ')
+                                FROM {$prefix}news_merchant
+                                    LEFT JOIN {$prefix}merchants ON {$prefix}merchants.merchant_id = {$prefix}news_merchant.merchant_id
+                                    LEFT JOIN {$prefix}merchants pm ON {$prefix}merchants.parent_id = pm.merchant_id
+                                    where {$prefix}news_merchant.news_id = {$prefix}news.news_id) as campaign_location_names"),
+                            DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
+                                    LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = om.timezone_id
+                                    WHERE om.merchant_id = {$prefix}news.mall_id)
+                                THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"),
+                            DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.order ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
+                                    LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = om.timezone_id
+                                    WHERE om.merchant_id = {$prefix}news.mall_id)
+                                THEN 5 ELSE {$prefix}campaign_status.order END) END  AS campaign_status_order"),
+                            DB::raw("IF({$prefix}news.is_all_gender = 'Y', 'A', {$prefix}news.is_all_gender) as gender")
+                        )
+                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                        ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                        ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
+                        ->where('news.news_id', '=', $news_id)
+                        ->where('news.object_type', '=', $object_type)
+                        ->excludeDeleted('news')
+                        ->first();
+
+            $this->response->data = $news;
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.news.getdetailnews.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.news.getdetailnews.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.news.getdetailnews.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            Event::fire('orbit.news.getdetailnews.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.news.getdetailnews.before.render', array($this, &$output));
 
         return $output;
     }
@@ -2245,6 +2409,20 @@ class NewsAPIController extends ControllerAPI
             return true;
         });
 
+        // Check the existance of news id
+        Validator::extend('orbit.exist.news', function ($attribute, $value, $parameters) {
+            $news = News::where('news_id', $value)
+                        ->first();
+
+            if (empty($news)) {
+                return false;
+            }
+
+            App::instance('orbit.exist.news', $news);
+
+            return true;
+        });
+
         // Check the existance of news id for update with permission check
         Validator::extend('orbit.update.news', function ($attribute, $value, $parameters) {
             $user = $this->api->user;
@@ -2327,17 +2505,6 @@ class NewsAPIController extends ControllerAPI
         });
 
         Validator::extend('orbit.empty.is_all_age', function ($attribute, $value, $parameters) {
-            $valid = false;
-            $statuses = array('Y', 'N');
-
-            if (in_array($value, $statuses)) {
-                $valid = true;
-            }
-
-            return $valid;
-        });
-
-        Validator::extend('orbit.empty.is_all_gender', function ($attribute, $value, $parameters) {
             $valid = false;
             $statuses = array('Y', 'N');
 

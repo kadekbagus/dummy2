@@ -124,6 +124,9 @@ class ESAdvertNewsUpdateQueue
                     ->first();
 
         if (! is_object($news)) {
+            $esAdvertNewsDelete = new \Orbit\Queue\Elasticsearch\ESAdvertNewsDeleteQueue('default', $advertData);
+            $doESAdvertNewsDelete = $esAdvertNewsDelete->fire($fakeJob, ['news_id' => $newsId]);
+
             $job->delete();
 
             return [
@@ -567,7 +570,8 @@ class ESAdvertNewsUpdateQueue
                     'total_general_reviews' => $totalGeneralReviews,
                     'featured_slot_gtm'     => $featuredSlotGTM,
                     'featured_slot_mall'    => $featuredSlotMall,
-                    'sponsor_provider'      => $sponsorProviderES
+                    'sponsor_provider'      => $sponsorProviderES,
+                    'is_hot_event'          => $news->is_hot_event,
                 ];
 
                 $body = array_merge($body, $translationBody);

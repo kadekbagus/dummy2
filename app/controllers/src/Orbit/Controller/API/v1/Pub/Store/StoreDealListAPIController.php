@@ -12,7 +12,7 @@ use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Util\PaginationNumber;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
-use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 use Elasticsearch\ClientBuilder;
 use Config;
 use Mall;
@@ -75,6 +75,7 @@ class StoreDealListAPIController extends PubControllerAPI
             $lat = '';
             $host = Config::get('orbit.elasticsearch');
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
+            $campaignType = OrbitInput::get('campaign_type', '');
 
             // Call validation from store helper
             $this->registerCustomValidation();
@@ -211,7 +212,24 @@ class StoreDealListAPIController extends PubControllerAPI
                 $jsonQuery['query']['bool']['must'][] = $countryCityFilterArr;
             }
 
-            $indexSearch = $esPrefix . Config::get('orbit.elasticsearch.indices.promotions.index') . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.news.index') . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index');
+            // filter by campaign type
+            switch ($campaignType) {
+                case 'promotion':
+                    $indexSearch = $esPrefix . Config::get('orbit.elasticsearch.indices.promotions.index');
+                    break;
+
+                case 'news':
+                    $indexSearch = $esPrefix . Config::get('orbit.elasticsearch.indices.news.index');
+                    break;
+
+                case 'coupon':
+                    $indexSearch = $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index');
+                    break;
+
+                default:
+                    $indexSearch = $esPrefix . Config::get('orbit.elasticsearch.indices.promotions.index') . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.news.index') . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index');
+                    break;
+            }
 
             $esParam = [
                 'index'  => $indexSearch,
@@ -225,7 +243,7 @@ class StoreDealListAPIController extends PubControllerAPI
 
             $listOfRec = array();
             $cdnConfig = Config::get('orbit.cdn');
-            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            $imgUrl = CdnUrlGeneratorWithCloudfront::create(['cdn' => $cdnConfig], 'cdn');
 
             foreach ($records['hits'] as $record) {
                 $data = array();

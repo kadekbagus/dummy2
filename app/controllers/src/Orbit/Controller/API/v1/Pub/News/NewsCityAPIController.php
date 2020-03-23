@@ -113,7 +113,7 @@ class NewsCityAPIController extends PubControllerAPI
 
             $_newsLocation = clone($newsLocation);
 
-            $take = PaginationNumber::parseTakeFromGet('news');
+            $take = PaginationNumber::parseTakeFromGet('city_location');
             $newsLocation->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();

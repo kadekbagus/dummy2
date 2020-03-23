@@ -29,6 +29,7 @@ class PaymentMidtransVerifyAPIController extends PubControllerAPI
             $user = $this->api->user;
 
             $payment_transaction_id = OrbitInput::get('payment_transaction_id');
+            $bypassUser = OrbitInput::get('bypass_user', 'N');
 
             $validator = Validator::make(
                 array(
@@ -40,7 +41,7 @@ class PaymentMidtransVerifyAPIController extends PubControllerAPI
             );
 
             // Begin database transaction
-            $this->beginTransaction();
+            // $this->beginTransaction();
 
             // Run the validation
             if ($validator->fails()) {
@@ -49,14 +50,20 @@ class PaymentMidtransVerifyAPIController extends PubControllerAPI
             }
 
             // validate payment data
-            $payment = PaymentTransaction::select('payment_transaction_id', 'external_payment_transaction_id', 'amount', 'status')
+            $payment = PaymentTransaction::select('payment_transaction_id', 'external_payment_transaction_id', 'amount', 'status', 'payment_method', 'currency', 'user_email');
 
-                                            // payment_transaction_id is value of payment_transaction_id or external_payment_transaction_id
-                                            ->where(function($query) use($payment_transaction_id) {
-                                            $query->where('payment_transactions.payment_transaction_id', '=', $payment_transaction_id)
-                                                  ->orWhere('payment_transactions.external_payment_transaction_id', '=', $payment_transaction_id);
-                                            })
-                                            ->first();
+            // Don't check for related User unless front-end explicitly requesting it.
+            // Useful for request like Midtrans' payment notification which doesn't have any
+            // user information/session available when doing the request.
+            if ($bypassUser === 'N') {
+                $payment->where('user_id', $user->user_id);
+            }
+
+            // payment_transaction_id is value of payment_transaction_id or external_payment_transaction_id
+            $payment = $payment->where(function($query) use($payment_transaction_id) {
+                            $query->where('payment_transactions.payment_transaction_id', '=', $payment_transaction_id)
+                                  ->orWhere('payment_transactions.external_payment_transaction_id', '=', $payment_transaction_id);
+                        })->first();
 
             if (empty($payment)) {
                 $httpCode = 404;

@@ -31,7 +31,7 @@ class MerchantHelper
     {
         // Check the existance of base merchant id
         Validator::extend('orbit.empty.base_merchant', function ($attribute, $value, $parameters) {
-            $baseMerchant = BaseMerchant::excludeDeleted()
+            $baseMerchant = BaseMerchant::with('baseMerchantTranslation', 'productTags')->excludeDeleted()
                                    ->where('base_merchant_id', $value)
                                    ->first();
 
@@ -169,7 +169,7 @@ class MerchantHelper
          * value null it means set to null (use main language content instead).
          */
 
-        $valid_fields = ['description'];
+        $valid_fields = ['description', 'custom_title', 'meta_description'];
         $operations = [];
 
         $data = @json_decode($translations_json_string);
@@ -219,6 +219,8 @@ class MerchantHelper
                 $newBaseMerchantTranslation->base_merchant_id = $baseMerchant->base_merchant_id;
                 $newBaseMerchantTranslation->language_id = $operation[1];
                 $newBaseMerchantTranslation->description = $operation[2]->description;
+                $newBaseMerchantTranslation->meta_description = $operation[2]->meta_description;
+                $newBaseMerchantTranslation->custom_title = isset($operation[2]->custom_title) ? $operation[2]->custom_title : null;
                 $newBaseMerchantTranslation->save();
                 $baseMerchantTranslations[] = $newBaseMerchantTranslation;
 

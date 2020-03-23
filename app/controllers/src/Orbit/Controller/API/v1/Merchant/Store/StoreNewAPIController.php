@@ -22,6 +22,9 @@ use ObjectFinancialDetail;
 use MerchantStorePaymentProvider;
 use ProductTag;
 use BaseStoreProductTag;
+use Language;
+use Orbit\Database\ObjectID;
+use Media;
 
 class StoreNewAPIController extends ControllerAPI
 {
@@ -99,6 +102,22 @@ class StoreNewAPIController extends ControllerAPI
             $swiftCodes = OrbitInput::post('swift_codes',[]);
             $productTags = OrbitInput::post('product_tags');
             $productTags = (array) $productTags;
+            $url = OrbitInput::post('url');
+            $facebook_url = OrbitInput::post('facebook_url');
+            $instagram_url = OrbitInput::post('instagram_url');
+            $twitter_url = OrbitInput::post('twitter_url');
+            $youtube_url = OrbitInput::post('youtube_url');
+            $line_url = OrbitInput::post('line_url');
+            $videoId1 = OrbitInput::post('video_id_1');
+            $videoId2 = OrbitInput::post('video_id_2');
+            $videoId3 = OrbitInput::post('video_id_3');
+            $videoId4 = OrbitInput::post('video_id_4');
+            $videoId5 = OrbitInput::post('video_id_5');
+            $videoId6 = OrbitInput::post('video_id_6');
+            $disable_ads = OrbitInput::post('disable_ads');
+            $disable_ymal = OrbitInput::post('disable_ymal');
+            $translations = OrbitInput::post('translations');
+            $banner = OrbitInput::files('banner', null);
 
             $storeHelper = StoreHelper::create();
             $storeHelper->storeCustomValidator();
@@ -110,18 +129,24 @@ class StoreNewAPIController extends ControllerAPI
 
             $validation_data = [
                 'base_merchant_id'    => $base_merchant_id,
+                'translations'        => $translations,
                 'mall_id'             => $mall_id,
                 'floor_id'            => $floor_id,
                 'status'              => $status,
                 'verification_number' => $verification_number,
+                'disable_ads'         => $disable_ads,
+                'disable_ymal'        => $disable_ymal,
             ];
 
             $validation_error = [
                 'base_merchant_id'    => 'required|orbit.empty.base_merchant',
+                'translations'        => 'required',
                 'mall_id'             => 'required|orbit.empty.mall|orbit.mall.country:' . $base_merchant_id,
                 'floor_id'            => 'orbit.empty.floor:' . $mall_id,
                 'status'              => 'in:active,inactive',
-                'verification_number' => 'alpha_num|orbit.unique.verification_number:' . $mall_id . ',' . '',
+                'verification_number' => 'alpha_num',
+                'disable_ads'         => 'in:n,y',
+                'disable_ymal'        => 'in:n,y',
             ];
 
             $validation_error_message = [
@@ -166,7 +191,99 @@ class StoreNewAPIController extends ControllerAPI
             $newstore->status = $status;
             $newstore->verification_number = $verification_number;
             $newstore->is_payment_acquire = $paymentAcquire;
+            $newstore->url = $url;
+            $newstore->facebook_url = $facebook_url;
+            $newstore->instagram_url = $instagram_url;
+            $newstore->twitter_url = $twitter_url;
+            $newstore->youtube_url = $youtube_url;
+            $newstore->line_url = $line_url;
+            $newstore->video_id_1 = $videoId1;
+            $newstore->video_id_2 = $videoId2;
+            $newstore->video_id_3 = $videoId3;
+            $newstore->video_id_4 = $videoId4;
+            $newstore->video_id_5 = $videoId5;
+            $newstore->video_id_6 = $videoId6;
+            $newstore->disable_ads = $disable_ads;
+            $newstore->disable_ymal = $disable_ymal;
+
+            // Translations
+            OrbitInput::post('translations', function($translations) use ($newstore) {
+            $idLanguageEnglish = Language::select('language_id')->where('name', '=', 'en')->first();
+                if (! empty($translations) ) {
+                    $dataTranslations = @json_decode($translations);
+                    if (json_last_error() != JSON_ERROR_NONE) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+                    }
+
+                    if (! is_null($dataTranslations)) {
+                        // Get english tenant description for saving to default language
+                        foreach ($dataTranslations as $key => $val) {
+                            // Validation language id from translation
+                            $language = Language::where('language_id', '=', $key)->first();
+                            if (empty($language)) {
+                                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                            }
+
+                            if ($key === $idLanguageEnglish->language_id) {
+                                $newstore->description = $val->description;
+                                $newstore->custom_title = $val->custom_title;
+                            }
+                        }
+                    }
+                }
+            });
+
             $newstore->save();
+
+            // if banner not send, copy banner from base merchant
+            $storeBanner = array();
+            if (empty($banner)) {
+                $bannerMerchant = Media::where('object_name', 'base_merchant')
+                                    ->where('media_name_id', 'base_merchant_banner')
+                                    ->where('object_id', $base_merchant_id)
+                                    ->get();
+
+                $path = public_path();
+                $baseConfig = Config::get('orbit.upload.base_store');
+                $type = 'banner';
+
+                if (count($bannerMerchant)) {
+                    foreach ($bannerMerchant as $bm) {
+
+                        $filename = $newstore->base_store_id . '-' . $bm->file_name;
+                        $sourceMediaPath = $path . DS . $baseConfig[$type]['path'] . DS . $bm->file_name;
+                        $destMediaPath = $path . DS . $baseConfig[$type]['path'] . DS . $filename;
+
+                        if (! @copy($sourceMediaPath, $destMediaPath)) {
+                            OrbitShopAPI::throwInvalidArgument('failed copy banner image from base merchant');
+                        }
+
+                        $storeBanner[] = [ "media_id" => ObjectID::make(),
+                                           "media_name_id" => 'base_store_banner',
+                                           "media_name_long" => str_replace('base_merchant_', 'base_store_', $bm->media_name_long),
+                                           "object_id" => $newstore->base_store_id,
+                                           "object_name" => 'base_store',
+                                           "file_name" => $bm->file_name,
+                                           "file_extension" => $bm->file_extension,
+                                           "file_size" => $bm->file_size,
+                                           "mime_type" => $bm->mime_type,
+                                           "path" => $baseConfig[$type]['path'] . DS . $filename,
+                                           "realpath" => $destMediaPath,
+                                           "cdn_url" => $bm->cdn_url,
+                                           "cdn_bucket_name" => $bm->cdn_bucket_name,
+                                           "metadata" => $bm->metadata,
+                                           "modified_by" => $user->user_id,
+                                           "created_at" => date("Y-m-d H:i:s"),
+                                           "updated_at" => date("Y-m-d H:i:s")];
+                    }
+                }
+
+                if (! empty($storeBanner)) {
+                    DB::table('media')->insert($storeBanner);
+                }
+            }
+
+            $newstore->media_banner = $storeBanner;
 
             // save product tag
             $tenantProductTags = array();
@@ -359,6 +476,11 @@ class StoreNewAPIController extends ControllerAPI
 
             $newstore->mall_id = $mall_id;
             $newstore->location = $storeHelper->getValidMall()->name;
+
+            // save translations
+            OrbitInput::post('translations', function($translation_json_string) use ($newstore, $storeHelper) {
+                $storeHelper->validateAndSaveTranslations($newstore, $translation_json_string, $scenario = 'create');
+            });
 
             Event::fire('orbit.basestore.postnewstore.after.save', array($this, $newstore));
             $this->response->data = $newstore;

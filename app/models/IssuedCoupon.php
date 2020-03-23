@@ -38,7 +38,7 @@ class IssuedCoupon extends Eloquent
 
     /**
      * IssuedCoupon - PaymentTransaction relation.
-     * 
+     *
      * @return [type] [description]
      */
     public function payment()
@@ -167,6 +167,44 @@ class IssuedCoupon extends Eloquent
         }
     }
 
+    public static function bulkIssueGiftN($couponCodes, $promotionId, $couponValidityDate, $admin = NULL) {
+        $issuerUserId = NULL;
+        if (! is_null($admin)) {
+            $issuerUserId = $admin->user_id;
+        }
+
+        // create array of data
+        $data = array();
+        $now = date('Y-m-d H:i:s');
+        for ($i = 0; $i < count($couponCodes); $i++) {
+            $data[] = array(
+                    'issued_coupon_id' => ObjectID::make(),
+                    'promotion_id' => $promotionId,
+                    'issued_coupon_code' => 'gift_n_coupon',
+                    'url' => $couponCodes[$i],
+                    'expired_date' => $couponValidityDate,
+                    'issuer_user_id' => $issuerUserId,
+                    'status' => self::STATUS_AVAILABLE,
+                    'created_at' => $now,
+                    'updated_at' => $now
+                );
+        }
+
+        // create collection from array
+        $collection = new \Illuminate\Database\Eloquent\Collection($data);
+        // chunk into smaller pieces,
+        // optimum 1000 items
+        // 9000 array item will raise error
+        $chunks = $collection->chunk(1000);
+        //convert chunk to array
+        $chunks->toArray();
+
+        //loop through chunks:
+        foreach($chunks as $chunk) {
+            DB::table('issued_coupons')->insert($chunk->toArray());
+        }
+    }
+
     /**
      * Get available coupon code
      * If there are already 'issued' coupon with user_email return those issued coupon
@@ -269,7 +307,7 @@ class IssuedCoupon extends Eloquent
 
     /**
      * Make this issued coupon available for purchase again.
-     * 
+     *
      * @return [type] [description]
      */
     public function makeAvailable()
@@ -281,5 +319,21 @@ class IssuedCoupon extends Eloquent
         $this->status = self::STATUS_AVAILABLE;
 
         $this->touch();
+    }
+
+    /**
+     * Reset Coupon Transfer fields.
+     *
+     * @return [type] [description]
+     */
+    public function resetTransfer()
+    {
+        $this->original_user_id = null;
+        $this->transfer_start_at = null;
+        $this->transfer_complete_at = null;
+        $this->transfer_status = null;
+        $this->transfer_name = null;
+        $this->transfer_email = null;
+        $this->save();
     }
 }

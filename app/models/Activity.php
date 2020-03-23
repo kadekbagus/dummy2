@@ -28,7 +28,8 @@ class Activity extends Eloquent
     const ACTIVTY_GROUP_MOBILE = 'mobile-ci';
 
     protected $hidden = ['http_method', 'request_uri', 'post_data', 'metadata_user', 'metadata_staff', 'metadata_object', 'metadata_location'];
-
+    public $fromQueue = false;
+    public $currentUrl = '';
     /**
      * Import trait ModelStatusTrait so we can use some common scope dealing
      * with `status` field.
@@ -372,6 +373,7 @@ class Activity extends Eloquent
             $primaryKey = $object->getKeyName();
             $this->object_id = $object->$primaryKey;
             $this->object_name = get_class($object);
+
             switch (get_class($object)) {
                 case 'News':
                     if (strtolower($object->object_type) === 'promotion') {
@@ -455,11 +457,31 @@ class Activity extends Eloquent
                     $this->object_display_name = $object->payment_name;
                     break;
 
+                case 'Article':
+                    $this->object_display_name = $object->title;
+                    break;
+
                 case 'PaymentTransaction':
-                    $paymentProvider = PaymentProvider::where('payment_provider_id', '=', $object->payment_provider_id)->first();
-                    if (is_object($paymentProvider)) {
-                        $this->object_display_name = $paymentProvider->payment_name;
+                    if (in_array($object->payment_method, ['midtrans', 'midtrans-qris'])) {
+                        $this->object_display_name = $object->details->count() > 0 ?
+                                                        $object->details->first()->object_name :
+                                                        'Can not get payment detail record.';
+
                     }
+                    else {
+                        $paymentProvider = PaymentProvider::where('payment_provider_id', '=', $object->payment_provider_id)->first();
+                        if (is_object($paymentProvider)) {
+                            $this->object_display_name = $paymentProvider->payment_name;
+                        }
+                    }
+                    break;
+
+                case 'Pulsa':
+                    $this->object_display_name = $object->pulsa_display_name;
+                    break;
+
+                case 'DigitalProduct':
+                    $this->object_display_name = $object->product_name;
                     break;
 
                 default:
@@ -531,13 +553,9 @@ class Activity extends Eloquent
             $primaryKey = $object->getKeyName();
             $this->coupon_id = $object->$primaryKey;
             $this->coupon_name = $object->promotion_name;
-
-            $this->metadata_object = $object->toJSON();
         } else {
             $this->coupon_id = null;
             $this->coupon_name = null;
-
-            $this->metadata_object = null;
         }
 
         return $this;
@@ -876,10 +894,6 @@ class Activity extends Eloquent
                 // try to get the current session id
                 $this->session_id = static::getSessionId();
             }
-
-            if ($this->activity_type !== 'logout'){
-                $this->saveToConnectedNow();
-            }
         }
 
         $notificationToken = OrbitInput::post('notification_token', OrbitInput::get('notification_token', NULL));
@@ -912,17 +926,18 @@ class Activity extends Eloquent
             'datetime' => date('Y-m-d H:i:s'),
             'referer' => substr($referer, 0, 2048),
             'orbit_referer' => substr($orbitReferer, 0, 2048),
-            'current_url' => Request::fullUrl(),
+            'current_url' => ($this->fromQueue) ? $this->currentUrl : Request::fullUrl(),
             'merchant_id' => OrbitInput::post('merchant_id', NULL),
             'notification_token' => $notificationToken
         ]);
 
+        // disable logging
         // Format -> JOB_ID;EXTENDED_ACTIVITY_ID;ACTIVITY_ID;MESSAGE
-        $dataLog = sprintf("%s;%s;\n", $activityQueue, $this->activity_id);
+        // $dataLog = sprintf("%s;%s;\n", $activityQueue, $this->activity_id);
 
         // Write the error log to dedicated file so it is easy to investigate and
         // easy to replay because the log is structured
-        file_put_contents(storage_path() . '/logs/activity-model.log', $dataLog, FILE_APPEND);
+        // file_put_contents(storage_path() . '/logs/activity-model.log', $dataLog, FILE_APPEND);
 
         // Save to object page views table
         Queue::push('Orbit\\Queue\\Activity\\ObjectPageViewActivityQueue', [
@@ -1079,60 +1094,6 @@ class Activity extends Eloquent
     }
 
     /**
-     * Check, Create and Update Connected Now.
-     *
-     * @author Irianto <irianto@dominopos.com>
-     * @throws Exception
-     */
-    protected function saveToConnectedNow()
-    {
-        $date = date('Y-m-d');
-        $hour = date('H');
-        $minute = date('i');
-
-        $activity = ConnectedNow::select('connected_now.*', 'list_connected_user.user_id')->leftJoin('list_connected_user', function ($join) {
-                $join->on('connected_now.connected_now_id', '=', 'list_connected_user.connected_now_id');
-                $join->where('list_connected_user.user_id', '=', $this->user_id);
-            })
-            ->where('merchant_id', '=', $this->location_id)
-            ->where('date', '=', $date)
-            ->where('hour', '=', $hour)
-            ->where('minute', '=', $minute)
-            ->first();
-
-        if (empty($activity)) {
-            if (! empty($this->location_id)) {
-                $newConnected = new ConnectedNow();
-                $newConnected->merchant_id = $this->location_id;
-                $newConnected->customer_connected = 1;
-                $newConnected->date = $date;
-                $newConnected->hour = $hour;
-                $newConnected->minute = $minute;
-                $newConnected->save();
-
-                if (! empty($this->user_id)) {
-                    $newListConnectedUser = new ListConnectedUser();
-                    $newListConnectedUser->connected_now_id = $newConnected->connected_now_id;
-                    $newListConnectedUser->user_id = $this->user_id;
-                    $newListConnectedUser->save();
-                }
-            }
-        } else {
-            if (is_null($activity->user_id)) {
-                if (! empty($this->user_id)) {
-                    $newListConnectedUser = new ListConnectedUser();
-                    $newListConnectedUser->connected_now_id = $activity->connected_now_id;
-                    $newListConnectedUser->user_id = $this->user_id;
-                    $newListConnectedUser->save();
-                }
-
-                $activity->customer_connected += 1;
-                $activity->save();
-            }
-        }
-    }
-
-    /**
      * Add the email to subscriber list in the Mailchimp.
      *
      * @author Rio Astamal <rio@dominopos.com>
@@ -1239,5 +1200,15 @@ class Activity extends Eloquent
 
     protected function removeEmoji($text){
         return preg_replace('/([0-9|#][\x{20E3}])|[\x{00ae}|\x{00a9}|\x{203C}|\x{2047}|\x{2048}|\x{2049}|\x{3030}|\x{303D}|\x{2139}|\x{2122}|\x{3297}|\x{3299}][\x{FE00}-\x{FEFF}]?|[\x{2190}-\x{21FF}][\x{FE00}-\x{FEFF}]?|[\x{2300}-\x{23FF}][\x{FE00}-\x{FEFF}]?|[\x{2460}-\x{24FF}][\x{FE00}-\x{FEFF}]?|[\x{25A0}-\x{25FF}][\x{FE00}-\x{FEFF}]?|[\x{2600}-\x{27BF}][\x{FE00}-\x{FEFF}]?|[\x{2900}-\x{297F}][\x{FE00}-\x{FEFF}]?|[\x{2B00}-\x{2BF0}][\x{FE00}-\x{FEFF}]?|[\x{1F000}-\x{1F6FF}][\x{FE00}-\x{FEFF}]?/u', '', $text);
+    }
+
+    public function setCurrentUrl($url)
+    {
+        if (!empty($url) && $url !== '') {
+            $this->fromQueue = true;
+            $this->currentUrl = $url;
+        }
+
+        return $this;
     }
 }

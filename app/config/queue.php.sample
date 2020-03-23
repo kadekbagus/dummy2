@@ -76,6 +76,13 @@ return array(
 			'ttr'    => 60,
 		),
 
+		'gtm_notification' => array(
+			'driver' => 'beanstalkd',
+			'host'   => 'localhost',
+			'queue'  => 'gtm_notification',
+			'ttr'    => 60,
+		),
+
 		'review_email' => array(
 			'driver' => 'beanstalkd',
 			'host'   => 'localhost',
@@ -105,6 +112,12 @@ return array(
 			'queue'  => 'default',
 		),
 
+		'gtm_pulsa' => array(
+			'driver' => 'beanstalkd',
+			'host'   => 'localhost',
+			'queue'  => 'gtm_pulsa',
+			'ttr'    => 60,
+		),
 	),
 
 	/*

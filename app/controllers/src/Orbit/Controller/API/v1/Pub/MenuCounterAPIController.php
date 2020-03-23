@@ -26,6 +26,8 @@ use Activity;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 use Mall;
+use Tenant;
+use Coupon;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use Orbit\Helper\Util\SimpleCache;
@@ -35,6 +37,8 @@ use Carbon\Carbon as Carbon;
 use stdClass;
 use Country;
 use UserSponsor;
+use UserDetail;
+use ArticleSearch;
 
 class MenuCounterAPIController extends PubControllerAPI
 {
@@ -77,6 +81,13 @@ class MenuCounterAPIController extends PubControllerAPI
             $mallId = OrbitInput::get('mall_id', null);
             $keyword = OrbitInput::get('keyword', null);
             $myCCFilter = OrbitInput::get('my_cc_filter', false);
+            $articleCategories = OrbitInput::get('category_id', []);
+            $articleObjectType = OrbitInput::get('object_type', null);
+            $articleObjectId = OrbitInput::get('object_id', null);
+            $ratingLow = OrbitInput::get('rating_low', 0);
+            $ratingHigh = OrbitInput::get('rating_high', 5);
+            $ratingLow = empty($ratingLow) ? 0 : $ratingLow;
+            $ratingHigh = empty($ratingHigh) ? 5 : $ratingHigh;
 
             $prefix = DB::getTablePrefix();
 
@@ -101,6 +112,10 @@ class MenuCounterAPIController extends PubControllerAPI
 
             $merchantJsonQuery = array('from' => 0, 'size' => 1);
             $storeJsonQuery = $merchantJsonQuery;
+
+            $articleSearcher = new ArticleSearch();
+            $articleSearcher->setPaginationParams(['from' => 0, 'size' => 1]);
+            $articleSearcher->isActive(compact('dateTimeEs'));
 
             // get user lat and lon
             if ($location == 'mylocation') {
@@ -167,9 +182,15 @@ class MenuCounterAPIController extends PubControllerAPI
             $partnerFilterMustNot = [];
             $partnerFilterMust = [];
             $countryData = null;
+            $genderFilter = [];
+            $genderFilterStore = [];
+            $articleLinkedObjectFilter = [];
+            $searchLinkedObjects = false;
+            $searchCategories = false;
+            $searchKeyword = false;
 
             // filter by country
-            OrbitInput::get('country', function ($countryFilter) use (&$campaignJsonQuery, &$mallJsonQuery, &$campaignCountryCityFilterArr, &$countryData, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr, &$campaignCountryFilter, &$storeCountryFilter) {
+            OrbitInput::get('country', function ($countryFilter) use (&$campaignJsonQuery, &$mallJsonQuery, &$campaignCountryCityFilterArr, &$countryData, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr, &$campaignCountryFilter, &$storeCountryFilter, &$articleSearcher) {
                 $countryData = Country::select('country_id')->where('name', $countryFilter)->first();
 
                 // campaign
@@ -209,10 +230,12 @@ class MenuCounterAPIController extends PubControllerAPI
                                                 'name' => 'country_city_hits'
                                             ],
                                         ]];
+
+                $articleSearcher->filterByCountry($countryFilter);
             });
 
             // filter by city, only filter when countryFilter is not empty
-            OrbitInput::get('cities', function ($cityFilters) use (&$campaignJsonQuery, &$mallJsonQuery, $countryFilter, &$campaignCountryCityFilterArr, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr, &$campaignCityFilter, &$storeCityFilter) {
+            OrbitInput::get('cities', function ($cityFilters) use (&$campaignJsonQuery, &$mallJsonQuery, $countryFilter, &$campaignCountryCityFilterArr, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr, &$campaignCityFilter, &$storeCityFilter, &$articleSearcher) {
                 if (! empty($countryFilter)) {
                     $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.news.city', '');
                     $campaignCityFilterArr = [];
@@ -270,6 +293,7 @@ class MenuCounterAPIController extends PubControllerAPI
                     ];
                 }
 
+                $articleSearcher->filterByCities($cityFilters);
             });
 
             // filter by mall_id (use in mall homepage/mall detail)
@@ -278,8 +302,14 @@ class MenuCounterAPIController extends PubControllerAPI
                 $mallFilterStore = ['nested' => ['path' => 'tenant_detail', 'query' => ['bool' => ['must' => ['match' => ['tenant_detail.mall_id' => $mallId]]]], 'inner_hits' => ['name' => 'tenant_detail_hits']]];
             });
 
+            if (! empty($articleObjectType) && ! empty($articleObjectId)) {
+                $searchLinkedObjects = true;
+            }
+
             // filter by keywords
             OrbitInput::get('keywords', function($keywords) use (&$keywordFilter, &$keywordFilterShould, &$keywordMallFilter, &$keywordMallFilterShould) {
+                $forbiddenCharacter = array('>', '<', '(', ')', '{', '}', '[', ']', '^', '"', '~', '/');
+                $keywords = str_replace($forbiddenCharacter, '', $keywords);
 
                 $esPriority = Config::get('orbit.elasticsearch.priority');
 
@@ -337,7 +367,15 @@ class MenuCounterAPIController extends PubControllerAPI
                                             "country" . $priorityCountry,
                                             "province" . $priorityProvince,
                                             "city" . $priorityCity)));
+
             });
+
+            $articleKeyword = OrbitInput::get('article_keywords', null);
+            $forbiddenCharacter = array('>', '<', '(', ')', '{', '}', '[', ']', '^', '"', '~', '/');
+            $articleKeyword = str_replace($forbiddenCharacter, '', $articleKeyword);
+            if (! empty($articleKeyword)) {
+                $searchKeyword = true;
+            }
 
             // filter by category
             OrbitInput::get('category_id', function($category_ids) use (&$categoryCampaignFilter, &$categoryStoreFilter) {
@@ -346,6 +384,16 @@ class MenuCounterAPIController extends PubControllerAPI
                     $categoryStoreFilter['bool']['should'][] = ['match' => ['category' => $category_id]];
                 }
             });
+
+            // Get object categories.
+            // Useful for case like related article to a campaign/object.
+            // We will query the object to root of their store/mall and get the category.
+            // Merge with the requested categories (if any).
+            $articleCategories = array_merge($articleCategories, $this->getObjectCategories());
+
+            if (! empty($articleCategories)) {
+                $searchCategories = true;
+            }
 
             // filter by sponsor provider
             OrbitInput::get('sponsor_provider_ids', function($sponsor_provider_ids) use (&$sponsorFilter) {
@@ -442,12 +490,99 @@ class MenuCounterAPIController extends PubControllerAPI
                 }
             }
 
+            OrbitInput::get('gender', function($gender) use (&$genderFilter, &$genderFilterStore, $user) {
+                $gender = strtolower($gender);
+                if ($gender === 'mygender') {
+                    $userGender = UserDetail::select('gender')->where('user_id', '=', $user->user_id)->first();
+                    if ($userGender) {
+                        if (strtolower($userGender->gender) == 'm') {
+                            $genderFilter = ['match' => ['is_all_gender' => 'F']];
+                            $genderFilterStore = ['match' => ['gender' => 'F']];
+                        } else if (strtolower($userGender->gender) == 'f') {
+                            $genderFilter = ['match' => ['is_all_gender' => 'M']];
+                            $genderFilterStore = ['match' => ['gender' => 'M']];
+                        }
+                    }
+                }
+            });
 
-            /* old query
-            if (! empty($campaignCountryCityFilterArr)) {
-                $campaignJsonQuery['query']['bool']['should'][] = $campaignCountryCityFilterArr;
-                $couponJsonQuery['query']['bool']['should'][] = $campaignCountryCityFilterArr;
-            }*/
+            // Build article search filter.
+            if ($searchLinkedObjects) {
+                $articleSearcher->filterByLinkedObject($articleObjectType, $articleObjectId, 'should');
+
+                if ($searchCategories) {
+                    $articleSearcher->filterByCategories($articleCategories, 'should');
+                }
+
+                if ($searchKeyword) {
+                    $articleSearcher->filterByKeyword($articleKeyword, 'should');
+                }
+
+                $articleSearcher->minimumShouldMatch(1);
+            }
+            else {
+                if ($searchCategories) {
+                    $articleSearcher->filterByCategories($articleCategories, 'must');
+                }
+
+                if ($searchKeyword) {
+                    $articleSearcher->filterByKeyword($articleKeyword, 'must');
+                }
+            }
+
+            // calculate rating and review based on location/mall
+            $scriptFieldRating = "double counter = 0; double rating = 0;";
+            $scriptFieldReview = "double review = 0;";
+
+            if (! empty($mallId)) {
+                // count total review and average rating for store inside mall
+                $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('mall_rating.rating_" . $mallId . "')) { if (! doc['mall_rating.rating_" . $mallId . "'].empty) { counter = counter + doc['mall_rating.review_" . $mallId . "'].value; rating = rating + (doc['mall_rating.rating_" . $mallId . "'].value * doc['mall_rating.review_" . $mallId . "'].value);}};";
+                $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('mall_rating.review_" . $mallId . "')) { if (! doc['mall_rating.review_" . $mallId . "'].empty) { review = review + doc['mall_rating.review_" . $mallId . "'].value;}}; ";
+            } else if (! empty($cityFilters)) {
+                // count total review and average rating based on city filter
+                $countryId = $countryData->country_id;
+                foreach ((array) $cityFilters as $cityFilter) {
+                    $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { if (! doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value * doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value);}}; ";
+                    $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { if (! doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value;}}; ";
+                }
+            } else if (! empty($countryFilter)) {
+                // count total review and average rating based on country filter
+                $countryId = $countryData->country_id;
+                $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { if (! doc['location_rating.rating_" . $countryId . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);}}; ";
+                $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "')) { if (! doc['location_rating.review_" . $countryId . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "'].value;}}; ";
+            } else {
+                // count total review and average rating based in all location
+                $mallCountry = Mall::groupBy('country')->lists('country');
+                $countries = Country::select('country_id')->whereIn('name', $mallCountry)->get();
+
+                foreach ($countries as $country) {
+                    $countryId = $country->country_id;
+                    $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { if (! doc['location_rating.rating_" . $countryId . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);}}; ";
+                    $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "')) { if (! doc['location_rating.review_" . $countryId . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "'].value;}}; ";
+                }
+            }
+
+            $scriptFieldRating = $scriptFieldRating . " return (counter == 0 && rateLow == 0) || "."((counter>0) && (rating/counter >= rateLow) && (rating/counter <= rateHigh));";
+            $scriptFieldReview = $scriptFieldReview . " if(review == 0) {return 0;} else {return review;}; ";
+
+            $rateLow = (double) $ratingLow;
+            $rateHigh = (double) $ratingHigh + 0.001;
+
+            $paramFilterRating = compact('rateLow', 'rateHigh');
+
+            $queryFilterRating = ['script' => ['script' => $scriptFieldRating, 'params' => $paramFilterRating]];
+
+            // filter by gender
+            if (! empty($genderFilter)) {
+                $couponJsonQuery['query']['bool']['must_not'][] = $genderFilter;
+                $campaignJsonQuery['query']['bool']['must_not'][] = $genderFilter;
+            }
+
+            if (! empty($genderFilterStore)) {
+                $storeJsonQuery['query']['bool']['must_not'][] = $genderFilterStore;
+                $merchantJsonQuery['query']['bool']['must_not'][] = $genderFilterStore;
+            }
+
 
             if (! empty($campaignCountryFilter)) {
                 $campaignJsonQuery['query']['bool']['must'][] = $campaignCountryFilter;
@@ -459,14 +594,6 @@ class MenuCounterAPIController extends PubControllerAPI
                 $couponJsonQuery['query']['bool']['must'][] = $campaignCityFilter;
             }
 
-            // if (! empty($merchantCountryCityFilterArr)) {
-            //     $merchantJsonQuery['query']['bool']['must'][] = $merchantCountryCityFilterArr;
-            // }
-
-            /* old query
-            if (! empty($storeCountryCityFilterArr)) {
-                $storeJsonQuery['query']['bool']['must'][] = $storeCountryCityFilterArr;
-            }*/
             if (! empty($storeCountryFilter)) {
                 $merchantJsonQuery['query']['bool']['must'][] = $storeCountryFilter;
             }
@@ -509,13 +636,11 @@ class MenuCounterAPIController extends PubControllerAPI
             }
 
             if (! empty($categoryStoreFilter)) {
-                //$storeJsonQuery['query']['bool']['must'][] = $categoryStoreFilter;
                 $merchantJsonQuery['query']['bool']['must'][] = $categoryStoreFilter;
             }
 
             if (! empty($sponsorFilter)) {
                 $campaignJsonQuery['query']['bool']['must'][] = $sponsorFilter;
-                $couponJsonQuery['query']['bool']['must'][] = $sponsorFilter;
             }
 
             if (! empty($partnerFilterMustNot)) {
@@ -529,6 +654,12 @@ class MenuCounterAPIController extends PubControllerAPI
                 $couponJsonQuery['query']['bool']['must'][] = $partnerFilterMust;
                 $merchantJsonQuery['query']['bool']['must'][] = $partnerFilterMust;
             }
+
+            // filter by rating
+            $merchantJsonQuery['query']['bool']['filter'][] = $queryFilterRating;
+            $mallJsonQuery['query']['bool']['filter'][] = $queryFilterRating;
+            $campaignJsonQuery['query']['bool']['filter'][] = $queryFilterRating;
+            $couponJsonQuery['query']['bool']['filter'][] = $queryFilterRating;
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
             $newsIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.news.index');
@@ -577,12 +708,16 @@ class MenuCounterAPIController extends PubControllerAPI
             ];
             $storeResponse = $client->search($storeParam);
 
+            // Get article list
+            $articleResponse = $articleSearcher->getResult();
+
             $campaignRecords = $campaignResponse['aggregations']['campaign_index']['buckets'];
             $couponRecords = $couponResponse['aggregations']['campaign_index']['buckets'];
             $listOfRec = array();
             $listOfRec['promotions'] = 0;
             $listOfRec['coupons'] = 0;
             $listOfRec['news'] = 0;
+            $listOfRec['articles'] = 0;
 
             foreach ($campaignRecords as $campaign) {
                 $key = str_replace($esPrefix, '', $campaign['key']);
@@ -597,6 +732,7 @@ class MenuCounterAPIController extends PubControllerAPI
             $listOfRec['mall'] = empty($mallResponse['hits']['total']) ? 0 : $mallResponse['hits']['total'];
             $listOfRec['merchants'] = empty($merchantResponse['hits']['total']) ? 0 : $merchantResponse['hits']['total'];
             $listOfRec['stores'] = empty($storeResponse['hits']['total']) ? 0 : $storeResponse['hits']['total'];
+            $listOfRec['articles'] = empty($articleResponse['hits']['total']) ? 0 : $articleResponse['hits']['total'];
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
@@ -663,5 +799,93 @@ class MenuCounterAPIController extends PubControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    /**
+     * Get object categories.
+     *
+     * @return [type] [description]
+     */
+    private function getObjectCategories()
+    {
+        $objectType = OrbitInput::get('object_type', '');
+        $objectId = OrbitInput::get('object_id', '');
+
+        switch ($objectType) {
+            case 'event':
+            case 'promotion':
+                return $this->getNewsCategory($objectId);
+                break;
+
+            case 'brand':
+            case 'store':
+                return $this->getBrandCategory($objectId);
+                break;
+
+            case 'coupon':
+                return $this->getCouponCategory($objectId);
+                break;
+
+            default:
+                return [];
+                break;
+        }
+    }
+
+    /**
+     * Get news/promotion categories.
+     *
+     * @param  string $newsId [description]
+     * @return [type]         [description]
+     */
+    private function getNewsCategory($newsId = '')
+    {
+        return News::select('categories.category_id')
+                     ->leftJoin('news_merchant', 'news.news_id', '=', 'news_merchant.news_id')
+                     ->leftJoin('category_merchant', 'news_merchant.merchant_id', '=', 'category_merchant.merchant_id')
+                     ->join('categories', 'category_merchant.category_id', '=', 'categories.category_id')
+                     ->where('categories.merchant_id', 0)
+                     ->where('categories.status', 'active')
+                     ->where('news.news_id', $newsId)
+                     ->groupBy('categories.category_id')
+                     ->get()->lists('category_id');
+    }
+
+    /**
+     * Get Brand/store categories.
+     *
+     * @param  string $brandId [description]
+     * @return [type]          [description]
+     */
+    private function getBrandCategory($brandId = '')
+    {
+        return Tenant::select('categories.category_id')
+                       ->leftJoin('category_merchant', 'merchants.merchant_id', '=', 'category_merchant.merchant_id')
+                       ->join('categories', 'category_merchant.category_id', '=', 'categories.category_id')
+                       ->where('categories.merchant_id', 0)
+                       ->where('categories.status', 'active')
+                       ->where('merchants.merchant_id', $brandId)
+                       ->groupBy('categories.category_id')
+                       ->get()->lists('category_id');
+    }
+
+    /**
+     * Get coupon categories.
+     *
+     * @param  string $couponId [description]
+     * @return [type]           [description]
+     */
+    private function getCouponCategory($couponId = '')
+    {
+        return Coupon::select('category_merchant.category_id')
+                       ->leftJoin('promotion_retailer', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
+                       ->leftJoin('merchants', 'promotion_retailer.retailer_id', '=', 'merchants.merchant_id')
+                       ->leftJoin('category_merchant', 'merchants.merchant_id', '=', 'category_merchant.merchant_id')
+                       ->join('categories', 'category_merchant.category_id', '=', 'categories.category_id')
+                       ->where('categories.merchant_id', 0)
+                       ->where('categories.status', 'active')
+                       ->where('promotions.promotion_id', $couponId)
+                       ->groupBy('categories.category_id')
+                       ->get()->lists('category_id');
     }
 }

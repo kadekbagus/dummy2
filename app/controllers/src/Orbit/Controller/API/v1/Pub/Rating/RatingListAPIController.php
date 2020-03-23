@@ -58,6 +58,8 @@ class RatingListAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $mongoConfig = Config::get('database.mongodb');
             $mallId = OrbitInput::get('mall_id', null);
+            $sortBy = OrbitInput::get('sortby', 'updated_at');
+            $sortMode = OrbitInput::get('sortmode', 'desc');
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -66,10 +68,14 @@ class RatingListAPIController extends PubControllerAPI
                 array(
                     'object_id'   => $objectId,
                     'object_type' => $objectType,
+                    'sort_by' => $sortBy,
+                    'sort_mode' => $sortMode
                 ),
                 array(
                     'object_id' => 'required',
-                    'object_type' => 'required'
+                    'object_type' => 'required',
+                    'sort_by' => 'in:updated_at,rating',
+                    'sort_mode' => 'in:desc,asc'
                 )
             );
 
@@ -84,8 +90,8 @@ class RatingListAPIController extends PubControllerAPI
                 'object_type' => $objectType,
                 'take'        => $take,
                 'skip'        => $skip,
-                'sortBy'      => 'updated_at',
-                'sortMode'    => 'desc'
+                'sortBy'      => $sortBy,
+                'sortMode'    => $sortMode
             ];
 
             $arrayQuery = '';
@@ -170,11 +176,18 @@ class RatingListAPIController extends PubControllerAPI
                     $image = "(CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END) as user_picture";
                 }
 
-                $userList = User::select('users.user_id', 'roles.role_name', DB::raw("(CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname)) as user_name"), DB::raw($image))
+                $userList = User::select('users.user_id',
+                                    'roles.role_name',
+                                    DB::raw("(CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname)) as user_name"),
+                                    DB::raw($image),
+                                    DB::raw("{$prefix}user_details.gender as user_gender"),
+                                    'users.created_at'
+                                  )
                                   ->leftJoin('media', function ($q) {
                                         $q->on('media.object_id', '=', 'users.user_id')
                                           ->on('media.media_name_long', '=', DB::raw("'user_profile_picture_orig'"));
                                     })
+                                  ->leftJoin('user_details', 'users.user_id', '=', 'user_details.user_id')
                                   ->join('roles', 'roles.role_id', '=', 'users.user_role_id')
                                   ->whereIn('users.user_id', $userIds)
                                   ->groupBy('users.user_id')
@@ -186,6 +199,8 @@ class RatingListAPIController extends PubControllerAPI
                 foreach ($userList as $list) {
                     $userRating[$list->user_id]['user_name'] = $list->user_name;
                     $userRating[$list->user_id]['user_picture'] = $list->user_picture;
+                    $userRating[$list->user_id]['user_gender'] = $list->user_gender;
+                    $userRating[$list->user_id]['user_created_at'] = $list->created_at->format('Y-m-d H:i:s');
 
                     if (in_array($list->role_name, $roleOfficial)) {
                         $isOfficialUser = 'y';
@@ -207,6 +222,16 @@ class RatingListAPIController extends PubControllerAPI
                     $rating->is_official_user = '';
                     if (! empty($userRating[$rating->user_id]['is_official_user'])) {
                         $rating->is_official_user = $userRating[$rating->user_id]['is_official_user'];
+                    }
+
+                    $rating->user_gender = '';
+                    if (! empty($userRating[$rating->user_id]['user_gender'])) {
+                        $rating->user_gender = $userRating[$rating->user_id]['user_gender'];
+                    }
+
+                    $rating->user_created_at = '';
+                    if (! empty($userRating[$rating->user_id]['user_created_at'])) {
+                        $rating->user_created_at = $userRating[$rating->user_id]['user_created_at'];
                     }
                 }
             }

@@ -41,16 +41,25 @@ return array(
         'label_coupons'     => 'Coupons',
         'label_events'      => 'Events',
         'subject'           => 'Welcome to Gotomalls!',
+        'header'            => 'Welcome to Gotomalls!',
         'greeting'          => 'Hi',
-        'message_part1'     => 'Thank you for joining Gotomalls!',
+        'message_part1'     => 'Thank you for joining Gotomalls. You have sucessfully created a Gotomalls account. Please click the "Activate Account" button below to verify your email address and complete your registration.',
         'message_part2'     => 'To activate your account, please click the button below.',
         'button_activation' => 'Activate Account',
         'message_part3'     => 'You can access Gotomalls on difference devices with the same account:',
-        'list_1'            => "Press the \"Sign In\" button located in the side menu.",
-        'list_2'            => 'Enter your email address.',
-        'list_3'            => 'Enter your password.',
+        'list_1_title'      => 'Find a Good Discount',
+        'list_1_body'       => 'Find the latest promotion, discounts and other attractive offers at your favorite malls and brands in Indonesia. Don\'t miss the latest promotions of your favorite brands, only in Gotomalls, the #1 shopping directory in Indonesia! Check out the latest promotions at
+                                <a style="text-decoration: none;color:#f43d3c;" href=":promotionListUrl">:promotionListLabel</a>.',
+        'list_2_title'      => 'Buy a Coupons and Tickets',
+        'list_2_body'       => 'Gotomalls provides tickets for amusement park, concerts, stand ups comedy, sportsevents and tickets for other exciting events in Indonesia. You can buy your favorite event tickets on Gotomalls at the best price easily, safely and comfortably. Check the event tickets directly at
+                                <a style="text-decoration: none;color:#f43d3c;" href=":eventListUrl">:eventListLabel</a>.',
+        'list_3_title'      => 'Buy Pulsa dan Data Plan',
+        'list_3_body'       => 'Gotomalls has a lot of pulsa and data packages promotions which you can access and buy directly on the Gotomalls website. You can use this opportunity for personalus or for your personal pulsa business. There are hundreds of users who use Gotomalls as a source of their pulsa business using the available promotion in Gotomalls. There will always be some Pulsa promotions on Gotomalls, check the promo directly at
+                                <a style="text-decoration: none;color:#f43d3c;" href=":purchasePulsaUrl">:purchasePulsaLabel</a>.',
         'message_part4'     => 'Have fun with Gotomalls!',
         'team_name'         => 'Gotomalls Team',
+        'ignore_email'      => 'Just ignore this email if you never created an account on Gotomalls. It is likely someone just type your email address by accident.',
+        'find_follow'       => 'Find and follow Us',
     ),
 
     'reset_password' => array(

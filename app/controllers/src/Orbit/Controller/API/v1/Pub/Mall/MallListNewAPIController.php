@@ -27,7 +27,7 @@ use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\SimpleCache;
-use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 use Elasticsearch\ClientBuilder;
 use Lang;
 use PartnerAffectedGroup;
@@ -107,10 +107,13 @@ class MallListNewAPIController extends PubControllerAPI
             $ul = OrbitInput::get('ul', null);
             $language = OrbitInput::get('language', 'id');
             $radius = Config::get('orbit.geo_location.distance', 10);
-            $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
             $viewType = OrbitInput::get('view_type', 'grid');
             $list_type = OrbitInput::get('list_type', 'preferred');
             $withAdvert = (bool) OrbitInput::get('with_advert', true);
+            $ratingLow = (double) OrbitInput::get('rating_low', 0);
+            $ratingHigh = (double) OrbitInput::get('rating_high', 5);
+            $ratingLow = empty($ratingLow) ? 0 : $ratingLow;
+            $ratingHigh = empty($ratingHigh) ? 5 : $ratingHigh;
             $latitude = '';
             $longitude = '';
             $locationFilter = '';
@@ -136,7 +139,9 @@ class MallListNewAPIController extends PubControllerAPI
                 'sort_mode' => $sortMode,
                 'language' => $language,
                 'location' => $location,
-                'list_type' => $list_type
+                'list_type' => $list_type,
+                'rating_low' => $ratingLow,
+                'rating_high' => $ratingHigh,
             ];
 
             $timezone = 'Asia/Jakarta'; // now with jakarta timezone
@@ -165,6 +170,8 @@ class MallListNewAPIController extends PubControllerAPI
             $this->searcher->filterByCountryAndCities($area);
 
             $keyword = OrbitInput::get('keyword', null);
+            $forbiddenCharacter = array('>', '<', '(', ')', '{', '}', '[', ']', '^', '"', '~', '/');
+            $keyword = str_replace($forbiddenCharacter, '', $keyword);
             if (! empty($keyword)) {
                 $cacheKey['keyword'] = $keyword;
                 $this->searcher->filterByKeyword($keyword);
@@ -237,6 +244,15 @@ class MallListNewAPIController extends PubControllerAPI
                 $withPreferred = $advertResult['withPreferred'];
             }
 
+            //filter by rating number
+            $this->searcher->filterByRating(
+                $ratingLow,
+                $ratingHigh,
+                compact(
+                    'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
+                )
+            );
+
             $scriptFields = $this->searcher->addReviewFollowScript(compact(
                 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
@@ -256,14 +272,17 @@ class MallListNewAPIController extends PubControllerAPI
                 case 'updated_at':
                     $this->searcher->sortByUpdatedAt();
                     break;
+                case 'location':
+                    $this->searcher->sortByNearest($ul);
+                    break;
                 case 'rating':
-                    $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
+                    $this->searcher->sortByRating($scriptFields['scriptFieldRating'], $sortMode);
                     break;
                 case 'followed':
                     $this->searcher->sortByFavorite($scriptFields['scriptFieldFollow']);
                     break;
                 default:
-                    $this->searcher->sortByName();
+                    $this->searcher->sortByName($language, $sortMode);
                     break;
             }
 
@@ -282,10 +301,11 @@ class MallListNewAPIController extends PubControllerAPI
 
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-                $response = $recordCache->get($serializedCacheKey, function() {
-                    return $this->searcher->getResult();
+                $response = $recordCache->get($serializedCacheKey, function() use($serializedCacheKey, $recordCache) {
+                    $resp = $this->searcher->getResult();
+                    $recordCache->put($serializedCacheKey, $resp);
+                    return $resp;
                 });
-                $recordCache->put($serializedCacheKey, $response);
             } else {
                 $response = $this->searcher->getResult();
             }
@@ -293,7 +313,7 @@ class MallListNewAPIController extends PubControllerAPI
             $area_data = $response['hits'];
             $listmall = array();
             $cdnConfig = Config::get('orbit.cdn');
-            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            $imgUrl = CdnUrlGeneratorWithCloudfront::create(['cdn' => $cdnConfig], 'cdn');
 
             $total = $area_data['total'];
             foreach ($area_data['hits'] as $dt) {
@@ -325,13 +345,14 @@ class MallListNewAPIController extends PubControllerAPI
                     $pageView = (int) $pageViewGTM + (int) $pageViewMall;
                 }
 
-                $followStatus = false;
-                if (! empty($objectFollow)) {
-                    if (in_array($mallId, $objectFollow)) {
-                        // if mall_id is available inside $objectFollow set follow status to true
-                        $followStatus = true;
-                    }
-                }
+                /*** disable follow status on listing ***/
+                // $followStatus = false;
+                // if (! empty($objectFollow)) {
+                //     if (in_array($mallId, $objectFollow)) {
+                //         // if mall_id is available inside $objectFollow set follow status to true
+                //         $followStatus = true;
+                //     }
+                // }
 
                 if ($words === 1) {
                     // handle if user filter location with one word, ex "jakarta", data in city "jakarta selatan", "jakarta barat" etc will be dissapear
@@ -377,7 +398,8 @@ class MallListNewAPIController extends PubControllerAPI
                             }
                         }
 
-                        $areadata['follow_status'] = $followStatus;
+                        /*** disable follow status on listing ***/
+                        //$areadata['follow_status'] = $followStatus;
                         $listmall[] = $areadata;
                     }
                     $total = count($listmall);
@@ -420,7 +442,8 @@ class MallListNewAPIController extends PubControllerAPI
                         $areadata['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
                     }
 
-                    $areadata['follow_status'] = $followStatus;
+                    /*** disable follow status on listing ***/
+                    //$areadata['follow_status'] = $followStatus;
                     $listmall[] = $areadata;
                 }
             }

@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>Suspicious Payment</title>
+        <title>Denied Payment</title>
     </head>
     <body>
         <h1>Denied Payment</h1>

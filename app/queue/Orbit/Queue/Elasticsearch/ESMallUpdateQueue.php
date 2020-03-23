@@ -168,6 +168,8 @@ class ESMallUpdateQueue
                 'status'          => $mall->status,
                 'ci_domain'       => $mall->ci_domain,
                 'is_subscribed'   => $mall->is_subscribed,
+                'disable_ads'     => $mall->disable_ads,
+                'disable_ymal'    => $mall->disable_ymal,
                 'updated_at'      => date('Y-m-d', strtotime($mall->updated_at)) . 'T' . date('H:i:s', strtotime($mall->updated_at)) . 'Z',
                 'keywords'        => '',
                 'postal_code'     => $mall->postal_code,
@@ -303,6 +305,12 @@ class ESMallUpdateQueue
                 // Notify the queueing system to delete Elasticsearch document
                 $esQueue = new \Orbit\Queue\Elasticsearch\ESCouponDeleteQueue();
                 $response = $esQueue->fire($fakeJob, ['coupon_id' => $coupon->promotion_id]);
+
+                $esAdvertCouponQueue = new \Orbit\Queue\Elasticsearch\ESAdvertCouponDeleteQueue();
+                $response = $esAdvertCouponQueue->fire($fakeJob, ['coupon_id' => $coupon->promotion_id]);
+
+                $esCouponSuggestionDelete = new \Orbit\Queue\Elasticsearch\ESCouponSuggestionDeleteQueue();
+                $doESCouponSuggestionDelete = $esCouponSuggestionDelete->fire($fakeJob, ['coupon_id' => $coupon->promotion_id]);
             } else {
                 // Notify the queueing system to update Elasticsearch document
                 $esQueue = new \Orbit\Queue\Elasticsearch\ESCouponUpdateQueue();

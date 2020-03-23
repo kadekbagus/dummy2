@@ -164,6 +164,7 @@ class RegistrationMail
         $tokenUrl = sprintf($baseUrl, $token->token_value, $user->user_email, $data['languageId'], $toUrl);
         $contactInfo = Config::get('orbit.contact_information.customer_service');
         $baseLinkUrl = Config::get('app.url') . '/%s?utm_source=gtm-activation-email&utm_medium=email&utm_content=menulink&lang=' . $data['languageId'];
+        $baseLinkUrlLabel = str_replace(['http://', 'https://'], '', Config::get('app.url')) . '/%s';
 
         $dataCopy = $data;
         $data = array(
@@ -188,18 +189,31 @@ class RegistrationMail
             'label_lucky_draws' => Lang::get('email.activation.label_lucky_draws'),
             'label_events'      => Lang::get('email.activation.label_events'),
             'subject'           => Lang::get('email.activation.subject'),
+            'header'            => Lang::get('email.activation.header'),
             'greeting'          => Lang::get('email.activation.greeting'),
             'message_part1'     => Lang::get('email.activation.message_part1'),
             'message_part2'     => Lang::get('email.activation.message_part2'),
             'button_activation' => Lang::get('email.activation.button_activation'),
             'message_part3'     => Lang::get('email.activation.message_part3'),
-            'list_1'            => Lang::get('email.activation.list_1'),
-            'list_2'            => Lang::get('email.activation.list_2'),
-            'list_3'            => Lang::get('email.activation.list_3'),
-            'list_4'            => Lang::get('email.activation.list_4'),
-            'list_5'            => Lang::get('email.activation.list_5'),
+            'list_1_title'      => Lang::get('email.activation.list_1_title'),
+            'list_1_body'       => Lang::get('email.activation.list_1_body', [
+                                    'promotionListUrl' => sprintf($baseLinkUrl, 'promotions'),
+                                    'promotionListLabel' => sprintf($baseLinkUrlLabel, 'promotions'),
+                                ]),
+            'list_2_title'      => Lang::get('email.activation.list_2_title'),
+            'list_2_body'       => Lang::get('email.activation.list_2_body', [
+                                    'eventListUrl' => sprintf($baseLinkUrl, 'events'),
+                                    'eventListLabel' => sprintf($baseLinkUrlLabel, 'events'),
+                                ]),
+            'list_3_title'      => Lang::get('email.activation.list_3_title'),
+            'list_3_body'       => Lang::get('email.activation.list_3_body', [
+                                    'purchasePulsaUrl' => sprintf($baseLinkUrl, 'pulsa') . '&country=Indonesia',
+                                    'purchasePulsaLabel' => sprintf($baseLinkUrlLabel, 'pulsa'),
+                                ]),
             'message_part4'     => Lang::get('email.activation.message_part4'),
-            'team_name'         => Lang::get('email.activation.team_name')
+            'team_name'         => Lang::get('email.activation.team_name'),
+            'ignore_email'      => Lang::get('email.activation.ignore_email'),
+            'find_follow'       => Lang::get('email.activation.find_follow'),
         );
 
         $mailviews = array(

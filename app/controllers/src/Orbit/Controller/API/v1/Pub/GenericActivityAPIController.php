@@ -112,8 +112,11 @@ class GenericActivityAPIController extends PubControllerAPI
                             'promotion' => 'News',
                             'news'      => 'News',
                             'event'     => 'News',
+                            'article'   => 'Article',
                             'paymentprovider' => 'PaymentProvider',
                             'paymenttransaction' => 'PaymentTransaction',
+                            'partner' => 'Partner',
+                            'user'      => 'User',
                         ];
 
                         $className = array_key_exists(strtolower($objectString), $mapObjectType) ? $mapObjectType[strtolower($objectString)] : null;
@@ -212,6 +215,10 @@ class GenericActivityAPIController extends PubControllerAPI
 
                         case 'events':
                             $activity->setObjectDisplayName('Events');
+                            break;
+
+                        case 'articles':
+                            $activity->setObjectDisplayName('Articles');
                             break;
 
                         default:

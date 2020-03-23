@@ -18,7 +18,7 @@ use Mall;
 use Lang;
 use \Exception;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
-use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 use PromotionRetailer;
 use PaymentTransaction;
 use Helper\EloquentRecordCounter as RecordCounter;
@@ -101,6 +101,7 @@ class CouponPurchasedListAPIController extends PubControllerAPI
             $coupon = PaymentTransaction::select(DB::raw("
                                     {$prefix}payment_transaction_details.object_id as object_id,
                                     {$prefix}payment_transactions.amount,
+                                    {$prefix}payment_transactions.currency,
                                     CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
                                     CONCAT({$prefix}payment_normal_paypro_details.store_name,' @ ', {$prefix}payment_normal_paypro_details.building_name) as store_at_building,
                                     {$prefix}payment_transactions.payment_transaction_id,
@@ -137,7 +138,14 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                                                     WHERE opr.promotion_id = {$prefix}promotions.promotion_id
                                                     GROUP BY opr.promotion_id
                                                     ORDER BY om.name
-                                                ) as link_to_tenant
+                                                ) as link_to_tenant,
+                                    (SELECT D.value_in_percent FROM {$prefix}payment_transaction_details PTD
+                                        LEFT JOIN {$prefix}discounts D on D.discount_id = PTD.object_id
+                                        WHERE PTD.object_type = 'discount'
+                                        AND PTD.payment_transaction_id = {$prefix}payment_transactions.payment_transaction_id) as discount_percent,
+                                    (SELECT PTD.price FROM {$prefix}payment_transaction_details PTD
+                                        WHERE PTD.object_type = 'discount'
+                                        AND PTD.payment_transaction_id = {$prefix}payment_transactions.payment_transaction_id) as discount_amount
                             "))
 
                             ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
@@ -171,7 +179,7 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                             ->where('payment_transactions.user_id', $user->user_id)
                             ->where('payment_transaction_details.object_type', 'coupon')
                             ->where('payment_transactions.payment_method', '!=', 'normal')
-                            ->whereNotIn('payment_transactions.status', array('starting', 'denied'))
+                            ->whereNotIn('payment_transactions.status', array('starting', 'denied', 'abort'))
                             ->groupBy('payment_transactions.payment_transaction_id');
 
             OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
@@ -216,7 +224,7 @@ class CouponPurchasedListAPIController extends PubControllerAPI
             $count = $this->calculateCount($prefix, $user);
 
             $cdnConfig = Config::get('orbit.cdn');
-            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            $imgUrl = CdnUrlGeneratorWithCloudfront::create(['cdn' => $cdnConfig], 'cdn');
             $localPath = '';
             $cdnPath = '';
             $listId = '';

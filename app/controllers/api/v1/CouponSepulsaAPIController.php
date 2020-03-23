@@ -136,7 +136,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $maximum_issued_coupon = OrbitInput::post('maximum_issued_coupon');
             $coupon_validity_in_date = OrbitInput::post('coupon_validity_in_date');
             $coupon_notification = OrbitInput::post('coupon_notification');
-            $rule_type = OrbitInput::post('rule_type','unique_coupon_per_user');
+            $rule_type = OrbitInput::post('rule_type');
             $rule_value = OrbitInput::post('rule_value', 0);
             $rule_object_type = OrbitInput::post('rule_object_type');
             $rule_object_id1 = OrbitInput::post('rule_object_id1');
@@ -171,6 +171,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $is_exclusive = OrbitInput::post('is_exclusive', 'N');
             $is_sponsored = OrbitInput::post('is_sponsored', 'N');
             $sponsor_ids = OrbitInput::post('sponsor_ids');
+            $gender = OrbitInput::post('gender', 'Y');
 
             $is3rdPartyPromotion = OrbitInput::post('is_3rd_party_promotion', 'N');
             $promotionValue = OrbitInput::post('promotion_value', NULL);
@@ -198,6 +199,8 @@ class CouponSepulsaAPIController extends ControllerAPI
             $terms_and_conditions = OrbitInput::post('terms_and_conditions');
             $voucher_benefit = OrbitInput::post('voucher_benefit');
             $token = OrbitInput::post('token');
+            $maxQuantityPerPurchase = OrbitInput::post('max_quantity_per_purchase', NULL);
+            $maxQuantityPerUser = OrbitInput::post('max_quantity_per_user', NULL);
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -233,6 +236,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'terms_and_conditions'    => $terms_and_conditions,
                 'token'                   => $token,
                 'voucher_benefit'         => $voucher_benefit,
+                'max_quantity_per_purchase' => $maxQuantityPerPurchase,
             ];
             $validator_validation = [
                 'promotion_name'          => 'required|max:255',
@@ -259,6 +263,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'terms_and_conditions'    => 'required',
                 'token'                   => 'required',
                 'voucher_benefit'         => 'required',
+                'max_quantity_per_purchase' => 'required|numeric',
             ];
             $validator_message = [
                 'rule_value.required'     => 'The amount to obtain is required',
@@ -304,6 +309,11 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             Event::fire('orbit.coupon.postnewcoupon.after.validation', array($this, $validator));
 
+            // A means all gender
+            if ($gender === 'A') {
+                $gender = 'Y';
+            }
+
             // save Coupon.
             $idStatus = CampaignStatus::select('campaign_status_id','campaign_status_name')->where('campaign_status_name', $campaignStatus)->first();
 
@@ -326,7 +336,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $newcoupon->coupon_notification = $coupon_notification;
             $newcoupon->created_by = $this->api->user->user_id;
             $newcoupon->is_all_age = 'Y';
-            $newcoupon->is_all_gender = 'Y';
+            $newcoupon->is_all_gender = $gender;
             $newcoupon->is_popup = $is_popup;
             $newcoupon->is_exclusive = $is_exclusive;
             $newcoupon->is_visible = $isVisible;
@@ -339,8 +349,15 @@ class CouponSepulsaAPIController extends ControllerAPI
             $newcoupon->is_sponsored = $is_sponsored;
             $newcoupon->price_selling = $price_selling;
             $newcoupon->price_old = $price_value;
+            $newcoupon->max_quantity_per_purchase = $maxQuantityPerPurchase;
+            $newcoupon->max_quantity_per_user = $maxQuantityPerUser;
 
             $newcoupon->is_unique_redeem = 'N';
+            if ($rule_type === 'unique_coupon_per_user') {
+                $newcoupon->is_unique_redeem = 'Y';
+                $newcoupon->max_quantity_per_purchase = 1;
+                $newcoupon->max_quantity_per_user = 1;
+            }
 
             Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
 
@@ -479,34 +496,32 @@ class CouponSepulsaAPIController extends ControllerAPI
             foreach ($keywords as $keyword) {
                 $keyword_id = null;
 
-                foreach ($mallid as $mall) {
-                    $existKeyword = Keyword::excludeDeleted()
-                    ->where('keyword', '=', $keyword)
-                    ->where('merchant_id', '=', $mall)
-                    ->first();
+                $existKeyword = Keyword::excludeDeleted()
+                ->where('keyword', '=', $keyword)
+                ->where('merchant_id', '=', 0)
+                ->first();
 
-                    if (empty($existKeyword)) {
-                        $newKeyword = new Keyword();
-                        $newKeyword->merchant_id = $mall;
-                        $newKeyword->keyword = $keyword;
-                        $newKeyword->status = 'active';
-                        $newKeyword->created_by = $this->api->user->user_id;
-                        $newKeyword->modified_by = $this->api->user->user_id;
-                        $newKeyword->save();
+                if (empty($existKeyword)) {
+                    $newKeyword = new Keyword();
+                    $newKeyword->merchant_id = 0;
+                    $newKeyword->keyword = $keyword;
+                    $newKeyword->status = 'active';
+                    $newKeyword->created_by = $this->api->user->user_id;
+                    $newKeyword->modified_by = $this->api->user->user_id;
+                    $newKeyword->save();
 
-                        $keyword_id = $newKeyword->keyword_id;
-                        $couponKeywords[] = $newKeyword;
-                    } else {
-                        $keyword_id = $existKeyword->keyword_id;
-                        $couponKeywords[] = $existKeyword;
-                    }
-
-                    $newKeywordObject = new KeywordObject();
-                    $newKeywordObject->keyword_id = $keyword_id;
-                    $newKeywordObject->object_id = $newcoupon->promotion_id;
-                    $newKeywordObject->object_type = 'coupon';
-                    $newKeywordObject->save();
+                    $keyword_id = $newKeyword->keyword_id;
+                    $couponKeywords[] = $newKeyword;
+                } else {
+                    $keyword_id = $existKeyword->keyword_id;
+                    $couponKeywords[] = $existKeyword;
                 }
+
+                $newKeywordObject = new KeywordObject();
+                $newKeywordObject->keyword_id = $keyword_id;
+                $newKeywordObject->object_id = $newcoupon->promotion_id;
+                $newKeywordObject->object_type = 'coupon';
+                $newKeywordObject->save();
             }
             $newcoupon->keywords = $couponKeywords;
 
@@ -515,34 +530,32 @@ class CouponSepulsaAPIController extends ControllerAPI
             foreach ($productTags as $productTag) {
                 $product_tag_id = null;
 
-                foreach ($mallid as $mall) {
-                    $existProductTag = ProductTag::excludeDeleted()
-                        ->where('product_tag', '=', $productTag)
-                        ->where('merchant_id', '=', $mall)
-                        ->first();
+                $existProductTag = ProductTag::excludeDeleted()
+                    ->where('product_tag', '=', $productTag)
+                    ->where('merchant_id', '=', 0)
+                    ->first();
 
-                    if (empty($existProductTag)) {
-                        $newProductTag = new ProductTag();
-                        $newProductTag->merchant_id = $mall;
-                        $newProductTag->product_tag = $productTag;
-                        $newProductTag->status = 'active';
-                        $newProductTag->created_by = $this->api->user->user_id;
-                        $newProductTag->modified_by = $this->api->user->user_id;
-                        $newProductTag->save();
+                if (empty($existProductTag)) {
+                    $newProductTag = new ProductTag();
+                    $newProductTag->merchant_id = 0;
+                    $newProductTag->product_tag = $productTag;
+                    $newProductTag->status = 'active';
+                    $newProductTag->created_by = $this->api->user->user_id;
+                    $newProductTag->modified_by = $this->api->user->user_id;
+                    $newProductTag->save();
 
-                        $product_tag_id = $newProductTag->product_tag_id;
-                        $couponProductTags[] = $newProductTag;
-                    } else {
-                        $product_tag_id = $existProductTag->product_tag_id;
-                        $couponProductTags[] = $existProductTag;
-                    }
-
-                    $newProductTagObject = new ProductTagObject();
-                    $newProductTagObject->product_tag_id = $product_tag_id;
-                    $newProductTagObject->object_id = $newcoupon->promotion_id;
-                    $newProductTagObject->object_type = 'coupon';
-                    $newProductTagObject->save();
+                    $product_tag_id = $newProductTag->product_tag_id;
+                    $couponProductTags[] = $newProductTag;
+                } else {
+                    $product_tag_id = $existProductTag->product_tag_id;
+                    $couponProductTags[] = $existProductTag;
                 }
+
+                $newProductTagObject = new ProductTagObject();
+                $newProductTagObject->product_tag_id = $product_tag_id;
+                $newProductTagObject->object_id = $newcoupon->promotion_id;
+                $newProductTagObject->object_type = 'coupon';
+                $newProductTagObject->save();
             }
             $newcoupon->product_tags = $couponProductTags;
 
@@ -865,7 +878,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $promotion_id = OrbitInput::post('promotion_id');
             $merchant_id = OrbitInput::post('current_mall');
             $campaignStatus = OrbitInput::post('campaign_status');
-            $rule_type = OrbitInput::post('rule_type', 'unique_coupon_per_user');
+            $rule_type = OrbitInput::post('rule_type');
             $rule_object_type = OrbitInput::post('rule_object_type');
             $discount_object_type = OrbitInput::post('discount_object_type');
             $begin_date = OrbitInput::post('begin_date');
@@ -884,6 +897,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $retailer_ids = (array) $retailer_ids;
             $linkToTenantIds = OrbitInput::post('link_to_tenant_ids');
             $linkToTenantIds = (array) $linkToTenantIds;
+
             $partner_ids = OrbitInput::post('partner_ids');
             $partner_ids = (array) $partner_ids;
             $is_exclusive = OrbitInput::post('is_exclusive', 'N');
@@ -1024,7 +1038,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                                             'translations.language',
                                             'translations.media',
                                             'ages.ageRange',
-                                            'genders',
                                             'keywords',
                                             'product_tags',
                                             'campaign_status',
@@ -1112,7 +1125,17 @@ class CouponSepulsaAPIController extends ControllerAPI
                 $updatedcoupon->coupon_validity_in_date = $coupon_validity_in_date;
             });
 
-            $updatedcoupon->is_unique_redeem = 'N';
+            OrbitInput::post('gender', function($gender) use ($updatedcoupon) {
+                if ($gender === 'A') {
+                    $gender = 'Y';
+                }
+
+                $updatedcoupon->is_all_gender = $gender;
+            });
+
+            if ($rule_type === 'unique_coupon_per_user') {
+                $updatedcoupon->is_unique_redeem = 'Y';
+            }
 
             $updatedcoupon->modified_by = $this->api->user->user_id;
 
@@ -1214,17 +1237,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                 }
             });
 
-
-            OrbitInput::post('is_all_gender', function($is_all_gender) use ($updatedcoupon, $promotion_id) {
-                $updatedcoupon->is_all_gender = $is_all_gender;
-                if ($is_all_gender == 'Y') {
-                    $deleted_campaign_genders = CampaignGender::where('campaign_id', '=', $promotion_id)
-                                                            ->where('campaign_type', '=', 'coupon');
-                    $deleted_campaign_genders->delete();
-                }
-            });
-
-            OrbitInput::post('retailer_ids', function($retailer_ids) use ($promotion_id, $payByWallet) {
+            OrbitInput::post('link_to_tenant_ids', function($retailer_ids) use ($promotion_id, $payByWallet) {
                 // validating retailer_ids.
                 foreach ($retailer_ids as $retailer_id_json) {
                     $data = @json_decode($retailer_id_json);
@@ -1345,41 +1358,39 @@ class CouponSepulsaAPIController extends ControllerAPI
                                                     ->where('object_type', '=', 'coupon');
             $deleted_keyword_object->delete();
 
-            OrbitInput::post('keywords', function($keywords) use ($updatedcoupon, $merchant_id, $user, $promotion_id, $mallid) {
+            OrbitInput::post('keywords', function($keywords) use ($updatedcoupon, $user, $promotion_id) {
                 // Insert new data
                 $couponKeywords = array();
                 foreach ($keywords as $keyword) {
                     $keyword_id = null;
 
-                    foreach ($mallid as $mall) {
-                        $existKeyword = Keyword::excludeDeleted()
-                            ->where('keyword', '=', $keyword)
-                            ->where('merchant_id', '=', $mall)
-                            ->first();
+                    $existKeyword = Keyword::excludeDeleted()
+                        ->where('keyword', '=', $keyword)
+                        ->where('merchant_id', '=', 0)
+                        ->first();
 
-                        if (empty($existKeyword)) {
-                            $newKeyword = new Keyword();
-                            $newKeyword->merchant_id = $mall;
-                            $newKeyword->keyword = $keyword;
-                            $newKeyword->status = 'active';
-                            $newKeyword->created_by = $user->user_id;
-                            $newKeyword->modified_by = $user->user_id;
-                            $newKeyword->save();
+                    if (empty($existKeyword)) {
+                        $newKeyword = new Keyword();
+                        $newKeyword->merchant_id = 0;
+                        $newKeyword->keyword = $keyword;
+                        $newKeyword->status = 'active';
+                        $newKeyword->created_by = $user->user_id;
+                        $newKeyword->modified_by = $user->user_id;
+                        $newKeyword->save();
 
-                            $keyword_id = $newKeyword->keyword_id;
-                            $couponKeywords[] = $newKeyword;
-                        } else {
-                            $keyword_id = $existKeyword->keyword_id;
-                            $couponKeywords[] = $existKeyword;
-                        }
-
-
-                        $newKeywordObject = new KeywordObject();
-                        $newKeywordObject->keyword_id = $keyword_id;
-                        $newKeywordObject->object_id = $promotion_id;
-                        $newKeywordObject->object_type = 'coupon';
-                        $newKeywordObject->save();
+                        $keyword_id = $newKeyword->keyword_id;
+                        $couponKeywords[] = $newKeyword;
+                    } else {
+                        $keyword_id = $existKeyword->keyword_id;
+                        $couponKeywords[] = $existKeyword;
                     }
+
+
+                    $newKeywordObject = new KeywordObject();
+                    $newKeywordObject->keyword_id = $keyword_id;
+                    $newKeywordObject->object_id = $promotion_id;
+                    $newKeywordObject->object_type = 'coupon';
+                    $newKeywordObject->save();
                 }
                 $updatedcoupon->keywords = $couponKeywords;
             });
@@ -1389,41 +1400,38 @@ class CouponSepulsaAPIController extends ControllerAPI
                                                     ->where('object_type', '=', 'coupon');
             $deleted_product_tags_object->delete();
 
-            OrbitInput::post('product_tags', function($productTags) use ($updatedcoupon, $merchant_id, $user, $promotion_id, $mallid) {
+            OrbitInput::post('product_tags', function($productTags) use ($updatedcoupon, $user, $promotion_id) {
                 // Insert new data
                 $couponProductTags = array();
                 foreach ($productTags as $productTag) {
                     $product_tag_id = null;
 
-                    foreach ($mallid as $mall) {
-                        $existProductTag = ProductTag::excludeDeleted()
-                            ->where('product_tag', '=', $productTag)
-                            ->where('merchant_id', '=', $mall)
-                            ->first();
+                    $existProductTag = ProductTag::excludeDeleted()
+                        ->where('product_tag', '=', $productTag)
+                        ->where('merchant_id', '=', 0)
+                        ->first();
 
-                        if (empty($existProductTag)) {
-                            $newProductTag = new ProductTag();
-                            $newProductTag->merchant_id = $mall;
-                            $newProductTag->product_tag = $productTag;
-                            $newProductTag->status = 'active';
-                            $newProductTag->created_by = $user->user_id;
-                            $newProductTag->modified_by = $user->user_id;
-                            $newProductTag->save();
+                    if (empty($existProductTag)) {
+                        $newProductTag = new ProductTag();
+                        $newProductTag->merchant_id = 0;
+                        $newProductTag->product_tag = $productTag;
+                        $newProductTag->status = 'active';
+                        $newProductTag->created_by = $user->user_id;
+                        $newProductTag->modified_by = $user->user_id;
+                        $newProductTag->save();
 
-                            $product_tag_id = $newProductTag->product_tag_id;
-                            $couponProductTags[] = $newProductTag;
-                        } else {
-                            $product_tag_id = $existProductTag->product_tag_id;
-                            $couponProductTags[] = $existProductTag;
-                        }
-
-                        $newProductTagObject = new ProductTagObject();
-                        $newProductTagObject->product_tag_id = $product_tag_id;
-                        $newProductTagObject->object_id = $promotion_id;
-                        $newProductTagObject->object_type = 'coupon';
-                        $newProductTagObject->save();
+                        $product_tag_id = $newProductTag->product_tag_id;
+                        $couponProductTags[] = $newProductTag;
+                    } else {
+                        $product_tag_id = $existProductTag->product_tag_id;
+                        $couponProductTags[] = $existProductTag;
                     }
 
+                    $newProductTagObject = new ProductTagObject();
+                    $newProductTagObject->product_tag_id = $product_tag_id;
+                    $newProductTagObject->object_id = $promotion_id;
+                    $newProductTagObject->object_type = 'coupon';
+                    $newProductTagObject->save();
                 }
                 $updatedcoupon->product_tags = $couponProductTags;
             });
@@ -1733,16 +1741,6 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             $table_prefix = DB::getTablePrefix();
 
-            // optimize orb_media query greatly when coupon_id is present
-            $mediaJoin = "";
-            $mediaOptimize = " AND (object_name = 'coupon_translation') ";
-            $mediaObjectIds = (array) OrbitInput::get('promotion_id', []);
-            if (! empty ($mediaObjectIds)) {
-                $mediaObjectIds = "'" . implode("', '", $mediaObjectIds) . "'";
-                $mediaJoin = " LEFT JOIN {$table_prefix}coupon_translations mont ON mont.coupon_translation_id = {$table_prefix}media.object_id ";
-                $mediaOptimize = " AND object_name = 'coupon_translation' AND mont.promotion_id IN ({$mediaObjectIds}) ";
-            }
-
             $filterName = OrbitInput::get('promotion_name_like', '');
 
             // Builder object
@@ -1750,7 +1748,70 @@ class CouponSepulsaAPIController extends ControllerAPI
             $coupons = Coupon::allowedForPMPUser($user, 'coupon')
                 ->with('couponRule')
                 ->select(
-                    DB::raw("{$table_prefix}promotions.*, {$table_prefix}promotions.promotion_id as campaign_id, 'coupon' as campaign_type, {$table_prefix}coupon_translations.promotion_name AS display_name, media.path as image_path,
+                    DB::raw("{$table_prefix}promotions.promotion_id,
+                             {$table_prefix}promotions.merchant_id,
+                             {$table_prefix}promotions.promotion_name,
+                             {$table_prefix}promotions.promotion_type,
+                             {$table_prefix}promotions.description,
+                             {$table_prefix}promotions.long_description,
+                             {$table_prefix}promotions.begin_date,
+                             {$table_prefix}promotions.end_date,
+                             {$table_prefix}promotions.sticky_order,
+                             {$table_prefix}promotions.is_permanent,
+                             {$table_prefix}promotions.status,
+                             {$table_prefix}promotions.campaign_status_id,
+                             {$table_prefix}promotions.image,
+                             {$table_prefix}promotions.is_coupon,
+                             {$table_prefix}promotions.maximum_issued_coupon_type,
+                             {$table_prefix}promotions.location_id,
+                             {$table_prefix}promotions.location_type,
+                             {$table_prefix}promotions.is_all_retailer,
+                             {$table_prefix}promotions.is_all_retailer_redeem,
+                             {$table_prefix}promotions.is_all_employee_redeem,
+                             {$table_prefix}promotions.is_all_employee,
+                             {$table_prefix}promotions.is_redeemed_at_cs,
+                             {$table_prefix}promotions.maximum_issued_coupon,
+                             {$table_prefix}promotions.coupon_validity_in_days,
+                             {$table_prefix}promotions.coupon_validity_in_date,
+                             {$table_prefix}promotions.coupon_notification,
+                             {$table_prefix}promotions.created_by,
+                             {$table_prefix}promotions.modified_by,
+                             {$table_prefix}promotions.created_at,
+                             {$table_prefix}promotions.updated_at,
+                             {$table_prefix}promotions.is_all_gender,
+                             {$table_prefix}promotions.is_all_age,
+                             {$table_prefix}promotions.is_popup,
+                             {$table_prefix}promotions.is_exclusive,
+                             {$table_prefix}promotions.promotion_value,
+                             {$table_prefix}promotions.currency,
+                             {$table_prefix}promotions.offer_type,
+                             {$table_prefix}promotions.offer_value,
+                             {$table_prefix}promotions.original_price,
+                             {$table_prefix}promotions.redemption_method,
+                             {$table_prefix}promotions.redemption_verification_code,
+                             {$table_prefix}promotions.short_description,
+                             {$table_prefix}promotions.is_visible,
+                             {$table_prefix}promotions.is_3rd_party_field_complete,
+                             {$table_prefix}promotions.is_3rd_party_promotion,
+                             {$table_prefix}promotions.third_party_name,
+                             {$table_prefix}promotions.is_unique_redeem,
+                             {$table_prefix}promotions.issuance_expiry_in_days,
+                             {$table_prefix}promotions.available,
+                             {$table_prefix}promotions.maximum_issuance,
+                             {$table_prefix}promotions.maximum_redeem,
+                             {$table_prefix}promotions.transaction_amount_commission,
+                             {$table_prefix}promotions.fixed_amount_commission,
+                             {$table_prefix}promotions.is_payable_by_wallet,
+                             {$table_prefix}promotions.is_payable_by_normal,
+                             {$table_prefix}promotions.is_sponsored,
+                             {$table_prefix}promotions.price_old,
+                             {$table_prefix}promotions.merchant_commision,
+                             {$table_prefix}promotions.price_selling,
+                             {$table_prefix}promotions.max_quantity_per_purchase,
+                             {$table_prefix}promotions.max_quantity_per_user,
+                             {$table_prefix}promotions.price_to_gtm,
+                             {$table_prefix}promotions.how_to_buy_and_redeem as how_to_buy_and_redeem_coupon,
+                        {$table_prefix}promotions.promotion_id as campaign_id, 'coupon' as campaign_type, {$table_prefix}coupon_translations.promotion_name AS display_name,
                     CASE WHEN {$table_prefix}campaign_status.campaign_status_name = 'expired' THEN {$table_prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$table_prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                                                                 FROM {$table_prefix}merchants om
                                                                                 LEFT JOIN {$table_prefix}timezones ot on ot.timezone_id = om.timezone_id
@@ -1762,25 +1823,13 @@ class CouponSepulsaAPIController extends ControllerAPI
                                                                                 LEFT JOIN {$table_prefix}timezones ot on ot.timezone_id = om.timezone_id
                                                                                 WHERE om.merchant_id = {$table_prefix}promotions.merchant_id)
                     THEN 5 ELSE {$table_prefix}campaign_status.order END) END AS campaign_status_order,
-
-                    {$table_prefix}campaign_status.order,
-                    CASE rule_type
-                        WHEN 'cart_discount_by_percentage' THEN 'percentage'
-                        WHEN 'product_discount_by_percentage' THEN 'percentage'
-                        WHEN 'cart_discount_by_value' THEN 'value'
-                        WHEN 'product_discount_by_value' THEN 'value'
-                        ELSE NULL
-                    END AS 'display_discount_type',
-                    CASE rule_type
-                        WHEN 'cart_discount_by_percentage' THEN discount_value * 100
-                        WHEN 'product_discount_by_percentage' THEN discount_value * 100
-                        ELSE discount_value
-                    END AS 'display_discount_value'
+                    {$table_prefix}campaign_status.order
                     "),
                     'coupon_sepulsa.external_id',
                     'coupon_sepulsa.price_from_sepulsa',
                     'coupon_sepulsa.price_value',
-                    'coupon_sepulsa.coupon_image_url',
+                    'coupon_sepulsa.coupon_image_url as image_path',
+                    'coupon_sepulsa.coupon_image_url as coupon_image_url',
                     'coupon_sepulsa.how_to_buy_and_redeem',
                     'coupon_sepulsa.terms_and_conditions',
                     'coupon_sepulsa.token',
@@ -1810,30 +1859,16 @@ class CouponSepulsaAPIController extends ControllerAPI
                         FROM {$table_prefix}issued_coupons ic
                         WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id
                             ) as coupon_codes"),
-                    DB::raw("CASE
-                                WHEN is_3rd_party_promotion = 'Y' AND is_3rd_party_field_complete = 'N' THEN 'not_available'
-                                WHEN is_3rd_party_promotion = 'Y' AND {$table_prefix}pre_exports.object_id IS NOT NULL AND {$table_prefix}pre_exports.object_type = 'coupon' THEN 'in_progress'
-                                WHEN is_3rd_party_promotion = 'Y' AND {$table_prefix}pre_exports.object_id IS NULL THEN 'available'
-                                WHEN is_3rd_party_promotion = 'N' THEN 'not_available'
-                            END AS export_status
-                        ")
+                    DB::raw("IF({$table_prefix}promotions.is_all_gender = 'Y', 'A', {$table_prefix}promotions.is_all_gender) as gender"),
+                    DB::raw("{$table_prefix}promotions.max_quantity_per_purchase as max_qty_per_purchase"),
+                    DB::raw("{$table_prefix}promotions.max_quantity_per_user as max_qty_per_user")
                 )
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                 ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
                 ->join('coupon_sepulsa', 'coupon_sepulsa.promotion_id', '=', 'promotions.promotion_id')
-                // Join for get export status
-                ->leftJoin('pre_exports', function ($join) {
-                         $join->on('promotions.promotion_id', '=', 'pre_exports.object_id')
-                              ->where('pre_exports.object_type', '=', 'coupon');
-                  })
-                ->leftJoin(DB::raw("(
-                        SELECT {$table_prefix}media.* FROM {$table_prefix}media
-                        {$mediaJoin}
-                        WHERE media_name_long = 'coupon_translation_image_resized_default'
-                        {$mediaOptimize} ) as media
-                    "), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
+
                 ->joinPromotionRules()
                 ->groupBy('promotions.promotion_id')
                 ->where('promotion_type', 'sepulsa');
@@ -2019,13 +2054,9 @@ class CouponSepulsaAPIController extends ControllerAPI
                     } elseif ($relation === 'campaignLocations.mall') {
                         $coupons->with('campaignLocations.mall');
                     } elseif ($relation === 'keywords') {
-                        $coupons->with(['keywords' => function($query) {
-                            $query->groupBy('keyword');
-                        }]);
+                        $coupons->with('keywords');
                     } elseif ($relation === 'product_tags') {
-                        $coupons->with(['product_tags' => function($query) {
-                            $query->groupBy('product_tag');
-                        }]);
+                        $coupons->with('product_tags');
                     } elseif ($relation === 'campaignObjectPartners') {
                         $coupons->with('campaignObjectPartners');
                     }
@@ -2177,6 +2208,7 @@ class CouponSepulsaAPIController extends ControllerAPI
 
         return $output;
     }
+
 
 
     /**
@@ -2414,9 +2446,12 @@ class CouponSepulsaAPIController extends ControllerAPI
             $this->config = ! empty($config) ? $config : Config::get('orbit.partners_api.sepulsa');
             $this->client = SepulsaClient::create($this->config);
 
-            $take = OrbitInput::get('take', 100);
+            $takeSepulsa = OrbitInput::get('take_sepulsa', 100);
+            $pageSepulsa = OrbitInput::get('page_sepulsa', 1);
+            $take = OrbitInput::get('take');
+            $skip = OrbitInput::get('skip');
 
-            $sepulsaResponse = VoucherList::create($this->config)->getList('', $take, [], $page=1);
+            $sepulsaResponse = VoucherList::create($this->config)->getList('', $takeSepulsa, [], $pageSepulsa);
             $sepulsaVouchers = isset($sepulsaResponse->result->data) ? $sepulsaResponse->result->data : null;
 
             $availableToken = [];
@@ -2430,11 +2465,12 @@ class CouponSepulsaAPIController extends ControllerAPI
             }
 
             $totalToken = count($availableToken);
+            $returnedRecord = (!empty($take) && !empty($skip)) ? array_slice($availableToken, $skip, $take) : $availableToken;
 
             $data = new stdclass();
             $data->total_records = $totalToken;
-            $data->returned_records = $totalToken;
-            $data->records = $availableToken;
+            $data->returned_records = count($returnedRecord);
+            $data->records = $returnedRecord;
 
             if (empty($availableToken)) {
                 $data->records = NULL;

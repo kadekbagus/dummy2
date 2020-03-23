@@ -28,12 +28,13 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use \Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\SimpleCache;
 use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 use Elasticsearch\ClientBuilder;
 use PartnerAffectedGroup;
 use PartnerCompetitor;
 use Country;
 use UserSponsor;
-
+use UserDetail;
 use CouponSearch;
 use AdvertStoreSearch as AdvertSearch;
 
@@ -61,15 +62,17 @@ class CouponListNewAPIController extends PubControllerAPI
      */
     protected $esConfig = [];
 
-    public function __construct()
+    public function __construct($contentType = 'application/json')
     {
-        parent::__construct();
+        parent::__construct($contentType);
         $this->esConfig = Config::get('orbit.elasticsearch');
         $this->searcher = new CouponSearch($this->esConfig);
     }
 
     /**
      * GET - get all coupon in all mall
+     *
+     * @todo refactor as this is similar to promotion, news or store listing
      *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
      *
@@ -131,6 +134,12 @@ class CouponListNewAPIController extends PubControllerAPI
             $viewType = OrbitInput::get('view_type', 'grid');
             $myCCFilter = OrbitInput::get('my_cc_filter', false);
             $withAdvert = (bool) OrbitInput::get('with_advert', true);
+            $gender = OrbitInput::get('gender', 'all');
+            $promotionType = OrbitInput::get('promotion_type', '');
+            $ratingLow = OrbitInput::get('rating_low', 0);
+            $ratingHigh = OrbitInput::get('rating_high', 5);
+            $ratingLow = empty($ratingLow) ? 0 : $ratingLow;
+            $ratingHigh = empty($ratingHigh) ? 5 : $ratingHigh;
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -142,11 +151,15 @@ class CouponListNewAPIController extends PubControllerAPI
                     'language' => $language,
                     'sortby'   => $sortBy,
                     'list_type'   => $list_type,
+                    'rating_low' => $ratingLow,
+                    'rating_high' => $ratingHigh,
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
                     'sortby'   => 'in:name,location,created_date,updated_date,rating,relevance',
                     'list_type'   => 'in:featured,preferred',
+                    'rating_low' => 'numeric|min:0|max:5',
+                    'rating_high' => 'numeric|min:0|max:5',
                 ),
                 array(
                 )
@@ -164,7 +177,8 @@ class CouponListNewAPIController extends PubControllerAPI
                 'no_total_record' => $no_total_records,
                 'take' => $take, 'skip' => $skip,
                 'country' => $countryFilter, 'cities' => $cityFilters,
-                'my_cc_filter' => $myCCFilter
+                'my_cc_filter' => $myCCFilter,
+                'promotion_type' => $promotionType
             ];
 
             // Run the validation
@@ -205,6 +219,8 @@ class CouponListNewAPIController extends PubControllerAPI
 
             // Filter by given keyword...
             $keyword = OrbitInput::get('keyword', null);
+            $forbiddenCharacter = array('>', '<', '(', ')', '{', '}', '[', ']', '^', '"', '~', '/');
+            $keyword = str_replace($forbiddenCharacter, '', $keyword);
             if (! empty($keyword)) {
                 $cacheKey['keyword'] = $keyword;
                 $this->searcher->filterByKeyword($keyword);
@@ -257,6 +273,23 @@ class CouponListNewAPIController extends PubControllerAPI
                 $this->searcher->filterByCategories($categoryIds);
             }
 
+            // Filter by gender
+            if (! empty($gender)) {
+                $filterGender = 'all';
+                if ($gender === 'mygender') {
+                    $userGender = UserDetail::select('gender')->where('user_id', '=', $user->user_id)->first();
+                    if ($userGender) {
+                        if (strtolower($userGender->gender) == 'm') {
+                            $filterGender = 'male';
+                        } else if (strtolower($userGender->gender) == 'f') {
+                            $filterGender = 'female';
+                        }
+                    }
+                }
+                $cacheKey['gender'] = $filterGender;
+                $this->searcher->filterByGender(strtolower($filterGender));
+            }
+
             // Filter by partner...
             $partnerId = OrbitInput::get('partner_id', null);
             if (! empty($partnerId)) {
@@ -298,6 +331,15 @@ class CouponListNewAPIController extends PubControllerAPI
                 $this->searcher->filterWithAdvert(compact('dateTimeEs', 'mallId', 'list_type', 'advertType', 'locationId', 'advertSorting'));
             }
 
+            //filter by rating number
+            $this->searcher->filterByRating(
+                $ratingLow,
+                $ratingHigh,
+                compact(
+                    'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
+                )
+            );
+
             // Add script fields...
             $scriptFields = $this->searcher->addReviewFollowScript(compact(
                 'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
@@ -307,13 +349,19 @@ class CouponListNewAPIController extends PubControllerAPI
                 $sortBy = 'relevance';
             }
 
+            // filter promotion_type
+            $this->searcher->filterPromotionType($promotionType);
+
             // Next sorting based on Visitor's selection.
             switch ($sortBy) {
                 case 'relevance':
                     $this->searcher->sortByRelevance();
                     break;
+                case 'location':
+                    $this->searcher->sortByNearest($ul);
+                    break;
                 case 'rating':
-                    $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
+                    $this->searcher->sortByRating($scriptFields['scriptFieldRating'], $sortMode);
                     break;
                 case 'created_date':
                     $this->searcher->sortByCreatedDate($sortMode);
@@ -342,7 +390,7 @@ class CouponListNewAPIController extends PubControllerAPI
             OrbitInput::get('excluded_ids', function($excludedIds) use (&$withAdvert) {
                 $jsonExcludedIds = [];
                 foreach ($excludedIds as $excludedId) {
-                    $jsonExcludedIds[] = array('term' => ['_id' => $excludedId]);
+                    $jsonExcludedIds[] = $excludedId;
                 }
 
                 if (count($jsonExcludedIds) > 0) {
@@ -352,12 +400,14 @@ class CouponListNewAPIController extends PubControllerAPI
                 $withAdvert = FALSE;
             });
 
+
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-                $response = $recordCache->get($serializedCacheKey, function() {
-                    return $this->searcher->getResult();
+                $response = $recordCache->get($serializedCacheKey, function() use($serializedCacheKey, $recordCache) {
+                    $resp = $this->searcher->getResult();
+                    $recordCache->put($serializedCacheKey, $resp);
+                    return $resp;
                 });
-                $recordCache->put($serializedCacheKey, $response);
             } else {
                 $response = $this->searcher->getResult();
             }
@@ -367,7 +417,7 @@ class CouponListNewAPIController extends PubControllerAPI
             $promotionIds = array();
             $listOfRec = array();
             $cdnConfig = Config::get('orbit.cdn');
-            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            $imgUrl = CdnUrlGeneratorWithCloudfront::create(['cdn' => $cdnConfig], 'cdn');
 
             foreach ($records['hits'] as $record) {
                 $data = array();
@@ -377,6 +427,8 @@ class CouponListNewAPIController extends PubControllerAPI
                 $pageView = 0;
                 $data['placement_type'] = null;
                 $data['placement_type_orig'] = null;
+                $data['coupon_country'] = 'Indonesia';
+                $data['currency'] = 'IDR';
                 $campaignId = '';
                 foreach ($record['_source'] as $key => $value) {
                     if ($key === "name") {
@@ -509,6 +561,18 @@ class CouponListNewAPIController extends PubControllerAPI
                             }
                         }
                     }
+
+                    if ($key === 'link_to_tenant') {
+                        if (! empty($data[$key]) && isset($data[$key][0])) {
+                            $data['coupon_country'] = $data[$key][0]['country'];
+                            if ($data['coupon_country'] === 'Indonesia') {
+                                $data['currency'] = 'IDR';
+                            }
+                            else {
+                                $data['currency'] = 'SGD';
+                            }
+                        }
+                    }
                 }
 
                 $data['average_rating'] = (! empty($record['fields']['average_rating'][0])) ? number_format(round($record['fields']['average_rating'][0], 1), 1) : 0;
@@ -532,8 +596,6 @@ class CouponListNewAPIController extends PubControllerAPI
                                 ->where('issued_coupons.user_id', '=', $user->user_id)
                                 ->where('issued_coupons.status', '=', 'issued')
                                 ->whereIn('promotion_id', $promotionIds)
-                                ->orderBy('created_at', 'desc')
-                                ->groupBy('promotion_id')
                                 ->get()
                                 ->lists('promotion_id');
 
@@ -588,7 +650,7 @@ class CouponListNewAPIController extends PubControllerAPI
             // save activity when accessing listing
             // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
             // moved from generic activity number 32
-            if (OrbitInput::get('from_homepage', '') !== 'y') {
+            if (OrbitInput::get('from_homepage', '') !== 'y' && $this->contentType !== 'raw') {
                 if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
                     if (is_object($mall)) {
                         $activityNotes = sprintf('Page viewed: View mall coupon list');

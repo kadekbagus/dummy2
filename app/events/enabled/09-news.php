@@ -202,16 +202,16 @@ Event::listen('orbit.news.postnewnews.after.commit', function($controller, $news
         $campaignType = 'News';
     }
 
-    // Send email process to the queue
-    Queue::push('Orbit\\Queue\\CampaignMail', [
-        'campaignType'       => $campaignType,
-        'campaignName'       => $news->news_name,
-        'pmpUser'            => $controller->api->user->username,
-        'eventType'          => 'created',
-        'date'               => $date,
-        'campaignId'         => $news->news_id,
-        'mode'               => 'create'
-    ]);
+    // Send email process to the queue (disabled because there's no use)
+    // Queue::push('Orbit\\Queue\\CampaignMail', [
+    //     'campaignType'       => $campaignType,
+    //     'campaignName'       => $news->news_name,
+    //     'pmpUser'            => $controller->api->user->username,
+    //     'eventType'          => 'created',
+    //     'date'               => $date,
+    //     'campaignId'         => $news->news_id,
+    //     'mode'               => 'create'
+    // ]);
 
 });
 
@@ -236,16 +236,16 @@ Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $n
         $campaignType = 'News';
     }
 
-    // Send email process to the queue
-    Queue::push('Orbit\\Queue\\CampaignMail', [
-        'campaignType'       => $campaignType,
-        'campaignName'       => $news->news_name,
-        'pmpUser'            => $controller->api->user->username,
-        'eventType'          => 'updated',
-        'date'               => $date,
-        'campaignId'         => $news->news_id,
-        'mode'               => 'update'
-    ]);
+    // Send email process to the queue (disabled because there's no use)
+    // Queue::push('Orbit\\Queue\\CampaignMail', [
+    //     'campaignType'       => $campaignType,
+    //     'campaignName'       => $news->news_name,
+    //     'pmpUser'            => $controller->api->user->username,
+    //     'eventType'          => 'updated',
+    //     'date'               => $date,
+    //     'campaignId'         => $news->news_id,
+    //     'mode'               => 'update'
+    // ]);
 
     $prefix = DB::getTablePrefix();
     if ($news->object_type === 'promotion') {
@@ -271,6 +271,11 @@ Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $n
         if ($promotions->campaign_status === 'stopped' || $promotions->campaign_status === 'expired') {
             // Notify the queueing system to delete Elasticsearch document
             Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionDeleteQueue', [
+                'news_id' => $promotions->news_id
+            ]);
+
+            // Notify the queueing system to delete Elasticsearch document
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESAdvertPromotionDeleteQueue', [
                 'news_id' => $promotions->news_id
             ]);
 
@@ -312,6 +317,10 @@ Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $n
                 'news_id' => $news->news_id
             ]);
 
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESAdvertNewsDeleteQueue', [
+                'news_id' => $news->news_id
+            ]);
+
             // Notify the queueing system to update Elasticsearch Suggestion document
             Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsSuggestionDeleteQueue', [
                 'news_id' => $news->news_id
@@ -326,7 +335,7 @@ Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $n
 
 });
 
-Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function($controller, $news)
+Event::listen('orbit.news.postupdatenews-mallnotification.after.commit', function($controller, $news)
 {
     if ($news->status === 'active')
     {
@@ -389,17 +398,31 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
         {
             // get user_ids and tokens
             $userIds = array_values(array_unique($follower));
-            $tokenSearch = ['user_ids' => json_encode($userIds), 'notification_provider' => 'onesignal'];
-            $tokenData = $mongoClient->setQueryString($tokenSearch)
-                                     ->setEndPoint('user-notification-tokens')
-                                     ->request('GET');
 
-            if ($tokenData->data->total_records > 0) {
-                foreach ($tokenData->data->records as $key => $value) {
-                    $tokens[] = $value->notification_token;
+            // Split data
+            $totalUserIds = count($userIds);
+            if (count($totalUserIds) > 0) {
+                $chunkSize = 100;
+                $chunkedArray = array_chunk($userIds, $chunkSize);
+
+                foreach ($chunkedArray as $chunk) {
+
+                    $tokenSearch = ['user_ids' => json_encode($chunk), 'notification_provider' => 'onesignal'];
+                    $tokenData = $mongoClient->setQueryString($tokenSearch)
+                                             ->setEndPoint('user-notification-tokens')
+                                             ->request('GET');
+
+                    if ($tokenData->data->total_records > 0) {
+                        foreach ($tokenData->data->records as $key => $value) {
+                            $tokens[] = $value->notification_token;
+                        }
+                    }
+
+                    usleep(100000);
                 }
-                $tokens = array_values(array_unique($tokens));
             }
+
+            $tokens = array_values(array_unique($tokens));
 
             $_news = News::select('news.*',
                                   DB::raw('default_languages.name as default_language_name'),
@@ -788,6 +811,7 @@ Event::listen('orbit.news.postupdatenews-storenotificationupdate.after.commit', 
                                     ->setEndPoint('user-id-follows')
                                     ->request('GET');
 
+
             $userIds = null;
             $notificationToken = array();
 
@@ -803,15 +827,27 @@ Event::listen('orbit.news.postupdatenews-storenotificationupdate.after.commit', 
                     $userIds = array_values(array_unique($userIds));
                 }
 
-                $queryStringUserNotifToken['user_ids'] = json_encode($userIds);
+                // Split data
+                $totalUserIds = count($userIds);
+                if (count($totalUserIds) > 0) {
+                    $chunkSize = 100;
+                    $chunkedArray = array_chunk($userIds, $chunkSize);
 
-                $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
-                                    ->setEndPoint('user-notification-tokens')
-                                    ->request('GET');
+                    foreach ($chunkedArray as $chunk) {
 
-                if ($notificationTokens->data->total_records > 0) {
-                    foreach ($notificationTokens->data->records as $key => $val) {
-                        $notificationToken[] = $val->notification_token;
+                        $queryStringUserNotifToken['user_ids'] = json_encode($chunk);
+
+                        $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
+                                            ->setEndPoint('user-notification-tokens')
+                                            ->request('GET');
+
+                        if ($notificationTokens->data->total_records > 0) {
+                            foreach ($notificationTokens->data->records as $key => $val) {
+                                $notificationToken[] = $val->notification_token;
+                            }
+                        }
+
+                        usleep(100000);
                     }
                 }
 
@@ -857,6 +893,8 @@ Event::listen('orbit.news.postupdatenews-storenotificationupdate.after.commit', 
                 $storeObjectNotif = $mongoClient->setFormParam($bodyStoreObjectNotifications)
                                                 ->setEndPoint('store-object-notifications')
                                                 ->request('POST');
+
+
             }
 
             // If there is no follower but there is user linked to credit-card/ewallet

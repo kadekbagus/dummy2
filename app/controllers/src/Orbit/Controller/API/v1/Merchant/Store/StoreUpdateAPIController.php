@@ -24,6 +24,8 @@ use ObjectFinancialDetail;
 use MerchantStorePaymentProvider;
 use ProductTag;
 use BaseStoreProductTag;
+use Language;
+use Orbit\Database\ObjectID;
 
 class StoreUpdateAPIController extends ControllerAPI
 {
@@ -102,6 +104,10 @@ class StoreUpdateAPIController extends ControllerAPI
             $bankAddress = OrbitInput::post('bank_address',[]);
             $swiftCodes = OrbitInput::post('swift_codes',[]);
             $productTags = OrbitInput::post('product_tags', []);
+            $translations = OrbitInput::post('translations');
+            $banner = OrbitInput::files('banner', null);
+            $disable_ads = OrbitInput::files('disable_ads', 'n');
+            $disable_ymal = OrbitInput::files('disable_ymal', 'n');
 
             $storeHelper = StoreHelper::create();
             $storeHelper->storeCustomValidator();
@@ -114,19 +120,25 @@ class StoreUpdateAPIController extends ControllerAPI
             $validation_data = [
                 'base_store_id'       => $baseStoreId,
                 'base_merchant_id'    => $baseMerchantId,
+                'translations'        => $translations,
                 'mall_id'             => $mallId,
                 'floor_id'            => $floor_id,
                 'status'              => $status,
                 'verification_number' => $verification_number,
+                'disable_ads'         => $disable_ads,
+                'disable_ymal'        => $disable_ymal,
             ];
 
             $validation_error = [
                 'base_store_id'       => 'required|orbit.empty.base_store',
                 'base_merchant_id'    => 'required|orbit.empty.base_merchant',
+                'translations'        => 'required',
                 'mall_id'             => 'required|orbit.empty.mall|orbit.mall.country:' . $baseMerchantId,
                 'floor_id'            => 'orbit.empty.floor:' . $mallId,
                 'status'              => 'in:active,inactive',
-                'verification_number' => 'alpha_num|orbit.unique.verification_number:' . $mallId . ',' . $baseStoreId,
+                'verification_number' => 'alpha_num',
+                'disable_ads'         => 'in:n,y',
+                'disable_ymal'        => 'in:n,y',
             ];
 
             $validation_error_message = [
@@ -194,7 +206,92 @@ class StoreUpdateAPIController extends ControllerAPI
                 $updatestore->is_payment_acquire = $paymentAcquire;
             });
 
+            OrbitInput::post('url', function($url) use ($updatestore) {
+                $updatestore->url = $url;
+            });
+
+            OrbitInput::post('facebook_url', function($facebook_url) use ($updatestore) {
+                $updatestore->facebook_url = $facebook_url;
+            });
+
+            OrbitInput::post('instagram_url', function($instagram_url) use ($updatestore) {
+                $updatestore->instagram_url = $instagram_url;
+            });
+
+            OrbitInput::post('twitter_url', function($twitter_url) use ($updatestore) {
+                $updatestore->twitter_url = $twitter_url;
+            });
+
+            OrbitInput::post('youtube_url', function($youtube_url) use ($updatestore) {
+                $updatestore->youtube_url = $youtube_url;
+            });
+
+            OrbitInput::post('line_url', function($line_url) use ($updatestore) {
+                $updatestore->line_url = $line_url;
+            });
+
+            OrbitInput::post('video_id_1', function($video_id_1) use ($updatestore) {
+                $updatestore->video_id_1 = $video_id_1;
+            });
+
+            OrbitInput::post('video_id_2', function($video_id_2) use ($updatestore) {
+                $updatestore->video_id_2 = $video_id_2;
+            });
+
+            OrbitInput::post('video_id_3', function($video_id_3) use ($updatestore) {
+                $updatestore->video_id_3 = $video_id_3;
+            });
+
+            OrbitInput::post('video_id_4', function($video_id_4) use ($updatestore) {
+                $updatestore->video_id_4 = $video_id_4;
+            });
+
+            OrbitInput::post('video_id_5', function($video_id_5) use ($updatestore) {
+                $updatestore->video_id_5 = $video_id_5;
+            });
+
+            OrbitInput::post('video_id_6', function($video_id_6) use ($updatestore) {
+                $updatestore->video_id_6 = $video_id_6;
+            });
+
+            OrbitInput::post('disable_ads', function($disable_ads) use ($updatestore) {
+                $updatestore->disable_ads = $disable_ads;
+            });
+
+            OrbitInput::post('disable_ymal', function($disable_ymal) use ($updatestore) {
+                $updatestore->disable_ymal = $disable_ymal;
+            });
+
+            // Translations
+            $idLanguageEnglish = Language::select('language_id')->where('name', '=', 'en')->first();
+
+            // Check for english content
+            $dataTranslations = @json_decode($translations);
+            if (json_last_error() != JSON_ERROR_NONE) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+            }
+
+            if (! is_null($dataTranslations)) {
+                // Get english tenant description for saving to default language
+                foreach ($dataTranslations as $key => $val) {
+                    // Validation language id from translation
+                    $language = Language::where('language_id', '=', $key)->first();
+                    if (empty($language)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                    }
+
+                    if ($key === $idLanguageEnglish->language_id) {
+                        $updatestore->description = $val->description;
+                        $updatestore->custom_title = isset($val->custom_title) ? $val->custom_title : null;
+                    }
+                }
+            }
+
             $updatestore->save();
+
+            OrbitInput::post('translations', function($translation_json_string) use ($updatestore, $storeHelper) {
+                $storeHelper->validateAndSaveTranslations($updatestore, $translation_json_string, $scenario = 'update');
+            });
 
             OrbitInput::post('product_tags', function($productTags) use ($updatestore, $user, $baseStoreId) {
                 // Delete old data

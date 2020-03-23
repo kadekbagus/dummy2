@@ -73,6 +73,10 @@ class ESStoreUpdateQueue
                                 'merchants.created_at',
                                 'merchants.updated_at',
                                 'merchants.mobile_default_language',
+                                'merchants.gender',
+                                'merchants.disable_ads',
+                                'merchants.disable_ymal',
+                                'merchants.gender',
                                 'media.path',
                                 'media.cdn_url',
                                 DB::raw("x({$prefix}merchant_geofences.position) as latitude"),
@@ -369,25 +373,28 @@ class ESStoreUpdateQueue
             }
 
             $body = [
-                'merchant_id'         => $store[0]->merchant_id,
-                'name'                => $store[0]->name,
-                'description'         => $store[0]->description,
-                'phone'               => $store[0]->phone,
-                'logo'                => $store[0]->path,
-                'logo_cdn'            => $store[0]->cdn_url,
-                'object_type'         => $store[0]->object_type,
-                'default_lang'        => $store[0]->mobile_default_language,
-                'category'            => $categoryIds,
-                'keywords'            => $keywords,
-                'product_tags'        => $productTags,
-                'partner_ids'         => $partnerIds,
-                'created_at'          => date('Y-m-d', strtotime($store[0]->created_at)) . 'T' . date('H:i:s', strtotime($store[0]->created_at)) . 'Z',
-                'updated_at'          => date('Y-m-d', strtotime($store[0]->updated_at)) . 'T' . date('H:i:s', strtotime($store[0]->updated_at)) . 'Z',
-                'tenant_detail_count' => count($store),
-                'translation'         => $translations,
-                'tenant_detail'       => $tenantDetails,
-                'gtm_page_views'      => $gtmPageViews,
-                'mall_page_views'     => $mallPageViews,
+                'merchant_id'          => $store[0]->merchant_id,
+                'name'                 => $store[0]->name,
+                'description'          => $store[0]->description,
+                'phone'                => $store[0]->phone,
+                'logo'                 => $store[0]->path,
+                'logo_cdn'             => $store[0]->cdn_url,
+                'object_type'          => $store[0]->object_type,
+                'default_lang'         => $store[0]->mobile_default_language,
+                'gender'               => $store[0]->gender,
+                'disable_ads'          => $store[0]->disable_ads,
+                'disable_ymal'         => $store[0]->disable_ymal,
+                'category'             => $categoryIds,
+                'keywords'             => $keywords,
+                'product_tags'         => $productTags,
+                'partner_ids'          => $partnerIds,
+                'created_at'           => date('Y-m-d', strtotime($store[0]->created_at)) . 'T' . date('H:i:s', strtotime($store[0]->created_at)) . 'Z',
+                'updated_at'           => date('Y-m-d', strtotime($store[0]->updated_at)) . 'T' . date('H:i:s', strtotime($store[0]->updated_at)) . 'Z',
+                'tenant_detail_count'  => count($store),
+                'translation'          => $translations,
+                'tenant_detail'        => $tenantDetails,
+                'gtm_page_views'       => $gtmPageViews,
+                'mall_page_views'      => $mallPageViews,
                 'featured_gtm_score'   => $featuredGtmScore,
                 'featured_mall_score'  => $featuredMallScore,
                 'preferred_gtm_score'  => $preferredGtmScore,
@@ -509,6 +516,12 @@ class ESStoreUpdateQueue
                     // Notify the queueing system to delete Elasticsearch document
                     $esQueue = new \Orbit\Queue\Elasticsearch\ESCouponDeleteQueue();
                     $response = $esQueue->fire($fakeJob, ['coupon_id' => $coupon->promotion_id]);
+
+                    $esAdvertCouponQueue = new \Orbit\Queue\Elasticsearch\ESAdvertCouponDeleteQueue();
+                    $response = $esAdvertCouponQueue->fire($fakeJob, ['coupon_id' => $coupon->promotion_id]);
+
+                    $esCouponSuggestionDelete = new \Orbit\Queue\Elasticsearch\ESCouponSuggestionDeleteQueue();
+                    $doESCouponSuggestionDelete = $esCouponSuggestionDelete->fire($fakeJob, ['coupon_id' => $coupon->promotion_id]);
                 } else {
                     // Notify the queueing system to update Elasticsearch document
                     $esQueue = new \Orbit\Queue\Elasticsearch\ESCouponUpdateQueue();

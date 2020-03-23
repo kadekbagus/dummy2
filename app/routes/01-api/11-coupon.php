@@ -36,6 +36,14 @@ Route::get('/api/v1/coupon/search', function()
 });
 
 /**
+ * Detail coupon
+ */
+Route::get('/api/v1/coupon/detail', function()
+{
+    return CouponAPIController::create()->getDetailCoupon();
+});
+
+/**
  * List/Search coupon by issue retailer
  */
 Route::get('/api/v1/coupon/by-issue-retailer/search', function()
@@ -431,4 +439,46 @@ Route::get('/api/v1/voucher-sepulsa/detail', function()
 Route::get('/api/v1/available-sepulsa-token/list', function()
 {
     return CouponSepulsaAPIController::create()->getAvailableSepulsaTokenList();
+});
+
+/**
+ * Coupon discount code quick and dirty.
+ */
+Route::post('/api/v1/pub/coupon-discount-code', function()
+{
+    return Orbit\Controller\API\v1\Pub\Coupon\CouponDiscountCodeAPIController::create()->postCouponDiscountCode();
+});
+
+Route::post('/app/v1/pub/coupon-discount-code', ['as' => 'pub-coupon-discount-code', 'uses' => 'IntermediatePubAuthController@Coupon\CouponDiscountCode_postCouponDiscountCode']);
+
+/**
+ * Create new coupon giftn
+ */
+Route::post('/api/v1/coupon-giftn/new', function()
+{
+    return CouponGiftNAPIController::create()->postNewGiftNCoupon();
+});
+
+/**
+ * Update coupon giftn
+ */
+Route::post('/api/v1/coupon-giftn/update', function()
+{
+    return CouponGiftNAPIController::create()->postUpdateGiftNCoupon();
+});
+
+/**
+ * List/Search coupon giftn
+ */
+Route::get('/api/v1/coupon-giftn/search', function()
+{
+    return CouponGiftNAPIController::create()->getSearchGiftNCoupon();
+});
+
+/**
+ * detail coupon giftn
+ */
+Route::get('/api/v1/coupon-giftn/detail', function()
+{
+    return CouponGiftNAPIController::create()->getDetailGiftNCoupon();
 });

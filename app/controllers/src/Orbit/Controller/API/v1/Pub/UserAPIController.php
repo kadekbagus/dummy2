@@ -12,6 +12,7 @@ use Activity;
 use Validator;
 use User;
 use UserDetail;
+use UserExtended;
 use Lang;
 use Config;
 use stdclass;
@@ -19,6 +20,7 @@ use DB;
 use Event;
 use Hash;
 use Queue;
+use Orbit\Helper\Util\CdnUrlGenerator;
 
 class UserAPIController extends PubControllerAPI
 {
@@ -85,6 +87,14 @@ class UserAPIController extends PubControllerAPI
             $updateUserDetail = UserDetail::where('user_id', $user->user_id)
                                             ->first();
 
+            $extendedUserDetail = UserExtended::where('user_id', $user->user_id)
+                                            ->first();
+
+            if (! is_object($extendedUserDetail)) {
+                $extendedUserDetail = new UserExtended();
+                $extendedUserDetail->user_id = $userId;
+            }
+
             OrbitInput::post('phone', function($phone) use ($updateUserDetail) {
                 $validator = Validator::make(
                     array('phone' => $phone),
@@ -101,11 +111,31 @@ class UserAPIController extends PubControllerAPI
                 $updateUserDetail->gender = $gender;
             });
 
+            OrbitInput::post('about', function($about) use ($extendedUserDetail) {
+                $extendedUserDetail->about = $about;
+            });
+
+            OrbitInput::post('location', function($location) use ($extendedUserDetail) {
+                $extendedUserDetail->location = $location;
+            });
+
+            OrbitInput::post('birthdate', function($birthdate) use ($updateUserDetail) {
+                $updateUserDetail->birthdate = $birthdate;
+            });
+
+			OrbitInput::post('birthdate', function($birthdate) use ($updateUserDetail) {
+                $updateUserDetail->birthdate = $birthdate;
+            });
+
             $updateUserDetail->save();
+            $extendedUserDetail->save();
 
             // Update session fullname and email
             $sessionData = $session->read(NULL);
             $sessionData['fullname'] = $updateUser->user_firstname. ' ' . $updateUser->user_lastname;
+            //update gender, phone also
+            $sessionData['gender'] = $updateUserDetail->gender;
+            $sessionData['phone'] = $updateUserDetail->phone;
             $session->update($sessionData);
 
             // Even for upload user picture profile
@@ -126,13 +156,18 @@ class UserAPIController extends PubControllerAPI
             }
 
             $image = null;
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+
             $media = $user->profilePicture()
                 ->where('media_name_long', 'user_profile_picture_orig')
                 ->get();
 
             if (count($media) > 0) {
                 if (! empty($media[0]->path)) {
-                    $image = $media[0]->path;
+                    $localPath = (! empty($media[0]->path)) ? $media[0]->path : '';
+                    $cdnPath = (! empty($media[0]->cdn_url)) ? $media[0]->cdn_url : '';
+                    $image = $imgUrl->getImageUrl($localPath, $cdnPath);
                 }
             }
 
@@ -142,6 +177,7 @@ class UserAPIController extends PubControllerAPI
             $data->lastname = $updateUser->user_lastname;
             $data->phone = $updateUserDetail->phone;
             $data->gender = $updateUserDetail->gender;
+            $data->birthdate = $updateUserDetail->birthdate;
             $data->image = $image;
 
             $activityNote = sprintf('Update User Account, user Id: %s', $updateUser->user_id);

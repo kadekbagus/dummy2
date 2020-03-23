@@ -22,6 +22,8 @@ use CampaignLocation;
 use CouponRetailer;
 use CouponRetailerRedeem;
 use NewsMerchant;
+use BaseStoreTranslation;
+use Language;
 
 class StoreHelper
 {
@@ -311,6 +313,15 @@ class StoreHelper
 
             return TRUE;
         });
+
+        // Check the images, we are allowed array of images but not more that one
+        Validator::extend('nomore.than.one', function ($attribute, $value, $parameters) {
+            if (is_array($value['name']) && count($value['name']) > 1) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
     }
 
     public function getValidBaseStore()
@@ -336,5 +347,109 @@ class StoreHelper
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    /**
+     * @param object $baseMerchant
+     * @param string $translations_json_string
+     * @throws InvalidArgsException
+     */
+    public function validateAndSaveTranslations($baseStore, $translations_json_string, $scenario = 'create')
+    {
+
+        /*
+         * JSON structure: object with keys = merchant_language_id and values = ProductTranslation object or null
+         *
+         * Having a value of null means deleting the translation
+         *
+         * where MerchantTranslation object is object with keys:
+         *   description, ticket_header, ticket_footer.
+         *
+         * No requirement for including fields. If field not included it means not updated. If field included with
+         * value null it means set to null (use main language content instead).
+         */
+
+        $valid_fields = ['description', 'custom_title', 'meta_description'];
+        $operations = [];
+
+        $data = @json_decode($translations_json_string);
+        if (json_last_error() != JSON_ERROR_NONE) {
+            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+        }
+
+        foreach ($data as $language_id => $translations) {
+            $language = Language::excludeDeleted()
+                ->where('language_id', '=', $language_id)
+                ->first();
+            if (empty($language)) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+            }
+            $existing_translation = BaseStoreTranslation::
+                  where('base_store_id', '=', $baseStore->base_store_id)
+                ->where('language_id', '=', $language_id)
+                ->first();
+
+            if ($translations === null) {
+                // deleting, verify exists
+                if (empty($existing_translation)) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                }
+                $operations[] = ['delete', $existing_translation];
+            } else {
+                foreach ($translations as $field => $value) {
+                    if ($language->status == 'active') {
+                        if (!in_array($field, $valid_fields, TRUE)) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.key'));
+                        }
+                        if ($value !== null && !is_string($value)) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.value'));
+                        }
+                        if ($field=='description' && $value == '') {
+                            OrbitShopAPI::throwInvalidArgument('Description field is required');
+                        }
+                    }
+                }
+                if (empty($existing_translation)) {
+                    $operations[] = ['create', $language_id, $translations];
+                } else {
+                    $operations[] = ['update', $existing_translation, $translations];
+                }
+            }
+        }
+
+        foreach ($operations as $operation) {
+            $op = $operation[0];
+            if ($op === 'create') {
+                $newBaseStoreTranslation = new BaseStoreTranslation();
+                $newBaseStoreTranslation->base_store_id = $baseStore->base_store_id;
+                $newBaseStoreTranslation->language_id = $operation[1];
+                $newBaseStoreTranslation->description = $operation[2]->description;
+                $newBaseStoreTranslation->meta_description = isset($operation[2]->meta_description) ? $operation[2]->meta_description : null;
+                $newBaseStoreTranslation->custom_title = isset($operation[2]->custom_title) ? $operation[2]->custom_title : null;
+                $newBaseStoreTranslation->save();
+                $baseStoreTranslations[] = $newBaseStoreTranslation;
+
+                $baseStore->translations = $baseStoreTranslations;
+            }
+            elseif ($op === 'update') {
+                /** @var MerchantTranslation $existing_translation */
+                $existing_translation = $operation[1];
+                $data = $operation[2];
+                foreach ($data as $field => $value) {
+                    $existing_translation->{$field} = $value;
+                }
+                $existing_translation->save();
+
+                $baseStore->setRelation('translation_'. $existing_translation->language_id, $existing_translation);
+            }
+            elseif ($op === 'delete') {
+                /** @var MerchantTranslation $existing_translation */
+                $existing_translation = $operation[1];
+                $existing_translation->delete();
+            }
+        }
+
+        // to prevent error on saving base merchant
+        unset($baseStore->translations);
     }
 }

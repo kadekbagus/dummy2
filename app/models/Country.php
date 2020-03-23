@@ -13,4 +13,9 @@ class Country extends Eloquent
     {
         return $this->belongsTo('BaseMerchant', 'country_id', 'country_id');
     }
+
+    public function cities()
+    {
+        return $this->hasMany('MallCity');
+    }
 }

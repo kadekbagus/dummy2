@@ -25,6 +25,11 @@ Route::post('/app/v1/mall/update', 'IntermediateAuthController@Mall_postUpdateMa
 Route::get('/app/v1/mall/{search}', 'IntermediateAuthController@Mall_getSearchMall')->where('search', '(list|search)');
 
 /**
+ * Detail mall
+ */
+Route::get('/app/v1/mall/detail', 'IntermediateAuthController@Mall_getMallDetail');
+
+/**
  * List and/or Search Mall Name
  */
 Route::get('/app/v1/mall-name/{search}', 'IntermediateAuthController@Mall_getSearchMallName')->where('search', '(list|search)');

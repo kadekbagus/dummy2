@@ -19,6 +19,7 @@ use Mall;
 use App;
 use Lang;
 use User;
+use UserDetail;
 use Activity;
 use Orbit\Helper\Util\CdnUrlGenerator;
 
@@ -39,9 +40,14 @@ class UserCIAPIController extends BaseAPIController
             $user = $this->api->user;
 
             // Get user detail for provide the phone data
-            $userDetail = User::with('userdetail')
-                               ->excludeDeleted()
-                               ->find($user->user_id);
+            // note that we need to alias location as user_loc because
+            // otherwise UserDetail::getLocationAttribute() will be called
+            // when we use $userdetail->location
+            $userDetail = User::select('phone', 'gender', 'location AS user_loc', 'about', 'birthdate', 'users.created_at', 'pulsa_email_subscription')
+                ->leftJoin('user_details', 'user_details.user_id', '=', 'users.user_id')
+                ->leftJoin('extended_users', 'extended_users.user_id', '=', 'users.user_id')
+                ->where('users.user_id', $user->user_id)
+                ->first();
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
@@ -68,15 +74,19 @@ class UserCIAPIController extends BaseAPIController
             }
 
             $data = new \stdclass();
+            $data->id = $user->user_id;
             $data->email = $user->user_email;
             $data->firstname = $user->user_firstname;
             $data->lastname = $user->user_lastname;
-            $data->gender = $user->userdetail->gender;
-            $data->phone = $user->phone;
             $data->role = $role->role_name;
             $data->image = $image;
-            $data->phone = $userDetail->userdetail->phone;
-            $data->gender = $userDetail->userdetail->gender;
+            $data->phone = ! empty($userDetail) ? $userDetail->phone : null;
+            $data->gender = ! empty($userDetail) ? $userDetail->gender : null;
+            $data->location = ! empty($userDetail) ? $userDetail->user_loc : null;
+            $data->about = ! empty($userDetail) ? $userDetail->about : null;
+            $data->birthdate = ! empty($userDetail) ? $userDetail->birthdate : null;
+            $data->join_date = $userDetail->created_at->format('Y-m-d H:i:s');
+            $data->pulsa_email_subscription = $userDetail->pulsa_email_subscription === 'yes';
 
             $this->response->data = $data;
             $this->response->code = 0;

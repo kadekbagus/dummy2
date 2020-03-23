@@ -24,6 +24,8 @@ class StoreListAPIController extends ControllerAPI
 {
     protected $storeViewRoles = ['super admin', 'merchant database admin'];
     protected $returnBuilder = FALSE;
+    protected $useChunk = FALSE;
+
     /**
      * GET - get store
      *
@@ -83,8 +85,7 @@ class StoreListAPIController extends ControllerAPI
             }
 
             $prefix = DB::getTablePrefix();
-            $store = BaseStore::with('bank', 'objectContact', 'financialContactDetail', 'paymentProvider', 'productTags')
-                            ->excludeDeleted('base_stores')
+            $store = BaseStore::excludeDeleted('base_stores')
                             ->select('base_merchants.base_merchant_id', 'base_merchants.country_id', 'countries.name as country_name',
                                 DB::raw("{$prefix}base_merchants.name AS merchant"),
                                 'base_stores.base_store_id',
@@ -96,7 +97,26 @@ class StoreListAPIController extends ControllerAPI
                                 'base_stores.verification_number',
                                 'base_stores.is_payment_acquire',
                                 'base_stores.status',
-                                'base_stores.created_at')
+                                'base_stores.created_at',
+                                'base_stores.url',
+                                'base_stores.facebook_url',
+                                'base_stores.instagram_url',
+                                'base_stores.twitter_url',
+                                'base_stores.youtube_url',
+                                'base_stores.line_url',
+                                'base_stores.video_id_1',
+                                'base_stores.video_id_2',
+                                'base_stores.video_id_3',
+                                'base_stores.video_id_4',
+                                'base_stores.video_id_5',
+                                'base_stores.video_id_6',
+                                'base_stores.description',
+                                'base_stores.custom_title',
+                                'base_stores.disable_ads',
+                                'base_stores.disable_ymal',
+                                'base_merchants.mobile_default_language'
+                                )
+                            ->with('baseStoreTranslation','supportedLanguage','mediaBanner')
                             ->join('base_merchants', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
                             ->leftJoin('objects', 'base_stores.floor_id', '=', 'objects.object_id')
                             ->leftJoin('merchants', 'base_stores.merchant_id', '=', 'merchants.merchant_id')
@@ -205,7 +225,18 @@ class StoreListAPIController extends ControllerAPI
                 $store->skip($skip);
             }
 
-            $storeList = $store->get();
+            if ($this->useChunk) {
+                $storeList = [];
+                $store->chunk(500, function($chunks) use(&$storeList) {
+                    foreach($chunks as $chunk) {
+                        $storeList[] = $chunk;
+                    }
+                });
+            } else {
+                $store->with('bank', 'objectContact', 'financialContactDetail', 'paymentProvider', 'productTags');
+                $storeList = $store->get();
+            }
+
             $count = RecordCounter::create($_store)->count();
 
             // Get total active inactive stores
@@ -238,8 +269,19 @@ class StoreListAPIController extends ControllerAPI
                 }
             }
 
+            // for store csv report (MDMStorePrinterController)
+            if ($this->returnBuilder && $this->useChunk) {
+                return ['stores' => $storeList,
+                    'count' => $count,
+                    'active_store' => $totalActiveStore,
+                    'inactive_store' => $totalInactiveStore];
+            }
+
             if ($this->returnBuilder) {
-                return ['builder' => $store, 'count' => $count];
+                return ['builder' => $store,
+                        'count' => $count,
+                        'active_store' => $totalActiveStore,
+                        'inactive_store' => $totalInactiveStore];
             }
 
             $this->response->data = new stdClass();
@@ -298,6 +340,13 @@ class StoreListAPIController extends ControllerAPI
     public function setReturnBuilder($bool)
     {
         $this->returnBuilder = $bool;
+
+        return $this;
+    }
+
+    public function setUseChunk($bool)
+    {
+        $this->useChunk = $bool;
 
         return $this;
     }

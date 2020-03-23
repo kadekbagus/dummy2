@@ -107,7 +107,7 @@ class StoreCityAPIController extends PubControllerAPI
 
             $_mall = clone $mall;
 
-            $take = PaginationNumber::parseTakeFromGet('retailer');
+            $take = PaginationNumber::parseTakeFromGet('city_location');
             $mall->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();

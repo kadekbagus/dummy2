@@ -4,6 +4,7 @@ use Illuminate\Auth\UserTrait;
 use Illuminate\Auth\UserInterface;
 
 use Orbit\Helper\Notifications\Notifiable;
+use Orbit\Helper\Activity\HasActivity;
 
 class User extends Eloquent implements UserInterface
 {
@@ -12,6 +13,7 @@ class User extends Eloquent implements UserInterface
     use UserRoleTrait;
 
     use Notifiable;
+    use HasActivity;
 
     const USER_ALREADY_ACTIVE_ERROR_CODE = 1401;
 
@@ -96,7 +98,72 @@ class User extends Eloquent implements UserInterface
 
     public function getFullName()
     {
-        return $this->user_firstname . ' ' . $this->user_lastname;
+        return strip_tags($this->user_firstname . ' ' . $this->user_lastname);
+    }
+
+    public function getUserFirstnameAttribute($value)
+    {
+        return strip_tags($value);
+    }
+
+    public function getUserLastnameAttribute($value)
+    {
+        return strip_tags($value);
+    }
+
+    /**
+     * Called by ProfileHelper.php
+     *
+     * @param  [type] $value [description]
+     * @return [type]        [description]
+     */
+    public function getNameAttribute($value)
+    {
+        return strip_tags($value);
+    }
+
+    /**
+     * Called by ProfileHelper.php
+     *
+     * @param  [type] $value [description]
+     * @return [type]        [description]
+     */
+    public function getUserNameAttribute($value)
+    {
+        return strip_tags($value);
+    }
+
+    /**
+     * Called by UserCIAPIController.php
+     *
+     * @param  [type] $value [description]
+     * @return [type]        [description]
+     */
+    public function getAboutAttribute($value)
+    {
+        return strip_tags($value);
+    }
+
+    /**
+     * Called by UserCIAPIController.php
+     *
+     * @param  [type] $value [description]
+     * @return [type]        [description]
+     */
+    public function getUserLocAttribute($value)
+    {
+        return strip_tags($value);
+    }
+
+    /**
+     * Called by ProfileHelper.php
+     *
+     * @param  [type] $value [description]
+     * @return [type]        [description]
+     */
+    public function getLocationAttribute($value)
+    {
+        return strip_tags($value);
     }
 
     /** This enables $user->full_name. */
@@ -197,6 +264,21 @@ class User extends Eloquent implements UserInterface
     public function userVerificationNumber()
     {
         return $this->hasOne('UserVerificationNumber', 'user_id', 'user_id');
+    }
+
+    public function userMerchantReview()
+    {
+        return $this->hasOne('UserMerchantReview');
+    }
+
+    public function purchases()
+    {
+        return $this->hasMany('PaymentTransaction');
+    }
+
+    public function discountCodes()
+    {
+        return $this->hasMany(DiscountCode::class);
     }
 
     /**
@@ -370,4 +452,14 @@ class User extends Eloquent implements UserInterface
         return $membershipNumbers->get();
     }
 
+    public function roleIs($roles = [])
+    {
+        return empty($roles)
+            || in_array(strtolower($this->role->role_name), $roles);
+    }
+
+    public function statusIs($status = [])
+    {
+        return empty($status) || in_array($this->status, $status);
+    }
 }

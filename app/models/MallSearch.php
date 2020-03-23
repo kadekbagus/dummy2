@@ -1,27 +1,19 @@
 <?php
 
-use Orbit\Helper\Elasticsearch\Search;
 
 use Orbit\Helper\Util\FollowStatusChecker;
 
 /**
 * Implementation of ES search for Malls...
 */
-class MallSearch extends Search
+class MallSearch extends ObjectTypeSearch
 {
-    function __construct($ESConfig = [])
-    {
-        parent::__construct($ESConfig);
+    protected $objectType = 'malldata';
+    protected $objectTypeAlias = 'malldata';
 
-        $this->setDefaultSearchParam();
-
-        $this->setIndex($this->esConfig['indices_prefix'] . $this->esConfig['indices']['malldata']['index']);
-        $this->setType($this->esConfig['indices']['malldata']['type']);
-    }
-    
     /**
      * Basic requirements of malls that will be listed.
-     * 
+     *
      * @return [type] [description]
      */
     public function filterBase()
@@ -37,7 +29,7 @@ class MallSearch extends Search
 
     /**
      * Filter by user's geo-location...
-     * 
+     *
      * @param  string $location [description]
      * @return [type]           [description]
      */
@@ -65,29 +57,29 @@ class MallSearch extends Search
 
     /**
      * Implement filter by keyword...
-     * 
+     *
      * @param  string $keyword [description]
      * @return [type]          [description]
      */
     public function filterByKeyword($keyword = '')
     {
-        $priorityName = isset($this->esConfig['priority']['mall']['name']) ? 
+        $priorityName = isset($this->esConfig['priority']['mall']['name']) ?
             $this->esConfig['priority']['mall']['name'] : '^6';
 
-        $priorityObjectType = isset($this->esConfig['priority']['mall']['object_type']) ? 
+        $priorityObjectType = isset($this->esConfig['priority']['mall']['object_type']) ?
             $this->esConfig['priority']['mall']['object_type'] : '^5';
 
-        $priorityDescription = isset($this->esConfig['priority']['mall']['description']) ? 
+        $priorityDescription = isset($this->esConfig['priority']['mall']['description']) ?
             $this->esConfig['priority']['mall']['description'] : '^3';
 
-        $priorityAddressLine = isset($this->esConfig['priority']['mall']['address_line']) ? 
+        $priorityAddressLine = isset($this->esConfig['priority']['mall']['address_line']) ?
             $this->esConfig['priority']['mall']['address_line'] : '';
 
         $this->must([
             'query_string' => [
                 'query' => '*' . $keyword . '*',
                 'fields' => [
-                    'name' . $priorityName, 
+                    'name' . $priorityName,
                     'object_type' . $priorityObjectType,
                     'description' . $priorityDescription,
                     'address_line' . $priorityAddressLine,
@@ -118,7 +110,7 @@ class MallSearch extends Search
 
     /**
      * Filter by Country and Cities...
-     * 
+     *
      * @param  array  $area [description]
      * @return [type]       [description]
      */
@@ -145,7 +137,7 @@ class MallSearch extends Search
 
     /**
      * Filter by Partner...
-     * 
+     *
      * @param  string $partnerId [description]
      * @return [type]            [description]
      */
@@ -174,8 +166,8 @@ class MallSearch extends Search
         $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
         $params['advertSorting'] = [
             '_script' => [
-                'script' => $sortPageScript, 
-                'type' => 'string', 
+                'script' => $sortPageScript,
+                'type' => 'string',
                 'order' => 'desc'
             ]
         ];
@@ -241,8 +233,8 @@ class MallSearch extends Search
             foreach($sortPageScripts as $sortPageScript) {
                 $advertOrdering = [
                     '_script' => [
-                        'script' => $sortPageScript, 
-                        'type' => 'string', 
+                        'script' => $sortPageScript,
+                        'type' => 'string',
                         'order' => 'desc'
                     ]
                 ];
@@ -258,7 +250,7 @@ class MallSearch extends Search
 
     /**
      * Exclude the partner competitors from the result.
-     * 
+     *
      * @param  array  $competitors [description]
      * @return [type]              [description]
      */
@@ -272,35 +264,8 @@ class MallSearch extends Search
     }
 
     /**
-     * Sort by name..
-     * 
-     * @return [type] [description]
-     */
-    public function sortByName()
-    {
-        $this->sort(['lowercase_name' => ['order' => 'asc']]);
-    }
-
-    /**
-     * Sort store by rating.
-     * 
-     * @param  string $sortingScript [description]
-     * @return [type]                [description]
-     */
-    public function sortByRating($sortingScript = '')
-    {
-        $this->sort([
-            '_script' => [
-                'script' => $sortingScript,
-                'type' => 'number',
-                'order' => 'desc'
-            ]
-        ]);
-    }
-
-    /**
      * Sort store by favorite.
-     * 
+     *
      * @param  string $sortingScript [description]
      * @return [type]                [description]
      */
@@ -318,75 +283,85 @@ class MallSearch extends Search
         $this->sortByName();
     }
 
-    public function addReviewFollowScript($params = [])
+    private function buildFollowCalcScript($params = [])
     {
-        $scriptFieldRating = "double counter = 0; double rating = 0;";
-        $scriptFieldReview = "double review = 0;";
         $scriptFieldFollow = "int follow = 0;";
-
-        if (! empty($params['cityFilters'])) {
-            // count total review and average rating based on city filter
-            $countryId = $params['countryData']->country_id;
-            foreach ((array) $params['cityFilters'] as $cityFilter) {
-                $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { if (! doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value * doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value);}}; ";
-                $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { if (! doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value;}}; ";
-            }
-        } else if (! empty($countryFilter)) {
-            // count total review and average rating based on country filter
-            $countryId = $params['countryData']->country_id;
-            $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { if (! doc['location_rating.rating_" . $countryId . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);}}; ";
-            $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "')) { if (! doc['location_rating.review_" . $countryId . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "'].value;}}; ";
-        } else {
-            // count total review and average rating based in all location
-            $mallCountry = Mall::groupBy('country')->lists('country');
-            $countries = Country::select('country_id')->whereIn('name', $mallCountry)->get();
-
-            foreach ($countries as $country) {
-                $countryId = $country->country_id;
-                $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { if (! doc['location_rating.rating_" . $countryId . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);}}; ";
-                $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "')) { if (! doc['location_rating.review_" . $countryId . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "'].value;}}; ";
-            }
-        }
-
-        $scriptFieldRating = $scriptFieldRating . " if(counter == 0 || rating == 0) {return 0;} else {return rating/counter;}; ";
-        $scriptFieldReview = $scriptFieldReview . " if(review == 0) {return 0;} else {return review;}; ";
-
         $role = $params['user']->role->role_name;
         $objectFollow = [];
         if (strtolower($role) === 'consumer') {
-            $objectFollow = $this->getUserFollow($params['user']); // return array of followed mall_id
+            /*** disable follow status on listing ***/
+            // $objectFollow = $this->getUserFollow($params['user']); // return array of followed mall_id
 
-            if (! empty($objectFollow)) {
-                if ($params['sortBy'] === 'followed') {
-                    foreach ($objectFollow as $followId) {
-                        $scriptFieldFollow = $scriptFieldFollow . " if (doc.containsKey('merchant_id')) { if (! doc['merchant_id'].empty) { if (doc['merchant_id'].value.toLowerCase() == '" . strtolower($followId) . "'){ follow = 1; }}};";
-                    }
+            // if (! empty($objectFollow)) {
+            //     if ($params['sortBy'] === 'followed') {
+            //         foreach ($objectFollow as $followId) {
+            //             $scriptFieldFollow = $scriptFieldFollow . ' ' .
+            //             "if (doc.containsKey('merchant_id')) {
+            //                 if (! doc['merchant_id'].empty) {
+            //                     if (doc['merchant_id'].value.toLowerCase() == '" . strtolower($followId) . "') {
+            //                         follow = 1;
+            //                     }
+            //                 }
+            //             };";
+            //         }
 
-                    $scriptFieldFollow = $scriptFieldFollow . " if(follow == 0) {return 0;} else {return follow;}; ";
-                }
-            }
+            //         $scriptFieldFollow = $scriptFieldFollow . ' ' .
+            //         "if (follow == 0) {
+            //             return 0;
+            //         } else {
+            //             return follow;
+            //         }; ";
+            //     }
+            // }
         }
-
-        // Add script fields into request body...
-        $this->scriptFields([
-            'average_rating' => $scriptFieldRating,
-            'total_review' => $scriptFieldReview,
-            'is_follow' => $scriptFieldFollow
-        ]);
-
-        return compact('scriptFieldRating', 'scriptFieldReview', 'scriptFieldFollow', 'objectFollow');
-
-        //////// END RATING & FOLLOW SCRIPTS /////
+        return compact('scriptFieldFollow', 'objectFollow');
     }
 
-    /**
-     * Sort by relevance..
-     * 
-     * @return [type] [description]
-     */
-    public function sortByRelevance()
+    protected function buildRatingReviewCalcScript($params = [])
     {
-        $this->sort(['_score' => ['order' => 'desc']]);
+        $scripts = [];
+        if (!empty($params['countryData']) && ! empty($params['cityFilters'])) {
+            $countryId = $params['countryData']->country_id;
+            $scripts = $this->buildRatingReviewCalcScriptByCountryCities($countryId, $params['cityFilters']);
+
+        } else if (! empty($params['countryData']) && empty($params['cityFilters'])) {
+            // count total review and average rating based on country filter
+            $countryId = $params['countryData']->country_id;
+            $scripts = $this->buildRatingReviewCalcScriptByCountries([$countryId]);
+        } else {
+            $scripts = $this->buildRatingReviewCalcScriptByMallCountries();
+        }
+        return $scripts + $this->buildFollowCalcScript($params);
+    }
+
+    protected function getReviewRatingScript($params = [])
+    {
+        $scripts = $this->buildRatingReviewCalcScript($params);
+        $scriptFieldRating = $scripts['scriptFieldRating'] . " " .
+        "if (counter == 0 || rating == 0) {
+            return 0;
+        } else {
+            return rating/counter;
+        }; ";
+        $scriptFieldReview = $scripts['scriptFieldReview'] . " " .
+        "if (review == 0) {
+            return 0;
+        } else {
+            return review;
+        }; ";
+
+        return array_merge($scripts, compact('scriptFieldRating', 'scriptFieldReview'));
+    }
+
+    public function addReviewFollowScript($params = [])
+    {
+        $scripts = $this->getReviewRatingScript($params);
+        $this->scriptFields([
+            'average_rating' => $scripts['scriptFieldRating'],
+            'total_review' => $scripts['scriptFieldReview'],
+            'is_follow' => $scripts['scriptFieldFollow'],
+        ]);
+        return $scripts;
     }
 
     public function sortByUpdatedAt()
@@ -395,8 +370,18 @@ class MallSearch extends Search
     }
 
     /**
+     * Sort by Nearest..
+     *
+     * @return [type] [description]
+     */
+    public function sortByNearest($ul = null)
+    {
+        $this->nearestSort(nul, 'position', $ul);
+    }
+
+    /**
      * Bypass Malls ordering...
-     * 
+     *
      * @param  array  $params [description]
      * @return [type]         [description]
      */
@@ -425,8 +410,9 @@ class MallSearch extends Search
 
         if (! empty($mallFeaturedIds)) {
 
+            // No need this, because we already have ordering in MallListNewAPIController.php
             // Make sure to sort by score first...
-            $this->sortByRelevance();
+            // $this->sortByRelevance();
 
             $esFeaturedBoost = Config::get('orbit.featured.es_boost', 10);
 
@@ -446,35 +432,13 @@ class MallSearch extends Search
     // check user follow
     public function getUserFollow($user)
     {
-        $follow = FollowStatusChecker::create()
-                                    ->setUserId($user->user_id)
-                                    ->setObjectType('mall')
-                                    ->getFollowStatus();
+        /*** disable follow status on listing ***/
+        // $follow = FollowStatusChecker::create()
+        //                             ->setUserId($user->user_id)
+        //                             ->setObjectType('mall')
+        //                             ->getFollowStatus();
 
-        return $follow;
-    }
-
-    /**
-     * Init default search params.
-     * 
-     * @return [type] [description]
-     */
-    public function setDefaultSearchParam()
-    {
-        $this->searchParam = [
-            'index' => '',
-            'type' => '',
-            'body' => [
-                'from' => 0,
-                'size' => 20,
-                'fields' => [
-                    '_source'
-                ],
-                'query' => [],
-                'track_scores' => true,
-                'sort' => []
-            ]
-        ];
+        // return $follow;
     }
 
     public function filterAdvertMalls($options = [])
@@ -484,33 +448,33 @@ class MallSearch extends Search
                 'should' => [
                     [
                         'bool' => [
-                            'must' => [ 
+                            'must' => [
                                 [
                                     'query' => [
                                         'match' => [
                                             'advert_status' => 'active'
                                         ]
                                     ]
-                                ], 
+                                ],
                                 [
                                     'range' => [
                                         'advert_start_date' => [
                                             'lte' => $options['dateTimeEs']
                                         ]
                                     ]
-                                ], 
+                                ],
                                 [
                                     'range' => [
                                         'advert_end_date' => [
                                             'gte' => $options['dateTimeEs']
                                         ]
                                     ]
-                                ], 
+                                ],
                                 [
                                     'match' => [
                                         'advert_location_ids' => $options['locationId']
                                     ]
-                                ], 
+                                ],
                                 [
                                     'terms' => [
                                         'advert_type' => $options['advertType']
@@ -531,15 +495,6 @@ class MallSearch extends Search
                         ]
                     ]
                 ]
-            ]
-        ]);
-    }
-
-    public function exclude($excludedIds = [])
-    {
-        $this->mustNot([
-            'terms' => [
-                '_id' => $excludedIds,
             ]
         ]);
     }

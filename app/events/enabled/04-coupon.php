@@ -316,16 +316,16 @@ Event::listen('orbit.coupon.postnewcoupon.after.commit', function($controller, $
     $timestamp = new DateTime($coupon->created_at);
     $date = $timestamp->format('d F Y H:i').' (UTC)';
 
-    // Send email process to the queue
-    Queue::push('Orbit\\Queue\\CampaignMail', [
-        'campaignType'       => 'Coupon',
-        'campaignName'       => $coupon->promotion_name,
-        'pmpUser'            => $controller->api->user->username,
-        'eventType'          => 'created',
-        'date'               => $date,
-        'campaignId'         => $coupon->promotion_id,
-        'mode'               => 'create'
-    ]);
+    // Send email process to the queue (disabled because there's no use)
+    // Queue::push('Orbit\\Queue\\CampaignMail', [
+    //     'campaignType'       => 'Coupon',
+    //     'campaignName'       => $coupon->promotion_name,
+    //     'pmpUser'            => $controller->api->user->username,
+    //     'eventType'          => 'created',
+    //     'date'               => $date,
+    //     'campaignId'         => $coupon->promotion_id,
+    //     'mode'               => 'create'
+    // ]);
 });
 
 
@@ -344,16 +344,16 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
     $timestamp = new DateTime($coupon->updated_at);
     $date = $timestamp->format('d F Y H:i').' (UTC)';
 
-    // Send email process to the queue
-    Queue::push('Orbit\\Queue\\CampaignMail', [
-        'campaignType'       => 'Coupon',
-        'campaignName'       => $coupon->promotion_name,
-        'pmpUser'            => $controller->api->user->username,
-        'eventType'          => 'updated',
-        'date'               => $date,
-        'campaignId'         => $coupon->promotion_id,
-        'mode'               => 'update'
-    ]);
+    // Send email process to the queue (disabled because there's no use)
+    // Queue::push('Orbit\\Queue\\CampaignMail', [
+    //     'campaignType'       => 'Coupon',
+    //     'campaignName'       => $coupon->promotion_name,
+    //     'pmpUser'            => $controller->api->user->username,
+    //     'eventType'          => 'updated',
+    //     'date'               => $date,
+    //     'campaignId'         => $coupon->promotion_id,
+    //     'mode'               => 'update'
+    // ]);
 
 
     if ($coupon->promotion_type != 'sepulsa') {
@@ -382,6 +382,7 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
                         THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END)
                     END AS campaign_status,
                     COUNT({$prefix}issued_coupons.issued_coupon_id) as available,
+                    {$prefix}promotions.available as agg_available,
                     {$prefix}promotions.is_visible
                 "))
                 ->join('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
@@ -396,9 +397,13 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
                 ->first();
 
     if (! empty($coupon)) {
-        if ($coupon->campaign_status === 'stopped' || $coupon->campaign_status === 'expired' || $coupon->available === 0 || $coupon->is_visible === 'N') {
+        if ($coupon->campaign_status === 'stopped' || $coupon->campaign_status === 'expired' || $coupon->agg_available === 0 || $coupon->is_visible === 'N') {
             // Notify the queueing system to delete Elasticsearch document
             Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
+                'coupon_id' => $coupon->promotion_id
+            ]);
+
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESAdvertCouponDeleteQueue', [
                 'coupon_id' => $coupon->promotion_id
             ]);
 
@@ -442,7 +447,7 @@ Event::listen('orbit.coupon.postaddtowallet.after.commit', function($controller,
 });
 
 
-Event::listen('orbit.coupon.postupdatecoupon-mallnotification.after.save', function($controller, $coupon)
+Event::listen('orbit.coupon.postupdatecoupon-mallnotification.after.commit', function($controller, $coupon)
 {
     if ($coupon->status === 'active')
     {
@@ -505,17 +510,32 @@ Event::listen('orbit.coupon.postupdatecoupon-mallnotification.after.save', funct
         {
             // get user_ids and tokens
             $userIds = array_values(array_unique($follower));
-            $tokenSearch = ['user_ids' => json_encode($userIds), 'notification_provider' => 'onesignal'];
-            $tokenData = $mongoClient->setQueryString($tokenSearch)
-                                     ->setEndPoint('user-notification-tokens')
-                                     ->request('GET');
 
-            if ($tokenData->data->total_records > 0) {
-                foreach ($tokenData->data->records as $key => $value) {
-                    $tokens[] = $value->notification_token;
+            // Split data
+            $totalUserIds = count($userIds);
+            if (count($totalUserIds) > 0) {
+                $chunkSize = 100;
+                $chunkedArray = array_chunk($userIds, $chunkSize);
+
+                foreach ($chunkedArray as $chunk) {
+
+                    $tokenSearch = ['user_ids' => json_encode($chunk), 'notification_provider' => 'onesignal'];
+                    $tokenData = $mongoClient->setQueryString($tokenSearch)
+                                             ->setEndPoint('user-notification-tokens')
+                                             ->request('GET');
+
+                    if ($tokenData->data->total_records > 0) {
+                        foreach ($tokenData->data->records as $key => $value) {
+                            $tokens[] = $value->notification_token;
+                        }
+                    }
+
+                    usleep(100000);
                 }
-                $tokens = array_values(array_unique($tokens));
             }
+
+            $tokens = array_values(array_unique($tokens));
+
 
             $_coupon = Coupon::select('promotions.*',
                                   DB::raw('default_languages.name as default_language_name'),
@@ -918,15 +938,27 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
                     $userIds = array_values(array_unique($userIds));
                 }
 
-                $queryStringUserNotifToken['user_ids'] = json_encode($userIds);
+                // Split data
+                $totalUserIds = count($userIds);
+                if (count($totalUserIds) > 0) {
+                    $chunkSize = 100;
+                    $chunkedArray = array_chunk($userIds, $chunkSize);
 
-                $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
-                                    ->setEndPoint('user-notification-tokens')
-                                    ->request('GET');
+                    foreach ($chunkedArray as $chunk) {
 
-                if ($notificationTokens->data->total_records > 0) {
-                    foreach ($notificationTokens->data->records as $key => $val) {
-                        $notificationToken[] = $val->notification_token;
+                        $queryStringUserNotifToken['user_ids'] = json_encode($chunk);
+
+                        $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
+                                            ->setEndPoint('user-notification-tokens')
+                                            ->request('GET');
+
+                        if ($notificationTokens->data->total_records > 0) {
+                            foreach ($notificationTokens->data->records as $key => $val) {
+                                $notificationToken[] = $val->notification_token;
+                            }
+                        }
+
+                        usleep(100000);
                     }
                 }
 
@@ -1034,5 +1066,64 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
             }
         }
 
+    }
+});
+
+
+Event::listen('orbit.coupon.postnewgiftncoupon.after.commit', function($controller, $coupon)
+{
+    // check coupon before update elasticsearch
+    $prefix = DB::getTablePrefix();
+    $coupon = Coupon::select(
+                DB::raw("
+                    {$prefix}promotions.promotion_id,
+                    CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                        THEN {$prefix}campaign_status.campaign_status_name
+                        ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                                                        FROM {$prefix}promotion_retailer opt
+                                                                            LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
+                                                                            LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                                            LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                                                        WHERE opt.promotion_id = {$prefix}promotions.promotion_id
+                                                                    )
+                        THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END)
+                    END AS campaign_status,
+                    COUNT({$prefix}issued_coupons.issued_coupon_id) as available,
+                    {$prefix}promotions.is_visible
+                "))
+                ->join('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
+                ->join('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
+                ->leftJoin('issued_coupons', function($q) {
+                    $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id')
+                        ->where('issued_coupons.status', '=', "available");
+                })
+                ->where('promotions.promotion_id', $coupon->promotion_id)
+                ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
+                ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
+                ->first();
+
+    if (! empty($coupon)) {
+        if ($coupon->campaign_status === 'stopped' || $coupon->campaign_status === 'expired' || $coupon->available === 0 || $coupon->is_visible === 'N') {
+            // Notify the queueing system to delete Elasticsearch document
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
+                'coupon_id' => $coupon->promotion_id
+            ]);
+
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESAdvertCouponDeleteQueue', [
+                'coupon_id' => $coupon->promotion_id
+            ]);
+
+            // Notify the queueing system to update Elasticsearch suggestion document
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
+                'coupon_id' => $coupon->promotion_id
+            ]);
+        } else {
+            if ($coupon->is_visible === 'Y') {
+                // Notify the queueing system to update Elasticsearch document
+                Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
+                    'coupon_id' => $coupon->promotion_id
+                ]);
+            }
+        }
     }
 });

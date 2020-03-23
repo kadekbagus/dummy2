@@ -68,6 +68,36 @@ class PaymentTransactionDetail extends Eloquent
     }
 
     /**
+     * Relation to Pulsa model.
+     *
+     * @return [type] [description]
+     */
+    public function pulsa()
+    {
+        return $this->belongsTo('Pulsa', 'object_id', 'pulsa_item_id');
+    }
+
+    public function discount_code()
+    {
+        return $this->belongsTo('DiscountCode', 'object_id', 'discount_code_id');
+    }
+
+    public function discount()
+    {
+        return $this->belongsTo('Discount', 'object_id', 'discount_id');
+    }
+
+    public function digital_product()
+    {
+        return $this->belongsTo('DigitalProduct', 'object_id', 'digital_product_id');
+    }
+
+    public function provider_product()
+    {
+        return $this->belongsTo('ProviderProduct');
+    }
+
+    /**
      * Determine if the payment is for Sepulsa Deals.
      *
      * @return [type] [description]
@@ -102,7 +132,11 @@ class PaymentTransactionDetail extends Eloquent
      */
     public function getPrice()
     {
-        return $this->currency . ' ' . number_format($this->price, 0, ',', '.');
+        if ($this->currency === 'IDR') {
+            return $this->currency . ' ' . number_format($this->price, 0, ',', '.');
+        }
+
+        return $this->currency . ' ' . number_format($this->price, 2, '.', ',');
     }
 
     /**
@@ -112,6 +146,11 @@ class PaymentTransactionDetail extends Eloquent
      */
     public function getTotal()
     {
-        return $this->currency . ' ' . number_format($this->price * $this->quantity, 0, ',', '.');
+        $total = $this->price * $this->quantity;
+        if ($this->currency === 'IDR') {
+            return $this->currency . ' ' . number_format($total, 0, ',', '.');
+        }
+
+        return $this->currency . ' ' . number_format($total, 2, '.', ',');
     }
 }

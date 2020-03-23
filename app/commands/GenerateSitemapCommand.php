@@ -160,6 +160,18 @@ class GenerateSitemapCommand extends Command
                     $this->generatePartnerDetailsSitemap();
                     break;
 
+                case 'article-detail':
+                    $this->generateArticleListSitemap();
+                    break;
+
+                case 'pulsa':
+                    $this->generatePulsaOperatorDetailSitemap();
+                    break;
+
+                case 'game-voucher':
+                    $this->generateGameVoucherDetailSitemap();
+                    break;
+
                 case 'misc':
                     $this->generateMiscListSitemap();
                     break;
@@ -169,6 +181,8 @@ class GenerateSitemapCommand extends Command
                     $this->generateMiscListSitemap();
                     $this->generateAllListSitemap();
                     $this->generateAllDetailSitemap();
+                    /* Disabled, as the article will have different sitemap than the rest */
+                    // $this->generateArticleListSitemap();
                     break;
             }
         } catch (\Exception $e) {
@@ -197,7 +211,6 @@ class GenerateSitemapCommand extends Command
             } else {
                 $this->urlStringPrinter(sprintf($this->urlTemplate, $uri['uri']), date('c', $updatedAt), $uri['changefreq']);
             }
-
         }
     }
 
@@ -233,6 +246,14 @@ class GenerateSitemapCommand extends Command
 
                 case 'partner':
                     $xml = $this->generatePartnerDetailsSitemap();
+                    break;
+
+                case 'pulsa':
+                    $xml = $this->generatePulsaOperatorDetailSitemap();
+                    break;
+
+                case 'game-voucher':
+                    $xml = $this->generateGameVoucherDetailSitemap();
                     break;
 
                 default:
@@ -551,6 +572,85 @@ class GenerateSitemapCommand extends Command
     }
 
     /**
+     * Generate all Article detail sitemap
+     *
+     * @param string $mall_id
+     * @param string $mall_slug
+     * @return void
+     */
+    protected function generateArticleListSitemap()
+    {
+        $detailUri = Config::get('orbit.sitemap.uri_properties.detail.article', []);
+
+        if (! empty($this->country)) {
+            $_GET['country'] = $this->country;
+        }
+
+        $_GET['take'] = 50;
+        $_GET['skip'] = 0;
+
+        $listController = Orbit\Controller\API\v1\Pub\Article\ArticleListAPIController::create('raw')
+            ->setUser($this->user)
+            ->setUseScroll();
+
+        $scroller = $listController->getSearcher();
+
+        $response = $listController->getSearchArticle();
+
+        if ($this->scrollResponseCheck($response)) {
+            $scrollId = $response['_scroll_id'];
+
+            while (true) {
+                // Execute a Scroll request
+                $scrollResponse = $scroller->scroll(["scroll_id" => $scrollId, "scroll" => "20s"]);
+
+                // Check to see if we got any search hits from the scroll
+                if (count($scrollResponse['hits']['hits']) > 0) {
+                    // If yes, Do Work Here
+
+                    $urlTemplate = $this->urlTemplate;
+
+                    // build the url
+                    $this->detailAppender($this->scrollRecords($scrollResponse), 'article', $urlTemplate, $detailUri, null, null);
+
+                    // Get new scrollId
+                    $scrollId = $scrollResponse['_scroll_id'];
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Generate sitemap for each pulsa operator page.
+     * @return void
+     */
+    protected function generatePulsaOperatorDetailSitemap()
+    {
+        // Get operator list.
+        $operatorList = TelcoOperator::select('slug')->where('status', 'active')->latest()->get();
+
+        // Append to sitemap
+        $detailUri = Config::get('orbit.sitemap.uri_properties.detail.pulsa', []);
+        $this->detailAppender($operatorList, 'pulsa', $this->urlTemplate, $detailUri);
+    }
+
+    /**
+     * Generate sitemap for game voucher detail page.
+     * @return void
+     */
+    protected function generateGameVoucherDetailSitemap()
+    {
+        // Get game list
+        $games = Game::select('slug')->active()->latest()->get();
+
+        // Generate detail sitemap
+        $detailUri = Config::get('orbit.sitemap.uri_properties.detail.game-voucher', []);
+        $this->detailAppender($games, 'game-voucher', $this->urlTemplate, $detailUri);
+    }
+
+    /**
      * Single function to append urls
      *
      * @param $xml DOMDocument
@@ -578,10 +678,14 @@ class GenerateSitemapCommand extends Command
                     $name = isset($record['coupon_name']) ? $record['coupon_name'] : $record['name'];
                     break;
 
+                case 'article':
+                    $id = $record['article_id'];
+                    $slug = $record['slug'];
+                    break;
+
                 case 'store':
                     $id = $record['merchant_id'];
                     $name = $record['name'];
-
                     break;
 
                 case 'partner':
@@ -589,6 +693,14 @@ class GenerateSitemapCommand extends Command
                     $id = $record->partner_id;
                     $name = $record->partner_name;
                     $updatedAt = strtotime($record->updated_at);
+                    break;
+
+                case 'pulsa':
+                    $slug = $record->slug;
+                    break;
+
+                case 'game-voucher':
+                    $slug = $record->slug;
                     break;
 
                 default:
@@ -599,7 +711,12 @@ class GenerateSitemapCommand extends Command
             if (! empty($mall_id)) {
                 $this->urlStringPrinter(sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $id, Str::slug($name))), date('c', $updatedAt), $detailUri['changefreq']);
             } else {
-                $this->urlStringPrinter(sprintf(sprintf($urlTemplate, $detailUri['uri']), $id, Str::slug($name)), date('c', $updatedAt), $detailUri['changefreq']);
+                if (in_array($type, ['article', 'pulsa', 'game-voucher'])) {
+                    $this->urlStringPrinter(sprintf(sprintf($urlTemplate, $detailUri['uri']), $slug), date('c', $updatedAt), $detailUri['changefreq']);
+                } else {
+                    $this->urlStringPrinter(sprintf(sprintf($urlTemplate, $detailUri['uri']), $id, Str::slug($name)), date('c', $updatedAt), $detailUri['changefreq']);
+                }
+
             }
         }
     }
@@ -616,6 +733,8 @@ class GenerateSitemapCommand extends Command
         foreach ($listUris as $key => $uri) {
             if ($key === 'home') {
                 $this->urlStringPrinter(sprintf($this->urlTemplate, $uri['uri']), date('c', $this->getLastPromotionUpdatedAt()), $uri['changefreq']);
+            } if ($key === 'nearest-mall-by-city') {
+                $this->generateNearestMallListByCitySitemap($uri);
             } else {
                 $this->urlStringPrinter(sprintf($this->urlTemplate, $uri['uri']), date('c'), $uri['changefreq']);
             }
@@ -719,6 +838,85 @@ class GenerateSitemapCommand extends Command
     }
 
     /**
+     * Generate nearest Malls by City.
+     *
+     * @param array $config
+     */
+    protected function generateNearestMallListByCitySitemap($config)
+    {
+        $countryOption = $this->option('nearest-countries');
+        $countryOption = array_map(function($country) {
+                return strtolower(trim($country));
+            }, explode(',', $countryOption));
+
+        $cityOption = $this->option('nearest-cities');
+        $cityOption = array_map(function($city) {
+                return strtolower(trim($city));
+            }, explode(',', $cityOption));
+
+        $langOption = $this->option('nearest-langs');
+        $langOption = array_map(function($lang) {
+                return strtolower(trim($lang));
+            }, explode(',', $langOption));
+
+        $countries = Country::with([
+                'cities' => function($query) use ($cityOption) {
+
+                    $query->orderBy('country_id')
+                        ->when(
+                            ! in_array('all', $cityOption),
+                            function($query) use ($cityOption) {
+                                $query->whereIn(
+                                    DB::raw('LOWER(city)'),
+                                    $cityOption
+                                );
+                            }
+                        );
+                }
+            ])
+            // If country option is not set to all, then just filter only
+            // those selected countries.
+            ->when(
+                ! in_array('all', $countryOption),
+                function($query) use ($countryOption) {
+                    return $query->whereIn(
+                        DB::raw('LOWER(name)'),
+                        $countryOption
+                    );
+                }
+            )->get();
+
+        // If nearest-langs is set to all, then set it with available
+        // values from config.
+        if (in_array('all', $langOption)) {
+            $langOption = array_keys($config);
+        }
+
+        foreach($langOption as $lang) {
+            foreach($countries as $country) {
+
+                $countryName = Str::slug($country->name);
+
+                foreach($country->cities as $city) {
+
+                    $uri = sprintf(
+                        $config[$lang]['uri'],
+                        $lang,
+                        $countryName,
+                        Str::slug($city->city)
+                    );
+
+                    $this->urlStringPrinter(
+                        sprintf($this->urlTemplate, $uri),
+                        date('c'),
+                        $config[$lang]['changefreq']
+                    );
+                }
+            }
+        }
+    }
+
+    /**
      * Get the console command arguments.
      *
      * @return array
@@ -740,6 +938,21 @@ class GenerateSitemapCommand extends Command
                 array('sleep', NULL, InputOption::VALUE_OPTIONAL, 'Sleep value.', 500000),
                 array('format-output', 0, InputOption::VALUE_NONE, 'Format sitemap XML file output.'),
                 array('country', 0, InputOption::VALUE_OPTIONAL, 'Filter sitemap by country ID.'),
+                array(
+                    'nearest-countries',  null, InputOption::VALUE_OPTIONAL,
+                    'List of countries for the sitemap. Use "all" to generate link for all country.',
+                    'Indonesia'
+                ),
+                array(
+                    'nearest-cities',  null, InputOption::VALUE_OPTIONAL,
+                    'List of cities for the sitemap.',
+                    'all'
+                ),
+                array(
+                    'nearest-langs',  null, InputOption::VALUE_OPTIONAL,
+                    'List of sitemap lang that will be generated. Use "all" to generate all lang set in config (orbit>sitemap)',
+                    'id'
+                ),
             );
     }
 }

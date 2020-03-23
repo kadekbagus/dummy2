@@ -25,6 +25,11 @@ Route::get('/app/v1/news/{search}', 'IntermediateAuthController@News_getSearchNe
      ->where('search', '(list|search)');
 
 /**
+ * Detail news
+ */
+Route::get('/app/v1/news/detail', 'IntermediateAuthController@News_getDetailNews');
+
+/**
  * Upload news image
  */
 Route::post('/app/v1/news-image/upload', 'IntermediateAuthController@Upload_postUploadNewsImage');

@@ -15,6 +15,8 @@ use DominoPOS\OrbitUploader\Uploader as OrbitUploader;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\OneSignal\OneSignal;
 use Orbit\Helper\MongoDB\Client as MongoClient;
+use Log;
+use Orbit\Notifications\RatingReview\RatingReviewRejectedNotification;
 
 class RatingReviewAPIController extends ControllerAPI
 {
@@ -101,6 +103,7 @@ class RatingReviewAPIController extends ControllerAPI
             $rating = OrbitInput::get('rating', null);
             $review = OrbitInput::get('review', null);
             $type = OrbitInput::get('type', null);
+            $is_image_reviewing = OrbitInput::get('is_image_reviewing', null);
 
             // Default sort by
             $sortBy = 'created_at';
@@ -166,7 +169,7 @@ class RatingReviewAPIController extends ControllerAPI
                     'skip'         => $skip,
                     'sortBy'       => $sortBy,
                     'sortMode'     => $sortMode,
-                    'store_ids'    => $storeIds
+                    'store_ids'    => json_encode($storeIds)
                 ];
             }
 
@@ -211,6 +214,12 @@ class RatingReviewAPIController extends ControllerAPI
             // filter type
             if (!empty($type)) {
                 $queryString['object_type_portal'] = $type;
+            }
+
+            // filter type
+            if (!empty($is_image_reviewing)) {
+                $queryString['is_image_reviewing'] = $is_image_reviewing;
+                $queryString['status'] = 'active';
             }
 
             $mongoConfig = Config::get('database.mongodb');
@@ -437,6 +446,144 @@ class RatingReviewAPIController extends ControllerAPI
     }
 
     /**
+     * test if review has at least one image that has been approved
+     * @return boolean true if at least one image that has been approved
+     */
+    private function hasApprovedImages($review)
+    {
+        if (! empty($review->images) && is_array($review->images)) {
+            foreach ($review->images as $img) {
+                if ($img[0]->approval_status === 'approved') {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * POST - delete review
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string     `id`                       (required) - id of the mongo db review
+     *
+     * @return Illuminate\Support\Facades\Response
+     *
+     */
+    public function postDeleteReview()
+    {
+        try {
+            $httpCode = 200;
+
+            // Require authentication
+            $this->checkAuth();
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->viewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $reviewId = OrbitInput::post('review_id');
+
+            $this->registerCustomValidation();
+
+            $validator = Validator::make(
+                array(
+                    'review_id' => $reviewId
+                ),
+                array(
+                    'review_id' => 'required|orbit.exist.review'
+                ),
+                array(
+                    'orbit.exist.review' => 'reply not found'
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $mongoConfig = Config::get('database.mongodb');
+            $mongoClient = MongoClient::create($mongoConfig);
+
+            $updateDataReview = [
+                '_id' => $reviewId,
+                'status' => 'deleted',
+            ];
+
+            $updateReview = $mongoClient->setFormParam($updateDataReview)
+                                        ->setEndPoint('reviews')
+                                        ->request('PUT');
+
+            $getReview = $mongoClient->setEndPoint("reviews/$reviewId")->request('GET');
+
+            // Send notification to Customer.
+            (new RatingReviewRejectedNotification($getReview->data))->send();
+
+            $reviewer = User::where('users.user_id', $getReview->data->user_id)->first();
+            $body = [
+                'object_id' => $getReview->data->object_id,
+                'object_type' => $getReview->data->object_type,
+            ];
+
+            $this->response->data = $getReview->data;
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->message = 'Request Ok';
+
+            Event::fire('orbit.rating.postrating.reject', [$reviewer, $body]);
+
+            if ($this->hasApprovedImages($getReview->data)) {
+                Event::fire('orbit.rating.postrating.rejectimage', [$reviewer, $body]);
+            }
+
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 50;
+        } catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+
+        return $output;
+    }
+
+    /**
      * Delete my reply.
      *
      * @author  budi <budi@dominopos.com>
@@ -490,12 +637,6 @@ class RatingReviewAPIController extends ControllerAPI
 
             $reply = $mongoClient->setEndPoint('reviews/' . $reviewId)
                                     ->request('GET');
-
-            // Make sure user has the right to delete the reply.
-            if ($reply->data->user_id !== $user->user_id) {
-                $errorMessage = 'You do not have right to delete the reply.';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
 
             $deleteReply = $mongoClient->setEndPoint('reviews/' . $reviewId)
                                         ->request('DELETE');

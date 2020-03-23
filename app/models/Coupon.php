@@ -36,6 +36,7 @@ class Coupon extends Eloquent
     const TYPE_NORMAL = 'mall';
     const TYPE_SEPULSA = 'sepulsa';
     const TYPE_HOT_DEALS = 'hot_deals';
+    const TYPE_GIFTNCOUPON = 'gift_n_coupon';
 
     protected $table = 'promotions';
 
@@ -203,6 +204,11 @@ class Coupon extends Eloquent
     public function coupon_sepulsa()
     {
         return $this->hasOne('CouponSepulsa', 'promotion_id', 'promotion_id');
+    }
+
+    public function discounts()
+    {
+        return $this->belongsToMany('Discount', 'object_discount', 'object_id')->where('object_type', 'coupon')->withTimestamps();
     }
 
     /**
@@ -757,31 +763,7 @@ class Coupon extends Eloquent
                 'coupon_id' => $this->promotion_id
             ]);
 
-            Queue::later(2, 'Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
-                'coupon_id' => $this->promotion_id
-            ]);
-        }
-    }
-
-    /**
-     * Restore the availability of coupon.
-     *
-     * @return [type] [description]
-     */
-    public function restore($amount = 1)
-    {
-        $this->available = $this->available + $amount;
-        $this->touch();
-
-        // Re sync the coupon data
-        if ($this->available > 0) {
-            Queue::later(2, 'Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
-                'coupon_id' => $this->promotion_id
-            ]);
-        }
-        else if ($this->available === 0) {
-            // Delete the coupon and also suggestion
-            Queue::later(2, 'Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
+            Queue::later(2, 'Orbit\\Queue\\Elasticsearch\\ESAdvertCouponDeleteQueue', [
                 'coupon_id' => $this->promotion_id
             ]);
 

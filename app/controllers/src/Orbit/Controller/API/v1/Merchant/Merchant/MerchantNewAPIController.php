@@ -82,9 +82,11 @@ class MerchantNewAPIController extends ControllerAPI
             $mobile_default_language = OrbitInput::post('mobile_default_language');
             $phone = OrbitInput::post('phone');
             $email = OrbitInput::post('email');
+            $gender = OrbitInput::post('gender', 'A');
             $productTags = OrbitInput::post('product_tags');
             $productTags = (array) $productTags;
-
+            $disable_ads = OrbitInput::post('disable_ads','n');
+            $disable_ymal = OrbitInput::post('disable_ymal','n');
             // Payment_acquire
             $paymentAcquire = OrbitInput::post('payment_acquire', 'N'); // Y or N
             $contactName = OrbitInput::post('contact_name');
@@ -98,6 +100,18 @@ class MerchantNewAPIController extends ControllerAPI
             $accountNumbers = OrbitInput::post('account_numbers',[]);
             $bankAddress = OrbitInput::post('bank_address',[]);
             $swiftCodes = OrbitInput::post('swift_codes',[]);
+
+            $instagramUrl = OrbitInput::post('instagram_url');
+            $twitterUrl = OrbitInput::post('twitter_url');
+            $youtubeUrl = OrbitInput::post('youtube_url');
+            $lineUrl = OrbitInput::post('line_url');
+            $otherPhotoSectionTitle = OrbitInput::post('other_photo_section_title');
+            $videoId1 = OrbitInput::post('video_id_1');
+            $videoId2 = OrbitInput::post('video_id_2');
+            $videoId3 = OrbitInput::post('video_id_3');
+            $videoId4 = OrbitInput::post('video_id_4');
+            $videoId5 = OrbitInput::post('video_id_5');
+            $videoId6 = OrbitInput::post('video_id_6');
 
             // Begin database transaction
             $this->beginTransaction();
@@ -113,6 +127,8 @@ class MerchantNewAPIController extends ControllerAPI
                     'merchantName'            => 'required|orbit.exist.merchant_name:' . $countryId,
                     'country'                 => 'required',
                     'languages'               => 'required|array',
+                    'disable_ads'             => 'in:n,y',
+                    'disable_ymal'            => 'in:n,y',
                     'mobile_default_language' => 'required|size:2|orbit.supported.language'
                 ),
                 array(
@@ -166,7 +182,21 @@ class MerchantNewAPIController extends ControllerAPI
             $newBaseMerchant->phone = $phone;
             $newBaseMerchant->email = $email;
             $newBaseMerchant->is_payment_acquire = $paymentAcquire;
+            $newBaseMerchant->gender = $gender;
             $newBaseMerchant->status = 'active';
+            $newBaseMerchant->instagram_url = $instagramUrl;
+            $newBaseMerchant->twitter_url = $twitterUrl;
+            $newBaseMerchant->youtube_url = $youtubeUrl;
+            $newBaseMerchant->line_url = $lineUrl;
+            $newBaseMerchant->other_photo_section_title = $otherPhotoSectionTitle;
+            $newBaseMerchant->video_id_1 = $videoId1;
+            $newBaseMerchant->video_id_2 = $videoId2;
+            $newBaseMerchant->video_id_3 = $videoId3;
+            $newBaseMerchant->video_id_4 = $videoId4;
+            $newBaseMerchant->video_id_5 = $videoId5;
+            $newBaseMerchant->video_id_6 = $videoId6;
+            $newBaseMerchant->disable_ads = $disable_ads;
+            $newBaseMerchant->disable_ymal = $disable_ymal;
 
             if (! empty($translations) ) {
                 $dataTranslations = @json_decode($translations);
@@ -185,6 +215,7 @@ class MerchantNewAPIController extends ControllerAPI
 
                         if ($key === $idLanguageEnglish->language_id) {
                             $newBaseMerchant->description = $val->description;
+                            $newBaseMerchant->custom_title = $val->custom_title;
                         }
                     }
                 }

@@ -6,12 +6,16 @@ use Event;
 use Queue;
 use Config;
 use Exception;
+use Illuminate\Database\QueryException;
 use Carbon\Carbon;
 
 use User;
 use PaymentTransaction;
 use IssuedCoupon;
 use Coupon;
+use Mall;
+use Activity;
+use TmpPromoCode;
 
 use Orbit\Helper\Sepulsa\API\TakeVoucher;
 use Orbit\Helper\Sepulsa\API\Responses\TakeVoucherResponse;
@@ -31,6 +35,10 @@ use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
  */
 class GetCouponQueue
 {
+    protected $activity = null;
+
+    protected $mall = '';
+
     /**
      * Get Sepulsa Voucher after payment completed.
      *
@@ -44,6 +52,13 @@ class GetCouponQueue
      */
     public function fire($job, $data)
     {
+        $mallId = isset($data['mall_id']) ? $data['mall_id'] : null;
+        $this->mall = Mall::where('merchant_id', $mallId)->first();
+
+        $this->activity = Activity::mobileci()
+                            ->setActivityType('transaction')
+                            ->setActivityName('transaction_status');
+
         try {
 
             DB::connection()->beginTransaction();
@@ -52,7 +67,9 @@ class GetCouponQueue
 
             Log::info("PaidCoupon: Getting Sepulsa Voucher for payment {$paymentId}");
 
-            $payment = PaymentTransaction::with(['details', 'user', 'issued_coupons'])->findOrFail($paymentId);
+            $payment = PaymentTransaction::with(['details.coupon', 'user', 'midtrans', 'issued_coupons'])->findOrFail($paymentId);
+
+            $this->activity->setUser($payment->user);
 
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired()) {
@@ -69,7 +86,7 @@ class GetCouponQueue
             }
 
             // It means we can not get related issued coupon.
-            if (empty($payment->issued_coupons)) {
+            if ($payment->issued_coupons->count() === 0) {
 
                 $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
                 $payment->save();
@@ -125,11 +142,23 @@ class GetCouponQueue
                             $issuedCoupon->issued_coupon_code       = $voucherData->code;
                             $issuedCoupon->url                      = $voucherData->redeem_url;
                             $issuedCoupon->issued_date              = Carbon::now();
-                            $issuedCoupon->expired_date             = $coupon->coupon_validity_in_date;
+                            $issuedCoupon->expired_date             = $voucherData->expired_date;
                             $issuedCoupon->status                   = IssuedCoupon::STATUS_ISSUED;
 
                             $issuedCoupon->save();
                         }
+                    }
+
+                    if (isset($data['discountCode']) &&
+                        isset($data['issuedCouponId']) &&
+                        isset($data['couponId']) &&
+                        isset($data['userId'])) {
+                        $newPromoCode = new TmpPromoCode();
+                        $newPromoCode->promo_code = $data['discountCode'];
+                        $newPromoCode->coupon_id = $data['couponId'];
+                        $newPromoCode->user_id = $data['userId'];
+                        $newPromoCode->issued_coupon_id = $data['issuedCouponId'];
+                        $newPromoCode->save();
                     }
 
                     // Update payment transaction data
@@ -143,10 +172,31 @@ class GetCouponQueue
 
                     // Notify customer for receipt/inApp.
                     $payment->user->notify(new ReceiptNotification($payment));
+
+                    // Log Activity
+                    $this->activity->setActivityNameLong('Transaction is Successful')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setObject($payment)
+                            ->setCoupon($coupon)
+                            ->setNotes(Coupon::TYPE_SEPULSA)
+                            ->setLocation($this->mall)
+                            ->responseOK()
+                            ->save();
+
+                    Activity::mobileci()
+                            ->setUser($payment->user)
+                            ->setActivityType('click')
+                            ->setActivityName('coupon_added_to_wallet')
+                            ->setActivityNameLong('Coupon Added To Wallet')
+                            ->setModuleName('Coupon')
+                            ->setObject($coupon)
+                            ->setNotes(Coupon::TYPE_SEPULSA)
+                            ->setLocation($this->mall)
+                            ->responseOK()
+                            ->save();
                 }
                 else {
                     Log::info("PaidCoupon: Failed to issue coupon from Sepulsa!");
-
                     // This means the TakeVoucher request failed, and we should retry (or not?)
                     $payment->notes = $payment->notes . $takenVouchers->getMessage() . "\n------\n";
 
@@ -156,6 +206,8 @@ class GetCouponQueue
             else {
                 Log::info("PaidCoupon: All coupons issued/redeemed for payment {$paymentId}.");
             }
+        } catch (QueryException $e) {
+            \Log::info('GETCOUPON QUERY EXCEPTION: ' . serialize([$e->getMessage(), $e->getFile(), $e->getLine()]));
         } catch (Exception $e) {
 
             // Failed to get token...
@@ -164,6 +216,7 @@ class GetCouponQueue
                 $this->retryJob($data, $payment, null, $e);
             }
             else {
+                \Log::info('GETCOUPON EXCEPTION: ' . serialize([$e->getMessage(), $e->getFile(), $e->getLine()]));
                 // Assume unhandled exception or payment not found.
                 if (! isset($payment)) {
                     $payment = null;
@@ -175,6 +228,10 @@ class GetCouponQueue
                 $this->retryJob($data, $payment, $takenVouchers, $e);
             }
         }
+
+        $issuedCoupon2 = IssuedCoupon::where('transaction_id', $paymentId)->first();
+
+        \Log::info('GETCOUPON IssuedCoupon After commit() fresh: ' . serialize($issuedCoupon2));
 
         $job->delete();
     }
@@ -256,6 +313,26 @@ class GetCouponQueue
                 ));
 
                 $this->notifyFailedCoupon($payment, $failureMessage);
+
+                $this->activity->setActivityNameLong('Transaction is Success - Failed Getting Coupon')
+                        ->setModuleName('Midtrans Transaction')
+                        ->setObject($payment)
+                        ->setNotes($failureMessage)
+                        ->setLocation($this->mall)
+                        ->responseFailed()
+                        ->save();
+
+                Activity::mobileci()
+                        ->setUser($payment->user)
+                        ->setActivityType('click')
+                        ->setActivityName('coupon_added_to_wallet')
+                        ->setActivityNameLong('Coupon Added to Wallet Failed')
+                        ->setModuleName('Coupon')
+                        ->setObject($payment->details->first()->coupon)
+                        ->setNotes($failureMessage)
+                        ->setLocation($this->mall)
+                        ->responseFailed()
+                        ->save();
             }
         }
         else {
@@ -284,7 +361,7 @@ class GetCouponQueue
         foreach($adminEmails as $email) {
             $devUser            = new User;
             $devUser->email     = $email;
-            $devUser->notify(new CouponNotAvailableNotification($payment, $failureMessage), $delay);
+            $devUser->notify(new CouponNotAvailableNotification($payment, $failureMessage));
         }
 
         // Notify customer that the coupon is not available and the money will be refunded.

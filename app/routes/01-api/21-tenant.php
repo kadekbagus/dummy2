@@ -205,3 +205,11 @@ Route::get('/api/v1/pub/store-featured/list', function()
 });
 
 Route::get('/app/v1/pub/store-featured/list', ['as' => 'pub-store-featured', 'uses' => 'IntermediatePubAuthController@Store\StoreFeaturedList_getStoreFeaturedList']);
+
+
+Route::get('/api/v1/pub/store/suggestion/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\Store\StoreAlsoLikeListAPIController::create()->getSearchStore();
+});
+
+Route::get('/app/v1/pub/store/suggestion/list', ['as' => 'pub-store-suggestion-list', 'uses' => 'IntermediatePubAuthController@Store\StoreAlsoLikeList_getSearchStore']);

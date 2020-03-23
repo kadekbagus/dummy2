@@ -359,6 +359,11 @@ class Tenant extends Eloquent
         return $this->mediaOrig()->where('media_name_id', 'retailer_logo');
     }
 
+    public function mediaBanner()
+    {
+        return $this->media()->where('media_name_id', 'retailer_banner');
+    }
+
     /**
      * Retailer belongsTo BaseStore.
      *

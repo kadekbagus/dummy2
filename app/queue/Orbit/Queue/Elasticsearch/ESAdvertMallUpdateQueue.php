@@ -248,6 +248,8 @@ class ESAdvertMallUpdateQueue
                     'status'          => $mall->status,
                     'ci_domain'       => $mall->ci_domain,
                     'is_subscribed'   => $mall->is_subscribed,
+                    'disable_ads'     => $mall->disable_ads,
+                    'disable_ymal'    => $mall->disable_ymal,
                     'updated_at'      => date('Y-m-d', strtotime($mall->updated_at)) . 'T' . date('H:i:s', strtotime($mall->updated_at)) . 'Z',
                     'keywords'        => '',
                     'postal_code'     => $mall->postal_code,

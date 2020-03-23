@@ -1,17 +1,31 @@
-<?php namespace OrbitShop\API\v1;
+<?php
+
+namespace OrbitShop\API\v1;
+
 /**
  * Base API Controller.
  *
  * @author Rio Astamal <me@rioastamal.net>
  */
+use App;
+use Config;
+use DB;
+use DominoPOS\OrbitACL\ACL;
+use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
+use DominoPOS\OrbitACL\Exception\ACLUnauthenticatedException;
 use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Response;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Config;
+use Lang;
+use Log;
+use OrbitShop\API\v1\ExceptionResponseProvider;
+use OrbitShop\API\v1\Exception\InvalidArgsException;
 use Orbit\Builder as OrbitBuilder;
+use Orbit\Helper\Resource\ResourceInterface;
 use Orbit\Helper\Util\CorsHeader;
 use PDO;
+use Response;
 
 abstract class ControllerAPI extends Controller
 {
@@ -124,6 +138,10 @@ abstract class ControllerAPI extends Controller
         {
             $this->expiresTime = $expires;
         }
+
+        if (isset($this->logQuery) && $this->logQuery) {
+            $this->enableQueryLog();
+        }
     }
 
     /**
@@ -183,7 +201,13 @@ abstract class ControllerAPI extends Controller
                 $json->code = $this->response->code;
                 $json->status = $this->response->status;
                 $json->message = $this->response->message;
-                $json->data = $this->response->data;
+
+                if ($this->response->data instanceof ResourceInterface) {
+                    $json->data = $this->response->data->toArray();
+                }
+                else {
+                    $json->data = $this->response->data;
+                }
 
                 if ($this->prettyPrintJSON) {
                     $output = json_encode($json, JSON_PRETTY_PRINT);
@@ -192,10 +216,10 @@ abstract class ControllerAPI extends Controller
                 }
 
                 $cors = CorsHeader::create(Config::get('orbit.security.cors', []));
-                
+
                 // Allow Cross-Domain Request
                 // http://enable-cors.org/index.html
-                
+
                 $this->customHeaders['Access-Control-Allow-Origin'] = $cors->getAllowOrigin();
                 $this->customHeaders['Access-Control-Allow-Methods'] = $cors->getAllowMethods();
                 $this->customHeaders['Access-Control-Allow-Credentials'] = $cors->getAllowCredentials();
@@ -203,7 +227,7 @@ abstract class ControllerAPI extends Controller
                 $angularTokenName = Config::get('orbit.security.csrf.angularjs.header_name');
                 $sessionHeader = Config::get('orbit.session.session_origin.header.name');
                 $allowHeaders = $cors->getAllowHeaders();
-                
+
                 if (! empty($angularTokenName)) {
                     $allowHeaders[] = $angularTokenName;
                 }
@@ -378,5 +402,98 @@ abstract class ControllerAPI extends Controller
         }
 
         return $eggs;
+    }
+
+    /**
+     * Authorize specific user roles.
+     *
+     * @todo this method should be removed, since it is moved to the ValidateRequest helper.
+     * @param  array  $allowedRoles [description]
+     * @return [type]        [description]
+     */
+    public function authorize($allowedRoles = [])
+    {
+        $this->checkAuth();
+
+        $user = $this->api->user;
+        $userRole = $user->role->role_name;
+
+        if (
+            ! empty($allowedRoles)
+            && ! in_array(strtolower($userRole), $allowedRoles)
+        ) {
+            ACL::throwAccessForbidden();
+        }
+
+        // Bind current user into container so it is accessible
+        // from anywhere.
+        App::instance('currentUser', $user);
+    }
+
+    /**
+     * handle exception.
+     *
+     * @param  Exception $e the exception.
+     * @param  bool $withDatabaseRollback indicate that we should rollback any DB changes or not.
+     *
+     * @return Illuminate\Http\Response
+     */
+    protected function handleException($e, $withDatabaseRollback = true)
+    {
+        // Rollback DB changes if needed.
+        if ($withDatabaseRollback) {
+            $this->rollBack();
+        }
+
+        $debug = Config::get('app.debug');
+        $httpCode = 500;
+        $this->response = new ExceptionResponseProvider($e);
+
+        if ($e instanceof ACLUnauthenticatedException) {
+            $httpCode = 401;
+        }
+        else if ($e instanceof ACLForbiddenException) {
+            $httpCode = 403;
+        }
+        else if ($e instanceof InvalidArgsException) {
+            $httpCode = 422;
+        }
+        else if ($e instanceof ModelNotFoundException) {
+            $httpCode = 404;
+            $this->response->code = 404;
+        }
+        else if ($e instanceof QueryException) {
+            if ($debug) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get(
+                    'validation.orbit.queryerror'
+                );
+            }
+        }
+        else {
+            // set other code/message...
+            if ($debug) {
+                $this->response->message = sprintf(
+                    '%s(%s): %s',
+                    $e->getFile(),
+                    $e->getLine(),
+                    $e->getMessage()
+                );
+            }
+        }
+
+        return $this->render($httpCode);
+    }
+
+    /**
+     * Register listener to log all queries being run.
+     * @return [type] [description]
+     */
+    protected function enableQueryLog()
+    {
+        DB::listen(function($query) {
+            Log::info($query);
+        });
     }
 }

@@ -36,6 +36,15 @@ Route::get('/api/v1/news/{search}', function()
 })->where('search', '(list|search)');
 
 /**
+ * Detail news
+ */
+Route::get('/api/v1/news/detail', function()
+{
+    return NewsAPIController::create()->getDetailNews();
+});
+
+
+/**
  * Upload news image
  */
 Route::post('/api/v1/news-image/upload', function()
@@ -159,3 +168,14 @@ Route::get('/api/v1/pub/news-featured/list', function()
 });
 
 Route::get('/app/v1/pub/news-featured/list', ['as' => 'pub-news-featured-list', 'uses' => 'IntermediatePubAuthController@News\NewsFeaturedList_getFeaturedNews']);
+
+
+/**
+ * List of news on all malls for Article Portal
+ */
+Route::get('/api/v1/suggestion-list', function()
+{
+    return SuggestionListAPIController::create()->getSuggestionList();
+});
+
+Route::get('/app/v1/suggestion-list', ['as' => 'suggestion-list', 'uses' => 'IntermediateAuthController@SuggestionList_getSuggestionList']);

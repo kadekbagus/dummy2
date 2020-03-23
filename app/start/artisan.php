@@ -128,6 +128,9 @@ Artisan::add(new ElasticsearchResyncPromotionCommand);
 // Initial Promotion data migration
 Artisan::add(new ElasticsearchResyncStoreCommand);
 
+// Initial article data migration
+Artisan::add(new ElasticsearchResyncArticleCommand);
+
 // Clear Promotion data in ES
 Artisan::add(new ElasticsearchClearPromotionCommand);
 
@@ -160,6 +163,9 @@ Artisan::add(new GetListActiveMallCommand);
 
 // List all active advert
 Artisan::add(new GetListActiveAdvertCommand);
+
+// List all active advert
+Artisan::add(new GetListActiveArticleCommand);
 
 // Fill table mall_countries
 Artisan::add(new FillTableMallCountriesCommand);
@@ -297,3 +303,39 @@ Artisan::add(new PaymentTransactionDataMigrationCommand);
 
 // Check Sepulsa vs GTM stat
 Artisan::add(new SepulsaRedemptionStatCommand);
+
+// Send reminder via email before Payment/Transaction expired.
+Artisan::add(new SendEmailBeforePaymentExpiredCommand);
+
+// Check Sepulsa Active Vouchers against our Active Campaign.
+Artisan::add(new SepulsaActiveVoucherReportCommand);
+
+// Copy base merchant description and banner to base store.
+Artisan::add(new CopyStoreDataCommand);
+
+// List all base stores.
+Artisan::add(new GetListBaseStoreCommand);
+
+// Create mall cs employee with verification code
+Artisan::add(new CreateUserMallCSCommand);
+
+// Give signup point to all active user
+Artisan::add(new UserSignUpPointCommand);
+
+// Register command to send pulsa pricelist.
+Artisan::add(new SendPulsaPriceListCommand);
+
+// Create RGP user
+Artisan::add(new CreateUserRGPCommand);
+
+// Update slug for telco operator
+Artisan::add(new TelcoOperatorSlugCommand);
+
+// Send User Report Email
+Artisan::add(new UserReportEmailCommand);
+
+// List all active user
+Artisan::add(new GetListActiveUserCommand);
+
+// Create BPP user
+Artisan::add(new CreateUserBPPCommand);

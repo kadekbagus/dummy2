@@ -24,6 +24,11 @@ Route::post('/app/v1/coupon/update', 'IntermediateAuthController@Coupon_postUpda
 Route::get('/app/v1/coupon/search', 'IntermediateAuthController@Coupon_getSearchCoupon');
 
 /**
+ * Detail coupon
+ */
+Route::get('/app/v1/coupon/detail', 'IntermediateAuthController@Coupon_getDetailCoupon');
+
+/**
  * List and/or Search coupon by issue retailer
  */
 Route::get('/app/v1/coupon/by-issue-retailer/search', 'IntermediateAuthController@Coupon_getSearchCouponByIssueRetailer');
@@ -113,3 +118,24 @@ Route::get('/app/v1/voucher-sepulsa/detail', 'IntermediateAuthController@CouponS
  * Get available sepulsa token
  */
 Route::get('/app/v1/available-sepulsa-token/list', 'IntermediateAuthController@CouponSepulsa_getAvailableSepulsaTokenList');
+
+
+/**
+ * Create new coupon giftn
+ */
+Route::post('/app/v1/coupon-giftn/new', 'IntermediateAuthController@CouponGiftN_postNewGiftNCoupon');
+
+/**
+ * Update coupon giftn
+ */
+Route::post('/app/v1/coupon-giftn/update', 'IntermediateAuthController@CouponGiftN_postUpdateGiftNCoupon');
+
+/**
+ * List and/or Search coupon giftn
+ */
+Route::get('/app/v1/coupon-giftn/search', 'IntermediateAuthController@CouponGiftN_getSearchGiftNCoupon');
+
+/**
+ * Detail coupon giftn
+ */
+Route::get('/app/v1/coupon-giftn/detail', 'IntermediateAuthController@CouponGiftN_getDetailGiftNCoupon');

@@ -302,49 +302,51 @@ class PromotionLocationAPIController extends PubControllerAPI
             }
 
             // ---- START RATING ----
-            $locationIds = [];
-            $merchantIds = [];
-            foreach ($listOfRec as &$itemLocation) {
-                $locationIds[] = $itemLocation->mall_id;
-                $merchantIds[] = $itemLocation->merchant_id;
-                $itemLocation->rating_average = null;
-                $itemLocation->review_counter = null;
-            }
+            if (count($listOfRec) !== 0) {
+                $locationIds = [];
+                $merchantIds = [];
+                foreach ($listOfRec as &$itemLocation) {
+                    $locationIds[] = $itemLocation->mall_id;
+                    $merchantIds[] = $itemLocation->merchant_id;
+                    $itemLocation->rating_average = null;
+                    $itemLocation->review_counter = null;
+                }
 
-            $queryString = [
-                'object_id'   => $promotion_id,
-                'object_type' => 'promotion',
-                'location_id' => $locationIds
-            ];
+                $queryString = [
+                    'object_id'   => $promotion_id,
+                    'object_type' => 'promotion',
+                    'location_id' => $locationIds
+                ];
 
-            if (! empty($storeName)) {
-                $queryString['store_id'] = $merchantIds;
-            }
+                if (! empty($storeName)) {
+                    $queryString['store_id'] = $merchantIds;
+                }
 
-            $mongoClient = MongoClient::create($mongoConfig);
-            $endPoint = "reviews";
-            $response = $mongoClient->setQueryString($queryString)
-                                    ->setEndPoint($endPoint)
-                                    ->request('GET');
+                $mongoClient = MongoClient::create($mongoConfig);
+                $endPoint = "reviews";
+                $response = $mongoClient->setQueryString($queryString)
+                                        ->setEndPoint($endPoint)
+                                        ->request('GET');
 
-            $reviewList = $response->data;
+                $reviewList = $response->data;
 
-            $ratings = array();
-            foreach ($reviewList->records as $review) {
-                $locationId = $review->location_id;
-                $ratings[$locationId]['rating'] = (! empty($ratings[$locationId]['rating'])) ? $ratings[$locationId]['rating'] + $review->rating : $review->rating;
-                $ratings[$locationId]['totalReview'] = (! empty($ratings[$locationId]['totalReview'])) ? $ratings[$locationId]['totalReview'] + 1 : 1;
+                $ratings = array();
+                foreach ($reviewList->records as $review) {
+                    $locationId = isset($review->location_id) ? $review->location_id : '';
+                    $ratings[$locationId]['rating'] = (! empty($ratings[$locationId]['rating'])) ? $ratings[$locationId]['rating'] + $review->rating : $review->rating;
+                    $ratings[$locationId]['totalReview'] = (! empty($ratings[$locationId]['totalReview'])) ? $ratings[$locationId]['totalReview'] + 1 : 1;
 
-                $ratings[$locationId]['average'] = $ratings[$locationId]['rating'] / $ratings[$locationId]['totalReview'];
-            }
+                    $ratings[$locationId]['average'] = $ratings[$locationId]['rating'] / $ratings[$locationId]['totalReview'];
+                }
 
-            foreach ($listOfRec as &$itemLocation) {
-                $mallId = $itemLocation->mall_id;
-                $ratingAverage = (! empty($ratings[$mallId]['average'])) ? number_format(round($ratings[$mallId]['average'], 1), 1) : null;
-                $reviewCounter = (! empty($ratings[$mallId]['totalReview'])) ? $ratings[$mallId]['totalReview'] : null;
+                foreach ($listOfRec as &$itemLocation) {
+                    $mallId = $itemLocation->mall_id;
+                    $ratingAverage = (! empty($ratings[$mallId]['average'])) ? number_format(round($ratings[$mallId]['average'], 1), 1) : null;
+                    $reviewCounter = (! empty($ratings[$mallId]['totalReview'])) ? $ratings[$mallId]['totalReview'] : null;
 
-                $itemLocation->rating_average = $ratingAverage;
-                $itemLocation->review_counter = $reviewCounter;
+                    $itemLocation->rating_average = $ratingAverage;
+                    $itemLocation->review_counter = $reviewCounter;
+                }
             }
             // ---- END OF RATING ----
 
@@ -369,7 +371,8 @@ class PromotionLocationAPIController extends PubControllerAPI
                                     FROM orb_media m
                                     WHERE m.media_name_long = 'news_translation_image_orig'
                                     AND m.object_id = {$prefix}news_translations.news_translation_id)
-                                END AS original_media_path
+                                END AS original_media_path,
+                                default_translation.news_name as default_name
                             "))
                         ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
                         ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
@@ -408,6 +411,7 @@ class PromotionLocationAPIController extends PubControllerAPI
             $data->total_records = $totalRec;
             if (is_object($promotionName)) {
                 $data->promotion_name = $promotionName->promotion_name;
+                $data->default_name = $promotionName->default_name;
                 $data->original_media_path = $promotionName->original_media_path;
             }
             $data->records = $listOfRec;

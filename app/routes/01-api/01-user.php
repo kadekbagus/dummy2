@@ -9,6 +9,12 @@ Route::get('/api/v1/account/list', function()
     return AccountAPIController::create()->getAccount();
 });
 
+// PMP Account Detail
+Route::get('/api/v1/account/detail', function()
+{
+    return AccountAPIController::create()->getAccountDetail();
+});
+
 // Create new PMP Account
 Route::post('/api/v1/account/new', function()
 {
@@ -231,3 +237,23 @@ Route::get('/api/v1/pub/user-reward', function()
 {
     return Orbit\Controller\API\v1\Pub\UserRewardAPIController::create()->getUserReward();
 });
+
+/**
+ * Route for list of user reward / promotion event
+ */
+Route::get('/api/v1/pub/user-profile/review', function()
+{
+    return Orbit\Controller\API\v1\Pub\UserProfile\ProfileReviewListAPIController::create()->getReviewList();
+});
+
+/**
+ * Route for list of user reward / promotion event
+ */
+Route::get('/api/v1/pub/user-profile/follow', function()
+{
+    return Orbit\Controller\API\v1\Pub\UserProfile\ProfileFollowListAPIController::create()->getFollowList();
+});
+
+Route::get('/{api}/v1/rgp/check-session', ['as' => 'rgp-check-session', function() {
+    return UserRgpAPIController::create()->validateSession();
+}])->where('api', '(api|app)');
