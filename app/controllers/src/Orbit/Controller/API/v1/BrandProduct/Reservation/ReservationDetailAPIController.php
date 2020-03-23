@@ -14,6 +14,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Util\PaginationNumber;
 use stdclass;
 
+use DB;
 use Lang;
 use Config;
 use BrandProductReservation;
@@ -25,8 +26,6 @@ class ReservationDetailAPIController extends ControllerAPI
 
     /**
      * List brand product reservation for BPP
-     *
-     * @todo: Add validation
      *
      * @author Ahmad <ahmad@dominopos.com>
      */
@@ -42,15 +41,38 @@ class ReservationDetailAPIController extends ControllerAPI
             $merchantId = $user->merchant_id;
             $brandProductReservationId = OrbitInput::get('brand_product_reservation_id');
 
-            $reservations = BrandProductReservation::select(
-                    'brand_product_reservations.brand_product_reservation_id',
-                    'selling_price',
-                    'brand_product_reservations.created_at',
-                    'expired_at',
-                    'status',
-                    'quantity',
-                    'product_name'
+            $validator = Validator::make(
+                array(
+                    'reservation_id'      => $brandProductReservationId,
+                ),
+                array(
+                    'reservation_id'      => 'required',
+                ),
+                array(
+                    'reservation_id.required' => 'Reservation ID is required',
                 )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $prefix = DB::getTablePrefix();
+
+            $reservations = BrandProductReservation::select(DB::raw("
+                    {$prefix}brand_product_reservations.brand_product_reservation_id,
+                    {$prefix}brand_product_reservations.selling_price,
+                    {$prefix}brand_product_reservations.created_at,
+                    {$prefix}brand_product_reservations.expired_at,
+                    {$prefix}brand_product_reservations.quantity,
+                    {$prefix}brand_product_reservations.product_name,
+                    CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
+                        THEN 'expired'
+                        ELSE {$prefix}brand_product_reservations.status
+                    END as status
+                "))
                 ->with([
                     'users' => function($q) {
                         $q->select('user_firstname', 'user_lastname');
@@ -65,7 +87,7 @@ class ReservationDetailAPIController extends ControllerAPI
                 ])
                 ->leftJoin('brand_product_reservation_details', 'brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
                 ->where('brand_product_reservations.brand_product_reservation_id', $brandProductReservationId)
-                ->where('brand_id', $brandId)
+                ->where('brand_product_reservationsbrand_id', $brandId)
                 ->where('option_type', 'merchant');
 
             if (! empty($merchantId)) {
