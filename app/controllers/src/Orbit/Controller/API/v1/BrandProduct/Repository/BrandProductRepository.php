@@ -18,7 +18,7 @@ class BrandProductRepository
 {
     use MediaQuery;
 
-    protected $imagePrefix = 'brand_product_image_';
+    protected $imagePrefix = 'brand_product_photos_';
 
     public function __construct()
     {
@@ -33,7 +33,6 @@ class BrandProductRepository
     public function get($brandProductId)
     {
         return BrandProduct::with([
-                'media' => $this->buildMediaQuery(),
                 'categories' => function($query) {
                     $query->select('category_id', 'category_name');
                 },
@@ -41,7 +40,7 @@ class BrandProductRepository
                     $query->select('brand_product_video_id', 'video_url');
                 },
                 'brand_product_variants',
-            ])
+            ] + $this->buildMediaQuery())
             ->findOrFail($brandProductId);
     }
 
