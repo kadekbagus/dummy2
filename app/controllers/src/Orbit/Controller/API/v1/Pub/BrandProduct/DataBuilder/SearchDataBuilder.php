@@ -1,0 +1,67 @@
+<?php
+
+namespace Orbit\Controller\API\v1\Pub\BrandProduct\DataBuilder;
+
+use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CategoryFilter;
+use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CitiesFilter;
+use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CountryFilter;
+use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\KeywordFilter;
+use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\MallFilter;
+use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\StoreFilter;
+use Orbit\Helper\Searchable\Elasticsearch\ESSearchDataBuilder;
+
+/**
+ * Brand product search query builder.
+ *
+ * @author Budi <budi@gotomalls.com>
+ */
+class SearchDataBuilder extends ESSearchDataBuilder
+{
+    // Compose search filters as needed.
+    use KeywordFilter,
+        CategoryFilter,
+        CountryFilter,
+        CitiesFilter,
+        MallFilter,
+        StoreFilter;
+
+    protected $objectType = 'products';
+
+    /**
+     * Override sort by created date (default field is 'begin_date').
+     *
+     * @param  string $sortingScript [description]
+     * @return [type]                [description]
+     */
+    public function sortByCreatedDate($order = 'desc')
+    {
+        $this->sort([
+            'created_at' => [
+                'order' => $order
+            ]
+        ]);
+    }
+
+    /**
+     * Add object-specific filter/sort params.
+     *
+     * @return array
+     */
+    protected function addCustomParam()
+    {
+        // Filter by categories
+        $this->request->has('category_id', function($categories) {
+            $this->filterByCategories($categories);
+        });
+
+        // Filter by mall
+        $this->request->has('mall_id', function($mallId) {
+            $this->filterByMall($mallId);
+        });
+
+        // Filter by store
+        $this->request->has('store_id', function($storeId) {
+            $this->filterByStore($storeId);
+        });
+    }
+}

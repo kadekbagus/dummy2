@@ -56,6 +56,12 @@ class ValidateRequest implements ValidateRequestInterface
      */
     protected $validator = null;
 
+    /**
+     * Pagination config.
+     * @var string|array string first, then array after load.
+     */
+    protected $pagination = null;
+
     public function __construct()
     {
         $this->loadPaginationConfig();
@@ -253,8 +259,11 @@ class ValidateRequest implements ValidateRequestInterface
      * @param  array  $messages [description]
      * @return self
      */
-    public function validate($data = [], $rules = [], $messages = [])
-    {
+    public function validate(
+        array $data = [],
+        array $rules = [],
+        array $messages = []
+    ) {
         // In case we have custom validation rules, register
         // in inside following method.
         if (method_exists($this, 'registerCustomValidations')) {
@@ -276,6 +285,9 @@ class ValidateRequest implements ValidateRequestInterface
 
         // Run an after validation hook. Can be overridden when needed.
         $this->afterValidation();
+
+        // Register current request in the container.
+        App::instance('currentRequest', $this);
     }
 
     /**
@@ -285,11 +297,11 @@ class ValidateRequest implements ValidateRequestInterface
      * @param  string  $key      the key
      * @param  Closure $callback the callback that will be run
      */
-    public function has($key, $callback)
+    public function has($key, $callback = null)
     {
-        if (Request::has($key)) {
-            $callback(Request::input($key));
-        }
+        return ! empty($callback) && Request::has($key)
+            ? $callback(Request::input($key))
+            : Request::has($key);
     }
 
     /**
