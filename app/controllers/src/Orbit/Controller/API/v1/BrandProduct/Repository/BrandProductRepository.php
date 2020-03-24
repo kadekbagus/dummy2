@@ -34,11 +34,9 @@ class BrandProductRepository
     {
         return BrandProduct::with([
                 'categories' => function($query) {
-                    $query->select('category_id', 'category_name');
+                    $query->select('categories.category_id', 'category_name');
                 },
-                'videos' => function($query) {
-                    $query->select('brand_product_video_id', 'video_url');
-                },
+                'videos',
                 'brand_product_variants',
             ] + $this->buildMediaQuery())
             ->findOrFail($brandProductId);
