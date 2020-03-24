@@ -22,7 +22,8 @@ class BrandProductResource extends Resource
             'maxReservationTime' => $this->max_reservation_time,
             'brandId' => $this->brand_id,
             'images' => $this->transformImages($this->resource),
-            'variants' => $this->transformVariants(),
+            'variants' => $this->transformVariants($this->resource),
+            'videos' => $this->transformVideos($this->resource),
         ];
     }
 
@@ -31,11 +32,11 @@ class BrandProductResource extends Resource
         return [];
     }
 
-    protected function transformVariants()
+    protected function transformVariants($item)
     {
         $variants = [];
 
-        foreach($this->resource->brand_product_variants as $variant) {
+        foreach($item->brand_product_variants as $variant) {
             $discount = $variant->original_price - $variant->selling_price;
             $discount = round($discount / $variant->original_price, 2) * 100;
 
@@ -50,5 +51,10 @@ class BrandProductResource extends Resource
         }
 
         return $variants;
+    }
+
+    protected function transformVideos($item)
+    {
+        return $item->videos;
     }
 }
