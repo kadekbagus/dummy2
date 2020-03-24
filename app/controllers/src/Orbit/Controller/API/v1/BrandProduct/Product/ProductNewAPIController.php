@@ -201,6 +201,7 @@ class ProductNewAPIController extends ControllerAPI
         $brandProductVariants = @json_decode($brandProductVariants, true);
         $brandProductVariants = $brandProductVariants ?: [];
         $brandProductVariantList = [];
+        $user = App::make('currentUser');
 
         foreach($brandProductVariants as $bpVariant) {
             // Save main BrandProductVariant record.
@@ -211,6 +212,7 @@ class ProductNewAPIController extends ControllerAPI
                 'original_price' => $bpVariant['original_price'],
                 'selling_price' => $bpVariant['selling_price'],
                 'quantity' => $bpVariant['quantity'],
+                'created_by' => $user->user_id,
             ]);
 
             if (isset($bpVariant['variant_options'])
