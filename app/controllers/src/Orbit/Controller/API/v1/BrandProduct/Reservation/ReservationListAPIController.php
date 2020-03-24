@@ -13,7 +13,7 @@ use Validator;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Util\PaginationNumber;
 use stdclass;
-
+use DB;
 use Lang;
 use Config;
 use BrandProductReservation;
@@ -40,15 +40,31 @@ class ReservationListAPIController extends ControllerAPI
             $brandId = $user->base_merchant_id;
             $merchantId = $user->merchant_id;
 
-            $reservations = BrandProductReservation::select(
-                    'brand_product_reservation_id',
-                    'selling_price',
-                    'created_at',
-                    'expired_at',
-                    'status',
-                    'quantity',
-                    'product_name'
+            $status = OrbitInput::get('status', null);
+
+            $validator = Validator::make(
+                array(
+                    'status'      => $status,
+                ),
+                array(
+                    'status'      => 'in:pending,accepted,cancelled,declined,expired',
                 )
+            );
+
+            $prefix = DB::getTablePrefix();
+
+            $reservations = BrandProductReservation::select(DB::raw("
+                    {$prefix}brand_product_reservations.brand_product_reservation_id,
+                    {$prefix}brand_product_reservations.selling_price,
+                    {$prefix}brand_product_reservations.created_at,
+                    {$prefix}brand_product_reservations.expired_at,
+                    {$prefix}brand_product_reservations.quantity,
+                    {$prefix}brand_product_reservations.product_name,
+                    CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
+                        THEN 'expired'
+                        ELSE {$prefix}brand_product_reservations.status
+                    END as status
+                "))
                 ->with([
                     'users' => function($q) {
                         $q->select('user_firstname', 'user_lastname');
@@ -62,8 +78,9 @@ class ReservationListAPIController extends ControllerAPI
                     }
                 ])
                 ->leftJoin('brand_product_reservation_details', 'brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
-                ->where('brand_id', $brandId)
-                ->where('option_type', 'merchant');
+                ->where(DB::raw("{$prefix}brand_product_reservations.brand_id"), $brandId)
+                ->where('option_type', 'merchant')
+                ->groupBy(DB::raw("{$prefix}brand_product_reservations.brand_product_reservation_id"));
 
             if (! empty($merchantId)) {
                 $reservations->where('brand_product_reservation_details.option_id', $merchantId);
@@ -76,7 +93,11 @@ class ReservationListAPIController extends ControllerAPI
 
             OrbitInput::get('status', function($status) use ($reservations)
             {
-                $reservations->where('status', $status);
+                if ($status == 'expired') {
+                    $reservations->where('expired_at', '<', DB::raw("NOW()"));
+                } else {
+                    $reservations->where('status', $status);
+                }
             });
 
             // Clone the query builder which still does not include the take,

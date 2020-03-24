@@ -20,6 +20,11 @@ use Exception;
 use App;
 use BrandProductVideo;
 use BrandProductCategory;
+use Request;
+use Variant;
+use VariantOption;
+use BrandProductVariant;
+use BrandProductVariantOption;
 
 class ProductNewAPIController extends ControllerAPI
 {
@@ -46,6 +51,9 @@ class ProductNewAPIController extends ControllerAPI
             $youtubeIds = OrbitInput::post('youtube_ids');
             $youtubeIds = (array) $youtubeIds;
             $categoryId = OrbitInput::post('category_id');
+            $variants = OrbitInput::post('variants');
+            $brandProductVariants = OrbitInput::post('brand_product_variants');
+            $brandProductMainPhoto = Request::file('brand_product_main_photo');
 
             // Begin database transaction
             $this->beginTransaction();
@@ -54,10 +62,16 @@ class ProductNewAPIController extends ControllerAPI
                 array(
                     'product_name'        => $productName,
                     'status'              => $status,
+                    'variants'            => $variants,
+                    'brand_product_variants' => $brandProductVariants,
+                    'brand_product_main_photo' => $brandProductMainPhoto,
                 ),
                 array(
                     'product_name'        => 'required',
                     'status'              => 'in:active,inactive',
+                    'variants'            => 'required',
+                    'brand_product_variants' => 'required',
+                    'brand_product_main_photo' => 'required|image|max:1024',
                 ),
                 array(
                     'product_name.required' => 'Product Name field is required',
@@ -82,7 +96,8 @@ class ProductNewAPIController extends ControllerAPI
 
             // save brand_product_categories
             $newBrandProductCategories = new BrandProductCategory();
-            $newBrandProductCategories->brand_product_id = $newBrandProduct->brand_product_id;
+            $newBrandProductCategories->brand_product_id
+                = $newBrandProduct->brand_product_id;
             $newBrandProductCategories->category_id = $categoryId;
             $newBrandProductCategories->save();
 
@@ -90,63 +105,154 @@ class ProductNewAPIController extends ControllerAPI
             $brandProductVideos = array();
             foreach ($youtubeIds as $youtube_id) {
                 $newBrandProductVideo = new BrandProductVideo();
-                $newBrandProductVideo->brand_product_id = $newBrandProduct->brand_product_id;
+                $newBrandProductVideo->brand_product_id
+                    = $newBrandProduct->brand_product_id;
                 $newBrandProductVideo->youtube_id = $youtube_id;
                 $newBrandProductVideo->save();
                 $brandProductVideos[] = $newBrandProductVideo;
             }
             $newBrandProduct->brand_product_video = $brandProductVideos;
 
-            Event::fire('orbit.brandproduct.postnewbrandproduct.after.save', array($this, $newBrandProduct));
+            // Save variants?
+            $this->saveVariants(
+                $newBrandProduct,
+                $variants,
+                $brandProductVariants
+            );
 
-            $this->response->data = $newBrandProduct;
+            Event::fire(
+                'orbit.brandproduct.postnewbrandproduct.after.save',
+                [$this, $newBrandProduct]
+            );
 
             // Commit the changes
             $this->commit();
-        } catch (ACLForbiddenException $e) {
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-            $httpCode = 403;
 
-            // Rollback the changes
-            $this->rollBack();
-        } catch (InvalidArgsException $e) {
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-            $httpCode = 403;
+            $this->response->data = $newBrandProduct;
 
-            // Rollback the changes
-            $this->rollBack();
-        } catch (QueryException $e) {
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-
-            // Only shows full query error when we are in debug mode
-            if (Config::get('app.debug')) {
-                $this->response->message = $e->getMessage();
-            } else {
-                $this->response->message = Lang::get('validation.orbit.queryerror');
-            }
-            $this->response->data = null;
-            $httpCode = 500;
-
-            // Rollback the changes
-            $this->rollBack();
-        } catch (\Exception $e) {
-            $this->response->code = $this->getNonZeroCode($e->getCode());
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-
-            // Rollback the changes
-            $this->rollBack();
+        } catch (Exception $e) {
+            return $this->handleException($e);
         }
 
-        return $this->render($httpCode);
+        return $this->render();
     }
 
+    private function saveVariants(
+        $newBrandProduct,
+        $variants,
+        $brandProductVariants
+    ) {
+
+        $variants = @json_decode($variants, true);
+        $variants = $variants ?: [];
+        $variantList = [];
+        $variantOptionIds = [];
+
+        $index = 0; // just to make sure the index starts at 0
+        foreach($variants as $variant) {
+            $variantOptionIds[$index] = [];
+            $newVariant = Variant::where('variant_name', $variant['name'])
+                ->first();
+
+            if (empty($newVariant)) {
+                $newVariant = Variant::create([
+                    'variant_name' => $variant['name'],
+                ]);
+
+                // Save variant options?
+                $variantOptions = [];
+                foreach($variant['options'] as $option) {
+                    $newVariantOption = VariantOption::where(
+                            'variant_id', $newVariant->variant_id
+                        )->where('value', $option)->first();
+
+                    if (empty($newVariantOption)) {
+                        $newVariantOption = VariantOption::create([
+                            'variant_id' => $newVariant->variant_id,
+                            'value' => $option,
+                        ]);
+                        $variantOptions[] = $newVariantOption;
+                    }
+
+                    $variantOptionIds[$index][$newVariantOption->value]
+                        = $newVariantOption->variant_option_id;
+                }
+            }
+
+            $newVariant->options = $variantOptions;
+            $variantList[] = $newVariant;
+            $index++;
+        }
+
+        $newBrandProduct->variants = $variantList;
+
+        $this->saveBrandProductVariants(
+            $newBrandProduct,
+            $variantOptionIds,
+            $brandProductVariants
+        );
+    }
+
+    private function saveBrandProductVariants(
+        $newBrandProduct,
+        $variantOptionIds,
+        $brandProductVariants
+    ) {
+        $brandProductVariants = @json_decode($brandProductVariants, true);
+        $brandProductVariants = $brandProductVariants ?: [];
+        $brandProductVariantList = [];
+        $user = App::make('currentUser');
+
+        foreach($brandProductVariants as $bpVariant) {
+            // Save main BrandProductVariant record.
+            $newBrandProductVariant = BrandProductVariant::create([
+                'brand_product_id' => $newBrandProduct->brand_product_id,
+                'sku' => $bpVariant['sku'],
+                'product_code' => $bpVariant['product_code'],
+                'original_price' => $bpVariant['original_price'],
+                'selling_price' => $bpVariant['selling_price'],
+                'quantity' => $bpVariant['quantity'],
+                'created_by' => $user->user_id,
+            ]);
+
+            if (isset($bpVariant['variant_options'])
+                && empty($bpVariant['variant_options'])) {
+                continue;
+            }
+
+            $bpVariantOptionList = [];
+            foreach($bpVariant['variant_options'] as $variantOption) {
+                $optionType = $variantOption['option_type'];
+                $optionValue = $variantOption['value'];
+
+                // $variantIndex should reflect the order of $variants
+                $variantIndex = $variantOption['variant_index'];
+                $variantOptionId = null;
+
+                // Check the existance of variant_option_id inside
+                // $variantOptionIds list. If exists, then use that id
+                // as option_id/link.
+                if ($optionType === 'merchant') {
+                    $variantOptionId = $optionValue;
+                }
+                else if (isset($variantOptionIds[$variantIndex])) {
+                    $selectedVariant = $variantOptionIds[$variantIndex];
+                    $variantOptionId = $selectedVariant[$optionValue];
+                }
+
+                $newBPVariantOption = BrandProductVariantOption::create([
+                    'brand_product_variant_id' => $newBrandProductVariant
+                        ->brand_product_variant_id,
+                    'option_type' => $optionType,
+                    'option_id' => $variantOptionId,
+                ]);
+
+                $bpVariantOptionList[] = $newBPVariantOption;
+            }
+
+            $brandProductVariantList[] = $bpVariantOptionList;
+        }
+
+        $newBrandProduct->brand_product_variants = $brandProductVariantList;
+    }
 }

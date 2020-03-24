@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * Brand Product Reservation
+ */
 class BrandProductReservation extends Eloquent
 {
     protected $primaryKey = 'brand_product_reservation_id';
