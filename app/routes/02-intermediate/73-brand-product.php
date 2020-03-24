@@ -32,3 +32,14 @@ Route::get(
         'uses' => 'IntermediatePubAuthController@BrandProduct\BrandProductReservation_handle'
     ]
 );
+
+/**
+ * Variant List
+ */
+Route::get(
+    '/app/v1/brand-product-variant/list',
+    [
+        'as' => 'brand-product-variant-list',
+        'uses' => 'IntermediateBrandProductAuthController@Variant\VariantList_handle',
+    ]
+);
