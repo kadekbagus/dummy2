@@ -37,6 +37,7 @@ class BrandProductRepository
                 'categories' => function($query) {
                     $query->select('categories.category_id', 'category_name');
                 },
+                'brand',
                 'videos',
                 'brand_product_variants.variant_options',
                 'brand_product_main_photo',

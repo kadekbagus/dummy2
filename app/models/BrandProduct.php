@@ -31,6 +31,13 @@ class BrandProduct extends Eloquent
         return new SearchDataBuilder($request);
     }
 
+    public function brand()
+    {
+        return $this->belongsTo(
+            BaseMerchant::class, 'brand_id', 'base_merchant_id'
+        );
+    }
+
     public function videos()
     {
         return $this->hasMany(BrandProductVideo::class);
