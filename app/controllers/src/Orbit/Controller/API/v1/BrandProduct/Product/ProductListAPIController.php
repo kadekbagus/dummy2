@@ -48,7 +48,7 @@ class ProductListAPIController extends ControllerAPI
                 array(
                     'status'      => $status,
                     'sortBy'      => $sortBy,
-                    'sortMode'    => $sortmode,
+                    'sortMode'    => $sortMode,
                 ),
                 array(
                     'status'      => 'in:inactive,active',
