@@ -7,6 +7,7 @@ use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CitiesFilter;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CountryFilter;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\KeywordFilter;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\MallFilter;
+use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\StatusFilter;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\StoreFilter;
 use Orbit\Helper\Searchable\Elasticsearch\ESSearchDataBuilder;
 
@@ -18,7 +19,8 @@ use Orbit\Helper\Searchable\Elasticsearch\ESSearchDataBuilder;
 class SearchDataBuilder extends ESSearchDataBuilder
 {
     // Compose search filters as needed.
-    use KeywordFilter,
+    use StatusFilter,
+        KeywordFilter,
         CategoryFilter,
         CountryFilter,
         CitiesFilter,
@@ -49,6 +51,9 @@ class SearchDataBuilder extends ESSearchDataBuilder
      */
     protected function addCustomParam()
     {
+        // Filter by status
+        $this->filterByStatus('active');
+
         // Filter by categories
         $this->request->has('category_id', function($categories) {
             $this->filterByCategories($categories);
