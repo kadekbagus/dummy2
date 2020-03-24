@@ -125,11 +125,10 @@ class ProductNewAPIController extends ControllerAPI
                 [$this, $newBrandProduct]
             );
 
-            $this->response->data = $newBrandProduct;
-
             // Commit the changes
-            // $this->commit();
-            $this->rollBack();
+            $this->commit();
+
+            $this->response->data = $newBrandProduct;
 
         } catch (Exception $e) {
             return $this->handleException($e);
