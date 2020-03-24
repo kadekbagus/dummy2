@@ -384,6 +384,7 @@ class IntermediateBaseController extends Controller
         $supportedDependenciesInjection = [
             'IntermediatePubAuthController',
             'IntermediateProductAuthController',
+            'IntermediateBrandProductAuthController',
         ];
 
         if (in_array($theClass, $supportedDependenciesInjection)) {
