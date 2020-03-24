@@ -3,6 +3,7 @@
 namespace Orbit\Controller\API\v1\Pub\BrandProduct\Resource;
 
 use Orbit\Helper\Resource\Resource;
+use VariantOption;
 
 /**
  * Brand Product collection class.
@@ -13,6 +14,8 @@ class BrandProductResource extends Resource
 {
     public function toArray()
     {
+        $variantOptions = VariantOption::with(['variant'])->get();
+
         return [
             'id' => $this->brand_product_id,
             'name' => $this->product_name,
@@ -21,18 +24,27 @@ class BrandProductResource extends Resource
             'status' => $this->status,
             'maxReservationTime' => $this->max_reservation_time,
             'brandId' => $this->brand_id,
-            'images' => $this->transformImages($this->resource),
-            'variants' => $this->transformVariants($this->resource),
+            'mainPhoto' => $this->transformMainPhoto($this->resource),
+            'otherPhotos' => $this->transformImages($this->resource),
+            'variants' => $this->transformVariants(
+                $this->resource,
+                $variantOptions
+            ),
             'videos' => $this->transformVideos($this->resource),
         ];
     }
 
-    protected function transformImages($item, $imagePrefix = '')
+    protected function transformMainPhoto($item)
     {
-        return [];
+        return $item->brand_product_main_photo;
     }
 
-    protected function transformVariants($item)
+    protected function transformImages($item, $imagePrefix = '')
+    {
+        return $item->brand_product_photos;
+    }
+
+    protected function transformVariants($item, $variantOptions)
     {
         $variants = [];
 
@@ -47,14 +59,43 @@ class BrandProductResource extends Resource
                 'sellingPrice' => $variant->selling_price,
                 'discount' => $discount,
                 'quantity' => $variant->quantity,
+                'options' => $this->transformVariantOptions(
+                    $variant->variant_options, $variantOptions
+                ),
             ];
         }
 
         return $variants;
     }
 
+    protected function transformVariantOptions($options, $variantOptions)
+    {
+        $optionList = [];
+
+        foreach($options as $option) {
+            if ($option->option_type === 'merchant') {
+                continue;
+            }
+
+            foreach($variantOptions as $variantOption) {
+                if ($variantOption->variant_option_id === $option->option_id) {
+                    $optionList[] = [
+                        'name' => $variantOption->variant->variant_name,
+                        'value' => $variantOption->value,
+                    ];
+
+                    break;
+                }
+            }
+        }
+
+        return $optionList;
+    }
+
     protected function transformVideos($item)
     {
-        return $item->videos;
+        return array_map(function($video) {
+            return $video['youtube_id'];
+        }, $item->videos->toArray());
     }
 }

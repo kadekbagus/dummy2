@@ -37,7 +37,9 @@ class BrandProductRepository
                     $query->select('categories.category_id', 'category_name');
                 },
                 'videos',
-                'brand_product_variants',
+                'brand_product_variants.variant_options',
+                'brand_product_main_photo',
+                'brand_product_photos',
             ] + $this->buildMediaQuery())
             ->findOrFail($brandProductId);
     }
