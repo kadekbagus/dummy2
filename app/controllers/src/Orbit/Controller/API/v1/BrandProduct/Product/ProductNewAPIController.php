@@ -205,6 +205,7 @@ class ProductNewAPIController extends ControllerAPI
         foreach($brandProductVariants as $bpVariant) {
             // Save main BrandProductVariant record.
             $newBrandProductVariant = BrandProductVariant::create([
+                'brand_product_id' => $newBrandProduct->brand_product_id,
                 'sku' => $bpVariant['sku'],
                 'product_code' => $bpVariant['product_code'],
                 'original_price' => $bpVariant['original_price'],
