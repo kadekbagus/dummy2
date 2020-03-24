@@ -55,12 +55,12 @@ class BrandProduct extends Eloquent
                     ->where('object_name', 'brand_product');
     }
 
-    public function BrandProductMainPhotos()
+    public function brand_product_main_photo()
     {
         return $this->media()->where('media_name_id', 'brand_product_main_photo');
     }
 
-    public function BrandProductPhotos()
+    public function brand_product_photos()
     {
     	return $this->media()->where('media_name_id', 'brand_product_photos');
     }
