@@ -72,7 +72,7 @@ class ProductListAPIController extends ControllerAPI
                         $q->select('path', 'cdn_url');
                     }
                 ])
-                ->leftJoin('brand_product_variants', 'brand_product.brand_product_id', '=', 'brand_product_variants.brand_product_id')
+                ->leftJoin('brand_product_variants', 'brand_products.brand_product_id', '=', 'brand_product_variants.brand_product_id')
                 ->leftJoin('brand_product_reservations', 'brand_product_variants.brand_product_variant_id', '=', 'brand_product_reservations.brand_product_variant_id')
                 ->where(DB::raw("{$prefix}brand_products.brand_id"), $brandId)
                 ->groupBy(DB::raw("{$prefix}brand_products.brand_product_id"));
