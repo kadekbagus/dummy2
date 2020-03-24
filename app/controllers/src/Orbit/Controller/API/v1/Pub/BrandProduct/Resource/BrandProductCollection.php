@@ -18,7 +18,7 @@ class BrandProductCollection extends ResourceCollection
     {
         foreach($this->collection as $item) {
             $data = $item['_source'];
-            $this->data[] = [
+            $this->data['records'][] = [
                 'id' => $data['brand_product_id'],
                 'name' => $data['brand_product_name'],
                 'slug' => Str::slug($data['brand_product_name']),
