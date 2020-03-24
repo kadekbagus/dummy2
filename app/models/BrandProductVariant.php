@@ -16,8 +16,8 @@ class BrandProductVariant extends Eloquent
         'original_price', 'selling_price', 'qty',
     ];
 
-    public function variants()
+    public function variant_options()
     {
-        return $this->hasMany(Variant::class);
+        return $this->hasMany(BrandProductVariantOption::class);
     }
 }

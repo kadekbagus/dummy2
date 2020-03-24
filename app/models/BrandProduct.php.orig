@@ -17,6 +17,7 @@ class BrandProduct extends Eloquent
 
     protected $table = 'brand_products';
 
+<<<<<<< HEAD
     /**
      * Get search query builder instance, which helps building
      * final search query based on $request param.
@@ -48,20 +49,22 @@ class BrandProduct extends Eloquent
     {
         return $this->hasMany(BrandProductVariant::class);
     }
-
+}
+=======
     public function media()
     {
         return $this->hasMany('Media', 'object_id', 'brand_product_id')
                     ->where('object_name', 'brand_product');
     }
 
-    public function brand_product_main_photo()
+    public function BrandProductMainPhotos()
     {
         return $this->media()->where('media_name_id', 'brand_product_main_photo');
     }
 
-    public function brand_product_photos()
+    public function BrandProductPhotos()
     {
     	return $this->media()->where('media_name_id', 'brand_product_photos');
     }
 }
+>>>>>>> origin/feature-4.23-development
