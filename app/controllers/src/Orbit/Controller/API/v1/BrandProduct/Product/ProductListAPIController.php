@@ -68,7 +68,7 @@ class ProductListAPIController extends ControllerAPI
                     count(brand_product_reservation_id) as total_reserved
                 "))
                 ->with([
-                    'product.mediaMain' => function($q) {
+                    'brand_product_main_photo' => function($q) {
                         $q->select('path', 'cdn_url');
                     }
                 ])
@@ -111,7 +111,7 @@ class ProductListAPIController extends ControllerAPI
             $products->skip($skip);
 
             // Default sort by
-            $sortBy = 'updated_at';
+            $sortBy = 'brand_products.updated_at';
             // Default sort mode
             $sortMode = 'desc';
 
