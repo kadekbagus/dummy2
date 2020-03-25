@@ -204,6 +204,26 @@ class ProductNewAPIController extends ControllerAPI
         $user = App::make('currentUser');
 
         foreach($brandProductVariants as $bpVariant) {
+            // Check for duplicate sku?
+            $skuExists = BrandProductVariant::select(
+                    'brand_product_variant_id'
+                )
+                ->join(
+                    'brand_products',
+                    'brand_product_variants.brand_product_id',
+                    '=',
+                    'brand_products.brand_product_id'
+                )
+                ->where('brand_products.brand_id', $newBrandProduct->brand_id)
+                ->where('sku', $bpVariant['sku'])
+                ->first();
+
+            if (! empty($skuExists)) {
+                OrbitShopAPI::throwInvalidArgument(
+                    "SKU: {$bpVariant['sku']} already used."
+                );
+            }
+
             // Save main BrandProductVariant record.
             $newBrandProductVariant = BrandProductVariant::create([
                 'brand_product_id' => $newBrandProduct->brand_product_id,
