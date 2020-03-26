@@ -118,6 +118,8 @@ class ESBrandProductUpdateQueue
                 'link_to_categories' => [],
                 'link_to_stores' => [],
                 'link_to_malls' => [],
+                'lowest_original_price' => 0.0,
+                'highest_original_price' => 0.0,
                 'lowest_selling_price' => 0.0,
                 'highest_selling_price' => 0.0,
             ];
@@ -126,6 +128,8 @@ class ESBrandProductUpdateQueue
             // Add linked product codes
             $lowestPrice = 0.0;
             $highestPrice = 0.0;
+            $lowestOriginalPrice = 0.0;
+            $highestOriginalPrice = 0.0;
             $linkedMerchantIds = [];
             foreach($brandProduct->brand_product_variants as $variant) {
                 $body['skus'][] = [
@@ -141,6 +145,12 @@ class ESBrandProductUpdateQueue
 
                 $highestPrice = $variant->selling_price > $highestPrice
                     ? $variant->selling_price : $highestPrice;
+
+                $lowestOriginalPrice = $variant->original_price < $lowestOriginalPrice
+                    ? $variant->original_price : $lowestOriginalPrice;
+
+                $highestOriginalPrice = $variant->original_price > $highestOriginalPrice
+                    ? $variant->original_price : $highestOriginalPrice;
 
                 foreach($variant->variant_options as $variantOption) {
                     if ($variantOption->option_type === 'merchant') {
@@ -171,6 +181,10 @@ class ESBrandProductUpdateQueue
             $body['lowest_selling_price'] = $lowestPrice == 0.0
                 ? $highestPrice : $lowestPrice;
             $body['highest_selling_price'] = $highestPrice;
+
+            $body['lowest_original_price'] = $lowestOriginalPrice == 0.0
+                ? $highestOriginalPrice : $lowestOriginalPrice;
+            $body['highest_original_price'] = $highestOriginalPrice;
 
             // var_dump($body); die;
 
