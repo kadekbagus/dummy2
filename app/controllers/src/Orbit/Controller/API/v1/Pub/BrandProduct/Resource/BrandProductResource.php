@@ -24,6 +24,8 @@ class BrandProductResource extends Resource
             'status' => $this->status,
             'maxReservationTime' => $this->max_reservation_time,
             'brandId' => $this->brand_id,
+            'brandName' => $this->brand->name,
+            'brandSlugName' => \Str::slug($this->brand->name),
             'mainPhoto' => $this->transformMainPhoto($this->resource),
             'otherPhotos' => $this->transformImages($this->resource),
             'variants' => $this->transformVariants(
