@@ -14,4 +14,9 @@ class BrandProductVariantOption extends Eloquent
     protected $fillable = [
         'brand_product_variant_option_id', 'option_type', 'option_id'
     ];
+
+    public function option()
+    {
+    	return $this->belongsTo('VariantOption', 'option_id', 'variant_option_id');
+    }
 }
