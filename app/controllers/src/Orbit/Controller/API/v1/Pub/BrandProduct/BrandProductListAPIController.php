@@ -26,10 +26,11 @@ class BrandProductListAPIController extends PubControllerAPI
     public function handle(BrandProduct $brandProduct, ListRequest $request)
     {
         try {
+            // Search/get list of brand products.
             $brandProducts = $brandProduct->search($request);
 
             // Map product list result from search provider
-            // to a client-ready data.
+            // to a client-ready collection.
             $this->response->data = new BrandProductCollection(
                 $brandProducts['hits'],
                 $brandProducts['total']

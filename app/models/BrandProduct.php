@@ -21,7 +21,7 @@ class BrandProduct extends Eloquent
      * Get search query builder instance, which helps building
      * final search query based on $request param.
      *
-     * @see Searchable\Searchable@search
+     * @see Orbit\Helper\Searchable\Searchable
      *
      * @return null|DataBuilder $builder builder instance or null if we don't
      *                                   need one.
@@ -29,6 +29,13 @@ class BrandProduct extends Eloquent
     public function getSearchQueryBuilder($request)
     {
         return new SearchDataBuilder($request);
+    }
+
+    public function brand()
+    {
+        return $this->belongsTo(
+            BaseMerchant::class, 'brand_id', 'base_merchant_id'
+        );
     }
 
     public function videos()
