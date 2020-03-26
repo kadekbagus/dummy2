@@ -58,8 +58,8 @@ class StoreListAPIController extends ControllerAPI
                     ->where('merchants.status', 'active');
             }
 
-            $request->has('keyword', function($keyword) {
-                $records->where('merchants.name', 'like', "%{$keyword}%");
+            $request->has('keyword', function($keyword) use ($records) {
+                $records->where(DB::raw('mall.name'), 'like', "%{$keyword}%");
             });
 
             $total = clone $records;
