@@ -14,14 +14,21 @@ use Str;
  */
 class BrandProductCollection extends ResourceCollection
 {
+    private $imgUrlHelper = null;
+
     public function toArray()
     {
+        $cdnConfig = Config::get('orbit.cdn');
+        $this->imgUrlHelper = CdnUrlGeneratorWithCloudfront::create(
+            ['cdn' => $cdnConfig], 'cdn'
+        );
+
         foreach($this->collection as $item) {
             $data = $item['_source'];
             $this->data['records'][] = [
-                'id' => $data['brand_product_id'],
-                'name' => $data['brand_product_name'],
-                'slug' => Str::slug($data['brand_product_name']),
+                'id' => $item['_id'],
+                'name' => $data['product_name'],
+                'slug' => Str::slug($data['product_name']),
                 'lowestPrice' => $data['lowest_selling_price'],
                 'highestPrice' => $data['highest_selling_price'],
                 'status' => $data['status'],
@@ -29,7 +36,7 @@ class BrandProductCollection extends ResourceCollection
                 'brandId' => $data['brand_id'],
                 'brandName' => $data['brand_name'],
                 'image' => $this->transformImages($data),
-                'stores' => $this->transfromStores($data),
+                'stores' => $this->transformStores($data),
             ];
         }
 
@@ -45,13 +52,10 @@ class BrandProductCollection extends ResourceCollection
     {
         $images = '';
 
-        $cdnConfig = Config::get('orbit.cdn');
-        $imgUrl = CdnUrlGeneratorWithCloudfront::create(['cdn' => $cdnConfig], 'cdn');
+        $localPath = $item['image_path'] ?: '';
+        $cdnPath = $item['image_cdn'] ?: '';
 
-        $localPath = isset($items['path']) ? $items['path'] : '';
-        $cdnPath = isset($items['cdn_url']) ? $items['cdn_url'] : '';
-
-        $images = $imgUrl->getImageUrl($localPath, $cdnPath);
+        $images = $this->imgUrlHelper->getImageUrl($localPath, $cdnPath);
 
         return $images;
     }
