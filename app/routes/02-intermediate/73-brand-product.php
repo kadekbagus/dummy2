@@ -54,3 +54,14 @@ Route::get(
         'uses' => 'IntermediateBrandProductAuthController@Store\StoreList_handle',
     ]
 );
+
+/**
+ * Brand Product Category list
+ */
+Route::get(
+    '/app/v1/brand-product-category/list',
+    [
+        'as' => 'brand-product-category-list',
+        'uses' => 'IntermediateBrandProductAuthController@Category\CategoryList_handle',
+    ]
+);
