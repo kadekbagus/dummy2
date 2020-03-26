@@ -339,3 +339,9 @@ Artisan::add(new GetListActiveUserCommand);
 
 // Create BPP user
 Artisan::add(new CreateUserBPPCommand);
+
+// Resync Brand Product into ES
+Artisan::add(new ElasticsearchResyncBrandProductCommand);
+
+// List all active brand products
+Artisan::add(new GetListActiveBrandProductCommand);

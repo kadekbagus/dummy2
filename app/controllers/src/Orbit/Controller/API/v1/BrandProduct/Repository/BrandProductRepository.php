@@ -4,6 +4,7 @@ namespace Orbit\Controller\API\v1\BrandProduct;
 
 use App;
 use BrandProduct;
+use Variant;
 use DB;
 use Exception;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Helper\MediaQuery;
@@ -36,6 +37,7 @@ class BrandProductRepository
                 'categories' => function($query) {
                     $query->select('categories.category_id', 'category_name');
                 },
+                'brand',
                 'videos',
                 'brand_product_variants.variant_options',
                 'brand_product_main_photo',
@@ -125,5 +127,25 @@ class BrandProductRepository
         });
 
         return $reservation;
+    }
+
+    /**
+     * Get list of Variant.
+     *
+     * @param  [type] $request [description]
+     * @return [type]          [description]
+     */
+    public function variants($request)
+    {
+        $sortBy = $request->sortby ?: 'created_at';
+        $sortMode = $request->sortmode ?: 'asc';
+
+        $records = Variant::with(['options']);
+        $total = clone $records;
+        $total = $total->count();
+        $records = $records->orderBy($sortBy, $sortMode)
+            ->skip($request->skip)->take($request->take)->get();
+
+        return compact('records', 'total');
     }
 }

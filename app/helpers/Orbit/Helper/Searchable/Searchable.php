@@ -13,6 +13,7 @@ use Orbit\Helper\Request\ValidateRequest;
  *       caches the result each time it gets data from API.
  *       (most of the time wrapped in ApiCache)
  *
+ * @todo Support scrolling
  * @todo Support for MySQL SearchProvider.
  *
  * @author Budi <budi@gotomalls.com>
