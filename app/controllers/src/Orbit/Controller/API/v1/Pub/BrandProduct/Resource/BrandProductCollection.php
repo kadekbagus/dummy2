@@ -31,6 +31,8 @@ class BrandProductCollection extends ResourceCollection
                 'slug' => Str::slug($data['product_name']),
                 'lowestPrice' => $data['lowest_selling_price'],
                 'highestPrice' => $data['highest_selling_price'],
+                'lowestOriginalPrice' => $data['lowest_original_price'],
+                'highestOriginalPrice' => $data['highest_original_price'],
                 'status' => $data['status'],
                 'rating' => $this->getRating($data),
                 'brandId' => $data['brand_id'],
