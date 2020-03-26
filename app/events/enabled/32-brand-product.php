@@ -13,7 +13,7 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
  * @param ProductNewAPIController $controller - The instance of the ProductNewAPIController or its subclass
  * @param Product $product - Instance of object Product
  */
-Event::listen('orbit.brandproduct.postnewbrandproduct.after.save', function($controller, $product)
+Event::listen('orbit.brandproduct.postnewbrandproduct.after.save', function($product)
 {
     $brand_product_main_photo = OrbitInput::files('brand_product_main_photo');
 

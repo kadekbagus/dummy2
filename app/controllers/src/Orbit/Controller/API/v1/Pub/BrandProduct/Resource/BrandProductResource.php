@@ -6,7 +6,7 @@ use Orbit\Helper\Resource\Resource;
 use VariantOption;
 
 /**
- * Brand Product collection class.
+ * Brand Product resource class.
  *
  * @author Budi <budi@gotomalls.com>
  */
