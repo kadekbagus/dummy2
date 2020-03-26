@@ -43,3 +43,14 @@ Route::get(
         'uses' => 'IntermediateBrandProductAuthController@Variant\VariantList_handle',
     ]
 );
+
+/**
+ * Brand Product Store list
+ */
+Route::get(
+    '/app/v1/brand-product-store/list',
+    [
+        'as' => 'brand-product-store-list',
+        'uses' => 'IntermediateBrandProductAuthController@Store\StoreList_handle',
+    ]
+);

@@ -2,6 +2,7 @@
 
 namespace Orbit\Controller\API\v1\BrandProduct\Variant;
 
+use Exception;
 use OrbitShop\API\v1\ControllerAPI;
 use Orbit\Controller\API\v1\BrandProduct\BrandProductRepository;
 use Orbit\Controller\API\v1\BrandProduct\Variant\Request\ListRequest;
@@ -9,6 +10,8 @@ use Orbit\Controller\API\v1\BrandProduct\Variant\Resource\VariantCollection;
 
 /**
  * Variant List Controller.
+ *
+ * @author Budi <budi@gotomalls.com>
  */
 class VariantListAPIController extends ControllerAPI
 {
