@@ -4,9 +4,11 @@ namespace Orbit\Controller\API\v1\Pub\BrandProduct\Resource;
 
 use Orbit\Helper\Resource\Resource;
 use VariantOption;
+use Tenant;
+use DB;
 
 /**
- * Brand Product collection class.
+ * Brand Product resource class.
  *
  * @author Budi <budi@gotomalls.com>
  */
@@ -33,6 +35,10 @@ class BrandProductResource extends Resource
                 $variantOptions
             ),
             'videos' => $this->transformVideos($this->resource),
+            'stores' => $this->transformStores(
+                $this->resource,
+                $variantOptions
+            ),
         ];
     }
 
@@ -55,6 +61,7 @@ class BrandProductResource extends Resource
             $discount = round($discount / $variant->original_price, 2) * 100;
 
             $variants[] = [
+                'id' => $variant->brand_product_variant_id,
                 'sku' => $variant->sku,
                 'productCode' => $variant->product_code,
                 'originalPrice' => $variant->original_price,
@@ -92,6 +99,77 @@ class BrandProductResource extends Resource
         }
 
         return $optionList;
+    }
+
+    protected function transformStores($item, $variantOptions)
+    {
+        $storeList = [];
+
+        // Populate list of store ids.
+        $storeIds = [];
+        foreach($item->brand_product_variants as $bpVariant) {
+            foreach($bpVariant->variant_options as $variantOption) {
+                if ($variantOption->option_type === 'merchant') {
+                    $storeIds[] = $variantOption->option_id;
+                }
+            }
+        }
+
+        // Fetch store info
+        $linkedStores = Tenant::select(
+                    'merchants.merchant_id as store_id',
+                    'merchants.name as store_name',
+                    DB::raw('mall.merchant_id as mall_id'),
+                    DB::raw('mall.name as mall_name')
+                )
+                ->join('merchants as mall', 'merchants.parent_id', '=',
+                    DB::raw('mall.merchant_id')
+                )
+                ->whereIn('merchants.merchant_id', $storeIds)
+                ->orderBy(DB::raw('mall.name'), 'asc')
+                ->get();
+
+        // Transform options per store
+        foreach($linkedStores as $store) {
+            $storeList[$store->store_id] = [
+                'store_id' => $variantOption->option_id,
+                'store_name' => $store->store_name,
+                'mall_id' => $store->mall_id,
+                'mall_name' => $store->mall_name,
+                'variants' => [],
+            ];
+
+            $optionList = [];
+            foreach($item->brand_product_variants as $bpVariant) {
+                foreach($bpVariant->variant_options as $variantOption) {
+                    if ($variantOption->option_type === 'merchant') {
+                        $storeList[$variantOption->option_id]['variants'][] = [
+                            'id' => $bpVariant->brand_product_variant_id,
+                            'sku' => $bpVariant->sku,
+                            'product_code' => $bpVariant->product_code,
+                            'original_price' => $bpVariant->original_price,
+                            'selling_price' => $bpVariant->selling_price,
+                            'options' => $optionList,
+                        ];
+                        $optionList = [];
+                    }
+                    else {
+                        // transform variantOptions as array so no loop here,
+                        // check with isset() should be enough.
+                        foreach($variantOptions as $varOpt) {
+                            if ($varOpt->variant_option_id === $variantOption->option_id) {
+                                $optionList[] = [
+                                    'name' => $varOpt->variant->variant_name,
+                                    'value' => $varOpt->value,
+                                ];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return array_values($storeList);
     }
 
     protected function transformVideos($item)

@@ -122,11 +122,16 @@ class ProductNewAPIController extends ControllerAPI
 
             Event::fire(
                 'orbit.brandproduct.postnewbrandproduct.after.save',
-                [$this, $newBrandProduct]
+                [$newBrandProduct]
             );
 
             // Commit the changes
             $this->commit();
+
+            Event::fire(
+                'orbit.brandproduct.after.commit',
+                [$newBrandProduct->brand_product_id]
+            );
 
             $this->response->data = $newBrandProduct;
 
@@ -160,7 +165,6 @@ class ProductNewAPIController extends ControllerAPI
                 ]);
 
                 // Save variant options?
-                $variantOptions = [];
                 foreach($variant['options'] as $option) {
                     $newVariantOption = VariantOption::where(
                             'variant_id', $newVariant->variant_id
@@ -171,7 +175,6 @@ class ProductNewAPIController extends ControllerAPI
                             'variant_id' => $newVariant->variant_id,
                             'value' => $option,
                         ]);
-                        $variantOptions[] = $newVariantOption;
                     }
 
                     $variantOptionIds[$index][$newVariantOption->value]
@@ -179,7 +182,8 @@ class ProductNewAPIController extends ControllerAPI
                 }
             }
 
-            $newVariant->options = $variantOptions;
+            // Load variant options...
+            $newVariant->load('options');
             $variantList[] = $newVariant;
             $index++;
         }
@@ -232,7 +236,7 @@ class ProductNewAPIController extends ControllerAPI
                 'original_price' => $bpVariant['original_price'],
                 'selling_price' => $bpVariant['selling_price'],
                 'quantity' => $bpVariant['quantity'],
-                'created_by' => $user->user_id,
+                'created_by' => $user->bpp_user_id,
             ]);
 
             if (isset($bpVariant['variant_options'])
