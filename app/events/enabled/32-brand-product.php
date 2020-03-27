@@ -79,3 +79,20 @@ Event::listen('orbit.brandproduct.postnewbrandproduct.after.save', function($pro
     }
 
 });
+
+/**
+ * Listen on:    `orbit.brandproduct.after.commit`
+ * Purpose:      Handle file upload on product creation
+ *
+ * @param ProductNewAPIController $controller - The instance of the ProductNewAPIController or its subclass
+ * @param Product $product - Instance of object Product
+ */
+Event::listen(
+    'orbit.brandproduct.after.commit',
+    function($brandProductId) {
+        Queue::push(
+            'Orbit\Queue\Elasticsearch\ESBrandProductUpdateQueue',
+            ['brand_product_id' => $brandProductId]
+        );
+    }
+);
