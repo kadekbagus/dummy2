@@ -2,6 +2,7 @@
 /**
  * An API controller for get all detail store in all mall, group by name.
  */
+use BrandProductVariantOption;
 use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -316,6 +317,24 @@ class StoreDetailAPIController extends PubControllerAPI
                                     }])
                                     ->where('merchant_id', '=', $merchantId)
                                     ->first();
+
+            $hasBrandProduct = BrandProductVariantOption::select('brand_products.status')
+                ->join(
+                    'brand_product_variants',
+                    'brand_product_variant_options.brand_product_variant_id',
+                    '=',
+                    'brand_product_variants.brand_product_variant_id'
+                )
+                ->join(
+                    'brand_products',
+                    'brand_product_variants.brand_product_id',
+                    '=',
+                    'brand_products.brand_product_id'
+                )
+                ->where('option_id', $merchantId)
+                ->where('brand_products.status', 'active')
+                ->first() !== null;
+
             $photos = [];
             $otherPhotos = [];
             if ($brandPhotos) {
@@ -394,6 +413,8 @@ class StoreDetailAPIController extends PubControllerAPI
 
             $store = $store->orderBy('merchants.created_at', 'asc')
                 ->first();
+
+            $store->has_brand_product = $hasBrandProduct;
 
             foreach ($store->mediaImageOrig as $key => $value) {
                 $validPhotos[] = $store->mediaImageOrig[$key];
