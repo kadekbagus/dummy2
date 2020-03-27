@@ -8,6 +8,9 @@ Route::post('/app/v1/brand-product/product/new', ['as' => 'brand-product-new', '
 // Route for product list
 Route::get('/app/v1/brand-product/product/list', ['as' => 'brand-product-list', 'uses' => $brandProductAuth . '@Product\ProductList_getSearchProduct']);
 
+// Route for product detail
+Route::get('/app/v1/brand-product/product/detail', ['as' => 'brand-product-detail', 'uses' => 'IntermediateBrandProductAuthController@Product\ProductDetail_getProductDetail']);
+
 // Route for brand product update
 Route::post(
     '/app/v1/brand-product/product/update',

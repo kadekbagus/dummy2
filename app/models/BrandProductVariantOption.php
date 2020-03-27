@@ -17,6 +17,11 @@ class BrandProductVariantOption extends Eloquent
         'option_type', 'option_id'
     ];
 
+    public function option()
+    {
+    	return $this->belongsTo('VariantOption', 'option_id', 'variant_option_id');
+    }
+
     public function variant_option()
     {
         return $this->belongsTo(
