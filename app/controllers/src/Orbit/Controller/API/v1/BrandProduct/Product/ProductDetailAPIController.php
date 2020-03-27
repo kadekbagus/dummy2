@@ -50,6 +50,12 @@ class ProductDetailAPIController extends ControllerAPI
                 )
             );
 
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             $prefix = DB::getTablePrefix();
 
             $product = BrandProduct::select(DB::raw("
