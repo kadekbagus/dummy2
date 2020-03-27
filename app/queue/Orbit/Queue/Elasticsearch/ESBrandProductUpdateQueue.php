@@ -64,7 +64,7 @@ class ESBrandProductUpdateQueue
             ->where('brand_product_id', $brandProductId)
             ->first();
 
-        // var_dump($brandProduct->brand); die;
+        // var_dump($brandProduct->brand_product_variants); die;
 
         if (! is_object($brandProduct)) {
             // Delete job
@@ -189,30 +189,32 @@ class ESBrandProductUpdateQueue
             // var_dump($body); die;
 
             // Add linked stores
-            $linkedStores = Tenant::select(
-                    'merchants.merchant_id as store_id',
-                    'merchants.name as store_name',
-                    DB::raw('mall.merchant_id as mall_id'),
-                    DB::raw('mall.name as mall_name'),
-                    DB::raw('mall.country as country_name'),
-                    DB::raw('mall.city as city_name'),
-                    DB::raw('X(mall_geofence.position) as lat'),
-                    DB::raw('Y(mall_geofence.position) as lon'),
-                    DB::raw('cities.mall_city_id as city_id')
-                )
-                ->join('merchants as mall', 'merchants.parent_id', '=',
-                    DB::raw('mall.merchant_id')
-                )
-                ->join('mall_cities as cities', DB::raw('mall.city'), '=',
-                    DB::raw('cities.city')
-                )
-                ->join('merchant_geofences as mall_geofence',
-                    DB::raw('mall.merchant_id'), '=',
-                    DB::raw('mall_geofence.merchant_id')
-                )
-                ->whereIn('merchants.merchant_id', $linkedMerchantIds)
-                ->orderBy(DB::raw('mall.name'), 'asc')
-                ->get();
+            if (count($linkedMerchantIds) > 0) {
+                $linkedStores = Tenant::select(
+                        'merchants.merchant_id as store_id',
+                        'merchants.name as store_name',
+                        DB::raw('mall.merchant_id as mall_id'),
+                        DB::raw('mall.name as mall_name'),
+                        DB::raw('mall.country as country_name'),
+                        DB::raw('mall.city as city_name'),
+                        DB::raw('X(mall_geofence.position) as lat'),
+                        DB::raw('Y(mall_geofence.position) as lon'),
+                        DB::raw('cities.mall_city_id as city_id')
+                    )
+                    ->join('merchants as mall', 'merchants.parent_id', '=',
+                        DB::raw('mall.merchant_id')
+                    )
+                    ->join('mall_cities as cities', DB::raw('mall.city'), '=',
+                        DB::raw('cities.city')
+                    )
+                    ->join('merchant_geofences as mall_geofence',
+                        DB::raw('mall.merchant_id'), '=',
+                        DB::raw('mall_geofence.merchant_id')
+                    )
+                    ->whereIn('merchants.merchant_id', $linkedMerchantIds)
+                    ->orderBy(DB::raw('mall.name'), 'asc')
+                    ->get();
+            }
 
             $linkedMalls = [];
             $linkedCities = [];
@@ -298,10 +300,10 @@ class ESBrandProductUpdateQueue
             // Safely delete the object
             $job->delete();
 
-            $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; Brand Product ID: %s; Article Name: %s',
+            $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; Brand Product ID: %s; Brand Product Name: %s',
                                 $job->getJobId(),
-                                $esConfig['indices']['articles']['index'],
-                                $esConfig['indices']['articles']['type'],
+                                $esConfig['indices']['products']['index'],
+                                $esConfig['indices']['products']['type'],
                                 $brandProduct->brand_product_id,
                                 $brandProduct->title);
             Log::info($message);
@@ -313,8 +315,8 @@ class ESBrandProductUpdateQueue
         } catch (Exception $e) {
             $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
-                                $esConfig['indices']['articles']['index'],
-                                $esConfig['indices']['articles']['type'],
+                                $esConfig['indices']['products']['index'],
+                                $esConfig['indices']['products']['type'],
                                 $e->getCode(),
                                 $e->getMessage());
             Log::info($message);

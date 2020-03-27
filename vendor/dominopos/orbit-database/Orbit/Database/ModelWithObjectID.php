@@ -82,7 +82,7 @@ class ModelWithObjectID extends Model
 
     public function belongsToMany($related, $table = null, $foreignKey = null, $otherKey = null, $relation = null, $pivotKey = null)
     {
-        $pivotKey = $table . '_id';
+        $pivotKey = $pivotKey ?: $table . '_id';
         return $this->belongsToManyObjectID($related, $table, $foreignKey, $otherKey, $pivotKey, $relation);
     }
 

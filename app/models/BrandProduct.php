@@ -47,7 +47,11 @@ class BrandProduct extends Eloquent
     {
         return $this->belongsToMany(
             Category::class,
-            'brand_product_categories'
+            'brand_product_categories',
+            'brand_product_id',
+            'category_id',
+            null,
+            'brand_product_category_id'
         );
     }
 
