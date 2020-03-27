@@ -34,28 +34,6 @@ Route::get(
 );
 
 /**
- * Variant List
- */
-Route::get(
-    '/app/v1/brand-product-variant/list',
-    [
-        'as' => 'brand-product-variant-list',
-        'uses' => 'IntermediateBrandProductAuthController@Variant\VariantList_handle',
-    ]
-);
-
-/**
- * Brand Product Store list
- */
-Route::get(
-    '/app/v1/brand-product-store/list',
-    [
-        'as' => 'brand-product-store-list',
-        'uses' => 'IntermediateBrandProductAuthController@Store\StoreList_handle',
-    ]
-);
-
-/**
  * Brand Product Scan
  */
 Route::post(

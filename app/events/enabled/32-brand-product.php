@@ -13,7 +13,7 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
  * @param ProductNewAPIController $controller - The instance of the ProductNewAPIController or its subclass
  * @param Product $product - Instance of object Product
  */
-Event::listen('orbit.brandproduct.postnewbrandproduct.after.save', function($controller, $product)
+Event::listen('orbit.brandproduct.postnewbrandproduct.after.save', function($product)
 {
     $brand_product_main_photo = OrbitInput::files('brand_product_main_photo');
 
@@ -79,3 +79,20 @@ Event::listen('orbit.brandproduct.postnewbrandproduct.after.save', function($con
     }
 
 });
+
+/**
+ * Listen on:    `orbit.brandproduct.after.commit`
+ * Purpose:      Handle file upload on product creation
+ *
+ * @param ProductNewAPIController $controller - The instance of the ProductNewAPIController or its subclass
+ * @param Product $product - Instance of object Product
+ */
+Event::listen(
+    'orbit.brandproduct.after.commit',
+    function($brandProductId) {
+        Queue::push(
+            'Orbit\Queue\Elasticsearch\ESBrandProductUpdateQueue',
+            ['brand_product_id' => $brandProductId]
+        );
+    }
+);

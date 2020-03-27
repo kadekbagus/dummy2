@@ -7,7 +7,7 @@ use Config;
 use Orbit\Helper\Request\ValidateRequest;
 
 /**
- * Base implementation of searchable eloquent model.
+ * Base implementation of searchable model.
  *
  * @todo Support cache? Not sure we need cache because landing page also
  *       caches the result each time it gets data from API.
