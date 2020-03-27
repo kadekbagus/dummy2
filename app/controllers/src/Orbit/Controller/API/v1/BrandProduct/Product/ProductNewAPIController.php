@@ -236,7 +236,7 @@ class ProductNewAPIController extends ControllerAPI
                 'original_price' => $bpVariant['original_price'],
                 'selling_price' => $bpVariant['selling_price'],
                 'quantity' => $bpVariant['quantity'],
-                'created_by' => $user->user_id,
+                'created_by' => $user->bpp_user_id,
             ]);
 
             if (isset($bpVariant['variant_options'])
