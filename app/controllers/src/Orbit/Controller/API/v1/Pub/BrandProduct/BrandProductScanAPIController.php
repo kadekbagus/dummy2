@@ -4,6 +4,7 @@ namespace Orbit\Controller\API\v1\Pub\BrandProduct;
 
 use Exception;
 use BrandProductVariant;
+use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Validator;
@@ -39,7 +40,7 @@ class BrandProductScanAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $product = BrandProductVariant::select('product_name', 'brand_products.product_id')
+            $product = BrandProductVariant::select('product_name', 'brand_products.brand_product_id')
                 ->leftJoin('brand_products', 'brand_products.brand_product_id', '=', 'brand_product_variants.brand_product_id')
                 ->leftJoin('brand_product_variant_options', 'brand_product_variant_options.brand_product_variant_id', '=', 'brand_product_variants.brand_product_variant_id')
                 ->where('product_code', $barcode)
