@@ -37,7 +37,7 @@ Route::get(
  * Brand Product Scan
  */
 Route::post(
-    '/app/v1/brand-product-scan',
+    '/app/v1/pub/brand-product-scan',
     [
         'as' => 'brand-product-scan',
         'uses' => 'IntermediatePubAuthController@BrandProduct\BrandProductScan_handle',
