@@ -27,8 +27,7 @@ class UpdateBrandProductBuilder
             'videos' => [],
             'variants' => [],
             'brand_product_variants' => [],
-            'main_photos' => '',
-            'photos' => '',
+            'deleted_images' => [],
         ];
 
         $this->request->has('product_name', function($name) use (&$data)
