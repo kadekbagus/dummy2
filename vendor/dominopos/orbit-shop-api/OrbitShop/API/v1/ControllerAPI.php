@@ -22,6 +22,7 @@ use Log;
 use OrbitShop\API\v1\ExceptionResponseProvider;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use Orbit\Builder as OrbitBuilder;
+use Orbit\Helper\Elasticsearch\ESException;
 use Orbit\Helper\Resource\ResourceInterface;
 use Orbit\Helper\Util\CorsHeader;
 use PDO;
@@ -461,6 +462,13 @@ abstract class ControllerAPI extends Controller
         else if ($e instanceof ModelNotFoundException) {
             $httpCode = 404;
             $this->response->code = 404;
+        }
+        else if ($e instanceof ESException) {
+            $this->response->message = 'ES Error';
+
+            if ($debug) {
+                $this->response->data = json_decode($e->getMessage(), true);
+            }
         }
         else if ($e instanceof QueryException) {
             if ($debug) {
