@@ -10,6 +10,7 @@ use BrandProductVariantOption;
 use DB;
 use Event;
 use Exception;
+use Language;
 use Media;
 use Orbit\Controller\API\v1\BrandProduct\Product\DataBuilder\UpdateBrandProductBuilder;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Helper\MediaQuery;
@@ -41,9 +42,23 @@ class BrandProductRepository
 
     public function get($brandProductId)
     {
+        $lang = Request::input('language', 'id');
+        $lang = Language::where('status', '=', 'active')
+                            ->where('name', $lang)
+                            ->first();
+
         return BrandProduct::with([
-                'categories' => function($query) {
-                    $query->select('categories.category_id', 'category_name');
+                'categories' => function($query) use ($lang) {
+                    $query->select('categories.category_id', 'category_translations.category_name')
+                        ->join('category_translations',
+                            'categories.category_id',
+                            '=',
+                            'category_translations.category_id'
+                        )
+                        ->where('category_translations.merchant_language_id',
+                            $lang->language_id
+                        )
+                        ->where('categories.merchant_id', 0);
                 },
                 'brand',
                 'videos',

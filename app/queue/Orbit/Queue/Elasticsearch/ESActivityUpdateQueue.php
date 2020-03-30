@@ -62,6 +62,8 @@ class ESActivityUpdateQueue
      */
     public function fire($job, $data)
     {
+        $esConfig = Config::get('orbit.elasticsearch');
+
         try {
             $activityId = $data['activity_id'];
             $activity = Activity::findOnWriteConnection($activityId);
@@ -144,7 +146,6 @@ class ESActivityUpdateQueue
                 }
             }
 
-            $esConfig = Config::get('orbit.elasticsearch');
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
 
             // check exist elasticsearch index
