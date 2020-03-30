@@ -2,16 +2,17 @@
 
 namespace Orbit\Queue\Elasticsearch;
 
-use Elasticsearch\ClientBuilder as ESBuilder;
+use BrandProduct;
 use Config;
 use DB;
-use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
-use Orbit\Helper\Util\JobBurier;
+use Elasticsearch\ClientBuilder as ESBuilder;
 use Exception;
 use Log;
 use Orbit\FakeJob;
+use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
+use Orbit\Helper\Util\JobBurier;
+use Orbit\Queue\Elasticsearch\ESBrandProductSuggestionUpdateQueue;
 use Tenant;
-use BrandProduct;
 
 /**
  * Update Brand Product document on ES.
@@ -296,6 +297,10 @@ class ESBrandProductUpdateQueue
 
             // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
             ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
+
+            $fakeJob = new FakeJob();
+            $esQueue = new \Orbit\Queue\Elasticsearch\ESBrandProductSuggestionUpdateQueue();
+            $suggestion = $esQueue->fire($fakeJob, ['brand_product_id' => $brandProductId]);
 
             // Safely delete the object
             $job->delete();
