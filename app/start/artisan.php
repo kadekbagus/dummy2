@@ -203,6 +203,10 @@ Artisan::add(new ElasticsearchResyncCouponSuggestionCommand);
 // Sync to elasticsearch from merchant(store) table to store suggestion index
 Artisan::add(new ElasticsearchResyncStoreSuggestionCommand);
 
+// Sync to elasticsearch from merchants table (brand product)
+// to brand product suggestion index
+Artisan::add(new ElasticsearchResyncBrandProductSuggestionCommand);
+
 // Delete not active campaign in suggest index elasticsearch
 Artisan::add(new CampaignDeleteInactiveEsCommand);
 

@@ -133,6 +133,13 @@ class ProductNewAPIController extends ControllerAPI
                 [$newBrandProduct->brand_product_id]
             );
 
+            // Update brand list suggestion
+            // $brandList = BrandProduct::select('brand_id')->groupBy('brand_id')
+            //     ->lists('brand_id');
+            // if (! empty($brandList)) {
+            //     Config::put('brand_list_suggestion', serialize($brandList), 60);
+            // }
+
             $this->response->data = $newBrandProduct;
 
         } catch (Exception $e) {

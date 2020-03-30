@@ -173,6 +173,11 @@ return array(
                 'index' => 'products',
                 'type' => 'basic',
             ],
+
+            'product_suggestions' => [
+                'index' => 'product_suggestions',
+                'type' => 'basic',
+            ],
         ],
 
         // index list will be include in suggestion
