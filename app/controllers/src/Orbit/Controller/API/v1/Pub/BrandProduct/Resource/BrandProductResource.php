@@ -25,6 +25,7 @@ class BrandProductResource extends Resource
             'tnc' => $this->tnc,
             'status' => $this->status,
             'maxReservationTime' => $this->max_reservation_time,
+            'category' => $this->resource->categories->first()->category_name,
             'brandId' => $this->brand_id,
             'brandName' => $this->brand->name,
             'brandSlugName' => \Str::slug($this->brand->name),
