@@ -52,3 +52,14 @@ Route::get(
         'uses' => $brandProductAuth . '@Category\CategoryList_handle',
     ]
 );
+
+/**
+ * Brand Product Update Status
+ */
+Route::post(
+    '/app/v1/brand-product/product/update-status',
+    [
+        'as' => 'brand-product-update-status',
+        'uses' => $brandProductAuth . '@Product\ProductUpdateStatus_handle',
+    ]
+);
