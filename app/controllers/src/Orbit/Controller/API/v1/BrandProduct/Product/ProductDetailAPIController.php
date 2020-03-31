@@ -68,13 +68,13 @@ class ProductDetailAPIController extends ControllerAPI
                 "))
                 ->with([
                     'brand_product_main_photo' => function($q) {
-                        $q->select('media_id', 'path', 'cdn_url');
+                        $q->select('media_id', 'object_id', 'path', 'cdn_url');
                     },
                     'brand_product_photos' => function($q) {
-                        $q->select('media_id', 'path', 'cdn_url');
+                        $q->select('media_id', 'object_id', 'path', 'cdn_url');
                     },
                     'videos' => function($q) {
-                        $q->select('media_id', 'path', 'cdn_url');
+                        $q->select('brand_product_videos', 'brand_product_id', 'youtube_id');
                     },
                     'categories',
                     'brand_product_variants.variant_options.option.variant'
