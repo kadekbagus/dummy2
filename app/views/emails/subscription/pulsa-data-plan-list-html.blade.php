@@ -220,6 +220,13 @@
                     </td>
                   </tr>
                   <tr>
+                    <td class="mobile">
+                      <a href="{{ $gameVoucherUrl }}">
+                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/game-voucher-banner-03-2020.jpg" alt="game-voucher-banner" style="width: 100%;margin-top:5px;margin-bottom:20px;">
+                      </a>
+                    </td>
+                  </tr>
+                  <tr>
                     <td class="mobile" align="left" valign="top">
                       <div style="" class="pulsa-promo-container">
                         <table border="0" cellpadding="0" cellspacing="0">

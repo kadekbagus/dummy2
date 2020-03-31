@@ -26,7 +26,7 @@ class ProductDetailAPIController extends ControllerAPI
 {
 
     /**
-     * Product list on brand product portal.
+     * Product detail on brand product portal.
      *
      * @author ahmad <ahmad@dominopos.com>
      */
@@ -61,24 +61,30 @@ class ProductDetailAPIController extends ControllerAPI
             $product = BrandProduct::select(DB::raw("
                     {$prefix}brand_products.brand_product_id,
                     {$prefix}brand_products.product_name,
-                    {$prefix}brand_products.description,
+                    {$prefix}brand_products.product_description,
                     {$prefix}brand_products.tnc,
                     {$prefix}brand_products.max_reservation_time,
                     {$prefix}brand_products.status
                 "))
                 ->with([
                     'brand_product_main_photo' => function($q) {
-                        $q->select('media_id', 'path', 'cdn_url');
+                        $q->select('media_id', 'object_id', 'path', 'cdn_url')
+                            ->where('media_name_long', 'brand_product_main_photo_orig');
                     },
                     'brand_product_photos' => function($q) {
-                        $q->select('media_id', 'path', 'cdn_url');
+                        $q->select('media_id', 'object_id', 'path', 'cdn_url', 'metadata')
+                            ->where('media_name_long', 'brand_product_photos_orig');
                     },
                     'videos' => function($q) {
-                        $q->select('media_id', 'path', 'cdn_url');
+                        $q->select('brand_product_video_id', 'brand_product_id', 'youtube_id');
                     },
-                    'categories',
+                    'categories' => function($q) {
+                        $q->select('categories.category_id', 'categories.category_name');
+                    },
                     'brand_product_variants.variant_options.option.variant'
-                ]);
+                ])
+                ->where('brand_products.brand_product_id', $productId)
+                ->where('brand_products.brand_id', $brandId);
 
             if (! empty($merchantId)) {
                 $product->leftJoin('brand_product_variant_options', 'brand_product_variant_options.brand_product_variant_id', '=', 'brand_product_variants.brand_product_variant_id')
@@ -86,8 +92,20 @@ class ProductDetailAPIController extends ControllerAPI
                     ->where('brand_product_reservation_details.option_id', $merchantId);
             }
 
-            $product->groupBy('brand_products.brand_product_id');
-            $product->firstOrFail();
+            $product = $product->groupBy('brand_products.brand_product_id')
+                ->firstOrFail();
+
+            foreach ($product->brand_product_photos as $key => $value) {
+                $img = new stdclass();
+                $img->media_id = $value->media_id;
+                $img->object_id = $value->object_id;
+                $img->path = $value->path;
+                $img->cdn_url = $value->cdn_url;
+                $img->metadata = $value->metadata;
+                $product->{"image".$key} = $img;
+            }
+
+            unset($product->brand_product_photos);
 
             $this->response->data = $product;
 
