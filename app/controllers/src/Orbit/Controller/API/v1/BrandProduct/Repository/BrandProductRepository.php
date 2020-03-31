@@ -172,17 +172,15 @@ class BrandProductRepository
         return compact('records', 'total');
     }
 
+    /**
+     * Update brand product.
+     *
+     * @param  ValidateRequest $request the request
+     * @return Illuminate\Database\Eloquent\Model $brandProduct brand product
+     */
     public function update($request)
     {
-        $brandProduct = BrandProduct::with([
-                'categories' => function($query) {
-                    $query->select('categories.category_id', 'category_name');
-                },
-                'videos',
-                'brand_product_variants.variant_options',
-                'brand_product_main_photo',
-                'brand_product_photos',
-            ])->findOrFail($request->brand_product_id);
+        $brandProduct = $this->get($request->brand_product_id);
 
         // Build update data.
         $updateData = (new UpdateBrandProductBuilder($request))->build();
@@ -211,11 +209,15 @@ class BrandProductRepository
         $this->updateVideos($brandProduct, $updateData['videos']);
 
         // Update variants...
-        $this->updateVariants(
-            $brandProduct,
-            $updateData['variants'],
-            $updateData['brand_product_variants']
-        );
+        if (count($updateData['variants']) > 0
+            && count($updateData['brand_product_variants'])
+        ) {
+            $this->updateVariants(
+                $brandProduct,
+                $updateData['variants'],
+                $updateData['brand_product_variants']
+            );
+        }
 
         // Reload relationship.
         $brandProduct->load(['brand_product_variants.variant_options']);
@@ -381,6 +383,7 @@ class BrandProductRepository
     )
     {
         $user = App::make('currentUser');
+        $brandProductId = $brandProduct->brand_product_id;
 
         foreach($brandProductVariants as $bpVariant) {
             // If bp variant id exists, then update
@@ -394,7 +397,7 @@ class BrandProductRepository
             if (empty($newBpVariant)) {
                 $newBpVariant = new BrandProductVariant;
                 $newBpVariant->created_by = $user->bpp_user_id;
-                $newBpVariant->brand_product_id = $brandProduct->brand_product_id;
+                $newBpVariant->brand_product_id = $brandProductId;
             }
 
             $newBpVariant->sku = $bpVariant->sku;
@@ -409,6 +412,7 @@ class BrandProductRepository
             $newBpVariant->variant_options()->delete();
 
             // Save new bp variant options
+            $brandProductVariantId = $newBpVariant->brand_product_variant_id;
             foreach($bpVariant->variant_options as $variantOption) {
                 $optionType = $variantOption->option_type;
                 $optionValue = $variantOption->value;
@@ -429,7 +433,7 @@ class BrandProductRepository
                 }
 
                 $newBpVariantOption = BrandProductVariantOption::create([
-                    'brand_product_variant_id' => $newBpVariant->brand_product_variant_id,
+                    'brand_product_variant_id' => $brandProductVariantId,
                     'option_type' => $optionType,
                     'option_id' => $variantOptionId,
                 ]);
