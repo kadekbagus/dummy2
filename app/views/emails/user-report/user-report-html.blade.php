@@ -137,6 +137,14 @@
                       </div>
                     </td>
                   </tr>
+
+                  <tr>
+                    <td class="mobile" width="600">
+                      <a href="{{ $game_voucher_page_url }}">
+                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/game-voucher-banner-03-2020.jpg" alt="game-voucher-banner" style="width: 100%;margin-top:5px;margin-bottom:20px;">
+                      </a>
+                    </td>
+                  </tr>
                 </table>
 
                 <table width="600" cellpadding="0" cellspacing="0" class="container campaigns-container">
