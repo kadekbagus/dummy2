@@ -68,14 +68,19 @@ class ProductListAPIController extends ControllerAPI
             $products = BrandProduct::select(DB::raw("
                     {$prefix}brand_products.brand_product_id,
                     {$prefix}brand_products.product_name,
-                    concat(min({$prefix}brand_product_variants.selling_price), ' - ', max({$prefix}brand_product_variants.selling_price)) as price,
+                    CASE WHEN min({$prefix}brand_product_variants.selling_price) = max({$prefix}brand_product_variants.selling_price)
+                        THEN min({$prefix}brand_product_variants.selling_price)
+                        ELSE
+                        concat(min({$prefix}brand_product_variants.selling_price), ' - ', max({$prefix}brand_product_variants.selling_price))
+                    END as price,
                     sum({$prefix}brand_product_variants.quantity) as total_quantity,
                     {$prefix}brand_products.status,
                     count(brand_product_reservation_id) as total_reserved
                 "))
                 ->with([
                     'brand_product_main_photo' => function($q) {
-                        $q->select('path', 'cdn_url');
+                        $q->select('media_id', 'object_id', 'path', 'cdn_url')
+                            ->where('media_name_long', 'brand_product_main_photo_orig');
                     }
                 ])
                 ->leftJoin('brand_product_variants', 'brand_products.brand_product_id', '=', 'brand_product_variants.brand_product_id')
