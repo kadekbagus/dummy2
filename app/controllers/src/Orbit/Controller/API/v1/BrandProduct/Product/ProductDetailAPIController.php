@@ -72,7 +72,7 @@ class ProductDetailAPIController extends ControllerAPI
                             ->where('media_name_long', 'brand_product_main_photo_orig');
                     },
                     'brand_product_photos' => function($q) {
-                        $q->select('media_id', 'object_id', 'path', 'cdn_url')
+                        $q->select('media_id', 'object_id', 'path', 'cdn_url', 'metadata')
                             ->where('media_name_long', 'brand_product_photos_orig');
                     },
                     'videos' => function($q) {
@@ -101,6 +101,7 @@ class ProductDetailAPIController extends ControllerAPI
                 $img->object_id = $value->object_id;
                 $img->path = $value->path;
                 $img->cdn_url = $value->cdn_url;
+                $img->metadata = $value->metadata;
                 $product->{"image".$key} = $img;
             }
 
