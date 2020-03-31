@@ -47,9 +47,9 @@ Event::listen('orbit.brandproduct.postnewbrandproduct.after.save', function($pro
         $product->imagePath = $response->data[0]->variants[0]->path;
     }
 
-    $images = OrbitInput::files('images');
-
-    if (! empty($images)) {
+    // image1,2,3,4
+    $images1 = OrbitInput::files('images1');
+    if (! empty($images1)) {
 
         $user = App::make('currentUser');
         // This will be used on MediaAPIController
@@ -61,6 +61,100 @@ Event::listen('orbit.brandproduct.postnewbrandproduct.after.save', function($pro
 
         $response = MediaAPIController::create('raw')
                                     ->setEnableTransaction(false)
+                                    ->setInputName('images1')
+                                    ->setSkipRoleChecking()
+                                    ->upload();
+
+        unset($_POST['media_name_id']);
+        unset($_POST['object_id']);
+
+
+        if ($response->code !== 0)
+        {
+            throw new \Exception($response->message, $response->code);
+        }
+
+        $product->setRelation('media', $response->data);
+        $product->media = $response->data;
+        $product->imagePath = $response->data[0]->variants[0]->path;
+    }
+
+    $images2 = OrbitInput::files('images2');
+    if (! empty($images2)) {
+
+        $user = App::make('currentUser');
+        // This will be used on MediaAPIController
+        App::instance('orbit.upload.user', $user);
+
+        // Use MediaAPIController class to upload the image
+        $_POST['media_name_id'] = 'brand_product_photos';
+        $_POST['object_id'] = $product->brand_product_id;
+
+        $response = MediaAPIController::create('raw')
+                                    ->setEnableTransaction(false)
+                                    ->setInputName('images2')
+                                    ->setSkipRoleChecking()
+                                    ->upload();
+
+        unset($_POST['media_name_id']);
+        unset($_POST['object_id']);
+
+
+        if ($response->code !== 0)
+        {
+            throw new \Exception($response->message, $response->code);
+        }
+
+        $product->setRelation('media', $response->data);
+        $product->media = $response->data;
+        $product->imagePath = $response->data[0]->variants[0]->path;
+    }
+
+    $images3 = OrbitInput::files('images3');
+    if (! empty($images3)) {
+
+        $user = App::make('currentUser');
+        // This will be used on MediaAPIController
+        App::instance('orbit.upload.user', $user);
+
+        // Use MediaAPIController class to upload the image
+        $_POST['media_name_id'] = 'brand_product_photos';
+        $_POST['object_id'] = $product->brand_product_id;
+
+        $response = MediaAPIController::create('raw')
+                                    ->setEnableTransaction(false)
+                                    ->setInputName('images3')
+                                    ->setSkipRoleChecking()
+                                    ->upload();
+
+        unset($_POST['media_name_id']);
+        unset($_POST['object_id']);
+
+
+        if ($response->code !== 0)
+        {
+            throw new \Exception($response->message, $response->code);
+        }
+
+        $product->setRelation('media', $response->data);
+        $product->media = $response->data;
+        $product->imagePath = $response->data[0]->variants[0]->path;
+    }
+
+    $images4 = OrbitInput::files('images4');
+    if (! empty($images4)) {
+
+        $user = App::make('currentUser');
+        // This will be used on MediaAPIController
+        App::instance('orbit.upload.user', $user);
+
+        // Use MediaAPIController class to upload the image
+        $_POST['media_name_id'] = 'brand_product_photos';
+        $_POST['object_id'] = $product->brand_product_id;
+
+        $response = MediaAPIController::create('raw')
+                                    ->setEnableTransaction(false)
+                                    ->setInputName('images4')
                                     ->setSkipRoleChecking()
                                     ->upload();
 

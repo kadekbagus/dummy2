@@ -33,12 +33,30 @@ trait Searchable
     protected $searchProvider = null;
 
     /**
+     * Flag that indicate that it should only count the records.
+     * @var bool
+     */
+    protected $countOnly = false;
+
+    /**
      * Get (build?) the search query.
      *
      * @param  ValidateRequest $request a ValidateRequest instance.
      * @return array search query
      */
     abstract public function getSearchQueryBuilder($request);
+
+    /**
+     * Set searchable to only count instead of the returning the records.
+     *
+     * @return self
+     */
+    public function countOnly()
+    {
+        $this->countOnly = true;
+
+        return $this;
+    }
 
     /**
      * Basic search function.
@@ -61,6 +79,10 @@ trait Searchable
 
         // Otherwise, we assume $query is an array that ready to be passed to
         // SearchProvider.
+
+        if ($this->countOnly) {
+            return $this->searchProvider->count($query);
+        }
 
         return $this->searchProvider->search($query);
     }
