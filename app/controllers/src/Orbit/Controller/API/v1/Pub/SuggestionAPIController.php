@@ -143,10 +143,10 @@ class SuggestionAPIController extends PubControllerAPI
                 $i++;
             }
 
-            if (count($brandList) > 0) {
-                $body['gtm_suggestions']['completion']['context']['brand_id'] =
-                    $brandList;
-            }
+            // if (count($brandList) > 0) {
+            //     $body['gtm_suggestions']['completion']['context']['brand_id'] =
+            //         $brandList;
+            // }
 
             $esParam = [
                 'index'  => $suggestion,
