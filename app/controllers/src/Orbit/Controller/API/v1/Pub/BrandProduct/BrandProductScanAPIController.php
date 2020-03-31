@@ -40,9 +40,11 @@ class BrandProductScanAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $product = BrandProductVariant::select('product_name', 'brand_products.brand_product_id')
+            $product = BrandProductVariant::select('product_name', 'brand_products.brand_product_id', 'path', 'cdn_url')
                 ->leftJoin('brand_products', 'brand_products.brand_product_id', '=', 'brand_product_variants.brand_product_id')
                 ->leftJoin('brand_product_variant_options', 'brand_product_variant_options.brand_product_variant_id', '=', 'brand_product_variants.brand_product_variant_id')
+                ->leftJoin('media', 'media.object_id', '=', 'brand_products.brand_product_id')
+                ->where('media_name_long', 'brand_product_main_photo_mobile_thumb')
                 ->where('product_code', $barcode)
                 ->where('option_type', 'merchant')
                 ->where('option_id', $storeId)
