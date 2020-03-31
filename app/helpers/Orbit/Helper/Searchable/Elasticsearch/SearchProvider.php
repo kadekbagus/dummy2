@@ -29,6 +29,23 @@ class SearchProvider implements SearchProviderInterface
     }
 
     /**
+     * Implement ES document count functionality.
+     *
+     * @param  array $query search/count query.
+     * @return int $result result count
+     */
+    public function count($query)
+    {
+        try {
+            $result = $this->client->count($query);
+        } catch (Exception $e) {
+            throw new ESException($e->getMessage(), $e->getCode());
+        }
+
+        return $result['count'];
+    }
+
+    /**
      * Implement the search to ES Server.
      *
      * @throws ESException
