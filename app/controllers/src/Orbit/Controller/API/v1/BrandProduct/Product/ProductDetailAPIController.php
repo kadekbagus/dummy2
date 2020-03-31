@@ -26,7 +26,7 @@ class ProductDetailAPIController extends ControllerAPI
 {
 
     /**
-     * Product list on brand product portal.
+     * Product detail on brand product portal.
      *
      * @author ahmad <ahmad@dominopos.com>
      */
@@ -61,7 +61,7 @@ class ProductDetailAPIController extends ControllerAPI
             $product = BrandProduct::select(DB::raw("
                     {$prefix}brand_products.brand_product_id,
                     {$prefix}brand_products.product_name,
-                    {$prefix}brand_products.description,
+                    {$prefix}brand_products.product_description,
                     {$prefix}brand_products.tnc,
                     {$prefix}brand_products.max_reservation_time,
                     {$prefix}brand_products.status
