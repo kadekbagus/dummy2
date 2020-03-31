@@ -96,8 +96,8 @@ class ProductNewAPIController extends ControllerAPI
 
             // save brand_product_categories
             $newBrandProductCategories = new BrandProductCategory();
-            $newBrandProductCategories->brand_product_id
-                = $newBrandProduct->brand_product_id;
+            $newBrandProductCategories->brand_product_id =
+                $newBrandProduct->brand_product_id;
             $newBrandProductCategories->category_id = $categoryId;
             $newBrandProductCategories->save();
 
@@ -105,8 +105,8 @@ class ProductNewAPIController extends ControllerAPI
             $brandProductVideos = array();
             foreach ($youtubeIds as $youtube_id) {
                 $newBrandProductVideo = new BrandProductVideo();
-                $newBrandProductVideo->brand_product_id
-                    = $newBrandProduct->brand_product_id;
+                $newBrandProductVideo->brand_product_id =
+                    $newBrandProduct->brand_product_id;
                 $newBrandProductVideo->youtube_id = $youtube_id;
                 $newBrandProductVideo->save();
                 $brandProductVideos[] = $newBrandProductVideo;
@@ -171,26 +171,30 @@ class ProductNewAPIController extends ControllerAPI
                     'variant_name' => $variant['name'],
                 ]);
 
-                // Save variant options?
-                foreach($variant['options'] as $option) {
-                    $newVariantOption = VariantOption::where(
-                            'variant_id', $newVariant->variant_id
-                        )->where('value', $option)->first();
+            }
 
-                    if (empty($newVariantOption)) {
-                        $newVariantOption = VariantOption::create([
-                            'variant_id' => $newVariant->variant_id,
-                            'value' => $option,
-                        ]);
-                    }
+            // Save variant options?
+            foreach($variant['options'] as $option) {
+                $newVariantOption = VariantOption::where(
+                        'variant_id', $newVariant->variant_id
+                    )->where('value', $option)->first();
 
-                    $variantOptionIds[$index][$newVariantOption->value]
-                        = $newVariantOption->variant_option_id;
+                if (empty($newVariantOption)) {
+                    $newVariantOption = VariantOption::create([
+                        'variant_id' => $newVariant->variant_id,
+                        'value' => $option,
+                    ]);
                 }
             }
 
             // Load variant options...
-            $newVariant->load('options');
+            $newVariant->load(['options']);
+
+            foreach($newVariant->options as $option) {
+                $variantOptionIds[$index][$option->value] =
+                    $option->variant_option_id;
+            }
+
             $variantList[] = $newVariant;
             $index++;
         }
