@@ -72,7 +72,7 @@ class ProductDetailAPIController extends ControllerAPI
                             ->where('media_name_long', 'brand_product_main_photo_orig');
                     },
                     'brand_product_photos' => function($q) {
-                        $q->select('media_id', 'object_id', 'path', 'cdn_url', 'metadata')
+                        $q->select('media_id', 'object_id', 'path', 'cdn_url')
                             ->where('media_name_long', 'brand_product_photos_orig');
                     },
                     'videos' => function($q) {
@@ -101,12 +101,61 @@ class ProductDetailAPIController extends ControllerAPI
                 $img->object_id = $value->object_id;
                 $img->path = $value->path;
                 $img->cdn_url = $value->cdn_url;
-                $img->metadata = $value->metadata;
                 $product->{"image".$key} = $img;
             }
 
             unset($product->brand_product_photos);
 
+            $variants = [];
+            foreach ($product->brand_product_variants as $key => $bpv) {
+                foreach ($bpv->variant_options as $key => $vo) {
+                    if ($vo->option_type === 'variant_option') {
+                        $variant = new stdclass();
+                        $variant->variant_id = $vo->option->variant_id;
+                        $variant->name = $vo->option->variant->variant_name;
+                        $variant->options = [];
+
+                        $variantExist = false;
+                        foreach ($variants as $key => $variantItem) {
+                            if ($variantItem->name === $variant->name) {
+                                $variantExist = true;
+                                break;
+                            }
+                        }
+
+                        if (! $variantExist) {
+                            $variants[] = $variant;
+                        }
+                    }
+                }
+            }
+
+            foreach ($variants as &$variantItem) {
+                foreach ($product->brand_product_variants as $key => $bpv) {
+                    foreach ($bpv->variant_options as $key => $vo) {
+                        if ($vo->option_type = 'variant_options' && isset($vo->option->variant)) {
+                            if ($variantItem->name === $vo->option->variant->variant_name) {
+                                $option = new stdclass();
+                                $option->option_id = $vo->option->variant_option_id;
+                                $option->option = $vo->option->value;
+
+                                $optionExist = false;
+                                foreach ($variantItem->options as $key => $optionItem) {
+                                    if ($optionItem->option === $vo->option->value) {
+                                        $optionExist = true;
+                                        break;
+                                    }
+                                }
+                                if (! $optionExist) {
+                                    $variantItem->options[] = $option;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            $product->variants = $variants;
             $this->response->data = $product;
 
         } catch (Exception $e) {
