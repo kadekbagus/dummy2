@@ -17,10 +17,10 @@ class ProductUpdateAPIController extends ControllerAPI
 {
     /**
      * Update Brand Product handler.
-     * 
+     *
      * @param BrandProductRepository $repo brand product repo
      * @param ValidateRequest $request the request handler
-     * 
+     *
      * @return Illuminate\Http\Response
      */
     public function handle(BrandProductRepository $repo, UpdateRequest $request)

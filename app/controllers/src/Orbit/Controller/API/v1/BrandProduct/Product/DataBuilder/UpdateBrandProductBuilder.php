@@ -70,13 +70,16 @@ class UpdateBrandProductBuilder
             $data['deleted_images'] = $images;
         });
 
-        $data['variants'] = @json_decode(
-            $this->request->variants
-        );
+        $this->request->has('variants', function($variants) use (&$data)
+        {
+            $data['variants'] = @json_decode($variants);
+        });
 
-        $data['brand_product_variants'] = @json_decode(
-            $this->request->brand_product_variants
-        );
+        $this->request->has('brand_product_variants', function($bpv) use (
+            &$data
+        ) {
+            $data['brand_product_variants'] = @json_decode($bpv);
+        });
 
         return $data;
     }
