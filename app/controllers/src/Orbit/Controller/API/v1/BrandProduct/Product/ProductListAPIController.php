@@ -52,7 +52,7 @@ class ProductListAPIController extends ControllerAPI
                 ),
                 array(
                     'status'      => 'in:inactive,active',
-                    'sortBy'      => 'in:product_name,price,total_quantity,total_reserved',
+                    'sortBy'      => 'in:product_name,min_price,total_quantity,total_reserved',
                     'sortMode'    => 'in:asc,desc',
                 )
             );
@@ -68,14 +68,16 @@ class ProductListAPIController extends ControllerAPI
             $products = BrandProduct::select(DB::raw("
                     {$prefix}brand_products.brand_product_id,
                     {$prefix}brand_products.product_name,
-                    concat(min({$prefix}brand_product_variants.selling_price), ' - ', max({$prefix}brand_product_variants.selling_price)) as price,
+                    min({$prefix}brand_product_variants.selling_price) as min_price,
+                    max({$prefix}brand_product_variants.selling_price) as max_price,
                     sum({$prefix}brand_product_variants.quantity) as total_quantity,
                     {$prefix}brand_products.status,
                     count(brand_product_reservation_id) as total_reserved
                 "))
                 ->with([
                     'brand_product_main_photo' => function($q) {
-                        $q->select('path', 'cdn_url');
+                        $q->select('media_id', 'object_id', 'path', 'cdn_url')
+                            ->where('media_name_long', 'brand_product_main_photo_orig');
                     }
                 ])
                 ->leftJoin('brand_product_variants', 'brand_products.brand_product_id', '=', 'brand_product_variants.brand_product_id')
@@ -127,7 +129,7 @@ class ProductListAPIController extends ControllerAPI
                 $sortByMapping = array(
                     'updated_at' => 'brand_products.updated_at',
                     'product_name' => 'brand_products.product_name',
-                    'price' => 'price',
+                    'min_price' => 'min_price',
                     'total_quantity' => 'total_quantity',
                     'total_reserved' => 'total_reserved',
                 );
