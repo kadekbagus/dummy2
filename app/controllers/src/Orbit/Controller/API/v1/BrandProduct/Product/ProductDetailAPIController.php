@@ -68,17 +68,23 @@ class ProductDetailAPIController extends ControllerAPI
                 "))
                 ->with([
                     'brand_product_main_photo' => function($q) {
-                        $q->select('media_id', 'object_id', 'path', 'cdn_url');
+                        $q->select('media_id', 'object_id', 'path', 'cdn_url')
+                            ->where('media_name_long', 'brand_product_main_photo_orig');
                     },
                     'brand_product_photos' => function($q) {
-                        $q->select('media_id', 'object_id', 'path', 'cdn_url');
+                        $q->select('media_id', 'object_id', 'path', 'cdn_url')
+                            ->where('media_name_long', 'brand_product_photos_orig');
                     },
                     'videos' => function($q) {
                         $q->select('brand_product_video_id', 'brand_product_id', 'youtube_id');
                     },
-                    'categories',
+                    'categories' => function($q) {
+                        $q->select('categories.category_id', 'categories.category_name');
+                    },
                     'brand_product_variants.variant_options.option.variant'
-                ]);
+                ])
+                ->where('brand_products.brand_product_id', $productId)
+                ->where('brand_products.brand_id', $brandId);
 
             if (! empty($merchantId)) {
                 $product->leftJoin('brand_product_variant_options', 'brand_product_variant_options.brand_product_variant_id', '=', 'brand_product_variants.brand_product_variant_id')
@@ -86,8 +92,8 @@ class ProductDetailAPIController extends ControllerAPI
                     ->where('brand_product_reservation_details.option_id', $merchantId);
             }
 
-            $product->groupBy('brand_products.brand_product_id');
-            $product->firstOrFail();
+            $product = $product->groupBy('brand_products.brand_product_id')
+                ->firstOrFail();
 
             $this->response->data = $product;
 
