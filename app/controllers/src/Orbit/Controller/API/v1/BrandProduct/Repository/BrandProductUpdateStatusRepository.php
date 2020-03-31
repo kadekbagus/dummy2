@@ -34,6 +34,6 @@ class BrandProductUpdateStatusRepository
         }
 
         $BrandProduct->save();
-        return $BrandProduct->toArray();
+        return $BrandProduct;
     }
 }
