@@ -95,6 +95,17 @@ class ProductDetailAPIController extends ControllerAPI
             $product = $product->groupBy('brand_products.brand_product_id')
                 ->firstOrFail();
 
+            foreach ($product->brand_product_photos as $key => $value) {
+                $img = new stdclass();
+                $img->media_id = $value->media_id;
+                $img->object_id = $value->object_id;
+                $img->path = $value->path;
+                $img->cdn_url = $value->cdn_url;
+                $product->{"image".$key} = $img;
+            }
+
+            unset($product->brand_product_photos);
+
             $this->response->data = $product;
 
         } catch (Exception $e) {
