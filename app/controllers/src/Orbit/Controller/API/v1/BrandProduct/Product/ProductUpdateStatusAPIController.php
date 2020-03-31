@@ -27,6 +27,10 @@ class ProductUpdateStatusAPIController extends ControllerAPI
 
             $this->commit();
 
+            Event::fire('orbit.brandproduct.after.commit', [
+                $this->response->data['brand_product_id']
+            ]);
+
         } catch (Exception $e) {
             return $this->handleException($e);
         }
