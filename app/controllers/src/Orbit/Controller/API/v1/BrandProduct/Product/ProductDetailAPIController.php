@@ -74,7 +74,7 @@ class ProductDetailAPIController extends ControllerAPI
                         $q->select('media_id', 'object_id', 'path', 'cdn_url');
                     },
                     'videos' => function($q) {
-                        $q->select('brand_product_videos', 'brand_product_id', 'youtube_id');
+                        $q->select('brand_product_video_id', 'brand_product_id', 'youtube_id');
                     },
                     'categories',
                     'brand_product_variants.variant_options.option.variant'
