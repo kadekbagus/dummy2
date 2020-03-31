@@ -64,6 +64,7 @@ class PulsaPriceListNotification extends CustomerNotification implements EmailNo
             'cs' => $this->getContactData(),
             'recipientEmail' => $this->getRecipientEmail(),
             'pulsaListUrl' => $this->getPulsaListUrl(),
+            'gameVoucherUrl' => $this->getGameVoucherUrl(),
             'campaigns' => $this->campaigns,
         ];
 
@@ -111,5 +112,18 @@ class PulsaPriceListNotification extends CustomerNotification implements EmailNo
         }
 
         return $pulsaListUrl;
+    }
+
+    /**
+     * Get GTM Game voucher page url.
+     *
+     * @return string gtm game voucher page.
+     */
+    public function getGameVoucherUrl()
+    {
+        $url = Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com')
+            . '/game-voucher?country=Indonesia';
+
+        return $url;
     }
 }
