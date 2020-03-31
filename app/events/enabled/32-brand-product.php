@@ -15,17 +15,19 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
  */
 Event::listen('orbit.brandproduct.postnewbrandproduct.after.save', function($product)
 {
+    // This will be used on MediaAPIController
+    $media = [];
+    $maxPhotos = 4;
+    $user = App::make('currentUser');
+    App::instance('orbit.upload.user', $user);
+    $_POST['media_name_id'] = 'brand_product_main_photo';
+    $_POST['object_id'] = $product->brand_product_id;
+
+    // Process brand product main photo
     $brand_product_main_photo = OrbitInput::files('brand_product_main_photo');
 
     if (! empty($brand_product_main_photo)) {
-
-        $user = App::make('currentUser');
-        // This will be used on MediaAPIController
-        App::instance('orbit.upload.user', $user);
-
         // Use MediaAPIController class to upload the image
-        $_POST['media_name_id'] = 'brand_product_main_photo';
-        $_POST['object_id'] = $product->brand_product_id;
 
         $response = MediaAPIController::create('raw')
                                     ->setEnableTransaction(false)
@@ -33,145 +35,46 @@ Event::listen('orbit.brandproduct.postnewbrandproduct.after.save', function($pro
                                     ->setSkipRoleChecking()
                                     ->upload();
 
-        unset($_POST['media_name_id']);
-        unset($_POST['object_id']);
-
-
         if ($response->code !== 0)
         {
             throw new \Exception($response->message, $response->code);
         }
 
-        $product->setRelation('media', $response->data);
-        $product->media = $response->data;
-        $product->imagePath = $response->data[0]->variants[0]->path;
+        $media[] = $response->data;
     }
 
-    // image1,2,3,4
-    $images1 = OrbitInput::files('images1');
-    if (! empty($images1)) {
+    // Process brand product photos...
+    $_POST['media_name_id'] = 'brand_product_photos';
 
-        $user = App::make('currentUser');
-        // This will be used on MediaAPIController
-        App::instance('orbit.upload.user', $user);
+    for($i = 0; $i < $maxPhotos; $i++) {
 
-        // Use MediaAPIController class to upload the image
-        $_POST['media_name_id'] = 'brand_product_photos';
-        $_POST['object_id'] = $product->brand_product_id;
+        $inputName = "images{$i}";
+        if (Request::hasFile($inputName)) {
 
-        $response = MediaAPIController::create('raw')
-                                    ->setEnableTransaction(false)
-                                    ->setInputName('images1')
-                                    ->setSkipRoleChecking()
-                                    ->upload();
+            $response = MediaAPIController::create('raw')
+                                        ->setInputName($inputName)
+                                        ->setEnableTransaction(false)
+                                        ->setSkipRoleChecking()
+                                        ->upload();
 
-        unset($_POST['media_name_id']);
-        unset($_POST['object_id']);
+            if ($response->code !== 0)
+            {
+                throw new \Exception($response->message, $response->code);
+            }
 
-
-        if ($response->code !== 0)
-        {
-            throw new \Exception($response->message, $response->code);
+            $media[] = $response->data;
         }
-
-        $product->setRelation('media', $response->data);
-        $product->media = $response->data;
-        $product->imagePath = $response->data[0]->variants[0]->path;
     }
 
-    $images2 = OrbitInput::files('images2');
-    if (! empty($images2)) {
+    $product->setRelation('media', $media);
+    $product->media = $media;
 
-        $user = App::make('currentUser');
-        // This will be used on MediaAPIController
-        App::instance('orbit.upload.user', $user);
-
-        // Use MediaAPIController class to upload the image
-        $_POST['media_name_id'] = 'brand_product_photos';
-        $_POST['object_id'] = $product->brand_product_id;
-
-        $response = MediaAPIController::create('raw')
-                                    ->setEnableTransaction(false)
-                                    ->setInputName('images2')
-                                    ->setSkipRoleChecking()
-                                    ->upload();
-
-        unset($_POST['media_name_id']);
-        unset($_POST['object_id']);
-
-
-        if ($response->code !== 0)
-        {
-            throw new \Exception($response->message, $response->code);
-        }
-
-        $product->setRelation('media', $response->data);
-        $product->media = $response->data;
-        $product->imagePath = $response->data[0]->variants[0]->path;
+    if (isset($media[0])) {
+        $product->imagePath = $media[0][0]->variants[0]->path;
     }
 
-    $images3 = OrbitInput::files('images3');
-    if (! empty($images3)) {
-
-        $user = App::make('currentUser');
-        // This will be used on MediaAPIController
-        App::instance('orbit.upload.user', $user);
-
-        // Use MediaAPIController class to upload the image
-        $_POST['media_name_id'] = 'brand_product_photos';
-        $_POST['object_id'] = $product->brand_product_id;
-
-        $response = MediaAPIController::create('raw')
-                                    ->setEnableTransaction(false)
-                                    ->setInputName('images3')
-                                    ->setSkipRoleChecking()
-                                    ->upload();
-
-        unset($_POST['media_name_id']);
-        unset($_POST['object_id']);
-
-
-        if ($response->code !== 0)
-        {
-            throw new \Exception($response->message, $response->code);
-        }
-
-        $product->setRelation('media', $response->data);
-        $product->media = $response->data;
-        $product->imagePath = $response->data[0]->variants[0]->path;
-    }
-
-    $images4 = OrbitInput::files('images4');
-    if (! empty($images4)) {
-
-        $user = App::make('currentUser');
-        // This will be used on MediaAPIController
-        App::instance('orbit.upload.user', $user);
-
-        // Use MediaAPIController class to upload the image
-        $_POST['media_name_id'] = 'brand_product_photos';
-        $_POST['object_id'] = $product->brand_product_id;
-
-        $response = MediaAPIController::create('raw')
-                                    ->setEnableTransaction(false)
-                                    ->setInputName('images4')
-                                    ->setSkipRoleChecking()
-                                    ->upload();
-
-        unset($_POST['media_name_id']);
-        unset($_POST['object_id']);
-
-
-        if ($response->code !== 0)
-        {
-            throw new \Exception($response->message, $response->code);
-        }
-
-        $product->setRelation('media', $response->data);
-        $product->media = $response->data;
-        $product->imagePath = $response->data[0]->variants[0]->path;
-    }
-
+    unset($_POST['media_name_id']);
+    unset($_POST['object_id']);
 });
 
 /**
