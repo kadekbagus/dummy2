@@ -12,6 +12,7 @@ use Event;
 use Exception;
 use Language;
 use Media;
+use MediaAPIController;
 use Orbit\Controller\API\v1\BrandProduct\Product\DataBuilder\UpdateBrandProductBuilder;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Helper\MediaQuery;
 use Request;
@@ -450,19 +451,30 @@ class BrandProductRepository
      */
     private function updateImages($brandProduct, $updateData)
     {
-        // Delete old main product photo, if client setting a new one.
-        if (Request::hasFile('brand_product_main_photo')) {
-            Media::where('media_name_id', 'brand_product_main_photo')
-                ->where('object_id', $brandProduct->brand_product_id)
-                ->delete();
+        // Delete old media if needed.
+        $_POST['media_id'] = '';
+        $deleted = [];
+        $user = App::make('currentUser');
+        App::instance('orbit.upload.user', $user);
+
+        foreach($updateData['deleted_images'] as $mediaId) {
+
+            $_POST['media_id'] = $mediaId;
+
+            $response = MediaAPIController::create('raw')
+                                        ->setEnableTransaction(false)
+                                        ->setSkipRoleChecking()
+                                        ->delete();
+
+            if ($response->code !== 0)
+            {
+                throw new \Exception($response->message, $response->code);
+            }
+
+            $deleted[] = $response->data;
         }
 
-        if (count($updateData['deleted_images']) > 0) {
-            Media::where('media_name_id', 'brand_product_photos')
-                ->where('object_id', $brandProduct->brand_product_id)
-                ->whereIn('metadata', $updateData['deleted_images'])
-                ->delete();
-        }
+        unset($_POST['media_id']);
 
         // Process new images
         $images = Event::fire(
