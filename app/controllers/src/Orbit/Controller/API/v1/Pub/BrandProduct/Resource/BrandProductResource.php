@@ -157,6 +157,7 @@ class BrandProductResource extends Resource
                             'product_code' => $bpVariant->product_code,
                             'original_price' => $bpVariant->original_price,
                             'selling_price' => $bpVariant->selling_price,
+                            'quantity' => $bpVariant->quantity,
                             'options' => $optionList,
                         ];
                         $optionList = [];
