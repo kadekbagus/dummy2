@@ -25,7 +25,7 @@ class BrandProductResource extends Resource
             'tnc' => $this->tnc,
             'status' => $this->status,
             'maxReservationTime' => $this->max_reservation_time,
-            'category' => $this->resource->categories->first()->category_name,
+            'category' => $this->getCategory($this->resource),
             'brandId' => $this->brand_id,
             'brandName' => $this->brand->name,
             'brandSlugName' => \Str::slug($this->brand->name),
@@ -41,6 +41,13 @@ class BrandProductResource extends Resource
                 $variantOptions
             ),
         ];
+    }
+
+    public function getCategory($item)
+    {
+        return ! $item->categories->isEmpty()
+            ? $item->categories->first()->category_name
+            : '';
     }
 
     protected function transformMainPhoto($item)
