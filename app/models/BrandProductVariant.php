@@ -18,6 +18,7 @@ class BrandProductVariant extends Eloquent
 
     public function variant_options()
     {
-        return $this->hasMany(BrandProductVariantOption::class);
+        return $this->hasMany(BrandProductVariantOption::class)
+            ->orderBy('brand_product_variant_options.option_type', 'desc');
     }
 }
