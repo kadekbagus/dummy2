@@ -338,10 +338,13 @@ class MediaAPIController extends ControllerAPI
                 $this->checkAuth();
                 $user = $this->api->user;
             }
-            $role = $user->role;
-            if (! in_array( strtolower($role->role_name), $this->uploadRoles)) {
-                $message = 'Your role are not allowed to access this resource.';
-                ACL::throwAccessForbidden($message);
+
+            if (! $this->skipRoleChecking) {
+                $role = $user->role;
+                if (! in_array( strtolower($role->role_name), $this->uploadRoles)) {
+                    $message = 'Your role are not allowed to access this resource.';
+                    ACL::throwAccessForbidden($message);
+                }
             }
 
             // Check config for media image upload
@@ -359,7 +362,6 @@ class MediaAPIController extends ControllerAPI
                     'media_id' => 'required'
                 )
             );
-
 
             // Run the validation
             if ($validator->fails()) {
