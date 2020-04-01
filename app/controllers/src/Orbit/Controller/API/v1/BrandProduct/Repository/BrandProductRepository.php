@@ -453,7 +453,6 @@ class BrandProductRepository
     {
         // Delete old media if needed.
         $_POST['media_id'] = '';
-        $deleted = [];
         $user = App::make('currentUser');
         App::instance('orbit.upload.user', $user);
 
@@ -468,10 +467,8 @@ class BrandProductRepository
 
             if ($response->code !== 0)
             {
-                throw new \Exception($response->message, $response->code);
+                throw new Exception($response->message, $response->code);
             }
-
-            $deleted[] = $response->data;
         }
 
         unset($_POST['media_id']);
