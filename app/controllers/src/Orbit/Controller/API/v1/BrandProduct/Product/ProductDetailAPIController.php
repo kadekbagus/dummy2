@@ -81,11 +81,22 @@ class ProductDetailAPIController extends ControllerAPI
                     'categories' => function($q) {
                         $q->select('categories.category_id', 'categories.category_name');
                     },
-                    'brand_product_variants.variant_options' => function($q) {
+                    'brand_product_variants.variant_options' => function($q) use ($prefix) {
                         $q->with([
                             'option.variant',
-                            'store' => function($q2) {
-                                $q2->select('merchant_id', 'name');
+                            'store' => function($q2) use ($prefix) {
+                                $q2->select(
+                                        'merchants.merchant_id',
+                                        'merchants.name',
+                                        DB::raw("malls.name as mall_name"),
+                                        DB::raw("CONCAT({$prefix}merchants.floor, ' ', {$prefix}merchants.unit) as location")
+                                    )
+                                    ->leftJoin(
+                                        DB::raw("{$prefix}merchants malls"),
+                                        DB::raw("malls.merchant_id"),
+                                        '=',
+                                        'merchants.parent_id'
+                                    );
                             }
                         ]);
                     }
@@ -160,7 +171,32 @@ class ProductDetailAPIController extends ControllerAPI
                 }
             }
 
+            $selectedStores = [];
+            foreach ($product->brand_product_variants as $key => $bpv) {
+                foreach ($bpv->variant_options as $key => $vo) {
+                    if ($vo->option_type = 'merchant' && ! is_null($vo->store)) {
+                        $store = new stdclass();
+                        $store->id = $vo->store->merchant_id;
+                        $store->name = $vo->store->name;
+                        $store->mall_name = $vo->store->mall_name;
+                        $store->location = $vo->store->location;
+
+                        $storeExist = false;
+                        foreach ($selectedStores as $key => $storeItem) {
+                            if ($storeItem->id === $vo->store->merchant_id) {
+                                $storeExist = true;
+                                break;
+                            }
+                        }
+                        if (! $storeExist) {
+                            $selectedStores[] = $store;
+                        }
+                    }
+                }
+            }
+
             $product->variants = $variants;
+            $product->selected_stores = $selectedStores;
             $this->response->data = $product;
 
         } catch (Exception $e) {
