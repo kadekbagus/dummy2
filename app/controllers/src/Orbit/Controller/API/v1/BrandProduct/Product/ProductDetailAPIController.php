@@ -81,7 +81,14 @@ class ProductDetailAPIController extends ControllerAPI
                     'categories' => function($q) {
                         $q->select('categories.category_id', 'categories.category_name');
                     },
-                    'brand_product_variants.variant_options.option.variant'
+                    'brand_product_variants.variant_options' => function($q) {
+                        $q->with([
+                            'option.variant',
+                            'store' => function($q2) {
+                                $q2->select('merchant_id', 'name');
+                            }
+                        ]);
+                    }
                 ])
                 ->where('brand_products.brand_product_id', $productId)
                 ->where('brand_products.brand_id', $brandId);
@@ -103,8 +110,6 @@ class ProductDetailAPIController extends ControllerAPI
                 $img->cdn_url = $value->cdn_url;
                 $product->{"image".$key} = $img;
             }
-
-            unset($product->brand_product_photos);
 
             $variants = [];
             foreach ($product->brand_product_variants as $key => $bpv) {
