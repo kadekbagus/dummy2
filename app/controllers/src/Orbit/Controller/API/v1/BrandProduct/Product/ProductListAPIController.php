@@ -88,7 +88,7 @@ class ProductListAPIController extends ControllerAPI
             if (! empty($merchantId)) {
                 $products->leftJoin('brand_product_variant_options', 'brand_product_variant_options.brand_product_variant_id', '=', 'brand_product_variants.brand_product_variant_id')
                     ->where('brand_product_variant_options.option_type', 'merchant')
-                    ->where('brand_product_reservation_details.option_id', $merchantId);
+                    ->where('brand_product_variant_options.option_id', $merchantId);
             }
 
             OrbitInput::get('product_name_like', function($keyword) use ($products)
