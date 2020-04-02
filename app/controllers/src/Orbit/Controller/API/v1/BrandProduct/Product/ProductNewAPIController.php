@@ -167,6 +167,7 @@ class ProductNewAPIController extends ControllerAPI
         $index = 0; // just to make sure the index starts at 0
         foreach($variants as $variant) {
             $variantOptionIds[$index] = [];
+            $variant['name'] = strtolower($variant['name']);
             $newVariant = Variant::where('variant_name', $variant['name'])
                 ->first();
 
@@ -174,11 +175,11 @@ class ProductNewAPIController extends ControllerAPI
                 $newVariant = Variant::create([
                     'variant_name' => $variant['name'],
                 ]);
-
             }
 
             // Save variant options?
             foreach($variant['options'] as $option) {
+                $option = strtolower($option);
                 $newVariantOption = VariantOption::where(
                         'variant_id', $newVariant->variant_id
                     )->where('value', $option)->first();
@@ -223,26 +224,6 @@ class ProductNewAPIController extends ControllerAPI
         $user = App::make('currentUser');
 
         foreach($brandProductVariants as $bpVariant) {
-            // Check for duplicate sku?
-            $skuExists = BrandProductVariant::select(
-                    'brand_product_variant_id'
-                )
-                ->join(
-                    'brand_products',
-                    'brand_product_variants.brand_product_id',
-                    '=',
-                    'brand_products.brand_product_id'
-                )
-                ->where('brand_products.brand_id', $newBrandProduct->brand_id)
-                ->where('sku', $bpVariant['sku'])
-                ->first();
-
-            if (! empty($skuExists)) {
-                OrbitShopAPI::throwInvalidArgument(
-                    "SKU: {$bpVariant['sku']} already used."
-                );
-            }
-
             // Save main BrandProductVariant record.
             $newBrandProductVariant = BrandProductVariant::create([
                 'brand_product_id' => $newBrandProduct->brand_product_id,
@@ -277,6 +258,7 @@ class ProductNewAPIController extends ControllerAPI
                     $variantOptionId = $optionValue;
                 }
                 else if (isset($variantOptionIds[$variantIndex])) {
+                    $optionValue = strtolower($optionValue);
                     $selectedVariant = $variantOptionIds[$variantIndex];
                     $variantOptionId = $selectedVariant[$optionValue];
                 }

@@ -293,17 +293,19 @@ class BrandProductRepository
         $index = 0;
         foreach($variants as $variant) {
             $variantOptionIds[$index] = [];
-            $newVariant = Variant::where('variant_name', $variant->name)
+            $variantName = strtolower($variant->name);
+            $newVariant = Variant::where('variant_name', $variantName)
                 ->first();
 
             if (empty($newVariant)) {
                 $newVariant = Variant::create([
-                    'variant_name' => $variant->name,
+                    'variant_name' => $variantName,
                 ]);
             }
 
             // Save variant options?
             foreach($variant->options as $option) {
+                $option = strtolower($option);
                 $newVariantOption = VariantOption::where(
                         'variant_id', $newVariant->variant_id
                     )->where('value', $option)->first();
@@ -453,6 +455,7 @@ class BrandProductRepository
                     $variantOptionId = $optionValue;
                 }
                 else if (isset($variantOptionIds[$variantIndex])) {
+                    $optionValue = strtolower($optionValue);
                     $selectedVariant = $variantOptionIds[$variantIndex];
                     $variantOptionId = $selectedVariant[$optionValue];
                 }
