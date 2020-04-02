@@ -83,6 +83,7 @@ class BrandProductRepository
             ->whereHas('products', function($query) {
                 $query->where('brand_products.status', 'active');
             })
+            ->orderBy('base_merchants.name', 'asc')
             ->skip($request->skip ?: 0)
             ->take($request->take ?: 20)
             ->get();
