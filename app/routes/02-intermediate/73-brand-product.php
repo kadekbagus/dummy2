@@ -1,5 +1,7 @@
 <?php
 
+$intermediateController = 'IntermediatePubAuthController@BrandProduct';
+
 /**
  * Brand Product List API
  */
@@ -7,7 +9,7 @@ Route::get(
     '/app/v1/pub/brand-product-list',
     [
         'as' => 'brand-product-list',
-        'uses' => 'IntermediatePubAuthController@BrandProduct\BrandProductList_handle'
+        'uses' => $intermediateController . '\BrandProductList_handle'
     ]
 );
 
@@ -18,7 +20,7 @@ Route::get(
     '/app/v1/pub/brand-product-detail',
     [
         'as' => 'brand-product-detail',
-        'uses' => 'IntermediatePubAuthController@BrandProduct\BrandProductDetail_handle'
+        'uses' => $intermediateController . '\BrandProductDetail_handle'
     ]
 );
 
@@ -29,7 +31,7 @@ Route::get(
     '/app/v1/pub/brand-product-reserve',
     [
         'as' => 'brand-product-reservation',
-        'uses' => 'IntermediatePubAuthController@BrandProduct\BrandProductReservation_handle'
+        'uses' => $intermediateController . '\BrandProductReservation_handle'
     ]
 );
 
@@ -40,6 +42,17 @@ Route::post(
     '/app/v1/pub/brand-product-scan',
     [
         'as' => 'brand-product-scan',
-        'uses' => 'IntermediatePubAuthController@BrandProduct\BrandProductScan_handle',
+        'uses' => $intermediateController . '\BrandProductScan_handle',
+    ]
+);
+
+/**
+ * Brand List which has products.
+ */
+Route::get(
+    '/app/v1/pub/brand-with-product-list',
+    [
+        'as' => 'brand-with-product-list',
+        'uses' => $intermediateController . '\BrandWithProductList_handle',
     ]
 );
