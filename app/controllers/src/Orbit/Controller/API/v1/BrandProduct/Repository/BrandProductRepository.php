@@ -79,10 +79,15 @@ class BrandProductRepository
      */
     public function brands($request)
     {
-        return BaseMerchant::with(['mediaLogoOrig', 'products'])
+        return BaseMerchant::select(
+                'base_merchants.name',
+                'base_merchants.base_merchant_id'
+            )
+            ->with(['mediaLogoOrig', 'products'])
             ->whereHas('products', function($query) {
                 $query->where('brand_products.status', 'active');
             })
+            ->where('base_merchants.status', 'active')
             ->orderBy('base_merchants.name', 'asc')
             ->skip($request->skip ?: 0)
             ->take($request->take ?: 20)
