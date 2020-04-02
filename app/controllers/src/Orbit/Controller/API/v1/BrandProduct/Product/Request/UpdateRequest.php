@@ -15,8 +15,8 @@ class UpdateRequest extends ValidateRequest
     {
         return [
             'brand_product_id' => 'required',
-            'variants' => 'required',
-            'brand_product_variants' => 'required',
+            'variants' => 'sometimes|required',
+            'brand_product_variants' => 'sometimes|required',
         ];
     }
 }

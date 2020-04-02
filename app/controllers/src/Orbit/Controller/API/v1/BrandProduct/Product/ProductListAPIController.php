@@ -52,7 +52,7 @@ class ProductListAPIController extends ControllerAPI
                 ),
                 array(
                     'status'      => 'in:inactive,active',
-                    'sortBy'      => 'in:product_name,min_price,total_quantity,total_reserved',
+                    'sortBy'      => 'in:product_name,min_price,total_quantity,total_reserved,status',
                     'sortMode'    => 'in:asc,desc',
                 )
             );
@@ -88,12 +88,12 @@ class ProductListAPIController extends ControllerAPI
             if (! empty($merchantId)) {
                 $products->leftJoin('brand_product_variant_options', 'brand_product_variant_options.brand_product_variant_id', '=', 'brand_product_variants.brand_product_variant_id')
                     ->where('brand_product_variant_options.option_type', 'merchant')
-                    ->where('brand_product_reservation_details.option_id', $merchantId);
+                    ->where('brand_product_variant_options.option_id', $merchantId);
             }
 
             OrbitInput::get('product_name_like', function($keyword) use ($products)
             {
-                $products->where('product_name', 'like', "%$keyword%");
+                $products->where('brand_products.product_name', 'like', "%$keyword%");
             });
 
             OrbitInput::get('category_id', function($categoryId) use ($products)
@@ -127,6 +127,7 @@ class ProductListAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
+                    'status' => 'brand_products.status',
                     'updated_at' => 'brand_products.updated_at',
                     'product_name' => 'brand_products.product_name',
                     'min_price' => 'min_price',
