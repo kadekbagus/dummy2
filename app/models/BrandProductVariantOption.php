@@ -19,7 +19,7 @@ class BrandProductVariantOption extends Eloquent
 
     public function option()
     {
-    	return $this->belongsTo('VariantOption', 'option_id', 'variant_option_id');
+        return $this->belongsTo('VariantOption', 'option_id', 'variant_option_id');
     }
 
     public function variant_option()
@@ -29,5 +29,10 @@ class BrandProductVariantOption extends Eloquent
             'option_id',
             'variant_option_id'
         );
+    }
+
+    public function store()
+    {
+        return $this->belongsTo('Tenant', 'option_id', 'merchant_id');
     }
 }

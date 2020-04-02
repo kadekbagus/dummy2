@@ -3,6 +3,7 @@
 namespace Orbit\Controller\API\v1\BrandProduct;
 
 use App;
+use BaseMerchant;
 use BrandProduct;
 use BrandProductVideo;
 use BrandProductVariant;
@@ -12,6 +13,7 @@ use Event;
 use Exception;
 use Language;
 use Media;
+use MediaAPIController;
 use Orbit\Controller\API\v1\BrandProduct\Product\DataBuilder\UpdateBrandProductBuilder;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Helper\MediaQuery;
 use Request;
@@ -67,6 +69,29 @@ class BrandProductRepository
                 'brand_product_photos',
             ])
             ->findOrFail($brandProductId);
+    }
+
+    /**
+     * Get list of brands which has products.
+     *
+     * @param  [type] $request [description]
+     * @return [type]          [description]
+     */
+    public function brands($request)
+    {
+        return BaseMerchant::select(
+                'base_merchants.name',
+                'base_merchants.base_merchant_id'
+            )
+            ->with(['mediaLogoOrig', 'products'])
+            ->whereHas('products', function($query) {
+                $query->where('brand_products.status', 'active');
+            })
+            ->where('base_merchants.status', 'active')
+            ->orderBy('base_merchants.name', 'asc')
+            ->skip($request->skip ?: 0)
+            ->take($request->take ?: 20)
+            ->get();
     }
 
     /**
@@ -172,17 +197,15 @@ class BrandProductRepository
         return compact('records', 'total');
     }
 
+    /**
+     * Update brand product.
+     *
+     * @param  ValidateRequest $request the request
+     * @return Illuminate\Database\Eloquent\Model $brandProduct brand product
+     */
     public function update($request)
     {
-        $brandProduct = BrandProduct::with([
-                'categories' => function($query) {
-                    $query->select('categories.category_id', 'category_name');
-                },
-                'videos',
-                'brand_product_variants.variant_options',
-                'brand_product_main_photo',
-                'brand_product_photos',
-            ])->findOrFail($request->brand_product_id);
+        $brandProduct = $this->get($request->brand_product_id);
 
         // Build update data.
         $updateData = (new UpdateBrandProductBuilder($request))->build();
@@ -211,11 +234,15 @@ class BrandProductRepository
         $this->updateVideos($brandProduct, $updateData['videos']);
 
         // Update variants...
-        $this->updateVariants(
-            $brandProduct,
-            $updateData['variants'],
-            $updateData['brand_product_variants']
-        );
+        if (count($updateData['variants']) > 0
+            && count($updateData['brand_product_variants'])
+        ) {
+            $this->updateVariants(
+                $brandProduct,
+                $updateData['variants'],
+                $updateData['brand_product_variants']
+            );
+        }
 
         // Reload relationship.
         $brandProduct->load(['brand_product_variants.variant_options']);
@@ -381,6 +408,7 @@ class BrandProductRepository
     )
     {
         $user = App::make('currentUser');
+        $brandProductId = $brandProduct->brand_product_id;
 
         foreach($brandProductVariants as $bpVariant) {
             // If bp variant id exists, then update
@@ -394,7 +422,7 @@ class BrandProductRepository
             if (empty($newBpVariant)) {
                 $newBpVariant = new BrandProductVariant;
                 $newBpVariant->created_by = $user->bpp_user_id;
-                $newBpVariant->brand_product_id = $brandProduct->brand_product_id;
+                $newBpVariant->brand_product_id = $brandProductId;
             }
 
             $newBpVariant->sku = $bpVariant->sku;
@@ -409,6 +437,7 @@ class BrandProductRepository
             $newBpVariant->variant_options()->delete();
 
             // Save new bp variant options
+            $brandProductVariantId = $newBpVariant->brand_product_variant_id;
             foreach($bpVariant->variant_options as $variantOption) {
                 $optionType = $variantOption->option_type;
                 $optionValue = $variantOption->value;
@@ -429,7 +458,7 @@ class BrandProductRepository
                 }
 
                 $newBpVariantOption = BrandProductVariantOption::create([
-                    'brand_product_variant_id' => $newBpVariant->brand_product_variant_id,
+                    'brand_product_variant_id' => $brandProductVariantId,
                     'option_type' => $optionType,
                     'option_id' => $variantOptionId,
                 ]);
@@ -446,19 +475,27 @@ class BrandProductRepository
      */
     private function updateImages($brandProduct, $updateData)
     {
-        // Delete old main product photo, if client setting a new one.
-        if (Request::hasFile('brand_product_main_photo')) {
-            Media::where('media_name_id', 'brand_product_main_photo')
-                ->where('object_id', $brandProduct->brand_product_id)
-                ->delete();
+        // Delete old media if needed.
+        $_POST['media_id'] = '';
+        $user = App::make('currentUser');
+        App::instance('orbit.upload.user', $user);
+
+        foreach($updateData['deleted_images'] as $mediaId) {
+
+            $_POST['media_id'] = $mediaId;
+
+            $response = MediaAPIController::create('raw')
+                                        ->setEnableTransaction(false)
+                                        ->setSkipRoleChecking()
+                                        ->delete();
+
+            if ($response->code !== 0)
+            {
+                throw new Exception($response->message, $response->code);
+            }
         }
 
-        if (count($updateData['deleted_images']) > 0) {
-            Media::where('media_name_id', 'brand_product_photos')
-                ->where('object_id', $brandProduct->brand_product_id)
-                ->whereIn('metadata', $updateData['deleted_images'])
-                ->delete();
-        }
+        unset($_POST['media_id']);
 
         // Process new images
         $images = Event::fire(
