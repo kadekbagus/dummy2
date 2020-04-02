@@ -3,6 +3,7 @@
 namespace Orbit\Controller\API\v1\BrandProduct;
 
 use App;
+use BaseMerchant;
 use BrandProduct;
 use BrandProductVideo;
 use BrandProductVariant;
@@ -68,6 +69,23 @@ class BrandProductRepository
                 'brand_product_photos',
             ])
             ->findOrFail($brandProductId);
+    }
+
+    /**
+     * Get list of brands which has products.
+     *
+     * @param  [type] $request [description]
+     * @return [type]          [description]
+     */
+    public function brands($request)
+    {
+        return BaseMerchant::with(['mediaLogoOrig', 'products'])
+            ->whereHas('products', function($query) {
+                $query->where('brand_products.status', 'active');
+            })
+            ->skip($request->skip ?: 0)
+            ->take($request->take ?: 20)
+            ->get();
     }
 
     /**
