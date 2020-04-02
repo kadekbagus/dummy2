@@ -64,7 +64,9 @@ class BrandProductCollection extends ResourceCollection
 
     protected function transformStores($item)
     {
-        return $item['link_to_stores'];
+        return isset($item['link_to_stores'][0])
+            ? [$item['link_to_stores'][0]]
+            : [];
     }
 
     protected function transformPrice($item)
