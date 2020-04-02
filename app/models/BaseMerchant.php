@@ -160,4 +160,11 @@ class BaseMerchant extends Eloquent
                     ->where('merchant_store_payment_provider.object_type', '=', 'base_merchant');
     }
 
+    public function products()
+    {
+        return $this->hasMany(BrandProduct::class, 'brand_id',
+            'base_merchant_id'
+        );
+    }
+
 }
