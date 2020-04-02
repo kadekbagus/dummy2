@@ -65,8 +65,11 @@ class BrandProductResource extends Resource
         $variants = [];
 
         foreach($item->brand_product_variants as $variant) {
-            $discount = $variant->original_price - $variant->selling_price;
-            $discount = round($discount / $variant->original_price, 2) * 100;
+            $discount = 0;
+            if (! empty($variant->original_price)) {
+                $discount = $variant->original_price - $variant->selling_price;
+                $discount = round($discount / $variant->original_price, 2) * 100;
+            }
 
             $variants[] = [
                 'id' => $variant->brand_product_variant_id,
