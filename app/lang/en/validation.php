@@ -541,6 +541,11 @@ return array(
             'unique' => 'Cannot review same object more than once.',
             'location' => 'Location is required for a review.',
         ),
+
+        'brand_product' => array(
+            'variants' => 'Variants is required and has a name with at least one option.',
+            'product_variants' => 'Brand Product Variant is required and the selling price and stock/quantity must be numeric.',
+        ),
     ),
 
     /*
