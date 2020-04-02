@@ -2,29 +2,29 @@
 
 namespace Orbit\Controller\API\v1\BrandProduct\Product;
 
-use OrbitShop\API\v1\ControllerAPI;
-use OrbitShop\API\v1\OrbitShopAPI;
-use OrbitShop\API\v1\Helper\Input as OrbitInput;
-use OrbitShop\API\v1\Exception\InvalidArgsException;
-use DominoPOS\OrbitACL\ACL;
-use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
-use Illuminate\Database\QueryException;
-use Validator;
-
-use Lang;
-use Config;
-use Event;
-use BrandProduct;
-use DB;
-use Exception;
 use App;
-use BrandProductVideo;
+use BrandProduct;
 use BrandProductCategory;
-use Request;
-use Variant;
-use VariantOption;
 use BrandProductVariant;
 use BrandProductVariantOption;
+use BrandProductVideo;
+use Config;
+use DB;
+use DominoPOS\OrbitACL\ACL;
+use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
+use Event;
+use Exception;
+use Illuminate\Database\QueryException;
+use Lang;
+use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\Exception\InvalidArgsException;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use OrbitShop\API\v1\OrbitShopAPI;
+use Orbit\Controller\API\v1\BrandProduct\Product\Validator\BrandProductValidator;
+use Request;
+use Validator;
+use Variant;
+use VariantOption;
 
 class ProductNewAPIController extends ControllerAPI
 {
@@ -48,8 +48,7 @@ class ProductNewAPIController extends ControllerAPI
             $tnc = OrbitInput::post('tnc');
             $status = OrbitInput::post('status', 'inactive');
             $maxReservationTime = OrbitInput::post('max_reservation_time', 48);
-            $youtubeIds = OrbitInput::post('youtube_ids');
-            $youtubeIds = (array) $youtubeIds;
+            $youtubeIds = OrbitInput::post('youtube_ids', []);
             $categoryId = OrbitInput::post('category_id');
             $variants = OrbitInput::post('variants');
             $brandProductVariants = OrbitInput::post('brand_product_variants');
@@ -58,10 +57,13 @@ class ProductNewAPIController extends ControllerAPI
             // Begin database transaction
             $this->beginTransaction();
 
+            $this->registerCustomValidations();
+
             $validator = Validator::make(
                 array(
                     'product_name'        => $productName,
                     'status'              => $status,
+                    'category_id'         => $categoryId,
                     'variants'            => $variants,
                     'brand_product_variants' => $brandProductVariants,
                     'brand_product_main_photo' => $brandProductMainPhoto,
@@ -69,8 +71,10 @@ class ProductNewAPIController extends ControllerAPI
                 array(
                     'product_name'        => 'required',
                     'status'              => 'in:active,inactive',
-                    'variants'            => 'required',
-                    'brand_product_variants' => 'required',
+                    'category_id'         => 'required',
+                    'variants'            => 'required|orbit.brand_product.variants',
+                    'brand_product_variants' => 'required'
+                        . '|orbit.brand_product.product_variants',
                     'brand_product_main_photo' => 'required|image|max:1024',
                 ),
                 array(
@@ -242,9 +246,11 @@ class ProductNewAPIController extends ControllerAPI
             // Save main BrandProductVariant record.
             $newBrandProductVariant = BrandProductVariant::create([
                 'brand_product_id' => $newBrandProduct->brand_product_id,
-                'sku' => $bpVariant['sku'],
-                'product_code' => $bpVariant['product_code'],
-                'original_price' => $bpVariant['original_price'],
+                'sku' => isset($bpVariant['sku']) ? $bpVariant['sku'] : null,
+                'product_code' => isset($bpVariant['product_code'])
+                    ? $bpVariant['product_code'] : null,
+                'original_price' => isset($bpVariant['original_price'])
+                    ? $bpVariant['original_price'] : null,
                 'selling_price' => $bpVariant['selling_price'],
                 'quantity' => $bpVariant['quantity'],
                 'created_by' => $user->bpp_user_id,
@@ -289,5 +295,26 @@ class ProductNewAPIController extends ControllerAPI
         }
 
         $newBrandProduct->brand_product_variants = $brandProductVariantList;
+    }
+
+    /**
+     * Register custom validations.
+     */
+    private function registerCustomValidations()
+    {
+        Validator::extend(
+            'orbit.brand_product.variants',
+            BrandProductValidator::class . '@variants'
+        );
+
+        Validator::extend(
+            'orbit.brand_product.product_variants',
+            BrandProductValidator::class . '@productVariants'
+        );
+
+        Validator::extend(
+            'unique_sku',
+            BrandProductValidator::class . '@uniqueSKU'
+        );
     }
 }
