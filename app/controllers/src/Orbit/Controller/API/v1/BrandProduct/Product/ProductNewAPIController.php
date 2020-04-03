@@ -74,7 +74,8 @@ class ProductNewAPIController extends ControllerAPI
                     'category_id'         => 'required',
                     'variants'            => 'required|orbit.brand_product.variants',
                     'brand_product_variants' => 'required'
-                        . '|orbit.brand_product.product_variants',
+                        . '|orbit.brand_product.product_variants'
+                        . '|orbit.brand_product.selling_price_lt_original_price'
                     'brand_product_main_photo' => 'required|image|max:1024',
                 ),
                 array(
@@ -136,13 +137,6 @@ class ProductNewAPIController extends ControllerAPI
                 'orbit.brandproduct.after.commit',
                 [$newBrandProduct->brand_product_id]
             );
-
-            // Update brand list suggestion
-            // $brandList = BrandProduct::select('brand_id')->groupBy('brand_id')
-            //     ->lists('brand_id');
-            // if (! empty($brandList)) {
-            //     Config::put('brand_list_suggestion', serialize($brandList), 60);
-            // }
 
             $this->response->data = $newBrandProduct;
 
@@ -292,6 +286,11 @@ class ProductNewAPIController extends ControllerAPI
         Validator::extend(
             'orbit.brand_product.product_variants',
             BrandProductValidator::class . '@productVariants'
+        );
+
+        Validator::extend(
+            'orbit.brand_product.selling_price_lt_original_price',
+            BrandProductValidator::class . '@sellingPriceLowerThanOriginalPrice'
         );
 
         Validator::extend(
