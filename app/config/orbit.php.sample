@@ -5918,6 +5918,10 @@ return array(
                     'uri' => 'game-voucher?country=Indonesia',
                     'changefreq' => 'daily',
                 ),
+                'product' => array(
+                    'uri' => 'products',
+                    'changefreq' => 'daily',
+                ),
             ),
             'detail' => array(
                 'promotion' => array(
@@ -5958,6 +5962,10 @@ return array(
                 ),
                 'game-voucher' => array(
                     'uri' => 'game-voucher/%s?country=Indonesia',
+                    'changefreq' => 'monthly',
+                ),
+                'product' => array(
+                    'uri' => 'products/%s/%s',
                     'changefreq' => 'monthly',
                 ),
             ),
