@@ -56,3 +56,11 @@ Route::get(
         'uses' => $intermediateController . '\BrandWithProductList_handle',
     ]
 );
+
+Route::get(
+    '/app/v1/pub/brand-product/suggestion/list',
+    [
+        'as' => 'brand-product-suggestion-list',
+        'uses' => $intermediateController . '\BrandProductSuggestionList_handle'
+    ]
+);

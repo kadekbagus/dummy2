@@ -67,7 +67,12 @@ class UpdateBrandProductBuilder
 
         $this->request->has('deleted_images', function($images) use (&$data)
         {
-            $data['deleted_images'] = $images;
+            if (is_string($images)) {
+                $data['deleted_images'] = @json_decode($images, true);
+            }
+            else {
+                $data['deleted_images'] = $images;
+            }
         });
 
         $this->request->has('variants', function($variants) use (&$data)

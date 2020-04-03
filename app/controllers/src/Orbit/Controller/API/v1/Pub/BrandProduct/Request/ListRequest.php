@@ -21,6 +21,12 @@ class ListRequest extends ValidateRequest
             'category_id' => 'sometimes|array',
             'cities' => 'sometimes|array',
             'store_id' => 'sometimes',
+            'except_id' => 'sometimes|required',
         ];
+    }
+
+    public function isSuggestion()
+    {
+        return $this->has('except_id');
     }
 }
