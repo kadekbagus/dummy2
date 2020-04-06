@@ -3,6 +3,7 @@
 namespace Orbit\Controller\API\v1\Pub\BrandProduct\Request;
 
 use Orbit\Helper\Request\ValidateRequest;
+use Orbit\Helper\Searchable\Elasticsearch\Scrolling;
 
 /**
  * List request.
@@ -11,11 +12,10 @@ use Orbit\Helper\Request\ValidateRequest;
  */
 class ListRequest extends ValidateRequest
 {
+    // Enable ES scrolling support for this listing request.
+    use Scrolling;
+
     protected $roles = ['guest', 'consumer'];
-
-    protected $useScroll = false;
-
-    protected $scrollDuration = '20s';
 
     public function rules()
     {
@@ -32,25 +32,5 @@ class ListRequest extends ValidateRequest
     public function isSuggestion()
     {
         return $this->has('except_id');
-    }
-
-    public function setScrollDuration($duration = '20s')
-    {
-        $this->scrollDuration = $duration;
-    }
-
-    public function getScrollDuration()
-    {
-        return $this->scrollDuration;
-    }
-
-    public function setUseScroll($useScroll = false)
-    {
-        $this->useScroll = $useScroll;
-    }
-
-    public function useScrolling()
-    {
-        return $this->useScroll;
     }
 }
