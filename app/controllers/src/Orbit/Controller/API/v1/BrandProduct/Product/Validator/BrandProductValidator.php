@@ -2,6 +2,7 @@
 
 namespace Orbit\Controller\API\v1\BrandProduct\Product\Validator;
 
+use App;
 use BrandProductVariant;
 
 /**
@@ -17,10 +18,9 @@ class BrandProductValidator
      * @param  [type] $attr      [description]
      * @param  [type] $value     [description]
      * @param  [type] $params    [description]
-     * @param  [type] $validator [description]
      * @return [type]            [description]
      */
-    public function uniqueSKU($attr, $value, $params, $validator)
+    public function uniqueSKU($attr, $value, $params)
     {
         $bpVariants = @json_decode($value);
 
@@ -46,10 +46,9 @@ class BrandProductValidator
      * @param  [type] $attr      [description]
      * @param  [type] $value     [description]
      * @param  [type] $params    [description]
-     * @param  [type] $validator [description]
      * @return [type]            [description]
      */
-    public function variants($attr, $value, $params, $validator)
+    public function variants($attr, $value, $params)
     {
         $variants = @json_decode($value, true);
 
@@ -83,10 +82,9 @@ class BrandProductValidator
      * @param  [type] $attr      [description]
      * @param  [type] $value     [description]
      * @param  [type] $params    [description]
-     * @param  [type] $validator [description]
      * @return [type]            [description]
      */
-    public function productVariants($attr, $value, $params, $validator)
+    public function productVariants($attr, $value, $params)
     {
         $productVariants = @json_decode($value, true);
 
@@ -137,6 +135,48 @@ class BrandProductValidator
                 if (! $valid) {
                     break;
                 }
+            }
+        }
+
+        if ($valid) {
+            App::instance('productVariants', $productVariants);
+        }
+
+        return $valid;
+    }
+
+    /**
+     * Validate that selling_price is lower than original_price.
+     *
+     * @param  [type] $attr   [description]
+     * @param  [type] $value  [description]
+     * @param  [type] $params [description]
+     * @return [type]         [description]
+     */
+    public function sellingPriceLowerThanOriginalPrice($attr, $value, $params)
+    {
+        $productVariants = App::bound('productVariants')
+            ? App::make('productVariants') : null;
+
+        if (empty($productVariants)) {
+            return false;
+        }
+
+        $valid = true;
+        foreach($productVariants as $pv) {
+            $originalPrice = 0;
+            if (isset($pv['original_price'])) {
+                $originalPrice = $pv['original_price'];
+            }
+
+            // If empty, assume valid (no need to compare)
+            if (empty($originalPrice)) {
+                continue;
+            }
+
+            if ($pv['selling_price'] >= $originalPrice) {
+                $valid = false;
+                break;
             }
         }
 

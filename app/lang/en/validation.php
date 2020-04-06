@@ -544,7 +544,8 @@ return array(
 
         'brand_product' => array(
             'variants' => 'Variants is required and must have a name with at least one option.',
-            'product_variants' => 'Brand Product Variant is required and the selling price and stock/quantity must be numeric.',
+            'product_variants' => 'Brand Product Variant is required and the selling price and stock/quantity are required and must be numeric.',
+            'selling_price_lt_original_price' => 'Selling Price must be lower than Original Price.',
         ),
     ),
 
