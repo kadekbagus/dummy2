@@ -79,7 +79,8 @@ class ProductNewAPIController extends ControllerAPI
                     'brand_product_main_photo' => 'required|image|max:1024',
                 ),
                 array(
-                    'product_name.required' => 'Product Name field is required',
+                    'product_name.required' => 'Product Name is required.',
+                    'category_id.required' => 'The Category is required.',
                 )
             );
 
