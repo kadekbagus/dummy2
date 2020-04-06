@@ -31,8 +31,8 @@ class BrandProductSuggestionListAPIController extends PubControllerAPI
             // Map product list result from search provider
             // to a client-ready collection.
             $this->response->data = new BrandProductCollection(
-                $brandProducts['hits'],
-                $brandProducts['total']
+                $brandProducts['hits']['hits'],
+                $brandProducts['hits']['total']
             );
 
         } catch (Exception $e) {

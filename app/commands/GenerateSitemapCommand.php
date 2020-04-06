@@ -659,7 +659,7 @@ class GenerateSitemapCommand extends Command
         $brandProduct = new BrandProduct();
         $request = new ListRequest();
         $brandProducts = $brandProduct->search($request);
-        $totalRecord = $brandProducts['total'];
+        $totalRecord = $brandProducts['hits']['total'];
         $totalLoop = $totalRecord/$take;
         $urlTemplate = $this->urlTemplate;
 
@@ -671,8 +671,8 @@ class GenerateSitemapCommand extends Command
             Request::merge(['skip' => $skip, 'take' => $take]);
             $brandProducts = $brandProduct->search($request);
             $data = new BrandProductCollection(
-                        $brandProducts['hits'],
-                        $brandProducts['total']
+                        $brandProducts['hits']['hits'],
+                        $brandProducts['hits']['total']
             );
             $data = $data->toArray();
             $this->detailAppender($data['records'], 'product', $urlTemplate, $detailUri, null, null);
