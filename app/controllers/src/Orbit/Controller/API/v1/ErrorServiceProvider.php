@@ -3,6 +3,7 @@
 use Config;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use DominoPOS\OrbitACL\Exception\ACLUnauthenticatedException;
+use DominoPOS\OrbitAPI\v10\StatusInterface;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\ServiceProvider;
@@ -44,7 +45,8 @@ class ErrorServiceProvider extends ServiceProvider
                 $response['code'] = 404;
             }
             else if ($e instanceof InvalidArgsException) {
-                $httpCode = 422;
+                $httpCode = 200;
+                $response['code'] = StatusInterface::INVALID_ARGUMENT;
             }
             else {
                 if (! Config::get('app.debug')) {
