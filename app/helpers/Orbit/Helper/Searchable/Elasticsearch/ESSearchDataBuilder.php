@@ -27,6 +27,8 @@ use Orbit\Helper\Searchable\Elasticsearch\Filters\SortByUpdatedDate;
  */
 abstract class ESSearchDataBuilder extends ESQueryBuilder
 {
+    // use Cacheable;
+
     // Compose basic filtering and sorting abilities.
     use ScriptFilter,
         ExcludeFilter,
@@ -87,17 +89,31 @@ abstract class ESSearchDataBuilder extends ESQueryBuilder
      */
     abstract protected function addCustomParam();
 
+    protected function getSortBy()
+    {
+        return $this->request->sortby ?: 'created_date';
+    }
+
+    protected function getSortMode()
+    {
+        return $this->request->sortmode ?: 'desc';
+    }
+
     /**
      * Basic supported sort queries... can be overridden when needed.
      */
     public function addSortQuery()
     {
-        $sortBy = $this->request->sortby ?: 'created_date';
-        $sortMode = $this->request->sortmode ?: 'desc';
+        $sortBy = $this->getSortBy();
+        $sortMode = $this->getSortMode();
 
         switch ($sortBy) {
             case 'name':
                 $this->sortByName($sortMode);
+                break;
+
+            case 'relevance':
+                $this->sortByRelevance();
                 break;
 
             // case 'nearest':
