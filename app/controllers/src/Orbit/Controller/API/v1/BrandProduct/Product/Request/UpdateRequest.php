@@ -27,6 +27,14 @@ class UpdateRequest extends ValidateRequest
         ];
     }
 
+    public function messages()
+    {
+        return [
+            'product_name.required' => 'Product Name is required.',
+            'category_id.required' => 'The Category is required.',
+        ];
+    }
+
     protected function registerCustomValidations()
     {
         Validator::extend(
