@@ -13,6 +13,7 @@ use DB;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use DominoPOS\OrbitACL\Exception\ACLUnauthenticatedException;
+use DominoPOS\OrbitAPI\v10\StatusInterface;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
@@ -457,7 +458,8 @@ abstract class ControllerAPI extends Controller
             $httpCode = 403;
         }
         else if ($e instanceof InvalidArgsException) {
-            $httpCode = 422;
+            $httpCode = 200;
+            $this->response->code = StatusInterface::INVALID_ARGUMENT;
         }
         else if ($e instanceof ModelNotFoundException) {
             $httpCode = 404;
