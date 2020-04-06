@@ -143,22 +143,7 @@ trait Searchable
      */
     protected function getCachedOrFreshResult($cacheKey, $query)
     {
-        return ! empty($cacheKey)
-            ? $this->getCachedResult($cacheKey,$query)
-            : $this->freshSearch($query);
-    }
-
-    /**
-     * Try getting search result from cache.
-     * If doesn't exists, do a fresh search from server.
-     *
-     * @param  [type] $query    [description]
-     * @param  [type] $cacheKey [description]
-     * @return [type]           [description]
-     */
-    protected function getCachedResult($cacheKey, $query)
-    {
-        $this->log('Trying to get result from Cache...');
+        $this->log('Getting cached search result...');
 
         return $this->cache->get($cacheKey, function() use ($query, $cacheKey)
             {
