@@ -148,7 +148,8 @@ trait HandleUpdate
 
             // Repopulate all options (old and new).
             foreach($newVariant->options as $option) {
-                $variantOptionIds[$index][$option->value] =
+                $optionValue = strtolower($option->value);
+                $variantOptionIds[$index][$optionValue] =
                     $option->variant_option_id;
             }
 
