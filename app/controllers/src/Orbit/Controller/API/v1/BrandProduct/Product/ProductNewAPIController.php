@@ -75,7 +75,7 @@ class ProductNewAPIController extends ControllerAPI
                     'variants'            => 'required|orbit.brand_product.variants',
                     'brand_product_variants' => 'required'
                         . '|orbit.brand_product.product_variants'
-                        . '|orbit.brand_product.selling_price_lt_original_price'
+                        . '|orbit.brand_product.selling_price_lt_original_price',
                     'brand_product_main_photo' => 'required|image|max:1024',
                 ),
                 array(
@@ -190,7 +190,8 @@ class ProductNewAPIController extends ControllerAPI
             $newVariant->load(['options']);
 
             foreach($newVariant->options as $option) {
-                $variantOptionIds[$index][$option->value] =
+                $optionValue = strtolower($option->value);
+                $variantOptionIds[$index][$optionValue] =
                     $option->variant_option_id;
             }
 
