@@ -12,11 +12,6 @@ use Orbit\Helper\Util\SimpleCache;
 /**
  * Base implementation of searchable model.
  *
- * @todo Support cache? Not sure we need cache because landing page also
- *       caches the result each time it gets data from API.
- *       (most of the time wrapped in ApiCache)
- *
- * @todo Support scrolling
  * @todo Support for MySQL SearchProvider.
  *
  * @author Budi <budi@gotomalls.com>

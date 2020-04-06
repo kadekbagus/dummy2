@@ -189,6 +189,18 @@ abstract class ESSearchParamBuilder extends ESQueryBuilder
             $this->cacheKeys['keyword'] = $keyword;
         });
 
+        // If request should use scrolling, then set specific params.
+        if (method_exists($this->request, 'useScrolling')
+            && $this->request->useScrolling()
+        ) {
+            $this->setParams([
+                'search_type' => 'scan',
+                'scroll' => $this->request->getScrollDuration(),
+            ]);
+
+            $this->removeParamItem('body.aggs');
+        }
+
         // Set additional params depends on the object.
         $this->addCustomParam();
 

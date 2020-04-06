@@ -13,6 +13,10 @@ class ListRequest extends ValidateRequest
 {
     protected $roles = ['guest', 'consumer'];
 
+    protected $useScroll = false;
+
+    protected $scrollDuration = '20s';
+
     public function rules()
     {
         return [
@@ -28,5 +32,25 @@ class ListRequest extends ValidateRequest
     public function isSuggestion()
     {
         return $this->has('except_id');
+    }
+
+    public function setScrollDuration($duration = '20s')
+    {
+        $this->scrollDuration = $duration;
+    }
+
+    public function getScrollDuration()
+    {
+        return $this->scrollDuration;
+    }
+
+    public function setUseScroll($useScroll = false)
+    {
+        $this->useScroll = $useScroll;
+    }
+
+    public function useScrolling()
+    {
+        return $this->useScroll;
     }
 }

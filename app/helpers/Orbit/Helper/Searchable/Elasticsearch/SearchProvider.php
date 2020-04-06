@@ -60,6 +60,23 @@ class SearchProvider implements SearchProviderInterface
             throw new ESException($e->getMessage(), $e->getCode());
         }
 
-        return $result['hits'];
+        return $result;
+    }
+
+    /**
+     * Implement scroll support for.
+     *
+     * @param  [type] $query [description]
+     * @return [type]        [description]
+     */
+    public function scroll($query)
+    {
+        try {
+            $result = $this->client->scroll($query);
+        } catch (Exception $e) {
+            throw new ESException($e->getMessage(), $e->getCode());
+        }
+
+        return $result;
     }
 }
