@@ -4,6 +4,8 @@ namespace Orbit\Controller\API\v1\BrandProduct\Product\Validator;
 
 use App;
 use BrandProductVariant;
+use Request;
+use Media;
 
 /**
  * Brand Product Validator.
@@ -188,6 +190,35 @@ class BrandProductValidator
             if ($pv['selling_price'] >= $originalPrice) {
                 $valid = false;
                 break;
+            }
+        }
+
+        return $valid;
+    }
+
+    /**
+     * Validate that brand product main photo is exists/sent if deleted_images
+     * contains media_id of brand_product_main_photo.
+     *
+     * @param  [type] $attr      [description]
+     * @param  [type] $value     [description]
+     * @param  [type] $params    [description]
+     * @param  [type] $validator [description]
+     * @return [type]            [description]
+     */
+    public function mainPhoto($attr, $value, $params, $validator)
+    {
+        $valid = true;
+
+        $deletedMedia = Media::select('media_name_id')
+            ->whereIn('media_id', $value)->get();
+
+        foreach($deletedMedia as $media) {
+            if ($media->media_name_id === 'brand_product_main_photo') {
+                if (! Request::hasFile('brand_product_main_photo')) {
+                    $valid = false;
+                    break;
+                }
             }
         }
 
