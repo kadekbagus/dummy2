@@ -174,10 +174,7 @@ abstract class ESSearchParamBuilder extends ESQueryBuilder
     public function build()
     {
         // Set result limit
-        $skip = $this->getSkipValue();
-        $take = $this->getTakeValue();
-
-        $this->setLimit($skip, $take);
+        $this->setLimit($this->getSkipValue(), $this->getTakeValue());
 
         // Filter by country
         $this->request->has('country', function($country) {
