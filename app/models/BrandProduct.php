@@ -1,6 +1,7 @@
 <?php
 
-use Orbit\Controller\API\v1\Pub\BrandProduct\DataBuilder\SearchDataBuilder;
+use Orbit\Controller\API\v1\Pub\BrandProduct\DataBuilder\SearchParamBuilder;
+use Orbit\Controller\API\v1\Pub\BrandProduct\DataBuilder\SuggestionParamBuilder;
 use Orbit\Helper\Searchable\Searchable;
 
 /**
@@ -17,6 +18,8 @@ class BrandProduct extends Eloquent
 
     protected $table = 'brand_products';
 
+    protected $searchableCache = 'brand-product-list';
+
     /**
      * Get search query builder instance, which helps building
      * final search query based on $request param.
@@ -28,7 +31,11 @@ class BrandProduct extends Eloquent
      */
     public function getSearchQueryBuilder($request)
     {
-        return new SearchDataBuilder($request);
+        if ($request->isSuggestion()) {
+            return new SuggestionParamBuilder($request);
+        }
+
+        return new SearchParamBuilder($request);
     }
 
     public function brand()

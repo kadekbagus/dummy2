@@ -9,14 +9,14 @@ use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\KeywordFilter;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\MallFilter;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\StatusFilter;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\StoreFilter;
-use Orbit\Helper\Searchable\Elasticsearch\ESSearchDataBuilder;
+use Orbit\Helper\Searchable\Elasticsearch\ESSearchParamBuilder;
 
 /**
  * Brand product search query builder.
  *
  * @author Budi <budi@gotomalls.com>
  */
-class SearchDataBuilder extends ESSearchDataBuilder
+class SearchParamBuilder extends ESSearchParamBuilder
 {
     // Compose search filters as needed.
     use StatusFilter,
@@ -28,6 +28,22 @@ class SearchDataBuilder extends ESSearchDataBuilder
         StoreFilter;
 
     protected $objectType = 'products';
+
+    /**
+     * List of cached request params.
+     * @var array
+     */
+    protected $cachedRequestParams = [
+        'sortby',
+        'sortmode',
+        'keyword',
+        'category_id',
+        'country',
+        'cities',
+        'store_id',
+        'mall_id',
+        'brand_id',
+    ];
 
     /**
      * Override sort by created date (default field is 'begin_date').

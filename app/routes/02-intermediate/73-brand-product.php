@@ -56,3 +56,22 @@ Route::get(
         'uses' => $intermediateController . '\BrandWithProductList_handle',
     ]
 );
+
+Route::get(
+    '/app/v1/pub/brand-product/suggestion/list',
+    [
+        'as' => 'brand-product-suggestion-list',
+        'uses' => $intermediateController . '\BrandProductSuggestionList_handle'
+    ]
+);
+
+/**
+ * Available stores for filtering product list.
+ */
+Route::get(
+    '/app/v1/pub/brand-product/available-store/list',
+    [
+        'as' => 'brand-product-available-store-list',
+        'uses' => $intermediateController . '\AvailableStoreList_handle',
+    ]
+);

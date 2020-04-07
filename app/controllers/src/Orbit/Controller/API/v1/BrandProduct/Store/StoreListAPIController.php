@@ -54,7 +54,7 @@ class StoreListAPIController extends ControllerAPI
                     ->orderBy($sortBy, $sortMode);
             }
             else if ($user->user_type === 'store') {
-                $records->where('merchant_id', $user->merchant_id)
+                $records->where('merchants.merchant_id', $user->merchant_id)
                     ->where('merchants.status', 'active');
             }
 
