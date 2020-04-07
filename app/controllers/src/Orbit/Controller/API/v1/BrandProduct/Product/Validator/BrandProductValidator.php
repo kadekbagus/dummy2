@@ -64,10 +64,21 @@ class BrandProductValidator
                 break;
             }
 
-            if ((isset($variant['name']) && empty($variant['name']))
-                || (isset($variant['options']) && empty($variant['options']))
-            ) {
+            if (isset($variant['name']) && empty($variant['name'])) {
                 $valid = false;
+                break;
+            }
+
+            if (isset($variant['options'])) {
+                foreach($variant['options'] as $option) {
+                    if (empty(trim($option))) {
+                        $valid = false;
+                        break;
+                    }
+                }
+            }
+
+            if (! $valid) {
                 break;
             }
         }
