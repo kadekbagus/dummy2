@@ -84,5 +84,9 @@ class SearchParamBuilder extends ESSearchParamBuilder
         $this->request->has('store_id', function($storeId) {
             $this->filterByStore($storeId);
         });
+
+        $this->request->has('brand_id', function($brandId) {
+            $this->filterByBrand($brandId);
+        });
     }
 }
