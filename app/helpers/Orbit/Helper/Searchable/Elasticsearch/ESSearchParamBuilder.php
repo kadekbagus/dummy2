@@ -25,11 +25,10 @@ use Orbit\Helper\Searchable\Elasticsearch\Filters\SortByUpdatedDate;
  *
  * @author Budi <budi@gotomalls.com>
  */
-abstract class ESSearchDataBuilder extends ESQueryBuilder
+abstract class ESSearchParamBuilder extends ESQueryBuilder
 {
-    // use Cacheable;
-
     // Compose basic filtering and sorting abilities.
+    // Can be overriden by child classes if needed.
     use ScriptFilter,
         ExcludeFilter,
         RatingFilter,
@@ -40,7 +39,12 @@ abstract class ESSearchDataBuilder extends ESQueryBuilder
         SortByUpdatedDate,
         SortByRating;
 
-    protected $request;
+    /**
+     * List of cached request params, which will be used to generate
+     * the cache key.
+     * @var array
+     */
+    protected $cachedRequestParams = [];
 
     public function __construct($request)
     {
@@ -89,14 +93,32 @@ abstract class ESSearchDataBuilder extends ESQueryBuilder
      */
     abstract protected function addCustomParam();
 
-    protected function getSortBy()
+    /**
+     * Build the cache keys based on request params.
+     *
+     * @override
+     * @return [type] [description]
+     */
+    protected function buildCacheKey()
     {
-        return $this->request->sortby ?: 'created_date';
+        foreach($this->cachedRequestParams as $param) {
+            $this->request->has($param, function($value) use ($param) {
+                $this->cacheKeys[$param] = $value;
+            });
+        }
     }
 
-    protected function getSortMode()
+    /**
+     * Get list of sorting params.
+     *
+     * @return [type] [description]
+     */
+    protected function getSortingParams()
     {
-        return $this->request->sortmode ?: 'desc';
+        return [
+            $this->request->sortby ?: 'created_date' =>
+                $this->request->sortmode ?: 'desc'
+        ];
     }
 
     /**
@@ -104,35 +126,33 @@ abstract class ESSearchDataBuilder extends ESQueryBuilder
      */
     public function addSortQuery()
     {
-        $sortBy = $this->getSortBy();
-        $sortMode = $this->getSortMode();
+        $sortingParams = $this->getSortingParams();
 
-        switch ($sortBy) {
-            case 'name':
-                $this->sortByName($sortMode);
-                break;
+        foreach($sortingParams as $sortBy => $sortMode) {
+            switch ($sortBy) {
+                case 'name':
+                    $this->sortByName($sortMode);
+                    break;
 
-            case 'relevance':
-                $this->sortByRelevance();
-                break;
+                case 'relevance':
+                    $this->sortByRelevance();
+                    break;
 
-            // case 'nearest':
-            //     $this->sortByNearest($this->request->ul);
-            //     break;
+                case 'nearest':
+                    $this->sortByNearest($this->request->ul);
+                    break;
 
-            // case 'rating':
-            //     if (method_exists($this, 'addReviewFollowScript')) {
-            //         $ratingScript = $this->addReviewFollowScript();
-            //     }
+                case 'rating':
+                    $ratingScript = $this->addReviewFollowScript();
+                    $this->sortByRating($ratingScript);
+                    break;
 
-            //     $this->sortByRating($ratingScript);
-            //     break;
-
-            case 'created_date':
-            default:
-                // Default sort by latest.
-                $this->sortByCreatedDate();
-                break;
+                case 'created_date':
+                default:
+                    // Default sort by latest.
+                    $this->sortByCreatedDate();
+                    break;
+            }
         }
     }
 
@@ -144,22 +164,42 @@ abstract class ESSearchDataBuilder extends ESQueryBuilder
     public function build()
     {
         // Set result limit
-        $this->setLimit($this->request->skip, $this->request->take);
+        $skip = $this->request->skip;
+        $take = $this->request->take;
+
+        $this->setLimit($skip, $take);
+        $this->cacheKeys['from'] = $skip;
+        $this->cacheKeys['size'] = $take;
 
         // Filter by country
         $this->request->has('country', function($country) {
             $this->filterByCountry($country);
+            $this->cacheKeys['country'] = $country;
         });
 
         // Filter by cities
         $this->request->has('cities', function($cities) {
             $this->filterByCities($cities);
+            $this->cacheKeys['cities'] = $cities;
         });
 
         // Filter by keyword
         $this->request->has('keyword', function($keyword) {
             $this->filterByKeyword($keyword);
+            $this->cacheKeys['keyword'] = $keyword;
         });
+
+        // If request should use scrolling, then set specific params.
+        if (method_exists($this->request, 'useScrolling')
+            && $this->request->useScrolling()
+        ) {
+            $this->setParams([
+                'search_type' => 'scan',
+                'scroll' => $this->request->getScrollDuration(),
+            ]);
+
+            $this->removeParamItem('body.aggs');
+        }
 
         // Set additional params depends on the object.
         $this->addCustomParam();
@@ -171,6 +211,6 @@ abstract class ESSearchDataBuilder extends ESQueryBuilder
         $this->buildSearchParam();
 
         // Return final ES query
-        return $this->searchParam;
+        return $this;
     }
 }

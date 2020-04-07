@@ -2,18 +2,25 @@
 
 namespace Orbit\Controller\API\v1\Pub\BrandProduct\DataBuilder;
 
-use Orbit\Controller\API\v1\Pub\BrandProduct\DataBuilder\SearchDataBuilder;
+use Orbit\Controller\API\v1\Pub\BrandProduct\DataBuilder\SearchParamBuilder;
 
 /**
  * Brand product suggestion query builder.
  *
  * @author Budi <budi@gotomalls.com>
  */
-class SuggestionDataBuilder extends SearchDataBuilder
+class SuggestionParamBuilder extends SearchParamBuilder
 {
-    protected function getSortBy()
+    protected $cacheContext = 'product-suggestion-list';
+
+    /**
+     * Force the sorting method to 'relevance'.
+     *
+     * @return string
+     */
+    protected function getSortingParams()
     {
-        return 'relevance';
+        return ['relevance' => 'desc'];
     }
 
     protected function addCustomParam()
