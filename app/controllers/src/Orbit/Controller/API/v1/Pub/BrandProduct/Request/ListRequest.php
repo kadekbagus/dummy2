@@ -20,8 +20,8 @@ class ListRequest extends ValidateRequest
     public function rules()
     {
         return [
-            'skip' => 'required|integer',
-            'take' => 'required|integer',
+            'skip' => 'sometimes|integer',
+            'take' => 'sometimes|integer',
             'category_id' => 'sometimes|array',
             'cities' => 'sometimes|array',
             'store_id' => 'sometimes',
