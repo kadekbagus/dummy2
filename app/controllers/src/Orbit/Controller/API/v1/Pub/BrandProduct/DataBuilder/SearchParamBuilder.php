@@ -34,6 +34,8 @@ class SearchParamBuilder extends ESSearchParamBuilder
      * @var array
      */
     protected $cachedRequestParams = [
+        'skip',
+        'take',
         'sortby',
         'sortmode',
         'keyword',

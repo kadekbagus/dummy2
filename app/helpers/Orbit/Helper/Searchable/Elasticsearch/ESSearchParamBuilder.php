@@ -121,6 +121,16 @@ abstract class ESSearchParamBuilder extends ESQueryBuilder
         ];
     }
 
+    protected function getSkipValue()
+    {
+        return $this->request->skip ?: 0;
+    }
+
+    protected function getTakeValue()
+    {
+        return $this->request->take ?: 20;
+    }
+
     /**
      * Basic supported sort queries... can be overridden when needed.
      */
@@ -164,29 +174,24 @@ abstract class ESSearchParamBuilder extends ESQueryBuilder
     public function build()
     {
         // Set result limit
-        $skip = $this->request->skip;
-        $take = $this->request->take;
+        $skip = $this->getSkipValue();
+        $take = $this->getTakeValue();
 
         $this->setLimit($skip, $take);
-        $this->cacheKeys['from'] = $skip;
-        $this->cacheKeys['size'] = $take;
 
         // Filter by country
         $this->request->has('country', function($country) {
             $this->filterByCountry($country);
-            $this->cacheKeys['country'] = $country;
         });
 
         // Filter by cities
         $this->request->has('cities', function($cities) {
             $this->filterByCities($cities);
-            $this->cacheKeys['cities'] = $cities;
         });
 
         // Filter by keyword
         $this->request->has('keyword', function($keyword) {
             $this->filterByKeyword($keyword);
-            $this->cacheKeys['keyword'] = $keyword;
         });
 
         // If request should use scrolling, then set specific params.

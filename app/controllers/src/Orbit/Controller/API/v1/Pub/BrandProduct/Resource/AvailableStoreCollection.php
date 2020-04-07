@@ -2,6 +2,7 @@
 
 namespace Orbit\Controller\API\v1\Pub\BrandProduct\Resource;
 
+use App;
 use Config;
 use Orbit\Helper\Resource\ResourceCollection;
 
@@ -14,6 +15,17 @@ class AvailableStoreCollection extends ResourceCollection
 {
     public function toArray()
     {
+        $request = null;
+        if (App::bound('currentRequest')) {
+            $request = App::make('currentRequest');
+        }
+
+        $maxRecord = 10;
+        if (! empty($request)) {
+            $maxRecord = (int) $request->take;
+        }
+
+        $storeCount = 0;
         foreach($this->collection as $item) {
 
             $stores = [];
@@ -36,10 +48,21 @@ class AvailableStoreCollection extends ResourceCollection
                     'mall_id' => $store['mall_id'],
                     'mall_name' => $store['mall_name'],
                 ];
+
+                $storeCount++;
+
+                if ($storeCount === $maxRecord) {
+                    break;
+                }
+            }
+
+            if ($storeCount === $maxRecord) {
+                break;
             }
         }
 
         $this->data['records'] = array_values($this->data['records']);
+        $this->data['returned_records'] = count($this->data['records']);
 
         return $this->data;
     }
