@@ -14,6 +14,11 @@ class AvailableStoreSearchParamBuilder extends SearchParamBuilder
 {
     use AvailableStoreFilter;
 
+    protected function getSortingParams()
+    {
+        return ['relevance' => 'desc'];
+    }
+
     protected function addCustomParam()
     {
         parent::addCustomParam();
