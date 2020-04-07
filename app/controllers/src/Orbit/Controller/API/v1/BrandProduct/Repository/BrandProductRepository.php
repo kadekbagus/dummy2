@@ -87,6 +87,11 @@ class BrandProductRepository
             })
             ->where('base_merchants.status', 'active')
             ->orderBy('base_merchants.name', 'asc')
+            ->whenHas('keyword', function($query, $keyword) {
+                return $query->where(
+                    'base_merchants.name', 'like', "%{$keyword}%"
+                );
+            })
             ->skip($request->skip ?: 0)
             ->take($request->take ?: 20)
             ->get();

@@ -19,6 +19,7 @@ class UpdateRequest extends ValidateRequest
             'brand_product_id' => 'required',
             'product_name' => 'sometimes|required',
             'category_id' => 'sometimes|required',
+            'status' => 'sometimes|required|in:active,inactive,deleted',
             'variants' => 'sometimes|required|orbit.brand_product.variants',
             'brand_product_variants' => 'required_with:variants'
                 . '|orbit.brand_product.product_variants'
