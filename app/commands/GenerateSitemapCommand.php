@@ -10,6 +10,8 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use OrbitShop\API\v1\Helper\Generator;
+use Orbit\Controller\API\v1\Pub\BrandProduct\Request\ListRequest;
+use Orbit\Controller\API\v1\Pub\BrandProduct\Resource\BrandProductCollection;
 
 class GenerateSitemapCommand extends Command
 {
@@ -172,6 +174,10 @@ class GenerateSitemapCommand extends Command
                     $this->generateGameVoucherDetailSitemap();
                     break;
 
+                case 'product':
+                    $this->generateProductDetailSitemap();
+                    break;
+
                 case 'misc':
                     $this->generateMiscListSitemap();
                     break;
@@ -254,6 +260,10 @@ class GenerateSitemapCommand extends Command
 
                 case 'game-voucher':
                     $xml = $this->generateGameVoucherDetailSitemap();
+                    break;
+
+                case 'product':
+                    $xml = $this->generateProductDetailSitemap();
                     break;
 
                 default:
@@ -623,6 +633,53 @@ class GenerateSitemapCommand extends Command
     }
 
     /**
+     * Generate all Products detail sitemap
+     *
+     * @param string $mall_id
+     * @param string $mall_slug
+     * @return void
+     */
+    protected function generateProductDetailSitemap()
+    {
+        $detailUri = Config::get('orbit.sitemap.uri_properties.detail.product', []);
+
+        $skip = 0;
+        $take = 50;
+        $firstTake = 1;
+
+        $user = User::with('apikey')
+            ->leftJoin('roles', 'users.user_role_id', '=', 'roles.role_id')
+            ->where('role_name', 'Consumer')
+            ->first();
+
+        App::instance('currentUser', $user);
+
+        Request::merge(['skip' => $skip, 'take' => $firstTake]);
+
+        $brandProduct = new BrandProduct();
+        $request = new ListRequest();
+        $brandProducts = $brandProduct->search($request);
+        $totalRecord = $brandProducts['hits']['total'];
+        $totalLoop = $totalRecord/$take;
+        $urlTemplate = $this->urlTemplate;
+
+        for($i=0; $i<=$totalLoop; $i++)
+        {
+            if ($i !== 0) {
+                $skip = $skip+$take;
+            }
+            Request::merge(['skip' => $skip, 'take' => $take]);
+            $brandProducts = $brandProduct->search($request);
+            $data = new BrandProductCollection(
+                        $brandProducts['hits']['hits'],
+                        $brandProducts['hits']['total']
+            );
+            $data = $data->toArray();
+            $this->detailAppender($data['records'], 'product', $urlTemplate, $detailUri, null, null);
+        }
+    }
+
+    /**
      * Generate sitemap for each pulsa operator page.
      * @return void
      */
@@ -701,6 +758,11 @@ class GenerateSitemapCommand extends Command
 
                 case 'game-voucher':
                     $slug = $record->slug;
+                    break;
+
+                case 'product':
+                    $id = $record['id'];
+                    $name = $record['name'];
                     break;
 
                 default:

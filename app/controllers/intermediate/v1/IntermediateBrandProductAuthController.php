@@ -7,6 +7,8 @@
 use DominoPOS\OrbitACL\ACL;
 use Orbit\Helper\Session\UserGetter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
+use OrbitShop\API\v1\ResponseProvider;
 
 class IntermediateBrandProductAuthController extends IntermediateBaseController
 {
@@ -53,8 +55,20 @@ class IntermediateBrandProductAuthController extends IntermediateBaseController
                     throw new Exception("You need to login to continue.", 1);
                 }
 
+            } catch (ACLForbiddenException $e) {
+                $response = new ResponseProvider();
+                $response->code = $e->getCode();
+                $response->status = 'error';
+                $response->message = $e->getMessage();
+
+                return $this->render($response);
             } catch (Exception $e) {
-                return $this->handleException($e);
+                $response = new ResponseProvider();
+                $response->code = $e->getCode();
+                $response->status = 'error';
+                $response->message = $e->getMessage();
+
+                return $this->render($response);
             }
         });
     }

@@ -20,4 +20,13 @@ trait StoreFilter
             ]
         ]);
     }
+
+    public function filterByBrand($brandId)
+    {
+        $this->should([
+            'match' => [
+                'brand_id' => $brandId
+            ]
+        ]);
+    }
 }

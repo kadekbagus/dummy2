@@ -5,18 +5,15 @@ namespace Orbit\Controller\API\v1\Pub\BrandProduct;
 use BrandProduct;
 use Exception;
 use OrbitShop\API\v1\PubControllerAPI;
-use Orbit\Controller\API\v1\BrandProduct\BrandProductRepository;
 use Orbit\Controller\API\v1\Pub\BrandProduct\Request\ListRequest;
 use Orbit\Controller\API\v1\Pub\BrandProduct\Resource\BrandProductCollection;
-use Orbit\Helper\Searchable\SearchProviderInterface;
-use Request;
 
 /**
- * Brand product list controller.
+ * Brand product suggestion (you may also like) list controller.
  *
  * @author Budi <budi@gotomalls.com>
  */
-class BrandProductListAPIController extends PubControllerAPI
+class BrandProductSuggestionListAPIController extends PubControllerAPI
 {
     /**
      * Handle product list request.
@@ -28,7 +25,6 @@ class BrandProductListAPIController extends PubControllerAPI
     public function handle(BrandProduct $brandProduct, ListRequest $request)
     {
         try {
-
             // Search/get list of brand products.
             $brandProducts = $brandProduct->search($request);
 

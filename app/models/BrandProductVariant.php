@@ -13,7 +13,8 @@ class BrandProductVariant extends Eloquent
 
     protected $fillable = [
         'brand_product_id', 'brand_product_variant_id', 'sku', 'product_code',
-        'original_price', 'selling_price', 'qty',
+        'original_price', 'selling_price', 'quantity',
+        'created_by'
     ];
 
     public function variant_options()
