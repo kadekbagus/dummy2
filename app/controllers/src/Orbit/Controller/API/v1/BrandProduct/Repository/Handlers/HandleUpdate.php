@@ -254,9 +254,12 @@ trait HandleUpdate
                 $newBpVariant->brand_product_id = $brandProductId;
             }
 
-            $newBpVariant->sku = $bpVariant->sku;
-            $newBpVariant->product_code = $bpVariant->product_code;
-            $newBpVariant->original_price = $bpVariant->original_price;
+            $newBpVariant->sku = isset($bpVariant->sku)
+                ? $bpVariant->sku : null;
+            $newBpVariant->product_code = isset($bpVariant->product_code)
+                ? $bpVariant->product_code : null;
+            $newBpVariant->original_price = isset($bpVariant->original_price)
+                ? $bpVariant->original_price : null;
             $newBpVariant->selling_price = $bpVariant->selling_price;
             $newBpVariant->quantity = $bpVariant->quantity;
 
