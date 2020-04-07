@@ -110,7 +110,7 @@ trait Searchable
      * @param  array|ValidateRequest $query [description]
      * @return array|Collection $result search result from SearchProvider.
      */
-    public function search($query, $cacheKey = '')
+    public function search($query)
     {
         $this->initSearchable();
 
