@@ -27,10 +27,6 @@ class SuggestionParamBuilder extends SearchParamBuilder
     {
         parent::addCustomParam();
 
-        $this->request->has('brand_id', function($brandId) {
-            $this->filterByBrand($brandId);
-        });
-
         $this->exclude($this->request->except_id);
     }
 }

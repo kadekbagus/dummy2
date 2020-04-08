@@ -481,6 +481,7 @@ class Activity extends Eloquent
                     break;
 
                 case 'DigitalProduct':
+                case 'BrandProduct':
                     $this->object_display_name = $object->product_name;
                     break;
 
