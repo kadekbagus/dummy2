@@ -4,11 +4,8 @@ namespace Orbit\Helper\Searchable\Elasticsearch;
 
 use Config;
 use Elasticsearch\ClientBuilder;
-use Elasticsearch\Common\Exceptions\BadRequest400Exception;
 use Exception;
-use Orbit\Helper\Elasticsearch\ESErrorChecker;
 use Orbit\Helper\Elasticsearch\ESException;
-use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Searchable\SearchProviderInterface;
 
 /**
@@ -60,6 +57,23 @@ class SearchProvider implements SearchProviderInterface
             throw new ESException($e->getMessage(), $e->getCode());
         }
 
-        return $result['hits'];
+        return $result;
+    }
+
+    /**
+     * Implement scroll support.
+     *
+     * @param  [type] $query [description]
+     * @return [type]        [description]
+     */
+    public function scroll($query)
+    {
+        try {
+            $result = $this->client->scroll($query);
+        } catch (Exception $e) {
+            throw new ESException($e->getMessage(), $e->getCode());
+        }
+
+        return $result;
     }
 }

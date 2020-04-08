@@ -50,6 +50,8 @@ trait KeywordFilter
      */
     public function filterByKeyword($keyword = '')
     {
+        $keyword = $this->escape($keyword);
+
         $this->setPriorityForQueryStr($this->objectType, $keyword);
 
         $this->cacheKey['keyword'] = $keyword;

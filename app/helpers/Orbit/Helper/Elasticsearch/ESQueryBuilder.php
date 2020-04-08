@@ -2,24 +2,31 @@
 
 namespace Orbit\Helper\Elasticsearch;
 
-use Elasticsearch\ClientBuilder;
 use Config;
+use Elasticsearch\ClientBuilder;
+use Orbit\Helper\Searchable\Helper\CacheableKeys;
 
 /**
-* Base ES Query Builder.
+* Base ES Search Query Builder.
 *
 * @author Budi <budi@gotomalls.com>
 */
 abstract class ESQueryBuilder
 {
+    // Indicate that this class has ability to generate a cache key
+    use CacheableKeys;
+
     // ES Params that will be sent to ES Server..
     protected $searchParam = [];
 
     /**
      * Array that holds constant scoring query.
-     * Any query that don't need to be added to scoring, should be put inside this var.
+     * Any query that don't need to be added to scoring,
+     * should be put inside this var.
      *
-     * Example: is_subscribed is not needed for any scoring/relevance, same as the status and city/country filters.
+     * Example: is_subscribed is not needed for any scoring/relevance,
+     * same as the status and city/country filters.
+     *
      * @var array
      */
     protected $constantScoring = [];
@@ -52,6 +59,8 @@ abstract class ESQueryBuilder
     public function setIndex($index = '')
     {
         $this->searchParam['index'] = $index;
+
+        return $this;
     }
 
     /**
@@ -72,6 +81,20 @@ abstract class ESQueryBuilder
     public function setType($type = '')
     {
         $this->searchParam['type'] = $type;
+
+        return $this;
+    }
+
+    /**
+     * Set document id.
+     *
+     * @param string $id [description]
+     */
+    public function setId($id = '')
+    {
+        $this->searchParam['id'] = $id;
+
+        return $this;
     }
 
     /**
@@ -99,6 +122,8 @@ abstract class ESQueryBuilder
     {
         $this->searchParam['body']['from'] = $skip;
         $this->searchParam['body']['size'] = $take;
+
+        return $this;
     }
 
     /**
@@ -110,6 +135,8 @@ abstract class ESQueryBuilder
     {
         $this->searchParam['body']['from'] = $param['from'];
         $this->searchParam['body']['size'] = $param['size'];
+
+        return $this;
     }
 
     /**
@@ -275,16 +302,6 @@ abstract class ESQueryBuilder
     }
 
     /**
-     * Get client
-     *
-     * @return $client Elasticsearch\ClientBuilder
-     */
-    public function getActiveClient()
-    {
-        return $this->client;
-    }
-
-    /**
      * Init default search params.
      *
      * @return [type] [description]
@@ -302,7 +319,7 @@ abstract class ESQueryBuilder
                 ],
                 'query' => [],
                 'track_scores' => true,
-                'sort' => []
+                'sort' => [],
             ]
         ];
     }
@@ -330,6 +347,7 @@ abstract class ESQueryBuilder
             '/',
             ':'
         );
+
         return str_replace($forbiddenCharacter, '', $str);
     }
 
@@ -373,13 +391,35 @@ abstract class ESQueryBuilder
             unset($this->searchParam['body']['query']);
         }
 
+        $this->buildCacheKey();
+
         // Encode to json
         $this->searchParam['body'] = json_encode($this->searchParam['body']);
 
         return $this;
     }
 
+    /**
+     * Basic cache key builder for es query.
+     *
+     * @return [type] [description]
+     */
+    protected function buildCacheKey()
+    {
+        $this->cacheKeys = $this->searchParam['body'];
+    }
+
     // Child classes must provide implementation of build(),
     // because later it will implement DataBuilder interface (helper).
     abstract public function build();
+
+    /**
+     * Get ES query.
+     *
+     * @return array the ES query.
+     */
+    public function getQuery()
+    {
+        return $this->searchParam;
+    }
 }

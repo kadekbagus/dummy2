@@ -459,7 +459,6 @@ abstract class ControllerAPI extends Controller
         }
         else if ($e instanceof InvalidArgsException) {
             $httpCode = 200;
-            $this->response->code = StatusInterface::INVALID_ARGUMENT;
         }
         else if ($e instanceof ModelNotFoundException) {
             $httpCode = 404;

@@ -46,7 +46,6 @@ class ErrorServiceProvider extends ServiceProvider
             }
             else if ($e instanceof InvalidArgsException) {
                 $httpCode = 200;
-                $response['code'] = StatusInterface::INVALID_ARGUMENT;
             }
             else {
                 if (! Config::get('app.debug')) {
