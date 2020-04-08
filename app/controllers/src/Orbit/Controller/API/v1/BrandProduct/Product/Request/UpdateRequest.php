@@ -25,6 +25,7 @@ class UpdateRequest extends ValidateRequest
                 . '|orbit.brand_product.product_variants'
                 . '|orbit.brand_product.selling_price_lt_original_price',
             'brand_product_main_photo' => 'sometimes|required|image|max:1024',
+            'deleted_images' => 'orbit.brand_product.main_photo',
         ];
     }
 
@@ -38,6 +39,7 @@ class UpdateRequest extends ValidateRequest
 
     protected function registerCustomValidations()
     {
+
         Validator::extend(
             'orbit.brand_product.variants',
             BrandProductValidator::class . '@variants'
@@ -51,6 +53,11 @@ class UpdateRequest extends ValidateRequest
         Validator::extend(
             'orbit.brand_product.selling_price_lt_original_price',
             BrandProductValidator::class . '@sellingPriceLowerThanOriginalPrice'
+        );
+
+        Validator::extend(
+            'orbit.brand_product.main_photo',
+            BrandProductValidator::class . '@mainPhoto'
         );
     }
 }
