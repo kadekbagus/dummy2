@@ -132,7 +132,7 @@ class ProductListAPIController extends PubControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'name' => 'products.name',
+                    //'name' => 'products.name',
                     'status' => 'products.status',
                     'updated_at' => 'products.updated_at',
                 );
