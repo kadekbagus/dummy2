@@ -9,6 +9,11 @@ trait MallFilter
 {
     public function filterByMall($mallId)
     {
+        // Ignore mall filter if set to count result only.
+        if ($this->countOnly) {
+            return;
+        }
+
         $this->must([
             'nested' => [
                 'path' => 'link_to_malls',

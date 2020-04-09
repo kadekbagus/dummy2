@@ -15,6 +15,11 @@ trait CountryFilter
      */
     public function filterByCountry($country)
     {
+        // Ignore country filter if set to count result only.
+        if ($this->countOnly) {
+            return;
+        }
+
         if ($country != '0' && ! empty($country)) {
             $this->must(['match' => ['country' => $country]]);
         }

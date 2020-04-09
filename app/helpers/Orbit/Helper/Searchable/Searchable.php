@@ -119,7 +119,9 @@ trait Searchable
         // Otherwise, we assume $query is an array that is ready to be passed to
         // SearchProvider.
         if ($query instanceof ValidateRequest) {
-            $query = $this->getSearchQueryBuilder($query)->build();
+            $query = $this->getSearchQueryBuilder($query)
+                ->setCountOnly($this->countOnly)
+                ->build();
 
             $cacheKey = $query->getCacheKey();
             $query = $query->getQuery();
