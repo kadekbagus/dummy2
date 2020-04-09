@@ -66,7 +66,9 @@ class BrandProductResource extends Resource
 
         foreach($item->brand_product_variants as $variant) {
             $discount = 0;
-            if (! empty($variant->original_price) && $variant->original_price > 0.0) {
+            if (! empty($variant->original_price)
+                && $variant->original_price > 0.0
+            ) {
                 $discount = $variant->original_price - $variant->selling_price;
                 $discount = round($discount / $variant->original_price, 2) * 100;
             }
@@ -130,8 +132,11 @@ class BrandProductResource extends Resource
         $linkedStores = Tenant::select(
                     'merchants.merchant_id as store_id',
                     'merchants.name as store_name',
+                    'merchants.floor',
+                    'merchants.unit',
                     DB::raw('mall.merchant_id as mall_id'),
-                    DB::raw('mall.name as mall_name')
+                    DB::raw('mall.name as mall_name'),
+                    DB::raw('mall.address_line1 as mall_address')
                 )
                 ->join('merchants as mall', 'merchants.parent_id', '=',
                     DB::raw('mall.merchant_id')
@@ -147,6 +152,9 @@ class BrandProductResource extends Resource
                 'store_name' => $store->store_name,
                 'mall_id' => $store->mall_id,
                 'mall_name' => $store->mall_name,
+                'floor' => $store->floor,
+                'unit' => $store->unit,
+                'mall_address' => $store->mall_address,
                 'variants' => [],
             ];
 
