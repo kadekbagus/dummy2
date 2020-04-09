@@ -9,12 +9,24 @@ trait StoreFilter
 {
     public function filterByStore($storeId)
     {
+        if (is_string($storeId)) {
+            $storeId = [$storeId];
+        }
+
+        $storeId = array_map(function($storeId) {
+            return [
+                'match' => [
+                    'link_to_stores.store_id' => $storeId
+                ],
+            ];
+        }, $storeId);
+
         $this->must([
             'nested' => [
                 'path' => 'link_to_stores',
                 'query' => [
-                    'match' => [
-                        'link_to_stores.store_id' => $storeId
+                    'bool' => [
+                        'should' => $storeId
                     ]
                 ],
             ]
@@ -23,9 +35,23 @@ trait StoreFilter
 
     public function filterByBrand($brandId)
     {
-        $this->should([
-            'match' => [
-                'brand_id' => $brandId
+        if (is_string($brandId)) {
+            $brandId = [$brandId];
+        }
+
+        $brandId = array_map(function($brandId) {
+            return [
+                'match' => [
+                    'brand_id' => $brandId,
+                ],
+            ];
+        }, $brandId);
+
+        $this->must([
+            'query' => [
+                'bool' => [
+                    'should' => $brandId
+                ],
             ]
         ]);
     }

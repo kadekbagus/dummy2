@@ -66,7 +66,7 @@ class BrandProductResource extends Resource
 
         foreach($item->brand_product_variants as $variant) {
             $discount = 0;
-            if (! empty($variant->original_price)) {
+            if (! empty($variant->original_price) && $variant->original_price > 0.0) {
                 $discount = $variant->original_price - $variant->selling_price;
                 $discount = round($discount / $variant->original_price, 2) * 100;
             }

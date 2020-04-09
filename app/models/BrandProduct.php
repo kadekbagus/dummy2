@@ -11,6 +11,8 @@ use Orbit\Helper\Searchable\Searchable;
  */
 class BrandProduct extends Eloquent
 {
+    use ModelStatusTrait;
+
     // Enable Searchable feature.
     use Searchable;
 
