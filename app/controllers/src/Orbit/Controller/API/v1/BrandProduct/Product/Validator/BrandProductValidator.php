@@ -143,6 +143,12 @@ class BrandProductValidator
                         $valid = true;
                         break;
                     }
+
+                    if ($vo['option_type'] === 'variant_option') {
+                        if (empty($vo['value'])) {
+                            break;
+                        }
+                    }
                 }
 
                 if (! $valid) {
