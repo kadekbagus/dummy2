@@ -136,7 +136,10 @@ class BrandProductResource extends Resource
                     'merchants.unit',
                     DB::raw('mall.merchant_id as mall_id'),
                     DB::raw('mall.name as mall_name'),
-                    DB::raw('mall.address_line1 as mall_address')
+                    DB::raw('mall.address_line1 as mall_address'),
+                    DB::raw('mall.city as mall_city'),
+                    DB::raw('mall.province as mall_province'),
+                    DB::raw('mall.postal_code as mall_postal_code')
                 )
                 ->join('merchants as mall', 'merchants.parent_id', '=',
                     DB::raw('mall.merchant_id')
@@ -155,6 +158,9 @@ class BrandProductResource extends Resource
                 'floor' => $store->floor,
                 'unit' => $store->unit,
                 'mall_address' => $store->mall_address,
+                'city' => $store->mall_city,
+                'province' => $store->mall_province,
+                'postal_code' => $store->mall_postal_code,
                 'variants' => [],
             ];
 
