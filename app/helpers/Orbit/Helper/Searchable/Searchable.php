@@ -125,6 +125,7 @@ trait Searchable
 
             $cacheKey = $query->getCacheKey();
             $query = $query->getQuery();
+            // dd($query); // enable this line to dump/view the search query.
         }
         else {
             // If not instance of Validate request, just create a cacheKey
