@@ -204,10 +204,14 @@ class ESBrandProductUpdateQueue
                         DB::raw('mall.city as city_name'),
                         DB::raw('X(mall_geofence.position) as lat'),
                         DB::raw('Y(mall_geofence.position) as lon'),
-                        DB::raw('cities.mall_city_id as city_id')
+                        DB::raw('cities.mall_city_id as city_id'),
+                        DB::raw('baseStore.base_merchant_id as brand_id')
                     )
                     ->join('merchants as mall', 'merchants.parent_id', '=',
                         DB::raw('mall.merchant_id')
+                    )
+                    ->join('base_stores as baseStore', 'merchants.merchant_id',
+                        '=', DB::raw('baseStore.base_store_id')
                     )
                     ->join('mall_cities as cities', DB::raw('mall.city'), '=',
                         DB::raw('cities.city')
@@ -241,6 +245,7 @@ class ESBrandProductUpdateQueue
                     'mall_name' => $store->mall_name,
                     'city' => $store->city_name,
                     'country' => $store->country_name,
+                    'brand_id' => $store->brand_id,
                 ] + $mallPosition;
 
                 if (! array_key_exists($store->mall_id, $linkedMalls)) {
