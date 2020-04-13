@@ -141,14 +141,20 @@ class ESBrandProductUpdateQueue
                     'product_code' => $variant->product_code,
                 ];
 
-                $lowestPrice = $variant->selling_price < $lowestPrice
-                    ? $variant->selling_price : $lowestPrice;
+                if ($variant->selling_price < $lowestPrice
+                    || $lowestPrice == 0.0
+                ) {
+                    $lowestPrice = $variant->selling_price;
+                }
 
                 $highestPrice = $variant->selling_price > $highestPrice
                     ? $variant->selling_price : $highestPrice;
 
-                $lowestOriginalPrice = $variant->original_price < $lowestOriginalPrice
-                    ? $variant->original_price : $lowestOriginalPrice;
+                if ($variant->original_price < $lowestOriginalPrice
+                    || $lowestOriginalPrice == 0.0
+                ) {
+                    $lowestOriginalPrice = $variant->original_price;
+                }
 
                 $highestOriginalPrice = $variant->original_price > $highestOriginalPrice
                     ? $variant->original_price : $highestOriginalPrice;
