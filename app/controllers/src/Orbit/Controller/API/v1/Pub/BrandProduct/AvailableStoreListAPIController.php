@@ -16,7 +16,7 @@ use Orbit\Controller\API\v1\Pub\BrandProduct\Resource\AvailableStoreCollection;
 class AvailableStoreListAPIController extends PubControllerAPI
 {
     /**
-     * Handle product list request.
+     * Handle available store list request.
      *
      * @param  BrandProduct   $brandProduct    [description]
      * @param  ListRequest    $request         [description]
