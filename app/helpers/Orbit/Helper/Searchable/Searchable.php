@@ -146,12 +146,8 @@ trait Searchable
      */
     protected function getCachedOrFreshResult($cacheKey, $query)
     {
-        $this->log('Getting cached search result...');
-
         return $this->cache->get($cacheKey, function() use ($query, $cacheKey)
             {
-                $this->log('No result from cache!');
-
                 $result = $this->freshSearch($query);
 
                 $this->cache->put($cacheKey, $result);
@@ -168,8 +164,6 @@ trait Searchable
      */
     protected function freshSearch($query)
     {
-        $this->log('Performing a fresh search...');
-
         if ($this->countOnly) {
             return $this->searchProvider->count($query);
         }
