@@ -141,14 +141,20 @@ class ESBrandProductUpdateQueue
                     'product_code' => $variant->product_code,
                 ];
 
-                $lowestPrice = $variant->selling_price < $lowestPrice
-                    ? $variant->selling_price : $lowestPrice;
+                if ($variant->selling_price < $lowestPrice
+                    || $lowestPrice == 0.0
+                ) {
+                    $lowestPrice = $variant->selling_price;
+                }
 
                 $highestPrice = $variant->selling_price > $highestPrice
                     ? $variant->selling_price : $highestPrice;
 
-                $lowestOriginalPrice = $variant->original_price < $lowestOriginalPrice
-                    ? $variant->original_price : $lowestOriginalPrice;
+                if ($variant->original_price < $lowestOriginalPrice
+                    || $lowestOriginalPrice == 0.0
+                ) {
+                    $lowestOriginalPrice = $variant->original_price;
+                }
 
                 $highestOriginalPrice = $variant->original_price > $highestOriginalPrice
                     ? $variant->original_price : $highestOriginalPrice;
@@ -179,12 +185,10 @@ class ESBrandProductUpdateQueue
             }
 
             // Add price
-            $body['lowest_selling_price'] = $lowestPrice == 0.0
-                ? $highestPrice : $lowestPrice;
+            $body['lowest_selling_price'] = $lowestPrice;
             $body['highest_selling_price'] = $highestPrice;
 
-            $body['lowest_original_price'] = $lowestOriginalPrice == 0.0
-                ? $highestOriginalPrice : $lowestOriginalPrice;
+            $body['lowest_original_price'] = $lowestOriginalPrice;
             $body['highest_original_price'] = $highestOriginalPrice;
 
             // var_dump($body); die;

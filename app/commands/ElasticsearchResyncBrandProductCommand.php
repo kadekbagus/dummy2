@@ -82,10 +82,10 @@ class ElasticsearchResyncBrandProductCommand extends Command {
 
             } catch (Exception $e) {
                 $this->error(sprintf(
-                    '%sFailed to sync Coupon ID "%s", message: %s',
+                    '%sFailed to sync Brand Product ID "%s", message: %s',
                     $this->stdoutPrefix,
                     $data['brand_product_id'],
-                    $e->getMessage()
+                    $e->getFile() . $e->getLine() . $e->getMessage()
                 ));
             }
         } catch (Exception $e) {
