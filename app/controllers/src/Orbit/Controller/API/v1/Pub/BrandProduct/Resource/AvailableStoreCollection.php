@@ -12,6 +12,7 @@ use Tenant;
  * Available Store collection class.
  *
  * @todo  inject ValidateRequest to toArray()
+ * @todo  Proper count total records.
  *
  * @author Budi <budi@gotomalls.com>
  */
@@ -47,8 +48,8 @@ class AvailableStoreCollection extends ResourceCollection
                     continue;
                 }
 
-                $this->data['records'][$store['store_id']] = [
-                    'store_id' => $store['store_id'],
+                $this->data['records'][$storeId] = [
+                    'store_id' => $storeId,
                     'store_name' => $store['store_name'],
                     'mall_id' => $store['mall_id'],
                     'mall_name' => $store['mall_name'],
@@ -71,7 +72,7 @@ class AvailableStoreCollection extends ResourceCollection
         }
 
         $this->data['records'] = array_values($this->data['records']);
-        $this->data['returned_records'] = count($this->data['records']);
+        $this->data['returned_records'] = $storeCount;
 
         return $this->data;
     }
@@ -84,11 +85,7 @@ class AvailableStoreCollection extends ResourceCollection
      */
     private function getStore($storeId = '')
     {
-        if (empty($storeId)) {
-            return null;
-        }
-
-        $store = Tenant::select(
+        return Tenant::select(
                 'merchants.merchant_id as store_id',
                 'merchants.name as store_name',
                 DB::raw('mall.merchant_id as mall_id'),
@@ -100,7 +97,5 @@ class AvailableStoreCollection extends ResourceCollection
             ->where(DB::raw('mall.status'), 'active')
             ->where('merchants.status', 'active')
             ->findOrFail($storeId);
-
-        return $store;
     }
 }
