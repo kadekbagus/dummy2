@@ -14,9 +14,18 @@ use DB;
  */
 class BrandProductResource extends Resource
 {
+    private $storeIds = [];
+
     public function toArray()
     {
         $variantOptions = VariantOption::with(['variant'])->get();
+        $arrVariants = [];
+        foreach($variantOptions as $vo) {
+            $arrVariants[$vo->variant_option_id] = [
+                'name' => $vo->variant->variant_name,
+                'value' => $vo->value,
+            ];
+        }
 
         return [
             'id' => $this->brand_product_id,
@@ -33,12 +42,12 @@ class BrandProductResource extends Resource
             'otherPhotos' => $this->transformImages($this->resource),
             'variants' => $this->transformVariants(
                 $this->resource,
-                $variantOptions
+                $arrVariants
             ),
             'videos' => $this->transformVideos($this->resource),
             'stores' => $this->transformStores(
                 $this->resource,
-                $variantOptions
+                $arrVariants
             ),
         ];
     }
@@ -66,7 +75,9 @@ class BrandProductResource extends Resource
 
         foreach($item->brand_product_variants as $variant) {
             $discount = 0;
-            if (! empty($variant->original_price) && $variant->original_price > 0.0) {
+            if (! empty($variant->original_price)
+                && $variant->original_price > 0.0
+            ) {
                 $discount = $variant->original_price - $variant->selling_price;
                 $discount = round($discount / $variant->original_price, 2) * 100;
             }
@@ -94,19 +105,17 @@ class BrandProductResource extends Resource
 
         foreach($options as $option) {
             if ($option->option_type === 'merchant') {
+                if (! in_array($option->option_id, $this->storeIds)) {
+                    $this->storeIds[] = $option->option_id;
+                }
+
                 continue;
             }
 
-            foreach($variantOptions as $variantOption) {
-                if ($variantOption->variant_option_id === $option->option_id) {
-                    $optionList[] = [
-                        'name' => $variantOption->variant->variant_name,
-                        'value' => $variantOption->value,
-                    ];
-
-                    break;
-                }
-            }
+            $optionList[] = [
+                'name' => $variantOptions[$option->option_id]['name'],
+                'value' => $variantOptions[$option->option_id]['value'],
+            ];
         }
 
         return $optionList;
@@ -116,37 +125,39 @@ class BrandProductResource extends Resource
     {
         $storeList = [];
 
-        // Populate list of store ids.
-        $storeIds = [];
-        foreach($item->brand_product_variants as $bpVariant) {
-            foreach($bpVariant->variant_options as $variantOption) {
-                if ($variantOption->option_type === 'merchant') {
-                    $storeIds[] = $variantOption->option_id;
-                }
-            }
-        }
-
         // Fetch store info
         $linkedStores = Tenant::select(
                     'merchants.merchant_id as store_id',
                     'merchants.name as store_name',
+                    'merchants.floor',
+                    'merchants.unit',
                     DB::raw('mall.merchant_id as mall_id'),
-                    DB::raw('mall.name as mall_name')
+                    DB::raw('mall.name as mall_name'),
+                    DB::raw('mall.address_line1 as mall_address'),
+                    DB::raw('mall.city as mall_city'),
+                    DB::raw('mall.province as mall_province'),
+                    DB::raw('mall.postal_code as mall_postal_code')
                 )
                 ->join('merchants as mall', 'merchants.parent_id', '=',
                     DB::raw('mall.merchant_id')
                 )
-                ->whereIn('merchants.merchant_id', $storeIds)
+                ->whereIn('merchants.merchant_id', $this->storeIds)
                 ->orderBy(DB::raw('mall.name'), 'asc')
                 ->get();
 
         // Transform options per store
         foreach($linkedStores as $store) {
             $storeList[$store->store_id] = [
-                'store_id' => $variantOption->option_id,
+                'store_id' => $store->store_id,
                 'store_name' => $store->store_name,
                 'mall_id' => $store->mall_id,
                 'mall_name' => $store->mall_name,
+                'floor' => $store->floor,
+                'unit' => $store->unit,
+                'mall_address' => $store->mall_address,
+                'city' => $store->mall_city,
+                'province' => $store->mall_province,
+                'postal_code' => $store->mall_postal_code,
                 'variants' => [],
             ];
 
@@ -154,32 +165,34 @@ class BrandProductResource extends Resource
             foreach($item->brand_product_variants as $bpVariant) {
                 foreach($bpVariant->variant_options as $variantOption) {
                     if ($variantOption->option_type === 'merchant') {
-                        $storeList[$variantOption->option_id]['variants'][] = [
-                            'id' => $bpVariant->brand_product_variant_id,
-                            'sku' => $bpVariant->sku,
-                            'product_code' => $bpVariant->product_code,
-                            'original_price' => $bpVariant->original_price,
-                            'selling_price' => $bpVariant->selling_price,
-                            'quantity' => $bpVariant->quantity,
-                            'options' => $optionList,
-                        ];
+                        $bpVariantId = $bpVariant->brand_product_variant_id;
+                        $storeList[$variantOption->option_id]['variants']
+                            [$bpVariantId] = [
+                                'id' => $bpVariantId,
+                                'sku' => $bpVariant->sku,
+                                'product_code' => $bpVariant->product_code,
+                                'original_price' => $bpVariant->original_price,
+                                'selling_price' => $bpVariant->selling_price,
+                                'quantity' => $bpVariant->quantity,
+                                'options' => $optionList,
+                            ];
+
                         $optionList = [];
                     }
                     else {
-                        // transform variantOptions as array so no loop here,
-                        // check with isset() should be enough.
-                        foreach($variantOptions as $varOpt) {
-                            if ($varOpt->variant_option_id === $variantOption->option_id) {
-                                $optionList[] = [
-                                    'name' => $varOpt->variant->variant_name,
-                                    'value' => $varOpt->value,
-                                ];
-                            }
-                        }
+                        $optionList[] = [
+                            'name' => $variantOptions[$variantOption->option_id]['name'],
+                            'value' => $variantOptions[$variantOption->option_id]['value'],
+                        ];
                     }
                 }
             }
         }
+
+        $storeList = array_map(function($store) {
+            $store['variants'] = array_values($store['variants']);
+            return $store;
+        }, $storeList);
 
         return array_values($storeList);
     }
