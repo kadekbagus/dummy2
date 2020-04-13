@@ -89,7 +89,9 @@ class AvailableStoreCollection extends ResourceCollection
         }
 
         $store = Tenant::select(
+                'merchants.merchant_id as store_id',
                 'merchants.name as store_name',
+                DB::raw('mall.merchant_id as mall_id'),
                 DB::raw('mall.name as mall_name')
             )
             ->join('merchants as mall', 'merchants.parent_id', '=',
