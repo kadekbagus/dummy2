@@ -179,12 +179,10 @@ class ESBrandProductUpdateQueue
             }
 
             // Add price
-            $body['lowest_selling_price'] = $lowestPrice == 0.0
-                ? $highestPrice : $lowestPrice;
+            $body['lowest_selling_price'] = $lowestPrice;
             $body['highest_selling_price'] = $highestPrice;
 
-            $body['lowest_original_price'] = $lowestOriginalPrice == 0.0
-                ? $highestOriginalPrice : $lowestOriginalPrice;
+            $body['lowest_original_price'] = $lowestOriginalPrice;
             $body['highest_original_price'] = $highestOriginalPrice;
 
             // var_dump($body); die;
