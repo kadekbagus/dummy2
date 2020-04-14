@@ -375,7 +375,11 @@ class MediaAPIController extends ControllerAPI
             }
 
             // get 1 media variant id
-            $media = Media::where('media_id', $mediaId)->firstOrFail();
+            $media = Media::where('media_id', $mediaId)->first();
+
+            if (empty($media)) {
+                return $this->render($httpCode);
+            }
 
             $objectId = $media->object_id;
             $mediaNameId = $media->media_name_id;

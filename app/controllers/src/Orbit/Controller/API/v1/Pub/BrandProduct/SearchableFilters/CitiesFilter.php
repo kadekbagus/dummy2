@@ -12,6 +12,11 @@ trait CitiesFilter
      */
     public function filterByCities($cities = [])
     {
+        // Ignore cities filter if set to count result only.
+        if ($this->countOnly) {
+            return;
+        }
+
         $citiesQuery['bool']['should'] = [];
 
         foreach($cities as $city) {
