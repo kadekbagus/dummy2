@@ -65,7 +65,9 @@ class UpdateBrandProductBuilder
 
         $this->request->has('youtube_ids', function($videoIds) use (&$data)
         {
-            $data['videos'] = $videoIds;
+            $data['videos'] = array_filter($videoIds, function($video) {
+                return ! empty(trim($video));
+            });
         });
 
         $this->request->has('deleted_images', function($images) use (&$data)

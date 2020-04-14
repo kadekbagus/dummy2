@@ -83,6 +83,7 @@ class ProductListAPIController extends ControllerAPI
                 ->leftJoin('brand_product_variants', 'brand_products.brand_product_id', '=', 'brand_product_variants.brand_product_id')
                 ->leftJoin('brand_product_reservations', 'brand_product_variants.brand_product_variant_id', '=', 'brand_product_reservations.brand_product_variant_id')
                 ->where(DB::raw("{$prefix}brand_products.brand_id"), $brandId)
+                ->where('brand_products.status', '<>', 'deleted')
                 ->groupBy(DB::raw("{$prefix}brand_products.brand_product_id"));
 
             if (! empty($merchantId)) {
