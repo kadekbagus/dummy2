@@ -4,6 +4,7 @@ namespace Orbit\Controller\API\v1\BrandProduct\Product\DataBuilder;
 
 use Variant;
 use VariantOption;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
 
 /**
  * Brand Product Update data builder.
@@ -32,12 +33,7 @@ class UpdateBrandProductBuilder
 
         $this->request->has('product_name', function($name) use (&$data)
         {
-            $data['main']['product_name'] = $name;
-        });
-
-        $this->request->has('product_description', function($desc) use (&$data)
-        {
-            $data['main']['product_description'] = $desc;
+            $data['main']['product_name'] = strip_tags($name);
         });
 
         $this->request->has('max_reservation_time', function($mrt) use (&$data)
@@ -45,9 +41,16 @@ class UpdateBrandProductBuilder
             $data['main']['max_reservation_time'] = $mrt;
         });
 
-        $this->request->has('tnc', function($tnc) use (&$data)
+        // Specifically use OrbitInput because we only check for the
+        // existance of given param, not the value (has value or not).
+        OrbitInput::post('product_description', function($desc) use (&$data)
         {
-            $data['main']['tnc'] = $tnc;
+            $data['main']['product_description'] = strip_tags($desc);
+        });
+
+        OrbitInput::post('tnc', function($tnc) use (&$data)
+        {
+            $data['main']['tnc'] = strip_tags($tnc);
         });
 
         $this->request->has('status', function($status) use (&$data)
