@@ -2099,6 +2099,9 @@ class LoginAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
+            // get logo for BPP user
+            $user->logo = $this->getBPPLogo($user->user_type, $user->base_merchant_id, $user->merchant_id);
+
             $this->response->data = $user;
 
         } catch (ACLForbiddenException $e) {
@@ -2263,5 +2266,30 @@ class LoginAPIController extends ControllerAPI
         $get_mall = $get_mall->orderBy('merchants.name')->get();
 
         return $get_mall;
+    }
+
+    protected function getBPPLogo($type, $baseMerchantId, $merchantId)
+    {
+        $logo = null;
+        if ($type === 'brand') {
+            $baseMerchant = BaseMerchant::select('base_merchant_id')->with('mediaLogo')->where('base_merchant_id', $baseMerchantId)->first();
+            if ($baseMerchant) {
+                $logo = $baseMerchant->mediaLogo;
+            }
+        } else {
+            $tenant = Tenant::select('merchant_id')->with('mediaLogo')->where('merchant_id', $merchantId)->first();
+            if ($tenant) {
+                if (isset ($tenant->mediaLogo)) {
+                    $logo = $tenant->mediaLogo;
+                } else {
+                    $baseMerchant = BaseMerchant::select('base_merchant_id')->with('mediaLogo')->where('base_merchant_id', $baseMerchantId)->first();
+                    if ($baseMerchant) {
+                        $logo = $baseMerchant->mediaLogo;
+                    }
+                }
+            }
+        }
+
+        return $logo;
     }
 }
