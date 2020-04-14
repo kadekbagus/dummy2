@@ -191,6 +191,11 @@ abstract class ESSearchParamBuilder extends ESQueryBuilder
             $this->filterByKeyword($keyword);
         });
 
+        // Somehow menu counter receive 'keywords' instead of 'keyword' ????
+        $this->request->has('keywords', function($keyword) {
+            $this->filterByKeyword($keyword);
+        });
+
         // If request should use scrolling, then set specific params.
         if (method_exists($this->request, 'useScrolling')
             && $this->request->useScrolling()
