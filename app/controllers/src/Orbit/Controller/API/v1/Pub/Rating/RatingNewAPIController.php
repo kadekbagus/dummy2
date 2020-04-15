@@ -26,8 +26,6 @@ use Queue;
 
 class RatingNewAPIController extends PubControllerAPI
 {
-    private $mongoClient = null;
-
     /**
      * POST - New Rating Review and Reply the Review
      *
@@ -240,7 +238,14 @@ class RatingNewAPIController extends PubControllerAPI
                 $body['merchant_name'] = $location->name;
                 $body['country'] = $location->country;
             }
-            Event::fire('orbit.rating.postrating.after.commit', array($this, $body, $user));
+
+            // Only trigger event if it is not a reply, because reply
+            // don't have location_id thus we can't get the store/mall location
+            // and the country which is needed by ESStoreUpdateQueue
+            // (if we review a Store).
+            if (! $isReply) {
+                Event::fire('orbit.rating.postrating.after.commit', array($this, $body, $user));
+            }
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
@@ -279,7 +284,7 @@ class RatingNewAPIController extends PubControllerAPI
                 $user = $this->getUser();
 
                 // If reply, skip the validation (assume unique).
-                if (isset($validatorData['is_reply'])) {
+                if (isset($validatorData['parent_id'])) {
                     return true;
                 }
 
@@ -290,15 +295,17 @@ class RatingNewAPIController extends PubControllerAPI
                     return false;
                 }
 
-                $mongoUniqueParam = [
+                $uniqueRatingParams = [
                     'user_id' => $user->user_id,
                     'object_id' => $objectId,
                     'store_id' => $locationId,
                     'status' => 'active',
                 ];
 
-                $duplicateRating = $this->mongo()
-                    ->setQueryString($mongoUniqueParam)
+                $mongoConfig = Config::get('database.mongodb');
+                $mongoClient = MongoClient::create($mongoConfig);
+                $duplicateRating = $mongoClient
+                    ->setQueryString($uniqueRatingParams)
                     ->setEndPoint('reviews')
                     ->request('GET');
 
@@ -315,15 +322,5 @@ class RatingNewAPIController extends PubControllerAPI
                 return false;
             }
         );
-    }
-
-    private function mongo()
-    {
-        if (empty($this->mongoClient)) {
-            $mongoConfig = Config::get('database.mongodb');
-            $this->mongoClient = MongoClient::create($mongoConfig);
-        }
-
-        return $this->mongoClient;
     }
 }
