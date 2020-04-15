@@ -26,6 +26,8 @@ use Queue;
 
 class RatingNewAPIController extends PubControllerAPI
 {
+    private $mongoClient = null;
+
     /**
      * POST - New Rating Review and Reply the Review
      *
@@ -86,6 +88,8 @@ class RatingNewAPIController extends PubControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
+            $this->registerCustomValidations();
+
             $validatorColumn = array(
                                 'review'      => str_replace(["\r", "\n"], '', $review),
                                 'object_id'   => $objectId,
@@ -96,7 +100,7 @@ class RatingNewAPIController extends PubControllerAPI
 
             $validation = array(
                             'review'      => 'max:1000',
-                            'object_id'   => 'required',
+                            'object_id'   => 'required|orbit.rating.unique',
                             'object_type' => 'required',
                             'rating'      => 'required',
                             'location_id' => 'required',
@@ -263,5 +267,63 @@ class RatingNewAPIController extends PubControllerAPI
         }
 
         return $this->render();
+    }
+
+    private function registerCustomValidations()
+    {
+        // Validate that current rating is unique to specific location.
+        Validator::extend(
+            'orbit.rating.unique',
+            function($attr, $objectId, $params, $validator) {
+                $validatorData = $validator->getData();
+                $user = $this->getUser();
+
+                // If reply, skip the validation (assume unique).
+                if (isset($validatorData['is_reply'])) {
+                    return true;
+                }
+
+                $locationId = isset($validatorData['location_id'])
+                    ? $validatorData['location_id'] : null;
+
+                if (empty($locationId)) {
+                    return false;
+                }
+
+                $mongoUniqueParam = [
+                    'user_id' => $user->user_id,
+                    'object_id' => $objectId,
+                    'store_id' => $locationId,
+                    'status' => 'active',
+                ];
+
+                $duplicateRating = $this->mongo()
+                    ->setQueryString($mongoUniqueParam)
+                    ->setEndPoint('reviews')
+                    ->request('GET');
+
+                // Mark validation as true (unique) if no record found for given
+                // user, object and location.
+                // Otherwise, always assume it is false (not unique/duplicate).
+                if (isset($duplicateRating->data)
+                    && ! empty($duplicateRating->data)
+                    && $duplicateRating->data->returned_records === 0
+                ) {
+                    return true;
+                }
+
+                return false;
+            }
+        );
+    }
+
+    private function mongo()
+    {
+        if (empty($this->mongoClient)) {
+            $mongoConfig = Config::get('database.mongodb');
+            $this->mongoClient = MongoClient::create($mongoConfig);
+        }
+
+        return $this->mongoClient;
     }
 }
