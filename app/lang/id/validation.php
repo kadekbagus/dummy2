@@ -537,6 +537,9 @@ return array(
             'unique' => 'Hanya dapat review objek yang sama satu kali.',
             'location' => 'Atribut location_id harus diisi.',
         ),
+        'rating' => array(
+            'unique' => "Anda sudah melakukan review untuk lokasi/item ini.",
+        ),
     ),
 
     /*

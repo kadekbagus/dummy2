@@ -548,6 +548,10 @@ return array(
             'selling_price_lt_original_price' => 'Selling Price must be lower than Original Price.',
             'main_photo' => 'Brand Product Main Photo is required.',
         ),
+
+        'rating' => array(
+            'unique' => "You already review this location/item.",
+        ),
     ),
 
     /*
