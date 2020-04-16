@@ -6,12 +6,13 @@ use Orbit\Controller\API\v1\Pub\BrandProduct\DataBuilder\SearchParamBuilder;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\AvailableStoreFilter;
 
 /**
- * Brand product search query builder.
+ * Available store query builder.
  *
  * @author Budi <budi@gotomalls.com>
  */
 class AvailableStoreSearchParamBuilder extends SearchParamBuilder
 {
+    // Add ability to filter available store by keyword.
     use AvailableStoreFilter;
 
     /**
@@ -33,6 +34,53 @@ class AvailableStoreSearchParamBuilder extends SearchParamBuilder
     protected function getSortingParams()
     {
         return ['relevance' => 'desc'];
+    }
+
+    /**
+     * Override default filter by store. Filter by store should not available.
+     *
+     * @param  [type] $storeId [description]
+     * @return [type]          [description]
+     */
+    public function filterByStore($storeId)
+    {
+        return;
+    }
+
+    /**
+     * Override default filter by brand.
+     * Add filter brand_id inside link_to_stores, so only stores
+     * for that brand returned.
+     *
+     * @param  string $brandId [description]
+     * @return [type]          [description]
+     */
+    public function filterByBrand($brandId = '')
+    {
+        parent::filterByBrand($brandId);
+
+        if (is_string($brandId)) {
+            $brandId = [$brandId];
+        }
+
+        $brandId = array_map(function($brandId) {
+            return [
+                'match' => [
+                    'link_to_stores.brand_id' => $brandId,
+                ],
+            ];
+        }, $brandId);
+
+        $this->must([
+            'nested' => [
+                'path' => 'link_to_stores',
+                'query' => [
+                    'bool' => [
+                        'should' => $brandId
+                    ]
+                ],
+            ]
+        ]);
     }
 
     protected function addCustomParam()

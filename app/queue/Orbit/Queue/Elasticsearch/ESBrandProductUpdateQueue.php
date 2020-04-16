@@ -141,14 +141,20 @@ class ESBrandProductUpdateQueue
                     'product_code' => $variant->product_code,
                 ];
 
-                $lowestPrice = $variant->selling_price < $lowestPrice
-                    ? $variant->selling_price : $lowestPrice;
+                if ($variant->selling_price < $lowestPrice
+                    || $lowestPrice == 0.0
+                ) {
+                    $lowestPrice = $variant->selling_price;
+                }
 
                 $highestPrice = $variant->selling_price > $highestPrice
                     ? $variant->selling_price : $highestPrice;
 
-                $lowestOriginalPrice = $variant->original_price < $lowestOriginalPrice
-                    ? $variant->original_price : $lowestOriginalPrice;
+                if ($variant->original_price < $lowestOriginalPrice
+                    || $lowestOriginalPrice == 0.0
+                ) {
+                    $lowestOriginalPrice = $variant->original_price;
+                }
 
                 $highestOriginalPrice = $variant->original_price > $highestOriginalPrice
                     ? $variant->original_price : $highestOriginalPrice;
@@ -179,12 +185,10 @@ class ESBrandProductUpdateQueue
             }
 
             // Add price
-            $body['lowest_selling_price'] = $lowestPrice == 0.0
-                ? $highestPrice : $lowestPrice;
+            $body['lowest_selling_price'] = $lowestPrice;
             $body['highest_selling_price'] = $highestPrice;
 
-            $body['lowest_original_price'] = $lowestOriginalPrice == 0.0
-                ? $highestOriginalPrice : $lowestOriginalPrice;
+            $body['lowest_original_price'] = $lowestOriginalPrice;
             $body['highest_original_price'] = $highestOriginalPrice;
 
             // var_dump($body); die;
@@ -200,10 +204,14 @@ class ESBrandProductUpdateQueue
                         DB::raw('mall.city as city_name'),
                         DB::raw('X(mall_geofence.position) as lat'),
                         DB::raw('Y(mall_geofence.position) as lon'),
-                        DB::raw('cities.mall_city_id as city_id')
+                        DB::raw('cities.mall_city_id as city_id'),
+                        DB::raw('baseStore.base_merchant_id as brand_id')
                     )
                     ->join('merchants as mall', 'merchants.parent_id', '=',
                         DB::raw('mall.merchant_id')
+                    )
+                    ->join('base_stores as baseStore', 'merchants.merchant_id',
+                        '=', DB::raw('baseStore.base_store_id')
                     )
                     ->join('mall_cities as cities', DB::raw('mall.city'), '=',
                         DB::raw('cities.city')
@@ -237,6 +245,7 @@ class ESBrandProductUpdateQueue
                     'mall_name' => $store->mall_name,
                     'city' => $store->city_name,
                     'country' => $store->country_name,
+                    'brand_id' => $store->brand_id,
                 ] + $mallPosition;
 
                 if (! array_key_exists($store->mall_id, $linkedMalls)) {

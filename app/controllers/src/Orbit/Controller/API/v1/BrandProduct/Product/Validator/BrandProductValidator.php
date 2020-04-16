@@ -143,6 +143,12 @@ class BrandProductValidator
                         $valid = true;
                         break;
                     }
+
+                    if ($vo['option_type'] === 'variant_option') {
+                        if (empty($vo['value'])) {
+                            break;
+                        }
+                    }
                 }
 
                 if (! $valid) {
@@ -177,13 +183,13 @@ class BrandProductValidator
 
         $valid = true;
         foreach($productVariants as $pv) {
-            $originalPrice = 0;
+            $originalPrice = 0.0;
             if (isset($pv['original_price'])) {
                 $originalPrice = $pv['original_price'];
             }
 
             // If empty, assume valid (no need to compare)
-            if (empty($originalPrice)) {
+            if (empty($originalPrice) || $originalPrice <= 0.0) {
                 continue;
             }
 
