@@ -36,7 +36,7 @@ class ProductListAPIController extends PubControllerAPI
             $user = $this->getUser();
 
             $storeId = OrbitInput::get('store_id', null);
-            $sort_by = OrbitInput::get('sortby', 'name');
+            $sort_by = OrbitInput::get('sortby', 'updated_at');
             $sort_mode = OrbitInput::get('sortmode','asc');
 
             $productHelper = ProductHelper::create();
@@ -76,7 +76,8 @@ class ProductListAPIController extends PubControllerAPI
             $product = Product::select(DB::raw("
                                     {$prefix}products.product_id,
                                     {$prefix}products.name,
-                                    {$prefix}products.status"
+                                    {$prefix}products.status,
+                                    {$prefix}products.updated_at"
                                 ))
                                 ->join('product_link_to_object', function($q) use ($baseMerchantId){
                                              $q->on('product_link_to_object.product_id', '=',  'products.product_id')
@@ -123,16 +124,17 @@ class ProductListAPIController extends PubControllerAPI
             $product->skip($skip);
 
             // Default sort by
-            $sortBy = 'name';
+            $sortBy = 'updated_at';
             // Default sort mode
-            $sortMode = 'asc';
+            $sortMode = 'desc';
 
             OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'name' => 'products.name',
+                    //'name' => 'products.name',
                     'status' => 'products.status',
+                    'updated_at' => 'products.updated_at',
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
