@@ -86,6 +86,8 @@ class RatingNewAPIController extends PubControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
+            $this->registerCustomValidations();
+
             $validatorColumn = array(
                                 'review'      => str_replace(["\r", "\n"], '', $review),
                                 'object_id'   => $objectId,
@@ -96,7 +98,7 @@ class RatingNewAPIController extends PubControllerAPI
 
             $validation = array(
                             'review'      => 'max:1000',
-                            'object_id'   => 'required',
+                            'object_id'   => 'required|orbit.rating.unique',
                             'object_type' => 'required',
                             'rating'      => 'required',
                             'location_id' => 'required',
@@ -236,7 +238,14 @@ class RatingNewAPIController extends PubControllerAPI
                 $body['merchant_name'] = $location->name;
                 $body['country'] = $location->country;
             }
-            Event::fire('orbit.rating.postrating.after.commit', array($this, $body, $user));
+
+            // Only trigger event if it is not a reply, because reply
+            // don't have location_id thus we can't get the store/mall location
+            // and the country which is needed by ESStoreUpdateQueue
+            // (if we review a Store).
+            if (! $isReply) {
+                Event::fire('orbit.rating.postrating.after.commit', array($this, $body, $user));
+            }
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
@@ -263,5 +272,55 @@ class RatingNewAPIController extends PubControllerAPI
         }
 
         return $this->render();
+    }
+
+    private function registerCustomValidations()
+    {
+        // Validate that current rating is unique to specific location.
+        Validator::extend(
+            'orbit.rating.unique',
+            function($attr, $objectId, $params, $validator) {
+                $validatorData = $validator->getData();
+                $user = $this->getUser();
+
+                // If reply, skip the validation (assume unique).
+                if (isset($validatorData['parent_id'])) {
+                    return true;
+                }
+
+                $locationId = isset($validatorData['location_id'])
+                    ? $validatorData['location_id'] : null;
+
+                if (empty($locationId)) {
+                    return false;
+                }
+
+                $uniqueRatingParams = [
+                    'user_id' => $user->user_id,
+                    'object_id' => $objectId,
+                    'store_id' => $locationId,
+                    'status' => 'active',
+                ];
+
+                $mongoConfig = Config::get('database.mongodb');
+                $mongoClient = MongoClient::create($mongoConfig);
+                $duplicateRating = $mongoClient
+                    ->setQueryString($uniqueRatingParams)
+                    ->setEndPoint('reviews')
+                    ->request('GET');
+
+                // Mark validation as true (unique) if no record found for given
+                // user, object and location.
+                // Otherwise, always assume it is false (not unique/duplicate).
+                if (isset($duplicateRating->data)
+                    && ! empty($duplicateRating->data)
+                    && $duplicateRating->data->returned_records === 0
+                ) {
+                    return true;
+                }
+
+                return false;
+            }
+        );
     }
 }
