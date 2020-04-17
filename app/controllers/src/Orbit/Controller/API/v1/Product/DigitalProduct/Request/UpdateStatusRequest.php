@@ -9,7 +9,7 @@ use Orbit\Helper\Request\ValidateRequest;
  *
  * @author Budi <budi@gotomalls.com>
  */
-class DigitalProductUpdateStatusRequest extends ValidateRequest
+class UpdateStatusRequest extends ValidateRequest
 {
     /**
      * Get validation rules.

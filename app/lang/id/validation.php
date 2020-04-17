@@ -528,6 +528,9 @@ return array(
         'unique' => array(
             'verification_number' => 'The verification number already used by other',
         ),
+        'rating' => array(
+            'unique' => "Anda sudah melakukan review untuk lokasi/item ini.",
+        ),
     ),
 
     /*
