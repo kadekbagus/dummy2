@@ -1,7 +1,6 @@
 <?php
 
 use Orbit\Controller\API\v1\Pub\BrandProduct\DataBuilder\SearchParamBuilder;
-use Orbit\Controller\API\v1\Pub\BrandProduct\DataBuilder\SuggestionParamBuilder;
 use Orbit\Helper\Searchable\Searchable;
 
 /**
@@ -33,10 +32,6 @@ class BrandProduct extends Eloquent
      */
     public function getSearchQueryBuilder($request)
     {
-        if ($request->isSuggestion()) {
-            return new SuggestionParamBuilder($request);
-        }
-
         return new SearchParamBuilder($request);
     }
 
