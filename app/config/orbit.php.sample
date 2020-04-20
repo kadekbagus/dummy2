@@ -1719,6 +1719,7 @@ return array(
                     'game_image' => 'game',
                     'brand_product_main_photo' => 'brand_product',
                     'brand_product_photos' => 'brand_product',
+                    'product_photos' => 'product'
                 ],
 
                 // Allowed Mimetype
