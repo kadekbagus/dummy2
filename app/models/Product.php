@@ -51,4 +51,9 @@ class Product extends Eloquent
         return $this->belongsTo('Country', 'country_id', 'country_id')
             ->select('country_id', 'name');
     }
+
+    public function videos()
+    {
+        return $this->hasMany('ProductVideo');
+    }
 }
