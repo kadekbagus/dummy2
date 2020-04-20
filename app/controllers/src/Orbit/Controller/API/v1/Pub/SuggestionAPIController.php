@@ -115,20 +115,12 @@ class SuggestionAPIController extends PubControllerAPI
             }
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
-            $countSuggestion = count($suggestionIndex);
-            $suggestion = '';
-            $i = 1;
-            foreach ($suggestionIndex as $suggest) {
-                $suggestPrefix = $esPrefix . $suggest;
-                if ($i != $countSuggestion) {
-                    $suggestPrefix = $suggestPrefix . ',';
-                }
-                $suggestion .= $suggestPrefix;
-                $i++;
-            }
+            $suggestion = array_map(function($indexName) use ($esPrefix) {
+                return $esPrefix . $indexName;
+            }, $suggestionIndex);
 
             $esParam = [
-                'index'  => $suggestion,
+                'index'  => implode(',', $suggestion),
                 'body'   => json_encode($body)
             ];
 
