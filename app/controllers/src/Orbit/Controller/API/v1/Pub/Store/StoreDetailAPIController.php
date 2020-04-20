@@ -441,6 +441,10 @@ class StoreDetailAPIController extends PubControllerAPI
             $baseMerchantId = null;
             if (! empty($baseMerchants)) {
                 $baseMerchantId = $baseMerchants->base_merchant_id;
+
+                //output brand_id
+                $store->brand_id = $baseMerchantId;
+
                 // brand level
                 if (empty($mallId)) {
                     $store->url = $baseMerchants->url;
