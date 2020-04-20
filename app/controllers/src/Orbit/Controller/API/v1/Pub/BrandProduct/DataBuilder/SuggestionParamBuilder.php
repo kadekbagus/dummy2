@@ -36,7 +36,7 @@ class SuggestionParamBuilder extends SearchParamBuilder
         parent::filterByBrand($brandId, 'should');
     }
 
-    public function filterByKeyword($keyword, $logic = 'must')
+    public function filterByKeyword($keyword = '', $logic = 'must')
     {
         parent::filterByKeyword($keyword, 'should');
     }
