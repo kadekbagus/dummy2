@@ -57,22 +57,6 @@ class SuggestionAPIController extends PubControllerAPI
                     ->setHosts($host['hosts']) // Set the hosts
                     ->build();
 
-            // Get list of brands that has products.
-            // $brandList = Cache::get('brand_list_suggestion', function() {
-            //     $brands = BrandProduct::select('brand_id')->groupBy('brand_id')
-            //                 ->lists('brand_id');
-
-            //     Cache::put('brand_list_suggestion', serialize($brands), 60);
-
-            //     Log::info('got brand list from db...');
-
-            //     return $brands;
-            // });
-
-            // if (is_string($brandList)) {
-            //     $brandList = unserialize($brandList);
-            // }
-
             // If parsing mall_id thats mean we search suggestion in mall level, and even no parsing that is common searching suggestion
             $field = 'suggest_' . $language;
             if (!empty($mallId)) {
@@ -143,33 +127,12 @@ class SuggestionAPIController extends PubControllerAPI
                 $i++;
             }
 
-            // if (count($brandList) > 0) {
-            //     $body['gtm_suggestions']['completion']['context']['brand_id'] =
-            //         $brandList;
-            // }
-
             $esParam = [
                 'index'  => $suggestion,
                 'body'   => json_encode($body)
             ];
 
             $response = $client->suggest($esParam);
-
-            // If no result with brand_id, then retry with brand_id removed
-            // from es param.
-            // @todo should unify suggestion into a single index?
-            //       or use separate indexes, but same properties (mapping)?
-            // if (count($brandList) > 0
-            //     && ! isset($response['gtm_suggestions'])) {
-            //     unset($body['gtm_suggestions']['completion']['context']
-            //         ['brand_id']);
-
-            //     $esParam = [
-            //         'body' => json_encode($body),
-            //     ];
-
-            //     $response = $client->suggest($esParam);
-            // }
 
             $listSuggestion = [];
             if (isset($response['gtm_suggestions'])) {
