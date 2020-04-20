@@ -444,6 +444,8 @@ class ProductHelper
                 $saveObjectMarketPlaces->object_id = $itemObj->id;
                 $saveObjectMarketPlaces->object_type = 'marketplace';
                 $saveObjectMarketPlaces->product_url = $itemObj->website_url;
+                $saveObjectMarketPlaces->original_price = $itemObj->original_price;
+                $saveObjectMarketPlaces->selling_price = $itemObj->selling_price;
                 $saveObjectMarketPlaces->save();
                 $marketplaceData[] = $saveObjectMarketPlaces;
             }
