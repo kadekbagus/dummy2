@@ -18,7 +18,7 @@ use Tenant;
 use BaseMerchant;
 use Product;
 use ProductLinkToObject;
-
+use ProductVideo;
 
 class ProductUpdateAPIController extends ControllerAPI
 {
@@ -169,11 +169,11 @@ class ProductUpdateAPIController extends ControllerAPI
 
             // update product_videos
             OrbitInput::post('youtube_ids', function($youtubeIds) use ($updatedProduct, $productId) {
-                $deletedOldData = ProductVideos::where('product_id', '=', $productId)->delete();
+                $deletedOldData = ProductVideo::where('product_id', '=', $productId)->delete();
 
                 $videos = array();
                 foreach ($youtubeIds as $youtubeId) {
-                    $productVideos = new ProductVideos();
+                    $productVideos = new ProductVideo();
                     $productVideos->product_id = $productId;
                     $productVideos->youtube_id = $youtubeId;
                     $productVideos->save();
