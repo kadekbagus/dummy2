@@ -17,20 +17,25 @@ trait CategoryFilter
     {
         $arrCategories = [];
 
+        // Remove empty category
+        $categories = array_filter($categories);
+
         foreach($categories as $category) {
             $arrCategories[] = ['match' => ['link_to_categories.category_id' => $category]];
         }
 
-        $this->{$logic}([
-            'nested' => [
-                'path' => 'link_to_categories',
-                'query' => [
-                    'bool' => [
-                        'should' => $arrCategories,
-                        // 'minimum_should_match' => 1,
+        if (! empty($categories)) {
+            $this->{$logic}([
+                'nested' => [
+                    'path' => 'link_to_categories',
+                    'query' => [
+                        'bool' => [
+                            'should' => $arrCategories,
+                            // 'minimum_should_match' => 1,
+                        ]
                     ]
-                ]
-            ],
-        ]);
+                ],
+            ]);
+        }
     }
 }
