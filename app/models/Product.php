@@ -1,7 +1,18 @@
 <?php
 
+use Orbit\Helper\Searchable\Searchable;
+
 class Product extends Eloquent
 {
+    use Searchable;
+
+    protected $searchableCache = 'product-affiliation-list';
+
+    protected function getSearchQueryBuilder($request)
+    {
+        return new SearchParamBuilder($request);
+    }
+
     /**
     * Product Model
     *

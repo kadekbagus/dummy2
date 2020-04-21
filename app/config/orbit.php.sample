@@ -296,8 +296,9 @@ return array(
 
             'product_affiliations' => [
                 'product_name' => '^10',
-                'brand_name' => '^8',
-                'description' => '^5',
+                'marketplace_name' => '^8',
+                'brand_name' => '^6',
+                'description' => '^4',
             ],
         ]
     ],

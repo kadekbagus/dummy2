@@ -13,7 +13,7 @@ trait KeywordFilter
      * @param [type] $objType [description]
      * @param [type] $keyword [description]
      */
-    protected function setPriorityForQueryStr($objType, $keyword)
+    protected function setPriorityForQueryStr($objType, $keyword, $logic = 'must')
     {
         $priorityProductName = isset($this->esConfig['priority'][$objType]['product_name']) ?
             $this->esConfig['priority'][$objType]['product_name'] : '^10';
@@ -24,7 +24,7 @@ trait KeywordFilter
         $priorityDescription = isset($this->esConfig['priority'][$objType]['description']) ?
             $this->esConfig['priority'][$objType]['description'] : '^4';
 
-        $this->must([
+        $this->{$logic}([
             'bool' => [
                 'should' => [
                     [
@@ -48,12 +48,10 @@ trait KeywordFilter
      * @param  [type] $keyword [description]
      * @return [type]          [description]
      */
-    public function filterByKeyword($keyword = '')
+    public function filterByKeyword($keyword = '', $logic = 'must')
     {
         $keyword = $this->escape($keyword);
 
-        $this->setPriorityForQueryStr($this->objectType, $keyword);
-
-        $this->cacheKey['keyword'] = $keyword;
+        $this->setPriorityForQueryStr($this->objectType, $keyword, $logic);
     }
 }
