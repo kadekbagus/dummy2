@@ -288,6 +288,13 @@ abstract class ESQueryBuilder
         }
     }
 
+    public function setBodyParams($params = [])
+    {
+        foreach($params as $param => $value) {
+            $this->searchParam['body'][$param] = $value;
+        }
+    }
+
     /**
      * Remove search params array element by key
      *
