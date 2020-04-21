@@ -1,7 +1,18 @@
 <?php
 
+use Orbit\Helper\Searchable\Searchable;
+
 class Product extends Eloquent
 {
+    use Searchable;
+
+    protected $searchableCache = 'product-affiliation-list';
+
+    protected function getSearchQueryBuilder($request)
+    {
+        return new SearchParamBuilder($request);
+    }
+
     /**
     * Product Model
     *
@@ -42,7 +53,13 @@ class Product extends Eloquent
     public function marketplaces()
     {
         return $this->belongsToMany('Marketplace', 'product_link_to_object', 'product_id', 'object_id')
-            ->select('marketplace_id', 'name', 'product_link_to_object.product_url')
+            ->select(
+                'marketplace_id',
+                'name',
+                'product_link_to_object.product_url',
+                'product_link_to_object.original_price',
+                'product_link_to_object.selling_price'
+            )
             ->where('product_link_to_object.object_type', '=', 'marketplace');
     }
 

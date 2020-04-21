@@ -49,7 +49,7 @@ class SuggestionAPIController extends PubControllerAPI
             $text = OrbitInput::get('text', '');
             $host = Config::get('orbit.elasticsearch');
             $language = OrbitInput::get('language', 'id');
-            $mallCountries = OrbitInput::get('country', null);
+            $mallCountries = OrbitInput::get('country', []);
             $mallCities = OrbitInput::get('cities', []);
             $mallId = OrbitInput::get('mall_id', null);
 
@@ -81,6 +81,7 @@ class SuggestionAPIController extends PubControllerAPI
 
                 if (empty($mallCities)) {
                     $mallCities = Mall::where('status', 'active')->groupBy('city')->lists('city');
+                    $mallCities = array_merge($mallCountries, $mallCities);
                 }
 
                 $body = [
