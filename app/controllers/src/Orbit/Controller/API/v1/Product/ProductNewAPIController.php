@@ -18,7 +18,7 @@ use Tenant;
 use BaseMerchant;
 use Product;
 use ProductLinkToObject;
-
+use ProductVideo;
 
 class ProductNewAPIController extends ControllerAPI
 {
@@ -145,7 +145,7 @@ class ProductNewAPIController extends ControllerAPI
 
             $videos = array();
             foreach ($youtubeIds as $youtubeId) {
-                $productVideos = new ProductVideos();
+                $productVideos = new ProductVideo();
                 $productVideos->product_id = $newProduct->product_id;
                 $productVideos->youtube_id = $youtubeId;
                 $productVideos->save();
