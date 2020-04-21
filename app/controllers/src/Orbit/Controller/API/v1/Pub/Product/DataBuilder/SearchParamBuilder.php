@@ -1,12 +1,11 @@
 <?php
 
-namespace Orbit\Controller\API\v1\Pub\BrandProduct\DataBuilder;
+namespace Orbit\Controller\API\v1\Pub\Product\DataBuilder;
 
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CategoryFilter;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CitiesFilter;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CountryFilter;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\KeywordFilter;
-use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\MallFilter;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\StatusFilter;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\StoreFilter;
 use Orbit\Helper\Searchable\Elasticsearch\ESSearchParamBuilder;
@@ -24,10 +23,9 @@ class SearchParamBuilder extends ESSearchParamBuilder
         CategoryFilter,
         CountryFilter,
         CitiesFilter,
-        MallFilter,
         StoreFilter;
 
-    protected $objectType = 'products';
+    protected $objectType = 'product_affiliations';
 
     /**
      * List of cached request params.
@@ -41,9 +39,6 @@ class SearchParamBuilder extends ESSearchParamBuilder
         'keyword',
         'category_id',
         'country',
-        'cities',
-        'store_id',
-        'mall_id',
         'brand_id',
     ];
 
@@ -63,6 +58,46 @@ class SearchParamBuilder extends ESSearchParamBuilder
     }
 
     /**
+     * Set keyword priority/weight against each field.
+     *
+     * @override
+     * @param [type] $objType [description]
+     * @param [type] $keyword [description]
+     */
+    protected function setPriorityForQueryStr($objType, $keyword, $logic = 'must')
+    {
+        $priorityProductName = isset($this->esConfig['priority'][$objType]['product_name']) ?
+            $this->esConfig['priority'][$objType]['product_name'] : '^10';
+
+        $priorityMarketplaceName = isset($this->esConfig['priority'][$objType]['marketplace_name']) ?
+            $this->esConfig['priority'][$objType]['marketplace_name'] : '^8';
+
+        $priorityBrandName = isset($this->esConfig['priority'][$objType]['brand_name']) ?
+            $this->esConfig['priority'][$objType]['brand_name'] : '^6';
+
+        $priorityDescription = isset($this->esConfig['priority'][$objType]['description']) ?
+            $this->esConfig['priority'][$objType]['description'] : '^4';
+
+        $this->{$logic}([
+            'bool' => [
+                'should' => [
+                    [
+                        'query_string' => [
+                            'query' => '*' . $keyword . '*',
+                            'fields' => [
+                                'product_name' . $priorityProductName,
+                                'marketplaces.marketplace_name' . $priorityMarketplaceName,
+                                'brand_name' . $priorityBrandName,
+                                'description' . $priorityDescription,
+                            ]
+                        ]
+                    ],
+                ]
+            ]
+        ]);
+    }
+
+    /**
      * Add object-specific filter/sort params.
      *
      * @return array
@@ -77,20 +112,12 @@ class SearchParamBuilder extends ESSearchParamBuilder
             $this->filterByCategories($categories);
         });
 
-        // Filter by mall
-        $this->request->has('mall_id', function($mallId) {
-            $this->filterByMall($mallId);
-        });
-
-        // Filter by store
-        $this->request->has('store_id', function($storeId) {
-            $this->filterByStore($storeId);
-        });
-
         $this->request->has('brand_id', function($brandId) {
             $this->filterByBrand($brandId);
         });
 
+        // Exclude description from the result,
+        // because we don't need it on listing.
         $this->setBodyParams([
             '_source' => [
                 'exclude' => ['description'],

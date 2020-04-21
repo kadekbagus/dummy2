@@ -1,5 +1,6 @@
 <?php
 
+use Orbit\Controller\API\v1\Pub\Product\DataBuilder\SearchParamBuilder;
 use Orbit\Helper\Searchable\Searchable;
 
 class Product extends Eloquent
@@ -7,11 +8,6 @@ class Product extends Eloquent
     use Searchable;
 
     protected $searchableCache = 'product-affiliation-list';
-
-    protected function getSearchQueryBuilder($request)
-    {
-        return new SearchParamBuilder($request);
-    }
 
     /**
     * Product Model
@@ -29,6 +25,17 @@ class Product extends Eloquent
     protected $table = 'products';
 
     protected $primaryKey = 'product_id';
+
+    /**
+     * Return search query builder.
+     *
+     * @param  [type] $request [description]
+     * @return [type]          [description]
+     */
+    protected function getSearchQueryBuilder($request)
+    {
+        return new SearchParamBuilder($request);
+    }
 
     public function media()
     {
