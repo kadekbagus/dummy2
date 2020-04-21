@@ -5825,6 +5825,11 @@ return array(
                 'enable' => false,
                 'cache_ttl' => 60,
             ],
+
+            'product-affiliation-suggestion-list' => [
+                'enable' => false,
+                'cache_ttl' => 60,
+            ],
         ],
 
         // If value is TRUE, Redis key will be deleted when store / campaign inactive
