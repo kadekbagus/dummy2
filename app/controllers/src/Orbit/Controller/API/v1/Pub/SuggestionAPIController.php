@@ -78,6 +78,9 @@ class SuggestionAPIController extends PubControllerAPI
                 if (empty($mallCountries)) {
                     $mallCountries = Mall::where('status', 'active')->groupBy('country')->lists('country');
                 }
+                else if (! empty($mallCountries) && is_string($mallCountries)) {
+                    $mallCountries = [$mallCountries];
+                }
 
                 if (empty($mallCities)) {
                     $mallCities = Mall::where('status', 'active')->groupBy('city')->lists('city');
