@@ -80,10 +80,10 @@ Route::get('/app/v1/new-product/brand/{search}', ['as' => 'product-api-brand-lis
  */
 Route::get('/api/v1/pub/brand-product/{search}', function()
 {
-    return Orbit\Controller\API\v1\Pub\Product\ProductListAPIController::create()->getSearchProduct();
+    return Orbit\Controller\API\v1\Pub\Product\ProductAffiliationListAPIController::create()->getSearchProduct();
 })->where('search', '(list|search)');
 
-Route::get('/app/v1/pub/brand-product/{search}', ['as' => 'pub-brand-product-list', 'uses' => 'IntermediatePubAuthController@Product\ProductList_getSearchProduct'])
+Route::get('/app/v1/pub/brand-product/{search}', ['as' => 'pub-brand-product-list', 'uses' => 'IntermediatePubAuthController@Product\ProductAffiliationList_getSearchProduct'])
     ->where('search', '(list|search)');
 
 
@@ -96,3 +96,25 @@ Route::get('/api/v1/pub/brand-product/detail', function()
 });
 
 Route::get('/app/v1/pub/brand-product/detail', ['as' => 'pub-brand-product-detail', 'uses' => 'IntermediatePubAuthController@Product\ProductDetail_getDetailProduct']);
+
+/**
+ * List of product affiliation.
+ */
+Route::get('/api/v1/pub/product-affiliation/{search}', function()
+{
+    return Orbit\Controller\API\v1\Pub\Product\ProductAffiliationListAPIController::create()->handle();
+})->where('search', '(list|search)');
+
+Route::get('/app/v1/pub/product-affiliation/{search}', ['as' => 'pub-product-affiliation-list', 'uses' => 'IntermediatePubAuthController@Product\ProductAffiliationList_handle'])
+    ->where('search', '(list|search)');
+
+/**
+ * List of product affiliation.
+ */
+Route::get('/api/v1/pub/product-affiliation-suggestion/{search}', function()
+{
+    return Orbit\Controller\API\v1\Pub\Product\ProductAffiliationSuggestionListAPIController::create()->handle();
+})->where('search', '(list|search)');
+
+Route::get('/app/v1/pub/product-affiliation-suggestion/{search}', ['as' => 'pub-product-affiliation-list', 'uses' => 'IntermediatePubAuthController@Product\ProductAffiliationSuggestionList_handle'])
+    ->where('search', '(list|search)');
