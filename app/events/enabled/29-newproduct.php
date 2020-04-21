@@ -15,6 +15,8 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
  */
 Event::listen('orbit.newproduct.postnewproduct.after.save', function($controller, $product)
 {
+    $media = [];
+    $maxPhotos = 4;
     $images = Input::file(null);
     if (! $images) {
         return;
@@ -28,16 +30,36 @@ Event::listen('orbit.newproduct.postnewproduct.after.save', function($controller
     $_POST['object_id'] = $product->product_id;
 
     $response = MediaAPIController::create('raw')
-        ->setEnableTransaction(false)
-        ->upload();
+                    ->setEnableTransaction(false)
+                    ->upload();
 
     unset($_POST['media_name_id']);
-    unset($_POST['object_id']);
-
 
     if ($response->code !== 0)
     {
         throw new \Exception($response->message, $response->code);
+    }
+
+    // Process product photos...
+    $_POST['media_name_id'] = 'product_photos';
+
+    for($i = 0; $i < $maxPhotos; $i++) {
+
+        $inputName = "photo{$i}";
+        if (Request::hasFile($inputName)) {
+
+            $response = MediaAPIController::create('raw')
+                                        ->setInputName($inputName)
+                                        ->setEnableTransaction(false)
+                                        ->upload();
+
+            if ($response->code !== 0)
+            {
+                throw new \Exception($response->message, $response->code);
+            }
+
+            $media[] = $response->data;
+        }
     }
 
     $product->setRelation('media', $response->data);
@@ -93,6 +115,8 @@ Event::listen('orbit.newproduct.postupdateproduct.after.save', function($control
         $product->load('media');
         $product->image = $response->data[0]->variants[0]->path;
     }
+
+
 });
 
 

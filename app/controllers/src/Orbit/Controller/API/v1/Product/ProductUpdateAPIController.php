@@ -167,6 +167,21 @@ class ProductUpdateAPIController extends ControllerAPI
                 $updatedProduct->brands = $brands;
             });
 
+            // update product_videos
+            OrbitInput::post('youtube_ids', function($youtubeIds) use ($updatedProduct, $productId) {
+                $deletedOldData = ProductVideos::where('product_id', '=', $productId)->delete();
+
+                $videos = array();
+                foreach ($youtubeIds as $youtubeId) {
+                    $productVideos = new ProductVideos();
+                    $productVideos->product_id = $productId;
+                    $productVideos->youtube_id = $youtubeId;
+                    $productVideos->save();
+                    $videos[] = $productVideos;
+                }
+                $updatedProduct->product_videos = $videos;
+            });
+
             // update marketplaces
             OrbitInput::post('marketplaces', function($marketplace_json_string) use ($updatedProduct, $productHelper) {
                 $productHelper->validateAndSaveMarketplaces($updatedProduct, $marketplace_json_string, $scenario = 'update');
