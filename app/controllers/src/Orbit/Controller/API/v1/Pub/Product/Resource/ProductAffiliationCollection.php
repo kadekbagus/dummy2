@@ -34,18 +34,14 @@ class ProductAffiliationCollection extends ResourceCollection
                 'lowestOriginalPrice' => $data['lowest_original_price'],
                 'highestOriginalPrice' => $data['highest_original_price'],
                 'status' => $data['status'],
+                'image' => $this->transformImages($data),
+                'brands' => $data['link_to_brands'],
                 'brandId' => $data['brand_id'],
                 'brandName' => $data['brand_name'],
-                'image' => $this->transformImages($data),
             ];
         }
 
         return $this->data;
-    }
-
-    protected function getRating($item)
-    {
-        return isset($item['rating']) ? $item['rating'] : 0;
     }
 
     protected function transformImages($item, $imagePrefix = '')

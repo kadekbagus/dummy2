@@ -2,6 +2,7 @@
 
 namespace Orbit\Controller\API\v1\Pub\Product\DataBuilder;
 
+use BaseStore;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CategoryFilter;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CitiesFilter;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CountryFilter;
@@ -66,17 +67,19 @@ class SearchParamBuilder extends ESSearchParamBuilder
      */
     protected function setPriorityForQueryStr($objType, $keyword, $logic = 'must')
     {
-        $priorityProductName = isset($this->esConfig['priority'][$objType]['product_name']) ?
-            $this->esConfig['priority'][$objType]['product_name'] : '^10';
+        $priorities = $this->esConfig['priority'][$objType];
 
-        $priorityMarketplaceName = isset($this->esConfig['priority'][$objType]['marketplace_name']) ?
-            $this->esConfig['priority'][$objType]['marketplace_name'] : '^8';
+        $priorityProductName = isset($priorities['product_name'])
+            ? $priorities['product_name'] : '^10';
 
-        $priorityBrandName = isset($this->esConfig['priority'][$objType]['brand_name']) ?
-            $this->esConfig['priority'][$objType]['brand_name'] : '^6';
+        $priorityMarketplaceName = isset($priorities['marketplace_name'])
+            ? $priorities['marketplace_name'] : '^8';
 
-        $priorityDescription = isset($this->esConfig['priority'][$objType]['description']) ?
-            $this->esConfig['priority'][$objType]['description'] : '^4';
+        $priorityBrandName = isset($priorities['brand_name'])
+            ? $priorities['brand_name'] : '^6';
+
+        $priorityDescription = isset($priorities['description'])
+            ? $priorities['description'] : '^4';
 
         $this->{$logic}([
             'bool' => [
@@ -86,13 +89,78 @@ class SearchParamBuilder extends ESSearchParamBuilder
                             'query' => '*' . $keyword . '*',
                             'fields' => [
                                 'product_name' . $priorityProductName,
-                                'marketplaces.marketplace_name' . $priorityMarketplaceName,
                                 'brand_name' . $priorityBrandName,
                                 'description' . $priorityDescription,
                             ]
                         ]
                     ],
+                    [
+                        'nested' => [
+                            'path' => 'marketplace_names',
+                            'query' => [
+                                'bool' => [
+                                    'should' => [
+                                        [
+                                            'query_string' => [
+                                                'query' => '*' . $keyword . '*',
+                                                'fields' => [
+                                                    'marketplace_names.marketplace_name'
+                                                        . $priorityMarketplaceName
+                                                ]
+                                            ],
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ],
+                    [
+                        'nested' => [
+                            'path' => 'link_to_brands',
+                            'query' => [
+                                'bool' => [
+                                    'should' => [
+                                        [
+                                            'query_string' => [
+                                                'query' => '*' . $keyword . '*',
+                                                'fields' => [
+                                                    'link_to_brands.brand_name'
+                                                        . $priorityBrandName
+                                                ]
+                                            ],
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ],
                 ]
+            ],
+        ]);
+    }
+
+    public function filterByBrand($brandId, $logic = 'must')
+    {
+        if (is_string($brandId)) {
+            $brandId = [$brandId];
+        }
+
+        $brandId = array_map(function($brandId) {
+            return [
+                'match' => [
+                    'link_to_brands.brand_id' => $brandId
+                ],
+            ];
+        }, $brandId);
+
+        $this->{$logic}([
+            'nested' => [
+                'path' => 'link_to_brands',
+                'query' => [
+                    'bool' => [
+                        'should' => $brandId
+                    ]
+                ],
             ]
         ]);
     }
@@ -113,6 +181,24 @@ class SearchParamBuilder extends ESSearchParamBuilder
         });
 
         $this->request->has('brand_id', function($brandId) {
+            $this->filterByBrand($brandId);
+        });
+
+        $this->request->has('store_id', function($storeId) {
+            // Reset search query, only filter active products which linked
+            // into specific store/brand.
+            $this->setBodyParams(['query' => []]);
+            $this->filterByStatus('active');
+
+            // Get the brand from store_id
+            $baseStore = BaseStore::select('base_merchant_id')
+                ->where('base_store_id', $storeId)->first();
+
+            $brandId = $storeId;
+            if (! empty($baseStore)) {
+                $brandId = $baseStore->base_merchant_id;
+            }
+
             $this->filterByBrand($brandId);
         });
 

@@ -107,16 +107,24 @@ class ESProductAffiliationUpdateQueue
 
             $brand = $product->merchants->first();
 
+            $brandId = '';
+            $brandName = '';
+            if (! empty($brand)) {
+                $brandId = $brand->base_merchant_id;
+                $brandName = $brand->name;
+            }
+
             // Prepare main body
             $body = [
                 'product_name' => $product->name,
                 'description' => $product->short_description,
                 'status' => $product->status,
-                'brand_id' => $brand->base_merchant_id,
-                'brand_name' => $brand->name,
+                'brand_id' => $brandId,
+                'brand_name' => $brandName,
                 'country' => '',
                 'marketplace_names' => [],
                 'link_to_categories' => [],
+                'link_to_brands' => [],
                 'lowest_original_price' => 0.0,
                 'highest_original_price' => 0.0,
                 'lowest_selling_price' => 0.0,
@@ -178,6 +186,17 @@ class ESProductAffiliationUpdateQueue
                 ];
             }
 
+            // Add link to brands
+            $linkToBrands = [];
+            foreach($product->merchants as $brand) {
+                $linkToBrands[] = [
+                    'brand_id' => $brand->base_merchant_id,
+                    'brand_name' => $brand->name,
+                ];
+            }
+
+            $body['link_to_brands'] = $linkToBrands;
+
             // Add price
             $body['lowest_selling_price'] = $lowestPrice;
             $body['highest_selling_price'] = $highestPrice;
@@ -223,8 +242,8 @@ class ESProductAffiliationUpdateQueue
 
             $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; Product ID: %s; Brand Product Name: %s',
                                 $job->getJobId(),
-                                $esConfig['indices']['products']['index'],
-                                $esConfig['indices']['products']['type'],
+                                $esConfig['indices']['product_affiliations']['index'],
+                                $esConfig['indices']['product_affiliations']['type'],
                                 $product->product_id,
                                 $product->title);
             Log::info($message);
@@ -236,8 +255,8 @@ class ESProductAffiliationUpdateQueue
         } catch (Exception $e) {
             $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
-                                $esConfig['indices']['products']['index'],
-                                $esConfig['indices']['products']['type'],
+                                $esConfig['indices']['product_affiliations']['index'],
+                                $esConfig['indices']['product_affiliations']['type'],
                                 $e->getCode(),
                                 $e->getMessage());
             Log::info($message);

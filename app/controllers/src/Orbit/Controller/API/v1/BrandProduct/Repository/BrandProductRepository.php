@@ -5,11 +5,13 @@ namespace Orbit\Controller\API\v1\BrandProduct;
 use App;
 use BaseMerchant;
 use BrandProduct;
+use DB;
 use Language;
 use Orbit\Controller\API\v1\BrandProduct\Product\DataBuilder\UpdateBrandProductBuilder;
 use Orbit\Controller\API\v1\BrandProduct\Repository\Handlers\HandleReservation;
 use Orbit\Controller\API\v1\BrandProduct\Repository\Handlers\HandleUpdate;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Helper\MediaQuery;
+use ProductLinkToObject;
 use Request;
 use Variant;
 
@@ -95,6 +97,29 @@ class BrandProductRepository
             ->skip($request->skip ?: 0)
             ->take($request->take ?: 20)
             ->get();
+    }
+
+    /**
+     * Get list of brands which has products.
+     *
+     * @param  [type] $request [description]
+     * @return [type]          [description]
+     */
+    public function brandsWithProductAffiliation($request)
+    {
+        return ProductLinkToObject::select(
+                'product_link_to_object.product_link_to_object_id',
+                'product_link_to_object.product_id',
+                'product_link_to_object.object_id',
+                'product_link_to_object.object_type',
+                'products.name'
+            )
+            ->with(['brand.mediaLogoOrig'])
+            ->join('products', 'product_link_to_object.product_id', '=',
+                'products.product_id'
+            )
+            ->where('object_type', 'brand')
+            ->where('products.status', 'active');
     }
 
     /**
