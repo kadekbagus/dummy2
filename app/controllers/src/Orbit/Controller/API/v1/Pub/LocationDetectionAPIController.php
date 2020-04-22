@@ -24,9 +24,6 @@ class LocationDetectionAPIController extends PubControllerAPI
 
         try {
 
-            $this->checkAuth();
-            $user = $this->api->user;
-
             $mallId = OrbitInput::get('mall_id', null);
             if (! empty($mallId)) {
                 $mall = Mall::where('merchant_id', '=', $mallId)->first();
