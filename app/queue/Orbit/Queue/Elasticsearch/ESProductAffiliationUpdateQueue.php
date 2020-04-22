@@ -242,8 +242,8 @@ class ESProductAffiliationUpdateQueue
 
             $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; Product ID: %s; Brand Product Name: %s',
                                 $job->getJobId(),
-                                $esConfig['indices']['products']['index'],
-                                $esConfig['indices']['products']['type'],
+                                $esConfig['indices']['product_affiliations']['index'],
+                                $esConfig['indices']['product_affiliations']['type'],
                                 $product->product_id,
                                 $product->title);
             Log::info($message);
@@ -255,8 +255,8 @@ class ESProductAffiliationUpdateQueue
         } catch (Exception $e) {
             $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
-                                $esConfig['indices']['products']['index'],
-                                $esConfig['indices']['products']['type'],
+                                $esConfig['indices']['product_affiliations']['index'],
+                                $esConfig['indices']['product_affiliations']['type'],
                                 $e->getCode(),
                                 $e->getMessage());
             Log::info($message);
