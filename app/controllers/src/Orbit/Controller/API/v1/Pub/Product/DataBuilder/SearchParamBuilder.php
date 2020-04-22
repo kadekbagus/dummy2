@@ -2,6 +2,7 @@
 
 namespace Orbit\Controller\API\v1\Pub\Product\DataBuilder;
 
+use BaseStore;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CategoryFilter;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CitiesFilter;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CountryFilter;
@@ -113,6 +114,24 @@ class SearchParamBuilder extends ESSearchParamBuilder
         });
 
         $this->request->has('brand_id', function($brandId) {
+            $this->filterByBrand($brandId);
+        });
+
+        $this->request->has('store_id', function($storeId) {
+            // Reset search query, only filter active products which linked
+            // into specific store/brand.
+            $this->setBodyParams(['query' => []]);
+            $this->filterByStatus('active');
+
+            // Get the brand from store_id
+            $baseStore = BaseStore::select('base_merchant_id')
+                ->where('base_store_id', $storeId)->first();
+
+            $brandId = $storeId;
+            if (! empty($baseStore)) {
+                $brandId = $baseStore->base_merchant_id;
+            }
+
             $this->filterByBrand($brandId);
         });
 
