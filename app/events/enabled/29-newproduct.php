@@ -241,3 +241,39 @@ Event::listen('orbit.updategame.postupdategame.after.save', function($controller
         $game->image = $response->data[0]->variants[0]->path;
     }
 });
+
+/**
+ * Listen on:    `orbit.newproduct.postnewproduct.after.commit`
+ * Purpose:      Sync product into ES.
+ *
+ * @param ProductNewAPIController $controller - The instance of the ProductNewAPIController or its subclass
+ * @param Product $product - Instance of object Product
+ */
+Event::listen(
+    'orbit.newproduct.postnewproduct.after.commit',
+    function($controller, $product)
+    {
+        Queue::push(
+            'Orbit\Queue\Elasticsearch\ESProductAffiliationUpdateQueue',
+            ['product_id' => $product->product_id]
+        );
+    }
+);
+
+/**
+ * Listen on:    `orbit.newproduct.postupdateproduct.after.commit`
+ * Purpose:      Sync product into ES.
+ *
+ * @param ProductNewAPIController $controller - The instance of the ProductNewAPIController or its subclass
+ * @param Product $product - Instance of object Product
+ */
+Event::listen(
+    'orbit.newproduct.postupdateproduct.after.commit',
+    function($controller, $product)
+    {
+        Queue::push(
+            'Orbit\Queue\Elasticsearch\ESProductAffiliationUpdateQueue',
+            ['product_id' => $product->product_id]
+        );
+    }
+);

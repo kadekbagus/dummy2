@@ -107,13 +107,20 @@ class ESProductAffiliationUpdateQueue
 
             $brand = $product->merchants->first();
 
+            $brandId = '';
+            $brandName = '';
+            if (! empty($brand)) {
+                $brandId = $brand->base_merchant_id;
+                $brandName = $brand->name;
+            }
+
             // Prepare main body
             $body = [
                 'product_name' => $product->name,
                 'description' => $product->short_description,
                 'status' => $product->status,
-                'brand_id' => $brand->base_merchant_id,
-                'brand_name' => $brand->name,
+                'brand_id' => $brandId,
+                'brand_name' => $brandName,
                 'country' => '',
                 'marketplace_names' => [],
                 'link_to_categories' => [],
