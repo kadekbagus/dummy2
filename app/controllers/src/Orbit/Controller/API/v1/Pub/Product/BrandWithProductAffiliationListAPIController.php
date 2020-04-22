@@ -29,16 +29,10 @@ class BrandWithProductAffiliationListAPIController extends PubControllerAPI
         try {
 
             $brands = $repo->brandsWithProductAffiliation($request);
-            $total = clone $brands;
-            $total = $total->count();
-            $brands = $brands
-                ->skip($request->skip ?: 0)
-                ->take($request->take ?: 10)
-                ->get();
 
             $this->response->data = new BrandWithProductAffiliationCollection(
                 $brands,
-                $total
+                $brands->count()
             );
 
         } catch (Exception $e) {

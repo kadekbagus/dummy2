@@ -120,7 +120,8 @@ class BrandProductRepository
             )
             ->where('object_type', 'brand')
             ->where('products.status', 'active')
-            ->groupBy('object_id');
+            ->groupBy('object_id')
+            ->get();
     }
 
     /**
