@@ -80,10 +80,10 @@ Route::get('/app/v1/new-product/brand/{search}', ['as' => 'product-api-brand-lis
  */
 Route::get('/api/v1/pub/brand-product/{search}', function()
 {
-    return Orbit\Controller\API\v1\Pub\Product\ProductAffiliationListAPIController::create()->getSearchProduct();
+    return Orbit\Controller\API\v1\Pub\Product\ProductAffiliationListAPIController::create()->handle();
 })->where('search', '(list|search)');
 
-Route::get('/app/v1/pub/brand-product/{search}', ['as' => 'pub-brand-product-list', 'uses' => 'IntermediatePubAuthController@Product\ProductAffiliationList_getSearchProduct'])
+Route::get('/app/v1/pub/brand-product/{search}', ['as' => 'pub-brand-product-list', 'uses' => 'IntermediatePubAuthController@Product\ProductAffiliationList_handle'])
     ->where('search', '(list|search)');
 
 
@@ -117,4 +117,15 @@ Route::get('/api/v1/pub/product-affiliation-suggestion/{search}', function()
 })->where('search', '(list|search)');
 
 Route::get('/app/v1/pub/product-affiliation-suggestion/{search}', ['as' => 'pub-product-affiliation-list', 'uses' => 'IntermediatePubAuthController@Product\ProductAffiliationSuggestionList_handle'])
+    ->where('search', '(list|search)');
+
+/**
+ * List of brand with product affiliation.
+ */
+Route::get('/api/v1/pub/brand-with-product-affiliation/{search}', function()
+{
+    return Orbit\Controller\API\v1\Pub\Product\BrandWithProductAffiliationListAPIController::create()->handle();
+})->where('search', '(list|search)');
+
+Route::get('/app/v1/pub/brand-with-product-affiliation/{search}', ['as' => 'pub-product-affiliation-list', 'uses' => 'IntermediatePubAuthController@Product\BrandWithProductAffiliationList_handle'])
     ->where('search', '(list|search)');

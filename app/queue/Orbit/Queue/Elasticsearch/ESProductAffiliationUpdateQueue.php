@@ -107,16 +107,24 @@ class ESProductAffiliationUpdateQueue
 
             $brand = $product->merchants->first();
 
+            $brandId = '';
+            $brandName = '';
+            if (! empty($brand)) {
+                $brandId = $brand->base_merchant_id;
+                $brandName = $brand->name;
+            }
+
             // Prepare main body
             $body = [
                 'product_name' => $product->name,
                 'description' => $product->short_description,
                 'status' => $product->status,
-                'brand_id' => $brand->base_merchant_id,
-                'brand_name' => $brand->name,
+                'brand_id' => $brandId,
+                'brand_name' => $brandName,
                 'country' => '',
                 'marketplace_names' => [],
                 'link_to_categories' => [],
+                'link_to_brands' => [],
                 'lowest_original_price' => 0.0,
                 'highest_original_price' => 0.0,
                 'lowest_selling_price' => 0.0,
@@ -177,6 +185,17 @@ class ESProductAffiliationUpdateQueue
                     'category_name' => $category->category_name,
                 ];
             }
+
+            // Add link to brands
+            $linkToBrands = [];
+            foreach($product->merchants as $brand) {
+                $linkToBrands[] = [
+                    'brand_id' => $brand->base_merchant_id,
+                    'brand_name' => $brand->name,
+                ];
+            }
+
+            $body['link_to_brands'] = $linkToBrands;
 
             // Add price
             $body['lowest_selling_price'] = $lowestPrice;
