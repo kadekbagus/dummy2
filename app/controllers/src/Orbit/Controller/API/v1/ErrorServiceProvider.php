@@ -33,12 +33,10 @@ class ErrorServiceProvider extends ServiceProvider
             $response = (new ExceptionResponseProvider($e))->toArray();
 
             if ($e instanceof ACLUnauthenticatedException) {
-                $httpCode = 401;
-                $response['code'] = 401;
+                $httpCode = 200;
             }
             else if ($e instanceof ACLForbiddenException) {
-                $httpCode = 403;
-                $response['code'] = 403;
+                $httpCode = 200;
             }
             else if ($e instanceof ModelNotFoundException) {
                 $httpCode = 404;
