@@ -84,6 +84,7 @@ class ProductUpdateAPIController extends ControllerAPI
                 ),
                 array(
                     'product_id'        => 'required',
+                    'name'              => 'required',
                     'status'            => 'in:active,inactive',
                     'country_id'        => 'required',
                     'short_description' => 'required',
