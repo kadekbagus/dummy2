@@ -92,9 +92,11 @@ class ProductNewAPIController extends ControllerAPI
 
             $newBrandProduct = new BrandProduct();
             $newBrandProduct->brand_id = $brandId;
-            $newBrandProduct->product_name = $productName;
-            $newBrandProduct->product_description = $productDescription;
-            $newBrandProduct->tnc = $tnc;
+            $newBrandProduct->product_name = strip_tags($productName);
+            $newBrandProduct->product_description = strip_tags(
+                $productDescription
+            );
+            $newBrandProduct->tnc = strip_tags($tnc);
             $newBrandProduct->status = $status;
             $newBrandProduct->max_reservation_time = $maxReservationTime;
             $newBrandProduct->created_by = $userId;

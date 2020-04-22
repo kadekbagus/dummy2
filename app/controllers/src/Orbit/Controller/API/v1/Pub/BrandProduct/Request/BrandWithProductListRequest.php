@@ -16,8 +16,8 @@ class BrandWithProductListRequest extends ValidateRequest
     public function rules()
     {
         return [
-            'skip' => 'required|integer',
-            'take' => 'required|integer',
+            'skip' => 'sometimes|integer',
+            'take' => 'sometimes|integer',
         ];
     }
 }

@@ -11,8 +11,6 @@ use Orbit\Controller\API\v1\Pub\BrandProduct\DataBuilder\SearchParamBuilder;
  */
 class SuggestionParamBuilder extends SearchParamBuilder
 {
-    protected $cacheContext = 'product-suggestion-list';
-
     /**
      * Force the sorting method to 'relevance'.
      *
@@ -23,13 +21,29 @@ class SuggestionParamBuilder extends SearchParamBuilder
         return ['relevance' => 'desc'];
     }
 
+    public function filterByCategories($categories, $logic = 'must')
+    {
+        parent::filterByCategories($categories, 'should');
+    }
+
+    public function filterByStore($storeId, $logic = 'must')
+    {
+        parent::filterByStore($storeId, 'should');
+    }
+
+    public function filterByBrand($brandId, $logic = 'must')
+    {
+        parent::filterByBrand($brandId, 'should');
+    }
+
+    public function filterByKeyword($keyword = '', $logic = 'must')
+    {
+        parent::filterByKeyword($keyword, 'should');
+    }
+
     protected function addCustomParam()
     {
         parent::addCustomParam();
-
-        $this->request->has('brand_id', function($brandId) {
-            $this->filterByBrand($brandId);
-        });
 
         $this->exclude($this->request->except_id);
     }

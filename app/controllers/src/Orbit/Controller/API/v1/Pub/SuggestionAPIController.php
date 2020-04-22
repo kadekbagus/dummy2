@@ -49,29 +49,13 @@ class SuggestionAPIController extends PubControllerAPI
             $text = OrbitInput::get('text', '');
             $host = Config::get('orbit.elasticsearch');
             $language = OrbitInput::get('language', 'id');
-            $mallCountries = OrbitInput::get('country', null);
+            $mallCountries = OrbitInput::get('country', []);
             $mallCities = OrbitInput::get('cities', []);
             $mallId = OrbitInput::get('mall_id', null);
 
             $client = ClientBuilder::create() // Instantiate a new ClientBuilder
                     ->setHosts($host['hosts']) // Set the hosts
                     ->build();
-
-            // Get list of brands that has products.
-            // $brandList = Cache::get('brand_list_suggestion', function() {
-            //     $brands = BrandProduct::select('brand_id')->groupBy('brand_id')
-            //                 ->lists('brand_id');
-
-            //     Cache::put('brand_list_suggestion', serialize($brands), 60);
-
-            //     Log::info('got brand list from db...');
-
-            //     return $brands;
-            // });
-
-            // if (is_string($brandList)) {
-            //     $brandList = unserialize($brandList);
-            // }
 
             // If parsing mall_id thats mean we search suggestion in mall level, and even no parsing that is common searching suggestion
             $field = 'suggest_' . $language;
@@ -94,9 +78,13 @@ class SuggestionAPIController extends PubControllerAPI
                 if (empty($mallCountries)) {
                     $mallCountries = Mall::where('status', 'active')->groupBy('country')->lists('country');
                 }
+                else if (! empty($mallCountries) && is_string($mallCountries)) {
+                    $mallCountries = [$mallCountries];
+                }
 
                 if (empty($mallCities)) {
                     $mallCities = Mall::where('status', 'active')->groupBy('city')->lists('city');
+                    $mallCities = array_merge($mallCountries, $mallCities);
                 }
 
                 $body = [
@@ -131,45 +119,16 @@ class SuggestionAPIController extends PubControllerAPI
             }
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
-            $countSuggestion = count($suggestionIndex);
-            $suggestion = '';
-            $i = 1;
-            foreach ($suggestionIndex as $suggest) {
-                $suggestPrefix = $esPrefix . $suggest;
-                if ($i != $countSuggestion) {
-                    $suggestPrefix = $suggestPrefix . ',';
-                }
-                $suggestion .= $suggestPrefix;
-                $i++;
-            }
-
-            // if (count($brandList) > 0) {
-            //     $body['gtm_suggestions']['completion']['context']['brand_id'] =
-            //         $brandList;
-            // }
+            $suggestion = array_map(function($indexName) use ($esPrefix) {
+                return $esPrefix . $indexName;
+            }, $suggestionIndex);
 
             $esParam = [
-                'index'  => $suggestion,
+                'index'  => implode(',', $suggestion),
                 'body'   => json_encode($body)
             ];
 
             $response = $client->suggest($esParam);
-
-            // If no result with brand_id, then retry with brand_id removed
-            // from es param.
-            // @todo should unify suggestion into a single index?
-            //       or use separate indexes, but same properties (mapping)?
-            // if (count($brandList) > 0
-            //     && ! isset($response['gtm_suggestions'])) {
-            //     unset($body['gtm_suggestions']['completion']['context']
-            //         ['brand_id']);
-
-            //     $esParam = [
-            //         'body' => json_encode($body),
-            //     ];
-
-            //     $response = $client->suggest($esParam);
-            // }
 
             $listSuggestion = [];
             if (isset($response['gtm_suggestions'])) {

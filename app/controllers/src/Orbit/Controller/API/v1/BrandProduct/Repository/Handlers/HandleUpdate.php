@@ -10,8 +10,10 @@ use BrandProductVariantOption;
 use DB;
 use Event;
 use Exception;
+use Media;
 use MediaAPIController;
 use Orbit\Controller\API\v1\BrandProduct\Product\DataBuilder\UpdateBrandProductBuilder;
+use Request;
 use Variant;
 use VariantOption;
 
@@ -254,9 +256,12 @@ trait HandleUpdate
                 $newBpVariant->brand_product_id = $brandProductId;
             }
 
-            $newBpVariant->sku = $bpVariant->sku;
-            $newBpVariant->product_code = $bpVariant->product_code;
-            $newBpVariant->original_price = $bpVariant->original_price;
+            $newBpVariant->sku = isset($bpVariant->sku)
+                ? $bpVariant->sku : null;
+            $newBpVariant->product_code = isset($bpVariant->product_code)
+                ? $bpVariant->product_code : null;
+            $newBpVariant->original_price = isset($bpVariant->original_price)
+                ? $bpVariant->original_price : null;
             $newBpVariant->selling_price = $bpVariant->selling_price;
             $newBpVariant->quantity = $bpVariant->quantity;
 
@@ -305,6 +310,22 @@ trait HandleUpdate
      */
     private function updateImages($brandProduct, $updateData)
     {
+        // If client update main photo, then remove the old ones.
+        // (only if media_id doesn't included in deleted_images).
+        if (Request::hasFile('brand_product_main_photo')) {
+            $mainPhotos = Media::select('media_id')
+                ->where('object_id', $brandProduct->brand_product_id)
+                ->where('media_name_id', 'brand_product_main_photo')
+                ->get();
+
+            foreach($mainPhotos as $mainPhoto) {
+                $mediaId = $mainPhoto->media_id;
+                if (! in_array($mediaId, $updateData['deleted_images'])) {
+                    $updateData['deleted_images'][] = $mediaId;
+                }
+            }
+        }
+
         // Delete old media if needed.
         $_POST['media_id'] = '';
         $user = App::make('currentUser');

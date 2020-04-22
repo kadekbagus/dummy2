@@ -57,7 +57,7 @@ abstract class ESSearchParamBuilder extends ESQueryBuilder
      *
      * @param  string $keyword the search keyword
      */
-    abstract public function filterByKeyword($keyword = '');
+    abstract public function filterByKeyword($keyword = '', $logic = 'must');
 
     /**
      * Filter by partner.
@@ -97,7 +97,6 @@ abstract class ESSearchParamBuilder extends ESQueryBuilder
      * Build the cache keys based on request params.
      *
      * @override
-     * @return [type] [description]
      */
     protected function buildCacheKey()
     {
@@ -119,6 +118,16 @@ abstract class ESSearchParamBuilder extends ESQueryBuilder
             $this->request->sortby ?: 'created_date' =>
                 $this->request->sortmode ?: 'desc'
         ];
+    }
+
+    protected function getSkipValue()
+    {
+        return $this->request->skip ?: 0;
+    }
+
+    protected function getTakeValue()
+    {
+        return $this->request->take ?: 20;
     }
 
     /**
@@ -164,29 +173,26 @@ abstract class ESSearchParamBuilder extends ESQueryBuilder
     public function build()
     {
         // Set result limit
-        $skip = $this->request->skip;
-        $take = $this->request->take;
-
-        $this->setLimit($skip, $take);
-        $this->cacheKeys['from'] = $skip;
-        $this->cacheKeys['size'] = $take;
+        $this->setLimit($this->getSkipValue(), $this->getTakeValue());
 
         // Filter by country
         $this->request->has('country', function($country) {
             $this->filterByCountry($country);
-            $this->cacheKeys['country'] = $country;
         });
 
         // Filter by cities
         $this->request->has('cities', function($cities) {
             $this->filterByCities($cities);
-            $this->cacheKeys['cities'] = $cities;
         });
 
         // Filter by keyword
         $this->request->has('keyword', function($keyword) {
             $this->filterByKeyword($keyword);
-            $this->cacheKeys['keyword'] = $keyword;
+        });
+
+        // Somehow menu counter receive 'keywords' instead of 'keyword' ????
+        $this->request->has('keywords', function($keyword) {
+            $this->filterByKeyword($keyword);
         });
 
         // If request should use scrolling, then set specific params.

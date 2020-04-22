@@ -39,6 +39,8 @@ abstract class ESQueryBuilder
 
     protected $esConfig = [];
 
+    protected $countOnly = false;
+
     public function __construct()
     {
         $this->esConfig = Config::get('orbit.elasticsearch');
@@ -286,6 +288,13 @@ abstract class ESQueryBuilder
         }
     }
 
+    public function setBodyParams($params = [])
+    {
+        foreach($params as $param => $value) {
+            $this->searchParam['body'][$param] = $value;
+        }
+    }
+
     /**
      * Remove search params array element by key
      *
@@ -395,6 +404,13 @@ abstract class ESQueryBuilder
 
         // Encode to json
         $this->searchParam['body'] = json_encode($this->searchParam['body']);
+
+        return $this;
+    }
+
+    public function setCountOnly($countOnly = false)
+    {
+        $this->countOnly = $countOnly;
 
         return $this;
     }

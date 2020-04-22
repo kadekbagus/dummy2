@@ -7,25 +7,51 @@ namespace Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters;
  */
 trait StoreFilter
 {
-    public function filterByStore($storeId)
+    public function filterByStore($storeId, $logic = 'must')
     {
-        $this->must([
+        if (is_string($storeId)) {
+            $storeId = [$storeId];
+        }
+
+        $storeId = array_map(function($storeId) {
+            return [
+                'match' => [
+                    'link_to_stores.store_id' => $storeId
+                ],
+            ];
+        }, $storeId);
+
+        $this->{$logic}([
             'nested' => [
                 'path' => 'link_to_stores',
                 'query' => [
-                    'match' => [
-                        'link_to_stores.store_id' => $storeId
+                    'bool' => [
+                        'should' => $storeId
                     ]
                 ],
             ]
         ]);
     }
 
-    public function filterByBrand($brandId)
+    public function filterByBrand($brandId, $logic = 'must')
     {
-        $this->should([
-            'match' => [
-                'brand_id' => $brandId
+        if (is_string($brandId)) {
+            $brandId = [$brandId];
+        }
+
+        $brandId = array_map(function($brandId) {
+            return [
+                'match' => [
+                    'brand_id' => $brandId,
+                ],
+            ];
+        }, $brandId);
+
+        $this->{$logic}([
+            'query' => [
+                'bool' => [
+                    'should' => $brandId
+                ],
             ]
         ]);
     }

@@ -32,8 +32,8 @@ trait AvailableStoreFilter
                         'should' => $queryStrings
                     ]
                 ],
-                // Sort link to stores based on relevancy,
-                // so we show best match store-mall first.
+                // Sort link_to_stores based on relevancy,
+                // so we show best-matched store first.
                 'inner_hits' => [
                     'sort' => [
                         [

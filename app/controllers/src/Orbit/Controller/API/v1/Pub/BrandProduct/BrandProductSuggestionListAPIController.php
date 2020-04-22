@@ -2,7 +2,7 @@
 
 namespace Orbit\Controller\API\v1\Pub\BrandProduct;
 
-use BrandProduct;
+use BrandProductSuggestion;
 use Exception;
 use OrbitShop\API\v1\PubControllerAPI;
 use Orbit\Controller\API\v1\Pub\BrandProduct\Request\ListRequest;
@@ -22,8 +22,10 @@ class BrandProductSuggestionListAPIController extends PubControllerAPI
      * @param  ListRequest    $request         [description]
      * @return [type]                          [description]
      */
-    public function handle(BrandProduct $brandProduct, ListRequest $request)
-    {
+    public function handle(
+        BrandProductSuggestion $brandProduct,
+        ListRequest $request
+    ) {
         try {
             // Search/get list of brand products.
             $brandProducts = $brandProduct->search($request);

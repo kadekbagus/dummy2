@@ -28,9 +28,4 @@ class ListRequest extends ValidateRequest
             'except_id' => 'sometimes|required',
         ];
     }
-
-    public function isSuggestion()
-    {
-        return $this->has('except_id');
-    }
 }

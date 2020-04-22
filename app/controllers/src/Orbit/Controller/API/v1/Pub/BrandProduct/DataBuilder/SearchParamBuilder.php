@@ -34,6 +34,8 @@ class SearchParamBuilder extends ESSearchParamBuilder
      * @var array
      */
     protected $cachedRequestParams = [
+        'skip',
+        'take',
         'sortby',
         'sortmode',
         'keyword',
@@ -84,5 +86,15 @@ class SearchParamBuilder extends ESSearchParamBuilder
         $this->request->has('store_id', function($storeId) {
             $this->filterByStore($storeId);
         });
+
+        $this->request->has('brand_id', function($brandId) {
+            $this->filterByBrand($brandId);
+        });
+
+        $this->setBodyParams([
+            '_source' => [
+                'exclude' => ['description'],
+            ],
+        ]);
     }
 }
