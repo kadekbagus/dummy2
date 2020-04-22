@@ -119,7 +119,8 @@ class BrandProductRepository
                 'products.product_id'
             )
             ->where('object_type', 'brand')
-            ->where('products.status', 'active');
+            ->where('products.status', 'active')
+            ->groupBy('object_id');
     }
 
     /**
