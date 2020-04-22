@@ -439,6 +439,16 @@ class ProductHelper
                 if (empty($itemObj->website_url)) {
                     OrbitShopAPI::throwInvalidArgument('Product URL is required');
                 }
+
+                // selling price cannot empty
+                if ($itemObj->selling_price == "") {
+                    OrbitShopAPI::throwInvalidArgument('Selling price cannot empty');
+                }
+
+                if ($itemObj->selling_price > $itemObj->original_price) {
+                    OrbitShopAPI::throwInvalidArgument('Selling price cannot higher than original price');
+                }
+
                 $saveObjectMarketPlaces = new ProductLinkToObject();
                 $saveObjectMarketPlaces->product_id = $newProduct->product_id;
                 $saveObjectMarketPlaces->object_id = $itemObj->id;
