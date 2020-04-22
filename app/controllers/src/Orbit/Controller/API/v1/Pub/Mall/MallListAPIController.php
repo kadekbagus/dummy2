@@ -26,7 +26,6 @@ use Orbit\Helper\Util\CdnUrlGeneratorWithCloudfront;
 use MallCountry;
 use MallCity;
 use Country;
-use Orbit\Helper\Util\FollowStatusChecker;
 
 class MallListAPIController extends PubControllerAPI
 {
@@ -47,11 +46,6 @@ class MallListAPIController extends PubControllerAPI
     {
         $httpCode = 200;
         try {
-            $activity = Activity::mobileci()->setActivityType('view');
-
-            $this->checkAuth();
-            $user = $this->api->user;
-
             // Cache result of all possible calls to backend storage
             $cacheConfig = Config::get('orbit.cache.context');
             $cacheContext = 'mall-list';
@@ -246,21 +240,7 @@ class MallListAPIController extends PubControllerAPI
             $scriptFieldRating = $scriptFieldRating . " if(counter == 0 || rating == 0) {return 0;} else {return rating/counter;}; ";
             $scriptFieldReview = $scriptFieldReview . " if(review == 0) {return 0;} else {return review;}; ";
 
-            $role = $user->role->role_name;
             $objectFollow = [];
-            if (strtolower($role) === 'consumer') {
-                $objectFollow = $this->getUserFollow($user); // return array of followed mall_id
-
-                if (! empty($objectFollow)) {
-                    if ($sort_by === 'followed') {
-                        foreach ($objectFollow as $followId) {
-                            $scriptFieldFollow = $scriptFieldFollow . " if (doc.containsKey('merchant_id')) { if (! doc['merchant_id'].empty) { if (doc['merchant_id'].value.toLowerCase() == '" . strtolower($followId) . "'){ follow = 1; }}};";
-                        }
-
-                        $scriptFieldFollow = $scriptFieldFollow . " if(follow == 0) {return 0;} else {return follow;}; ";
-                    }
-                }
-            }
 
             $jsonArea['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview), 'is_follow' => array('script' => $scriptFieldFollow));
 
@@ -438,21 +418,6 @@ class MallListAPIController extends PubControllerAPI
 
                     $areadata['follow_status'] = $followStatus;
                     $listmall[] = $areadata;
-                }
-            }
-
-            if (OrbitInput::get('from_homepage', '') !== 'y') {
-                if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
-                    $activityNotes = sprintf('Page viewed: Mall list');
-                    $activity->setUser($user)
-                        ->setActivityName('view_malls_main_page')
-                        ->setActivityNameLong('View Malls Main Page')
-                        ->setObject(null)
-                        ->setModuleName('Mall')
-                        ->setNotes($activityNotes)
-                        ->setObjectDisplayName($viewType)
-                        ->responseOK()
-                        ->save();
                 }
             }
 
@@ -669,16 +634,5 @@ class MallListAPIController extends PubControllerAPI
         $this->withoutScore = TRUE;
 
         return $this;
-    }
-
-    // check user follow
-    public function getUserFollow($user)
-    {
-        $follow = FollowStatusChecker::create()
-                                    ->setUserId($user->user_id)
-                                    ->setObjectType('mall')
-                                    ->getFollowStatus();
-
-        return $follow;
     }
 }
