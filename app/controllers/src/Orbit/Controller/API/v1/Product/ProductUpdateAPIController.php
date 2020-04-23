@@ -66,7 +66,7 @@ class ProductUpdateAPIController extends ControllerAPI
             $countryId = OrbitInput::post('country_id');
             $categories = OrbitInput::post('categories');
             $marketplaces = OrbitInput::post('marketplaces');
-            $brandIds = OrbitInput::post('brand_ids');
+            $brandIds = OrbitInput::post('brand_ids', []);
 
             // Begin database transaction
             $this->beginTransaction();
@@ -151,6 +151,12 @@ class ProductUpdateAPIController extends ControllerAPI
             });
 
             // update brands
+            // FE always send brand_ids, when they don't it means delete
+            if (count($brandIds) == 0) {
+                $deletedOldData = ProductLinkToObject::where('product_id', '=', $productId)
+                                                     ->where('object_type', '=', 'brand')
+                                                     ->delete();
+            }
             OrbitInput::post('brand_ids', function($brandIds) use ($updatedProduct, $productId) {
                 $deletedOldData = ProductLinkToObject::where('product_id', '=', $productId)
                                                      ->where('object_type', '=', 'brand')
