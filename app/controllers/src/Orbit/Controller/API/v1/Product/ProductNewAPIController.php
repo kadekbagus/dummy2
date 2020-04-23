@@ -90,7 +90,7 @@ class ProductNewAPIController extends ControllerAPI
                     'images'            => 'required|array',
                     'short_description' => 'required',
                     'categories'        => 'required|array',
-                    'brand_ids'         => 'required|array',
+                    'brand_ids'         => 'array',
                     'marketplaces'      => 'required|orbit.empty.marketplaces',
                 ),
                 array(
