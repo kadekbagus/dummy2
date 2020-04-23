@@ -129,3 +129,14 @@ Route::get('/api/v1/pub/brand-with-product-affiliation/{search}', function()
 
 Route::get('/app/v1/pub/brand-with-product-affiliation/{search}', ['as' => 'pub-product-affiliation-list', 'uses' => 'IntermediatePubAuthController@Product\BrandWithProductAffiliationList_handle'])
     ->where('search', '(list|search)');
+
+
+/**
+ * Detail of product affiliation.
+ */
+Route::get('/api/v1/pub/product-affiliation/detail', function()
+{
+    return Orbit\Controller\API\v1\Pub\Product\ProductAffiliationDetailAPIController::create()->handle();
+});
+
+Route::get('/app/v1/pub/product-affiliation/detail', ['as' => 'pub-product-affiliation-detail', 'uses' => 'IntermediatePubAuthController@Product\ProductAffiliationDetail_handle']);

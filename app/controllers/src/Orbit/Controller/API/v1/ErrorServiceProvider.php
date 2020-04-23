@@ -29,23 +29,12 @@ class ErrorServiceProvider extends ServiceProvider
 
             Log::error($e);
 
-            $httpCode = 500;
+            $httpCode = 200;
             $response = (new ExceptionResponseProvider($e))->toArray();
 
-            if ($e instanceof ACLUnauthenticatedException) {
-                $httpCode = 401;
-                $response['code'] = 401;
-            }
-            else if ($e instanceof ACLForbiddenException) {
-                $httpCode = 403;
-                $response['code'] = 403;
-            }
-            else if ($e instanceof ModelNotFoundException) {
+            if ($e instanceof ModelNotFoundException) {
                 $httpCode = 404;
                 $response['code'] = 404;
-            }
-            else if ($e instanceof InvalidArgsException) {
-                $httpCode = 200;
             }
             else {
                 if (! Config::get('app.debug')) {

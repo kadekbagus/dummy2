@@ -24,10 +24,11 @@ class BrandWithProductAffiliationCollection extends ResourceCollection
         );
 
         foreach($this->collection as $item) {
+            $brand = $item->brand;
             $this->data['records'][] = [
-                'id' => $item->brand->base_merchant_id,
-                'name' => $item->brand->name,
-                'slug' => Str::slug($item->name),
+                'id' => $brand->base_merchant_id,
+                'name' => $brand->name,
+                'slug' => Str::slug($brand->name),
                 'image' => $this->transformImages($item),
             ];
         }

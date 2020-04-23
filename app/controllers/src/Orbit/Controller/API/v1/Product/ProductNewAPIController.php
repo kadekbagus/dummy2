@@ -96,10 +96,11 @@ class ProductNewAPIController extends ControllerAPI
                 array(
                     'name.required'                 => 'Product Title field is required',
                     'country_id.required'           => 'Country field is required',
-                    'images.required'               => 'Product Image is required',
+                    'images.required'               => 'Product Main Image is required',
                     'short_description.required'    => 'Product Description is required',
                     'categories.required'           => 'Product Category is required',
                     'orbit.empty.marketplaces'      => 'Link to Affiliates is required',
+                    'brand_ids.required'            => 'Link to Brand is required',
                 )
             );
 
