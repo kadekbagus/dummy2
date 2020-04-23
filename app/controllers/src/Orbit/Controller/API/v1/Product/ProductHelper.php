@@ -440,6 +440,14 @@ class ProductHelper
                     OrbitShopAPI::throwInvalidArgument('Product URL is required');
                 }
 
+                if (!isset($itemObj->selling_price)) {
+                    OrbitShopAPI::throwInvalidArgument('Selling price cannot empty');
+                }
+
+                if (!isset($itemObj->original_price)) {
+                    $itemObj->original_price = 0;
+                }
+
                 // selling price cannot empty
                 if ($itemObj->selling_price == "") {
                     OrbitShopAPI::throwInvalidArgument('Selling price cannot empty');
