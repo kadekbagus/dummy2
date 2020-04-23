@@ -445,8 +445,11 @@ class ProductHelper
                     OrbitShopAPI::throwInvalidArgument('Selling price cannot empty');
                 }
 
-                if ($itemObj->selling_price > $itemObj->original_price) {
-                    OrbitShopAPI::throwInvalidArgument('Selling price cannot higher than original price');
+                // validate selling and original price
+                if ($itemObj->original_price != "0") {
+                    if ($itemObj->selling_price > $itemObj->original_price) {
+                        OrbitShopAPI::throwInvalidArgument('Selling price cannot higher than original price');
+                    }
                 }
 
                 $saveObjectMarketPlaces = new ProductLinkToObject();
