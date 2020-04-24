@@ -141,7 +141,15 @@ class ProductAffiliationDetailRepository
                                         'media.cdn_bucket_name',
                                         'media.metadata'
                                     )->where('media_name_long', 'product_photos_orig');
-                          }
+                          },
+            'merchants' => function ($q) use ($prefix) {
+                        $q->select(DB::raw("{$prefix}base_merchants.name, {$prefix}base_merchants.base_merchant_id"),
+                                   DB::raw("(SELECT {$prefix}base_stores.base_store_id FROM {$prefix}base_stores
+                                              WHERE {$prefix}base_stores.base_merchant_id = {$prefix}base_merchants.base_merchant_id
+                                              AND {$prefix}base_merchants.status = 'active' limit 1) as merchant_id"),
+                                   'countries.name as country_name')
+                            ->leftJoin('countries', 'base_merchants.country_id', '=', 'countries.country_id');
+                    }
         ])
         ->where('product_id', $productId)
         ->firstOrFail();
