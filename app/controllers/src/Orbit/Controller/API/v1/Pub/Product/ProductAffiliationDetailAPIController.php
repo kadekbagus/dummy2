@@ -6,7 +6,6 @@ use Product;
 use Exception;
 use OrbitShop\API\v1\PubControllerAPI;
 use Orbit\Controller\API\v1\Pub\Product\Request\DetailRequest;
-use Orbit\Controller\API\v1\Pub\Product\Resource\ProductAffiliationDetailCollection;
 use Orbit\Controller\API\v1\Pub\Product\Repository\ProductAffiliationDetailRepository as Repo;
 /**
  * Product Affiliation detail controller.
