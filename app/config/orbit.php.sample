@@ -178,6 +178,16 @@ return array(
                 'index' => 'product_suggestions',
                 'type' => 'basic',
             ],
+
+            'product_affiliations' => [
+                'index' => 'product_affiliations',
+                'type' => 'basic',
+            ],
+
+            'product_affiliation_suggestions' => [
+                'index' => 'product_affiliation_suggestions',
+                'type' => 'basic',
+            ],
         ],
 
         // index list will be include in suggestion
@@ -188,6 +198,7 @@ return array(
             'store_suggestions',
             'mall_suggestions',
             'product_suggestions',
+            'product_affiliation_suggestions',
         ],
 
         // index list will be include in suggestion in mall level
@@ -281,6 +292,13 @@ return array(
                 'product_name' => '^10',
                 'brand_name' => '^8',
                 'description' => '^5',
+            ],
+
+            'product_affiliations' => [
+                'product_name' => '^10',
+                'marketplace_name' => '^8',
+                'brand_name' => '^6',
+                'description' => '^4',
             ],
         ]
     ],
@@ -1702,6 +1720,7 @@ return array(
                     'game_image' => 'game',
                     'brand_product_main_photo' => 'brand_product',
                     'brand_product_photos' => 'brand_product',
+                    'product_photos' => 'product'
                 ],
 
                 // Allowed Mimetype
@@ -5788,6 +5807,26 @@ return array(
             ],
 
             'brand-product-available-store-list' => [
+                'enable' => false,
+                'cache_ttl' => 60,
+            ],
+
+            'brand-product-suggestion-list' => [
+                'enable' => false,
+                'cache_ttl' => 60,
+            ],
+
+            'product-affiliation-list' => [
+                'enable' => false,
+                'cache_ttl' => 60,
+            ],
+
+            'product-affiliation-list-count' => [
+                'enable' => false,
+                'cache_ttl' => 60,
+            ],
+
+            'product-affiliation-suggestion-list' => [
                 'enable' => false,
                 'cache_ttl' => 60,
             ],

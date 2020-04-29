@@ -18,7 +18,7 @@ use Tenant;
 use BaseMerchant;
 use Product;
 use ProductLinkToObject;
-
+use ProductVideo;
 
 class ProductUpdateAPIController extends ControllerAPI
 {
@@ -66,7 +66,7 @@ class ProductUpdateAPIController extends ControllerAPI
             $countryId = OrbitInput::post('country_id');
             $categories = OrbitInput::post('categories');
             $marketplaces = OrbitInput::post('marketplaces');
-            $brandIds = OrbitInput::post('brand_ids');
+            $brandIds = OrbitInput::post('brand_ids', []);
 
             // Begin database transaction
             $this->beginTransaction();
@@ -84,6 +84,7 @@ class ProductUpdateAPIController extends ControllerAPI
                 ),
                 array(
                     'product_id'        => 'required',
+                    'name'              => 'required',
                     'status'            => 'in:active,inactive',
                     'country_id'        => 'required',
                     'short_description' => 'required',
@@ -150,6 +151,12 @@ class ProductUpdateAPIController extends ControllerAPI
             });
 
             // update brands
+            // FE always send brand_ids, when they don't it means delete
+            if (count($brandIds) == 0) {
+                $deletedOldData = ProductLinkToObject::where('product_id', '=', $productId)
+                                                     ->where('object_type', '=', 'brand')
+                                                     ->delete();
+            }
             OrbitInput::post('brand_ids', function($brandIds) use ($updatedProduct, $productId) {
                 $deletedOldData = ProductLinkToObject::where('product_id', '=', $productId)
                                                      ->where('object_type', '=', 'brand')
@@ -165,6 +172,21 @@ class ProductUpdateAPIController extends ControllerAPI
                     $brands[] = $saveObjectCategories;
                 }
                 $updatedProduct->brands = $brands;
+            });
+
+            // update product_videos
+            OrbitInput::post('youtube_ids', function($youtubeIds) use ($updatedProduct, $productId) {
+                $deletedOldData = ProductVideo::where('product_id', '=', $productId)->delete();
+
+                $videos = array();
+                foreach ($youtubeIds as $youtubeId) {
+                    $productVideos = new ProductVideo();
+                    $productVideos->product_id = $productId;
+                    $productVideos->youtube_id = $youtubeId;
+                    $productVideos->save();
+                    $videos[] = $productVideos;
+                }
+                $updatedProduct->product_videos = $videos;
             });
 
             // update marketplaces

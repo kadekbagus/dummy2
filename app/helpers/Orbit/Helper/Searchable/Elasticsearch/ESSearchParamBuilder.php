@@ -57,7 +57,7 @@ abstract class ESSearchParamBuilder extends ESQueryBuilder
      *
      * @param  string $keyword the search keyword
      */
-    abstract public function filterByKeyword($keyword = '');
+    abstract public function filterByKeyword($keyword = '', $logic = 'must');
 
     /**
      * Filter by partner.
@@ -97,7 +97,6 @@ abstract class ESSearchParamBuilder extends ESQueryBuilder
      * Build the cache keys based on request params.
      *
      * @override
-     * @return [type] [description]
      */
     protected function buildCacheKey()
     {

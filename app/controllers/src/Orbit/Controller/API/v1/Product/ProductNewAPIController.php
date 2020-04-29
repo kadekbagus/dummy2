@@ -18,7 +18,7 @@ use Tenant;
 use BaseMerchant;
 use Product;
 use ProductLinkToObject;
-
+use ProductVideo;
 
 class ProductNewAPIController extends ControllerAPI
 {
@@ -66,6 +66,7 @@ class ProductNewAPIController extends ControllerAPI
             $categories = OrbitInput::post('categories', []);
             $marketplaces = OrbitInput::post('marketplaces', []);
             $brandIds = OrbitInput::post('brand_ids', []);
+            $youtubeIds = OrbitInput::post('youtube_ids', []);
             $images = \Input::file('images');
 
             // Begin database transaction
@@ -95,10 +96,11 @@ class ProductNewAPIController extends ControllerAPI
                 array(
                     'name.required'                 => 'Product Title field is required',
                     'country_id.required'           => 'Country field is required',
-                    'images.required'               => 'Product Image is required',
+                    'images.required'               => 'Product Main Image is required',
                     'short_description.required'    => 'Product Description is required',
                     'categories.required'           => 'Product Category is required',
                     'orbit.empty.marketplaces'      => 'Link to Affiliates is required',
+                    'brand_ids.required'            => 'Link to Brand is required',
                 )
             );
 
@@ -141,6 +143,16 @@ class ProductNewAPIController extends ControllerAPI
                 $brands[] = $saveObjectCategories;
             }
             $newProduct->brands = $brands;
+
+            $videos = array();
+            foreach ($youtubeIds as $youtubeId) {
+                $productVideos = new ProductVideo();
+                $productVideos->product_id = $newProduct->product_id;
+                $productVideos->youtube_id = $youtubeId;
+                $productVideos->save();
+                $videos[] = $productVideos;
+            }
+            $newProduct->product_videos = $videos;
 
             // save translations
             OrbitInput::post('marketplaces', function($marketplace_json_string) use ($newProduct, $productHelper) {

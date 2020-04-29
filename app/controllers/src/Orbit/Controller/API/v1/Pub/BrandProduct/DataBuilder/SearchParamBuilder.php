@@ -90,5 +90,11 @@ class SearchParamBuilder extends ESSearchParamBuilder
         $this->request->has('brand_id', function($brandId) {
             $this->filterByBrand($brandId);
         });
+
+        $this->setBodyParams([
+            '_source' => [
+                'exclude' => ['description'],
+            ],
+        ]);
     }
 }

@@ -42,7 +42,7 @@ class AvailableStoreSearchParamBuilder extends SearchParamBuilder
      * @param  [type] $storeId [description]
      * @return [type]          [description]
      */
-    public function filterByStore($storeId)
+    public function filterByStore($storeId, $logic = 'must')
     {
         return;
     }
@@ -55,9 +55,9 @@ class AvailableStoreSearchParamBuilder extends SearchParamBuilder
      * @param  string $brandId [description]
      * @return [type]          [description]
      */
-    public function filterByBrand($brandId = '')
+    public function filterByBrand($brandId = '', $logic = 'must')
     {
-        parent::filterByBrand($brandId);
+        parent::filterByBrand($brandId, $logic);
 
         if (is_string($brandId)) {
             $brandId = [$brandId];
@@ -71,7 +71,7 @@ class AvailableStoreSearchParamBuilder extends SearchParamBuilder
             ];
         }, $brandId);
 
-        $this->must([
+        $this->{$logic}([
             'nested' => [
                 'path' => 'link_to_stores',
                 'query' => [

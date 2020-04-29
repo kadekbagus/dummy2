@@ -1,11 +1,11 @@
 <?php
 
-namespace Orbit\Controller\API\v1\Pub\BrandProduct\Request;
+namespace Orbit\Controller\API\v1\Pub\Product\Request;
 
 use Orbit\Helper\Request\ValidateRequest;
 
 /**
- * Brand with Product List request.
+ * Brand with Product Affiliation List request.
  *
  * @author Budi <budi@gotomalls.com>
  */

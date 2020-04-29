@@ -4,6 +4,7 @@
  * @desc Controller for news list and search in landing page
  */
 
+use App;
 use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use Helper\EloquentRecordCounter as RecordCounter;
@@ -41,6 +42,8 @@ use UserDetail;
 use ArticleSearch;
 use BrandProduct;
 use Orbit\Controller\API\v1\Pub\BrandProduct\Request\ListRequest;
+use Orbit\Controller\API\v1\Pub\Product\Request\ListRequest as ProductAffiliationListRequest;
+use Product;
 
 class MenuCounterAPIController extends PubControllerAPI
 {
@@ -59,8 +62,10 @@ class MenuCounterAPIController extends PubControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getMenuCounter(BrandProduct $brandProduct, ListRequest $request)
-    {
+    public function getMenuCounter(
+        BrandProduct $brandProduct,
+        ListRequest $request
+    ) {
         $httpCode = 200;
         $activity = Activity::mobileci()->setActivityType('view');
         $keyword = null;
@@ -733,11 +738,19 @@ class MenuCounterAPIController extends PubControllerAPI
 
             $productCount = $brandProduct->countResult($request);
 
+            $productAffiliations = App::make(Product::class);
+            $productAffiliationRequest = App::make(
+                ProductAffiliationListRequest::class
+            );
+            $productAffiliationCount = $productAffiliations
+                ->countResult($productAffiliationRequest);
+
             $listOfRec['mall'] = empty($mallResponse['hits']['total']) ? 0 : $mallResponse['hits']['total'];
             $listOfRec['merchants'] = empty($merchantResponse['hits']['total']) ? 0 : $merchantResponse['hits']['total'];
             $listOfRec['stores'] = empty($storeResponse['hits']['total']) ? 0 : $storeResponse['hits']['total'];
             $listOfRec['articles'] = empty($articleResponse['hits']['total']) ? 0 : $articleResponse['hits']['total'];
             $listOfRec['products'] = $productCount;
+            $listOfRec['product_affiliations'] = $productAffiliationCount;
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
