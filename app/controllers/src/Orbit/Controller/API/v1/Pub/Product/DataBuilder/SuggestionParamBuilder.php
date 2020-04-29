@@ -18,16 +18,6 @@ use Orbit\Helper\Searchable\Elasticsearch\ESSearchParamBuilder;
  */
 class SuggestionParamBuilder extends SearchParamBuilder
 {
-    /**
-     * Force the sorting method to 'relevance'.
-     *
-     * @return string
-     */
-    protected function getSortingParams()
-    {
-        return ['relevance' => 'desc'];
-    }
-
     public function filterByCategories($categories, $logic = 'must')
     {
         parent::filterByCategories($categories, 'should');
