@@ -133,62 +133,18 @@ class ESProductAffiliationSuggestionUpdateQueue
             $strings = preg_replace('/[^A-Za-z0-9 ] /', '', $strings);
             $strings = str_replace(['"', "'"], '', $strings);
 
-            $words = explode(" ", $strings);
+            $textName = $strings;
+            $explode = explode(' ', $textName);
+            $count = count($explode);
 
-            $num = count($words);
-
-            // The total number of possible combinations
-            $total = pow(2, $num);
-
-            $combo = [];
-            // Loop through each possible combination
-            // Warning, higher word counts will also increase CPU usage.
-            for ($i = 0; $i < $total; $i++) {
-                    //For each combination check if each bit is set
-                $save = '';
-                for ($j = 0; $j < $total; $j++) {
-                    //Is bit $j set in $i?
-                    if (pow(2, $j) & $i) {
-                        // echo $words[$j] . ' ';
-                        $save = $save . $words[$j] . ' ';
-                    }
+            $combo = array();
+            for($a = 0; $a < $count; $a++) {
+                $textName = '';
+                for($b = $a; $b < $count; $b++) {
+                    $textName .= $explode[$b] . ' ';
                 }
-                $combo[] = trim($save);
-                // echo "\n";
+                $combo[] = substr($textName, 0, -1);
             }
-
-            // remove first empty element
-            $combo = array_splice($combo, 1, count($combo));
-
-            // sort by most word counts and leftest word occurence first
-            // @todo: there is a little bit issue on "leftest word occurence first"
-            //     some cases it is not sorting as expected
-            usort($combo, function($a, $b) use ($words) {
-                $totalA = 0;
-                $totalB = 0;
-
-                $componentA = explode(" ", $a);
-                foreach($componentA as $ca) {
-                    $totalA = $totalA + pow(array_search($ca, $words), 2);
-                }
-
-                $componentB = explode(" ", $b);
-                foreach($componentB as $cb) {
-                    $totalB = $totalB + pow(array_search($cb, $words), 2);
-                }
-
-                $wordCountA = str_word_count($a);
-                $wordCountB = str_word_count($b);
-
-                if ($wordCountB == $wordCountA) {
-                    // print_r([$totalA, $totalB]);
-                    return $totalA - $totalB;
-                } elseif ($wordCountB > $wordCountA) {
-                    return 1;
-                } elseif ($wordCountB < $wordCountA) {
-                    return -1;
-                }
-            });
 
             $brand = $product->merchants->first();
 
