@@ -63,6 +63,19 @@ class SearchParamBuilder extends ESSearchParamBuilder
     }
 
     /**
+     * Sort by name.
+     *
+     * @override
+     */
+    public function sortByName($language = 'id', $sortMode = 'asc')
+    {
+        parent::sortByName($language, $sortMode);
+
+        // After sorting by name, then sort by relevance.
+        $this->sortByRelevance();
+    }
+
+    /**
      * Add object-specific filter/sort params.
      *
      * @return array
