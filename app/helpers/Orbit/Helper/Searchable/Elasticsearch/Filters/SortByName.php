@@ -9,7 +9,7 @@ trait SortByName
      *
      * @return [type] [description]
      */
-    public function sortByName($language = 'id', $sortMode = 'asc')
+    public function sortByName($sortMode = 'asc')
     {
         $this->sort(['lowercase_name' => ['order' => $sortMode]]);
     }
