@@ -103,14 +103,15 @@ class SuggestionAPIController extends PubControllerAPI
 
                 OrbitInput::get('country', function($country) use (&$body)
                 {
-                    if (! empty($country) || $country != '') {
+                    if (! empty($country) && $country != '') {
                         $body['gtm_suggestions']['completion']['context']['country'] = $country;
                     }
                 });
 
-                OrbitInput::get('cities', function($cities) use (&$body)
+                OrbitInput::get('cities', function($cities) use (&$body, $mallCountries)
                 {
-                    if (! empty($cities) || $cities != '') {
+                    if (! empty($cities) && $cities != '') {
+                        $cities = array_merge($mallCountries, $cities);
                         $body['gtm_suggestions']['completion']['context']['city'] = $cities;
                     }
                 });
