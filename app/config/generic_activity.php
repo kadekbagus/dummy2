@@ -2841,5 +2841,13 @@ return array(
             'object_type' => 'BrandProduct',
             'parameter_name' => 'object_id',
         ),
+        '310' => array(
+            'name' => 'click_marketplace_link',
+            'name_long' => 'Click Marketplace Link',
+            'module_name' => 'Affiliation Product',
+            'type' => 'click',
+            'object_type' => 'Product',
+            'parameter_name' => 'object_id',
+        ),
     ),
 );
