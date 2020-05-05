@@ -468,6 +468,7 @@ class ProductHelper
                 $saveObjectMarketPlaces->product_url = $itemObj->website_url;
                 $saveObjectMarketPlaces->original_price = $itemObj->original_price;
                 $saveObjectMarketPlaces->selling_price = $itemObj->selling_price;
+                $saveObjectMarketPlaces->sku = isset($itemObj->sku) ? $itemObj->sku : null;
                 $saveObjectMarketPlaces->save();
                 $marketplaceData[] = $saveObjectMarketPlaces;
             }
