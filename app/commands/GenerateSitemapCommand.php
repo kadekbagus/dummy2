@@ -12,6 +12,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use OrbitShop\API\v1\Helper\Generator;
 use Orbit\Controller\API\v1\Pub\BrandProduct\Request\ListRequest;
 use Orbit\Controller\API\v1\Pub\BrandProduct\Resource\BrandProductCollection;
+use Orbit\Controller\API\v1\Pub\Product\Request\ListRequest as ListRequestProductAffiliate;
 
 class GenerateSitemapCommand extends Command
 {
@@ -178,6 +179,10 @@ class GenerateSitemapCommand extends Command
                     $this->generateProductDetailSitemap();
                     break;
 
+                case 'product-affiliate':
+                    $this->generateProductAffiliateDetailSitemap();
+                    break;
+
                 case 'misc':
                     $this->generateMiscListSitemap();
                     break;
@@ -264,6 +269,10 @@ class GenerateSitemapCommand extends Command
 
                 case 'product':
                     $xml = $this->generateProductDetailSitemap();
+                    break;
+
+                case 'product-affiliate':
+                    $xml = $this->generateProductAffiliateDetailSitemap();
                     break;
 
                 default:
@@ -680,6 +689,53 @@ class GenerateSitemapCommand extends Command
     }
 
     /**
+     * Generate all Products detail sitemap
+     *
+     * @param string $mall_id
+     * @param string $mall_slug
+     * @return void
+     */
+    protected function generateProductAffiliateDetailSitemap()
+    {
+        $detailUri = Config::get('orbit.sitemap.uri_properties.detail.product-affiliate', []);
+
+        $skip = 0;
+        $take = 50;
+        $firstTake = 1;
+
+        $user = User::with('apikey')
+            ->leftJoin('roles', 'users.user_role_id', '=', 'roles.role_id')
+            ->where('role_name', 'Consumer')
+            ->first();
+
+        App::instance('currentUser', $user);
+
+        Request::merge(['skip' => $skip, 'take' => $firstTake]);
+
+        $product = new Product();
+        $request = new ListRequestProductAffiliate();
+        $products = $product->search($request);
+        $totalRecord = $products['hits']['total'];
+        $totalLoop = $totalRecord/$take;
+        $urlTemplate = $this->urlTemplate;
+
+        for($i=0; $i<=$totalLoop; $i++)
+        {
+            if ($i !== 0) {
+                $skip = $skip+$take;
+            }
+            Request::merge(['skip' => $skip, 'take' => $take]);
+            $products = $product->search($request);
+            $data = new BrandProductCollection(
+                        $products['hits']['hits'],
+                        $products['hits']['total']
+            );
+            $data = $data->toArray();
+            $this->detailAppender($data['records'], 'product', $urlTemplate, $detailUri, null, null);
+        }
+    }
+
+    /**
      * Generate sitemap for each pulsa operator page.
      * @return void
      */
@@ -761,6 +817,11 @@ class GenerateSitemapCommand extends Command
                     break;
 
                 case 'product':
+                    $id = $record['id'];
+                    $name = $record['name'];
+                    break;
+
+                case 'product-affiliate':
                     $id = $record['id'];
                     $name = $record['name'];
                     break;
