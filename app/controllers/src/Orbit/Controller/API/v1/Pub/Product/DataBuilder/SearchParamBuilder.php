@@ -3,13 +3,13 @@
 namespace Orbit\Controller\API\v1\Pub\Product\DataBuilder;
 
 use BaseStore;
-use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CategoryFilter;
-use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CitiesFilter;
-use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CountryFilter;
-use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\KeywordFilter;
-use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\StatusFilter;
-use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\StoreFilter;
 use Orbit\Helper\Searchable\Elasticsearch\ESSearchParamBuilder;
+use Orbit\Controller\API\v1\Pub\Product\SearchableFilters\CountryFilter;
+use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\StoreFilter;
+use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CitiesFilter;
+use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\StatusFilter;
+use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\KeywordFilter;
+use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CategoryFilter;
 
 /**
  * Brand product search query builder.
