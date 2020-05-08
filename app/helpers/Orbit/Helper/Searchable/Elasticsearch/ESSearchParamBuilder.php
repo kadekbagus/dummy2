@@ -135,6 +135,12 @@ abstract class ESSearchParamBuilder extends ESQueryBuilder
      */
     public function addSortQuery()
     {
+        // Ignore sorting if request only to count the result.
+        // (For example, called by MenuCounterAPI)
+        if ($this->countOnly) {
+            return;
+        }
+
         $sortingParams = $this->getSortingParams();
 
         foreach($sortingParams as $sortBy => $sortMode) {
@@ -147,14 +153,15 @@ abstract class ESSearchParamBuilder extends ESQueryBuilder
                     $this->sortByRelevance();
                     break;
 
-                case 'nearest':
-                    $this->sortByNearest($this->request->ul);
-                    break;
+                // Disable sortby nearest and rating at the moment.
+                // case 'nearest':
+                //     $this->sortByNearest($this->request->ul);
+                //     break;
 
-                case 'rating':
-                    $ratingScript = $this->addReviewFollowScript();
-                    $this->sortByRating($ratingScript);
-                    break;
+                // case 'rating':
+                //     $ratingScript = $this->addReviewFollowScript();
+                //     $this->sortByRating($ratingScript);
+                //     break;
 
                 case 'created_date':
                 default:
