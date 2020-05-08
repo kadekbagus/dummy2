@@ -86,4 +86,10 @@ class Product extends Eloquent
     {
         return $this->mediaAll()->where('media_name_id', 'product_photos');
     }
+
+    public function product_tags()
+    {
+        return $this->hasMany('ProductTagObject', 'object_id', 'product_id')
+                    ->join('product_tags', 'product_tags.product_tag_id', '=', 'product_tag_object.product_tag_id');
+    }
 }

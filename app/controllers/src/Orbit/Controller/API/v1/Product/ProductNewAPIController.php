@@ -19,6 +19,8 @@ use BaseMerchant;
 use Product;
 use ProductLinkToObject;
 use ProductVideo;
+use ProductTag;
+use ProductTagObject;
 
 class ProductNewAPIController extends ControllerAPI
 {
@@ -68,6 +70,8 @@ class ProductNewAPIController extends ControllerAPI
             $brandIds = OrbitInput::post('brand_ids', []);
             $youtubeIds = OrbitInput::post('youtube_ids', []);
             $images = \Input::file('images');
+            $productTags = OrbitInput::post('product_tags');
+            $productTags = (array) $productTags;
 
             // Begin database transaction
             $this->beginTransaction();
@@ -153,6 +157,39 @@ class ProductNewAPIController extends ControllerAPI
                 $videos[] = $productVideos;
             }
             $newProduct->product_videos = $videos;
+
+            $tags = array();
+            foreach ($productTags as $productTag) {
+                $product_tag_id = null;
+
+                $existProductTag = ProductTag::excludeDeleted()
+                    ->where('product_tag', '=', $productTag)
+                    ->where('merchant_id', '=', 0)
+                    ->first();
+
+                if (empty($existProductTag)) {
+                    $newProductTag = new ProductTag();
+                    $newProductTag->merchant_id = 0;
+                    $newProductTag->product_tag = $productTag;
+                    $newProductTag->status = 'active';
+                    $newProductTag->created_by = $this->api->user->user_id;
+                    $newProductTag->modified_by = $this->api->user->user_id;
+                    $newProductTag->save();
+
+                    $product_tag_id = $newProductTag->product_tag_id;
+                    $tags[] = $newProductTag;
+                } else {
+                    $product_tag_id = $existProductTag->product_tag_id;
+                    $tags[] = $existProductTag;
+                }
+
+                $newProductTagObject = new ProductTagObject();
+                $newProductTagObject->product_tag_id = $product_tag_id;
+                $newProductTagObject->object_id = $newProduct->product_id;
+                $newProductTagObject->object_type = 'product';
+                $newProductTagObject->save();
+            }
+            $newProduct->product_tags = $tags;
 
             // save translations
             OrbitInput::post('marketplaces', function($marketplace_json_string) use ($newProduct, $productHelper) {
