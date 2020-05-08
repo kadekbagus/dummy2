@@ -19,6 +19,8 @@ use BaseMerchant;
 use Product;
 use ProductLinkToObject;
 use ProductVideo;
+use ProductTag;
+use ProductTagObject;
 
 class ProductUpdateAPIController extends ControllerAPI
 {
@@ -187,6 +189,47 @@ class ProductUpdateAPIController extends ControllerAPI
                     $videos[] = $productVideos;
                 }
                 $updatedProduct->product_videos = $videos;
+            });
+
+            // Update product tags
+            $deleted_product_tags_object = ProductTagObject::where('object_id', '=', $productId)
+                                                    ->where('object_type', '=', 'coupon');
+            $deleted_product_tags_object->delete();
+
+            OrbitInput::post('product_tags', function($productTags) use ($updatedProduct, $user, $productId) {
+                // Insert new data
+                $tags = array();
+                foreach ($productTags as $productTag) {
+                    $product_tag_id = null;
+
+                    $existProductTag = ProductTag::excludeDeleted()
+                        ->where('product_tag', '=', $productTag)
+                        ->where('merchant_id', '=', 0)
+                        ->first();
+
+                    if (empty($existProductTag)) {
+                        $newProductTag = new ProductTag();
+                        $newProductTag->merchant_id = 0;
+                        $newProductTag->product_tag = $productTag;
+                        $newProductTag->status = 'active';
+                        $newProductTag->created_by = $user->user_id;
+                        $newProductTag->modified_by = $user->user_id;
+                        $newProductTag->save();
+
+                        $product_tag_id = $newProductTag->product_tag_id;
+                        $tags[] = $newProductTag;
+                    } else {
+                        $product_tag_id = $existProductTag->product_tag_id;
+                        $tags[] = $existProductTag;
+                    }
+
+                    $newProductTagObject = new ProductTagObject();
+                    $newProductTagObject->product_tag_id = $product_tag_id;
+                    $newProductTagObject->object_id = $productId;
+                    $newProductTagObject->object_type = 'product';
+                    $newProductTagObject->save();
+                }
+                $updatedProduct->product_tags = $tags;
             });
 
             // update marketplaces
