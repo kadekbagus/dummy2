@@ -193,7 +193,7 @@ class ProductUpdateAPIController extends ControllerAPI
 
             // Update product tags
             $deleted_product_tags_object = ProductTagObject::where('object_id', '=', $productId)
-                                                    ->where('object_type', '=', 'coupon');
+                                                    ->where('object_type', '=', 'product');
             $deleted_product_tags_object->delete();
 
             OrbitInput::post('product_tags', function($productTags) use ($updatedProduct, $user, $productId) {
