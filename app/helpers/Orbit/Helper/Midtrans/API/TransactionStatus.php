@@ -1,16 +1,11 @@
 <?php namespace Orbit\Helper\Midtrans\API;
 
-use Orbit\Helper\Midtrans\Client as MidtransClient;
-use Orbit\Helper\Midtrans\ConfigSelector;
-use Config;
-use Cache;
 use Log;
+use Config;
 use Exception;
-
+use Midtrans\Config as MidtransConfig;
+use Midtrans\Transaction;
 use Orbit\Helper\Midtrans\API\Response\TransactionStatusResponse;
-
-use \Veritrans_Config;
-use \Veritrans_Transaction;
 
 /**
  * Get Campaign List from Sepulsa
@@ -31,8 +26,8 @@ class TransactionStatus
     {
         $this->config = ! empty($config) ? $config : Config::get('orbit.partners_api.midtrans');
 
-        Veritrans_Config::$serverKey = $this->config['server_key'];
-        Veritrans_Config::$isProduction = $this->config['is_production'];
+        MidtransConfig::$serverKey = $this->config['server_key'];
+        MidtransConfig::$isProduction = $this->config['is_production'];
     }
 
     public static function create($config=[])
@@ -54,7 +49,7 @@ class TransactionStatus
                 throw new Exception('Midtrans::getStatus(): TransactionId is empty.', 404);
             }
 
-            $response = Veritrans_Transaction::status($transactionId);
+            $response = Transaction::status($transactionId);
 
         } catch (Exception $e) {
             Log::info('Midtrans::getStatus(): Exception, File: ' . $e->getFile() . ':' . $e->getLine() . ' >> ' . $e->getMessage());
