@@ -1,10 +1,10 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2b63c792068bbfc6984962f5be7a1800",
+    "content-hash": "e4b737b9458356eea10be1bfa17656ef",
     "packages": [
         {
             "name": "artdarek/oauth-4-laravel",
@@ -707,6 +707,7 @@
                 }
             ],
             "description": "Provides a simple API and specification that abstracts away the details of HTTP into a single PHP function.",
+            "abandoned": true,
             "time": "2015-05-20T03:37:09+00:00"
         },
         {
@@ -757,6 +758,7 @@
                 "Guzzle",
                 "stream"
             ],
+            "abandoned": true,
             "time": "2014-10-12T19:18:40+00:00"
         },
         {
@@ -917,6 +919,7 @@
                 "serialize",
                 "tokenizer"
             ],
+            "abandoned": "opis/closure",
             "time": "2013-10-09T04:20:00+00:00"
         },
         {
@@ -1199,6 +1202,55 @@
                 "debug"
             ],
             "time": "2014-08-20T15:25:30+00:00"
+        },
+        {
+            "name": "midtrans/midtrans-php",
+            "version": "2.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Midtrans/midtrans-php.git",
+                "reference": "4c5bbe32e26a4cd9c9d1460c91fd7270a57b9f4d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Midtrans/midtrans-php/zipball/4c5bbe32e26a4cd9c9d1460c91fd7270a57b9f4d",
+                "reference": "4c5bbe32e26a4cd9c9d1460c91fd7270a57b9f4d",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.4"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "5.7.*",
+                "psy/psysh": "0.4.*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Midtrans\\": "Midtrans/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-3.0"
+            ],
+            "authors": [
+                {
+                    "name": "Andri Setiawan",
+                    "email": "andri.setiawan@veritrans.co.id"
+                },
+                {
+                    "name": "Alvin Litani",
+                    "email": "alvin.litani@veritrans.co.id"
+                },
+                {
+                    "name": "Ismail Faruqi",
+                    "email": "ismail.faruqi@veritrans.co.id"
+                }
+            ],
+            "description": "PHP Wrapper for Midtrans Payment API.",
+            "homepage": "https://midtrans.com",
+            "time": "2020-02-06T07:41:28+00:00"
         },
         {
             "name": "monolog/monolog",
@@ -2769,55 +2821,6 @@
             "time": "2014-10-26T07:41:27+00:00"
         },
         {
-            "name": "veritrans/veritrans-php",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/veritrans/veritrans-php.git",
-                "reference": "382f3514ebb3fb768adc820768c62932d8cfec07"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/veritrans/veritrans-php/zipball/382f3514ebb3fb768adc820768c62932d8cfec07",
-                "reference": "382f3514ebb3fb768adc820768c62932d8cfec07",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.4"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "5.7.*",
-                "psy/psysh": "0.4.*"
-            },
-            "type": "library",
-            "autoload": {
-                "classmap": [
-                    ""
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "GPL-3.0"
-            ],
-            "authors": [
-                {
-                    "name": "Andri Setiawan",
-                    "email": "andri.setiawan@veritrans.co.id"
-                },
-                {
-                    "name": "Alvin Litani",
-                    "email": "alvin.litani@veritrans.co.id"
-                },
-                {
-                    "name": "Ismail Faruqi",
-                    "email": "ismail.faruqi@veritrans.co.id"
-                }
-            ],
-            "description": "PHP Wraper for Veritrans VT-Web Payment API.",
-            "homepage": "https://midtrans.com",
-            "time": "2018-05-19T11:20:46+00:00"
-        },
-        {
             "name": "zendframework/zend-permissions-acl",
             "version": "2.3.0",
             "target-dir": "Zend/Permissions/Acl",
@@ -2865,11 +2868,11 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "laraeval/laraeval": 20,
-        "veritrans/veritrans-php": 20
+        "laraeval/laraeval": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": [],
-    "platform-dev": []
+    "platform-dev": [],
+    "plugin-api-version": "1.1.0"
 }
