@@ -8,6 +8,7 @@ use Orbit\Notifications\Pulsa\Subscription\PulsaPriceListNotification;
 
 use Orbit\Controller\API\v1\Pub\Coupon\CouponListNewAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsListNewAPIController;
+use Orbit\Controller\API\v1\Pub\Product\ProductAffiliationListAPIController;
 
 /**
  * @author Budi <budi@dominopos.com>
