@@ -246,7 +246,7 @@
                   <tr>
                     <td height="20" align="center">&nbsp;</td>
                   </tr>
-                  @if (count($campaigns['coupons']) > 0 || count($campaigns['events']) > 0)
+                  @if (count($campaigns['coupons']) > 0)
                     <tr>
                       <td width="600" class="mobile center" valign="middle">
                         <p class="campaign-suggestion-text">{{ trans('email-subscription.pulsa.body.campaign_suggestion_text', [], '', 'id') }}</p>
@@ -254,9 +254,9 @@
                     </tr>
 
                     @include('emails.subscription.pulsa-data-plan-list-coupon-suggestion', ['campaigns' => $campaigns['coupons'], 'campaignListUrl' => $campaigns['couponListUrl']])
-
-                    @include('emails.subscription.pulsa-data-plan-list-product-suggestion', ['campaigns' => $campaigns['events'], 'campaignListUrl' => $campaigns['eventListUrl']])
                   @endif
+
+                  @include('emails.subscription.pulsa-data-plan-list-product-suggestion', ['products' => $products, 'productListUrl' => $productListUrl])
                 </table>
               </td>
             </tr>

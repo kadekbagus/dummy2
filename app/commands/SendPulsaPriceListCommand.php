@@ -59,13 +59,15 @@ class SendPulsaPriceListCommand extends Command {
         }
 
         $campaigns = $this->getCampaigns();
+        $products = $this->getProducts();
+        $productListUrl = $this->generateLandingPageUrl('products');
 
         $sent = 0;
         $userList->chunk($this->option('chunk'), function($users) use (&$sent, $campaigns) {
             $this->info("Sending email to {$users->count()} customers...");
 
             foreach($users as $user) {
-                (new PulsaPriceListNotification($user, $campaigns))->send();
+                (new PulsaPriceListNotification($user, $campaigns, $products, $productListUrl))->send();
             }
 
             $sent += $users->count();
@@ -137,9 +139,6 @@ class SendPulsaPriceListCommand extends Command {
 
             // 'eventListUrl' => $this->generateLandingPageUrl('events'),
             // 'events' => $this->getEvents(),
-
-            'productListUrl' => $this->generateLandingPageUrl('products'),
-            'products' => $this->getProducts(),
         ];
     }
 
