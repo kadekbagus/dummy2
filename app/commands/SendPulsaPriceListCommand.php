@@ -8,7 +8,7 @@ use Orbit\Notifications\Pulsa\Subscription\PulsaPriceListNotification;
 
 use Orbit\Controller\API\v1\Pub\Coupon\CouponListNewAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsListNewAPIController;
-use Orbit\Controller\API\v1\Pub\Product\ProductAffiliationListAPIController;
+
 
 /**
  * @author Budi <budi@dominopos.com>
@@ -233,18 +233,23 @@ class SendPulsaPriceListCommand extends Command {
      */
     private function getProducts()
     {
-        // Sort by hot event first.
+        $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+        $_SERVER['HTTP_USER_AGENT'] = 'command-line';
+        $userInstance = Orbit\Helper\Net\GuestUserGenerator::create()->generate();
+        App::instance('currentUser', $userInstance);
+
         $_GET['sortby'] = 'updated_at';
+        $_GET['country'] = 'Indonesia';
 
-        $productList = ProductAffiliationListAPIController::create('raw')
-            ->handle();
+        $productList = Orbit\Controller\API\v1\Pub\Product\ProductAffiliationListAPIController::create('raw')->handle(\App::make(Product::class), new Orbit\Controller\API\v1\Pub\Product\Request\ListRequest());
+        $productList = $productList->data->toArray();
 
-        if ($productList->code !== 0) {
+        if (count($productList['records']) < 1) {
             return [];
         }
 
         $productListArray = [];
-        foreach($productList->data->records as $product) {
+        foreach($productList['records'] as $product) {
             $productListArray[] = [
                 'id' => $product['id'],
                 'name' => $product['name'],
