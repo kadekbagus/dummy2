@@ -239,7 +239,6 @@ class SendPulsaPriceListCommand extends Command {
 
         $_GET['sortby'] = 'updated_at';
         $_GET['country'] = 'Indonesia';
-        $_GET['take'] = '6';
 
         $productList = Orbit\Controller\API\v1\Pub\Product\ProductAffiliationListAPIController::create('raw')->handle(\App::make(Product::class), new Orbit\Controller\API\v1\Pub\Product\Request\ListRequest());
         $productList = $productList->data->toArray();
@@ -248,14 +247,19 @@ class SendPulsaPriceListCommand extends Command {
             return [];
         }
 
+        $maxProductDisplay = 6;
+        $i = 0;
         $productListArray = [];
         foreach($productList['records'] as $product) {
-            $productListArray[] = [
-                'id' => $product['id'],
-                'name' => $product['name'],
-                'image_url' => $product['image'],
-                'detail_url' => $this->generateProductUrl($product['id'], $product['name']),
-            ];
+            if ($i < $maxProductDisplay) {
+                $productListArray[] = [
+                    'id' => $product['id'],
+                    'name' => $product['name'],
+                    'image_url' => $product['image'],
+                    'detail_url' => $this->generateProductUrl($product['id'], $product['name']),
+                ];
+            }
+            $i++;
         }
 
         return count($productListArray) > 0
