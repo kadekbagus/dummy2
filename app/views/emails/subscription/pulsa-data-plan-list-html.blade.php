@@ -232,7 +232,7 @@
                         <table border="0" cellpadding="0" cellspacing="0">
                           <tr>
                             <td class="mobile center" valign="top">
-                              <img src="https://mall-api-v420.gotomalls.cool/uploads/coupon/translation/2019/05/MDNvYtXoxRCXdkXx--1558592400_1.jpg" style="" class="pulsa-promo-img">
+                              <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/img-email-sub.png" style="" class="pulsa-promo-img">
                             </td>
                             <td class="mobile center" valign="top">
                               <p class="pulsa-promo-description">{{ trans('email-subscription.pulsa.body.marketing_body', [], '', 'id') }}</p>
