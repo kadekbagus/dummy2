@@ -232,7 +232,7 @@ class SendPulsaPriceListCommand extends Command {
         // Sort by hot event first.
         $_GET['sortby'] = 'updated_at';
 
-        $productList = ProductAffiliationListAPIController::('raw')
+        $productList = ProductAffiliationListAPIController::create('raw')
             ->handle();
 
         if ($productList->code !== 0) {
