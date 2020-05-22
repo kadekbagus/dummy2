@@ -255,7 +255,7 @@
 
                     @include('emails.subscription.pulsa-data-plan-list-coupon-suggestion', ['campaigns' => $campaigns['coupons'], 'campaignListUrl' => $campaigns['couponListUrl']])
 
-                    @include('emails.subscription.pulsa-data-plan-list-event-suggestion', ['campaigns' => $campaigns['events'], 'campaignListUrl' => $campaigns['eventListUrl']])
+                    @include('emails.subscription.pulsa-data-plan-list-product-suggestion', ['campaigns' => $campaigns['events'], 'campaignListUrl' => $campaigns['eventListUrl']])
                   @endif
                 </table>
               </td>

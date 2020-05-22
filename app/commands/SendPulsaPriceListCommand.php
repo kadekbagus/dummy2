@@ -223,6 +223,38 @@ class SendPulsaPriceListCommand extends Command {
     }
 
     /**
+     * Get event list.
+     *
+     * @return array
+     */
+    private function getProducts()
+    {
+        // Sort by hot event first.
+        $_GET['sortby'] = 'updated_at';
+
+        $productList = ProductAffiliationListAPIController::('raw')
+            ->handle();
+
+        if ($productList->code !== 0) {
+            return [];
+        }
+
+        $productListArray = [];
+        foreach($productList->data->records as $product) {
+            $productListArray[] = [
+                'id' => $product['id'],
+                'name' => $product['name'],
+                'image_url' => $product['image'],
+                'detail_url' => $this->generateProductUrl($product['id'], $product['name']),
+            ];
+        }
+
+        return count($productListArray) > 0
+            ? array_chunk($productListArray, 2, true)
+            : $productListArray;
+    }
+
+    /**
      * Flatten event locations.
      *
      * @return string
@@ -261,5 +293,12 @@ class SendPulsaPriceListCommand extends Command {
         $format = "/{$objectType}/%s/%s?country=Indonesia";
         return Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com')
             . sprintf($format, $campaignId, Str::slug($campaignName));
+    }
+
+    private function generateProductUrl($productId, $productName)
+    {
+        $format = "/products/affiliate/%s/%s?country=Indonesia";
+        return Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com')
+            . sprintf($format, $productId, Str::slug($productName));
     }
 }
