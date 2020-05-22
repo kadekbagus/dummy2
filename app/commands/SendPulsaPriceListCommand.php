@@ -239,6 +239,7 @@ class SendPulsaPriceListCommand extends Command {
 
         $_GET['sortby'] = 'updated_at';
         $_GET['country'] = 'Indonesia';
+        $_GET['take'] = '6';
 
         $productList = Orbit\Controller\API\v1\Pub\Product\ProductAffiliationListAPIController::create('raw')->handle(\App::make(Product::class), new Orbit\Controller\API\v1\Pub\Product\Request\ListRequest());
         $productList = $productList->data->toArray();

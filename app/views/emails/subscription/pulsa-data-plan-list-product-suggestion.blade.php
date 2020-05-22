@@ -56,7 +56,7 @@
                         <tr>
                           <td colspan="2" height="20" valign="middle">
                             <a href="{{ $productListUrl }}" target="_blank" style="color: #f43d3c;text-decoration: none;" class="suggestion-list-more-url">
-                              {{ trans('email-subscription.pulsa.body.buttons.see_more_events', [], '', 'id') }}
+                              {{ trans('email-subscription.pulsa.body.buttons.see_more_products', [], '', 'id') }}
                             </a>
                           </td>
                         </tr>
