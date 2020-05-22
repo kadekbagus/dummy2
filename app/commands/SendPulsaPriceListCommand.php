@@ -63,7 +63,7 @@ class SendPulsaPriceListCommand extends Command {
         $productListUrl = $this->generateLandingPageUrl('products');
 
         $sent = 0;
-        $userList->chunk($this->option('chunk'), function($users) use (&$sent, $campaigns) {
+        $userList->chunk($this->option('chunk'), function($users) use (&$sent, $campaigns, $products, $productListUrl) {
             $this->info("Sending email to {$users->count()} customers...");
 
             foreach($users as $user) {
