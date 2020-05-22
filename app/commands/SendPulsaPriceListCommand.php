@@ -134,8 +134,11 @@ class SendPulsaPriceListCommand extends Command {
             'couponListUrl' => $this->generateLandingPageUrl('coupons'),
             'coupons' => $this->getCoupons(),
 
-            'eventListUrl' => $this->generateLandingPageUrl('events'),
-            'events' => $this->getEvents(),
+            // 'eventListUrl' => $this->generateLandingPageUrl('events'),
+            // 'events' => $this->getEvents(),
+
+            'productListUrl' => $this->generateLandingPageUrl('products'),
+            'products' => $this->getProducts(),
         ];
     }
 
@@ -282,6 +285,11 @@ class SendPulsaPriceListCommand extends Command {
         $utmStringParams = '?country=Indonesia';
         foreach($utmParams as $utmKey => $utmValue) {
             $utmStringParams .= "&{$utmKey}={$utmValue}";
+        }
+
+        if ($objectType === 'products') {
+            return Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com')
+            . "/products/affiliate{$utmStringParams}";
         }
 
         return Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com')
