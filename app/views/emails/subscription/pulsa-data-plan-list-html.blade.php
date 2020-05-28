@@ -232,7 +232,7 @@
                         <table border="0" cellpadding="0" cellspacing="0">
                           <tr>
                             <td class="mobile center" valign="top">
-                              <img src="https://mall-api-v420.gotomalls.cool/uploads/coupon/translation/2019/05/MDNvYtXoxRCXdkXx--1558592400_1.jpg" style="" class="pulsa-promo-img">
+                              <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/img-email-sub.png" style="" class="pulsa-promo-img">
                             </td>
                             <td class="mobile center" valign="top">
                               <p class="pulsa-promo-description">{{ trans('email-subscription.pulsa.body.marketing_body', [], '', 'id') }}</p>
@@ -246,7 +246,7 @@
                   <tr>
                     <td height="20" align="center">&nbsp;</td>
                   </tr>
-                  @if (count($campaigns['coupons']) > 0 || count($campaigns['events']) > 0)
+                  @if (count($campaigns['coupons']) > 0)
                     <tr>
                       <td width="600" class="mobile center" valign="middle">
                         <p class="campaign-suggestion-text">{{ trans('email-subscription.pulsa.body.campaign_suggestion_text', [], '', 'id') }}</p>
@@ -254,9 +254,9 @@
                     </tr>
 
                     @include('emails.subscription.pulsa-data-plan-list-coupon-suggestion', ['campaigns' => $campaigns['coupons'], 'campaignListUrl' => $campaigns['couponListUrl']])
-
-                    @include('emails.subscription.pulsa-data-plan-list-event-suggestion', ['campaigns' => $campaigns['events'], 'campaignListUrl' => $campaigns['eventListUrl']])
                   @endif
+
+                  @include('emails.subscription.pulsa-data-plan-list-product-suggestion', ['products' => $products, 'productListUrl' => $productListUrl])
                 </table>
               </td>
             </tr>

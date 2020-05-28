@@ -27,10 +27,12 @@ class PulsaPriceListNotification extends CustomerNotification implements EmailNo
 
     protected $campaigns;
 
-    function __construct($user = null, $campaigns = null)
+    function __construct($user = null, $campaigns = null, $products = null, $productListUrl = null)
     {
         parent::__construct($user);
         $this->campaigns = $campaigns;
+        $this->products = $products;
+        $this->productListUrl = $productListUrl;
     }
 
     /**
@@ -66,6 +68,8 @@ class PulsaPriceListNotification extends CustomerNotification implements EmailNo
             'pulsaListUrl' => $this->getPulsaListUrl(),
             'gameVoucherUrl' => $this->getGameVoucherUrl(),
             'campaigns' => $this->campaigns,
+            'products' => $this->products,
+            'productListUrl' => $this->productListUrl,
         ];
 
         return $emailData;

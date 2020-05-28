@@ -143,12 +143,20 @@ class ProductAffiliationDetailRepository
                                     )->where('media_name_long', 'product_photos_orig');
                           },
             'merchants' => function ($q) use ($prefix) {
-                        $q->select(DB::raw("{$prefix}base_merchants.name, {$prefix}base_merchants.base_merchant_id"),
-                                   DB::raw("(SELECT {$prefix}base_stores.base_store_id FROM {$prefix}base_stores
-                                              WHERE {$prefix}base_stores.base_merchant_id = {$prefix}base_merchants.base_merchant_id
-                                              AND {$prefix}base_merchants.status = 'active' limit 1) as merchant_id"),
-                                   'countries.name as country_name')
-                            ->leftJoin('countries', 'base_merchants.country_id', '=', 'countries.country_id');
+                        $q->select(
+                            DB::raw("
+                                    {$prefix}base_merchants.name,
+                                    {$prefix}base_merchants.base_merchant_id,
+                                    {$prefix}countries.name as country_name,
+                                    {$prefix}base_stores.base_store_id as merchant_id
+                                    "
+                                )
+                        )
+                        ->leftJoin('countries', 'base_merchants.country_id', '=', 'countries.country_id')
+                        ->leftJoin('base_stores', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
+                        ->where('base_merchants.status', 'active')
+                        ->where('base_stores.status', 'active')
+                        ->groupBy('base_merchants.base_merchant_id');
                     }
         ])
         ->where('product_id', $productId)

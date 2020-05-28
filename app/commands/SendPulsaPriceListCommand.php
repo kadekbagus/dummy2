@@ -9,6 +9,7 @@ use Orbit\Notifications\Pulsa\Subscription\PulsaPriceListNotification;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponListNewAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsListNewAPIController;
 
+
 /**
  * @author Budi <budi@dominopos.com>
  */
@@ -58,13 +59,15 @@ class SendPulsaPriceListCommand extends Command {
         }
 
         $campaigns = $this->getCampaigns();
+        $products = $this->getProducts();
+        $productListUrl = $this->generateLandingPageUrl('products');
 
         $sent = 0;
-        $userList->chunk($this->option('chunk'), function($users) use (&$sent, $campaigns) {
+        $userList->chunk($this->option('chunk'), function($users) use (&$sent, $campaigns, $products, $productListUrl) {
             $this->info("Sending email to {$users->count()} customers...");
 
             foreach($users as $user) {
-                (new PulsaPriceListNotification($user, $campaigns))->send();
+                (new PulsaPriceListNotification($user, $campaigns, $products, $productListUrl))->send();
             }
 
             $sent += $users->count();
@@ -134,8 +137,8 @@ class SendPulsaPriceListCommand extends Command {
             'couponListUrl' => $this->generateLandingPageUrl('coupons'),
             'coupons' => $this->getCoupons(),
 
-            'eventListUrl' => $this->generateLandingPageUrl('events'),
-            'events' => $this->getEvents(),
+            // 'eventListUrl' => $this->generateLandingPageUrl('events'),
+            // 'events' => $this->getEvents(),
         ];
     }
 
@@ -223,6 +226,48 @@ class SendPulsaPriceListCommand extends Command {
     }
 
     /**
+     * Get event list.
+     *
+     * @return array
+     */
+    private function getProducts()
+    {
+        $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+        $_SERVER['HTTP_USER_AGENT'] = 'command-line';
+        $userInstance = Orbit\Helper\Net\GuestUserGenerator::create()->generate();
+        App::instance('currentUser', $userInstance);
+
+        $_GET['sortby'] = 'updated_at';
+        $_GET['country'] = 'Indonesia';
+
+        $productList = Orbit\Controller\API\v1\Pub\Product\ProductAffiliationListAPIController::create('raw')->handle(\App::make(Product::class), new Orbit\Controller\API\v1\Pub\Product\Request\ListRequest());
+        $productList = $productList->data->toArray();
+
+        if (count($productList['records']) < 1) {
+            return [];
+        }
+
+        $maxProductDisplay = 6;
+        $i = 0;
+        $productListArray = [];
+        foreach($productList['records'] as $product) {
+            if ($i < $maxProductDisplay) {
+                $productListArray[] = [
+                    'id' => $product['id'],
+                    'name' => $product['name'],
+                    'image_url' => $product['image'],
+                    'detail_url' => $this->generateProductUrl($product['id'], $product['name']),
+                ];
+            }
+            $i++;
+        }
+
+        return count($productListArray) > 0
+            ? array_chunk($productListArray, 2, true)
+            : $productListArray;
+    }
+
+    /**
      * Flatten event locations.
      *
      * @return string
@@ -252,6 +297,11 @@ class SendPulsaPriceListCommand extends Command {
             $utmStringParams .= "&{$utmKey}={$utmValue}";
         }
 
+        if ($objectType === 'products') {
+            return Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com')
+            . "/products/affiliate{$utmStringParams}";
+        }
+
         return Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com')
             . "/{$objectType}{$utmStringParams}";
     }
@@ -261,5 +311,12 @@ class SendPulsaPriceListCommand extends Command {
         $format = "/{$objectType}/%s/%s?country=Indonesia";
         return Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com')
             . sprintf($format, $campaignId, Str::slug($campaignName));
+    }
+
+    private function generateProductUrl($productId, $productName)
+    {
+        $format = "/products/affiliate/%s/%s?country=Indonesia";
+        return Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com')
+            . sprintf($format, $productId, Str::slug($productName));
     }
 }
