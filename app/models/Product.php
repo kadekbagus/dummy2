@@ -67,7 +67,7 @@ class Product extends Eloquent
     public function marketplaces()
     {
         return $this->belongsToMany('Marketplace', 'product_link_to_object', 'product_id', 'object_id')
-            ->select('marketplace_id', 'name', 'product_link_to_object.product_url', 'selling_price', 'original_price')
+            ->select('marketplace_id', 'name', 'product_link_to_object.product_url', 'selling_price', 'original_price', 'sku')
             ->where('product_link_to_object.object_type', '=', 'marketplace');
     }
 
