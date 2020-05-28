@@ -115,8 +115,12 @@ class ESProductAffiliationUpdateQueue
             }
 
             // Prepare main body
+            $lowercaseName = strtolower($product->name);
+            $lowercaseName = str_replace(' ', '_', $lowercaseName);
+
             $body = [
                 'product_name' => $product->name,
+                'lowercase_name' => $lowercaseName,
                 'description' => $product->short_description,
                 'status' => $product->status,
                 'brand_id' => $brandId,

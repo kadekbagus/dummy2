@@ -102,8 +102,12 @@ class ESBrandProductUpdateQueue
             ];
 
             // Prepare main body
+            $lowercaseName = strtolower($brandProduct->product_name);
+            $lowercaseName = str_replace(' ', '_', $lowercaseName);
+
             $body = [
                 'product_name' => $brandProduct->product_name,
+                'lowercase_name' => $lowercaseName,
                 'description' => $brandProduct->product_description,
                 'status' => $brandProduct->status,
                 'created_at' => $this->esDate($brandProduct->created_at),
