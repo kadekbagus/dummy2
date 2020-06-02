@@ -94,6 +94,9 @@ class SearchParamBuilder extends ESSearchParamBuilder
         $priorityDescription = isset($priorities['description'])
             ? $priorities['description'] : '^4';
 
+        $priorityProductTags = isset($priorities['product_tags'])
+            ? $priorities['product_tags'] : '^6';
+
         $this->{$logic}([
             'bool' => [
                 'should' => [
@@ -104,6 +107,7 @@ class SearchParamBuilder extends ESSearchParamBuilder
                                 'product_name' . $priorityProductName,
                                 'brand_name' . $priorityBrandName,
                                 'description' . $priorityDescription,
+                                'product_tags' . $priorityProductTags,
                             ]
                         ]
                     ],
