@@ -5,7 +5,7 @@ namespace Orbit\Controller\API\v1\BrandProduct\Store;
 use DB;
 use Exception;
 use OrbitShop\API\v1\ControllerAPI;
-use Orbit\Controller\API\v1\BrandProduct\BrandProductRepository;
+use Orbit\Controller\API\v1\BrandProduct\Repository\BrandProductRepository;
 use Orbit\Controller\API\v1\BrandProduct\Store\Resource\StoreCollection;
 use Orbit\Controller\API\v1\BrandProduct\Store\Request\ListRequest;
 use Tenant;
