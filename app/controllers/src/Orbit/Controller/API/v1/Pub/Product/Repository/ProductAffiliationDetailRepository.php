@@ -160,6 +160,7 @@ class ProductAffiliationDetailRepository
                     }
         ])
         ->where('product_id', $productId)
+        ->where('products.status', 'active')
         ->firstOrFail();
 
         return $product;
