@@ -59,6 +59,23 @@ class SearchParamBuilder extends ESSearchParamBuilder
     }
 
     /**
+     * @override
+     *
+     * Force sorting by relevance if request has keyword.
+     *
+     */
+    protected function getSortingParams()
+    {
+        if ($this->request->has('keyword')) {
+            return [
+                'relevance' => 'desc',
+            ];
+        }
+
+        return parent::getSortingParams();
+    }
+
+    /**
      * Sort by name.
      *
      * @override
