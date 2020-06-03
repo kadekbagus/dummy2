@@ -1,6 +1,6 @@
 <?php
 
-namespace Orbit\Controller\API\v1\BrandProduct;
+namespace Orbit\Controller\API\v1\BrandProduct\Repository;
 
 use App;
 use BaseMerchant;
