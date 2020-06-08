@@ -4,7 +4,7 @@ namespace Orbit\Controller\API\v1\Pub\BrandProduct;
 
 use Exception;
 use OrbitShop\API\v1\PubControllerAPI;
-use Orbit\Controller\API\v1\BrandProduct\BrandProductRepository;
+use Orbit\Controller\API\v1\BrandProduct\Repository\BrandProductRepository;
 use Orbit\Controller\API\v1\Pub\BrandProduct\Request\BrandWithProductListRequest;
 use Orbit\Controller\API\v1\Pub\BrandProduct\Resource\BrandWithProductCollection;
 

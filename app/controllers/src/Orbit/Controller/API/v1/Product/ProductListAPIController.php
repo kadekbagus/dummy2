@@ -77,7 +77,12 @@ class ProductListAPIController extends ControllerAPI
                                     {$prefix}products.name,
                                     {$prefix}products.status,
                                     {$prefix}products.created_at,
-                                    {$prefix}products.updated_at"
+                                    {$prefix}products.updated_at,
+                                    (SELECT SUBSTRING_INDEX(GROUP_CONCAT({$prefix}base_merchants.name), ',', 2)
+                                        FROM {$prefix}product_link_to_object
+                                        INNER JOIN {$prefix}base_merchants ON {$prefix}base_merchants.base_merchant_id = {$prefix}product_link_to_object.object_id
+                                        WHERE {$prefix}product_link_to_object.product_id = {$prefix}products.product_id
+                                        AND {$prefix}product_link_to_object.object_type = 'brand') as link_to_brand"
                                 ));
 
             OrbitInput::get('product_id', function($product_id) use ($product)

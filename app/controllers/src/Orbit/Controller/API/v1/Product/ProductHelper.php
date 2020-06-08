@@ -440,6 +440,14 @@ class ProductHelper
                     OrbitShopAPI::throwInvalidArgument('Product URL is required');
                 }
 
+                if (!isset($itemObj->selling_price)) {
+                    OrbitShopAPI::throwInvalidArgument('Selling price cannot empty');
+                }
+
+                if (!isset($itemObj->original_price)) {
+                    $itemObj->original_price = 0;
+                }
+
                 // selling price cannot empty
                 if ($itemObj->selling_price == "") {
                     OrbitShopAPI::throwInvalidArgument('Selling price cannot empty');
@@ -460,6 +468,7 @@ class ProductHelper
                 $saveObjectMarketPlaces->product_url = $itemObj->website_url;
                 $saveObjectMarketPlaces->original_price = $itemObj->original_price;
                 $saveObjectMarketPlaces->selling_price = $itemObj->selling_price;
+                $saveObjectMarketPlaces->sku = isset($itemObj->sku) ? $itemObj->sku : null;
                 $saveObjectMarketPlaces->save();
                 $marketplaceData[] = $saveObjectMarketPlaces;
             }

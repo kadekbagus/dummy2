@@ -61,6 +61,9 @@ class ESProductAffiliationUpdateQueue
                 'marketplaces',
                 'categories',
                 'merchants',
+                'product_tags' => function($query) {
+                    $query->groupBy('product_tag');
+                },
                 'media' => function($query) {
                     $query->where('media.media_name_long', 'product_image_orig')
                         ->latest()
@@ -115,10 +118,15 @@ class ESProductAffiliationUpdateQueue
             }
 
             // Prepare main body
+            $lowercaseName = strtolower($product->name);
+            $lowercaseName = str_replace(' ', '_', $lowercaseName);
+
             $body = [
                 'product_name' => $product->name,
+                'lowercase_name' => $lowercaseName,
                 'description' => $product->short_description,
                 'status' => $product->status,
+                'product_tags' => [],
                 'brand_id' => $brandId,
                 'brand_name' => $brandName,
                 'country' => '',
@@ -214,6 +222,14 @@ class ESProductAffiliationUpdateQueue
                 $body['image_path'] = $mainPhoto->path;
                 $body['image_cdn'] = $mainPhoto->cdn_url;
             }
+
+            // Update product tags
+            $productTags = [];
+            foreach($product->product_tags as $productTag) {
+                $productTags[] = $productTag->product_tag;
+            }
+
+            $body['product_tags'] = $productTags;
 
             // Delete old document before inserting/updating new one.
             if ($response_search['hits']['total'] > 0) {

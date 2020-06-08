@@ -3,13 +3,13 @@
 namespace Orbit\Controller\API\v1\Pub\Product\DataBuilder;
 
 use BaseStore;
-use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CategoryFilter;
-use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CitiesFilter;
-use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CountryFilter;
-use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\KeywordFilter;
-use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\StatusFilter;
-use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\StoreFilter;
 use Orbit\Helper\Searchable\Elasticsearch\ESSearchParamBuilder;
+use Orbit\Controller\API\v1\Pub\Product\SearchableFilters\CountryFilter;
+use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\StoreFilter;
+use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CitiesFilter;
+use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\StatusFilter;
+use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\KeywordFilter;
+use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CategoryFilter;
 
 /**
  * Brand product search query builder.
@@ -59,6 +59,36 @@ class SearchParamBuilder extends ESSearchParamBuilder
     }
 
     /**
+     * @override
+     *
+     * Force sorting by relevance if request has keyword.
+     *
+     */
+    protected function getSortingParams()
+    {
+        if ($this->request->has('keyword')) {
+            return [
+                'relevance' => 'desc',
+            ];
+        }
+
+        return parent::getSortingParams();
+    }
+
+    /**
+     * Sort by name.
+     *
+     * @override
+     */
+    public function sortByName($language = 'id', $sortMode = 'asc')
+    {
+        parent::sortByName($language, $sortMode);
+
+        // After sorting by name, then sort by relevance.
+        $this->sortByRelevance();
+    }
+
+    /**
      * Set keyword priority/weight against each field.
      *
      * @override
@@ -81,6 +111,9 @@ class SearchParamBuilder extends ESSearchParamBuilder
         $priorityDescription = isset($priorities['description'])
             ? $priorities['description'] : '^4';
 
+        $priorityProductTags = isset($priorities['product_tags'])
+            ? $priorities['product_tags'] : '^6';
+
         $this->{$logic}([
             'bool' => [
                 'should' => [
@@ -91,6 +124,7 @@ class SearchParamBuilder extends ESSearchParamBuilder
                                 'product_name' . $priorityProductName,
                                 'brand_name' . $priorityBrandName,
                                 'description' . $priorityDescription,
+                                'product_tags' . $priorityProductTags,
                             ]
                         ]
                     ],
