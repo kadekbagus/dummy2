@@ -703,7 +703,7 @@ class StoreDetailAPIController extends PubControllerAPI
      */
     private function getBrandCategory($brandId = '')
     {
-        $brandCategories = Tenant::select('categories.category_id', 'categories.name')
+        $brandCategories = Tenant::select('categories.category_id', 'categories.category_name')
                        ->leftJoin('category_merchant', 'merchants.merchant_id', '=', 'category_merchant.merchant_id')
                        ->join('categories', 'category_merchant.category_id', '=', 'categories.category_id')
                        ->where('categories.merchant_id', 0)
@@ -714,7 +714,7 @@ class StoreDetailAPIController extends PubControllerAPI
 
         foreach ($brandCategories as $brandCategory) {
             $this->categoryIds[] = $brandCategory->category_id;
-            $this->categoryNames[] = $brandCategory->name;
+            $this->categoryNames[] = $brandCategory->category_name;
         }
 
     }
