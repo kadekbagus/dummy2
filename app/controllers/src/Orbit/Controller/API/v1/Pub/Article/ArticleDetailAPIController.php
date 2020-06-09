@@ -485,6 +485,11 @@ class ArticleDetailAPIController extends PubControllerAPI
 
             $article['media_content'] = $mediaContent;
 
+            $article['category_names'] = [];
+
+            foreach ($article->category as $articleCategory) {
+                $article['category_names'][] = $articleCategory->name;
+            }
 
             $mall = null;
             $mallName = 'gtm';
