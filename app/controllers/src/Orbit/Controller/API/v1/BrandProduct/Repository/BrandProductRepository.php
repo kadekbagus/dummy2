@@ -71,17 +71,17 @@ class BrandProductRepository
             ->findOrFail($brandProductId);
 
         // get category name list on default lang (english)
-        $productCategories = Category::select('categories.category_id', 'categories.name')
+        $productCategories = Category::select('categories.category_id', 'categories.category_name')
                        ->leftJoin('brand_product_categories', 'categories.category_id', '=', 'brand_product_categories.object_id')
                        ->leftJoin('brand_products', 'brand_products.brand_product_id', '=', 'brand_product_categories.brand_product_id')
                        ->where('categories.status', 'active')
                        ->where('brand_products.brand_product_id', $brandProductId)
-                       ->groupBy('categories.name')
+                       ->groupBy('categories.category_id')
                        ->get();
 
         $categoryNames = [];
         foreach ($productCategories as $productCategory) {
-            $categoryNames[] = $productCategory->name;
+            $categoryNames[] = $productCategory->category_name;
         }
 
         $product->category_names = $categoryNames;

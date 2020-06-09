@@ -488,7 +488,7 @@ class ArticleDetailAPIController extends PubControllerAPI
             $article['category_names'] = [];
 
             foreach ($article->category as $articleCategory) {
-                $article['category_names'][] = $articleCategory->name;
+                $article['category_names'][] = $articleCategory->category_name;
             }
 
             $mall = null;

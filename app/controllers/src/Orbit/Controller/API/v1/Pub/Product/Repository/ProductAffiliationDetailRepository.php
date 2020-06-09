@@ -165,18 +165,18 @@ class ProductAffiliationDetailRepository
         ->firstOrFail();
 
         // get category name list on default lang (english)
-        $productCategories = Category::select('categories.category_id', 'categories.name')
+        $productCategories = Category::select('categories.category_id', 'categories.category_name')
                        ->leftJoin('product_link_to_object', 'categories.category_id', '=', 'product_link_to_object.object_id')
                        ->leftJoin('products', 'products.product_id', '=', 'product_link_to_object.product_id')
                        ->where('product_link_to_object.object_type', 'category')
                        ->where('categories.status', 'active')
                        ->where('products.product_id', $productId)
-                       ->groupBy('categories.name')
+                       ->groupBy('categories.category_id')
                        ->get();
 
         $categoryNames = [];
         foreach ($productCategories as $productCategory) {
-            $categoryNames[] = $productCategory->name;
+            $categoryNames[] = $productCategory->category_name;
         }
 
         $product->category_names = $categoryNames;
