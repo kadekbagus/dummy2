@@ -46,7 +46,7 @@ class BrandProductRepository
                             ->where('name', $lang)
                             ->first();
 
-        return BrandProduct::with([
+        $brandProduct = BrandProduct::with([
                 'categories' => function($query) use ($lang) {
                     $query->select(
                             'categories.category_id',
@@ -69,6 +69,24 @@ class BrandProductRepository
                 'brand_product_photos',
             ])
             ->findOrFail($brandProductId);
+
+        // get category name list on default lang (english)
+        $productCategories = Category::select('categories.category_id', 'categories.name')
+                       ->leftJoin('brand_product_categories', 'categories.category_id', '=', 'brand_product_categories.object_id')
+                       ->leftJoin('brand_products', 'brand_products.brand_product_id', '=', 'brand_product_categories.brand_product_id')
+                       ->where('categories.status', 'active')
+                       ->where('brand_products.brand_product_id', $brandProductId)
+                       ->groupBy('categories.name')
+                       ->get();
+
+        $categoryNames = [];
+        foreach ($productCategories as $productCategory) {
+            $categoryNames[] = $productCategory->name;
+        }
+
+        $product->category_names = $categoryNames;
+
+        return $brandProduct;
     }
 
     /**
