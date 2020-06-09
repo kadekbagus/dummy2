@@ -398,11 +398,6 @@ class StoreDetailAPIController extends PubControllerAPI
                 $mall = Mall::excludeDeleted()->where('merchant_id', '=', $mallId)->first();
             }
 
-            $this->getBrandCategory($merchantId);
-
-            $store->category_ids = $this->categoryIds;
-            $store->category_names = $this->categoryNames;
-
             if ($storeInfo->status != 'active') {
                 $mallName = 'gtm';
                 if (! empty($mall)) {
@@ -425,6 +420,11 @@ class StoreDetailAPIController extends PubControllerAPI
             foreach ($store->mediaImageOrig as $key => $value) {
                 $validPhotos[] = $store->mediaImageOrig[$key];
             }
+
+            $this->getBrandCategory($merchantId);
+
+            $store->category_ids = $this->categoryIds;
+            $store->category_names = $this->categoryNames;
 
             // Config page_views
             $configPageViewSource = Config::get('orbit.page_view.source', FALSE);
