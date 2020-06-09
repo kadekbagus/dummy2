@@ -331,6 +331,8 @@ class MallAPIController extends ControllerAPI
             $video_id_5 = OrbitInput::post('video_id_5');
             $video_id_6 = OrbitInput::post('video_id_6');
             $other_photo_section_title = OrbitInput::post('other_photo_section_title');
+            $mall_google_indoor_map = OrbitInput::post('mall_google_indoor_map');
+            $mall_google_indoor_streetview = OrbitInput::post('mall_google_indoor_streetview');
 
             // generate array validation image
             $logo_validation = $this->generate_validation_image('mall_logo', $logo, 'orbit.upload.mall.logo');
