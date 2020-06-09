@@ -32,6 +32,8 @@ class StoreDetailAPIController extends PubControllerAPI
     protected $valid_language = NULL;
     protected $store = NULL;
     protected $withoutScore = FALSE;
+    protected $categoryIds = [];
+    protected $categoryNames = [];
 
     /**
      * GET - get all detail store in all mall, group by name
@@ -395,8 +397,6 @@ class StoreDetailAPIController extends PubControllerAPI
                 $mall = Mall::excludeDeleted()->where('merchant_id', '=', $mallId)->first();
             }
 
-            $store->category_ids = $this->getBrandCategory($merchantId);
-
             if ($storeInfo->status != 'active') {
                 $mallName = 'gtm';
                 if (! empty($mall)) {
@@ -419,6 +419,11 @@ class StoreDetailAPIController extends PubControllerAPI
             foreach ($store->mediaImageOrig as $key => $value) {
                 $validPhotos[] = $store->mediaImageOrig[$key];
             }
+
+            $this->getBrandCategory($merchantId);
+
+            $store->category_ids = $this->categoryIds;
+            $store->category_names = $this->categoryNames;
 
             // Config page_views
             $configPageViewSource = Config::get('orbit.page_view.source', FALSE);
@@ -698,16 +703,21 @@ class StoreDetailAPIController extends PubControllerAPI
      */
     private function getBrandCategory($brandId = '')
     {
-        return Tenant::select('categories.category_id')
+        $brandCategories = Tenant::select('categories.category_id', 'categories.category_name')
                        ->leftJoin('category_merchant', 'merchants.merchant_id', '=', 'category_merchant.merchant_id')
                        ->join('categories', 'category_merchant.category_id', '=', 'categories.category_id')
                        ->where('categories.merchant_id', 0)
                        ->where('categories.status', 'active')
                        ->where('merchants.merchant_id', $brandId)
                        ->groupBy('categories.category_id')
-                       ->get()->lists('category_id');
-    }
+                       ->get();
 
+        foreach ($brandCategories as $brandCategory) {
+            $this->categoryIds[] = $brandCategory->category_id;
+            $this->categoryNames[] = $brandCategory->category_name;
+        }
+
+    }
 
     private function getSelectDescriptionQuery($mallId = null, $prefix, $valid_language)
     {
