@@ -158,6 +158,14 @@ class ProductAffiliationDetailRepository
                         ->where('base_merchants.status', 'active')
                         ->where('base_stores.status', 'active')
                         ->groupBy('base_merchants.base_merchant_id');
+                    },
+            'product_tags' => function($q) {
+                        $q->select(
+                            'product_tags.product_tag_id',
+                            'product_tag_object_id',
+                            'product_tag',
+                            'product_tag_object.object_id'
+                        );
                     }
         ])
         ->where('product_id', $productId)
