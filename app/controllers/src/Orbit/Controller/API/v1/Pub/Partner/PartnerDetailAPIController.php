@@ -209,12 +209,12 @@ class PartnerDetailAPIController extends PubControllerAPI
                 ->groupBy('partners.partner_id')
                 ->first();
 
-            // Cache the result of database calls
-            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($partner);
-
             if (! is_object($partner)) {
                 OrbitShopAPI::throwInvalidArgument('Partner that you specify is not found');
             }
+
+            // Cache the result of database calls
+            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($partner);
 
             $this->response->data = $partner;
             $this->response->code = 0;
