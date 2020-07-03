@@ -210,7 +210,12 @@ class PartnerDetailAPIController extends PubControllerAPI
                 ->first();
 
             if (! is_object($partner)) {
-                OrbitShopAPI::throwInvalidArgument('Partner that you specify is not found');
+                $httpCode = 404;
+                $this->response->data = null;
+                $this->response->code = 404;
+                $this->response->status = 'error';
+                $this->response->message = 'Partner that you specify is not found';
+                return $this->render($httpCode);
             }
 
             // Cache the result of database calls
