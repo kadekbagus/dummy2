@@ -21,6 +21,7 @@ return [
                 'pulsa_list' => 'See Pulsa &amp; Data Plan',
                 'see_more_vouchers' => 'See more vouchers on Gotomalls &raquo;',
                 'see_more_events' => 'See more events on Gotomalls &raquo;',
+                'see_more_products' => 'See more products on Gotomalls &raquo;',
             ],
         ],
     ],

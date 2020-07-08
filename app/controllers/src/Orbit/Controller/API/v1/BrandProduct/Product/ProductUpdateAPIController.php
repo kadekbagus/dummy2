@@ -5,7 +5,7 @@ namespace Orbit\Controller\API\v1\BrandProduct\Product;
 use Event;
 use Exception;
 use OrbitShop\API\v1\ControllerAPI;
-use Orbit\Controller\API\v1\BrandProduct\BrandProductRepository;
+use Orbit\Controller\API\v1\BrandProduct\Repository\BrandProductRepository;
 use Orbit\Controller\API\v1\BrandProduct\Product\Request\UpdateRequest;
 
 /**

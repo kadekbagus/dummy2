@@ -59,6 +59,23 @@ class SearchParamBuilder extends ESSearchParamBuilder
     }
 
     /**
+     * @override
+     *
+     * Force sorting by relevance if request has keyword.
+     *
+     */
+    protected function getSortingParams()
+    {
+        if ($this->request->has('keyword')) {
+            return [
+                'relevance' => 'desc',
+            ];
+        }
+
+        return parent::getSortingParams();
+    }
+
+    /**
      * Sort by name.
      *
      * @override
@@ -94,6 +111,9 @@ class SearchParamBuilder extends ESSearchParamBuilder
         $priorityDescription = isset($priorities['description'])
             ? $priorities['description'] : '^4';
 
+        $priorityProductTags = isset($priorities['product_tags'])
+            ? $priorities['product_tags'] : '^6';
+
         $this->{$logic}([
             'bool' => [
                 'should' => [
@@ -104,6 +124,7 @@ class SearchParamBuilder extends ESSearchParamBuilder
                                 'product_name' . $priorityProductName,
                                 'brand_name' . $priorityBrandName,
                                 'description' . $priorityDescription,
+                                'product_tags' . $priorityProductTags,
                             ]
                         ]
                     ],

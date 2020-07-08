@@ -8,6 +8,7 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Validator;
 use Language;
 use Product;
+use Category;
 
 /**
  * Product Affiliation Repository.
@@ -143,16 +144,50 @@ class ProductAffiliationDetailRepository
                                     )->where('media_name_long', 'product_photos_orig');
                           },
             'merchants' => function ($q) use ($prefix) {
-                        $q->select(DB::raw("{$prefix}base_merchants.name, {$prefix}base_merchants.base_merchant_id"),
-                                   DB::raw("(SELECT {$prefix}base_stores.base_store_id FROM {$prefix}base_stores
-                                              WHERE {$prefix}base_stores.base_merchant_id = {$prefix}base_merchants.base_merchant_id
-                                              AND {$prefix}base_merchants.status = 'active' limit 1) as merchant_id"),
-                                   'countries.name as country_name')
-                            ->leftJoin('countries', 'base_merchants.country_id', '=', 'countries.country_id');
+                        $q->select(
+                            DB::raw("
+                                    {$prefix}base_merchants.name,
+                                    {$prefix}base_merchants.base_merchant_id,
+                                    {$prefix}countries.name as country_name,
+                                    {$prefix}base_stores.base_store_id as merchant_id
+                                    "
+                                )
+                        )
+                        ->leftJoin('countries', 'base_merchants.country_id', '=', 'countries.country_id')
+                        ->leftJoin('base_stores', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
+                        ->where('base_merchants.status', 'active')
+                        ->where('base_stores.status', 'active')
+                        ->groupBy('base_merchants.base_merchant_id');
+                    },
+            'product_tags' => function($q) {
+                        $q->select(
+                            'product_tags.product_tag_id',
+                            'product_tag_object_id',
+                            'product_tag',
+                            'product_tag_object.object_id'
+                        );
                     }
         ])
         ->where('product_id', $productId)
+        ->where('products.status', 'active')
         ->firstOrFail();
+
+        // get category name list on default lang (english)
+        $productCategories = Category::select('categories.category_id', 'categories.category_name')
+                       ->leftJoin('product_link_to_object', 'categories.category_id', '=', 'product_link_to_object.object_id')
+                       ->leftJoin('products', 'products.product_id', '=', 'product_link_to_object.product_id')
+                       ->where('product_link_to_object.object_type', 'category')
+                       ->where('categories.status', 'active')
+                       ->where('products.product_id', $productId)
+                       ->groupBy('categories.category_id')
+                       ->get();
+
+        $categoryNames = [];
+        foreach ($productCategories as $productCategory) {
+            $categoryNames[] = $productCategory->category_name;
+        }
+
+        $product->category_names = $categoryNames;
 
         return $product;
     }

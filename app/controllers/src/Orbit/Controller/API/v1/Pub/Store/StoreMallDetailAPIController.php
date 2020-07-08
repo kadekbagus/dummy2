@@ -205,7 +205,8 @@ class StoreMallDetailAPIController extends PubControllerAPI
                               ->where('merchants.name', $storename)
                               ->where('merchants.status', 'active')
                               ->where(DB::raw("mall.country_id"), '=', $countryId)
-                              ->where(DB::raw("mall.status"), 'active');
+                              ->where(DB::raw("mall.status"), 'active')
+                              ->where(DB::raw("mall.is_subscribed"), 'Y');
 
             if (!empty ($cities)) {
                 $mall->whereIn(DB::raw('mall.city'), $cities);
