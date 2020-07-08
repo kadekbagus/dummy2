@@ -2858,5 +2858,14 @@ return array(
             'object_type' => null,
             'parameter_name' => null
         ),
+        // user clicking product announcement
+        '312' => array(
+            'name' => 'click_announcement_product',
+            'name_long' => 'Click Announcement Product',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null
+        ),
     ),
 );
