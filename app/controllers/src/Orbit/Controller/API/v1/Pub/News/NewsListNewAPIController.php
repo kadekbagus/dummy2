@@ -516,19 +516,20 @@ class NewsListNewAPIController extends PubControllerAPI
                         }
                     }
 
-                    if (empty($mallId)) {
-                        if ($key === 'gtm_page_views') {
-                            $pageView = $value;
-                        }
-                    } else {
-                        if (isset($record['_source']['mall_page_views'])) {
-                            foreach ($record['_source']['mall_page_views'] as $dt) {
-                                if ($dt['location_id'] === $mallId) {
-                                    $pageView = $dt['total_views'];
-                                }
-                            }
-                        }
-                    }
+                    // !--------- Disable page view --------!
+                    // if (empty($mallId)) {
+                    //     if ($key === 'gtm_page_views') {
+                    //         $pageView = $value;
+                    //     }
+                    // } else {
+                    //     if (isset($record['_source']['mall_page_views'])) {
+                    //         foreach ($record['_source']['mall_page_views'] as $dt) {
+                    //             if ($dt['location_id'] === $mallId) {
+                    //                 $pageView = $dt['total_views'];
+                    //             }
+                    //         }
+                    //     }
+                    // }
 
                     if ($key === 'avg_general_rating') {
                         $avgGeneralRating = $value;
@@ -546,13 +547,14 @@ class NewsListNewAPIController extends PubControllerAPI
                     $data['total_review'] = round($totalGeneralReviews, 1);
                 }
 
-                if (Config::get('orbit.page_view.source', 'mysql') === 'redis') {
-                    $redisKey = 'news' . '||' . $campaignId . '||' . $locationId;
-                    $redisConnection = Config::get('orbit.page_view.redis.connection', '');
-                    $redis = Redis::connection($redisConnection);
-                    $pageView = (! empty($redis->get($redisKey))) ? $redis->get($redisKey) : $pageView;
-                }
-                $data['page_view'] = $pageView;
+                // if (Config::get('orbit.page_view.source', 'mysql') === 'redis') {
+                //     $redisKey = 'news' . '||' . $campaignId . '||' . $locationId;
+                //     $redisConnection = Config::get('orbit.page_view.redis.connection', '');
+                //     $redis = Redis::connection($redisConnection);
+                //     $pageView = (! empty($redis->get($redisKey))) ? $redis->get($redisKey) : $pageView;
+                // }
+                // $data['page_view'] = $pageView;
+                $data['page_view'] = 0;
 
                 $data['score'] = $record['_score'];
                 unset($data['created_by'], $data['creator_email'], $data['partner_tokens']);

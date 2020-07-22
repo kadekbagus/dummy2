@@ -350,37 +350,39 @@ class CouponDetailAPIController extends PubControllerAPI
             $configPageViewRedisDb = Config::get('orbit.page_view.redis.connection', FALSE);
             $totalPageViews = 0;
 
+            // !--------- Disable page view --------!
             // Get total page views, depend of config what DB used
-            if ($configPageViewSource === 'redis') {
-                $keyRedis = 'coupon||' . $couponId . '||' . $location;
-                $redis = Redis::connection($configPageViewRedisDb);
-                $totalPageViewRedis = $redis->get($keyRedis);
-                $totalPageViews = 0;
+            // if ($configPageViewSource === 'redis') {
+            //     $keyRedis = 'coupon||' . $couponId . '||' . $location;
+            //     $redis = Redis::connection($configPageViewRedisDb);
+            //     $totalPageViewRedis = $redis->get($keyRedis);
+            //     $totalPageViews = 0;
 
-                if (! empty($totalPageViewRedis)) {
-                    $totalPageViews = $totalPageViewRedis;
-                } else {
-                    $totalObjectPageView = TotalObjectPageView::where('object_type', 'coupon')
-                                                                 ->where('object_id', $couponId)
-                                                                 ->where('location_id', $location)
-                                                                 ->first();
+            //     if (! empty($totalPageViewRedis)) {
+            //         $totalPageViews = $totalPageViewRedis;
+            //     } else {
+            //         $totalObjectPageView = TotalObjectPageView::where('object_type', 'coupon')
+            //                                                      ->where('object_id', $couponId)
+            //                                                      ->where('location_id', $location)
+            //                                                      ->first();
 
-                    if (! empty($totalObjectPageView->total_view)) {
-                        $totalPageViews = $totalObjectPageView->total_view;
-                    }
-                }
+            //         if (! empty($totalObjectPageView->total_view)) {
+            //             $totalPageViews = $totalObjectPageView->total_view;
+            //         }
+            //     }
 
-            } else {
-                $totalObjectPageView = TotalObjectPageView::where('object_type', 'coupon')
-                                                             ->where('object_id', $couponId)
-                                                             ->where('location_id', $location)
-                                                             ->first();
+            // } else {
+            //     $totalObjectPageView = TotalObjectPageView::where('object_type', 'coupon')
+            //                                                  ->where('object_id', $couponId)
+            //                                                  ->where('location_id', $location)
+            //                                                  ->first();
 
-                if (! empty($totalObjectPageView->total_view)) {
-                    $totalPageViews = $totalObjectPageView->total_view;
-                }
-            }
-            $coupon->total_view = $totalPageViews;
+            //     if (! empty($totalObjectPageView->total_view)) {
+            //         $totalPageViews = $totalObjectPageView->total_view;
+            //     }
+            // }
+            // $coupon->total_view = $totalPageViews;
+            $coupon->total_view = 0;
 
             // ---- START RATING ----
             $reviewCounter = \Orbit\Helper\MongoDB\Review\ReviewCounter::create(Config::get('database.mongodb'))
