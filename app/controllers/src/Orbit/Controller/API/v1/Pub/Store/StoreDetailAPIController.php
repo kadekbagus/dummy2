@@ -466,35 +466,37 @@ class StoreDetailAPIController extends PubControllerAPI
                 }
             }
 
+            // !--------- Disable page view --------!
             // Get total page views, depend of config what DB used
-            if ($configPageViewSource === 'redis') {
-                $keyRedis = 'tenant||' . $baseMerchantId . '||' . $location;
-                $redis = Redis::connection($configPageViewRedisDb);
-                $totalPageViewRedis = $redis->get($keyRedis);
+            // if ($configPageViewSource === 'redis') {
+            //     $keyRedis = 'tenant||' . $baseMerchantId . '||' . $location;
+            //     $redis = Redis::connection($configPageViewRedisDb);
+            //     $totalPageViewRedis = $redis->get($keyRedis);
 
-                if (! empty($totalPageViewRedis)) {
-                    $totalPageViews = $totalPageViewRedis;
-                } else {
-                    $totalObjectPageView = TotalObjectPageView::where('object_type', 'tenant')
-                                                                 ->where('object_id', $baseMerchantId)
-                                                                 ->where('location_id', $location)
-                                                                 ->first();
+            //     if (! empty($totalPageViewRedis)) {
+            //         $totalPageViews = $totalPageViewRedis;
+            //     } else {
+            //         $totalObjectPageView = TotalObjectPageView::where('object_type', 'tenant')
+            //                                                      ->where('object_id', $baseMerchantId)
+            //                                                      ->where('location_id', $location)
+            //                                                      ->first();
 
-                    if (! empty($totalObjectPageView->total_view)) {
-                        $totalPageViews = $totalObjectPageView->total_view;
-                    }
-                }
-            } else {
-                $totalObjectPageView = TotalObjectPageView::where('object_type', 'tenant')
-                                                             ->where('object_id', $baseMerchantId)
-                                                             ->where('location_id', $location)
-                                                             ->first();
+            //         if (! empty($totalObjectPageView->total_view)) {
+            //             $totalPageViews = $totalObjectPageView->total_view;
+            //         }
+            //     }
+            // } else {
+            //     $totalObjectPageView = TotalObjectPageView::where('object_type', 'tenant')
+            //                                                  ->where('object_id', $baseMerchantId)
+            //                                                  ->where('location_id', $location)
+            //                                                  ->first();
 
-                if (! empty($totalObjectPageView->total_view)) {
-                    $totalPageViews = $totalObjectPageView->total_view;
-                }
-            }
-            $store->total_view = $totalPageViews;
+            //     if (! empty($totalObjectPageView->total_view)) {
+            //         $totalPageViews = $totalObjectPageView->total_view;
+            //     }
+            // }
+            // $store->total_view = $totalPageViews;
+            $store->total_view = 0;
 
 
             // Get status followed

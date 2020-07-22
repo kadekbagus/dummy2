@@ -693,31 +693,33 @@ class PromotionFeaturedListAPIController extends PubControllerAPI
                         }
                     }
 
-                    if (empty($mallId)) {
-                        if ($key === 'gtm_page_views') {
-                            $pageView = $value;
-                        }
-                    } else {
-                        if (isset($record['_source']['mall_page_views'])) {
-                            foreach ($record['_source']['mall_page_views'] as $dt) {
-                                if ($dt['location_id'] === $mallId) {
-                                    $pageView = $dt['total_views'];
-                                }
-                            }
-                        }
-                    }
+                    // !--------- Disable page view --------!
+                    // if (empty($mallId)) {
+                    //     if ($key === 'gtm_page_views') {
+                    //         $pageView = $value;
+                    //     }
+                    // } else {
+                    //     if (isset($record['_source']['mall_page_views'])) {
+                    //         foreach ($record['_source']['mall_page_views'] as $dt) {
+                    //             if ($dt['location_id'] === $mallId) {
+                    //                 $pageView = $dt['total_views'];
+                    //             }
+                    //         }
+                    //     }
+                    // }
                 }
 
                 $data['average_rating'] = (! empty($record['fields']['average_rating'][0])) ? number_format(round($record['fields']['average_rating'][0], 1), 1) : 0;
                 $data['total_review'] = (! empty($record['fields']['total_review'][0])) ? round($record['fields']['total_review'][0], 1) : 0;
 
-                if (Config::get('orbit.page_view.source', 'mysql') === 'redis') {
-                    $redisKey = 'promotion' . '||' . $campaignId . '||' . $locationId;
-                    $redisConnection = Config::get('orbit.page_view.redis.connection', '');
-                    $redis = Redis::connection($redisConnection);
-                    $pageView = (! empty($redis->get($redisKey))) ? $redis->get($redisKey) : $pageView;
-                }
-                $data['page_view'] = $pageView;
+                // if (Config::get('orbit.page_view.source', 'mysql') === 'redis') {
+                //     $redisKey = 'promotion' . '||' . $campaignId . '||' . $locationId;
+                //     $redisConnection = Config::get('orbit.page_view.redis.connection', '');
+                //     $redis = Redis::connection($redisConnection);
+                //     $pageView = (! empty($redis->get($redisKey))) ? $redis->get($redisKey) : $pageView;
+                // }
+                // $data['page_view'] = $pageView;
+                $data['page_view'] = 0;
                 $data['score'] = $record['_score'];
                 unset($data['created_by'], $data['creator_email'], $data['partner_tokens']);
                 $listOfRec[] = $data;

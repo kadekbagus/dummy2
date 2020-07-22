@@ -228,35 +228,37 @@ class NewsDetailAPIController extends PubControllerAPI
             $configPageViewRedisDb = Config::get('orbit.page_view.redis.connection', FALSE);
             $totalPageViews = 0;
 
+            // !--------- Disable page view --------!
             // Get total page views, depend of config what DB used
-            if ($configPageViewSource === 'redis') {
-                $keyRedis = 'news||' . $newsId . '||' . $location;
-                $redis = Redis::connection($configPageViewRedisDb);
-                $totalPageViewRedis = $redis->get($keyRedis);
+            // if ($configPageViewSource === 'redis') {
+            //     $keyRedis = 'news||' . $newsId . '||' . $location;
+            //     $redis = Redis::connection($configPageViewRedisDb);
+            //     $totalPageViewRedis = $redis->get($keyRedis);
 
-                if (! empty($totalPageViewRedis)) {
-                    $totalPageViews = $totalPageViewRedis;
-                } else {
-                    $totalObjectPageView = TotalObjectPageView::where('object_type', 'news')
-                                                                 ->where('object_id', $newsId)
-                                                                 ->where('location_id', $location)
-                                                                 ->first();
+            //     if (! empty($totalPageViewRedis)) {
+            //         $totalPageViews = $totalPageViewRedis;
+            //     } else {
+            //         $totalObjectPageView = TotalObjectPageView::where('object_type', 'news')
+            //                                                      ->where('object_id', $newsId)
+            //                                                      ->where('location_id', $location)
+            //                                                      ->first();
 
-                    if (! empty($totalObjectPageView->total_view)) {
-                        $totalPageViews = $totalObjectPageView->total_view;
-                    }
-                }
-            } else {
-                $totalObjectPageView = TotalObjectPageView::where('object_type', 'news')
-                                                             ->where('object_id', $newsId)
-                                                             ->where('location_id', $location)
-                                                             ->first();
+            //         if (! empty($totalObjectPageView->total_view)) {
+            //             $totalPageViews = $totalObjectPageView->total_view;
+            //         }
+            //     }
+            // } else {
+            //     $totalObjectPageView = TotalObjectPageView::where('object_type', 'news')
+            //                                                  ->where('object_id', $newsId)
+            //                                                  ->where('location_id', $location)
+            //                                                  ->first();
 
-                if (! empty($totalObjectPageView->total_view)) {
-                    $totalPageViews = $totalObjectPageView->total_view;
-                }
-            }
-            $news->total_view = $totalPageViews;
+            //     if (! empty($totalObjectPageView->total_view)) {
+            //         $totalPageViews = $totalObjectPageView->total_view;
+            //     }
+            // }
+            // $news->total_view = $totalPageViews;
+            $news->total_view = 0;
 
             if ($news->is_exclusive === 'Y') {
                 // check token

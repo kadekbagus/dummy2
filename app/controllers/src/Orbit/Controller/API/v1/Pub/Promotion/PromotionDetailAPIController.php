@@ -219,35 +219,37 @@ class PromotionDetailAPIController extends PubControllerAPI
             $configPageViewRedisDb = Config::get('orbit.page_view.redis.connection', FALSE);
             $totalPageViews = 0;
 
+            // !--------- Disable page view --------!
             // Get total page views, depend of config what DB used
-            if ($configPageViewSource === 'redis') {
-                $keyRedis = 'promotion||' . $promotionId . '||' . $location;
-                $redis = Redis::connection($configPageViewRedisDb);
-                $totalPageViewRedis = $redis->get($keyRedis);
+            // if ($configPageViewSource === 'redis') {
+            //     $keyRedis = 'promotion||' . $promotionId . '||' . $location;
+            //     $redis = Redis::connection($configPageViewRedisDb);
+            //     $totalPageViewRedis = $redis->get($keyRedis);
 
-                if (! empty($totalPageViewRedis)) {
-                    $totalPageViews = $totalPageViewRedis;
-                } else {
-                    $totalObjectPageView = TotalObjectPageView::where('object_type', 'promotion')
-                                                                 ->where('object_id', $promotionId)
-                                                                 ->where('location_id', $location)
-                                                                 ->first();
+            //     if (! empty($totalPageViewRedis)) {
+            //         $totalPageViews = $totalPageViewRedis;
+            //     } else {
+            //         $totalObjectPageView = TotalObjectPageView::where('object_type', 'promotion')
+            //                                                      ->where('object_id', $promotionId)
+            //                                                      ->where('location_id', $location)
+            //                                                      ->first();
 
-                    if (! empty($totalObjectPageView->total_view)) {
-                        $totalPageViews = $totalObjectPageView->total_view;
-                    }
-                }
-            } else {
-                $totalObjectPageView = TotalObjectPageView::where('object_type', 'promotion')
-                                                             ->where('object_id', $promotionId)
-                                                             ->where('location_id', $location)
-                                                             ->first();
+            //         if (! empty($totalObjectPageView->total_view)) {
+            //             $totalPageViews = $totalObjectPageView->total_view;
+            //         }
+            //     }
+            // } else {
+            //     $totalObjectPageView = TotalObjectPageView::where('object_type', 'promotion')
+            //                                                  ->where('object_id', $promotionId)
+            //                                                  ->where('location_id', $location)
+            //                                                  ->first();
 
-                if (! empty($totalObjectPageView->total_view)) {
-                    $totalPageViews = $totalObjectPageView->total_view;
-                }
-            }
-            $promotion->total_view = $totalPageViews;
+            //     if (! empty($totalObjectPageView->total_view)) {
+            //         $totalPageViews = $totalObjectPageView->total_view;
+            //     }
+            // }
+            // $promotion->total_view = $totalPageViews;
+            $promotion->total_view = 0;
 
             if ($promotion->is_exclusive === 'Y') {
                 // check token
