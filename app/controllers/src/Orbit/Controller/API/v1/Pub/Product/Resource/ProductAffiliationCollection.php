@@ -25,6 +25,16 @@ class ProductAffiliationCollection extends ResourceCollection
 
         foreach($this->collection as $item) {
             $data = $item['_source'];
+            $logos = Config::get('orbit.marketplace_logo', null);
+            if (isset($data['marketplace_names']) && ! empty($logos)) {
+                foreach($data['marketplace_names'] as &$marketplace) {
+                    $marketplace['marketplace_logo'] = null;
+                    if (array_key_exists($marketplace['marketplace_name'], $logos)) {
+                        $marketplace['marketplace_logo'] = $logos[$marketplace['marketplace_name']];
+                    }
+                }
+            }
+
             $this->data['records'][] = [
                 'id' => $item['_id'],
                 'name' => $data['product_name'],
@@ -38,6 +48,7 @@ class ProductAffiliationCollection extends ResourceCollection
                 'brands' => $data['link_to_brands'],
                 'brandId' => $data['brand_id'],
                 'brandName' => $data['brand_name'],
+                'marketplaces' => isset($data['marketplace_names']) ? $data['marketplace_names'] : [],
             ];
         }
 
