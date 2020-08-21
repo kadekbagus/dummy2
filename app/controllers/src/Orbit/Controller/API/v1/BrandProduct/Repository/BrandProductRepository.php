@@ -14,6 +14,7 @@ use Orbit\Controller\API\v1\Pub\DigitalProduct\Helper\MediaQuery;
 use ProductLinkToObject;
 use Request;
 use Variant;
+use Category;
 
 /**
  * Brand Product Repository. An abstraction which unify various Brand Product
@@ -46,7 +47,7 @@ class BrandProductRepository
                             ->where('name', $lang)
                             ->first();
 
-        return BrandProduct::with([
+        $brandProduct = BrandProduct::with([
                 'categories' => function($query) use ($lang) {
                     $query->select(
                             'categories.category_id',
@@ -69,6 +70,24 @@ class BrandProductRepository
                 'brand_product_photos',
             ])
             ->findOrFail($brandProductId);
+
+        // get category name list on default lang (english)
+        $productCategories = Category::select('categories.category_id', 'categories.category_name')
+                       ->leftJoin('brand_product_categories', 'categories.category_id', '=', 'brand_product_categories.category_id')
+                       ->leftJoin('brand_products', 'brand_products.brand_product_id', '=', 'brand_product_categories.brand_product_id')
+                       ->where('categories.status', 'active')
+                       ->where('brand_products.brand_product_id', $brandProductId)
+                       ->groupBy('categories.category_id')
+                       ->get();
+
+        $categoryNames = [];
+        foreach ($productCategories as $productCategory) {
+            $categoryNames[] = $productCategory->category_name;
+        }
+
+        $brandProduct->category_names = $categoryNames;
+
+        return $brandProduct;
     }
 
     /**

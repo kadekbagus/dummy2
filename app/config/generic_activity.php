@@ -2849,5 +2849,23 @@ return array(
             'object_type' => 'Product',
             'parameter_name' => 'object_id',
         ),
+        // user clicking product banner in home page
+        '311' => array(
+            'name' => 'click_home_products_link',
+            'name_long' => 'Click Home Products Link',
+            'module_name' => 'Product',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null
+        ),
+        // user clicking product announcement
+        '312' => array(
+            'name' => 'click_announcement_product',
+            'name_long' => 'Click Announcement Product',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null
+        ),
     ),
 );

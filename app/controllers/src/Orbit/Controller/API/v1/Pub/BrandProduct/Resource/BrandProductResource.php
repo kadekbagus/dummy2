@@ -49,6 +49,7 @@ class BrandProductResource extends Resource
                 $this->resource,
                 $arrVariants
             ),
+            'category_names' => $this->category_names,
         ];
     }
 

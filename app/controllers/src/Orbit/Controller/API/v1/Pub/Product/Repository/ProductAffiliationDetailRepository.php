@@ -8,6 +8,7 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Validator;
 use Language;
 use Product;
+use Category;
 
 /**
  * Product Affiliation Repository.
@@ -157,11 +158,36 @@ class ProductAffiliationDetailRepository
                         ->where('base_merchants.status', 'active')
                         ->where('base_stores.status', 'active')
                         ->groupBy('base_merchants.base_merchant_id');
+                    },
+            'product_tags' => function($q) {
+                        $q->select(
+                            'product_tags.product_tag_id',
+                            'product_tag_object_id',
+                            'product_tag',
+                            'product_tag_object.object_id'
+                        );
                     }
         ])
         ->where('product_id', $productId)
         ->where('products.status', 'active')
         ->firstOrFail();
+
+        // get category name list on default lang (english)
+        $productCategories = Category::select('categories.category_id', 'categories.category_name')
+                       ->leftJoin('product_link_to_object', 'categories.category_id', '=', 'product_link_to_object.object_id')
+                       ->leftJoin('products', 'products.product_id', '=', 'product_link_to_object.product_id')
+                       ->where('product_link_to_object.object_type', 'category')
+                       ->where('categories.status', 'active')
+                       ->where('products.product_id', $productId)
+                       ->groupBy('categories.category_id')
+                       ->get();
+
+        $categoryNames = [];
+        foreach ($productCategories as $productCategory) {
+            $categoryNames[] = $productCategory->category_name;
+        }
+
+        $product->category_names = $categoryNames;
 
         return $product;
     }
