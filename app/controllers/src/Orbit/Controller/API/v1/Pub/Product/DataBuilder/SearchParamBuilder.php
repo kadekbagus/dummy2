@@ -10,6 +10,8 @@ use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CitiesFilter;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\StatusFilter;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\KeywordFilter;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\CategoryFilter;
+use Orbit\Controller\API\v1\Pub\Product\SearchableFilters\MarketplaceFilter;
+use Orbit\Controller\API\v1\Pub\Product\SearchableFilters\PriceRangeFilter;
 
 /**
  * Brand product search query builder.
@@ -24,7 +26,9 @@ class SearchParamBuilder extends ESSearchParamBuilder
         CategoryFilter,
         CountryFilter,
         CitiesFilter,
-        StoreFilter;
+        StoreFilter,
+        PriceRangeFilter,
+        MarketplaceFilter;
 
     protected $objectType = 'product_affiliations';
 
@@ -41,6 +45,7 @@ class SearchParamBuilder extends ESSearchParamBuilder
         'category_id',
         'country',
         'brand_id',
+        'price_range',
     ];
 
     /**
@@ -234,6 +239,14 @@ class SearchParamBuilder extends ESSearchParamBuilder
             }
 
             $this->filterByBrand($brandId);
+        });
+
+        $this->request->has('price_range', function($priceRange) {
+            $this->filterByPriceRange($priceRange);
+        });
+
+        $this->request->has('marketplaces', function($marketplaces) {
+            $this->filterByMarketplace($marketplaces);
         });
 
         // Exclude description from the result,
