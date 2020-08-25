@@ -6469,6 +6469,9 @@ return array(
         ],
     ],
 
+    /**
+     * Config for affiliation logo for product list page
+     */
     'marketplace_logo' => [
         'Bukalapak' => 'https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/affiliations/logo/logo-bukalapak.png',
         'Blibli.com' => 'https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/affiliations/logo/logo-blibli.png',
