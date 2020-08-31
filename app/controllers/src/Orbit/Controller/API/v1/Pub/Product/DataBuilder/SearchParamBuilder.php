@@ -45,7 +45,9 @@ class SearchParamBuilder extends ESSearchParamBuilder
         'category_id',
         'country',
         'brand_id',
-        'price_range',
+        'min_price',
+        'max_price',
+        'marketplaces',
     ];
 
     /**
@@ -241,8 +243,12 @@ class SearchParamBuilder extends ESSearchParamBuilder
             $this->filterByBrand($brandId);
         });
 
-        $this->request->has('price_range', function($priceRange) {
-            $this->filterByPriceRange($priceRange);
+        $this->request->has('min_price', function($minPrice) {
+            $this->filterByMinPrice($minPrice);
+        });
+
+        $this->request->has('max_price', function($maxPrice) {
+            $this->filterByMaxPrice($maxPrice);
         });
 
         $this->request->has('marketplaces', function($marketplaces) {

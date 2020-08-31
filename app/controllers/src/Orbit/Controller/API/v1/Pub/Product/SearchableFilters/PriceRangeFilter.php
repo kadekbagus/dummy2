@@ -4,36 +4,47 @@ namespace Orbit\Controller\API\v1\Pub\Product\SearchableFilters;
 
 /**
  * Implement price range filter.
+ *
+ * @author Budi <budi@dominopos.com>
  */
 trait PriceRangeFilter
 {
     /**
-     * Filter by price range.
+     * Filter by min price
      *
-     * @param  string $priceRange price range, separated by dash '-'.
-     * @param string $logic logic that should wrap this query.
+     * @param  int $minPrice minimum price
+     * @param string $logic logic that should wrap this filter.
      * @return void
      */
-    public function filterByPriceRange($priceRange = '', $logic = 'filter')
+    public function filterByMinPrice($minPrice = 0, $logic = 'filter')
     {
-        $priceRange = explode('-', $priceRange);
-        $priceRangeQuery = [];
-
-        if (isset($priceRange[0]) && ! empty($priceRange[0])) {
-            $priceRangeQuery['lowest_selling_price'] = [
-                'gte' => (double) $priceRange[0]
-            ];
-        }
-
-        if (isset($priceRange[1]) && ! empty($priceRange[1])) {
-            $priceRangeQuery['highest_selling_price'] = [
-                'lte' => (double) $priceRange[1],
-            ];
-        }
-
-        if (! empty($priceRangeQuery)) {
+        if (! empty($minPrice)) {
             $this->{$logic}([
-                'range' => $priceRangeQuery
+                'range' => [
+                    'lowest_selling_price' => [
+                        'gte' => (double) $minPrice,
+                    ],
+                ],
+            ]);
+        }
+    }
+
+    /**
+     * Filter by max price
+     *
+     * @param  int $maxPrice maximum price
+     * @param string $logic logic that should wrap this filter.
+     * @return void
+     */
+    public function filterByMaxPrice($maxPrice = 0, $logic = 'filter')
+    {
+        if (! empty($maxPrice)) {
+            $this->{$logic}([
+                'range' => [
+                    'highest_selling_price' => [
+                        'lte' => (double) $maxPrice,
+                    ],
+                ],
             ]);
         }
     }

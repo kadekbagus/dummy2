@@ -48,7 +48,9 @@ class SearchParamBuilder extends ESSearchParamBuilder
         'store_id',
         'mall_id',
         'brand_id',
-        'price_range',
+        'min_price',
+        'max_price',
+        'marketplaces',
     ];
 
     /**
@@ -108,8 +110,12 @@ class SearchParamBuilder extends ESSearchParamBuilder
             $this->filterByBrand($brandId);
         });
 
-        $this->request->has('price_range', function($priceRange) {
-            $this->filterByPriceRange($priceRange);
+        $this->request->has('min_price', function($minPrice) {
+            $this->filterByMinPrice($minPrice);
+        });
+
+        $this->request->has('max_price', function($maxPrice) {
+            $this->filterByMaxPrice($maxPrice);
         });
 
         $this->setBodyParams([
