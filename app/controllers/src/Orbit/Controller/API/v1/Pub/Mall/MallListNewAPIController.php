@@ -334,16 +334,17 @@ class MallListNewAPIController extends PubControllerAPI
                 $mallId = $dt['_source']['merchant_id'];
 
                 $pageView = 0;
-                if (Config::get('orbit.page_view.source', 'mysql') === 'redis') {
-                    $redisKeyGTM = 'mall' . '||' . $mallId . '||0';
-                    $redisKeyMall = 'mall' . '||' . $mallId . '||' . $mallId;
-                    $redisConnection = Config::get('orbit.page_view.redis.connection', '');
-                    $redis = Redis::connection($redisConnection);
-                    $pageViewGTM = (! empty($redis->get($redisKeyGTM))) ? $redis->get($redisKeyGTM) : 0;
-                    $pageViewMall = (! empty($redis->get($redisKeyMall))) ? $redis->get($redisKeyMall) : 0;
+                // !--------- Disable page view --------!
+                // if (Config::get('orbit.page_view.source', 'mysql') === 'redis') {
+                //     $redisKeyGTM = 'mall' . '||' . $mallId . '||0';
+                //     $redisKeyMall = 'mall' . '||' . $mallId . '||' . $mallId;
+                //     $redisConnection = Config::get('orbit.page_view.redis.connection', '');
+                //     $redis = Redis::connection($redisConnection);
+                //     $pageViewGTM = (! empty($redis->get($redisKeyGTM))) ? $redis->get($redisKeyGTM) : 0;
+                //     $pageViewMall = (! empty($redis->get($redisKeyMall))) ? $redis->get($redisKeyMall) : 0;
 
-                    $pageView = (int) $pageViewGTM + (int) $pageViewMall;
-                }
+                //     $pageView = (int) $pageViewGTM + (int) $pageViewMall;
+                // }
 
                 /*** disable follow status on listing ***/
                 // $followStatus = false;

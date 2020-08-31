@@ -9,6 +9,8 @@ use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\KeywordFilter;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\MallFilter;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\StatusFilter;
 use Orbit\Controller\API\v1\Pub\BrandProduct\SearchableFilters\StoreFilter;
+use Orbit\Controller\API\v1\Pub\Product\SearchableFilters\MarketplaceFilter;
+use Orbit\Controller\API\v1\Pub\Product\SearchableFilters\PriceRangeFilter;
 use Orbit\Helper\Searchable\Elasticsearch\ESSearchParamBuilder;
 
 /**
@@ -25,7 +27,8 @@ class SearchParamBuilder extends ESSearchParamBuilder
         CountryFilter,
         CitiesFilter,
         MallFilter,
-        StoreFilter;
+        StoreFilter,
+        PriceRangeFilter;
 
     protected $objectType = 'products';
 
@@ -45,6 +48,9 @@ class SearchParamBuilder extends ESSearchParamBuilder
         'store_id',
         'mall_id',
         'brand_id',
+        'min_price',
+        'max_price',
+        'marketplaces',
     ];
 
     /**
@@ -102,6 +108,14 @@ class SearchParamBuilder extends ESSearchParamBuilder
 
         $this->request->has('brand_id', function($brandId) {
             $this->filterByBrand($brandId);
+        });
+
+        $this->request->has('min_price', function($minPrice) {
+            $this->filterByMinPrice($minPrice);
+        });
+
+        $this->request->has('max_price', function($maxPrice) {
+            $this->filterByMaxPrice($maxPrice);
         });
 
         $this->setBodyParams([
