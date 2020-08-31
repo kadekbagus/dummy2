@@ -128,6 +128,10 @@ class ProviderProductUpdateAPIController extends ControllerAPI
                 $updatedProviderProduct->status = $status;
             });
 
+            OrbitInput::post('extra_field_metadata', function($extra_field_metadata) use ($updatedProviderProduct) {
+                $updatedProviderProduct->extra_field_metadata = $extra_field_metadata;
+            });
+
             Event::fire('orbit.updateproviderproduct.postupdateproviderproduct.before.save', array($this, $updatedProviderProduct));
 
             $updatedProviderProduct->touch();
