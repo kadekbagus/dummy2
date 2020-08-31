@@ -17,16 +17,24 @@ trait PriceRangeFilter
     public function filterByPriceRange($priceRange = '', $logic = 'filter')
     {
         $priceRange = explode('-', $priceRange);
+        $priceRangeQuery = [];
 
-        $this->{$logic}([
-            'range' => [
-                'lowest_selling_price' => [
-                    'gte' => (double) $priceRange[0],
-                ],
-                'highest_selling_price' => [
-                    'lte' => (double) $priceRange[1],
-                ],
-            ],
-        ]);
+        if (isset($priceRange[0]) && ! empty($priceRange[0])) {
+            $priceRangeQuery['lowest_selling_price'] = [
+                'gte' => (double) $priceRange[0]
+            ];
+        }
+
+        if (isset($priceRange[1]) && ! empty($priceRange[1])) {
+            $priceRangeQuery['highest_selling_price'] = [
+                'lte' => (double) $priceRange[1],
+            ];
+        }
+
+        if (! empty($priceRangeQuery)) {
+            $this->{$logic}([
+                'range' => $priceRangeQuery
+            ]);
+        }
     }
 }
