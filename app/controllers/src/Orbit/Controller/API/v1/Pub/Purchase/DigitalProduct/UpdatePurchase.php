@@ -232,9 +232,15 @@ class UpdatePurchase
                     $this->purchase->user->activity(new PurchaseProcessingProductActivity($this->purchase, $objectName, $this->objectType));
                 }
 
-                Event::fire('orbit.payment.postupdatepayment.after.commit', [$this->purchase, $mall]);
+                $UPointPaymentInfo = [
+                    'payment_info' => $request->upoint_payment_info ?: ''
+                ];
 
-                $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
+                Event::fire('orbit.payment.postupdatepayment.after.commit', [
+                    $this->purchase,
+                    $mall,
+                    $UPointPaymentInfo
+                ]);
 
                 // If previous status was starting and now is pending, we should trigger job transaction status check.
                 // The job will be run forever until the transaction status is success, failed, expired or reached the maximum number of allowed check.

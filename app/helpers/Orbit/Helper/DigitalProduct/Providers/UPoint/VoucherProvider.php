@@ -1,16 +1,17 @@
-<?php namespace Orbit\Helper\DigitalProduct\Providers\Ayopay;
+<?php namespace Orbit\Helper\DigitalProduct\Providers\UPoint;
 
 use Exception;
 use Orbit\Helper\DigitalProduct\Providers\BaseProvider;
-use Orbit\Helper\DigitalProduct\Providers\Ayopay\API\StatusAPI;
-use Orbit\Helper\DigitalProduct\Providers\Ayopay\API\PurchaseAPI;
+use Orbit\Helper\DigitalProduct\Providers\UPoint\API\ConfirmAPI;
+use Orbit\Helper\DigitalProduct\Providers\UPoint\API\StatusAPI;
+use Orbit\Helper\DigitalProduct\Providers\UPoint\API\PurchaseAPI;
 
 /**
- * Purchase Provider for AyoPay.
+ * Purchase Provider for UPoint.
  *
  * @author Budi <budi@gotomalls.com>
  */
-class Provider extends BaseProvider
+class VoucherProvider extends BaseProvider
 {
     /**
      * Purchase the product from provider.
@@ -35,10 +36,10 @@ class Provider extends BaseProvider
     }
 
     /**
-     *
+     * implement confirm purchase to upoint server.
      */
     public function confirm($params = [])
     {
-        throw new Exception("Confirm Purchase not supported by Ayopay.");
+        return ConfirmAPI::create($params)->run();
     }
 }
