@@ -107,15 +107,10 @@ class GetUPointDTUProductQueue
                 ])->confirm($confirmData);
 
             // Append noted
-            $notes = $payment->notes;
-            if (empty($notes)) {
-                $notes = '[' . json_encode($confirmPurchase->getData()) .']';
-            } else {
-                $notes = substr_replace($notes, "," . json_encode($confirmPurchase->getData()), -1, 0);
-            }
-
-            $payment->notes = $notes;
-            $detail->payload = $confirmPurchase->getData();
+            $purchaseNotes = unserialize($payment->notes);
+            $purchaseNotes['confirm'] = $confirmPurchase->getData();
+            $payment->notes = serialize($purchaseNotes);
+            $detail->payload = $purchaseNotes['confirm'];
             $detail->save();
 
             if ($confirmPurchase->isSuccess()) {
