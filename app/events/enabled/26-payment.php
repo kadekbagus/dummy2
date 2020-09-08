@@ -69,12 +69,11 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
     else if ($payment->completed()) {
         Log::info("PaidCoupon: PaymentID: {$paymentId} verified!");
 
-        $queueData = [
+        $queueData = array_merge([
             'paymentId' => $payment->payment_transaction_id,
             'retries' => 0,
             'current_url' => $utmUrl,
-            'payment_info' => $paymentInfo,
-        ];
+        ], $paymentInfo);
 
         if (! empty($mall)) {
             $queueData['mall_id'] = $mall->merchant_id;
