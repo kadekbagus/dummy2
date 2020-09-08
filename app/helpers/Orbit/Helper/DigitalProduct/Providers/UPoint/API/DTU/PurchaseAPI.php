@@ -14,7 +14,7 @@ class PurchaseAPI extends UPointDTUAPI
 {
     protected $endPoint = '/dtu/inquiry';
 
-    protected $shouldMockResponse = true;
+    // protected $shouldMockResponse = true;
 
     /**
      * Build purchase api request param (body).

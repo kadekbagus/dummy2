@@ -14,7 +14,7 @@ class ConfirmAPI extends UPointDTUAPI
 {
     protected $endPoint = '/dtu/payment';
 
-    protected $shouldMockResponse = true;
+    // protected $shouldMockResponse = true;
 
     /**
      * Build purchase api request param (body).
