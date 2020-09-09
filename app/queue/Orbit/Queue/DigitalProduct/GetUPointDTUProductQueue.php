@@ -1,22 +1,22 @@
 <?php namespace Orbit\Queue\DigitalProduct;
 
-use App;
-use Config;
 use DB;
-use Event;
-use Exception;
+use App;
 use Log;
 use Mall;
-use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
-use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedProductActivity;
-use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
-use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
-use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
-use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotification;
-use Orbit\Notifications\DigitalProduct\DigitalProductNotAvailableNotification;
-use Orbit\Notifications\DigitalProduct\ReceiptNotification;
-use PaymentTransaction;
 use User;
+use Event;
+use Config;
+use Exception;
+use PaymentTransaction;
+use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
+use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
+use Orbit\Notifications\DigitalProduct\UPointDTU\ReceiptNotification;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
+use Orbit\Notifications\DigitalProduct\DigitalProductNotAvailableNotification;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedProductActivity;
+use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
+use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotification;
 
 /**
  * A job to get/issue Hot Deals Coupon after payment completed.
@@ -119,10 +119,7 @@ class GetUPointDTUProductQueue
                 $this->log("Issued for payment {$paymentId}..");
 
                 // Notify Customer.
-                // $payment->user->notify(new ReceiptNotification(
-                //     $payment,
-                //     $confirmPurchase->getVoucherData()
-                // ));
+                $payment->user->notify(new ReceiptNotification($payment, []));
 
                 $cid = time();
                 // send google analitics event hit
@@ -169,7 +166,7 @@ class GetUPointDTUProductQueue
                         ->request();
                 }
 
-                // $payment->user->activity(new PurchaseSuccessActivity($payment, $this->objectType));
+                $payment->user->activity(new PurchaseSuccessActivity($payment, $this->objectType));
 
                 if (! empty($discount)) {
                     // Mark promo code as issued.
@@ -240,14 +237,14 @@ class GetUPointDTUProductQueue
                 DB::connection()->commit();
 
                 // Notify admin for this failure.
-                // foreach($adminEmails as $email) {
-                //     $admin              = new User;
-                //     $admin->email       = $email;
-                //     $admin->notify(new DigitalProductNotAvailableNotification($payment, $e->getMessage()));
-                // }
+                foreach($adminEmails as $email) {
+                    $admin              = new User;
+                    $admin->email       = $email;
+                    $admin->notify(new DigitalProductNotAvailableNotification($payment, $e->getMessage()));
+                }
 
                 // // Notify customer that coupon is not available.
-                // $payment->user->notify(new CustomerDigitalProductNotAvailableNotification($payment));
+                $payment->user->notify(new CustomerDigitalProductNotAvailableNotification($payment));
 
                 $notes = $e->getMessage();
 
