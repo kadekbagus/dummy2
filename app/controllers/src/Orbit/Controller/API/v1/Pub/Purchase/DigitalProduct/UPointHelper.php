@@ -77,7 +77,9 @@ trait UPointHelper
             'user_info' => $this->getUPointUserInfo($providerProduct, $request),
         ];
 
-        $purchaseResponse = app(PurchaseProviderInterface::class)->purchase($purchaseParams);
+        $purchaseResponse = App::make(PurchaseProviderInterface::class, [
+                'providerId' => $providerProduct->provider_name,
+            ])->purchase($purchaseParams);
 
         // Info should contain user information associated with game user_id,
         // e.g. game nickname and the server name.
@@ -98,16 +100,13 @@ trait UPointHelper
      */
     protected function getUPointUserInfo($providerProduct, $request)
     {
-        $decodedUserInfo = json_decode($request->upoint_user_info);
-        $userInfo = [];
+        $decodedUserInfo = json_decode($request->upoint_user_info, true);
 
-        unset($decodedUserInfo->product_code);
-
-        foreach($decodedUserInfo as $key => $value) {
-            $userInfo[$key] = $value;
+        if (isset($decodedUserInfo['product_code'])) {
+            unset($decodedUserInfo['product_code']);
         }
 
-        return json_encode($userInfo);
+        return json_encode($decodedUserInfo);
     }
 
     /**
