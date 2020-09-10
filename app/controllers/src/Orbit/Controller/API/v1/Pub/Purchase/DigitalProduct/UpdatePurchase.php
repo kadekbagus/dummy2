@@ -39,6 +39,8 @@ use User;
  */
 class UpdatePurchase
 {
+    use UPointHelper;
+
     protected $objectType = 'digital_product';
 
     protected $purchase = null;
@@ -213,14 +215,18 @@ class UpdatePurchase
 
                 $this->purchase->save();
 
-                $objectName = $this->resolveObjectName($this->purchase);
-
                 // Commit the changes ASAP so if there are any other requests that trigger this controller
                 // they will use the updated payment data/status.
                 // Try not doing any expensive operation above.
                 DB::commit();
 
                 $this->purchase->current_utm_url = $currentUtmUrl;
+
+                $objectName = $this->resolveObjectName($this->purchase);
+
+                $UPointPaymentInfo = [
+                    'payment_info' => $this->getUPointPaymentInfo($this->purchase, $request)
+                ];
 
                 // Log activity...
                 // Should be done before issuing coupon for the sake of activity ordering,
@@ -231,10 +237,6 @@ class UpdatePurchase
                 else if ($this->purchase->status === PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT) {
                     $this->purchase->user->activity(new PurchaseProcessingProductActivity($this->purchase, $objectName, $this->objectType));
                 }
-
-                $UPointPaymentInfo = [
-                    'payment_info' => $request->upoint_payment_info ?: ''
-                ];
 
                 Event::fire('orbit.payment.postupdatepayment.after.commit', [
                     $this->purchase,
