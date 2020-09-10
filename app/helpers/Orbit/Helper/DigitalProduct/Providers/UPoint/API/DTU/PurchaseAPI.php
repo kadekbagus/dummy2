@@ -35,7 +35,7 @@ class PurchaseAPI extends UPointDTUAPI
         $this->randomizeResponseChance[0] = 1;
 
         if ($this->randomizeResponseChance[0] === 1) {
-            $this->mockResponse = '{
+            $this->mockResponse = json_decode('{
                 "status":100,
                 "status_msg":"OK",
                 "trx_id":"' . $this->requestData['trx_id'] . '",
@@ -52,13 +52,13 @@ class PurchaseAPI extends UPointDTUAPI
                         "role_name":"arshav"
                     }
                 }
-            }';
+            }');
         }
         else {
-            $this->mockResponse = '{
+            $this->mockResponse = json_decode('{
                 "status":200,
                 "status_msg":"Bad Request"
-            }';
+            }');
         }
     }
 

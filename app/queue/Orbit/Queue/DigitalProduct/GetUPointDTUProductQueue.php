@@ -110,7 +110,7 @@ class GetUPointDTUProductQueue
             $purchaseNotes = unserialize($payment->notes);
             $purchaseNotes['confirm'] = $confirmPurchase->getData();
             $payment->notes = serialize($purchaseNotes);
-            $detail->payload = $purchaseNotes['confirm'];
+            $detail->payload = serialize($purchaseNotes['confirm']);
             $detail->save();
 
             if ($confirmPurchase->isSuccess()) {

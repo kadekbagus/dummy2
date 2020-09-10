@@ -135,6 +135,18 @@ trait UPointHelper
      */
     protected function getUPointPaymentInfo($purchase, $request)
     {
-        return $request->payment_info;
+        $purchaseNotes = unserialize($purchase->notes);
+
+        if (! isset($purchaseNotes['inquiry'])) {
+            throw new Exception("Can't find Inquiry response from purchase notes! TrxID: {$purchase->payment_transaction_id}");
+        }
+
+        $inquiry = $purchaseNotes['inquiry'];
+
+        if (isset($inquiry->info) && isset($inquiry->info->details)) {
+            return json_encode($inquiry->info->details);
+        }
+
+        return '';
     }
 }

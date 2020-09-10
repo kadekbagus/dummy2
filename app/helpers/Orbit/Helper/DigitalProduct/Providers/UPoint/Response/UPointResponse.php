@@ -20,7 +20,7 @@ class UPointResponse extends BaseResponse
     {
         $this->rawResponse = $response;
 
-        parent::__construct(json_decode($response));
+        parent::__construct($response);
 
         if (isset($this->response->data->status_msg)) {
             $this->response->setMessage($this->response->data->status_msg);
