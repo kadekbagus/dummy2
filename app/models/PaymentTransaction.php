@@ -295,6 +295,17 @@ class PaymentTransaction extends Eloquent
         return false;
     }
 
+    public function forUPoint($method = '')
+    {
+        foreach($this->details as $detail) {
+            if (! empty($detail->provider_product)) {
+                return $detail->provider_product->provider_name === "upoint-{$method}";
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Determine if the payment is for Pulsa.
      *

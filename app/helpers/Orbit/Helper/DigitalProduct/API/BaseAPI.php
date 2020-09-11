@@ -85,10 +85,7 @@ class BaseAPI
      */
     public function __construct($requestData = [], $customConfig = [])
     {
-        $env = Config::get('orbit.digital_product.providers.env', 'local');
-        $orbitConfig = Config::get("orbit.digital_product.providers.{$this->providerId}.config.{$env}", []);
-
-        $this->config = array_merge($orbitConfig, $customConfig);
+        $this->config = $this->getConfig($customConfig);
 
         $this->client = new Guzzle([
             'base_uri' => $this->config['base_uri']
@@ -107,6 +104,28 @@ class BaseAPI
         $this->queryString = array_merge($this->queryString, $queryString);
 
         return $this;
+    }
+
+    /**
+     * Get current provider env.
+     *
+     * @return string
+     */
+    protected function getEnv()
+    {
+        return Config::get('orbit.digital_product.providers.env', 'local');
+    }
+
+    /**
+     * Get provider config based on current env.
+     *
+     * @return array
+     */
+    protected function getConfig($customConfig = [])
+    {
+        $orbitConfig = Config::get("orbit.digital_product.providers.{$this->providerId}.config.{$this->getEnv()}", []);
+
+        return array_merge($orbitConfig, $customConfig);
     }
 
     /**

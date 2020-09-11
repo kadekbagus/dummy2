@@ -2,19 +2,19 @@
 
 namespace Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct;
 
-use App;
-use Country;
 use DB;
-use Discount;
+use App;
 use Log;
 use Mall;
-use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseStartingActivity;
-use Orbit\Helper\Util\CampaignSourceParser;
+use Country;
+use Request;
+use Discount;
 use PaymentMidtrans;
 use PaymentTransaction;
 use PaymentTransactionDetail;
 use PaymentTransactionDetailNormalPaypro;
-use Request;
+use Orbit\Helper\Util\CampaignSourceParser;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseStartingActivity;
 
 /**
  * Digital Product Purchase
@@ -25,7 +25,9 @@ use Request;
  */
 class CreatePurchase
 {
-    public static function create($request)
+    use UPointHelper;
+
+    public function build($request)
     {
         $currentUser = App::make('currentUser');
         $digitalProduct = App::make('digitalProduct');
@@ -161,6 +163,9 @@ class CreatePurchase
 
             $purchase->promo_code = $reservedPromoCode->discount_code;
         }
+
+        // Do initial purchase request to upoint (if needed).
+        $this->createUPointPurchase($purchase, $digitalProduct, $providerProduct, $request);
 
         DB::commit();
 

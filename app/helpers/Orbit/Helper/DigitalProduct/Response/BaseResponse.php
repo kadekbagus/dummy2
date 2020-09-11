@@ -13,13 +13,13 @@ class BaseResponse
      * To store the raw response from API.
      * @var null
      */
-    protected $rawResponse = null;
+    protected $rawResponse;
 
     /**
      * To store the parsed data from API.
-     * @var null
+     * @var object
      */
-    protected $response = null;
+    protected $response;
 
     /**
      * Number of maximum retry.

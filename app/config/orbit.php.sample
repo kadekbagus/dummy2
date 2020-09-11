@@ -6466,6 +6466,38 @@ return array(
                     ],
                 ],
             ],
+
+            'upoint-dtu' => [
+                'env' => 'sandbox',
+                'id' => 'upoint-dtu',
+                'name' => 'UPoint DTU',
+                'config' => [
+                    'sandbox' => [
+                        'base_uri' => 'https://devdtu.upoint.co.id',
+                        'secret_token' => '12345678',
+                        'partner_id' => '12345678',
+                    ],
+                    'production' => [
+                        'base_uri' => 'https://devdtu.upoint.co.id',
+                        'secret_token' => '12345678',
+                        'partner_id' => '12345678',
+                    ],
+                ],
+            ],
         ],
+    ],
+
+    /**
+     * Config for affiliation logo for product list page
+     */
+    'marketplace_logo' => [
+        'Bukalapak' => 'https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/affiliations/logo/logo-bukalapak.png',
+        'Blibli.com' => 'https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/affiliations/logo/logo-blibli.png',
+        'Bukalapak Singapore' => 'https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/affiliations/logo/logo-bukalapak.png',
+        'Natural Farm' => 'https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/affiliations/logo/logo-natural-farm.png',
+        'Amazon' => 'https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/affiliations/logo/logo-amazon.png',
+        'Tokopedia' => 'https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/affiliations/logo/logo-tokopedia.png',
+        'Shopee' => 'https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/affiliations/logo/logo-shopee.png',
+        'Lazada' => 'https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/affiliations/logo/logo-lazada.png',
     ],
 );
