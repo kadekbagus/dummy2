@@ -42,7 +42,7 @@ class PurchaseNewAPIController extends PubControllerAPI
                 //     break;
 
                 case 'digital_product':
-                    $purchase = DigitalProductCreatePurchase::create($request);
+                    $purchase = (new DigitalProductCreatePurchase())->build($request);
                     break;
 
                 default:

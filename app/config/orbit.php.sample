@@ -6466,6 +6466,24 @@ return array(
                     ],
                 ],
             ],
+
+            'upoint-dtu' => [
+                'env' => 'sandbox',
+                'id' => 'upoint-dtu',
+                'name' => 'UPoint DTU',
+                'config' => [
+                    'sandbox' => [
+                        'base_uri' => 'https://devdtu.upoint.co.id',
+                        'secret_token' => '12345678',
+                        'partner_id' => '12345678',
+                    ],
+                    'production' => [
+                        'base_uri' => 'https://devdtu.upoint.co.id',
+                        'secret_token' => '12345678',
+                        'partner_id' => '12345678',
+                    ],
+                ],
+            ],
         ],
     ],
 
