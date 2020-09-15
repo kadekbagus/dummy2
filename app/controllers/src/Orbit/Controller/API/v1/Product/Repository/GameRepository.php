@@ -59,11 +59,11 @@ class GameRepository
                     'digital_products' => function($query) {
                         $query->select(
                             'digital_products.digital_product_id',
-                            'product_type', 'selected_provider_product_id',
-                            'code', 'product_name', 'selling_price',
-                            'digital_products.status', 'is_displayed', 'is_promo',
-                            'description', 'notes', 'extra_field_metadata'
-                        )->displayed();
+                            'digital_products.product_type', 'digital_products.selected_provider_product_id',
+                            'digital_products.code', 'digital_products.product_name', 'digital_products.selling_price',
+                            'digital_products.status', 'digital_products.is_displayed', 'digital_products.is_promo',
+                            'digital_products.description', 'digital_products.notes', 'provider_products.extra_field_metadata'
+                        )->leftJoin('provider_products', 'provider_products.provider_product_id', '=', 'digital_products.selected_provider_product_id')->displayed();
                     }
                 ],
                 $this->buildMediaQuery()

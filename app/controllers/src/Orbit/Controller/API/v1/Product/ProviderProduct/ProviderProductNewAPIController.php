@@ -64,6 +64,7 @@ class ProviderProductNewAPIController extends ControllerAPI
             $price = OrbitInput::post('price');
             $commission_type = OrbitInput::post('commission_type');
             $commission_value = OrbitInput::post('commission_value');
+            $extra_field_metadata = OrbitInput::post('extra_field_metadata');
 
             // Begin database transaction
             $this->beginTransaction();
@@ -120,6 +121,7 @@ class ProviderProductNewAPIController extends ControllerAPI
             $newProviderProduct->commission_type = $commission_type;
             $newProviderProduct->commission_value = $commission_value;
             $newProviderProduct->status = $status;
+            $newProviderProduct->extra_field_metadata = $extra_field_metadata;
 
             Event::fire('orbit.newproviderproduct.postnewproviderproduct.before.save', array($this, $newProviderProduct));
 
