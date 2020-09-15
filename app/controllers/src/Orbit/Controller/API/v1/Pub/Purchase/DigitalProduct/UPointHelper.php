@@ -116,6 +116,10 @@ trait UPointHelper
     {
         $decodedUserInfo = json_decode($request->upoint_user_info);
 
+        if (! isset($decodedUserInfo['product_code'])) {
+            throw new Exception("DTU Purchase request failed! Missing Product Code.");
+        }
+
         return $decodedUserInfo->product_code ?: '';
     }
 
