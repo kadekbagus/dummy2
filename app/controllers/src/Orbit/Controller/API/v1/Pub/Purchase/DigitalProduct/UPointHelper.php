@@ -41,7 +41,12 @@ trait UPointHelper
 
         // Info should contain user information associated with game user_id,
         // e.g. game nickname and the server name.
-        if ($purchaseResponse->isSuccess()) {
+        $responseData = json_decode($purchaseResponse->getData());
+
+        if (null !== $responseData
+            && (isset($responseData->status)
+            && 100 === (int) $responseData->status)
+        ) {
 
             if (empty($purchase->notes)) {
                 $purchase->notes = serialize([
