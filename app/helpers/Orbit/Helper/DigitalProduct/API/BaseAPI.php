@@ -182,8 +182,11 @@ class BaseAPI
                 $this->options['query'] = $this->queryString;
             }
 
-            // Set header...
-            $this->options['headers']['Content-Type'] = $this->contentType;
+            // somehow if the Content-Type is set, Upoint cannot read the params
+            if ($this->providerId !== 'upoint-dtu') {
+                // Set header...
+                $this->options['headers']['Content-Type'] = $this->contentType;
+            }
 
             // Do the request...
             if (! $this->shouldMockResponse) {
@@ -228,7 +231,11 @@ class BaseAPI
     {
         $this->requestData = array_merge($this->requestData, $requestData);
 
-        $this->options['body'] = $this->buildRequestParam();
+        if ($this->providerId === 'upoint-dtu') {
+            $this->options['form_params'] = $this->buildRequestParam();
+        } else {
+            $this->options['body'] = $this->buildRequestParam();
+        }
 
         if ($this->shouldMockResponse) {
             $this->mockResponseData();
