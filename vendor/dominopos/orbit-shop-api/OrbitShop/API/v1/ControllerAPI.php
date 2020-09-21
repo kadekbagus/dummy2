@@ -28,6 +28,7 @@ use Orbit\Helper\Resource\ResourceInterface;
 use Orbit\Helper\Util\CorsHeader;
 use PDO;
 use Response;
+use Orbit\Helper\Exception\OrbitCustomException;
 
 abstract class ControllerAPI extends Controller
 {
@@ -479,6 +480,11 @@ abstract class ControllerAPI extends Controller
                     'validation.orbit.queryerror'
                 );
             }
+        }
+        else if ($e instanceof OrbitCustomException) {
+            $this->response->code = $e->getCode();
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getData();
         }
         else {
             // set other code/message...
