@@ -47,7 +47,6 @@ trait UPointHelper
             && (isset($responseData->status)
             && 100 === (int) $responseData->status)
         ) {
-
             if (empty($purchase->notes)) {
                 $purchase->notes = serialize([
                     'inquiry' => $purchaseResponse->getData(),
@@ -63,8 +62,14 @@ trait UPointHelper
 
             Log::info("DTU Purchase created for trxID: {$purchase->payment_transaction_id}");
         }
+
         else {
-            throw new Exception("DTU Purchase request failed!");
+            if (isset($responseData->status_msg)) {
+                Log::info("DTU Purchase failed: " . $responseData->status_msg);
+                throw new Exception(sprintf('Purchase request failed! %s', $responseData->status_msg), 1);
+            } else {
+                throw new Exception('Purchase request failed!', 1);
+            }
         }
     }
 

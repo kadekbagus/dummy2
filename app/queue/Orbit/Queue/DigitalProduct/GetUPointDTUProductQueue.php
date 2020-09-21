@@ -98,6 +98,11 @@ class GetUPointDTUProductQueue
             $digitalProductName = $digitalProduct->product_name;
 
             $paymentNotes = unserialize($payment->notes);
+
+            if (! isset($paymentNotes['inquiry'])) {
+                throw new Exception('GetUPointDTUProductQueue: Missing inquiry response.');
+            }
+
             $inquiryResponseData = json_decode($paymentNotes['inquiry']);
 
             $upointProductCode = '';
