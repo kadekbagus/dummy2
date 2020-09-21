@@ -41,8 +41,12 @@ trait UPointHelper
 
         // Info should contain user information associated with game user_id,
         // e.g. game nickname and the server name.
-        if ($purchaseResponse->isSuccess()) {
+        $responseData = json_decode($purchaseResponse->getData());
 
+        if (null !== $responseData
+            && (isset($responseData->status)
+            && 100 === (int) $responseData->status)
+        ) {
             if (empty($purchase->notes)) {
                 $purchase->notes = serialize([
                     'inquiry' => $purchaseResponse->getData(),
@@ -58,8 +62,14 @@ trait UPointHelper
 
             Log::info("DTU Purchase created for trxID: {$purchase->payment_transaction_id}");
         }
+
         else {
-            throw new Exception("DTU Purchase request failed!");
+            if (isset($responseData->status_msg)) {
+                Log::info("DTU Purchase failed: " . $responseData->status_msg);
+                throw new Exception(sprintf('Purchase request failed! %s', $responseData->status_msg), 1);
+            } else {
+                throw new Exception('Purchase request failed!', 1);
+            }
         }
     }
 
@@ -115,6 +125,10 @@ trait UPointHelper
     protected function getUPointProductCode($digitalProduct, $request)
     {
         $decodedUserInfo = json_decode($request->upoint_user_info);
+
+        if (! isset($decodedUserInfo->product_code)) {
+            throw new Exception("DTU Purchase request failed! Missing Product Code.");
+        }
 
         return $decodedUserInfo->product_code ?: '';
     }
