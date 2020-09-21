@@ -4,6 +4,7 @@ use Log;
 use Exception;
 use Illuminate\Support\Facades\App;
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
+use Orbit\Helper\Exception\OrbitCustomException;
 
 trait UPointHelper
 {
@@ -64,11 +65,20 @@ trait UPointHelper
         }
 
         else {
+            $customData = new \stdclass();
+            $customData->source = 'upoint';
+
             if (isset($responseData->status_msg)) {
+                $customData->status = $responseData->status;
+                $customData->message = $responseData->status_msg;
                 Log::info("DTU Purchase failed: " . $responseData->status_msg);
-                throw new Exception(sprintf('Purchase request failed! %s', $responseData->status_msg), 1);
+
+                throw new OrbitCustomException(sprintf('Purchase request failed! %s', $responseData->status_msg), 1, $customData);
             } else {
-                throw new Exception('Purchase request failed!', 1);
+                $customData->status = $responseData->status;
+                $customData->message = $responseData->status_msg;
+
+                throw new OrbitCustomException('Purchase request failed!', 1, $customData);
             }
         }
     }
@@ -99,7 +109,9 @@ trait UPointHelper
             );
         }
         else {
-            throw new Exception("Voucher Purchase request failed!");
+            $customData = new \stdclass();
+            $customData->source = 'upoint';
+            throw new OrbitCustomException('Voucher Purchase request failed!', 1, $customData);
         }
     }
 
@@ -127,7 +139,9 @@ trait UPointHelper
         $decodedUserInfo = json_decode($request->upoint_user_info);
 
         if (! isset($decodedUserInfo->product_code)) {
-            throw new Exception("DTU Purchase request failed! Missing Product Code.");
+            $customData = new \stdclass();
+            $customData->source = 'upoint';
+            throw new OrbitCustomException('Missing Product Code.', 1, $customData);
         }
 
         return $decodedUserInfo->product_code ?: '';
