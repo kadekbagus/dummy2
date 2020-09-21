@@ -484,7 +484,7 @@ abstract class ControllerAPI extends Controller
         else if ($e instanceof OrbitCustomException) {
             $this->response->code = $e->getCode();
             $this->response->message = $e->getMessage();
-            $this->response->data = $e->getData();
+            $this->response->data = $e->getCustomData();
         }
         else {
             // set other code/message...
