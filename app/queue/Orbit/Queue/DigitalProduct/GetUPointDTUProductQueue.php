@@ -97,9 +97,31 @@ class GetUPointDTUProductQueue
             $discount = $payment->discount_code;
             $digitalProductName = $digitalProduct->product_name;
 
+            $paymentNotes = unserialize($payment->notes);
+
+            if (! isset($paymentNotes['inquiry'])) {
+                throw new Exception('GetUPointDTUProductQueue: Missing inquiry response.');
+            }
+
+            $inquiryResponseData = json_decode($paymentNotes['inquiry']);
+
+            $upointProductCode = '';
+
+            if (isset($inquiryResponseData->info)) {
+                $upointProductCode = isset($inquiryResponseData->info->product) ? $inquiryResponseData->info->product : '';
+            }
+
+            $upointInquiryPayload = [];
+
+            if (isset($inquiryResponseData->info)) {
+                $upointInquiryPayload = isset($inquiryResponseData->info->details) ? $inquiryResponseData->info->details : [];
+            }
+
             $confirmData = [
                 'trx_id' => $paymentId,
                 'payment_info' => $data['payment_info'],
+                'upoint_product_code' => $upointProductCode,
+                'inquiry_details' => $upointInquiryPayload,
             ];
 
             $confirmPurchase = App::make(PurchaseProviderInterface::class, [
@@ -113,7 +135,12 @@ class GetUPointDTUProductQueue
             $detail->payload = serialize($purchaseNotes['confirm']);
             $detail->save();
 
-            if ($confirmPurchase->isSuccess()) {
+            $responseData = json_decode($confirmPurchase->getData());
+
+            if (null !== $responseData
+                && (isset($responseData->status)
+                && 100 === (int) $responseData->status)
+            ) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
 
                 $this->log("Issued for payment {$paymentId}..");
