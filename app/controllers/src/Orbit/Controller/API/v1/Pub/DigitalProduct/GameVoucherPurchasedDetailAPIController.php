@@ -23,6 +23,7 @@ use PromotionRetailer;
 use PaymentTransaction;
 use Helper\EloquentRecordCounter as RecordCounter;
 use SimpleXMLElement;
+use ProviderProduct;
 
 class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
 {
@@ -85,6 +86,7 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
                                             'payment_transactions.external_payment_transaction_id',
                                             'payment_transaction_details.object_name as product_name',
                                             'payment_transaction_details.object_type',
+                                            'payment_transaction_details.provider_product_id',
                                             'payment_transaction_details.price',
                                             'payment_transaction_details.quantity',
                                             'payment_midtrans.payment_midtrans_info',
@@ -129,7 +131,7 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
             }
 
             $game_voucher->payment_midtrans_info = json_decode(unserialize($game_voucher->payment_midtrans_info));
-            $game_voucher->digital_product_code = isset($game_voucher->payload) ? $this->getVoucherCode($game_voucher->payload) : null;
+            $game_voucher->digital_product_code = $this->getVoucherCode($game_voucher);
 
             $this->response->data = $game_voucher;
         } catch (ACLForbiddenException $e) {
@@ -176,16 +178,69 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
         return DB::connection()->getPdo()->quote($arg);
     }
 
-    protected function getVoucherCode($data)
+    protected function getVoucherCode($gameVoucher)
     {
-        $voucherCode = null;
-        $voucherString = ',';
-        $voucherXml = new SimpleXMLElement($data);
+        $provider = '';
 
-        if (isset($voucherXml->voucher)) {
-            if (strpos($voucherXml->voucher, $voucherString) !== false) {
-                $voucherData = explode($voucherString, $voucherXml->voucher);
-                $voucherCode = $voucherData[0]."\n".$voucherData[1];
+        $provider = ProviderProduct::where('provider_product_id', $gameVoucher->provider_product_id)
+            ->first();
+
+        $voucherCode = null;
+
+        if (isset($provider->provider_name)) {
+            switch ($provider->provider_name) {
+                case 'ayopay':
+                    $voucherString = ',';
+                    $voucherXml = new SimpleXMLElement($gameVoucher->payload);
+
+                    if (isset($voucherXml->voucher)) {
+                        if (strpos($voucherXml->voucher, $voucherString) !== false) {
+                            $voucherData = explode($voucherString, $voucherXml->voucher);
+                            $voucherCode = $voucherData[0]."\n".$voucherData[1];
+                        }
+                    }
+
+                    break;
+
+                case 'upoint-dtu':
+                    $payload = unserialize($gameVoucher->payload);
+
+                    $payloadObj = json_decode($payload);
+
+                    if (isset($payloadObj->info)) {
+                        if (isset($payloadObj->info->user_info)) {
+                            if (isset($payloadObj->info->user_info->user_id)) {
+                                $voucherCode = $voucherCode . "User ID: " . $payloadObj->info->user_info->user_id . "\n";
+                            }
+                        }
+                        if (isset($payloadObj->info->details)) {
+                            if (isset($payloadObj->info->details[0])) {
+                                if (isset($payloadObj->info->details[0]->server_name)) {
+                                    if (! empty($payloadObj->info->details[0]->server_name)) {
+                                        $voucherCode = $voucherCode . "Server Name: " . $payloadObj->info->details[0]->server_name;
+                                    }
+                                }
+                            }
+                        }
+                        if (isset($payloadObj->info->details)) {
+                            if (isset($payloadObj->info->details[0])) {
+                                if (isset($payloadObj->info->details[0]->username)) {
+                                    if (! empty($payloadObj->info->details[0]->username)) {
+                                        $voucherCode = $voucherCode . "User Name: " . $payloadObj->info->details[0]->username;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;
+
+                case 'upoint-voucher':
+                    # code...
+                    break;
+
+                default:
+
+                    break;
             }
         }
 
