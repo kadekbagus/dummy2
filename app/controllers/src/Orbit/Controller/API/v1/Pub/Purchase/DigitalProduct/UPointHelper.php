@@ -4,6 +4,7 @@ use Log;
 use Exception;
 use Illuminate\Support\Facades\App;
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
+use Orbit\Helper\Exception\OrbitCustomException;
 
 trait UPointHelper
 {
@@ -41,8 +42,12 @@ trait UPointHelper
 
         // Info should contain user information associated with game user_id,
         // e.g. game nickname and the server name.
-        if ($purchaseResponse->isSuccess()) {
+        $responseData = json_decode($purchaseResponse->getData());
 
+        if (null !== $responseData
+            && (isset($responseData->status)
+            && 100 === (int) $responseData->status)
+        ) {
             if (empty($purchase->notes)) {
                 $purchase->notes = serialize([
                     'inquiry' => $purchaseResponse->getData(),
@@ -58,8 +63,23 @@ trait UPointHelper
 
             Log::info("DTU Purchase created for trxID: {$purchase->payment_transaction_id}");
         }
+
         else {
-            throw new Exception("DTU Purchase request failed!");
+            $customData = new \stdclass();
+            $customData->source = 'upoint';
+
+            if (isset($responseData->status_msg)) {
+                $customData->status = $responseData->status;
+                $customData->message = $responseData->status_msg;
+                Log::info("DTU Purchase failed: " . $responseData->status_msg);
+
+                throw new OrbitCustomException(sprintf('Purchase request failed! %s', $responseData->status_msg), 1, $customData);
+            } else {
+                $customData->status = $responseData->status;
+                $customData->message = $responseData->status_msg;
+
+                throw new OrbitCustomException('Purchase request failed!', 1, $customData);
+            }
         }
     }
 
@@ -89,7 +109,9 @@ trait UPointHelper
             );
         }
         else {
-            throw new Exception("Voucher Purchase request failed!");
+            $customData = new \stdclass();
+            $customData->source = 'upoint';
+            throw new OrbitCustomException('Voucher Purchase request failed!', 1, $customData);
         }
     }
 
@@ -115,6 +137,12 @@ trait UPointHelper
     protected function getUPointProductCode($digitalProduct, $request)
     {
         $decodedUserInfo = json_decode($request->upoint_user_info);
+
+        if (! isset($decodedUserInfo->product_code)) {
+            $customData = new \stdclass();
+            $customData->source = 'upoint';
+            throw new OrbitCustomException('Missing Product Code.', 1, $customData);
+        }
 
         return $decodedUserInfo->product_code ?: '';
     }
