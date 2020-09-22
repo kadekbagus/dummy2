@@ -14,10 +14,16 @@ class UPointAPI extends BaseAPI
 
     protected $providerId = 'upoint';
 
-    protected $contentType = 'application/x-www-form-urlencode';
+    // somehow if the Content-Type is set, Upoint cannot read the params
+    protected $contentType = null;
 
     protected function getEnv()
     {
         return Config::get("orbit.digital_product.providers.{$this->providerId}.env", 'sandbox');
+    }
+
+    protected function setBodyParams()
+    {
+        $this->options['form_params'] = $this->buildRequestParam();
     }
 }

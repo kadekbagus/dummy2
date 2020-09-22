@@ -1,10 +1,9 @@
 <?php namespace Orbit\Helper\DigitalProduct\Providers\UPoint;
 
-use Exception;
 use Orbit\Helper\DigitalProduct\Providers\BaseProvider;
-use Orbit\Helper\DigitalProduct\Providers\UPoint\API\ConfirmAPI;
 use Orbit\Helper\DigitalProduct\Providers\UPoint\API\StatusAPI;
-use Orbit\Helper\DigitalProduct\Providers\UPoint\API\PurchaseAPI;
+use Orbit\Helper\DigitalProduct\Providers\UPoint\API\Voucher\ConfirmAPI;
+use Orbit\Helper\DigitalProduct\Providers\UPoint\API\Voucher\PurchaseAPI;
 
 /**
  * Purchase Provider for UPoint.

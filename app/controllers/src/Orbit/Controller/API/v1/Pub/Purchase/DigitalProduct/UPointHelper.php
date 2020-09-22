@@ -92,9 +92,9 @@ trait UPointHelper
 
         $purchaseParams = [
             'trx_id' => $purchase->payment_transaction_id,
-            'product' => $this->getUPointProductCode($digitalProduct, $request),
             'item' => $digitalProduct->code,
             'user_info' => $this->getUPointUserInfo($providerProduct, $request),
+            'timestamp' => time(),
         ];
 
         $purchaseResponse = App::make(PurchaseProviderInterface::class, [
@@ -104,9 +104,16 @@ trait UPointHelper
         // Info should contain user information associated with game user_id,
         // e.g. game nickname and the server name.
         if ($purchaseResponse->isSuccess()) {
-            $purchase->upoint_info = $this->transformUPointPurchaseInfo(
-                $purchaseResponse->info
-            );
+            if (empty($purchase->notes)) {
+                $purchase->notes = serialize([
+                    'inquiry' => $purchaseResponse->getData(),
+                    'confirm' => '',
+                ]);
+
+                $purchase->save();
+            }
+
+            Log::info("Voucher Purchase created for trxID: {$purchase->payment_transaction_id}");
         }
         else {
             $customData = new \stdclass();
@@ -158,23 +165,26 @@ trait UPointHelper
         return $response->info;
     }
 
-    /**
-     * @return string json encoded payment info.
-     */
-    protected function getUPointPaymentInfo($purchase, $request)
+    protected function buildUPointParams($purchase)
     {
+        $providerProduct = $purchase->getProviderProduct();
+
         $purchaseNotes = unserialize($purchase->notes);
-
-        if (! isset($purchaseNotes['inquiry'])) {
-            throw new Exception("Can't find Inquiry response from purchase notes! TrxID: {$purchase->payment_transaction_id}");
-        }
-
         $inquiry = $purchaseNotes['inquiry'];
 
-        if (isset($inquiry->info) && isset($inquiry->info->details)) {
-            return json_encode($inquiry->info->details);
+        if ($providerProduct->provider_name === 'upoint-dtu') {
+            if (isset($inquiry->info) && isset($inquiry->info->details)) {
+                return [
+                    'payment_info' => json_encode($inquiry->info->details)
+                ];
+            }
         }
-
-        return '';
+        else if ($providerProduct->provider_name === 'upoint-voucher') {
+            return [
+                'upoint_trx_id' => $inquiry->trx_id,
+                'trx_id' => $purchase->payment_transaction_id,
+                'request_status' => $inquiry->status,
+            ];
+        }
     }
 }
