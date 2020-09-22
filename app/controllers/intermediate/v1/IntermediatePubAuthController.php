@@ -4,6 +4,7 @@ use DominoPOS\OrbitACL\ACL;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Net\UrlChecker;
 use Orbit\Helper\Session\UserGetter;
+use Orbit\Helper\Exception\OrbitCustomException;
 
 /**
  * Intermediate Controller for all pub controller which need authentication.
@@ -39,6 +40,8 @@ class IntermediatePubAuthController extends IntermediateBaseController
 
                 // Check for blocked url
                 UrlChecker::checkBlockedUrl($user);
+            } catch (OrbitCustomException $e) {
+                return $this->handleException($e);
             } catch (Exception $e) {
                 return $this->handleException($e);
             }
