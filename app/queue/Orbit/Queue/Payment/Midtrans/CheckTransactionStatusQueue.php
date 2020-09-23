@@ -8,6 +8,7 @@ use Exception;
 use Event;
 use Mall;
 use Activity;
+use Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct\UPointHelper;
 use Orbit\Helper\Util\JobBurier;
 
 use PaymentTransaction;
@@ -26,6 +27,8 @@ use Orbit\Notifications\DigitalProduct\ExpiredPaymentNotification as DigitalProd
  */
 class CheckTransactionStatusQueue
 {
+    use UPointHelper;
+
     /**
      * $data should have 2 items:
      * 1. transactionId -- the transaction ID we want to check. Should be equivalent with external_payment_transaction_id.
@@ -198,7 +201,11 @@ class CheckTransactionStatusQueue
                 }
 
                 // Fire event to get the coupon if necessary.
-                Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment, $mall]);
+                Event::fire('orbit.payment.postupdatepayment.after.commit', [
+                    $payment,
+                    $mall,
+                    $this->buildUPointParams($payment),
+                ]);
 
                 Log::info('Midtrans::CheckTransactionStatusQueue: Checking stopped.');
             }
