@@ -6484,6 +6484,24 @@ return array(
                     ],
                 ],
             ],
+
+            'upoint-voucher' => [
+                'env' => 'sandbox',
+                'id' => 'upoint-voucher',
+                'name' => 'UPoint Voucher',
+                'config' => [
+                    'sandbox' => [
+                        'base_uri' => 'https://devdtu.upoint.co.id',
+                        'secret_token' => '12345678',
+                        'partner_id' => '12345678',
+                    ],
+                    'production' => [
+                        'base_uri' => 'https://devdtu.upoint.co.id',
+                        'secret_token' => '12345678',
+                        'partner_id' => '12345678',
+                    ],
+                ],
+            ],
         ],
     ],
 
