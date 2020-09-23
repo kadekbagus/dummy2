@@ -4,6 +4,7 @@ use Log;
 use Exception;
 use Illuminate\Support\Facades\App;
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
+use Orbit\Helper\Exception\OrbitCustomException;
 
 trait UPointHelper
 {
@@ -41,8 +42,12 @@ trait UPointHelper
 
         // Info should contain user information associated with game user_id,
         // e.g. game nickname and the server name.
-        if ($purchaseResponse->isSuccess()) {
+        $responseData = json_decode($purchaseResponse->getData());
 
+        if (null !== $responseData
+            && (isset($responseData->status)
+            && 100 === (int) $responseData->status)
+        ) {
             if (empty($purchase->notes)) {
                 $purchase->notes = serialize([
                     'inquiry' => $purchaseResponse->getData(),
@@ -58,8 +63,23 @@ trait UPointHelper
 
             Log::info("DTU Purchase created for trxID: {$purchase->payment_transaction_id}");
         }
+
         else {
-            throw new Exception("DTU Purchase request failed!");
+            $customData = new \stdclass();
+            $customData->source = 'upoint';
+
+            if (isset($responseData->status_msg)) {
+                $customData->status = $responseData->status;
+                $customData->message = $responseData->status_msg;
+                Log::info("DTU Purchase failed: " . $responseData->status_msg);
+
+                throw new OrbitCustomException(sprintf('Purchase request failed! %s', $responseData->status_msg), 1, $customData);
+            } else {
+                $customData->status = $responseData->status;
+                $customData->message = $responseData->status_msg;
+
+                throw new OrbitCustomException('Purchase request failed!', 1, $customData);
+            }
         }
     }
 
@@ -72,9 +92,9 @@ trait UPointHelper
 
         $purchaseParams = [
             'trx_id' => $purchase->payment_transaction_id,
-            'product' => $this->getUPointProductCode($digitalProduct, $request),
             'item' => $digitalProduct->code,
             'user_info' => $this->getUPointUserInfo($providerProduct, $request),
+            'timestamp' => time(),
         ];
 
         $purchaseResponse = App::make(PurchaseProviderInterface::class, [
@@ -84,12 +104,21 @@ trait UPointHelper
         // Info should contain user information associated with game user_id,
         // e.g. game nickname and the server name.
         if ($purchaseResponse->isSuccess()) {
-            $purchase->upoint_info = $this->transformUPointPurchaseInfo(
-                $purchaseResponse->info
-            );
+            if (empty($purchase->notes)) {
+                $purchase->notes = serialize([
+                    'inquiry' => $purchaseResponse->getData(),
+                    'confirm' => '',
+                ]);
+
+                $purchase->save();
+            }
+
+            Log::info("Voucher Purchase created for trxID: {$purchase->payment_transaction_id}");
         }
         else {
-            throw new Exception("Voucher Purchase request failed!");
+            $customData = new \stdclass();
+            $customData->source = 'upoint';
+            throw new OrbitCustomException('Voucher Purchase request failed!', 1, $customData);
         }
     }
 
@@ -116,6 +145,12 @@ trait UPointHelper
     {
         $decodedUserInfo = json_decode($request->upoint_user_info);
 
+        if (! isset($decodedUserInfo->product_code)) {
+            $customData = new \stdclass();
+            $customData->source = 'upoint';
+            throw new OrbitCustomException('Missing Product Code.', 1, $customData);
+        }
+
         return $decodedUserInfo->product_code ?: '';
     }
 
@@ -130,23 +165,27 @@ trait UPointHelper
         return $response->info;
     }
 
-    /**
-     * @return string json encoded payment info.
-     */
-    protected function getUPointPaymentInfo($purchase, $request)
+    protected function buildUPointParams($purchase)
     {
+        $providerProduct = $purchase->getProviderProduct();
+
         $purchaseNotes = unserialize($purchase->notes);
+        $inquiry = json_decode($purchaseNotes['inquiry']);
 
-        if (! isset($purchaseNotes['inquiry'])) {
-            throw new Exception("Can't find Inquiry response from purchase notes! TrxID: {$purchase->payment_transaction_id}");
+        if ($providerProduct->provider_name === 'upoint-dtu') {
+
+            if (isset($inquiry->info) && isset($inquiry->info->details)) {
+                return [
+                    'payment_info' => json_encode($inquiry->info->details)
+                ];
+            }
         }
-
-        $inquiry = $purchaseNotes['inquiry'];
-
-        if (isset($inquiry->info) && isset($inquiry->info->details)) {
-            return json_encode($inquiry->info->details);
+        else if ($providerProduct->provider_name === 'upoint-voucher') {
+            return [
+                'upoint_trx_id' => $inquiry->trx_id,
+                'trx_id' => $purchase->payment_transaction_id,
+                'request_status' => $inquiry->status,
+            ];
         }
-
-        return '';
     }
 }

@@ -11,7 +11,7 @@ use Exception;
 use PaymentTransaction;
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
-use Orbit\Notifications\DigitalProduct\UPointDTU\ReceiptNotification;
+use Orbit\Notifications\DigitalProduct\UPointVoucher\ReceiptNotification;
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
 use Orbit\Notifications\DigitalProduct\DigitalProductNotAvailableNotification;
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedProductActivity;
@@ -25,7 +25,7 @@ use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotific
  *
  * @author Budi <budi@dominopos.com>
  */
-class GetUPointDTUProductQueue
+class GetUPointVoucherProductQueue
 {
     /**
      * Delay before we trigger another MCash Purchase (in minutes).
@@ -100,28 +100,13 @@ class GetUPointDTUProductQueue
             $paymentNotes = unserialize($payment->notes);
 
             if (! isset($paymentNotes['inquiry'])) {
-                throw new Exception('GetUPointDTUProductQueue: Missing inquiry response.');
-            }
-
-            $inquiryResponseData = json_decode($paymentNotes['inquiry']);
-
-            $upointProductCode = '';
-
-            if (isset($inquiryResponseData->info)) {
-                $upointProductCode = isset($inquiryResponseData->info->product) ? $inquiryResponseData->info->product : '';
-            }
-
-            $upointInquiryPayload = [];
-
-            if (isset($inquiryResponseData->info)) {
-                $upointInquiryPayload = isset($inquiryResponseData->info->details) ? $inquiryResponseData->info->details : [];
+                throw new Exception('GetUPointVoucherProductQueue: Missing inquiry response.');
             }
 
             $confirmData = [
-                'trx_id' => $paymentId,
-                'payment_info' => $data['payment_info'],
-                'upoint_product_code' => $upointProductCode,
-                'inquiry_details' => $upointInquiryPayload,
+                'upoint_trx_id' => $data['upoint_trx_id'],
+                'trx_id' => $data['trx_id'],
+                'request_status' => $data['request_status'],
             ];
 
             $confirmPurchase = App::make(PurchaseProviderInterface::class, [
@@ -129,24 +114,21 @@ class GetUPointDTUProductQueue
                 ])->confirm($confirmData);
 
             // Append noted
-            $purchaseNotes = unserialize($payment->notes);
-            $purchaseNotes['confirm'] = $confirmPurchase->getData();
-            $payment->notes = serialize($purchaseNotes);
-            $detail->payload = serialize($purchaseNotes['confirm']);
+            $paymentNotes['confirm'] = $confirmPurchase->getData();
+            $payment->notes = serialize($paymentNotes);
+            $detail->payload = serialize($paymentNotes['confirm']);
             $detail->save();
 
-            $responseData = json_decode($confirmPurchase->getData());
-
-            if (null !== $responseData
-                && (isset($responseData->status)
-                && 100 === (int) $responseData->status)
-            ) {
+            if ($confirmPurchase->isSuccess()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
 
                 $this->log("Issued for payment {$paymentId}..");
 
                 // Notify Customer.
-                $payment->user->notify(new ReceiptNotification($payment, []));
+                $payment->user->notify(new ReceiptNotification(
+                    $payment,
+                    $confirmPurchase->getSerialNumber()
+                ));
 
                 $cid = time();
                 // send google analitics event hit

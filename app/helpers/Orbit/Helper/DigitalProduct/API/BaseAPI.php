@@ -177,13 +177,9 @@ class BaseAPI
     protected function request()
     {
         try {
-            // Add query string if needed.
-            if (! empty($this->queryString)) {
-                $this->options['query'] = $this->queryString;
-            }
+            $this->addQueryString();
 
-            // Set header...
-            $this->options['headers']['Content-Type'] = $this->contentType;
+            $this->setRequestContentType();
 
             // Do the request...
             if (! $this->shouldMockResponse) {
@@ -199,6 +195,32 @@ class BaseAPI
         }
 
         return $this->response($response);
+    }
+
+    /**
+     * Add query string to the request url.
+     *
+     * Can be overridden as needed.
+     */
+    protected function addQueryString()
+    {
+        // Add query string if needed.
+        if (! empty($this->queryString)) {
+            $this->options['query'] = $this->queryString;
+        }
+    }
+
+    /**
+     * Set Content-Type request header.
+     *
+     * Can be overridden as needed.
+     */
+    protected function setRequestContentType()
+    {
+        if (! empty($this->contentType)) {
+            // Set header...
+            $this->options['headers']['Content-Type'] = $this->contentType;
+        }
     }
 
     /**
@@ -219,6 +241,16 @@ class BaseAPI
     }
 
     /**
+     * Set request body params.
+     *
+     * Can be overridden as needed.
+     */
+    protected function setBodyParams()
+    {
+        $this->options['body'] = $this->buildRequestParam();
+    }
+
+    /**
      * Run the api.
      *
      * @param  array  $requestData [description]
@@ -228,7 +260,7 @@ class BaseAPI
     {
         $this->requestData = array_merge($this->requestData, $requestData);
 
-        $this->options['body'] = $this->buildRequestParam();
+        $this->setBodyParams();
 
         if ($this->shouldMockResponse) {
             $this->mockResponseData();
