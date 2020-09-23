@@ -44,14 +44,8 @@ class ConfirmAPI extends UPointDTUAPI
     {
         $paymentInfo = [];
 
-        // if (isset($this->requestData['payment_info'])) {
-        //     $paymentInfo['payment_info'] = $this->requestData['payment_info'];
-        // }
-
-        if (isset($this->requestData['inquiry_details'])) {
-            if (isset($this->requestData['inquiry_details'][0])) {
-                $paymentInfo['payment_info'] = json_encode($this->requestData['inquiry_details'][0]);
-            }
+        if (isset($this->requestData['payment_info'])) {
+            $paymentInfo['payment_info'] = $this->requestData['payment_info'];
         }
 
         // TODO: Might need to map the payment info based on the game name.
