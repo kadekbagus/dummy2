@@ -80,6 +80,7 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
                                             'payment_transactions.currency',
                                             'payment_transactions.status',
                                             'payment_transactions.payment_method',
+                                            'payment_transactions.notes',
                                             'payment_transactions.extra_data',
                                             'payment_transactions.created_at',
                                             DB::raw("convert_tz({$prefix}payment_transactions.created_at, '+00:00', {$prefix}payment_transactions.timezone_name) as date_tz"),
@@ -203,35 +204,50 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
                     break;
 
                 case 'upoint-dtu':
-                    $payload = unserialize($gameVoucher->payload);
+                    $payload = unserialize($gameVoucher->notes);
 
-                    $payloadObj = json_decode($payload);
+                    if (isset($payload['inquiry'])) {
+                        $payloadObj = json_decode($payload['inquiry']);
 
-                    if (isset($payloadObj->info)) {
-                        if (isset($payloadObj->info->user_info)) {
-                            if (isset($payloadObj->info->user_info->user_id)) {
-                                $voucherCode = $voucherCode . "User ID: " . $payloadObj->info->user_info->user_id . "\n";
+                        if (isset($payloadObj->info)) {
+                            if (isset($payloadObj->info->user_info)) {
+                                // append user_id
+                                if (isset($payloadObj->info->user_info->user_id)) {
+                                    $voucherCode = $voucherCode . "User ID: " . $payloadObj->info->user_info->user_id . "\n";
+                                }
+                                // append server_id
+                                if (isset($payloadObj->info->user_info->server_id)) {
+                                    $voucherCode = $voucherCode . "Server ID: " . $payloadObj->info->user_info->server_id . "\n";
+                                }
                             }
-                        }
-                        if (isset($payloadObj->info->details)) {
-                            if (isset($payloadObj->info->details[0])) {
-                                if (isset($payloadObj->info->details[0]->server_name)) {
-                                    if (! empty($payloadObj->info->details[0]->server_name)) {
-                                        $voucherCode = $voucherCode . "Server Name: " . $payloadObj->info->details[0]->server_name;
+
+                            if (isset($payloadObj->info->details)) {
+                                if (is_array($payloadObj->info->details) && isset($payloadObj->info->details[0])) {
+                                    if (isset($payloadObj->info->details[0])) {
+                                        // append server_name
+                                        if (isset($payloadObj->info->details[0]->server_name)) {
+                                            if (! empty($payloadObj->info->details[0]->server_name)) {
+                                                $voucherCode = $voucherCode . "Server Name: " . $payloadObj->info->details[0]->server_name;
+                                            }
+                                        }
+                                        // append user name
+                                        if (isset($payloadObj->info->details[0]->username)) {
+                                            if (! empty($payloadObj->info->details[0]->username)) {
+                                                $voucherCode = $voucherCode . "User Name: " . $payloadObj->info->details[0]->username;
+                                            }
+                                        }
                                     }
                                 }
                             }
-                        }
-                        if (isset($payloadObj->info->details)) {
-                            if (isset($payloadObj->info->details[0])) {
-                                if (isset($payloadObj->info->details[0]->username)) {
-                                    if (! empty($payloadObj->info->details[0]->username)) {
-                                        $voucherCode = $voucherCode . "User Name: " . $payloadObj->info->details[0]->username;
-                                    }
+                            // append user_name if detail is object
+                            if (isset($payloadObj->info->details)) {
+                                if (is_object($payloadObj->info->details) && isset($payloadObj->info->details->username)) {
+                                    $voucherCode = $voucherCode . "User Name: " . $payloadObj->info->details->username;
                                 }
                             }
                         }
                     }
+
                     break;
 
                 case 'upoint-voucher':
