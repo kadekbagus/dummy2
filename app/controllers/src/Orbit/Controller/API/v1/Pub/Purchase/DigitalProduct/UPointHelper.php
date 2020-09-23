@@ -171,9 +171,9 @@ trait UPointHelper
 
         $purchaseNotes = unserialize($purchase->notes);
         $inquiry = $purchaseNotes['inquiry'];
+        $inquiry = json_decode($inquiry);
 
         if ($providerProduct->provider_name === 'upoint-dtu') {
-            $inquiry = json_decode($inquiry);
 
             if (isset($inquiry->info) && isset($inquiry->info->details)) {
                 return [
