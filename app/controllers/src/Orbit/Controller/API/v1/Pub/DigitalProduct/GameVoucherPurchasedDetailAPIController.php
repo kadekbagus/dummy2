@@ -253,7 +253,21 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
                     break;
 
                 case 'upoint-voucher':
-                    # code...
+                    if (! empty($gameVoucher->payload)) {
+                        $payload = unserialize($gameVoucher->payload);
+                        $payloadObj = json_decode($payload);
+
+                        if (isset($payloadObj->item) && is_array($payloadObj->item)) {
+                            $voucherData = array_filter($payloadObj->item, function($key) {
+                                return $key->name === 'voucher';
+                            });
+
+                            if (isset($voucherData[0]) && isset($voucherData[0]->value)) {
+                                $voucherCode = str_replace(';', "\n", $voucherData[0]->value);
+                            }
+                        }
+                    }
+
                     break;
 
                 default:
