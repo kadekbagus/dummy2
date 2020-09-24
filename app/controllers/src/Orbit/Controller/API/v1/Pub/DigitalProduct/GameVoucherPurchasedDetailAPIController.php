@@ -191,13 +191,15 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
         if (isset($provider->provider_name)) {
             switch ($provider->provider_name) {
                 case 'ayopay':
-                    $voucherString = ',';
-                    $voucherXml = new SimpleXMLElement($gameVoucher->payload);
+                    if (! empty($gameVoucher->payload)) {
+                        $voucherString = ',';
+                        $voucherXml = new SimpleXMLElement($gameVoucher->payload);
 
-                    if (isset($voucherXml->voucher)) {
-                        if (strpos($voucherXml->voucher, $voucherString) !== false) {
-                            $voucherData = explode($voucherString, $voucherXml->voucher);
-                            $voucherCode = $voucherData[0]."\n".$voucherData[1];
+                        if (isset($voucherXml->voucher)) {
+                            if (strpos($voucherXml->voucher, $voucherString) !== false) {
+                                $voucherData = explode($voucherString, $voucherXml->voucher);
+                                $voucherCode = $voucherData[0]."\n".$voucherData[1];
+                            }
                         }
                     }
 
