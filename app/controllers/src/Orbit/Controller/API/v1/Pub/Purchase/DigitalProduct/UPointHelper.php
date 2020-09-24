@@ -92,7 +92,7 @@ trait UPointHelper
 
         $purchaseParams = [
             'trx_id' => $purchase->payment_transaction_id,
-            'item' => $digitalProduct->code,
+            'item' => $providerProduct->code,
             'user_info' => $this->getUPointUserInfo($providerProduct, $request),
             'timestamp' => time(),
         ];
@@ -103,7 +103,12 @@ trait UPointHelper
 
         // Info should contain user information associated with game user_id,
         // e.g. game nickname and the server name.
-        if ($purchaseResponse->isSuccess()) {
+        $responseData = json_decode($purchaseResponse->getData());
+
+        if (null !== $responseData
+            && (isset($responseData->status)
+            && 1 === (int) $responseData->status)
+        ) {
             if (empty($purchase->notes)) {
                 $purchase->notes = serialize([
                     'inquiry' => $purchaseResponse->getData(),
@@ -187,5 +192,6 @@ trait UPointHelper
                 'request_status' => $inquiry->status,
             ];
         }
+        return [];
     }
 }
