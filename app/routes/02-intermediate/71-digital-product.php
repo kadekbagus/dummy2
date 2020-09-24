@@ -26,3 +26,8 @@ Route::get('/app/v1/pub/game-voucher-purchased/list', ['as' => 'pub-game-voucher
  * Game Voucher Purchased detail.
  */
 Route::get('/app/v1/pub/game-voucher-purchased/detail', ['as' => 'pub-game-voucher-purchased-detail', 'uses' => 'IntermediatePubAuthController@DigitalProduct\GameVoucherPurchasedDetail_getGameVoucherPurchasedDetail']);
+
+/**
+ * Electricity list api
+ */
+Route::get('/app/v1/pub/electricity/list', ['as' => 'electricity-list', 'uses' => 'IntermediatePubAuthController@DigitalProduct\ElectricityList_getList']);
