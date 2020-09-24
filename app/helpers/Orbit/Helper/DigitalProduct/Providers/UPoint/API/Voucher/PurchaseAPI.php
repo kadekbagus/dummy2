@@ -11,7 +11,7 @@ use Orbit\Helper\DigitalProduct\Providers\UPoint\Response\Voucher\PurchaseAPIRes
  */
 class PurchaseAPI extends UPointVoucherAPI
 {
-    protected $endPoint = '/dtu/inquiry';
+    protected $endPoint = '/repoFeeder/host_to_host/request';
 
     // protected $shouldMockResponse = true;
 
