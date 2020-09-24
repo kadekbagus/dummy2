@@ -11,7 +11,7 @@ use Orbit\Helper\DigitalProduct\Providers\UPoint\Response\Voucher\ConfirmAPIResp
  */
 class ConfirmAPI extends UPointVoucherAPI
 {
-    protected $endPoint = '/dtu/payment';
+    protected $endPoint = '/repoFeeder/host_to_host/confirm';
 
     // protected $shouldMockResponse = true;
 
