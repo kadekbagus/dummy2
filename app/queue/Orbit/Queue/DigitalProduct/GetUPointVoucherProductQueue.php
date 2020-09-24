@@ -119,7 +119,12 @@ class GetUPointVoucherProductQueue
             $detail->payload = serialize($paymentNotes['confirm']);
             $detail->save();
 
-            if ($confirmPurchase->isSuccess()) {
+            $responseData = json_decode($confirmPurchase->getData());
+
+            if (null !== $responseData
+                && (isset($responseData->status)
+                && 1 === (int) $responseData->status)
+            ) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
 
                 $this->log("Issued for payment {$paymentId}..");
