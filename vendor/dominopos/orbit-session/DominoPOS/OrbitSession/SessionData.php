@@ -65,9 +65,9 @@ class SessionData
     /**
      * Constructor
      */
-    public function __construct(array $value, $applicationId = null)
+    public function __construct(array $value, $applicationId = null, $sessionId = null)
     {
-        $this->id = $this->genSessionId();
+        $this->id = empty($sessionId) ? $sessionId : $this->genSessionId();
         $this->applicationId = $applicationId;
         $this->userAgent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'Unknown UA/?';
         $this->ipAddress = $_SERVER['REMOTE_ADDR'];
