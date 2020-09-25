@@ -55,7 +55,11 @@ class IntermediatePubAuthController extends IntermediateBaseController
 
                     $this->session = DB::table('sessions')
                         ->where('session_id', 'bot_session_id_haha')
-                        ->firstOrFail();
+                        ->first();
+
+                    if (!isset($this->session)) {
+                        throw new Exception('Bot User session is not available', 1);
+                    }
                 }
 
                 // Register User instance in the container,
