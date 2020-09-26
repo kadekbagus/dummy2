@@ -36,16 +36,10 @@ class IntermediatePubAuthController extends IntermediateBaseController
         {
             try
             {
-                $userAgent = $_SERVER['HTTP_USER_AGENT'];
-
-                \Log::info('***%%%*** USER AGENT: ' . $userAgent);
-
                 $fallbackUARules = ['browser' => [], 'platform' => [], 'device_model' => [], 'bot_crawler' => []];
                 $detectUA = new UserAgent();
                 $detectUA->setRules(Config::get('orbit.user_agent_rules', $fallbackUARules));
                 $detectUA->setUserAgent($this->getUserAgent());
-
-                \Log::info('***%%%*** IS BOT: ' . serialize($detectUA->isBotCrawler()));
 
                 if (! $detectUA->isBotCrawler()) {
                     $this->session = SessionPreparer::prepareSession();
