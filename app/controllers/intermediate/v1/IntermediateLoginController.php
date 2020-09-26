@@ -1168,9 +1168,10 @@ class IntermediateLoginController extends IntermediateBaseController
                 $this->session = new OrbitSession($config);
                 $this->session->setSessionId($botSession->session_id);
                 $this->session->disableForceNew();
+                $this->session->setByPassExpiryCheck(true);
                 $this->session->start($sessionData->value, 'no-session-creation');
 
-                $response->data = $this->session;
+                $response->data = $this->session->getSession();
             }
 
             unset($response->data->userAgent);
