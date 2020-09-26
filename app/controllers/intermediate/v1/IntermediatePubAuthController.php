@@ -6,6 +6,9 @@ use Orbit\Helper\Net\UrlChecker;
 use Orbit\Helper\Session\UserGetter;
 use Orbit\Helper\Exception\OrbitCustomException;
 use Orbit\Helper\Util\UserAgent;
+use DominoPOS\OrbitSession\Session as OrbitSession;
+use DominoPOS\OrbitSession\SessionConfig;
+use Orbit\Helper\Session\AppOriginProcessor;
 
 /**
  * Intermediate Controller for all pub controller which need authentication.
@@ -15,6 +18,10 @@ use Orbit\Helper\Util\UserAgent;
 class IntermediatePubAuthController extends IntermediateBaseController
 {
     const APPLICATION_ID = 1;
+
+    protected $botEmail = 'bot@yourmailbot.com';
+
+    protected $botSessionId = 'bot_session_id_haha';
 
     /**
      * Check the authenticated user on constructor
@@ -49,17 +56,44 @@ class IntermediatePubAuthController extends IntermediateBaseController
                     // load previous bot's session
 
                     // load bot's user
-                    $user = User::leftJoin('roles', 'users.user_role_id', '=', 'roles.role_id')
-                        ->where('roles.role_name', 'bot')
+                    $user = User::where('user_email', $this->botEmail)
                         ->firstOrFail();
 
-                    $this->session = DB::table('sessions')
-                        ->where('session_id', 'bot_session_id_haha')
+                    $botSession = DB::table('sessions')
+                        ->where('session_id', $this->botSessionId)
                         ->first();
 
-                    if (!isset($this->session)) {
+                    if (! is_object($botSession)) {
                         throw new Exception('Bot User session is not available', 1);
                     }
+
+                    $sessionData = unserialize($botSession->session_data);
+
+                    if (empty($sessionData->value)) {
+                        throw new Exception('Bot User session data is empty', 1);
+                    }
+
+                    // set the session strict to FALSE
+                    Config::set('orbit.session.strict', FALSE);
+
+                    // Return mall_portal, cs_portal, pmp_portal etc
+                    $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
+                                                   ->getAppName();
+
+                    // Session Config
+                    $orbitSessionConfig = Config::get('orbit.session.origin.' . $appOrigin);
+                    $applicationId = Config::get('orbit.session.app_id.' . $appOrigin);
+
+                    // Instantiate the OrbitSession object
+                    $config = new SessionConfig(Config::get('orbit.session'));
+                    $config->setConfig('session_origin', $orbitSessionConfig);
+                    $config->setConfig('expire', $orbitSessionConfig['expire']);
+                    $config->setConfig('application_id', $applicationId);
+
+                    $this->session = new OrbitSession($config);
+                    $this->session->setSessionId($botSession->session_id);
+                    $this->session->disableForceNew();
+                    $this->session->start($sessionData->value, 'no-session-creation');
                 }
 
                 // Register User instance in the container,
