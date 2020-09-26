@@ -1170,7 +1170,7 @@ class IntermediateLoginController extends IntermediateBaseController
                 $this->session->disableForceNew();
                 $this->session->start($sessionData->value, 'no-session-creation');
 
-                $response->data = $this->session;
+                $response->data = $this->session->getSession();
             }
 
             unset($response->data->userAgent);
