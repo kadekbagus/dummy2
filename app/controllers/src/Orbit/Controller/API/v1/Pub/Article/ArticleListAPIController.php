@@ -199,7 +199,7 @@ class ArticleListAPIController extends PubControllerAPI
             // Filter by given keyword...
             // Keyword can be a Mall Name (for mall detail page)
             $keyword = OrbitInput::get('keyword', null);
-            $forbiddenCharacter = array('>', '<', '(', ')', '{', '}', '[', ']', '^', '"', '~', '/');
+            $forbiddenCharacter = array('>', '<', '(', ')', '{', '}', '[', ']', '^', '"', '~', '/', ':');
             $keyword = str_replace($forbiddenCharacter, '', $keyword);
             if (! empty($keyword)) {
                 $cacheKey['keyword'] = $keyword;
