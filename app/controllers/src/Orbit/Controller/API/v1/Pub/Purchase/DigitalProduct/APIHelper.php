@@ -9,8 +9,6 @@ trait APIHelper
 
     protected function buildAPIParams($purchase)
     {
-        Log::info("Building api params for queue data...");
-
         $params = [];
 
         if ($purchase->forUPoint()) {
@@ -19,8 +17,6 @@ trait APIHelper
         else if ($purchase->forWoodoos()) {
             $params = $this->buildWoodoosParams($purchase);
         }
-
-        Log::info(serialize($params));
 
         return $params;
     }

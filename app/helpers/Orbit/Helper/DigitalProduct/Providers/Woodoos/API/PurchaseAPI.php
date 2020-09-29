@@ -11,9 +11,9 @@ use Orbit\Helper\DigitalProduct\Providers\Woodoos\Response\PurchaseAPIResponse;
  */
 class PurchaseAPI extends WoodoosAPI
 {
-    protected $endPoint = '/giftCardService/activation';
+    protected $endPoint = 'giftCardService/activation';
 
-    protected $shouldMockResponse = true;
+    // protected $shouldMockResponse = true;
 
     /**
      * Build purchase api request param (body).
@@ -28,12 +28,14 @@ class PurchaseAPI extends WoodoosAPI
             'terminalId' => $this->config['terminal_id'],
             'cashierId' => $this->config['cashier_id'],
             'transactionNumber' => $this->requestData['trx_id'],
+            // 'passphrase' => $this->config['passphrase'],
             'gencode' => $this->requestData['item_code'],
             'amount' => $this->requestData['amount'],
             // 'cardNumber' => '???',
             // 'track2Data' => '???',
         ];
 
+        \Log::info("Woodoos Request Params:");
         \Log::info(serialize($params));
 
         return $params;

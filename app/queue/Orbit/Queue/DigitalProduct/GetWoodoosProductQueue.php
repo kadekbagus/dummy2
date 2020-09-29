@@ -1,29 +1,23 @@
 <?php namespace Orbit\Queue\DigitalProduct;
 
-use Activity;
-use App;
-use Carbon\Carbon;
-use Config;
-use Coupon;
 use DB;
-use Event;
-use Exception;
-use IssuedCoupon;
+use App;
 use Log;
 use Mall;
-use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
-use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedProductActivity;
-use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
-use Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct\APIHelper;
-use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
-use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
-use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotification;
-use Orbit\Notifications\DigitalProduct\DigitalProductNotAvailableNotification;
-use Orbit\Notifications\DigitalProduct\PulsaRetryNotification;
-use Orbit\Notifications\DigitalProduct\ReceiptNotification;
-use PaymentTransaction;
-use Queue;
 use User;
+use Event;
+use Config;
+use Exception;
+use PaymentTransaction;
+use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
+use Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct\APIHelper;
+use Orbit\Notifications\DigitalProduct\Woodoos\ReceiptNotification;
+use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
+use Orbit\Notifications\DigitalProduct\DigitalProductNotAvailableNotification;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedProductActivity;
+use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
+use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotification;
 
 /**
  * A job to get/issue Hot Deals Coupon after payment completed.
@@ -116,7 +110,7 @@ class GetWoodoosProductQueue
             $this->log(serialize($activationResponse->getData()));
 
             if (! $activationResponse->isSuccess()) {
-                throw new Exception("Failed Activation Request to Woodoos! {$activationResponse->getMessage()}");
+                throw new Exception("Failed Activation Request to Woodoos! {$activationResponse->getFailureMessage()}");
             }
 
             $purchaseData['ref_number'] = $activationResponse->getRefNumber();
@@ -144,10 +138,10 @@ class GetWoodoosProductQueue
                 $this->log("Issued for payment {$paymentId}..");
 
                 // Notify Customer.
-                // $payment->user->notify(new ReceiptNotification(
-                //     $payment,
-                //     $purchase->getVoucherData()
-                // ));
+                $payment->user->notify(new ReceiptNotification(
+                    $payment,
+                    $purchase->getVoucherData()
+                ));
 
                 $cid = time();
                 // send google analitics event hit
@@ -265,14 +259,14 @@ class GetWoodoosProductQueue
                 DB::connection()->commit();
 
                 // Notify admin for this failure.
-                // foreach($adminEmails as $email) {
-                //     $admin              = new User;
-                //     $admin->email       = $email;
-                //     $admin->notify(new DigitalProductNotAvailableNotification($payment, $e->getMessage()));
-                // }
+                foreach($adminEmails as $email) {
+                    $admin              = new User;
+                    $admin->email       = $email;
+                    $admin->notify(new DigitalProductNotAvailableNotification($payment, $e->getMessage()));
+                }
 
                 // Notify customer that coupon is not available.
-                // $payment->user->notify(new CustomerDigitalProductNotAvailableNotification($payment));
+                $payment->user->notify(new CustomerDigitalProductNotAvailableNotification($payment));
 
                 $notes = $e->getMessage();
 

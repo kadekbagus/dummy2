@@ -39,7 +39,8 @@ class WoodoosResponse extends BaseResponse
     {
         return null !== $this->response->data
             && isset($this->response->data->isSuccessful)
-            && $this->response->data->isSuccessful === true;
+            && ($this->response->data->isSuccessful === true
+                || $this->response->data->isSuccessful === 'true');
     }
 
     /**
@@ -55,7 +56,7 @@ class WoodoosResponse extends BaseResponse
     public function getFailureMessage()
     {
         return isset($this->response->data->errorMessage)
-            ? $this->rawResponse->data->errorMessage
+            ? $this->response->data->errorMessage
             : 'Unknown error!';
     }
 }

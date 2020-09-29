@@ -6509,7 +6509,7 @@ return array(
                 'name' => 'Woodoos (Ogloba)',
                 'config' => [
                     'sandbox' => [
-                        'base_uri' => 'https://demo.woodoos.com/gc-gateway-restful',
+                        'base_uri' => 'https://demo.woodoos.com/gc-gateway-restful/',
                         'merchant_id' => 'GoToMalls',
                         'terminal_id' => '001',
                         'cashier_id' => '001',

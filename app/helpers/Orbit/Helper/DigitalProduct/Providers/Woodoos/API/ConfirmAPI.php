@@ -11,9 +11,9 @@ use Orbit\Helper\DigitalProduct\Providers\Woodoos\Response\ConfirmAPIResponse;
  */
 class ConfirmAPI extends WoodoosAPI
 {
-    protected $endPoint = '/giftCardService/confirmTransaction';
+    protected $endPoint = 'giftCardService/confirmTransaction';
 
-    protected $shouldMockResponse = true;
+    // protected $shouldMockResponse = true;
 
     /**
      * Build purchase api request param (body).
@@ -27,6 +27,7 @@ class ConfirmAPI extends WoodoosAPI
             'merchantId' => $this->config['merchant_id'],
             'terminalId' => $this->config['terminal_id'],
             'cashierId' => $this->config['cashier_id'],
+            // 'passphrase' => $this->config['passphrase'],
             'referenceNumber' => $this->requestData['ref_number'],
         ];
 
