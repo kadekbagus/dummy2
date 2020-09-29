@@ -19,4 +19,9 @@ class ReceiptNotification extends BaseReceiptNotification
             'html' => 'emails.digital-product.woodoos.receipt',
         ];
     }
+
+    public function getMyPurchasesUrl($path = '')
+    {
+        return parent::getMyPurchasesUrl('/electricity');
+    }
 }
