@@ -89,6 +89,7 @@ class IntermediateBaseController extends Controller
 
         // CSRF protection
         $csrfProtection = Config::get('orbit.security.csrf.protect');
+        App::setLocale(Request::input('language', 'en'));
 
         if (Request::isMethod('post') && $csrfProtection === TRUE) {
             $csrfMode = Config::get('orbit.security.csrf.mode');
@@ -261,9 +262,12 @@ class IntermediateBaseController extends Controller
             $user = App::make('currentUser');
 
             // Fetch apikey, or create a new one if doesn't exists.
-            $apikey = empty($user->apikey)
-                ? $user->createAPiKey()
-                : $user->apikey;
+            $apikey = $user->apikey;
+
+            if (empty($apikey)) {
+                // Create new one
+                $apikey = $user->createAPiKey();
+            }
 
             // Generate the signature
             $_GET['apikey'] = $apikey->api_key;
