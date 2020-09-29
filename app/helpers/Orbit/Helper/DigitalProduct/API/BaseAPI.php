@@ -183,7 +183,13 @@ class BaseAPI
 
             // Do the request...
             if (! $this->shouldMockResponse) {
-                $response = $this->client->request($this->method, $this->endPoint, $this->options);
+
+                $response = $this->client->request(
+                    $this->method,
+                    $this->endPoint,
+                    $this->options
+                );
+
                 $response = $response->getBody()->getContents();
             }
             else {
