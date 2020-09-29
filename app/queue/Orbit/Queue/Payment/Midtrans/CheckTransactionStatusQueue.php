@@ -8,8 +8,7 @@ use Exception;
 use Event;
 use Mall;
 use Activity;
-use Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct\UPointHelper;
-use Orbit\Helper\Util\JobBurier;
+use Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct\APIHelper;
 
 use PaymentTransaction;
 
@@ -27,7 +26,7 @@ use Orbit\Notifications\DigitalProduct\ExpiredPaymentNotification as DigitalProd
  */
 class CheckTransactionStatusQueue
 {
-    use UPointHelper;
+    use APIHelper;
 
     /**
      * $data should have 2 items:
@@ -204,7 +203,7 @@ class CheckTransactionStatusQueue
                 Event::fire('orbit.payment.postupdatepayment.after.commit', [
                     $payment,
                     $mall,
-                    $this->buildUPointParams($payment),
+                    $this->buildAPIParams($payment),
                 ]);
 
                 Log::info('Midtrans::CheckTransactionStatusQueue: Checking stopped.');

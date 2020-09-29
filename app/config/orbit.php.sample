@@ -6519,6 +6519,21 @@ return array(
                     ],
                 ],
             ],
+
+            'woodoos' => [
+                'env' => 'sandbox',
+                'id' => 'woodoos',
+                'name' => 'Woodoos (Ogloba)',
+                'config' => [
+                    'sandbox' => [
+                        'base_uri' => 'https://demo.woodoos.com/gc-gateway-restful/',
+                        'merchant_id' => 'GoToMalls',
+                        'terminal_id' => '001',
+                        'cashier_id' => '001',
+                        'passphrase' => '3Zj8mlA1nNk87iuGQOWTHlvq6t21066120kjgs0HN89Nx6MqTV',
+                    ],
+                ]
+            ],
         ],
     ],
 
