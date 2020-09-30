@@ -93,6 +93,7 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
                                             'payment_midtrans.payment_midtrans_info',
                                             'digital_products.digital_product_id as item_id',
                                             'payment_transaction_details.payload',
+                                            'games.game_name',
                                             DB::raw($gameLogo)
                                             )
 
