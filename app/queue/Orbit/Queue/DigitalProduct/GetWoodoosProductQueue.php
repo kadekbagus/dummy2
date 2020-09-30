@@ -10,8 +10,9 @@ use Config;
 use Exception;
 use PaymentTransaction;
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
+use Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct\APIHelper;
+use Orbit\Notifications\DigitalProduct\Woodoos\ReceiptNotification;
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
-use Orbit\Notifications\DigitalProduct\UPointDTU\ReceiptNotification;
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
 use Orbit\Notifications\DigitalProduct\DigitalProductNotAvailableNotification;
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedProductActivity;
@@ -25,8 +26,10 @@ use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotific
  *
  * @author Budi <budi@dominopos.com>
  */
-class GetUPointDTUProductQueue
+class GetWoodoosProductQueue
 {
+    use APIHelper;
+
     /**
      * Delay before we trigger another MCash Purchase (in minutes).
      * @var integer
@@ -85,8 +88,8 @@ class GetUPointDTUProductQueue
             }
 
             $detail = $payment->details->first();
-            $digitalProduct = $this->getDigitalProduct($payment);
-            $providerProduct = $this->getProviderProduct($payment);
+            $digitalProduct = $this->getDigitalProduct($payment); // @todo read from payment
+            $providerProduct = $this->getProviderProduct($payment); // @todo read from payment
             $productCode = $providerProduct->code;
             $digitalProductId = $digitalProduct->digital_product_id;
 
@@ -97,56 +100,48 @@ class GetUPointDTUProductQueue
             $discount = $payment->discount_code;
             $digitalProductName = $digitalProduct->product_name;
 
-            $paymentNotes = unserialize($payment->notes);
+            $purchaseData = $this->buildAPIParams($payment);
 
-            if (! isset($paymentNotes['inquiry'])) {
-                throw new Exception('GetUPointDTUProductQueue: Missing inquiry response.');
+            $activationResponse = App::make(PurchaseProviderInterface::class, [
+                    'providerId' => 'woodoos',
+                ])->purchase($purchaseData);
+
+            $this->log("Activation Response: ");
+            $this->log(serialize($activationResponse->getData()));
+
+            if (! $activationResponse->isSuccess()) {
+                throw new Exception("Failed Activation Request to Woodoos! {$activationResponse->getFailureMessage()}");
             }
 
-            $inquiryResponseData = json_decode($paymentNotes['inquiry']);
+            $purchaseData['ref_number'] = $activationResponse->getRefNumber();
 
-            $upointProductCode = '';
+            $purchase = App::make(PurchaseProviderInterface::class, [
+                    'providerId' => 'woodoos',
+                ])->confirm($purchaseData);
 
-            if (isset($inquiryResponseData->info)) {
-                $upointProductCode = isset($inquiryResponseData->info->product) ? $inquiryResponseData->info->product : '';
-            }
-
-            $upointInquiryPayload = [];
-
-            if (isset($inquiryResponseData->info)) {
-                $upointInquiryPayload = isset($inquiryResponseData->info->details) ? $inquiryResponseData->info->details : [];
-            }
-
-            $confirmData = [
-                'trx_id' => $paymentId,
-                'payment_info' => isset($data['payment_info']) ? $data['payment_info'] : null,
-                'upoint_product_code' => $upointProductCode,
-                'inquiry_details' => $upointInquiryPayload,
-            ];
-
-            $confirmPurchase = App::make(PurchaseProviderInterface::class, [
-                    'providerId' => $providerProduct->provider_name,
-                ])->confirm($confirmData);
+            $this->log("Confirm Purchase Response:");
+            $this->log(serialize($purchase->getData()));
 
             // Append noted
-            $purchaseNotes = unserialize($payment->notes);
-            $purchaseNotes['confirm'] = $confirmPurchase->getData();
-            $payment->notes = serialize($purchaseNotes);
-            $detail->payload = serialize($purchaseNotes['confirm']);
+            $notes = serialize([
+                'activation' => $activationResponse->getData(),
+                'confirm' => $purchase->getData(),
+            ]);
+
+            $payment->notes = $notes;
+            $detail->payload = serialize($purchase->getData());
             $detail->save();
 
-            $responseData = json_decode($confirmPurchase->getData());
-
-            if (null !== $responseData
-                && (isset($responseData->status)
-                && 100 === (int) $responseData->status)
-            ) {
+            if ($purchase->isSuccess()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
 
                 $this->log("Issued for payment {$paymentId}..");
 
                 // Notify Customer.
-                $payment->user->notify(new ReceiptNotification($payment, []));
+                $payment->user->notify(new ReceiptNotification(
+                    $payment,
+                    $purchase->getVoucherData()
+                ));
 
                 $cid = time();
                 // send google analitics event hit
@@ -207,8 +202,8 @@ class GetUPointDTUProductQueue
                     $this->log("Promo code {$discount->discount_code} issued for purchase {$paymentId}");
                 }
 
-                $this->log("Purchase Data: " . serialize($confirmData));
-                $this->log("Purchase Response: " . serialize($confirmPurchase->getData()));
+                $this->log("Purchase Data: " . serialize($purchaseData));
+                $this->log("Purchase Response: " . serialize($purchase->getData()));
             }
 
             // Pending?
@@ -219,9 +214,9 @@ class GetUPointDTUProductQueue
 
             else {
                 $this->log("Purchase failed for payment {$paymentId}.");
-                $this->log("Purchase Data: " . serialize($confirmData));
-                $this->log("Purchase Response: " . serialize($confirmPurchase->getData()));
-                throw new Exception($confirmPurchase->getFailureMessage());
+                $this->log("Purchase Data: " . serialize($purchaseData));
+                $this->log("Purchase Response: " . serialize($purchase->getData()));
+                throw new Exception($purchase->getFailureMessage());
             }
 
             $payment->save();
@@ -270,7 +265,7 @@ class GetUPointDTUProductQueue
                     $admin->notify(new DigitalProductNotAvailableNotification($payment, $e->getMessage()));
                 }
 
-                // // Notify customer that coupon is not available.
+                // Notify customer that coupon is not available.
                 $payment->user->notify(new CustomerDigitalProductNotAvailableNotification($payment));
 
                 $notes = $e->getMessage();
@@ -292,7 +287,7 @@ class GetUPointDTUProductQueue
                     ])
                     ->request();
 
-                // $payment->user->activity(new PurchaseFailedProductActivity($payment, $this->objectType, $notes));
+                $payment->user->activity(new PurchaseFailedProductActivity($payment, $this->objectType, $notes));
             }
             else {
                 DB::connection()->rollBack();

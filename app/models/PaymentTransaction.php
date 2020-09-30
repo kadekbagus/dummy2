@@ -299,7 +299,18 @@ class PaymentTransaction extends Eloquent
     {
         foreach($this->details as $detail) {
             if (! empty($detail->provider_product)) {
-                return $detail->provider_product->provider_name === "upoint-{$method}";
+                return stripos($detail->provider_product->provider_name, "upoint-{$method}") !== false;
+            }
+        }
+
+        return false;
+    }
+
+    public function forWoodoos()
+    {
+        foreach($this->details as $detail) {
+            if (! empty($detail->provider_product)) {
+                return $detail->provider_product->provider_name === "woodoos";
             }
         }
 

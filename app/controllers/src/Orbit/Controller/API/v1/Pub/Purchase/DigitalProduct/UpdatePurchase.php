@@ -39,7 +39,7 @@ use User;
  */
 class UpdatePurchase
 {
-    use UPointHelper;
+    use APIHelper;
 
     protected $objectType = 'digital_product';
 
@@ -224,7 +224,7 @@ class UpdatePurchase
 
                 $objectName = $this->resolveObjectName($this->purchase);
 
-                $UPointParams = $this->buildUPointParams($this->purchase);
+                $apiParams = $this->buildAPIParams($this->purchase);
 
                 // Log activity...
                 // Should be done before issuing coupon for the sake of activity ordering,
@@ -239,7 +239,7 @@ class UpdatePurchase
                 Event::fire('orbit.payment.postupdatepayment.after.commit', [
                     $this->purchase,
                     $mall,
-                    $UPointParams
+                    $apiParams
                 ]);
 
                 // If previous status was starting and now is pending, we should trigger job transaction status check.
