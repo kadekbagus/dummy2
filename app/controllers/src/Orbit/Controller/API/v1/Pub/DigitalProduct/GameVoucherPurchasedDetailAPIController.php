@@ -218,7 +218,7 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
                                     $voucherCode = $voucherCode . "User ID: " . $payloadObj->info->user_info->user_id . "\n";
                                 }
                                 // append server_id
-                                if (isset($payloadObj->info->user_info->server_id)) {
+                                if (isset($payloadObj->info->user_info->server_id) && $payloadObj->info->user_info->server_id != '1') {
                                     $voucherCode = $voucherCode . "Server ID: " . $payloadObj->info->user_info->server_id . "\n";
                                 }
                             }
@@ -236,6 +236,10 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
                                         if (isset($payloadObj->info->details[0]->username)) {
                                             if (! empty($payloadObj->info->details[0]->username)) {
                                                 $voucherCode = $voucherCode . "User Name: " . $payloadObj->info->details[0]->username;
+                                            }
+                                        } elseif (isset($payloadObj->info->details[0]->role_name)) {
+                                            if (! empty($payloadObj->info->details[0]->role_name)) {
+                                                $voucherCode = $voucherCode . "User Name: " . $payloadObj->info->details[0]->role_name;
                                             }
                                         }
                                     }
