@@ -16,12 +16,15 @@ class WoodoosAPI extends BaseAPI
 
     protected function setBodyParams()
     {
-        $this->options['json'] = json_encode($this->buildRequestParam());
+        $this->options['json'] = $this->buildRequestParam();
     }
 
     protected function setHeaders()
     {
-        $this->options['headers']['Authorization'] = $this->config['passphrase'];
+        $this->options['auth'] = [
+            $this->config['merchant_id'],
+            $this->config['passphrase'],
+        ];
     }
 
     protected function handleException($e)
