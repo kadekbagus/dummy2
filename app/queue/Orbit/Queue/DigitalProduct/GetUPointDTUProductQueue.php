@@ -68,7 +68,7 @@ class GetUPointDTUProductQueue
                 'user',
                 'midtrans',
                 'discount_code'
-            ])->findOrFail($paymentId);
+            ])->leftJoin('games', 'games.game_id', '=', 'payment_transactions.extra_data')->findOrFail($paymentId);
 
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired() || $payment->canceled()
@@ -119,7 +119,7 @@ class GetUPointDTUProductQueue
 
             $confirmData = [
                 'trx_id' => $paymentId,
-                'payment_info' => $data['payment_info'],
+                'payment_info' => isset($data['payment_info']) ? $data['payment_info'] : null,
                 'upoint_product_code' => $upointProductCode,
                 'inquiry_details' => $upointInquiryPayload,
             ];
