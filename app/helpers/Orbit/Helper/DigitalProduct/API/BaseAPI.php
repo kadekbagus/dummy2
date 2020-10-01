@@ -3,11 +3,7 @@
 use Config;
 use Exception;
 use GuzzleHttp\Client as Guzzle;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\RequestException;
-use Log;
 use Orbit\Helper\DigitalProduct\Response\BaseResponse;
-use Orbit\Helper\Exception\OrbitCustomException;
 
 /**
  * Base 3rd party API wrapper.

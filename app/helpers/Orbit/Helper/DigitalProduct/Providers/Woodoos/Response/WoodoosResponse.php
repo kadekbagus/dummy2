@@ -43,16 +43,6 @@ class WoodoosResponse extends BaseResponse
                 || $this->response->data->isSuccessful === 'true');
     }
 
-    /**
-     * Just return the raw response from API.
-     *
-     * @return [type] [description]
-     */
-    public function getData()
-    {
-        return $this->response->data;
-    }
-
     public function getFailureMessage()
     {
         return isset($this->response->data->errorMessage)
