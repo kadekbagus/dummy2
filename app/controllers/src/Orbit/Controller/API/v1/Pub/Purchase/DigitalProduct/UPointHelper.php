@@ -194,6 +194,10 @@ trait UPointHelper
                     if (isset($payloadObj->info->user_info->server_id) && $payloadObj->info->user_info->server_id != '1') {
                         $confirmationInfo->server_id = $payloadObj->info->user_info->server_id;
                     }
+                    // append user_code
+                    if (isset($payloadObj->info->user_info->user_code)) {
+                        $confirmationInfo->user_code = $payloadObj->info->user_info->user_code;
+                    }
                 }
 
                 if (isset($payloadObj->info->details)) {
@@ -220,8 +224,15 @@ trait UPointHelper
                     }
 
                     // if the details is an object
-                    if (is_object($payloadObj->info->details) && isset($payloadObj->info->details->username)) {
-                        $confirmationInfo->username = $payloadObj->info->details->username;
+                    if (is_object($payloadObj->info->details)) {
+                        // append username
+                        if (isset($payloadObj->info->details->username)) {
+                            $confirmationInfo->username = $payloadObj->info->details->username;
+                        }
+                        // append user_name
+                        if (isset($payloadObj->info->details->user_name)) {
+                            $confirmationInfo->user_name = $payloadObj->info->details->user_name;
+                        }
                     }
                 }
             }
