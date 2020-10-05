@@ -3,9 +3,7 @@
 use Config;
 use Exception;
 use GuzzleHttp\Client as Guzzle;
-use Log;
 use Orbit\Helper\DigitalProduct\Response\BaseResponse;
-use Orbit\Helper\Exception\OrbitCustomException;
 
 /**
  * Base 3rd party API wrapper.
@@ -181,9 +179,17 @@ class BaseAPI
 
             $this->setRequestContentType();
 
+            $this->setHeaders();
+
             // Do the request...
             if (! $this->shouldMockResponse) {
-                $response = $this->client->request($this->method, $this->endPoint, $this->options);
+
+                $response = $this->client->request(
+                    $this->method,
+                    $this->endPoint,
+                    $this->options
+                );
+
                 $response = $response->getBody()->getContents();
             }
             else {
@@ -224,6 +230,14 @@ class BaseAPI
     }
 
     /**
+     * Set additional request headers.
+     */
+    protected function setHeaders()
+    {
+        //
+    }
+
+    /**
      * Handle exception while running the request.
      *
      * @param  [type] $e [description]
@@ -232,7 +246,7 @@ class BaseAPI
     protected function handleException($e)
     {
         $response = (object) [
-            'status' => 500,
+            'status' => $e->getCode(),
             'message' => $e->getMessage(),
             'data' => null,
         ];

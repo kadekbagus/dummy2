@@ -1,7 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct;
 
 use Log;
-use Exception;
 use Illuminate\Support\Facades\App;
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
 use Orbit\Helper\Exception\OrbitCustomException;
@@ -92,7 +91,7 @@ trait UPointHelper
 
         $purchaseParams = [
             'trx_id' => $purchase->payment_transaction_id,
-            'item' => $digitalProduct->code,
+            'item' => $providerProduct->code,
             'user_info' => $this->getUPointUserInfo($providerProduct, $request),
             'timestamp' => time(),
         ];
@@ -103,7 +102,12 @@ trait UPointHelper
 
         // Info should contain user information associated with game user_id,
         // e.g. game nickname and the server name.
-        if ($purchaseResponse->isSuccess()) {
+        $responseData = json_decode($purchaseResponse->getData());
+
+        if (null !== $responseData
+            && (isset($responseData->status)
+            && 1 === (int) $responseData->status)
+        ) {
             if (empty($purchase->notes)) {
                 $purchase->notes = serialize([
                     'inquiry' => $purchaseResponse->getData(),
@@ -167,25 +171,30 @@ trait UPointHelper
 
     protected function buildUPointParams($purchase)
     {
-        $providerProduct = $purchase->getProviderProduct();
-
         $purchaseNotes = unserialize($purchase->notes);
         $inquiry = json_decode($purchaseNotes['inquiry']);
 
-        if ($providerProduct->provider_name === 'upoint-dtu') {
-
+        if ($purchase->forUPoint('dtu')) {
             if (isset($inquiry->info) && isset($inquiry->info->details)) {
-                return [
-                    'payment_info' => json_encode($inquiry->info->details)
-                ];
+                if (is_array($inquiry->info->details) && isset($inquiry->info->details[0])) {
+                    return [
+                        'payment_info' => json_encode($inquiry->info->details[0])
+                    ];
+                } else {
+                    return [
+                        'payment_info' => json_encode($inquiry->info->details)
+                    ];
+                }
             }
         }
-        else if ($providerProduct->provider_name === 'upoint-voucher') {
+        else if ($purchase->forUPoint('voucher')) {
             return [
                 'upoint_trx_id' => $inquiry->trx_id,
                 'trx_id' => $purchase->payment_transaction_id,
                 'request_status' => $inquiry->status,
             ];
         }
+
+        return [];
     }
 }

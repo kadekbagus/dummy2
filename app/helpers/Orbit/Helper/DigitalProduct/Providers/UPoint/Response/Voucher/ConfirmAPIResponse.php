@@ -35,8 +35,6 @@ class ConfirmAPIResponse extends PurchaseAPIResponse
 
     public function getSerialNumber()
     {
-        return array_filter($this->voucherData, function($key) {
-            return stripos($key, 'serial') !== false;
-        }, ARRAY_FILTER_USE_KEY);
+        return $this->voucherData;
     }
 }

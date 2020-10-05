@@ -119,7 +119,7 @@ class GetUPointDTUProductQueue
 
             $confirmData = [
                 'trx_id' => $paymentId,
-                'payment_info' => $data['payment_info'],
+                'payment_info' => isset($data['payment_info']) ? $data['payment_info'] : null,
                 'upoint_product_code' => $upointProductCode,
                 'inquiry_details' => $upointInquiryPayload,
             ];

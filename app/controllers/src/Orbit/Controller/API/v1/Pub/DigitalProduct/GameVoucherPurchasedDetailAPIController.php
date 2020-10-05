@@ -191,13 +191,15 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
         if (isset($provider->provider_name)) {
             switch ($provider->provider_name) {
                 case 'ayopay':
-                    $voucherString = ',';
-                    $voucherXml = new SimpleXMLElement($gameVoucher->payload);
+                    if (! empty($gameVoucher->payload)) {
+                        $voucherString = ',';
+                        $voucherXml = new SimpleXMLElement($gameVoucher->payload);
 
-                    if (isset($voucherXml->voucher)) {
-                        if (strpos($voucherXml->voucher, $voucherString) !== false) {
-                            $voucherData = explode($voucherString, $voucherXml->voucher);
-                            $voucherCode = $voucherData[0]."\n".$voucherData[1];
+                        if (isset($voucherXml->voucher)) {
+                            if (strpos($voucherXml->voucher, $voucherString) !== false) {
+                                $voucherData = explode($voucherString, $voucherXml->voucher);
+                                $voucherCode = $voucherData[0]."\n".$voucherData[1];
+                            }
                         }
                     }
 
@@ -216,7 +218,7 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
                                     $voucherCode = $voucherCode . "User ID: " . $payloadObj->info->user_info->user_id . "\n";
                                 }
                                 // append server_id
-                                if (isset($payloadObj->info->user_info->server_id)) {
+                                if (isset($payloadObj->info->user_info->server_id) && $payloadObj->info->user_info->server_id != '1') {
                                     $voucherCode = $voucherCode . "Server ID: " . $payloadObj->info->user_info->server_id . "\n";
                                 }
                             }
@@ -235,6 +237,10 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
                                             if (! empty($payloadObj->info->details[0]->username)) {
                                                 $voucherCode = $voucherCode . "User Name: " . $payloadObj->info->details[0]->username;
                                             }
+                                        } elseif (isset($payloadObj->info->details[0]->role_name)) {
+                                            if (! empty($payloadObj->info->details[0]->role_name)) {
+                                                $voucherCode = $voucherCode . "User Name: " . $payloadObj->info->details[0]->role_name;
+                                            }
                                         }
                                     }
                                 }
@@ -251,7 +257,21 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
                     break;
 
                 case 'upoint-voucher':
-                    # code...
+                    if (! empty($gameVoucher->payload)) {
+                        $payload = unserialize($gameVoucher->payload);
+                        $payloadObj = json_decode($payload);
+
+                        if (isset($payloadObj->item) && is_array($payloadObj->item)) {
+                            $voucherData = array_filter($payloadObj->item, function($key) {
+                                return $key->name === 'voucher';
+                            });
+
+                            if (isset($voucherData[0]) && isset($voucherData[0]->value)) {
+                                $voucherCode = str_replace(';', "\n", $voucherData[0]->value);
+                            }
+                        }
+                    }
+
                     break;
 
                 default:

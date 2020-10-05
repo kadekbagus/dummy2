@@ -212,7 +212,7 @@ class PromotionListNewAPIController extends PubControllerAPI
 
             // Filter by given keyword...
             $keyword = OrbitInput::get('keyword');
-            $forbiddenCharacter = array('>', '<', '(', ')', '{', '}', '[', ']', '^', '"', '~', '/');
+            $forbiddenCharacter = array('>', '<', '(', ')', '{', '}', '[', ']', '^', '"', '~', '/', ':');
             $keyword = str_replace($forbiddenCharacter, '', $keyword);
             if (! empty($keyword)) {
                 $cacheKey['keyword'] = $keyword;

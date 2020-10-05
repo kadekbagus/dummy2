@@ -67,6 +67,7 @@ class ArticleSearch extends Search
      */
     public function filterByKeyword($keyword = '', $logic = 'should')
     {
+        $keyword = $this->escape($keyword);
         $keywordFields = ['title', 'body'];
 
         $priorityFields = [];
