@@ -87,6 +87,7 @@ class GameVoucherPurchasedListAPIController extends PubControllerAPI
                                                 'payment_transaction_details.quantity',
                                                 'payment_transaction_details.payload',
                                                 'provider_products.provider_name',
+                                                'games.game_name',
                                                 DB::raw($gameLogo),
                                                 DB::raw("(SELECT D.value_in_percent FROM {$prefix}payment_transaction_details PTD
                                                             LEFT JOIN {$prefix}discounts D on D.discount_id = PTD.object_id
