@@ -71,6 +71,11 @@ class PaymentTransaction extends Eloquent
     const STATUS_SUCCESS_NO_PRODUCT_FAILED = 'success_no_product_failed';
 
     /**
+     * Make promo_code as property, to avoid SQL error when saving.
+     */
+    public $promo_code = null;
+
+    /**
      * Payment - Coupon Sepulsa relation.
      *
      * @return [type] [description]
