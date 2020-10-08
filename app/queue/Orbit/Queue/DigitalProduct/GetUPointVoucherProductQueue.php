@@ -68,7 +68,7 @@ class GetUPointVoucherProductQueue
                 'user',
                 'midtrans',
                 'discount_code'
-            ])->findOrFail($paymentId);
+            ])->leftJoin('games', 'games.game_id', '=', 'payment_transactions.extra_data')->findOrFail($paymentId);
 
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired() || $payment->canceled()
