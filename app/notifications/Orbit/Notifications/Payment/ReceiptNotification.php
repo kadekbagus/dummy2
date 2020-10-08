@@ -97,6 +97,7 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
             'redeemUrl'         => Config::get('orbit.coupon.direct_redemption_url'),
             'transactionDateTime' => $this->payment->getTransactionDate('d F Y, H:i ') . " {$this->getLocalTimezoneName($this->payment->timezone_name)}",
             'emailSubject'      => $this->getEmailSubject(),
+            'gameName'          => $this->getGameName(),
         ];
     }
 

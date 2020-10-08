@@ -83,6 +83,11 @@ trait HasPaymentTrait
         return $this->payment->phone;
     }
 
+    protected function getGameName()
+    {
+        return $this->payment->game_name;
+    }
+
     /**
      * Get the customer data.
      *
