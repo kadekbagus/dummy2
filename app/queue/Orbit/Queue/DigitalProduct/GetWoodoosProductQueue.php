@@ -137,12 +137,6 @@ class GetWoodoosProductQueue
 
                 $this->log("Issued for payment {$paymentId}..");
 
-                // Notify Customer.
-                $payment->user->notify(new ReceiptNotification(
-                    $payment,
-                    $purchase->getVoucherData()
-                ));
-
                 $cid = time();
                 // send google analitics event hit
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))
@@ -150,7 +144,7 @@ class GetWoodoosProductQueue
                         'cid' => $cid,
                         't' => 'event',
                         'ea' => 'Purchase Digital Product Successful',
-                        'ec' => 'game_voucher',
+                        'ec' => 'electricity',
                         'el' => $digitalProductName,
                         'cs' => $payment->utm_source,
                         'cm' => $payment->utm_medium,
@@ -182,7 +176,7 @@ class GetWoodoosProductQueue
                             'ip' => $detail->price,
                             'iq' => $detail->quantity,
                             'ic' => $productCode,
-                            'iv' => 'game_voucher',
+                            'iv' => 'electricity',
                             'cu' => $payment->currency,
                         ])
                         ->request();
@@ -224,8 +218,16 @@ class GetWoodoosProductQueue
             // Commit the changes ASAP.
             DB::connection()->commit();
 
-            // Increase point when the transaction is success.
+            // If purchase success, then...
             if (in_array($payment->status, [PaymentTransaction::STATUS_SUCCESS])) {
+
+                // Notify Customer
+                $payment->user->notify(new ReceiptNotification(
+                    $payment,
+                    $purchase->getVoucherData()
+                ));
+
+                // Increase user's point
                 $rewardObject = (object) [
                     'object_id' => $digitalProductId,
                     'object_type' => 'digital_product',
@@ -277,7 +279,7 @@ class GetWoodoosProductQueue
                         'cid' => time(),
                         't' => 'event',
                         'ea' => 'Purchase Digital Product Failed',
-                        'ec' => 'game_voucher',
+                        'ec' => 'electricity',
                         'el' => $digitalProductName,
                         'cs' => $payment->utm_source,
                         'cm' => $payment->utm_medium,
