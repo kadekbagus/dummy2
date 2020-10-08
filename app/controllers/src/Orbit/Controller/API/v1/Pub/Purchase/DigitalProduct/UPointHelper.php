@@ -60,6 +60,8 @@ trait UPointHelper
                 $purchaseResponse
             );
 
+            $purchase->confirmation_info = $this->getConfirmationInfo($purchase);
+
             Log::info("DTU Purchase created for trxID: {$purchase->payment_transaction_id}");
         }
 
@@ -167,6 +169,76 @@ trait UPointHelper
     protected function transformUPointPurchaseInfo($response)
     {
         return $response->info;
+    }
+
+    /**
+     * Information to be used on confirmation window popup.
+     *
+     * @return object
+     */
+    protected function getConfirmationInfo($purchase)
+    {
+        $confirmationInfo = new \stdclass();
+        $payload = unserialize($purchase->notes);
+
+        if (isset($payload['inquiry'])) {
+            $payloadObj = json_decode($payload['inquiry']);
+
+            if (isset($payloadObj->info)) {
+                if (isset($payloadObj->info->user_info)) {
+                    // append user_id
+                    if (isset($payloadObj->info->user_info->user_id)) {
+                        $confirmationInfo->user_id = $payloadObj->info->user_info->user_id;
+                    }
+                    // append server_id
+                    if (isset($payloadObj->info->user_info->server_id) && $payloadObj->info->user_info->server_id != '1') {
+                        $confirmationInfo->server_id = $payloadObj->info->user_info->server_id;
+                    }
+                    // append user_code
+                    if (isset($payloadObj->info->user_info->user_code)) {
+                        $confirmationInfo->user_code = $payloadObj->info->user_info->user_code;
+                    }
+                }
+
+                if (isset($payloadObj->info->details)) {
+                    // if the details is an array of object
+                    if (is_array($payloadObj->info->details) && isset($payloadObj->info->details[0])) {
+                        if (isset($payloadObj->info->details[0])) {
+                            // append server_name
+                            if (isset($payloadObj->info->details[0]->server_name)) {
+                                if (! empty($payloadObj->info->details[0]->server_name)) {
+                                    $confirmationInfo->server_name = $payloadObj->info->details[0]->server_name;
+                                }
+                            }
+                            // append user name
+                            if (isset($payloadObj->info->details[0]->username)) {
+                                if (! empty($payloadObj->info->details[0]->username)) {
+                                    $confirmationInfo->username = $payloadObj->info->details[0]->username;
+                                }
+                            } elseif (isset($payloadObj->info->details[0]->role_name)) {
+                                if (! empty($payloadObj->info->details[0]->role_name)) {
+                                    $confirmationInfo->username = $payloadObj->info->details[0]->role_name;
+                                }
+                            }
+                        }
+                    }
+
+                    // if the details is an object
+                    if (is_object($payloadObj->info->details)) {
+                        // append username
+                        if (isset($payloadObj->info->details->username)) {
+                            $confirmationInfo->username = $payloadObj->info->details->username;
+                        }
+                        // append user_name
+                        if (isset($payloadObj->info->details->user_name)) {
+                            $confirmationInfo->user_name = $payloadObj->info->details->user_name;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $confirmationInfo;
     }
 
     protected function buildUPointParams($purchase)

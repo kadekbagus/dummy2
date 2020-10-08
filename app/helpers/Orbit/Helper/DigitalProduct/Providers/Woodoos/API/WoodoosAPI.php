@@ -1,6 +1,7 @@
 <?php namespace Orbit\Helper\DigitalProduct\Providers\Woodoos\API;
 
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\Config;
 use Orbit\Helper\DigitalProduct\API\BaseAPI;
 
 /**
@@ -13,6 +14,11 @@ class WoodoosAPI extends BaseAPI
     protected $method = 'POST';
 
     protected $providerId = 'woodoos';
+
+    protected function getEnv()
+    {
+        return Config::get("orbit.digital_product.providers.{$this->providerId}.env", 'sandbox');
+    }
 
     protected function setBodyParams()
     {

@@ -10,8 +10,6 @@ use Orbit\Helper\DigitalProduct\Response\HasVoucherData;
  */
 class WoodoosResponse extends BaseResponse
 {
-    use HasVoucherData;
-
     /**
      * Accept well-formatted xml string...
      *
@@ -26,8 +24,6 @@ class WoodoosResponse extends BaseResponse
         }
 
         parent::__construct($response);
-
-        $this->parseVoucherData($response);
     }
 
     /**
