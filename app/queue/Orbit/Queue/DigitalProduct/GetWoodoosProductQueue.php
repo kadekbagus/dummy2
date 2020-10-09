@@ -129,7 +129,7 @@ class GetWoodoosProductQueue
             ]);
 
             $payment->notes = $notes;
-            $detail->payload = serialize($confirmationResponse->getData());
+            $detail->payload = serialize($activationResponse->getData());
             $detail->save();
 
             if ($confirmationResponse->isSuccess()) {
