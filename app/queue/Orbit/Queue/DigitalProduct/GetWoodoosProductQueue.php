@@ -115,24 +115,24 @@ class GetWoodoosProductQueue
 
             $purchaseData['ref_number'] = $activationResponse->getRefNumber();
 
-            $purchase = App::make(PurchaseProviderInterface::class, [
+            $confirmationResponse = App::make(PurchaseProviderInterface::class, [
                     'providerId' => 'woodoos',
                 ])->confirm($purchaseData);
 
             $this->log("Confirm Purchase Response:");
-            $this->log(serialize($purchase->getData()));
+            $this->log(serialize($confirmationResponse->getData()));
 
             // Append noted
             $notes = serialize([
                 'activation' => $activationResponse->getData(),
-                'confirm' => $purchase->getData(),
+                'confirm' => $confirmationResponse->getData(),
             ]);
 
             $payment->notes = $notes;
-            $detail->payload = serialize($purchase->getData());
+            $detail->payload = serialize($activationResponse->getData());
             $detail->save();
 
-            if ($purchase->isSuccess()) {
+            if ($confirmationResponse->isSuccess()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
 
                 $this->log("Issued for payment {$paymentId}..");
@@ -197,7 +197,7 @@ class GetWoodoosProductQueue
                 }
 
                 $this->log("Purchase Data: " . serialize($purchaseData));
-                $this->log("Purchase Response: " . serialize($purchase->getData()));
+                $this->log("Purchase Response: " . serialize($confirmationResponse->getData()));
             }
 
             // Pending?
@@ -209,8 +209,8 @@ class GetWoodoosProductQueue
             else {
                 $this->log("Purchase failed for payment {$paymentId}.");
                 $this->log("Purchase Data: " . serialize($purchaseData));
-                $this->log("Purchase Response: " . serialize($purchase->getData()));
-                throw new Exception($purchase->getFailureMessage());
+                $this->log("Purchase Response: " . serialize($confirmationResponse->getData()));
+                throw new Exception($confirmationResponse->getFailureMessage());
             }
 
             $payment->save();
@@ -224,7 +224,7 @@ class GetWoodoosProductQueue
                 // Notify Customer
                 $payment->user->notify(new ReceiptNotification(
                     $payment,
-                    $purchase->getVoucherData()
+                    $activationResponse->getVoucherData()
                 ));
 
                 // Increase user's point
