@@ -36,6 +36,8 @@ class Session
      */
     protected $forceNew = FALSE;
 
+    protected $byPassExpiryCheck = FALSE;
+
     /**
      * List of static error codes
      */
@@ -141,8 +143,10 @@ class Session
 
                 // Does the session already expire?
                 $expireAt = $sessionData->expireAt;
-                if ($expireAt < $now) {
-                    throw new Exception ('Your session has expired.', static::ERR_SESS_EXPIRE);
+                if ($this->byPassExpiryCheck) {
+                    if ($expireAt < $now) {
+                        throw new Exception ('Your session has expired.', static::ERR_SESS_EXPIRE);
+                    }
                 }
 
                 $this->driver->update($sessionData);
@@ -344,6 +348,13 @@ class Session
     public function disableForceNew()
     {
         $this->forceNew = FALSE;
+
+        return $this;
+    }
+
+    public function setByPassExpiryCheck($check=false)
+    {
+        $this->byPassExpiryCheck = $check;
 
         return $this;
     }

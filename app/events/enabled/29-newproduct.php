@@ -15,6 +15,8 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
  */
 Event::listen('orbit.newproduct.postnewproduct.after.save', function($controller, $product)
 {
+    $media = [];
+    $maxPhotos = 4;
     $images = Input::file(null);
     if (! $images) {
         return;
@@ -28,16 +30,36 @@ Event::listen('orbit.newproduct.postnewproduct.after.save', function($controller
     $_POST['object_id'] = $product->product_id;
 
     $response = MediaAPIController::create('raw')
-        ->setEnableTransaction(false)
-        ->upload();
+                    ->setEnableTransaction(false)
+                    ->upload();
 
     unset($_POST['media_name_id']);
-    unset($_POST['object_id']);
-
 
     if ($response->code !== 0)
     {
         throw new \Exception($response->message, $response->code);
+    }
+
+    // Process product photos...
+    $_POST['media_name_id'] = 'product_photos';
+
+    for($i = 0; $i < $maxPhotos; $i++) {
+
+        $inputName = "photo{$i}";
+        if (Request::hasFile($inputName)) {
+
+            $response = MediaAPIController::create('raw')
+                                        ->setInputName($inputName)
+                                        ->setEnableTransaction(false)
+                                        ->upload();
+
+            if ($response->code !== 0)
+            {
+                throw new \Exception($response->message, $response->code);
+            }
+
+            $media[] = $response->data;
+        }
     }
 
     $product->setRelation('media', $response->data);
@@ -54,12 +76,13 @@ Event::listen('orbit.newproduct.postnewproduct.after.save', function($controller
  */
 Event::listen('orbit.newproduct.postupdateproduct.after.save', function($controller, $product)
 {
-    $images = Input::file(null);
+    $images = Input::file('images');
+    $maxPhotos = 4;
+    $media = [];
+    // This will be used on MediaAPIController
+    App::instance('orbit.upload.user', $controller->api->user);
 
     if (! empty($images)) {
-        // This will be used on MediaAPIController
-        App::instance('orbit.upload.user', $controller->api->user);
-
         // Delete previous cover image
         $oldImage = Media::where('object_id', $product->product_id)
             ->where('object_name', 'product')
@@ -93,6 +116,52 @@ Event::listen('orbit.newproduct.postupdateproduct.after.save', function($control
         $product->load('media');
         $product->image = $response->data[0]->variants[0]->path;
     }
+
+    // update product_photos
+    $_POST['media_name_id'] = 'product_photos';
+    $_POST['object_id'] = $product->product_id;
+
+    // delete media if any
+    OrbitInput::post('deleted_photos', function($deletedPhotos) use ($product) {
+        $deletedPhotos = (array) $deletedPhotos;
+        foreach ($deletedPhotos as $key => $value) {
+            $oldImage = Media::where('object_id', $product->product_id)
+                ->where('object_name', 'product')
+                ->where('media_name_id', 'product_photos')
+                ->where('media_id', $value)
+                ->first();
+
+            if (is_object($oldImage)) {
+                $_POST['media_id'] = $oldImage->media_id;
+                $deleteResponse = MediaAPIController::create('raw')
+                    ->setEnableTransaction(false)
+                    ->delete();
+                unset($_POST['media_id']);
+            }
+        }
+    });
+
+    for($i = 0; $i < $maxPhotos; $i++) {
+
+        $inputName = "photo{$i}";
+        if (Request::hasFile($inputName)) {
+
+            // then upload again
+            $response = MediaAPIController::create('raw')
+                                        ->setInputName($inputName)
+                                        ->setEnableTransaction(false)
+                                        ->upload();
+
+            if ($response->code !== 0)
+            {
+                throw new \Exception($response->message, $response->code);
+            }
+
+            $media[] = $response->data;
+        }
+    }
+
+    $product->product_photos = $media;
 });
 
 
@@ -172,3 +241,39 @@ Event::listen('orbit.updategame.postupdategame.after.save', function($controller
         $game->image = $response->data[0]->variants[0]->path;
     }
 });
+
+/**
+ * Listen on:    `orbit.newproduct.postnewproduct.after.commit`
+ * Purpose:      Sync product into ES.
+ *
+ * @param ProductNewAPIController $controller - The instance of the ProductNewAPIController or its subclass
+ * @param Product $product - Instance of object Product
+ */
+Event::listen(
+    'orbit.newproduct.postnewproduct.after.commit',
+    function($controller, $product)
+    {
+        Queue::push(
+            'Orbit\Queue\Elasticsearch\ESProductAffiliationUpdateQueue',
+            ['product_id' => $product->product_id]
+        );
+    }
+);
+
+/**
+ * Listen on:    `orbit.newproduct.postupdateproduct.after.commit`
+ * Purpose:      Sync product into ES.
+ *
+ * @param ProductNewAPIController $controller - The instance of the ProductNewAPIController or its subclass
+ * @param Product $product - Instance of object Product
+ */
+Event::listen(
+    'orbit.newproduct.postupdateproduct.after.commit',
+    function($controller, $product)
+    {
+        Queue::push(
+            'Orbit\Queue\Elasticsearch\ESProductAffiliationUpdateQueue',
+            ['product_id' => $product->product_id]
+        );
+    }
+);

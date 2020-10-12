@@ -73,7 +73,13 @@ class ProductDetailAPIController extends ControllerAPI
                         $q->addSelect('marketplaces.status')
                           ->where('marketplaces.status', '=', 'active');
                     },
-                    'country'
+                    'country',
+                    'videos',
+                    'product_photos' => function($q) {
+                        $q->select('media_id', 'metadata', 'object_id', 'path', 'cdn_url')
+                            ->where('media_name_long', 'product_photos_orig');
+                    },
+                    'product_tags'
                 ])
                 ->where('product_id', $productId)
                 ->firstOrFail();

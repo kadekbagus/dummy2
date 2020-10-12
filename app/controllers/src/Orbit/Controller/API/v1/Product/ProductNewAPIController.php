@@ -18,7 +18,9 @@ use Tenant;
 use BaseMerchant;
 use Product;
 use ProductLinkToObject;
-
+use ProductVideo;
+use ProductTag;
+use ProductTagObject;
 
 class ProductNewAPIController extends ControllerAPI
 {
@@ -66,7 +68,10 @@ class ProductNewAPIController extends ControllerAPI
             $categories = OrbitInput::post('categories', []);
             $marketplaces = OrbitInput::post('marketplaces', []);
             $brandIds = OrbitInput::post('brand_ids', []);
+            $youtubeIds = OrbitInput::post('youtube_ids', []);
             $images = \Input::file('images');
+            $productTags = OrbitInput::post('product_tags');
+            $productTags = (array) $productTags;
 
             // Begin database transaction
             $this->beginTransaction();
@@ -95,10 +100,11 @@ class ProductNewAPIController extends ControllerAPI
                 array(
                     'name.required'                 => 'Product Title field is required',
                     'country_id.required'           => 'Country field is required',
-                    'images.required'               => 'Product Image is required',
+                    'images.required'               => 'Product Main Image is required',
                     'short_description.required'    => 'Product Description is required',
                     'categories.required'           => 'Product Category is required',
                     'orbit.empty.marketplaces'      => 'Link to Affiliates is required',
+                    'brand_ids.required'            => 'Link to Brand is required',
                 )
             );
 
@@ -141,6 +147,49 @@ class ProductNewAPIController extends ControllerAPI
                 $brands[] = $saveObjectCategories;
             }
             $newProduct->brands = $brands;
+
+            $videos = array();
+            foreach ($youtubeIds as $youtubeId) {
+                $productVideos = new ProductVideo();
+                $productVideos->product_id = $newProduct->product_id;
+                $productVideos->youtube_id = $youtubeId;
+                $productVideos->save();
+                $videos[] = $productVideos;
+            }
+            $newProduct->product_videos = $videos;
+
+            $tags = array();
+            foreach ($productTags as $productTag) {
+                $product_tag_id = null;
+
+                $existProductTag = ProductTag::excludeDeleted()
+                    ->where('product_tag', '=', $productTag)
+                    ->where('merchant_id', '=', 0)
+                    ->first();
+
+                if (empty($existProductTag)) {
+                    $newProductTag = new ProductTag();
+                    $newProductTag->merchant_id = 0;
+                    $newProductTag->product_tag = $productTag;
+                    $newProductTag->status = 'active';
+                    $newProductTag->created_by = $this->api->user->user_id;
+                    $newProductTag->modified_by = $this->api->user->user_id;
+                    $newProductTag->save();
+
+                    $product_tag_id = $newProductTag->product_tag_id;
+                    $tags[] = $newProductTag;
+                } else {
+                    $product_tag_id = $existProductTag->product_tag_id;
+                    $tags[] = $existProductTag;
+                }
+
+                $newProductTagObject = new ProductTagObject();
+                $newProductTagObject->product_tag_id = $product_tag_id;
+                $newProductTagObject->object_id = $newProduct->product_id;
+                $newProductTagObject->object_type = 'product';
+                $newProductTagObject->save();
+            }
+            $newProduct->product_tags = $tags;
 
             // save translations
             OrbitInput::post('marketplaces', function($marketplace_json_string) use ($newProduct, $productHelper) {

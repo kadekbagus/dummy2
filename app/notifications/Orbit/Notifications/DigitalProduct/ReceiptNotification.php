@@ -41,7 +41,7 @@ class ReceiptNotification extends BaseReceiptNotification
     public function getEmailData()
     {
         return array_merge(parent::getEmailData(), [
-            'myWalletUrl' => $this->getMyPurchasesUrl('/coupons'),
+            'myWalletUrl' => $this->getMyPurchasesUrl('/game-voucher'),
             'voucherData' => $this->voucherData,
         ]);
     }

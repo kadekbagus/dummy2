@@ -2785,5 +2785,87 @@ return array(
             'object_type' => null,
             'parameter_name' => null
         ),
+        '303' => array(
+            'name' => 'view_brand_product_list_page',
+            'name_long' => 'View Brand Product List Page',
+            'module_name' => 'Brand Product',
+            'type' => 'view',
+            'object_type' => null,
+            'parameter_name' => null,
+        ),
+        '304' => array(
+            'name' => 'view_brand_product_detail_page',
+            'name_long' => 'View Brand Product Detail Page',
+            'module_name' => 'Brand Product',
+            'type' => 'view',
+            'object_type' => 'BrandProduct',
+            'parameter_name' => 'object_id',
+        ),
+        '305' => array(
+            'name' => 'click_product_from_list',
+            'name_long' => 'Click Brand Product From List',
+            'module_name' => 'Brand Product',
+            'type' => 'click',
+            'object_type' => 'BrandProduct',
+            'parameter_name' => 'object_id',
+        ),
+        '306' => array(
+            'name' => 'click_see_all_brand_products',
+            'name_long' => 'Click See All Brand Products',
+            'module_name' => 'Brand Product',
+            'type' => 'click',
+            'object_type' => 'Tenant',
+            'parameter_name' => 'object_id',
+        ),
+        '307' => array(
+            'name' => 'click_scan_brand_product',
+            'name_long' => 'Click Scan Brand Product',
+            'module_name' => 'Brand Product',
+            'type' => 'click',
+            'object_type' => 'Tenant',
+            'parameter_name' => 'object_id',
+        ),
+        '308' => array(
+            'name' => 'view_scan_brand_product_popup',
+            'name_long' => 'View Scan Brand Product Popup',
+            'module_name' => 'Brand Product',
+            'type' => 'view',
+            'object_type' => 'Tenant',
+            'parameter_name' => 'object_id',
+        ),
+        '309' => array(
+            'name' => 'success_scan_brand_product',
+            'name_long' => 'Success Scan Brand Product',
+            'module_name' => 'Brand Product',
+            'type' => 'click',
+            'object_type' => 'BrandProduct',
+            'parameter_name' => 'object_id',
+        ),
+        '310' => array(
+            'name' => 'click_marketplace_link',
+            'name_long' => 'Click Marketplace Link',
+            'module_name' => 'Affiliation Product',
+            'type' => 'click',
+            'object_type' => 'Product',
+            'parameter_name' => 'object_id',
+        ),
+        // user clicking product banner in home page
+        '311' => array(
+            'name' => 'click_home_products_link',
+            'name_long' => 'Click Home Products Link',
+            'module_name' => 'Product',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null
+        ),
+        // user clicking product announcement
+        '312' => array(
+            'name' => 'click_announcement_product',
+            'name_long' => 'Click Announcement Product',
+            'module_name' => 'Application',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null
+        ),
     ),
 );

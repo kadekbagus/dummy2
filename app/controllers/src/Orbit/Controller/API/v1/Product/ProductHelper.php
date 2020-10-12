@@ -439,11 +439,36 @@ class ProductHelper
                 if (empty($itemObj->website_url)) {
                     OrbitShopAPI::throwInvalidArgument('Product URL is required');
                 }
+
+                if (!isset($itemObj->selling_price)) {
+                    OrbitShopAPI::throwInvalidArgument('Selling price cannot empty');
+                }
+
+                if (!isset($itemObj->original_price)) {
+                    $itemObj->original_price = 0;
+                }
+
+                // selling price cannot empty
+                if ($itemObj->selling_price == "") {
+                    OrbitShopAPI::throwInvalidArgument('Selling price cannot empty');
+                }
+
+                if ($itemObj->original_price == "" || $itemObj->original_price == "0" || $itemObj->original_price == null) {
+
+                } else {
+                    if ($itemObj->selling_price > $itemObj->original_price) {
+                        OrbitShopAPI::throwInvalidArgument('Selling price cannot higher than original price');
+                    }
+                }
+
                 $saveObjectMarketPlaces = new ProductLinkToObject();
                 $saveObjectMarketPlaces->product_id = $newProduct->product_id;
                 $saveObjectMarketPlaces->object_id = $itemObj->id;
                 $saveObjectMarketPlaces->object_type = 'marketplace';
                 $saveObjectMarketPlaces->product_url = $itemObj->website_url;
+                $saveObjectMarketPlaces->original_price = $itemObj->original_price;
+                $saveObjectMarketPlaces->selling_price = $itemObj->selling_price;
+                $saveObjectMarketPlaces->sku = isset($itemObj->sku) ? $itemObj->sku : null;
                 $saveObjectMarketPlaces->save();
                 $marketplaceData[] = $saveObjectMarketPlaces;
             }

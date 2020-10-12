@@ -1,7 +1,6 @@
 <?php namespace Orbit\Helper\DigitalProduct\Providers;
 
 use Exception;
-use Orbit\Helper\DigitalProduct\Providers\Ayopay\Provider as AyoPayProvider;
 
 /**
  * Purchase Provider Builder that build correct purchase provider class based on the provider id.
@@ -26,7 +25,19 @@ class PurchaseProviderBuilder
     {
         switch ($this->providerId) {
             case 'ayopay':
-                return new AyoPayProvider($config);
+                return new AyoPay\Provider($config);
+                break;
+
+            case 'upoint-dtu':
+                return new UPoint\DTUProvider($config);
+                break;
+
+            case 'upoint-voucher':
+                return new UPoint\VoucherProvider($config);
+                break;
+
+            case 'woodoos':
+                return new Woodoos\Provider($config);
                 break;
 
             // case 'unipin':

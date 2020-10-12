@@ -12,7 +12,7 @@ use Orbit\Notifications\Payment\CanceledPaymentNotification;
  *
  * @param PaymentTransaction $payment - Instance of PaymentTransaction model
  */
-Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTransaction $payment, $mall = null)
+Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTransaction $payment, $mall = null, $paymentInfo = [])
 {
     $paymentId = $payment->payment_transaction_id;
     $utm_source = (isset($payment->utm_source)) ? $payment->utm_source : '';
@@ -22,6 +22,8 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
     $utm_campaign = (isset($payment->utm_campaign)) ? $payment->utm_campaign : '';
 
     $utmUrl = '?utm_source='.$utm_source.'&utm_medium='.$utm_medium.'&utm_term='.$utm_term.'&utm_content='.$utm_content.'&utm_campaign='.$utm_campaign;
+
+    $queue = '';
 
     // Clean up payment if expired, failed, denied, or canceled.
     if ($payment->expired() || $payment->failed() || $payment->denied() || $payment->canceled()) {
@@ -67,7 +69,12 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
     else if ($payment->completed()) {
         Log::info("PaidCoupon: PaymentID: {$paymentId} verified!");
 
-        $queueData = ['paymentId' => $payment->payment_transaction_id, 'retries' => 0, 'current_url' => $utmUrl];
+        $queueData = array_merge([
+            'paymentId' => $payment->payment_transaction_id,
+            'retries' => 0,
+            'current_url' => $utmUrl,
+        ], $paymentInfo);
+
         if (! empty($mall)) {
             $queueData['mall_id'] = $mall->merchant_id;
         }
@@ -87,12 +94,19 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
         else if ($payment->forDigitalProduct()) {
             Log::info("DigitalProduct: Will try to purchase digital product in a few seconds for {$paymentId} ...");
 
-            // @notes shouldn't we use specific queue/tube for this?
-            Queue::push(
-                'Orbit\\Queue\\DigitalProduct\\GetDigitalProductQueue',
-                $queueData //,
-                // 'gtm_pulsa'
-            );
+            $queue = 'Orbit\\Queue\\DigitalProduct\\GetDigitalProductQueue';
+
+            if ($payment->forUPoint('dtu')) {
+                $queue = 'Orbit\\Queue\\DigitalProduct\\GetUPointDTUProductQueue';
+            }
+            else if ($payment->forUPoint('voucher')) {
+                $queue = 'Orbit\\Queue\\DigitalProduct\\GetUPointVoucherProductQueue';
+            }
+            else if ($payment->forWoodoos()) {
+                $queue = 'Orbit\\Queue\\DigitalProduct\\GetWoodoosProductQueue';
+            }
+
+            Queue::connection('sync')->push($queue, $queueData);
         }
         else if ($payment->forSepulsa() || $payment->paidWith(['bank_transfer', 'echannel', 'gopay'])) {
             $delay = Config::get('orbit.transaction.delay_before_issuing_coupon', 75);

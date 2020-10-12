@@ -109,7 +109,13 @@
                                                             <tbody class="transaction-items">
                                                                 @foreach($transaction['items'] as $item)
                                                                 <tr class="transaction-item">
-                                                                    <td class="transaction-item item-name">{{ $item['name'] }}</td>
+                                                                    <td class="transaction-item item-name">{{ $item['name'] }}
+
+                                                                        @if (isset($gameName) && ! empty($gameName))
+                                                                            <p>( {{ $gameName }} )</p>
+                                                                        @endif
+
+                                                                    </td>
                                                                     <td class="transaction-item" style="text-align: center;">{{{ $item['quantity'] }}}</td>
                                                                     <td class="transaction-item">{{{ $item['price'] }}}</td>
                                                                     <td class="transaction-item">{{{ $item['total'] }}}</td>

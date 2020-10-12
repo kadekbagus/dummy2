@@ -262,9 +262,12 @@ class IntermediateBaseController extends Controller
             $user = App::make('currentUser');
 
             // Fetch apikey, or create a new one if doesn't exists.
-            $apikey = empty($user->apikey)
-                ? $user->createAPiKey()
-                : $user->apikey;
+            $apikey = $user->apikey;
+
+            if (empty($apikey)) {
+                // Create new one
+                $apikey = $user->createAPiKey();
+            }
 
             // Generate the signature
             $_GET['apikey'] = $apikey->api_key;
@@ -385,6 +388,7 @@ class IntermediateBaseController extends Controller
         $supportedDependenciesInjection = [
             'IntermediatePubAuthController',
             'IntermediateProductAuthController',
+            'IntermediateBrandProductAuthController',
         ];
 
         if (in_array($theClass, $supportedDependenciesInjection)) {

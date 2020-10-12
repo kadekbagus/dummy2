@@ -1,8 +1,9 @@
 <?php namespace Orbit\Helper\DigitalProduct\Providers\Ayopay;
 
-use Orbit\Helper\DigitalProduct\Providers\Ayopay\API\PurchaseAPI;
-use Orbit\Helper\DigitalProduct\Providers\Ayopay\API\StatusAPI;
+use Exception;
 use Orbit\Helper\DigitalProduct\Providers\BaseProvider;
+use Orbit\Helper\DigitalProduct\Providers\Ayopay\API\StatusAPI;
+use Orbit\Helper\DigitalProduct\Providers\Ayopay\API\PurchaseAPI;
 
 /**
  * Purchase Provider for AyoPay.
@@ -31,5 +32,13 @@ class Provider extends BaseProvider
     public function status($requestParam = [])
     {
         return StatusAPI::create($requestParam)->run();
+    }
+
+    /**
+     *
+     */
+    public function confirm($params = [])
+    {
+        throw new Exception("Confirm Purchase not supported by Ayopay.");
     }
 }

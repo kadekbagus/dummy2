@@ -19,6 +19,9 @@ use Elasticsearch\ClientBuilder;
 use Language;
 use DB;
 use Tenant;
+use Cache;
+use BrandProduct;
+use Log;
 
 class SuggestionAPIController extends PubControllerAPI
 {
@@ -46,7 +49,7 @@ class SuggestionAPIController extends PubControllerAPI
             $text = OrbitInput::get('text', '');
             $host = Config::get('orbit.elasticsearch');
             $language = OrbitInput::get('language', 'id');
-            $mallCountries = OrbitInput::get('country', null);
+            $mallCountries = OrbitInput::get('country', []);
             $mallCities = OrbitInput::get('cities', []);
             $mallId = OrbitInput::get('mall_id', null);
 
@@ -55,8 +58,8 @@ class SuggestionAPIController extends PubControllerAPI
                     ->build();
 
             // If parsing mall_id thats mean we search suggestion in mall level, and even no parsing that is common searching suggestion
+            $field = 'suggest_' . $language;
             if (!empty($mallId)) {
-                $field = 'suggest_' . $language;
                 $body = array(
                                 'gtm_suggestions' => array(
                                     'text' => $text,
@@ -75,12 +78,15 @@ class SuggestionAPIController extends PubControllerAPI
                 if (empty($mallCountries)) {
                     $mallCountries = Mall::where('status', 'active')->groupBy('country')->lists('country');
                 }
+                else if (! empty($mallCountries) && is_string($mallCountries)) {
+                    $mallCountries = [$mallCountries];
+                }
 
                 if (empty($mallCities)) {
                     $mallCities = Mall::where('status', 'active')->groupBy('city')->lists('city');
+                    $mallCities = array_merge($mallCountries, $mallCities);
                 }
 
-                $field = 'suggest_' . $language;
                 $body = [
                     'gtm_suggestions' => [
                         'text' => $text,
@@ -97,14 +103,15 @@ class SuggestionAPIController extends PubControllerAPI
 
                 OrbitInput::get('country', function($country) use (&$body)
                 {
-                    if (! empty($country) || $country != '') {
+                    if (! empty($country) && $country != '') {
                         $body['gtm_suggestions']['completion']['context']['country'] = $country;
                     }
                 });
 
-                OrbitInput::get('cities', function($cities) use (&$body)
+                OrbitInput::get('cities', function($cities) use (&$body, $mallCountries)
                 {
-                    if (! empty($cities) || $cities != '') {
+                    if (! empty($cities) && $cities != '') {
+                        $cities = array_merge($mallCountries, $cities);
                         $body['gtm_suggestions']['completion']['context']['city'] = $cities;
                     }
                 });
@@ -112,25 +119,16 @@ class SuggestionAPIController extends PubControllerAPI
                 $suggestionIndex = Config::get('orbit.elasticsearch.suggestion_indices');
             }
 
-            $field = 'suggest_' . $language;
-
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
-            $countSuggestion = count($suggestionIndex);
-            $suggestion = '';
-            $i = 1;
-            foreach ($suggestionIndex as $suggest) {
-                $suggestPrefix = $esPrefix . $suggest;
-                if ($i != $countSuggestion) {
-                    $suggestPrefix = $suggestPrefix . ',';
-                }
-                $suggestion .= $suggestPrefix;
-                $i++;
-            }
+            $suggestion = array_map(function($indexName) use ($esPrefix) {
+                return $esPrefix . $indexName;
+            }, $suggestionIndex);
 
             $esParam = [
-                'index'  => $suggestion,
+                'index'  => implode(',', $suggestion),
                 'body'   => json_encode($body)
             ];
+
             $response = $client->suggest($esParam);
 
             $listSuggestion = [];

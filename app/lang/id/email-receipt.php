@@ -20,7 +20,7 @@ return [
 
         'greeting_digital_product' => [
             'customer_name' => 'Hi, :customerName',
-            'body' => 'Terima kasih telah melakukan pembelian :itemName di Gotomalls.com. Pembayaran Anda telah diverifikasi oleh sistem kami. Berikut ini detail dari pembelian Anda.',
+            'body' => 'Terima kasih telah melakukan pembelian :itemName :gameName di Gotomalls.com. Pembayaran Anda telah diverifikasi oleh sistem kami. Berikut ini detail dari pembelian Anda.',
         ],
 
         'transaction_labels' => [

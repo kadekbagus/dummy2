@@ -71,6 +71,11 @@ class PaymentTransaction extends Eloquent
     const STATUS_SUCCESS_NO_PRODUCT_FAILED = 'success_no_product_failed';
 
     /**
+     * Make promo_code as property, to avoid SQL error when saving.
+     */
+    public $promo_code = null;
+
+    /**
      * Payment - Coupon Sepulsa relation.
      *
      * @return [type] [description]
@@ -289,6 +294,28 @@ class PaymentTransaction extends Eloquent
         foreach($this->details as $detail) {
             if (! empty($detail->digital_product)) {
                 return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function forUPoint($method = '')
+    {
+        foreach($this->details as $detail) {
+            if (! empty($detail->provider_product)) {
+                return stripos($detail->provider_product->provider_name, "upoint-{$method}") !== false;
+            }
+        }
+
+        return false;
+    }
+
+    public function forWoodoos()
+    {
+        foreach($this->details as $detail) {
+            if (! empty($detail->provider_product)) {
+                return $detail->provider_product->provider_name === "woodoos";
             }
         }
 

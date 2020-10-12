@@ -3,9 +3,7 @@
 use Config;
 use Exception;
 use GuzzleHttp\Client as Guzzle;
-use Log;
 use Orbit\Helper\DigitalProduct\Response\BaseResponse;
-use Orbit\Helper\Exception\OrbitCustomException;
 
 /**
  * Base 3rd party API wrapper.
@@ -85,10 +83,7 @@ class BaseAPI
      */
     public function __construct($requestData = [], $customConfig = [])
     {
-        $env = Config::get('orbit.digital_product.providers.env', 'local');
-        $orbitConfig = Config::get("orbit.digital_product.providers.{$this->providerId}.config.{$env}", []);
-
-        $this->config = array_merge($orbitConfig, $customConfig);
+        $this->config = $this->getConfig($customConfig);
 
         $this->client = new Guzzle([
             'base_uri' => $this->config['base_uri']
@@ -107,6 +102,28 @@ class BaseAPI
         $this->queryString = array_merge($this->queryString, $queryString);
 
         return $this;
+    }
+
+    /**
+     * Get current provider env.
+     *
+     * @return string
+     */
+    protected function getEnv()
+    {
+        return Config::get('orbit.digital_product.providers.env', 'local');
+    }
+
+    /**
+     * Get provider config based on current env.
+     *
+     * @return array
+     */
+    protected function getConfig($customConfig = [])
+    {
+        $orbitConfig = Config::get("orbit.digital_product.providers.{$this->providerId}.config.{$this->getEnv()}", []);
+
+        return array_merge($orbitConfig, $customConfig);
     }
 
     /**
@@ -158,17 +175,21 @@ class BaseAPI
     protected function request()
     {
         try {
-            // Add query string if needed.
-            if (! empty($this->queryString)) {
-                $this->options['query'] = $this->queryString;
-            }
+            $this->addQueryString();
 
-            // Set header...
-            $this->options['headers']['Content-Type'] = $this->contentType;
+            $this->setRequestContentType();
+
+            $this->setHeaders();
 
             // Do the request...
             if (! $this->shouldMockResponse) {
-                $response = $this->client->request($this->method, $this->endPoint, $this->options);
+
+                $response = $this->client->request(
+                    $this->method,
+                    $this->endPoint,
+                    $this->options
+                );
+
                 $response = $response->getBody()->getContents();
             }
             else {
@@ -183,6 +204,40 @@ class BaseAPI
     }
 
     /**
+     * Add query string to the request url.
+     *
+     * Can be overridden as needed.
+     */
+    protected function addQueryString()
+    {
+        // Add query string if needed.
+        if (! empty($this->queryString)) {
+            $this->options['query'] = $this->queryString;
+        }
+    }
+
+    /**
+     * Set Content-Type request header.
+     *
+     * Can be overridden as needed.
+     */
+    protected function setRequestContentType()
+    {
+        if (! empty($this->contentType)) {
+            // Set header...
+            $this->options['headers']['Content-Type'] = $this->contentType;
+        }
+    }
+
+    /**
+     * Set additional request headers.
+     */
+    protected function setHeaders()
+    {
+        //
+    }
+
+    /**
      * Handle exception while running the request.
      *
      * @param  [type] $e [description]
@@ -191,12 +246,22 @@ class BaseAPI
     protected function handleException($e)
     {
         $response = (object) [
-            'status' => 500,
+            'status' => $e->getCode(),
             'message' => $e->getMessage(),
             'data' => null,
         ];
 
         return $this->response($response);
+    }
+
+    /**
+     * Set request body params.
+     *
+     * Can be overridden as needed.
+     */
+    protected function setBodyParams()
+    {
+        $this->options['body'] = $this->buildRequestParam();
     }
 
     /**
@@ -209,7 +274,7 @@ class BaseAPI
     {
         $this->requestData = array_merge($this->requestData, $requestData);
 
-        $this->options['body'] = $this->buildRequestParam();
+        $this->setBodyParams();
 
         if ($this->shouldMockResponse) {
             $this->mockResponseData();

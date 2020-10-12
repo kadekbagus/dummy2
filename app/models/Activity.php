@@ -403,6 +403,7 @@ class Activity extends Eloquent
                 case 'Tenant':
                 case 'TenantStoreAndService':
                 case 'CampaignLocation':
+                case 'Product':
                     $this->object_display_name = $object->name;
                     break;
 
@@ -481,6 +482,7 @@ class Activity extends Eloquent
                     break;
 
                 case 'DigitalProduct':
+                case 'BrandProduct':
                     $this->object_display_name = $object->product_name;
                     break;
 

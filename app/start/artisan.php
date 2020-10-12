@@ -203,6 +203,14 @@ Artisan::add(new ElasticsearchResyncCouponSuggestionCommand);
 // Sync to elasticsearch from merchant(store) table to store suggestion index
 Artisan::add(new ElasticsearchResyncStoreSuggestionCommand);
 
+// Sync to elasticsearch from merchants table (brand product)
+// to brand product suggestion index
+Artisan::add(new ElasticsearchResyncBrandProductSuggestionCommand);
+
+// Sync to elasticsearch from merchants table (brand product)
+// to brand product suggestion index
+Artisan::add(new ElasticsearchResyncProductAffiliationSuggestionCommand);
+
 // Delete not active campaign in suggest index elasticsearch
 Artisan::add(new CampaignDeleteInactiveEsCommand);
 
@@ -339,3 +347,15 @@ Artisan::add(new GetListActiveUserCommand);
 
 // Create BPP user
 Artisan::add(new CreateUserBPPCommand);
+
+// Resync Brand Product into ES
+Artisan::add(new ElasticsearchResyncBrandProductCommand);
+
+// Resync product affiliation into ES
+Artisan::add(new ElasticsearchResyncProductAffiliationCommand);
+
+// List all active brand products
+Artisan::add(new GetListActiveBrandProductCommand);
+
+// List all active products affiliation
+Artisan::add(new GetListActiveProductAffiliationCommand);

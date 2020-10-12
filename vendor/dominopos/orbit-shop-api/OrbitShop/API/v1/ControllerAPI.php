@@ -13,6 +13,7 @@ use DB;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use DominoPOS\OrbitACL\Exception\ACLUnauthenticatedException;
+use DominoPOS\OrbitAPI\v10\StatusInterface;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
@@ -22,10 +23,12 @@ use Log;
 use OrbitShop\API\v1\ExceptionResponseProvider;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use Orbit\Builder as OrbitBuilder;
+use Orbit\Helper\Elasticsearch\ESException;
 use Orbit\Helper\Resource\ResourceInterface;
 use Orbit\Helper\Util\CorsHeader;
 use PDO;
 use Response;
+use Orbit\Helper\Exception\OrbitCustomException;
 
 abstract class ControllerAPI extends Controller
 {
@@ -456,11 +459,18 @@ abstract class ControllerAPI extends Controller
             $httpCode = 403;
         }
         else if ($e instanceof InvalidArgsException) {
-            $httpCode = 422;
+            $httpCode = 200;
         }
         else if ($e instanceof ModelNotFoundException) {
             $httpCode = 404;
             $this->response->code = 404;
+        }
+        else if ($e instanceof ESException) {
+            $this->response->message = 'ES Error';
+
+            if ($debug) {
+                $this->response->data = json_decode($e->getMessage(), true);
+            }
         }
         else if ($e instanceof QueryException) {
             if ($debug) {
@@ -470,6 +480,11 @@ abstract class ControllerAPI extends Controller
                     'validation.orbit.queryerror'
                 );
             }
+        }
+        else if ($e instanceof OrbitCustomException) {
+            $this->response->code = $e->getCode();
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getCustomData();
         }
         else {
             // set other code/message...

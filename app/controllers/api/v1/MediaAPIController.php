@@ -36,6 +36,13 @@ class MediaAPIController extends ControllerAPI
     protected $inputName = '';
 
     /**
+     * for bypass role checking (used on bpp)
+     *
+     *
+     * @var string */
+    protected $skipRoleChecking = false;
+
+    /**
      * This uploader receive multiple file input and will make 4 variant for each image
      * (original, desktop thumbnail, mobile thumbnail, and medium quality image)
      *
@@ -60,10 +67,13 @@ class MediaAPIController extends ControllerAPI
                 $this->checkAuth();
                 $user = $this->api->user;
             }
-            $role = $user->role;
-            if (! in_array(strtolower($role->role_name), $this->uploadRoles)) {
-                $message = 'Your role are not allowed to access this resource.';
-                ACL::throwAccessForbidden($message);
+
+            if (! $this->skipRoleChecking) {
+                $role = $user->role;
+                if (! in_array(strtolower($role->role_name), $this->uploadRoles)) {
+                    $message = 'Your role are not allowed to access this resource.';
+                    ACL::throwAccessForbidden($message);
+                }
             }
 
             // Check config for media image upload
@@ -328,10 +338,13 @@ class MediaAPIController extends ControllerAPI
                 $this->checkAuth();
                 $user = $this->api->user;
             }
-            $role = $user->role;
-            if (! in_array( strtolower($role->role_name), $this->uploadRoles)) {
-                $message = 'Your role are not allowed to access this resource.';
-                ACL::throwAccessForbidden($message);
+
+            if (! $this->skipRoleChecking) {
+                $role = $user->role;
+                if (! in_array( strtolower($role->role_name), $this->uploadRoles)) {
+                    $message = 'Your role are not allowed to access this resource.';
+                    ACL::throwAccessForbidden($message);
+                }
             }
 
             // Check config for media image upload
@@ -350,7 +363,6 @@ class MediaAPIController extends ControllerAPI
                 )
             );
 
-
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -363,7 +375,11 @@ class MediaAPIController extends ControllerAPI
             }
 
             // get 1 media variant id
-            $media = Media::where('media_id', $mediaId)->firstOrFail();
+            $media = Media::where('media_id', $mediaId)->first();
+
+            if (empty($media)) {
+                return $this->render($httpCode);
+            }
 
             $objectId = $media->object_id;
             $mediaNameId = $media->media_name_id;
@@ -689,5 +705,18 @@ class MediaAPIController extends ControllerAPI
         }
 
         return $objectId;
+    }
+
+    /**
+     * Set custom file input name that will be read by Input class.
+     *
+     * @param string $inputName the name of input that will be read.
+     * @return MediaAPIController current instance.
+     */
+    public function setSkipRoleChecking($skip = true)
+    {
+        $this->skipRoleChecking = $skip;
+
+        return $this;
     }
 }

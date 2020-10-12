@@ -18,7 +18,9 @@ use Tenant;
 use BaseMerchant;
 use Product;
 use ProductLinkToObject;
-
+use ProductVideo;
+use ProductTag;
+use ProductTagObject;
 
 class ProductUpdateAPIController extends ControllerAPI
 {
@@ -66,7 +68,7 @@ class ProductUpdateAPIController extends ControllerAPI
             $countryId = OrbitInput::post('country_id');
             $categories = OrbitInput::post('categories');
             $marketplaces = OrbitInput::post('marketplaces');
-            $brandIds = OrbitInput::post('brand_ids');
+            $brandIds = OrbitInput::post('brand_ids', []);
 
             // Begin database transaction
             $this->beginTransaction();
@@ -84,6 +86,7 @@ class ProductUpdateAPIController extends ControllerAPI
                 ),
                 array(
                     'product_id'        => 'required',
+                    'name'              => 'required',
                     'status'            => 'in:active,inactive',
                     'country_id'        => 'required',
                     'short_description' => 'required',
@@ -150,6 +153,12 @@ class ProductUpdateAPIController extends ControllerAPI
             });
 
             // update brands
+            // FE always send brand_ids, when they don't it means delete
+            if (count($brandIds) == 0) {
+                $deletedOldData = ProductLinkToObject::where('product_id', '=', $productId)
+                                                     ->where('object_type', '=', 'brand')
+                                                     ->delete();
+            }
             OrbitInput::post('brand_ids', function($brandIds) use ($updatedProduct, $productId) {
                 $deletedOldData = ProductLinkToObject::where('product_id', '=', $productId)
                                                      ->where('object_type', '=', 'brand')
@@ -165,6 +174,62 @@ class ProductUpdateAPIController extends ControllerAPI
                     $brands[] = $saveObjectCategories;
                 }
                 $updatedProduct->brands = $brands;
+            });
+
+            // update product_videos
+            OrbitInput::post('youtube_ids', function($youtubeIds) use ($updatedProduct, $productId) {
+                $deletedOldData = ProductVideo::where('product_id', '=', $productId)->delete();
+
+                $videos = array();
+                foreach ($youtubeIds as $youtubeId) {
+                    $productVideos = new ProductVideo();
+                    $productVideos->product_id = $productId;
+                    $productVideos->youtube_id = $youtubeId;
+                    $productVideos->save();
+                    $videos[] = $productVideos;
+                }
+                $updatedProduct->product_videos = $videos;
+            });
+
+            // Update product tags
+            $deleted_product_tags_object = ProductTagObject::where('object_id', '=', $productId)
+                                                    ->where('object_type', '=', 'product');
+            $deleted_product_tags_object->delete();
+
+            OrbitInput::post('product_tags', function($productTags) use ($updatedProduct, $user, $productId) {
+                // Insert new data
+                $tags = array();
+                foreach ($productTags as $productTag) {
+                    $product_tag_id = null;
+
+                    $existProductTag = ProductTag::excludeDeleted()
+                        ->where('product_tag', '=', $productTag)
+                        ->where('merchant_id', '=', 0)
+                        ->first();
+
+                    if (empty($existProductTag)) {
+                        $newProductTag = new ProductTag();
+                        $newProductTag->merchant_id = 0;
+                        $newProductTag->product_tag = $productTag;
+                        $newProductTag->status = 'active';
+                        $newProductTag->created_by = $user->user_id;
+                        $newProductTag->modified_by = $user->user_id;
+                        $newProductTag->save();
+
+                        $product_tag_id = $newProductTag->product_tag_id;
+                        $tags[] = $newProductTag;
+                    } else {
+                        $product_tag_id = $existProductTag->product_tag_id;
+                        $tags[] = $existProductTag;
+                    }
+
+                    $newProductTagObject = new ProductTagObject();
+                    $newProductTagObject->product_tag_id = $product_tag_id;
+                    $newProductTagObject->object_id = $productId;
+                    $newProductTagObject->object_type = 'product';
+                    $newProductTagObject->save();
+                }
+                $updatedProduct->product_tags = $tags;
             });
 
             // update marketplaces
