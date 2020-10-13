@@ -248,26 +248,28 @@ trait UPointHelper
         $purchaseNotes = unserialize($purchase->notes);
         $inquiry = json_decode($purchaseNotes['inquiry']);
 
-        if ($providerProduct->provider_name === 'upoint-dtu') {
+        if (isset($providerProduct->provider_name)) {
+            if ($providerProduct->provider_name === 'upoint-dtu') {
 
-            if (isset($inquiry->info) && isset($inquiry->info->details)) {
-                if (is_array($inquiry->info->details) && isset($inquiry->info->details[0])) {
-                    return [
-                        'payment_info' => json_encode($inquiry->info->details[0])
-                    ];
-                } else {
-                    return [
-                        'payment_info' => json_encode($inquiry->info->details)
-                    ];
+                if (isset($inquiry->info) && isset($inquiry->info->details)) {
+                    if (is_array($inquiry->info->details) && isset($inquiry->info->details[0])) {
+                        return [
+                            'payment_info' => json_encode($inquiry->info->details[0])
+                        ];
+                    } else {
+                        return [
+                            'payment_info' => json_encode($inquiry->info->details)
+                        ];
+                    }
                 }
             }
-        }
-        else if ($providerProduct->provider_name === 'upoint-voucher') {
-            return [
-                'upoint_trx_id' => $inquiry->trx_id,
-                'trx_id' => $purchase->payment_transaction_id,
-                'request_status' => $inquiry->status,
-            ];
+            else if ($providerProduct->provider_name === 'upoint-voucher') {
+                return [
+                    'upoint_trx_id' => $inquiry->trx_id,
+                    'trx_id' => $purchase->payment_transaction_id,
+                    'request_status' => $inquiry->status,
+                ];
+            }
         }
         return [];
     }
