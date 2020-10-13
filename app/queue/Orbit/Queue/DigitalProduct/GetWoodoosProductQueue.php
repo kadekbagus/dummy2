@@ -115,33 +115,27 @@ class GetWoodoosProductQueue
 
             $purchaseData['ref_number'] = $activationResponse->getRefNumber();
 
-            $purchase = App::make(PurchaseProviderInterface::class, [
+            $confirmationResponse = App::make(PurchaseProviderInterface::class, [
                     'providerId' => 'woodoos',
                 ])->confirm($purchaseData);
 
             $this->log("Confirm Purchase Response:");
-            $this->log(serialize($purchase->getData()));
+            $this->log(serialize($confirmationResponse->getData()));
 
             // Append noted
             $notes = serialize([
                 'activation' => $activationResponse->getData(),
-                'confirm' => $purchase->getData(),
+                'confirm' => $confirmationResponse->getData(),
             ]);
 
             $payment->notes = $notes;
-            $detail->payload = serialize($purchase->getData());
+            $detail->payload = serialize($activationResponse->getData());
             $detail->save();
 
-            if ($purchase->isSuccess()) {
+            if ($confirmationResponse->isSuccess()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
 
                 $this->log("Issued for payment {$paymentId}..");
-
-                // Notify Customer.
-                $payment->user->notify(new ReceiptNotification(
-                    $payment,
-                    $purchase->getVoucherData()
-                ));
 
                 $cid = time();
                 // send google analitics event hit
@@ -150,7 +144,7 @@ class GetWoodoosProductQueue
                         'cid' => $cid,
                         't' => 'event',
                         'ea' => 'Purchase Digital Product Successful',
-                        'ec' => 'game_voucher',
+                        'ec' => 'electricity',
                         'el' => $digitalProductName,
                         'cs' => $payment->utm_source,
                         'cm' => $payment->utm_medium,
@@ -182,7 +176,7 @@ class GetWoodoosProductQueue
                             'ip' => $detail->price,
                             'iq' => $detail->quantity,
                             'ic' => $productCode,
-                            'iv' => 'game_voucher',
+                            'iv' => 'electricity',
                             'cu' => $payment->currency,
                         ])
                         ->request();
@@ -203,7 +197,7 @@ class GetWoodoosProductQueue
                 }
 
                 $this->log("Purchase Data: " . serialize($purchaseData));
-                $this->log("Purchase Response: " . serialize($purchase->getData()));
+                $this->log("Purchase Response: " . serialize($confirmationResponse->getData()));
             }
 
             // Pending?
@@ -215,8 +209,8 @@ class GetWoodoosProductQueue
             else {
                 $this->log("Purchase failed for payment {$paymentId}.");
                 $this->log("Purchase Data: " . serialize($purchaseData));
-                $this->log("Purchase Response: " . serialize($purchase->getData()));
-                throw new Exception($purchase->getFailureMessage());
+                $this->log("Purchase Response: " . serialize($confirmationResponse->getData()));
+                throw new Exception($confirmationResponse->getFailureMessage());
             }
 
             $payment->save();
@@ -224,8 +218,16 @@ class GetWoodoosProductQueue
             // Commit the changes ASAP.
             DB::connection()->commit();
 
-            // Increase point when the transaction is success.
+            // If purchase success, then...
             if (in_array($payment->status, [PaymentTransaction::STATUS_SUCCESS])) {
+
+                // Notify Customer
+                $payment->user->notify(new ReceiptNotification(
+                    $payment,
+                    $activationResponse->getVoucherData()
+                ));
+
+                // Increase user's point
                 $rewardObject = (object) [
                     'object_id' => $digitalProductId,
                     'object_type' => 'digital_product',
@@ -277,7 +279,7 @@ class GetWoodoosProductQueue
                         'cid' => time(),
                         't' => 'event',
                         'ea' => 'Purchase Digital Product Failed',
-                        'ec' => 'game_voucher',
+                        'ec' => 'electricity',
                         'el' => $digitalProductName,
                         'cs' => $payment->utm_source,
                         'cm' => $payment->utm_medium,

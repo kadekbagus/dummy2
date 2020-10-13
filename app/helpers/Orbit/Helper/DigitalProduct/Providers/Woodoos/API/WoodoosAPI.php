@@ -1,7 +1,7 @@
 <?php namespace Orbit\Helper\DigitalProduct\Providers\Woodoos\API;
 
-use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\Config;
 use Orbit\Helper\DigitalProduct\API\BaseAPI;
 
 /**
@@ -15,19 +15,22 @@ class WoodoosAPI extends BaseAPI
 
     protected $providerId = 'woodoos';
 
-    /**
-     * Set to null so it wont be included in the header.
-     */
-    protected $contentType = null;
+    protected function getEnv()
+    {
+        return Config::get("orbit.digital_product.providers.{$this->providerId}.env", 'sandbox');
+    }
 
     protected function setBodyParams()
     {
-        $this->options['form_params'] = $this->buildRequestParam();
+        $this->options['json'] = $this->buildRequestParam();
     }
 
     protected function setHeaders()
     {
-        $this->options['headers']['Authorization'] = 'Bearer ' . $this->config['passphrase'];
+        $this->options['auth'] = [
+            $this->config['merchant_id'],
+            $this->config['passphrase'],
+        ];
     }
 
     protected function handleException($e)

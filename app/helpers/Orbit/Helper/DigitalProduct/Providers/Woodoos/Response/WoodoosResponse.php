@@ -10,8 +10,6 @@ use Orbit\Helper\DigitalProduct\Response\HasVoucherData;
  */
 class WoodoosResponse extends BaseResponse
 {
-    use HasVoucherData;
-
     /**
      * Accept well-formatted xml string...
      *
@@ -26,8 +24,6 @@ class WoodoosResponse extends BaseResponse
         }
 
         parent::__construct($response);
-
-        $this->parseVoucherData($response);
     }
 
     /**
@@ -41,16 +37,6 @@ class WoodoosResponse extends BaseResponse
             && isset($this->response->data->isSuccessful)
             && ($this->response->data->isSuccessful === true
                 || $this->response->data->isSuccessful === 'true');
-    }
-
-    /**
-     * Just return the raw response from API.
-     *
-     * @return [type] [description]
-     */
-    public function getData()
-    {
-        return $this->response->data;
     }
 
     public function getFailureMessage()
