@@ -30,6 +30,7 @@ class PurchaseAPI extends WoodoosAPI
             'transactionNumber' => $this->requestData['trx_id'],
             'gencode' => $this->requestData['item_code'],
             'amount' => $this->requestData['amount'],
+            'reason' => $this->requestData['electric_id'],
         ];
     }
 

@@ -31,6 +31,7 @@ class DigitalProductPurchaseRequest extends ValidateRequest
             'object_id' => 'required|product_exists|provider_product_exists', // digital product id
             'object_type' => 'required|in:digital_product', // digital_product
             'game_id' => 'sometimes|required|product_with_game_exists',
+            // 'electric_id' => 'sometimes|required|product_with_electricity_exists',
             // 'provider_product_id' => 'required|provider_product_exists',
             'promo_code' => 'sometimes|required|alpha_dash|active_discount|available_discount',
             'object_name' => 'required',
