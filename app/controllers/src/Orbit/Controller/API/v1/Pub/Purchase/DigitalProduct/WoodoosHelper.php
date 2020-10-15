@@ -16,7 +16,7 @@ trait WoodoosHelper
             'trx_id' => time(),
             'item_code' => $providerProduct->code,
             'amount' => $purchase->amount,
-            // 'electric_id' => $purchase->extra_data,
+            'electric_id' => $purchase->extra_data,
         ];
     }
 }
