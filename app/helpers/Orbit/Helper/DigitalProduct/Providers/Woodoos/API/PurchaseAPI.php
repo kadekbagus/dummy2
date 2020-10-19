@@ -23,22 +23,15 @@ class PurchaseAPI extends WoodoosAPI
      */
     protected function buildRequestParam()
     {
-        $params = [
+        return [
             'merchantId' => $this->config['merchant_id'],
             'terminalId' => $this->config['terminal_id'],
             'cashierId' => $this->config['cashier_id'],
             'transactionNumber' => $this->requestData['trx_id'],
-            // 'passphrase' => $this->config['passphrase'],
             'gencode' => $this->requestData['item_code'],
             'amount' => $this->requestData['amount'],
-            // 'cardNumber' => '???',
-            // 'track2Data' => '???',
+            'reason' => $this->requestData['electric_id'],
         ];
-
-        \Log::info("Woodoos Request Params:");
-        \Log::info(serialize($params));
-
-        return $params;
     }
 
     protected function mockResponseData()

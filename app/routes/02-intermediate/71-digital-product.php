@@ -30,4 +30,14 @@ Route::get('/app/v1/pub/game-voucher-purchased/detail', ['as' => 'pub-game-vouch
 /**
  * Electricity list api
  */
-Route::get('/app/v1/pub/electricity/list', ['as' => 'electricity-list', 'uses' => 'IntermediatePubAuthController@DigitalProduct\ElectricityList_getList']);
+Route::get('/app/v1/pub/electricity/list', ['as' => 'pub-electricity-list', 'uses' => 'IntermediatePubAuthController@DigitalProduct\ElectricityList_getList']);
+
+/**
+ * Electricity purchased list api
+ */
+Route::get('/app/v1/pub/electricity-purchased/list', ['as' => 'pub-electricity-purchased-list', 'uses' => 'IntermediatePubAuthController@DigitalProduct\ElectricityPurchasedList_getElectricityPurchasedList']);
+
+/**
+ * Electricity purchased detail api
+ */
+Route::get('/app/v1/pub/electricity-purchased/detail', ['as' => 'pub-electricity-purchased-detail', 'uses' => 'IntermediatePubAuthController@DigitalProduct\ElectricityPurchasedDetail_getElectricityPurchasedDetail']);

@@ -2867,5 +2867,38 @@ return array(
             'object_type' => null,
             'parameter_name' => null
         ),
+
+        '313' => array(
+            'name' => 'click_home_pln_token_link',
+            'name_long' => 'Click Home PLN Token Link',
+            'module_name' => 'PLN',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null,
+        ),
+        '314' => array(
+            'name' => 'click_announcement_pln_token',
+            'name_long' => 'Click Announcement PLN Token',
+            'module_name' => 'PLN',
+            'type' => 'click',
+            'object_type' => null,
+            'parameter_name' => null,
+        ),
+        '315' => array(
+            'name' => 'view_pln_token_purchase_page',
+            'name_long' => 'View PLN Token Purchase Page',
+            'module_name' => 'PLN',
+            'type' => 'view',
+            'object_type' => null,
+            'parameter_name' => null,
+        ),
+        '316' => array(
+            'name' => 'click_buy_pln_token',
+            'name_long' => 'Click Buy PLN Token',
+            'module_name' => 'PLN',
+            'type' => 'click',
+            'object_type' => 'DigitalProduct',
+            'parameter_name' => 'object_id',
+        ),
     ),
 );
