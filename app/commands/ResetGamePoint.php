@@ -3,6 +3,8 @@
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
+use Orbit\Models\Gamification\UserGameEvent;
+use Orbit\Models\Gamification\UserVariable;
 
 class ResetGamePoint extends Command {
 
@@ -56,15 +58,14 @@ class ResetGamePoint extends Command {
         // Delete records before end date
         do {
             $userGameEvents = UserGameEvent::whereIn('object_type', ['pulsa', 'coupon', 'digital_product'])
-                           ->where('users.user_role_id', '=', $roleId)
-                           ->whereNull('user_game_events.user_id')
-                           ->skip($skip)
-                           ->take($take);
+                ->where('created_at', '<', $endDate)
+                ->skip($skip)
+                ->take($take);
 
             if (! empty($userId)) {
                 $userGameEvents = $userGameEvents->where('user_id', $userId);
             }
-            $userGameEvents->get();
+            $userGameEvents = $userGameEvents->get();
 
             $skip = $take + $skip;
 
@@ -130,7 +131,7 @@ class ResetGamePoint extends Command {
     protected function getOptions()
     {
         return array(
-            array('end-date', null, InputOption::REQUIRED, 'Date limit for point reset', null),
+            array('end-date', null, InputOption::VALUE_REQUIRED, 'Date limit for point reset', null),
             array('user-id', null, InputOption::VALUE_OPTIONAL, 'Date more than.', null),
             array('dry-run', null, InputOption::VALUE_NONE, 'Run in dry run mode, do not delete the data.'),
         );
