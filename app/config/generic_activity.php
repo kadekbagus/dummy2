@@ -2666,7 +2666,7 @@ return array(
             'name_long' => 'Click Game In Listing',
             'module_name' => 'Game Voucher',
             'type' => 'click',
-            'object_type' => 'DigitalProduct',
+            'object_type' => 'Game',
             'parameter_name' => 'object_id',
         ),
         '290' => array(
