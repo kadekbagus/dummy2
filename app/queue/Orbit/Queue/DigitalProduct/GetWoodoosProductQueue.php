@@ -1,23 +1,25 @@
 <?php namespace Orbit\Queue\DigitalProduct;
 
-use DB;
 use App;
+use Config;
+use DB;
+use Event;
+use Exception;
+use Illuminate\Support\Facades\Queue;
 use Log;
 use Mall;
-use User;
-use Event;
-use Config;
-use Exception;
-use PaymentTransaction;
-use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
-use Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct\APIHelper;
-use Orbit\Notifications\DigitalProduct\Woodoos\ReceiptNotification;
-use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
-use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
-use Orbit\Notifications\DigitalProduct\DigitalProductNotAvailableNotification;
-use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedProductActivity;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedProductActivity;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
+use Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct\APIHelper;
+use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
+use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
 use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotification;
+use Orbit\Notifications\DigitalProduct\DigitalProductNotAvailableNotification;
+use Orbit\Notifications\DigitalProduct\Woodoos\ReceiptNotification;
+use Orbit\Queue\DigitalProduct\CheckWoodoosPurchaseStatusQueue;
+use PaymentTransaction;
+use User;
 
 /**
  * A job to get/issue Hot Deals Coupon after payment completed.
@@ -35,6 +37,8 @@ class GetWoodoosProductQueue
      * @var integer
      */
     protected $retryDelay = 3;
+
+    protected $maxRetry = 10;
 
     private $objectType = 'digital_product';
 
@@ -102,37 +106,34 @@ class GetWoodoosProductQueue
 
             $purchaseData = $this->buildAPIParams($payment);
 
-            $activationResponse = App::make(PurchaseProviderInterface::class, [
-                    'providerId' => 'woodoos',
-                ])->purchase($purchaseData);
-
-            $this->log("Activation Response: ");
-            $this->log(serialize($activationResponse->getData()));
-
-            if (! $activationResponse->isSuccess()) {
-                throw new Exception("Failed Activation Request to Woodoos! {$activationResponse->getFailureMessage()}");
+            // If we are retrying this queue, assume that the purchase was
+            // pending so use status API instead of purchase/activation.
+            if ($data['retry'] > 0) {
+                $purchase = App::make(PurchaseProviderInterface::class, [
+                        'providerId' => 'woodoos',
+                    ])->status($purchaseData);
+            }
+            else {
+                $purchase = App::make(PurchaseProviderInterface::class, [
+                        'providerId' => 'woodoos',
+                    ])->purchase($purchaseData);
             }
 
-            $purchaseData['ref_number'] = $activationResponse->getRefNumber();
-
-            $confirmationResponse = App::make(PurchaseProviderInterface::class, [
-                    'providerId' => 'woodoos',
-                ])->confirm($purchaseData);
-
-            $this->log("Confirm Purchase Response:");
-            $this->log(serialize($confirmationResponse->getData()));
-
             // Append noted
-            $notes = serialize([
-                'activation' => $activationResponse->getData(),
-                'confirm' => $confirmationResponse->getData(),
-            ]);
+            $notes = empty($payment->notes) ? [] : unserialize($payment->notes);
+            $notes[] = $purchase->getData();
 
-            $payment->notes = $notes;
-            $detail->payload = serialize($activationResponse->getData());
-            $detail->save();
+            $payment->notes = serialize($notes);
+            $detail->payload = serialize($purchase->getData());
 
-            if ($confirmationResponse->isSuccess()) {
+            if ($purchase->isSuccessWithoutToken() && $this->shouldRetry($data)) {
+
+                $this->log("Purchase still pending/no cardNumber (token)
+                    information on the response.");
+
+                $this->checkPurchaseStatusLater($data);
+            }
+            else if ($purchase->isSuccessWithToken()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
 
                 $this->log("Issued for payment {$paymentId}..");
@@ -197,7 +198,7 @@ class GetWoodoosProductQueue
                 }
 
                 $this->log("Purchase Data: " . serialize($purchaseData));
-                $this->log("Purchase Response: " . serialize($confirmationResponse->getData()));
+                $this->log("Purchase Response: " . serialize($purchase->getData()));
             }
 
             // Pending?
@@ -207,13 +208,20 @@ class GetWoodoosProductQueue
             // Not used at the moment, moved below.
 
             else {
+                $failureMessage = $purchase->getFailureMessage();
+
+                if ($purchase->isSuccessWithoutToken()) {
+                    $failureMessage = "No PLN Token information from Woodoos!";
+                }
+
                 $this->log("Purchase failed for payment {$paymentId}.");
                 $this->log("Purchase Data: " . serialize($purchaseData));
-                $this->log("Purchase Response: " . serialize($confirmationResponse->getData()));
-                throw new Exception($confirmationResponse->getFailureMessage());
+                $this->log("Purchase Response: " . serialize($purchase->getData()));
+                throw new Exception($failureMessage);
             }
 
             $payment->save();
+            $detail->save();
 
             // Commit the changes ASAP.
             DB::connection()->commit();
@@ -224,7 +232,7 @@ class GetWoodoosProductQueue
                 // Notify Customer
                 $payment->user->notify(new ReceiptNotification(
                     $payment,
-                    $activationResponse->getVoucherData()
+                    $purchase->getVoucherData()
                 ));
 
                 // Increase user's point
@@ -335,6 +343,24 @@ class GetWoodoosProductQueue
         }
 
         return $providerProduct;
+    }
+
+    private function shouldRetry($data = [])
+    {
+        return $data['retry'] < $this->maxRetry;
+    }
+
+    private function checkPurchaseStatusLater($data = [])
+    {
+        $this->log("Check Purchase status scheduled to be run in {$this->retryDelay} minute(s)");
+
+        $data['retry']++;
+
+        Queue::later(
+            $this->retryDelay * 60,
+            "Orbit\Queue\DigitalProduct\GetWoodoosProductQueue",
+            $data
+        );
     }
 
     /**

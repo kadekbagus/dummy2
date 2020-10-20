@@ -2,7 +2,6 @@
 
 use Exception;
 use Orbit\Helper\DigitalProduct\Providers\BaseProvider;
-use Orbit\Helper\DigitalProduct\Providers\Woodoos\API\ConfirmAPI;
 use Orbit\Helper\DigitalProduct\Providers\Woodoos\API\StatusAPI;
 use Orbit\Helper\DigitalProduct\Providers\Woodoos\API\PurchaseAPI;
 
@@ -40,6 +39,6 @@ class Provider extends BaseProvider
      */
     public function confirm($params = [])
     {
-        return ConfirmAPI::create($params)->run();
+        throw new Exception("Confirm API not supported by Woodoos!");
     }
 }

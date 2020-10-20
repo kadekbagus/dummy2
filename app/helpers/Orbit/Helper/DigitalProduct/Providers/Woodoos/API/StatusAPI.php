@@ -1,6 +1,6 @@
 <?php namespace Orbit\Helper\DigitalProduct\Providers\Woodoos\API;
 
-use Orbit\Helper\DigitalProduct\Providers\Woodoos\Response\PurchaseAPIResponse;
+use Orbit\Helper\DigitalProduct\Providers\Woodoos\Response\StatusAPIResponse;
 
 /**
  * Purchase API wrapper for Woodoos client.
@@ -9,9 +9,9 @@ use Orbit\Helper\DigitalProduct\Providers\Woodoos\Response\PurchaseAPIResponse;
  *
  * @author Budi <budi@gotomalls.com>
  */
-class PurchaseAPI extends WoodoosAPI
+class StatusAPI extends WoodoosAPI
 {
-    protected $endPoint = 'giftCardService/activation';
+    protected $endPoint = 'giftCardService/queryTransaction';
 
     // protected $shouldMockResponse = true;
 
@@ -25,12 +25,7 @@ class PurchaseAPI extends WoodoosAPI
     {
         return [
             'merchantId' => $this->config['merchant_id'],
-            'terminalId' => $this->config['terminal_id'],
-            'cashierId' => $this->config['cashier_id'],
             'transactionNumber' => $this->requestData['trx_id'],
-            'gencode' => $this->requestData['item_code'],
-            'amount' => $this->requestData['amount'],
-            'mobileNo' => $this->requestData['electric_id'],
         ];
     }
 
@@ -66,7 +61,9 @@ class PurchaseAPI extends WoodoosAPI
             $this->mockResponse = '{
                 "isSuccessful":true,
                 "referenceNumber":"12345678",
-                "mobileNo":"62123121111"
+                "mobileNo":"62123121111",
+                "cardNumber":"",
+                "pinCode":"123456"
             }';
         }
         else {
@@ -85,6 +82,6 @@ class PurchaseAPI extends WoodoosAPI
      */
     protected function response($response)
     {
-        return new PurchaseAPIResponse($response);
+        return new StatusAPIResponse($response);
     }
 }
