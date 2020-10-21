@@ -1,5 +1,7 @@
 <?php namespace Orbit\Helper\DigitalProduct\Providers\Woodoos\API;
 
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Psr7\Request;
 use Orbit\Helper\DigitalProduct\Providers\Woodoos\Response\PurchaseAPIResponse;
 
 /**
@@ -30,13 +32,18 @@ class PurchaseAPI extends WoodoosAPI
             'transactionNumber' => $this->requestData['trx_id'],
             'gencode' => $this->requestData['item_code'],
             'amount' => $this->requestData['amount'],
-            'reason' => $this->requestData['electric_id'],
+            'mobileNo' => $this->requestData['electric_id'],
         ];
+    }
+
+    protected function mockRequestException()
+    {
+        throw new RequestException("Request exception on purchase/activation api.", new Request('GET', 'test'));
     }
 
     protected function mockResponseData()
     {
-        $this->randomizeResponseChance[0] = 1;
+        $this->randomizeResponseChance[0] = 2;
 
         if ($this->randomizeResponseChance[0] === 1) {
             $this->mockResponse = '{
@@ -60,6 +67,13 @@ class PurchaseAPI extends WoodoosAPI
                 "earliestExpiryDate":"20250101",
                 "earliestExpiryAmount":123456,
                 "barcodeNumber":"123456789"
+            }';
+        }
+        else if ($this->randomizeResponseChance[0] === 2) {
+            $this->mockResponse = '{
+                "isSuccessful":true,
+                "referenceNumber":"12345678",
+                "mobileNo":"62123121111"
             }';
         }
         else {

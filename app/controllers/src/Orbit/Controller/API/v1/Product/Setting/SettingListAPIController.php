@@ -47,10 +47,10 @@ class SettingListAPIController extends ControllerAPI
                     'type' => $type,
                 ),
                 array(
-                    'type' => 'in:pulsa,game_voucher',
+                    'type' => 'in:pulsa,game_voucher,electricity',
                 ),
                 array(
-                    'type.in' => 'The argument you specified is not valid, the valid values are: pulsa, game_voucher',
+                    'type.in' => 'The argument you specified is not valid, the valid values are: pulsa, game_voucher, and electricity.',
                 )
             );
 
@@ -60,10 +60,13 @@ class SettingListAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $data['pulsa'] = 'enable_pulsa_page';
-            $data['game_voucher'] = 'enable_game_voucher_page';
+            $data = [
+                'pulsa' => 'enable_pulsa_page',
+                'game_voucher' => 'enable_game_voucher_page',
+                'electricity' => 'enable_electricity_page',
+            ];
 
-            $setting = Setting::select('setting_name', 'setting_value')->whereIn('setting_name', ['enable_pulsa_page','enable_game_voucher_page']);
+            $setting = Setting::select('setting_name', 'setting_value')->whereIn('setting_name', $data);
 
             OrbitInput::get('type', function($type) use ($setting, $data)
             {
