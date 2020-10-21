@@ -146,6 +146,11 @@ class BaseAPI
         $this->mockResponseData = null;
     }
 
+    protected function mockRequestException()
+    {
+        // do nothing
+    }
+
     /**
      * Format response.
      *
@@ -193,6 +198,7 @@ class BaseAPI
                 $response = $response->getBody()->getContents();
             }
             else {
+                $this->mockRequestException();
                 $response = $this->mockResponse;
             }
 

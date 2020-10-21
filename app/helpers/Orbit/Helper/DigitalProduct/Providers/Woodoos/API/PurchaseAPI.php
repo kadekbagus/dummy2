@@ -1,5 +1,7 @@
 <?php namespace Orbit\Helper\DigitalProduct\Providers\Woodoos\API;
 
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Psr7\Request;
 use Orbit\Helper\DigitalProduct\Providers\Woodoos\Response\PurchaseAPIResponse;
 
 /**
@@ -32,6 +34,11 @@ class PurchaseAPI extends WoodoosAPI
             'amount' => $this->requestData['amount'],
             'mobileNo' => $this->requestData['electric_id'],
         ];
+    }
+
+    protected function mockRequestException()
+    {
+        throw new RequestException("Request exception on purchase/activation api.", new Request('GET', 'test'));
     }
 
     protected function mockResponseData()

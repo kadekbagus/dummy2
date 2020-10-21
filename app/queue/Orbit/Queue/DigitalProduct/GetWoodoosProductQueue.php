@@ -13,6 +13,7 @@ use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedProductActivit
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
 use Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct\APIHelper;
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
+use Orbit\Helper\DigitalProduct\Providers\Woodoos\WoodoosRequestException;
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
 use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotification;
 use Orbit\Notifications\DigitalProduct\DigitalProductNotAvailableNotification;
@@ -51,12 +52,12 @@ class GetWoodoosProductQueue
      */
     public function fire($job, $data)
     {
-        $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
         $mallId = isset($data['mall_id']) ? $data['mall_id'] : null;
         $mall = Mall::where('merchant_id', $mallId)->first();
         $payment = null;
         $discount = null;
         $digitalProduct = null;
+        $purchase = null;
 
         if (! isset($data['retry'])) {
             $data['retry'] = 0;
@@ -128,8 +129,7 @@ class GetWoodoosProductQueue
 
             if ($purchase->isSuccessWithoutToken() && $this->shouldRetry($data)) {
 
-                $this->log("Purchase still pending/no cardNumber (token)
-                    information on the response.");
+                $this->log("Purchase still pending/no token on the response.");
 
                 $this->checkPurchaseStatusLater($data);
             }
@@ -138,75 +138,15 @@ class GetWoodoosProductQueue
 
                 $this->log("Issued for payment {$paymentId}..");
 
-                $cid = time();
-                // send google analitics event hit
-                GMP::create(Config::get('orbit.partners_api.google_measurement'))
-                    ->setQueryString([
-                        'cid' => $cid,
-                        't' => 'event',
-                        'ea' => 'Purchase Digital Product Successful',
-                        'ec' => 'electricity',
-                        'el' => $digitalProductName,
-                        'cs' => $payment->utm_source,
-                        'cm' => $payment->utm_medium,
-                        'cn' => $payment->utm_campaign,
-                        'ck' => $payment->utm_term,
-                        'cc' => $payment->utm_content
-                    ])
-                    ->request();
-
-                if (! is_null($detail) && ! is_null($digitalProduct)) {
-                    // send google analitics transaction hit
-                    GMP::create(Config::get('orbit.partners_api.google_measurement'))
-                        ->setQueryString([
-                            'cid' => $cid,
-                            't' => 'transaction',
-                            'ti' => $payment->payment_transaction_id,
-                            'tr' => $payment->amount,
-                            'cu' => $payment->currency,
-                        ])
-                        ->request();
-
-                    // send google analitics item hit
-                    GMP::create(Config::get('orbit.partners_api.google_measurement'))
-                        ->setQueryString([
-                            'cid' => $cid,
-                            't' => 'item',
-                            'ti' => $payment->payment_transaction_id,
-                            'in' => $digitalProductName,
-                            'ip' => $detail->price,
-                            'iq' => $detail->quantity,
-                            'ic' => $productCode,
-                            'iv' => 'electricity',
-                            'cu' => $payment->currency,
-                        ])
-                        ->request();
-                }
+                $this->recordGMP($payment, $detail, $digitalProduct, $digitalProductName, $productCode);
 
                 $payment->user->activity(new PurchaseSuccessActivity($payment, $this->objectType));
 
-                if (! empty($discount)) {
-                    // Mark promo code as issued.
-                    $promoCodeReservation = App::make(ReservationInterface::class);
-                    $promoData = (object) [
-                        'promo_code' => $discount->discount_code,
-                        'object_id' => $digitalProductId,
-                        'object_type' => 'digital_product'
-                    ];
-                    $promoCodeReservation->markAsIssued($payment->user, $promoData);
-                    $this->log("Promo code {$discount->discount_code} issued for purchase {$paymentId}");
-                }
+                $this->updatePromoCode('issued', $payment, $discount, $digitalProduct);
 
                 $this->log("Purchase Data: " . serialize($purchaseData));
                 $this->log("Purchase Response: " . serialize($purchase->getData()));
             }
-
-            // Pending?
-
-            // Retry?
-
-            // Not used at the moment, moved below.
-
             else {
                 $failureMessage = $purchase->getFailureMessage();
 
@@ -246,65 +186,14 @@ class GetWoodoosProductQueue
                 Event::fire('orbit.purchase.pulsa.success', [$payment->user, $rewardObject]);
             }
 
+        } catch (WoodoosRequestException $e) {
+
+            $this->reverseTransaction($payment, $discount, $digitalProduct, $purchaseData, $data);
+
         } catch (Exception $e) {
 
-            // Mark as failed if we get any exception.
-            if (! empty($payment)) {
-                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT_FAILED;
-                $payment->save();
+            $this->handleFailure($e, $discount, $digitalProduct, $payment, $data);
 
-                if (! empty($discount) && ! empty($digitalProduct)) {
-                    // Mark promo code as available.
-                    $discountCode = $discount->discount_code;
-                    $promoCodeReservation = App::make(ReservationInterface::class);
-                    $promoData = (object) [
-                        'promo_code' => $discountCode,
-                        'object_id' => $digitalProductId,
-                        'object_type' => 'digital_product'
-                    ];
-                    $promoCodeReservation->markAsAvailable($payment->user, $promoData);
-                    $this->log("Promo code {$discountCode} reverted back/marked as available...");
-                }
-
-                DB::connection()->commit();
-
-                // Notify admin for this failure.
-                foreach($adminEmails as $email) {
-                    $admin              = new User;
-                    $admin->email       = $email;
-                    $admin->notify(new DigitalProductNotAvailableNotification($payment, $e->getMessage()));
-                }
-
-                // Notify customer that coupon is not available.
-                $payment->user->notify(new CustomerDigitalProductNotAvailableNotification($payment));
-
-                $notes = $e->getMessage();
-
-                $digitalProductName = ! empty($digitalProduct) ? $digitalProduct->product_name : '-';
-
-                GMP::create(Config::get('orbit.partners_api.google_measurement'))
-                    ->setQueryString([
-                        'cid' => time(),
-                        't' => 'event',
-                        'ea' => 'Purchase Digital Product Failed',
-                        'ec' => 'electricity',
-                        'el' => $digitalProductName,
-                        'cs' => $payment->utm_source,
-                        'cm' => $payment->utm_medium,
-                        'cn' => $payment->utm_campaign,
-                        'ck' => $payment->utm_term,
-                        'cc' => $payment->utm_content
-                    ])
-                    ->request();
-
-                $payment->user->activity(new PurchaseFailedProductActivity($payment, $this->objectType, $notes));
-            }
-            else {
-                DB::connection()->rollBack();
-            }
-
-            $this->log(sprintf("Get {$this->objectType} exception: %s:%s, %s", $e->getFile(), $e->getLine(), $e->getMessage()));
-            $this->log(serialize($data));
         }
 
         $job->delete();
@@ -345,6 +234,61 @@ class GetWoodoosProductQueue
         return $providerProduct;
     }
 
+    private function handleFailure($e, $discount = null, $digitalProduct = null, $payment = null, $data = [])
+    {
+        // Mark as failed if we get any exception.
+        if (! empty($payment)) {
+            $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT_FAILED;
+            $payment->save();
+
+            $this->updatePromoCode('reset', $payment, $discount, $digitalProduct);
+
+            DB::connection()->commit();
+
+            // Notify admin for this failure.
+            $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
+            foreach($adminEmails as $email) {
+                $admin              = new User;
+                $admin->email       = $email;
+                $admin->notify(new DigitalProductNotAvailableNotification($payment, $e->getMessage()));
+            }
+
+            // Notify customer that coupon is not available.
+            $payment->user->notify(new CustomerDigitalProductNotAvailableNotification($payment));
+
+            $notes = $e->getMessage();
+
+            $digitalProductName = ! empty($digitalProduct) ? $digitalProduct->product_name : '-';
+
+            GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                ->setQueryString([
+                    'cid' => time(),
+                    't' => 'event',
+                    'ea' => 'Purchase Digital Product Failed',
+                    'ec' => 'electricity',
+                    'el' => $digitalProductName,
+                    'cs' => $payment->utm_source,
+                    'cm' => $payment->utm_medium,
+                    'cn' => $payment->utm_campaign,
+                    'ck' => $payment->utm_term,
+                    'cc' => $payment->utm_content
+                ])
+                ->request();
+
+            $payment->user->activity(new PurchaseFailedProductActivity($payment, $this->objectType, $notes));
+        }
+        else {
+            DB::connection()->rollBack();
+        }
+
+        $this->log(sprintf(
+            "Get {$this->objectType} exception: %s:%s, %s",
+            $e->getFile(), $e->getLine(), $e->getMessage()
+        ));
+
+        $this->log(serialize($data));
+    }
+
     private function shouldRetry($data = [])
     {
         return $data['retry'] < $this->maxRetry;
@@ -361,6 +305,129 @@ class GetWoodoosProductQueue
             "Orbit\Queue\DigitalProduct\GetWoodoosProductQueue",
             $data
         );
+    }
+
+    private function reverseTransaction($payment, $discount, $digitalProduct, $purchaseData, $data)
+    {
+        $this->log("Woodoos purchase request timed out! Reversing transaction...");
+
+        $reversal = App::make(PurchaseProviderInterface::class, [
+                'providerId' => 'woodoos'
+            ])->reversal($purchaseData);
+
+        if ($reversal->isSuccess()) {
+
+            $notes = empty($payment->notes) ? [] : unserialize($payment->notes);
+            $notes[] = $reversal->getData();
+            $notes = serialize($notes);
+
+            $payment->notes = $notes;
+            $payment->save();
+
+            $this->handleFailure(
+                new Exception("Reversal success! Marking transaction as failed and notifying customer..."),
+                $discount, $digitalProduct, $payment, $data
+            );
+        }
+        else {
+            $this->log("Reversal is failed because the transaction is already forwarded to PLN/PULSA/EMONEY system");
+
+            if ($this->shouldRetry($data)) {
+
+                DB::connection()->commit();
+
+                $this->checkPurchaseStatusLater($data);
+            }
+            else {
+                $this->handleFailure(
+                    new Exception("Reversal failed and max retry attempt reached!"),
+                    $discount, $digitalProduct, $payment, $data
+                );
+            }
+        }
+    }
+
+    private function recordGMP($payment, $detail = null, $digitalProduct = null, $digitalProductName, $productCode)
+    {
+        $cid = time();
+        // send google analitics event hit
+        GMP::create(Config::get('orbit.partners_api.google_measurement'))
+            ->setQueryString([
+                'cid' => $cid,
+                't' => 'event',
+                'ea' => 'Purchase Digital Product Successful',
+                'ec' => 'electricity',
+                'el' => $digitalProductName,
+                'cs' => $payment->utm_source,
+                'cm' => $payment->utm_medium,
+                'cn' => $payment->utm_campaign,
+                'ck' => $payment->utm_term,
+                'cc' => $payment->utm_content
+            ])
+            ->request();
+
+        if (! is_null($detail) && ! is_null($digitalProduct)) {
+            // send google analitics transaction hit
+            GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                ->setQueryString([
+                    'cid' => $cid,
+                    't' => 'transaction',
+                    'ti' => $payment->payment_transaction_id,
+                    'tr' => $payment->amount,
+                    'cu' => $payment->currency,
+                ])
+                ->request();
+
+            // send google analitics item hit
+            GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                ->setQueryString([
+                    'cid' => $cid,
+                    't' => 'item',
+                    'ti' => $payment->payment_transaction_id,
+                    'in' => $digitalProductName,
+                    'ip' => $detail->price,
+                    'iq' => $detail->quantity,
+                    'ic' => $productCode,
+                    'iv' => 'electricity',
+                    'cu' => $payment->currency,
+                ])
+                ->request();
+        }
+    }
+
+    private function updatePromoCode($status = '', $payment, $discount = null, $digitalProduct = null)
+    {
+        if ($status === 'issued') {
+            if (! empty($discount) && ! empty($digitalProduct)) {
+                // Mark promo code as issued.
+                $promoCodeReservation = App::make(ReservationInterface::class);
+                $promoData = (object) [
+                    'promo_code' => $discount->discount_code,
+                    'object_id' => $digitalProduct->digital_product_id,
+                    'object_type' => 'digital_product'
+                ];
+                $promoCodeReservation->markAsIssued($payment->user, $promoData);
+                $this->log(sprintf(
+                    "Promo code %s issued for purchase %s",
+                    $discount->discount_code,
+                    $payment->payment_transaction_id
+                ));
+            }
+        }
+        else if ($status === 'reset') {
+            if (! empty($discount) && ! empty($digitalProduct)) {
+                // Mark promo code as available.
+                $discountCode = $discount->discount_code;
+                $promoCodeReservation = App::make(ReservationInterface::class);
+                $promoData = (object) [
+                    'promo_code' => $discountCode,
+                    'object_id' => $digitalProduct->digital_product_id,
+                    'object_type' => 'digital_product'
+                ];
+                $promoCodeReservation->markAsAvailable($payment->user, $promoData);
+                $this->log("Promo code {$discountCode} reverted back/marked as available...");
+            }
+        }
     }
 
     /**
