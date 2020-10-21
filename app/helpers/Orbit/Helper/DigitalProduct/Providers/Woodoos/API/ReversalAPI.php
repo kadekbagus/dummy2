@@ -1,6 +1,6 @@
 <?php namespace Orbit\Helper\DigitalProduct\Providers\Woodoos\API;
 
-use Orbit\Helper\DigitalProduct\Providers\Woodoos\Response\StatusAPIResponse;
+use Orbit\Helper\DigitalProduct\Providers\Woodoos\Response\ReversalAPIResponse;
 
 /**
  * Purchase API wrapper for Woodoos client.
@@ -9,9 +9,9 @@ use Orbit\Helper\DigitalProduct\Providers\Woodoos\Response\StatusAPIResponse;
  *
  * @author Budi <budi@gotomalls.com>
  */
-class StatusAPI extends WoodoosAPI
+class ReversalAPI extends WoodoosAPI
 {
-    protected $endPoint = 'giftCardService/queryTransaction';
+    protected $endPoint = 'giftCardService/reversal';
 
     // protected $shouldMockResponse = true;
 
@@ -31,29 +31,22 @@ class StatusAPI extends WoodoosAPI
 
     protected function mockResponseData()
     {
-        $this->randomizeResponseChance[0] = 1;
+        $this->randomizeResponseChance[0] = 0;
 
         if ($this->randomizeResponseChance[0] === 1) {
             $this->mockResponse = '{
                 "isSuccessful":true,
-                "cardNumber":"1234-1234-1234-1234",
-                "cardStatus":"IN USE",
-                "expiryDate":"2022-07-07",
-                "cardBalance":800,
-                "transactionRecord":[]
-            }';
-        }
-        else if ($this->randomizeResponseChance[0] === 2) {
-            $this->mockResponse = '{
-                "isSuccessful":true,
-                "referenceNumber":"12345678",
-                "mobileNo":"62123121111",
-                "cardNumber":"",
-                "pinCode":"123456"
+                "errorCode":null,
+                "errorMessage":null,
+                "handlingFee":100,
+                "previousBalance":100,
+                "balance":0,
+                "note":""
             }';
         }
         else {
             $this->mockResponse = '{
+                "isSuccessful":false,
                 "errorCode":"500",
                 "errorMessage":"Internal Server Error"
             }';
@@ -68,6 +61,6 @@ class StatusAPI extends WoodoosAPI
      */
     protected function response($response)
     {
-        return new StatusAPIResponse($response);
+        return new ReversalAPIResponse($response);
     }
 }

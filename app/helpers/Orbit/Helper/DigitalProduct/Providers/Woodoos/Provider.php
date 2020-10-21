@@ -2,8 +2,9 @@
 
 use Exception;
 use Orbit\Helper\DigitalProduct\Providers\BaseProvider;
-use Orbit\Helper\DigitalProduct\Providers\Woodoos\API\StatusAPI;
 use Orbit\Helper\DigitalProduct\Providers\Woodoos\API\PurchaseAPI;
+use Orbit\Helper\DigitalProduct\Providers\Woodoos\API\ReversalAPI;
+use Orbit\Helper\DigitalProduct\Providers\Woodoos\API\StatusAPI;
 
 /**
  * Purchase Provider for AyoPay.
@@ -40,5 +41,16 @@ class Provider extends BaseProvider
     public function confirm($params = [])
     {
         throw new Exception("Confirm API not supported by Woodoos!");
+    }
+
+    /**
+     * Implement reversal ability.
+     *
+     * @param  array  $params [description]
+     * @return [type]         [description]
+     */
+    public function reversal($params = [])
+    {
+        return ReversalAPI::create($params)->run();
     }
 }
