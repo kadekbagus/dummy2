@@ -50,7 +50,7 @@ class SettingPageAPIController extends PubControllerAPI
 
             $data = [
                 'pulsa' => 'enable_pulsa_page',
-                'game_voucher'] => 'enable_game_voucher_page',
+                'game_voucher' => 'enable_game_voucher_page',
                 'electricity' => 'enable_electricity_page',
             ];
 
