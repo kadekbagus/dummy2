@@ -11,7 +11,7 @@ use Orbit\Helper\DigitalProduct\Providers\Woodoos\Response\StatusAPIResponse;
  */
 class StatusAPI extends WoodoosAPI
 {
-    protected $endPoint = 'giftCardService/queryTransaction';
+    protected $endPoint = 'giftCardService/queryTransactions';
 
     // protected $shouldMockResponse = true;
 
