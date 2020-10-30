@@ -432,6 +432,10 @@ class PaymentTransaction extends Eloquent
 
         $issuedCoupons = $this->issued_coupons;
 
+        if (empty($issuedCoupons)) {
+            return;
+        }
+
         if ($issuedCoupons->count() === 0) {
             $issuedCoupons = IssuedCoupon::where('transaction_id', $this->payment_transaction_id)->get();
 

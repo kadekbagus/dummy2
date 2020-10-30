@@ -62,7 +62,7 @@ class ElectricityPurchasedListAPIController extends PubControllerAPI
                                                 'payment_transactions.status',
                                                 'payment_transactions.notes',
                                                 'payment_transactions.payment_method',
-                                                'payment_transactions.extra_data',
+                                                'payment_transactions.extra_data as customer_id',
                                                 'payment_transactions.created_at',
                                                 'payment_transaction_details.object_name as product_name',
                                                 'payment_transaction_details.object_type',

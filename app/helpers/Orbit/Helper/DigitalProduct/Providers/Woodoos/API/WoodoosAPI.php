@@ -3,6 +3,7 @@
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Config;
 use Orbit\Helper\DigitalProduct\API\BaseAPI;
+use Orbit\Helper\DigitalProduct\Providers\Woodoos\WoodoosRequestException;
 
 /**
  * Base Woodoos API...
@@ -35,12 +36,16 @@ class WoodoosAPI extends BaseAPI
 
     protected function handleException($e)
     {
+        // If we catch any exception when making purchase request,
+        // then throw specific exception so that the consuming-class can
+        // take proper actions.
         if ($e instanceof RequestException) {
             if ($e->hasResponse()) {
                 $response = $e->getResponse()->getBody()->getContents();
                 \Log::info('API Exception: ' . $response);
-                return $this->response($response);
             }
+
+            throw new WoodoosRequestException("Woodoos request exception!");
         }
 
         return parent::handleException($e);

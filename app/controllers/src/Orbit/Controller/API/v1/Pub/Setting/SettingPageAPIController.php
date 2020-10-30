@@ -35,10 +35,10 @@ class SettingPageAPIController extends PubControllerAPI
                     'type' => $type,
                 ),
                 array(
-                    'type' => 'required|in:pulsa,game_voucher',
+                    'type' => 'required|in:pulsa,game_voucher,electricity',
                 ),
                 array(
-                    'type.in' => 'The argument you specified is not valid, the valid values are: pulsa, game_voucher',
+                    'type.in' => 'The argument you specified is not valid, the valid values are: pulsa, game_voucher,electricity',
                 )
             );
 
@@ -48,8 +48,11 @@ class SettingPageAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $data['pulsa'] = 'enable_pulsa_page';
-            $data['game_voucher'] = 'enable_game_voucher_page';
+            $data = [
+                'pulsa' => 'enable_pulsa_page',
+                'game_voucher' => 'enable_game_voucher_page',
+                'electricity' => 'enable_electricity_page',
+            ];
 
             $setting = Setting::select('setting_name', 'setting_value')->where('setting_name', $data[$type])->first();
 

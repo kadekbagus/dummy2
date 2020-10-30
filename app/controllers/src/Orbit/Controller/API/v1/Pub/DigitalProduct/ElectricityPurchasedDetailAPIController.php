@@ -59,7 +59,7 @@ class ElectricityPurchasedDetailAPIController extends PubControllerAPI
                                             'payment_transactions.status',
                                             'payment_transactions.payment_method',
                                             'payment_transactions.notes',
-                                            'payment_transactions.extra_data',
+                                            'payment_transactions.extra_data as customer_id',
                                             'payment_transactions.created_at',
                                             DB::raw("convert_tz({$prefix}payment_transactions.created_at, '+00:00', {$prefix}payment_transactions.timezone_name) as date_tz"),
                                             'payment_transactions.external_payment_transaction_id',
@@ -101,6 +101,7 @@ class ElectricityPurchasedDetailAPIController extends PubControllerAPI
             }
 
             $electricity->payment_midtrans_info = json_decode(unserialize($electricity->payment_midtrans_info));
+            $electricity->activation_code = unserialize($electricity->payload);
 
             $this->response->data = $electricity;
         } catch (ACLForbiddenException $e) {

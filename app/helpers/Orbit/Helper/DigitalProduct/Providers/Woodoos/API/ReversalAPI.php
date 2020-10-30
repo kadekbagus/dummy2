@@ -1,6 +1,6 @@
 <?php namespace Orbit\Helper\DigitalProduct\Providers\Woodoos\API;
 
-use Orbit\Helper\DigitalProduct\Providers\Woodoos\Response\ConfirmAPIResponse;
+use Orbit\Helper\DigitalProduct\Providers\Woodoos\Response\ReversalAPIResponse;
 
 /**
  * Purchase API wrapper for Woodoos client.
@@ -9,9 +9,9 @@ use Orbit\Helper\DigitalProduct\Providers\Woodoos\Response\ConfirmAPIResponse;
  *
  * @author Budi <budi@gotomalls.com>
  */
-class ConfirmAPI extends WoodoosAPI
+class ReversalAPI extends WoodoosAPI
 {
-    protected $endPoint = 'giftCardService/confirmTransaction';
+    protected $endPoint = 'giftCardService/reversal';
 
     // protected $shouldMockResponse = true;
 
@@ -23,33 +23,30 @@ class ConfirmAPI extends WoodoosAPI
      */
     protected function buildRequestParam()
     {
-        $params = [
+        return [
             'merchantId' => $this->config['merchant_id'],
-            'terminalId' => $this->config['terminal_id'],
-            'cashierId' => $this->config['cashier_id'],
-            // 'passphrase' => $this->config['passphrase'],
-            'referenceNumber' => $this->requestData['ref_number'],
+            'transactionNumber' => $this->requestData['trx_id'],
         ];
-
-        return $params;
     }
 
     protected function mockResponseData()
     {
-        $this->randomizeResponseChance[0] = 1;
+        $this->randomizeResponseChance[0] = 0;
 
         if ($this->randomizeResponseChance[0] === 1) {
             $this->mockResponse = '{
                 "isSuccessful":true,
-                "referenceNumber":"12345678",
-                "balance":1234567,
-                "note":"note",
-                "pinCode":"123456",
-                "pointBalance":true
+                "errorCode":null,
+                "errorMessage":null,
+                "handlingFee":100,
+                "previousBalance":100,
+                "balance":0,
+                "note":""
             }';
         }
         else {
             $this->mockResponse = '{
+                "isSuccessful":false,
                 "errorCode":"500",
                 "errorMessage":"Internal Server Error"
             }';
@@ -64,6 +61,6 @@ class ConfirmAPI extends WoodoosAPI
      */
     protected function response($response)
     {
-        return new ConfirmAPIResponse($response);
+        return new ReversalAPIResponse($response);
     }
 }
