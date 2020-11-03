@@ -38,6 +38,6 @@ class ExpiredPaymentNotification extends BaseNotification
     protected function getBuyUrl()
     {
         return Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com')
-            . '/electricity?country=Indonesia';
+            . '/pln-token?country=Indonesia';
     }
 }
