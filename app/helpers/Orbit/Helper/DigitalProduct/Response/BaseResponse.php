@@ -11,7 +11,7 @@ class BaseResponse
 {
     /**
      * To store the raw response from API.
-     * @var null
+     * @var mixed
      */
     protected $rawResponse;
 

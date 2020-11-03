@@ -1,7 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct;
 
 use Log;
-use Exception;
 use Illuminate\Support\Facades\App;
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
 use Orbit\Helper\Exception\OrbitCustomException;
@@ -61,6 +60,8 @@ trait UPointHelper
                 $purchaseResponse
             );
 
+            $purchase->confirmation_info = $this->getConfirmationInfo($purchase);
+
             Log::info("DTU Purchase created for trxID: {$purchase->payment_transaction_id}");
         }
 
@@ -92,7 +93,7 @@ trait UPointHelper
 
         $purchaseParams = [
             'trx_id' => $purchase->payment_transaction_id,
-            'item' => $digitalProduct->code,
+            'item' => $providerProduct->code,
             'user_info' => $this->getUPointUserInfo($providerProduct, $request),
             'timestamp' => time(),
         ];
@@ -103,7 +104,12 @@ trait UPointHelper
 
         // Info should contain user information associated with game user_id,
         // e.g. game nickname and the server name.
-        if ($purchaseResponse->isSuccess()) {
+        $responseData = json_decode($purchaseResponse->getData());
+
+        if (null !== $responseData
+            && (isset($responseData->status)
+            && 1 === (int) $responseData->status)
+        ) {
             if (empty($purchase->notes)) {
                 $purchase->notes = serialize([
                     'inquiry' => $purchaseResponse->getData(),
@@ -165,27 +171,102 @@ trait UPointHelper
         return $response->info;
     }
 
+    /**
+     * Information to be used on confirmation window popup.
+     *
+     * @return object
+     */
+    protected function getConfirmationInfo($purchase)
+    {
+        $confirmationInfo = new \stdclass();
+        $payload = unserialize($purchase->notes);
+
+        if (isset($payload['inquiry'])) {
+            $payloadObj = json_decode($payload['inquiry']);
+
+            if (isset($payloadObj->info)) {
+                if (isset($payloadObj->info->user_info)) {
+                    // append user_id
+                    if (isset($payloadObj->info->user_info->user_id)) {
+                        $confirmationInfo->user_id = $payloadObj->info->user_info->user_id;
+                    }
+                    // append server_id
+                    if (isset($payloadObj->info->user_info->server_id) && $payloadObj->info->user_info->server_id != '1') {
+                        $confirmationInfo->server_id = $payloadObj->info->user_info->server_id;
+                    }
+                    // append user_code
+                    if (isset($payloadObj->info->user_info->user_code)) {
+                        $confirmationInfo->user_code = $payloadObj->info->user_info->user_code;
+                    }
+                }
+
+                if (isset($payloadObj->info->details)) {
+                    // if the details is an array of object
+                    if (is_array($payloadObj->info->details) && isset($payloadObj->info->details[0])) {
+                        if (isset($payloadObj->info->details[0])) {
+                            // append server_name
+                            if (isset($payloadObj->info->details[0]->server_name)) {
+                                if (! empty($payloadObj->info->details[0]->server_name)) {
+                                    $confirmationInfo->server_name = $payloadObj->info->details[0]->server_name;
+                                }
+                            }
+                            // append user name
+                            if (isset($payloadObj->info->details[0]->username)) {
+                                if (! empty($payloadObj->info->details[0]->username)) {
+                                    $confirmationInfo->username = $payloadObj->info->details[0]->username;
+                                }
+                            } elseif (isset($payloadObj->info->details[0]->role_name)) {
+                                if (! empty($payloadObj->info->details[0]->role_name)) {
+                                    $confirmationInfo->username = $payloadObj->info->details[0]->role_name;
+                                }
+                            }
+                        }
+                    }
+
+                    // if the details is an object
+                    if (is_object($payloadObj->info->details)) {
+                        // append username
+                        if (isset($payloadObj->info->details->username)) {
+                            $confirmationInfo->username = $payloadObj->info->details->username;
+                        }
+                        // append user_name
+                        if (isset($payloadObj->info->details->user_name)) {
+                            $confirmationInfo->user_name = $payloadObj->info->details->user_name;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $confirmationInfo;
+    }
+
     protected function buildUPointParams($purchase)
     {
-        $providerProduct = $purchase->getProviderProduct();
-
         $purchaseNotes = unserialize($purchase->notes);
         $inquiry = json_decode($purchaseNotes['inquiry']);
 
-        if ($providerProduct->provider_name === 'upoint-dtu') {
-
+        if ($purchase->forUPoint('dtu')) {
             if (isset($inquiry->info) && isset($inquiry->info->details)) {
-                return [
-                    'payment_info' => json_encode($inquiry->info->details)
-                ];
+                if (is_array($inquiry->info->details) && isset($inquiry->info->details[0])) {
+                    return [
+                        'payment_info' => json_encode($inquiry->info->details[0])
+                    ];
+                } else {
+                    return [
+                        'payment_info' => json_encode($inquiry->info->details)
+                    ];
+                }
             }
         }
-        else if ($providerProduct->provider_name === 'upoint-voucher') {
+        else if ($purchase->forUPoint('voucher')) {
             return [
                 'upoint_trx_id' => $inquiry->trx_id,
                 'trx_id' => $purchase->payment_transaction_id,
                 'request_status' => $inquiry->status,
             ];
         }
+
+        return [];
     }
 }

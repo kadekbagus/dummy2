@@ -68,7 +68,7 @@ class GetUPointVoucherProductQueue
                 'user',
                 'midtrans',
                 'discount_code'
-            ])->findOrFail($paymentId);
+            ])->leftJoin('games', 'games.game_id', '=', 'payment_transactions.extra_data')->findOrFail($paymentId);
 
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired() || $payment->canceled()
@@ -119,7 +119,12 @@ class GetUPointVoucherProductQueue
             $detail->payload = serialize($paymentNotes['confirm']);
             $detail->save();
 
-            if ($confirmPurchase->isSuccess()) {
+            $responseData = json_decode($confirmPurchase->getData());
+
+            if (null !== $responseData
+                && (isset($responseData->status)
+                && 1 === (int) $responseData->status)
+            ) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
 
                 $this->log("Issued for payment {$paymentId}..");

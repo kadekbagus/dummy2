@@ -102,6 +102,9 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
             else if ($payment->forUPoint('voucher')) {
                 $queue = 'Orbit\\Queue\\DigitalProduct\\GetUPointVoucherProductQueue';
             }
+            else if ($payment->forWoodoos()) {
+                $queue = 'Orbit\\Queue\\DigitalProduct\\GetWoodoosProductQueue';
+            }
 
             Queue::connection('sync')->push($queue, $queueData);
         }

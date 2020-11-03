@@ -14,11 +14,13 @@ use Orbit\Helper\Net\Domain;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitSession\Session as OrbitSession;
+use DominoPOS\OrbitSession\SessionConfig;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Orbit\Helper\Net\GuestUserGenerator;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Session\AppOriginProcessor;
 use Carbon\Carbon;
+use Orbit\Helper\Util\UserAgent;
 
 class IntermediateLoginController extends IntermediateBaseController
 {
@@ -1065,66 +1067,112 @@ class IntermediateLoginController extends IntermediateBaseController
     {
         $response = new ResponseProvider();
         try {
-            $this->session->start(array(), 'no-session-creation');
-            if (empty($this->session->read('guest_user_id'))) {
-                $guestConfig = [
-                    'session' => $this->session
-                ];
-                $guest = GuestUserGenerator::create($guestConfig)->generate();
+            $fallbackUARules = ['browser' => [], 'platform' => [], 'device_model' => [], 'bot_crawler' => []];
+            $detectUA = new UserAgent();
+            $detectUA->setRules(Config::get('orbit.user_agent_rules', $fallbackUARules));
+            $detectUA->setUserAgent($this->getUserAgent());
 
-                $sessionData = $this->session->read(NULL);
-                $sessionData['logged_in'] = TRUE;
-                $sessionData['guest_user_id'] = $guest->user_id;
-                $sessionData['guest_email'] = $guest->user_email;
-                $sessionData['role'] = strtolower($this->session->read('role')) === 'consumer' ? $this->session->read('role') : $guest->role->role_name;
-                $sessionData['fullname'] = ! empty($this->session->read('fullname')) ? $this->session->read('fullname') : '';
-                $sessionData['status'] = $guest->status;
+            if (! $detectUA->isBotCrawler()) {
+                $this->session->start(array(), 'no-session-creation');
+                if (empty($this->session->read('guest_user_id'))) {
+                    $guestConfig = [
+                        'session' => $this->session
+                    ];
+                    $guest = GuestUserGenerator::create($guestConfig)->generate();
 
-                $this->session->update($sessionData);
-            }
+                    $sessionData = $this->session->read(NULL);
+                    $sessionData['logged_in'] = TRUE;
+                    $sessionData['guest_user_id'] = $guest->user_id;
+                    $sessionData['guest_email'] = $guest->user_email;
+                    $sessionData['role'] = strtolower($this->session->read('role')) === 'consumer' ? $this->session->read('role') : $guest->role->role_name;
+                    $sessionData['fullname'] = ! empty($this->session->read('fullname')) ? $this->session->read('fullname') : '';
+                    $sessionData['status'] = $guest->status;
 
-            $response->data = $this->session->getSession();
-
-            if (! isset($response->data->value['status']) || empty($response->data->value['status'])) {
-                $response->data->value['status'] = null;
-                if (strtolower($response->data->value['role']) === 'guest') {
-                    $response->data->value['status'] = 'pending';
-                } elseif (strtolower($response->data->value['role']) === 'consumer') {
-                    $user = User::excludeDeleted()
-                        ->where('user_id', $response->data->value['user_id'])
-                        ->first();
-
-                    if (is_object($user)) {
-                        $response->data->value['status'] = $user->status;
-                    }
+                    $this->session->update($sessionData);
                 }
 
-                $sessionData = $this->session->read(NULL);
-                $sessionData['status'] = $response->data->value['status'];
-                $this->session->update($sessionData);
-            }
+                $response->data = $this->session->getSession();
 
-            // request to update the status in session data
-            OrbitInput::get('request_update', function($req) use($response) {
-                if ($req === 'yes') {
-                    // this should be run if only the user is consumer and the status is pending
-                    if (strtolower($response->data->value['role']) === 'consumer') {
-                        if (isset($response->data->value['status']) && $response->data->value['status'] === 'pending') {
-                            $user = User::excludeDeleted()
-                                ->where('user_id', $response->data->value['user_id'])
-                                ->first();
+                if (! isset($response->data->value['status']) || empty($response->data->value['status'])) {
+                    $response->data->value['status'] = null;
+                    if (strtolower($response->data->value['role']) === 'guest') {
+                        $response->data->value['status'] = 'pending';
+                    } elseif (strtolower($response->data->value['role']) === 'consumer') {
+                        $user = User::excludeDeleted()
+                            ->where('user_id', $response->data->value['user_id'])
+                            ->first();
 
-                            if (is_object($user)) {
-                                $response->data->value['status'] = $user->status;
+                        if (is_object($user)) {
+                            $response->data->value['status'] = $user->status;
+                        }
+                    }
 
-                                $sessionData = $this->session->read(NULL);
-                                $sessionData['status'] = $response->data->value['status'];
-                                $this->session->update($sessionData);
+                    $sessionData = $this->session->read(NULL);
+                    $sessionData['status'] = $response->data->value['status'];
+                    $this->session->update($sessionData);
+                }
+
+                // request to update the status in session data
+                OrbitInput::get('request_update', function($req) use($response) {
+                    if ($req === 'yes') {
+                        // this should be run if only the user is consumer and the status is pending
+                        if (strtolower($response->data->value['role']) === 'consumer') {
+                            if (isset($response->data->value['status']) && $response->data->value['status'] === 'pending') {
+                                $user = User::excludeDeleted()
+                                    ->where('user_id', $response->data->value['user_id'])
+                                    ->first();
+
+                                if (is_object($user)) {
+                                    $response->data->value['status'] = $user->status;
+
+                                    $sessionData = $this->session->read(NULL);
+                                    $sessionData['status'] = $response->data->value['status'];
+                                    $this->session->update($sessionData);
+                                }
                             }
                         }
                     }
+                });
+            } else {
+                $botSession = DB::table('sessions')
+                    ->where('session_id', 'bot_session_id_haha')
+                    ->first();
+
+                if (! is_object($botSession)) {
+                    throw new Exception('Bot User session is not available', 1);
                 }
-            });
+
+                $sessionData = unserialize($botSession->session_data);
+
+                if (empty($sessionData->value)) {
+                    throw new Exception('Bot User session data is empty', 1);
+                }
+
+                // set the session strict to FALSE
+                Config::set('orbit.session.strict', FALSE);
+
+                // Return mall_portal, cs_portal, pmp_portal etc
+                $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
+                                               ->getAppName();
+
+                // Session Config
+                $orbitSessionConfig = Config::get('orbit.session.origin.' . $appOrigin);
+                $applicationId = Config::get('orbit.session.app_id.' . $appOrigin);
+
+                // Instantiate the OrbitSession object
+                $config = new SessionConfig(Config::get('orbit.session'));
+                $config->setConfig('session_origin', $orbitSessionConfig);
+                $config->setConfig('expire', $orbitSessionConfig['expire']);
+                $config->setConfig('application_id', $applicationId);
+
+                $this->session = new OrbitSession($config);
+                $this->session->setSessionId($botSession->session_id);
+                $this->session->disableForceNew();
+                $this->session->setByPassExpiryCheck(true);
+                $this->session->start($sessionData->value, 'no-session-creation');
+
+                $response->data = $this->session->getSession();
+            }
 
             unset($response->data->userAgent);
             unset($response->data->ipAddress);
@@ -1900,5 +1948,15 @@ class IntermediateLoginController extends IntermediateBaseController
         }
 
         return $this->render($response);
+    }
+
+    /**
+     * Detect the user agent of the request.
+     *
+     * @return string
+     */
+    protected function getUserAgent()
+    {
+        return isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'Unknown-UA/?';
     }
 }

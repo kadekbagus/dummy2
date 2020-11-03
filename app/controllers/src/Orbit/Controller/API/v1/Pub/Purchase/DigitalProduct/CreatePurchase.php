@@ -79,7 +79,7 @@ class CreatePurchase
         $purchase->status = PaymentTransaction::STATUS_STARTING;
         $purchase->timezone_name = $mallTimeZone;
         $purchase->post_data = $request->post_data ? serialize($request->post_data) : null;
-        $purchase->extra_data = $request->game_id;
+        $purchase->extra_data = $this->getExtraData($request);
 
         $purchase->utm_source = $campaignData['campaign_source'];
         $purchase->utm_medium = $campaignData['campaign_medium'];
@@ -174,5 +174,24 @@ class CreatePurchase
         $currentUser->activity(new PurchaseStartingActivity($purchase, $objectType));
 
         return $purchase;
+    }
+
+    /**
+     * Get the right extra_data value for the purchase.
+     *
+     * @param  ValidateRequestInterface $request request object
+     * @return string|null extra data
+     */
+    private function getExtraData($request)
+    {
+        if ($request->game_id) {
+            return $request->game_id;
+        }
+
+        if ($request->electric_id) {
+            return $request->electric_id;
+        }
+
+        return null;
     }
 }
