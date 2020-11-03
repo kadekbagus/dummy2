@@ -32,8 +32,8 @@ class PendingPaymentNotification extends Base
     public function getEmailData()
     {
         return array_merge(parent::getEmailData(), [
-            'cancelUrl' => $this->getCancelUrl() . "&type=electricity",
-            'myWalletUrl' => $this->getMyPurchasesUrl('/electricity'),
+            'cancelUrl' => $this->getCancelUrl() . "&type=pln-token",
+            'myWalletUrl' => $this->getMyPurchasesUrl('/pln?country=Indonesia'),
         ]);
     }
 }
