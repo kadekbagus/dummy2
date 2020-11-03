@@ -6,7 +6,7 @@ use DB;
 use Exception;
 use Log;
 use Mail;
-use Orbit\Notifications\Payment\DigitalProduct\PendingPaymentNotification as Base;
+use Orbit\Notifications\DigitalProduct\PendingPaymentNotification as Base;
 use PaymentTransaction;
 use Queue;
 
