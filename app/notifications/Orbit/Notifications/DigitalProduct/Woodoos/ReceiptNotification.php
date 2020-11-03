@@ -22,6 +22,6 @@ class ReceiptNotification extends BaseReceiptNotification
 
     public function getMyPurchasesUrl($path = '')
     {
-        return parent::getMyPurchasesUrl('/electricity');
+        return parent::getMyPurchasesUrl('/electricity?country=Indonesia');
     }
 }
