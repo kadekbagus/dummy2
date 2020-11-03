@@ -57,10 +57,10 @@
                                     <tr>
                                         <td width="600" class="mobile" align="left" valign="top">
                                             <h3 class="greeting-username">
-                                                {{ trans('email-receipt.body.greeting_digital_electricity.customer_name', ['customerName' => $customerName], '', $lang) }}
+                                                {{ trans('email-receipt.body.greeting_electricity.customer_name', ['customerName' => $customerName], '', $lang) }}
                                             </h3>
                                             <p class="greeting-text">
-                                                {{ trans('email-receipt.body.greeting_digital_electricity.body', ['itemName' => $transaction['items'][0]['shortName']], '', $lang) }}
+                                                {{ trans('email-receipt.body.greeting_electricity.body', ['itemName' => $transaction['items'][0]['shortName']], '', $lang) }}
                                             </p>
                                         </td>
                                     </tr>

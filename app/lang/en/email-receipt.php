@@ -24,7 +24,7 @@ return [
             'body' => 'Thank you for purchasing :itemName :gameName in Gotomalls.com. Your payment has been verified by our system. Below is the transaction summary of your purchase',
         ],
 
-        'greeting_digital_product' => [
+        'greeting_electricity' => [
             'customer_name' => 'Dear, :customerName',
             'body' => 'Thank you for purchasing :itemName in Gotomalls.com. Your payment has been verified by our system. Below is the transaction summary of your purchase',
         ],
