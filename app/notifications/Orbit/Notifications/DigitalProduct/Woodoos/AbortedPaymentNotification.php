@@ -1,14 +1,14 @@
 <?php namespace Orbit\Notifications\DigitalProduct\Woodoos;
 
 use Config;
-use Orbit\Notifications\DigitalProduct\ExpiredPaymentNotification as BaseNotification;
+use Orbit\Notifications\DigitalProduct\AbortedPaymentNotification as BaseNotification;
 
 /**
- * Email notification for Expired Payment (Digital Product).
+ * Email notification for Aborted Payment (Digital Product).
  *
  * @author Budi <budi@dominopos.com>
  */
-class ExpiredPaymentNotification extends BaseNotification
+class AbortedPaymentNotification extends BaseNotification
 {
     /**
      * Get the email templates.
@@ -19,7 +19,7 @@ class ExpiredPaymentNotification extends BaseNotification
     public function getEmailTemplates()
     {
         return [
-            'html' => 'emails.digital-product.woodoos.expired-payment',
+            'html' => 'emails.digital-product.woodoos.aborted-payment',
         ];
     }
 

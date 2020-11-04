@@ -1,15 +1,6 @@
 <?php namespace Orbit\Notifications\DigitalProduct\Woodoos;
 
-use Carbon\Carbon;
-use Config;
-use DB;
-use Exception;
-use Log;
-use Mail;
 use Orbit\Notifications\DigitalProduct\PendingPaymentNotification as Base;
-use PaymentTransaction;
-use Queue;
-
 
 /**
  * Pending Payment Notification for Digital Product.
