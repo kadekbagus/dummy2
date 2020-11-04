@@ -59,6 +59,7 @@ return [
             'buy_pulsa' => 'Buy Pulsa Now',
             'buy_data_plan' => 'Buy Data Plan Now',
             'buy_digital_product' => 'Buy :productType Now',
+            'buy_electricity' => 'Buy Electricity Now',
         ]
     ],
 ];
