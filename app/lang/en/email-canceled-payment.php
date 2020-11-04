@@ -17,6 +17,11 @@ return [
             'body' => 'We confirm that your transaction has been canceled.  Below are the transaction details:',
         ],
 
+        'greeting_electricity' => [
+            'customer_name' => '<strong>Hi, :customerName</strong>',
+            'body' => 'We confirm that your transaction has been canceled.  Below are the transaction details:',
+        ],
+
         'transaction_labels' => [
             'transaction_id' => 'Transaction ID: ',
             'transaction_date' => 'Transaction Date: ',
@@ -33,6 +38,9 @@ return [
             'status' => 'Status: ',
             'status_canceled' => 'Canceled',
             'product_name' => 'Product: ',
+            'electricity_name' => 'Electricity: ',
+            'electricity_phone_number' => 'Customer ID: ',
+            'electricity_price' => 'Price: ',
         ],
 
         'payment-info-line-1' => 'Did you find any problems trying to make the purchase?',
@@ -42,6 +50,7 @@ return [
         'payment-info-line-4-pulsa' => 'You can make a new purchase of Pulsa by clicking button below.',
         'payment-info-line-4-data-plan' => 'You can make a new purchase of Data Plan by clicking button below.',
         'payment-info-line-4-digital-product' => 'You can make a new purchase of :productType by clicking button below.',
+        'payment-info-line-4-electricity' => 'You can make a new purchase of :productType by clicking button below.',
 
         'regards' => 'Thank you,<br><br>Gotomalls Service Team',
 

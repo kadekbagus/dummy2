@@ -25,7 +25,10 @@ use Orbit\Notifications\DigitalProduct\CanceledPaymentNotification;
 use Orbit\Notifications\DigitalProduct\CustomerRefundNotification;
 use Orbit\Notifications\DigitalProduct\ExpiredPaymentNotification;
 use Orbit\Notifications\DigitalProduct\PendingPaymentNotification;
+use Orbit\Notifications\DigitalProduct\Woodoos\AbortedPaymentNotification as WoodoosAbortedPaymentNotification;
+use Orbit\Notifications\DigitalProduct\Woodoos\ExpiredPaymentNotification as WoodoosExpiredPaymentNotification;
 use Orbit\Notifications\DigitalProduct\Woodoos\PendingPaymentNotification as WoodoosPendingPaymentNotification;
+use Orbit\Notifications\DigitalProduct\Woodoos\CanceledPaymentNotification as WoodoosCanceledPaymentNotification;
 use PaymentTransaction;
 use Queue;
 use Request;
@@ -279,7 +282,13 @@ class UpdatePurchase
                 // Send notification if the purchase was canceled.
                 // Only send if previous status was pending.
                 if ($oldStatus === PaymentTransaction::STATUS_PENDING && $status === PaymentTransaction::STATUS_CANCELED) {
-                    $this->purchase->user->notify(new CanceledPaymentNotification($this->purchase));
+
+                    if ($this->purchase->forWoodoos()) {
+                        $this->purchase->user->notify(new WoodoosCanceledPaymentNotification($this->purchase));
+                    }
+                    else {
+                        $this->purchase->user->notify(new CanceledPaymentNotification($this->purchase));
+                    }
 
                     $this->purchase->user->activity(new PurchaseCanceledActivity($this->purchase, $objectName));
                 }
@@ -287,7 +296,13 @@ class UpdatePurchase
                 // Send notification if the purchase was expired
                 // Only send if previous status was pending.
                 if ($oldStatus === PaymentTransaction::STATUS_PENDING && $status === PaymentTransaction::STATUS_EXPIRED) {
-                    $this->purchase->user->notify(new ExpiredPaymentNotification($this->purchase));
+
+                    if ($this->purchase->forWoodoos()) {
+                        $this->purchase->user->notify(new WoodoosExpiredPaymentNotification($this->purchase));
+                    }
+                    else {
+                        $this->purchase->user->notify(new ExpiredPaymentNotification($this->purchase));
+                    }
 
                     $this->purchase->user->activity(new PurchaseExpiredActivity($this->purchase, $objectName));
                 }
@@ -296,7 +311,13 @@ class UpdatePurchase
                 // Only send if previous status was starting.
                 if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_ABORTED) {
                     if ($fromSnap) {
-                        $this->purchase->user->notify(new AbortedPaymentNotification($this->purchase));
+
+                        if ($this->purchase->forWoodoos()) {
+                            $this->purchase->user->notify(new WoodoosAbortedPaymentNotification($this->purchase));
+                        }
+                        else {
+                            $this->purchase->user->notify(new AbortedPaymentNotification($this->purchase));
+                        }
 
                         $this->purchase->user->activity(new PurchaseAbortedActivity($this->purchase, $objectName));
                     }

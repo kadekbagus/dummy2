@@ -1,6 +1,6 @@
 <?php namespace Orbit\Notifications\DigitalProduct\Woodoos;
 
-use Orbit\Notifications\Payment\DigitalProduct\ReminderPaymentNotification as BaseNotification;
+use Orbit\Notifications\DigitalProduct\ReminderPaymentNotification as BaseNotification;
 
 /**
  * A reminder notification, that will be fired up at midnight to remind Customer
@@ -18,8 +18,8 @@ class ReminderPaymentNotification extends BaseNotification
     public function getEmailData()
     {
         return array_merge(parent::getEmailData(), [
-            'cancelUrl' => $this->getCancelUrl() . "&type=electricity",
-            'myWalletUrl' => $this->getMyPurchasesUrl('/electricity'),
+            'cancelUrl' => $this->getCancelUrl() . "&type=pln-token",
+            'myWalletUrl' => $this->getMyPurchasesUrl('/pln?country=Indonesia'),
         ]);
     }
 }

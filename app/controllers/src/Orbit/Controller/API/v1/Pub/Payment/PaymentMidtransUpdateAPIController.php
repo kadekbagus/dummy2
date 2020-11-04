@@ -90,7 +90,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 $this->commit();
                 return (new PaymentPulsaUpdateAPIController())->postPaymentPulsaUpdate();
             }
-            else if ($payment_update->forDigitalProduct()) {
+            else if ($payment_update->forDigitalProduct() || $payment_update->forWoodoos()) {
                 $this->commit();
                 return (new PurchaseUpdateAPIController())->postUpdate();
             }
