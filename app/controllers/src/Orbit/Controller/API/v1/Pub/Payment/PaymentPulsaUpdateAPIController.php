@@ -91,7 +91,7 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
             $refundReason = '';
             $currentUtmUrl = $this->generateUtmUrl($payment_transaction_id);
 
-            $payment_update = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'details.coupon', 'details.digital_product', 'refunds', 'midtrans', 'user', 'discount_code'])->findOrFail($payment_transaction_id);
+            $payment_update = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'details.coupon', 'details.digital_product', 'details.provider_product', 'refunds', 'midtrans', 'user', 'discount_code'])->findOrFail($payment_transaction_id);
 
             if ($payment_update->forWoodoos()) {
                 $this->commit();
