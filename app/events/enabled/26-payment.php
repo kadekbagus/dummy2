@@ -31,7 +31,7 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
 
         DB::connection()->beginTransaction();
 
-        if (! $payment->forPulsa() && ! $payment->forDigitalProduct()) {
+        if (! $payment->forPulsa() && ! $payment->forDigitalProduct() && ! $payment->forWoodoos()) {
             $payment->cleanUp();
         }
 
