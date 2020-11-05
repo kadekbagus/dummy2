@@ -17,6 +17,7 @@ use Orbit\Helper\Midtrans\API\TransactionStatus;
 use Orbit\Notifications\Payment\ExpiredPaymentNotification;
 use Orbit\Notifications\Pulsa\ExpiredPaymentNotification as PulsaExpiredPaymentNotification;
 use Orbit\Notifications\DigitalProduct\ExpiredPaymentNotification as DigitalProductExpiredPaymentNotification;
+use Orbit\Notifications\DigitalProduct\Woodoos\ExpiredPaymentNotification as WoodoosExpiredPaymentNotification;
 
 /**
  * Get transaction status from Midtrans and update our internal payment status if necessary.
@@ -193,7 +194,12 @@ class CheckTransactionStatusQueue
                     if ($paymentDetail->object_type === 'pulsa') {
                         $payment->user->notify(new PulsaExpiredPaymentNotification($payment));
                     } else if ($paymentDetail->object_type === 'digital_product') {
-                        $payment->user->notify(new DigitalProductExpiredPaymentNotification($payment));
+                        if ($payment->forWoodoos()) {
+                            $payment->user->notify(new WoodoosExpiredPaymentNotification($payment));
+                        }
+                        else {
+                            $payment->user->notify(new DigitalProductExpiredPaymentNotification($payment));
+                        }
                     } else if ($paymentDetail->object_type === 'coupon') {
                         $payment->user->notify(new ExpiredPaymentNotification($payment));
                     }
