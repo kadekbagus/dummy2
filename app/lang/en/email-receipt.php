@@ -24,6 +24,11 @@ return [
             'body' => 'Thank you for purchasing :itemName :gameName in Gotomalls.com. Your payment has been verified by our system. Below is the transaction summary of your purchase',
         ],
 
+        'greeting_electricity' => [
+            'customer_name' => 'Dear, :customerName',
+            'body' => 'Thank you for purchasing :itemName in Gotomalls.com. Your payment has been verified by our system. Below is the transaction summary of your purchase',
+        ],
+
         'transaction_labels' => [
             'transaction_id' => 'Transaction ID',
             'transaction_date' => 'Transaction Date',
@@ -42,6 +47,7 @@ return [
         'view_my_purchases' => 'To see your purchased item, please click the button below:',
 
         'voucher_code' => 'Your Game Voucher Information:',
+        'voucher_code_electricity' => 'Your Electricity Token Information:',
 
         'help' => 'Please contact our customer service at <a style="color:#f43d3c;text-decoration:none;" href="tel::csPhone">:csPhone</a> or email at <a style="color:#f43d3c;text-decoration:none;" href="mailto::csEmail">:csEmail</a> if you find any difficulties.',
         'thank_you' => 'Thank you and have a nice day.',
