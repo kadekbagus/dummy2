@@ -2,37 +2,33 @@
 
 namespace Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct;
 
-use App;
-use Carbon\Carbon;
-use Config;
-use Country;
 use DB;
-use Event;
 use Log;
 use Mall;
-use OrbitShop\API\v1\Helper\Input as OrbitInput;
-use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseAbortedActivity;
-use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseCanceledActivity;
-use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseExpiredActivity;
-use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedActivity;
-use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchasePendingActivity;
-use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseProcessingProductActivity;
-use Orbit\Helper\Midtrans\API\TransactionCancel;
+use User;
+use Event;
+use Queue;
+use Config;
+use Exception;
+use Carbon\Carbon;
+use PaymentTransaction;
 use Orbit\Helper\Midtrans\API\TransactionStatus;
-use Orbit\Helper\Util\CampaignSourceParser;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Notifications\DigitalProduct\AbortedPaymentNotification;
-use Orbit\Notifications\DigitalProduct\CanceledPaymentNotification;
 use Orbit\Notifications\DigitalProduct\CustomerRefundNotification;
 use Orbit\Notifications\DigitalProduct\ExpiredPaymentNotification;
 use Orbit\Notifications\DigitalProduct\PendingPaymentNotification;
+use Orbit\Notifications\DigitalProduct\CanceledPaymentNotification;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedActivity;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseAbortedActivity;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseExpiredActivity;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchasePendingActivity;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseCanceledActivity;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseProcessingProductActivity;
 use Orbit\Notifications\DigitalProduct\Woodoos\AbortedPaymentNotification as WoodoosAbortedPaymentNotification;
 use Orbit\Notifications\DigitalProduct\Woodoos\ExpiredPaymentNotification as WoodoosExpiredPaymentNotification;
 use Orbit\Notifications\DigitalProduct\Woodoos\PendingPaymentNotification as WoodoosPendingPaymentNotification;
 use Orbit\Notifications\DigitalProduct\Woodoos\CanceledPaymentNotification as WoodoosCanceledPaymentNotification;
-use PaymentTransaction;
-use Queue;
-use Request;
-use User;
 
 /**
  * Digital Product Purchase Update handler.
@@ -49,6 +45,10 @@ class UpdatePurchase
 
     protected $purchase = null;
 
+    private $shouldNotifyRefund = false;
+
+    private $refundReason = '';
+
     public function update($request)
     {
         try {
@@ -61,10 +61,6 @@ class UpdatePurchase
             $refundData = $request->refund_data;
 
             $shouldUpdate = false;
-            $paymentSuspicious = false;
-            $paymentDenied = false;
-            $shouldNotifyRefund = false;
-            $refundReason = '';
             $currentUtmUrl = $this->generateUtmUrl();
 
             $this->purchase = PaymentTransaction::onWriteConnection()->with([
@@ -114,26 +110,7 @@ class UpdatePurchase
 
                 // If it is a refund request, then try to record it..
                 if (in_array($tmpNewStatus, ['refund', 'partial_refund']) && ! empty($refundData)) {
-                    $this->log("It is a refund notification for payment {$payment_transaction_id}...");
-
-                    $refundData = json_decode($refundData, true);
-                    $refundDataObject = new \stdClass;
-                    $refundDataObject->refunds = [];
-                    foreach($refundData['refunds'] as $refund) {
-                        $refundDataObject->refunds[] = (object) $refund;
-                    }
-                    $refundDataObject->refund_amount = $refundData['refund_amount'];
-
-                    $refundList = $this->purchase->recordRefund($refundDataObject);
-
-                    if (count($refundList) > 0) {
-                        $this->purchase->status = PaymentTransaction::STATUS_SUCCESS_REFUND;
-                        $this->purchase->save();
-                        $shouldNotifyRefund = true;
-                        $refundReason = isset($refundList[0]) && isset($refundList[0]->reason)
-                            ? $refundList[0]->reason
-                            : '';
-                    }
+                    $this->handleRefund($refundData);
                 }
                 else {
                     $this->log("Getting correct status from Midtrans for payment {$payment_transaction_id}...");
@@ -142,7 +119,10 @@ class UpdatePurchase
                     // If the new status doesnt match with what midtrans gave us, then
                     // we can ignored this request (dont update).
                     if ($tmpNewStatus !== $status) {
-                        $this->log("New status {$tmpNewStatus} for payment {$payment_transaction_id} will be IGNORED since the correct status is {$status}!");
+                        $this->log(sprintf(
+                            "New status %s for payment %s will be IGNORED since the correct status is %s!",
+                            $tmpNewStatus, $payment_transaction_id, $status
+                        ));
                     }
                     else {
                         $this->log("New status {$status} for payment {$payment_transaction_id} will be set!");
@@ -210,7 +190,9 @@ class UpdatePurchase
 
                 // If new status is 'aborted', then keep it as 'starting' after cleaning up
                 // any related (issued) coupons.
-                if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_ABORTED) {
+                if ($oldStatus === PaymentTransaction::STATUS_STARTING
+                    && $status === PaymentTransaction::STATUS_ABORTED
+                ) {
                     // If not from closing snap window, then keep status to starting.
                     if (! $fromSnap) {
                         $this->purchase->status = PaymentTransaction::STATUS_STARTING;
@@ -228,8 +210,6 @@ class UpdatePurchase
 
                 $objectName = $this->resolveObjectName($this->purchase);
 
-                $apiParams = $this->buildAPIParams($this->purchase);
-
                 // Log activity...
                 // Should be done before issuing coupon for the sake of activity ordering,
                 // or at the end before returning the response??
@@ -237,33 +217,46 @@ class UpdatePurchase
                     $this->purchase->user->activity(new PurchaseFailedActivity($this->purchase));
                 }
                 else if ($this->purchase->status === PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT) {
-                    $this->purchase->user->activity(new PurchaseProcessingProductActivity($this->purchase, $objectName, $this->objectType));
+                    $this->purchase->user->activity(
+                        new PurchaseProcessingProductActivity(
+                            $this->purchase, $objectName, $this->objectType
+                        )
+                    );
                 }
 
                 Event::fire('orbit.payment.postupdatepayment.after.commit', [
                     $this->purchase,
-                    $mall,
-                    $apiParams
+                    $mall
                 ]);
 
                 // If previous status was starting and now is pending, we should trigger job transaction status check.
                 // The job will be run forever until the transaction status is success, failed, expired or reached the maximum number of allowed check.
-                if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_PENDING) {
+                if ($oldStatus === PaymentTransaction::STATUS_STARTING
+                    && $status === PaymentTransaction::STATUS_PENDING
+                ) {
                     $delay = Config::get('orbit.partners_api.midtrans.transaction_status_timeout', 60);
-                    $queueData = ['transactionId' => $payment_transaction_id, 'check' => 0, 'current_url' => $currentUtmUrl];
+                    $queueData = [
+                        'transactionId' => $payment_transaction_id,
+                        'check' => 0,
+                        'current_url' => $currentUtmUrl
+                    ];
+
                     if (! empty($mall)) {
                         $queueData['mall_id'] = $mall->merchant_id;
                     }
 
                     Queue::later(
                         $delay,
-                        'Orbit\\Queue\\Payment\\Midtrans\\CheckTransactionStatusQueue',
+                        "Orbit\Queue\Payment\Midtrans\CheckTransactionStatusQueue",
                         $queueData
                     );
 
-                    $this->log('First time TransactionStatus check for Payment: ' . $payment_transaction_id . ' is scheduled to run after ' . $delay . ' seconds.');
+                    $this->log(sprintf(
+                        'First time TransactionStatus check for Payment: %s  is scheduled to run after %s seconds.',
+                        $payment_transaction_id, $delay
+                    ));
 
-                    // Notify customer for pending payment (to complete the payment).
+                    // Notify customer to complete the payment.
                     // Send email to address that being used on checkout (can be different with user's email)
                     $paymentUser = new User;
                     $paymentUser->email = $this->purchase->user_email;
@@ -281,8 +274,9 @@ class UpdatePurchase
 
                 // Send notification if the purchase was canceled.
                 // Only send if previous status was pending.
-                if ($oldStatus === PaymentTransaction::STATUS_PENDING && $status === PaymentTransaction::STATUS_CANCELED) {
-
+                if ($oldStatus === PaymentTransaction::STATUS_PENDING
+                    && $status === PaymentTransaction::STATUS_CANCELED
+                ) {
                     if ($this->purchase->forWoodoos()) {
                         $this->purchase->user->notify(new WoodoosCanceledPaymentNotification($this->purchase));
                     }
@@ -295,8 +289,9 @@ class UpdatePurchase
 
                 // Send notification if the purchase was expired
                 // Only send if previous status was pending.
-                if ($oldStatus === PaymentTransaction::STATUS_PENDING && $status === PaymentTransaction::STATUS_EXPIRED) {
-
+                if ($oldStatus === PaymentTransaction::STATUS_PENDING
+                    && $status === PaymentTransaction::STATUS_EXPIRED
+                ) {
                     if ($this->purchase->forWoodoos()) {
                         $this->purchase->user->notify(new WoodoosExpiredPaymentNotification($this->purchase));
                     }
@@ -309,9 +304,10 @@ class UpdatePurchase
 
                 // Send notification if the purchase was aborted
                 // Only send if previous status was starting.
-                if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_ABORTED) {
+                if ($oldStatus === PaymentTransaction::STATUS_STARTING
+                    && $status === PaymentTransaction::STATUS_ABORTED
+                ) {
                     if ($fromSnap) {
-
                         if ($this->purchase->forWoodoos()) {
                             $this->purchase->user->notify(new WoodoosAbortedPaymentNotification($this->purchase));
                         }
@@ -328,8 +324,12 @@ class UpdatePurchase
             }
 
             // Send refund notification to customer.
-            if ($shouldNotifyRefund) {
-                $this->purchase->user->notify(new CustomerRefundNotification($this->purchase, $refundReason));
+            if ($this->shouldNotifyRefund) {
+                $this->purchase->user->notify(
+                    new CustomerRefundNotification(
+                        $this->purchase, $this->refundReason
+                    )
+                );
             }
 
             return $this->purchase;
@@ -390,5 +390,29 @@ class UpdatePurchase
         $utmUrl = '?utm_source='.$utm_source.'&utm_medium='.$utm_medium.'&utm_term='.$utm_term.'&utm_content='.$utm_content.'&utm_campaign='.$utm_campaign;
 
         return $utmUrl;
+    }
+
+    private function handleRefund($refundData)
+    {
+        $this->log("It is a refund notification...");
+
+        $refundData = json_decode($refundData, true);
+        $refundDataObject = new \stdClass;
+        $refundDataObject->refunds = [];
+        foreach($refundData['refunds'] as $refund) {
+            $refundDataObject->refunds[] = (object) $refund;
+        }
+        $refundDataObject->refund_amount = $refundData['refund_amount'];
+
+        $refundList = $this->purchase->recordRefund($refundDataObject);
+
+        if (count($refundList) > 0) {
+            $this->purchase->status = PaymentTransaction::STATUS_SUCCESS_REFUND;
+            $this->purchase->save();
+            $this->shouldNotifyRefund = true;
+            $this->refundReason = isset($refundList[0]) && isset($refundList[0]->reason)
+                ? $refundList[0]->reason
+                : '';
+        }
     }
 }
