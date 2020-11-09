@@ -15,7 +15,7 @@ trait WoodoosHelper
         return [
             'trx_id' => $purchase->payment_transaction_id,
             'item_code' => $providerProduct->code,
-            'amount' => $providerProduct->price,
+            'amount' => $providerProduct->extra_field_metadata,
             'electric_id' => $this->cleanUpElectricID($purchase->extra_data),
         ];
     }
