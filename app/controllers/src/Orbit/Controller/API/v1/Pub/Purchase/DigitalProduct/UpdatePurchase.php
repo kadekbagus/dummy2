@@ -29,6 +29,10 @@ use Orbit\Notifications\DigitalProduct\Woodoos\AbortedPaymentNotification as Woo
 use Orbit\Notifications\DigitalProduct\Woodoos\ExpiredPaymentNotification as WoodoosExpiredPaymentNotification;
 use Orbit\Notifications\DigitalProduct\Woodoos\PendingPaymentNotification as WoodoosPendingPaymentNotification;
 use Orbit\Notifications\DigitalProduct\Woodoos\CanceledPaymentNotification as WoodoosCanceledPaymentNotification;
+use Orbit\Notifications\DigitalProduct\Electricity\AbortedPaymentNotification as ElectricityAbortedPaymentNotification;
+use Orbit\Notifications\DigitalProduct\Electricity\ExpiredPaymentNotification as ElectricityExpiredPaymentNotification;
+use Orbit\Notifications\DigitalProduct\Electricity\PendingPaymentNotification as ElectricityPendingPaymentNotification;
+use Orbit\Notifications\DigitalProduct\Electricity\CanceledPaymentNotification as ElectricityCanceledPaymentNotification;
 
 /**
  * Digital Product Purchase Update handler.
@@ -264,6 +268,9 @@ class UpdatePurchase
                     if ($this->purchase->forWoodoos()) {
                         $paymentUser->notify(new WoodoosPendingPaymentNotification($this->purchase), 30);
                     }
+                    else if ($this->purchase->forMCashElectricity()) {
+                        $paymentUser->notify(new ElectricityPendingPaymentNotification($this->purchase), 30);
+                    }
                     else {
                         $paymentUser->notify(new PendingPaymentNotification($this->purchase), 30);
                     }
@@ -280,6 +287,9 @@ class UpdatePurchase
                     if ($this->purchase->forWoodoos()) {
                         $this->purchase->user->notify(new WoodoosCanceledPaymentNotification($this->purchase));
                     }
+                    else if ($this->purchase->forMCashElectricity()) {
+                        $this->purchase->user->notify(new ElectricityCanceledPaymentNotification($this->purchase));
+                    }
                     else {
                         $this->purchase->user->notify(new CanceledPaymentNotification($this->purchase));
                     }
@@ -294,6 +304,9 @@ class UpdatePurchase
                 ) {
                     if ($this->purchase->forWoodoos()) {
                         $this->purchase->user->notify(new WoodoosExpiredPaymentNotification($this->purchase));
+                    }
+                    else if ($this->purchase->forMCashElectricity()) {
+                        $this->purchase->user->notify(new ElectricityExpiredPaymentNotification($this->purchase));
                     }
                     else {
                         $this->purchase->user->notify(new ExpiredPaymentNotification($this->purchase));
@@ -310,6 +323,9 @@ class UpdatePurchase
                     if ($fromSnap) {
                         if ($this->purchase->forWoodoos()) {
                             $this->purchase->user->notify(new WoodoosAbortedPaymentNotification($this->purchase));
+                        }
+                        else if ($this->purchase->forMCashElectricity()) {
+                            $this->purchase->user->notify(new ElectricityAbortedPaymentNotification($this->purchase));
                         }
                         else {
                             $this->purchase->user->notify(new AbortedPaymentNotification($this->purchase));

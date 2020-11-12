@@ -99,11 +99,11 @@ class GetMCashElectricityQueue
 
             $discount = $payment->discount_code;
 
-            $purchase = Purchase::create()->doPurchase(
-                    $providerProduct->code,
-                    $customerId,
-                    $paymentId
-                );
+            $purchase = Purchase::create()->mockSuccess()->doPurchase(
+                $providerProduct->code,
+                $customerId,
+                $paymentId
+            );
 
             // Append noted
             $notes = $payment->notes;
@@ -414,8 +414,8 @@ class GetMCashElectricityQueue
     private function notifyRetryPurchase($payment, $purchase)
     {
         $adminEmails = Config::get('orbit.transaction.notify_emails', [
-                'developer@dominopos.com'
-            ]);
+            'developer@dominopos.com'
+        ]);
 
         // Send notification each time we do retry...
         foreach($adminEmails as $email) {
