@@ -99,7 +99,7 @@ class GetMCashElectricityQueue
 
             $discount = $payment->discount_code;
 
-            $purchase = Purchase::create()->mockSuccess()->doPurchase(
+            $purchase = Purchase::create()->doPurchase(
                 $providerProduct->code,
                 $customerId,
                 $paymentId
