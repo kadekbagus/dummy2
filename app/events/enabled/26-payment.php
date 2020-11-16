@@ -105,6 +105,9 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
             else if ($payment->forWoodoos()) {
                 $queue = 'Orbit\\Queue\\DigitalProduct\\GetWoodoosProductQueue';
             }
+            else if ($payment->forMCashElectricity()) {
+                $queue = 'Orbit\\Queue\\DigitalProduct\\GetMCashElectricityQueue';
+            }
 
             Queue::connection('sync')->push($queue, $queueData);
         }

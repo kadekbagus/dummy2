@@ -1,13 +1,13 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct;
 
-use Log;
+use PaymentTransaction;
 
 trait APIHelper
 {
     use UPointHelper,
         WoodoosHelper;
 
-    protected function buildAPIParams($purchase)
+    protected function buildAPIParams(PaymentTransaction $purchase)
     {
         $params = [];
 
@@ -17,6 +17,9 @@ trait APIHelper
         else if ($purchase->forWoodoos()) {
             $params = $this->buildWoodoosParams($purchase);
         }
+        // else if ($purchase->forMCashElectricity()) {
+        //     $params = $this->buildMCashParams($purchase);
+        // }
 
         return $params;
     }

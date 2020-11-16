@@ -66,6 +66,19 @@ class Purchase
         return $this;
     }
 
+    public function mockResponse($data = [])
+    {
+        $this->mockData = (object) array_merge([
+            'status' => 0,
+            'message' => 'TRX SUCCESS',
+            'data' => (object) [
+                'serial_number' => '12313131',
+            ]
+        ], $data);
+
+        return $this;
+    }
+
     /**
      * @param string $product - MCash product code (pulsa code)
      * @param string $customer - Customer phone number
