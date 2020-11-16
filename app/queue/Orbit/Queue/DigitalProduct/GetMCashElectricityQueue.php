@@ -120,6 +120,10 @@ class GetMCashElectricityQueue
             if ($purchase->isSuccess()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
                 $payment->save();
+
+                $detail->payload = $this->parseElectricityInfo($purchase);
+                $detail->save();
+
                 DB::connection()->commit();
 
                 $this->log("Electricity Purchase is SUCCESS for payment {$paymentId}.");
@@ -131,6 +135,10 @@ class GetMCashElectricityQueue
                 // actually make it success on their side.
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
                 $payment->save();
+
+                $detail->payload = $this->parseElectricityInfo($purchase);
+                $detail->save();
+
                 DB::connection()->commit();
 
                 $this->log("Electricity Purchase is PENDING for payment {$paymentId}.");
@@ -186,7 +194,7 @@ class GetMCashElectricityQueue
                 // Notify Customer
                 $payment->user->notify(new ReceiptNotification(
                     $payment,
-                    $purchase->getSerialNumber()
+                    $this->parseElectricityInfo($purchase)
                 ));
 
                 // Reward point to User.
@@ -426,6 +434,25 @@ class GetMCashElectricityQueue
             $admin->email       = $email;
             $admin->notify(new PulsaRetryNotification($payment, $purchase->getMessage()));
         }
+    }
+
+    private function parseElectricityInfo($purchase)
+    {
+        $info = [];
+        $serialNumber = $purchase->getSerialNumber();
+
+        if (! empty($serialNumber)) {
+            $serialNumber = explode('*', $serialNumber);
+            $info = [
+                'token' => $serialNumber[0],
+                'customer' => $serialNumber[1],
+                'tarif' => $serialNumber[2],
+                'daya' => $serialNumber[3],
+                'kwh' => $serialNumber[4],
+            ];
+        }
+
+        return serialize($info);
     }
 
     /**

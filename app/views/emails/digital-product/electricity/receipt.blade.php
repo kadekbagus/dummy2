@@ -143,7 +143,7 @@
                                                             <div class="voucher-data-container">
                                                                 @foreach($voucherData as $voucherDataKey => $data)
                                                                     <div class="voucher-data-item">
-                                                                        {{ $data }}
+                                                                        {{ trans('email-receipt.body.voucher_code_electricity_labels.' . $voucherDataKey, [], '', $lang) }}: {{ $data }}
                                                                     </div>
                                                                 @endforeach
                                                             </div>

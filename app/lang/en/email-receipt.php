@@ -48,6 +48,13 @@ return [
 
         'voucher_code' => 'Your Game Voucher Information:',
         'voucher_code_electricity' => 'Your Electricity Token Information:',
+        'voucher_code_electricity_labels' => [
+            'token' => 'Token',
+            'customer' => 'Customer',
+            'tarif' => 'Tariff',
+            'daya' => 'Power',
+            'kwh' => 'kWh',
+        ],
 
         'help' => 'Please contact our customer service at <a style="color:#f43d3c;text-decoration:none;" href="tel::csPhone">:csPhone</a> or email at <a style="color:#f43d3c;text-decoration:none;" href="mailto::csEmail">:csEmail</a> if you find any difficulties.',
         'thank_you' => 'Thank you and have a nice day.',
