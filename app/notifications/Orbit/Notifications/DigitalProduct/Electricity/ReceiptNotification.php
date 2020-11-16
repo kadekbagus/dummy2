@@ -20,6 +20,13 @@ class ReceiptNotification extends BaseReceiptNotification
         ];
     }
 
+    protected function getVoucherData()
+    {
+        if (!empty($this->voucherData) && is_string($this->voucherData)) {
+            return ['TOKEN' => $this->voucherData];
+        }
+    }
+
     public function getMyPurchasesUrl($path = '')
     {
         return parent::getMyPurchasesUrl('/pln?country=Indonesia');

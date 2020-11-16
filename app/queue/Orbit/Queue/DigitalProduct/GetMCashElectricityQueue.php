@@ -99,11 +99,13 @@ class GetMCashElectricityQueue
 
             $discount = $payment->discount_code;
 
-            $purchase = Purchase::create()->doPurchase(
-                $providerProduct->code,
-                $customerId,
-                $paymentId
-            );
+            $purchase = Purchase::create()
+                // ->mockResponse(['status' => 618])
+                ->doPurchase(
+                    $providerProduct->code,
+                    $customerId,
+                    $paymentId
+                );
 
             // Append noted
             $notes = $payment->notes;
@@ -183,7 +185,8 @@ class GetMCashElectricityQueue
 
                 // Notify Customer
                 $payment->user->notify(new ReceiptNotification(
-                    $payment, $purchase->getSerialNumber()
+                    $payment,
+                    $purchase->getSerialNumber()
                 ));
 
                 // Reward point to User.
