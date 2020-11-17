@@ -25,7 +25,7 @@ class PurchaseProviderBuilder
     {
         switch ($this->providerId) {
             case 'ayopay':
-                return new AyoPay\Provider($config);
+                return new Ayopay\Provider($config);
                 break;
 
             case 'upoint-dtu':
