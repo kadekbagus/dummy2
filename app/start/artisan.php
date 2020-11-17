@@ -359,3 +359,6 @@ Artisan::add(new GetListActiveBrandProductCommand);
 
 // List all active products affiliation
 Artisan::add(new GetListActiveProductAffiliationCommand);
+
+// Reset user game points
+Artisan::add(new ResetGamePoint);
