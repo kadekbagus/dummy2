@@ -2,7 +2,7 @@
 
 return [
     'subject' => 'Coupon Not Available',
-    'subject_pulsa' => '[Admin] Cannot Purchase Pulsa/Data Plan',
+    'subject_pulsa' => '[Admin] Cannot Purchase Pulsa/Data Plan/Electricity',
     'subject_digital_product' => '[Admin] Cannot Purchase :productType',
     'subject_pulsa_pending' => '[Admin] Purchase Pulsa/Data Plan PENDING',
     'subject_pulsa_retrying' => '[Admin] Purchase Pulsa/Data Plan RETRY',

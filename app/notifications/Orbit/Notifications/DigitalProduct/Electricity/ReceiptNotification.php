@@ -1,4 +1,4 @@
-<?php namespace Orbit\Notifications\DigitalProduct\Woodoos;
+<?php namespace Orbit\Notifications\DigitalProduct\Electricity;
 
 use Orbit\Notifications\DigitalProduct\ReceiptNotification as BaseReceiptNotification;
 
@@ -11,13 +11,18 @@ class ReceiptNotification extends BaseReceiptNotification
 {
     protected $voucherData = [];
 
-    protected $signature = 'woodoos-receipt-notification';
+    protected $signature = 'electricity-receipt-notification';
 
     public function getEmailTemplates()
     {
         return [
-            'html' => 'emails.digital-product.woodoos.receipt',
+            'html' => 'emails.digital-product.electricity.receipt',
         ];
+    }
+
+    protected function getVoucherData()
+    {
+        return unserialize($this->voucherData);
     }
 
     public function getMyPurchasesUrl($path = '')

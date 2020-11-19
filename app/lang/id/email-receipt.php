@@ -23,6 +23,11 @@ return [
             'body' => 'Terima kasih telah melakukan pembelian :itemName :gameName di Gotomalls.com. Pembayaran Anda telah diverifikasi oleh sistem kami. Berikut ini detail dari pembelian Anda.',
         ],
 
+        'greeting_electricity' => [
+            'customer_name' => 'Hi, :customerName',
+            'body' => 'Terima kasih telah melakukan pembelian :itemName di Gotomalls.com. Pembayaran Anda telah diverifikasi oleh sistem kami. Berikut ini detail dari pembelian Anda.',
+        ],
+
         'transaction_labels' => [
             'transaction_id' => 'No. Transaksi',
             'transaction_date' => 'Tanggal Transaksi',
@@ -41,6 +46,14 @@ return [
         'view_my_purchases' => 'Untuk melihat pembelian Anda, dapat melalui tombol di bawah ini:',
 
         'voucher_code' => 'Informasi Voucher Game Anda:',
+        'voucher_code_electricity' => 'Informasi Token PLN Anda:',
+        'voucher_code_electricity_labels' => [
+            'token' => 'Token',
+            'customer' => 'Pelanggan',
+            'tarif' => 'Tarif',
+            'daya' => 'Daya',
+            'kwh' => 'kWh',
+        ],
 
         'help' => 'Jika menemui kendala terkait pembelian, silakan hubungi layanan bantuan kami di nomor <a style="color:#f43d3c;text-decoration:none;" href="tel::csPhone">:csPhone</a> atau surel di <a style="color:#f43d3c;text-decoration:none;" href="mailto::csEmail">:csEmail</a>.',
         'thank_you' => 'Terima kasih dan kami tunggu pembelian berikutnya!',
