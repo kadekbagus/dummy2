@@ -293,7 +293,7 @@
               <br>
 
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-canceled-payment.body.payment-info-line-4-electricity') }}
+                {{ trans('email-canceled-payment.body.payment-info-line-4-electricity', ['productType' => $productType], '', 'en') }}
               </p>
               <br>
               <p style="text-align: center;">
