@@ -14,3 +14,8 @@ Route::post('/app/v1/pub/purchase/update', [
     'as' => 'pub-digital-product-purchase-update',
     'uses' => 'IntermediatePubAuthController@Purchase\PurchaseUpdate_postUpdate'
 ]);
+
+Route::post('/app/v1/pub/purchase/availability', [
+    'as' => 'pub-digital-product-purchase-availability',
+    'uses' => 'IntermediatePubAuthController@Purchase\PurchaseAvailability_postAvailability',
+]);
