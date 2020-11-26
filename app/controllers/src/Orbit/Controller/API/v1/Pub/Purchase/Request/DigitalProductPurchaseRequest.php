@@ -31,7 +31,7 @@ class DigitalProductPurchaseRequest extends ValidateRequest
             'object_id' => 'required|product_exists|provider_product_exists', // digital product id
             'object_type' => 'required|in:digital_product', // digital_product
             'game_id' => 'sometimes|required|product_with_game_exists',
-            // 'electric_id' => 'sometimes|required|product_with_electricity_exists',
+            'electric_id' => 'sometimes|required|limit.pending|limit.purchase',
             // 'provider_product_id' => 'required|provider_product_exists',
             'promo_code' => 'sometimes|required|alpha_dash|active_discount|available_discount',
             'object_name' => 'required',
@@ -60,6 +60,8 @@ class DigitalProductPurchaseRequest extends ValidateRequest
             'promo_code.alpha_dash' => 'PROMO_CODE_MUST_BE_ALPHA_DASH',
             'promo_code.active_discount' => 'PROMO_CODE_NOT_ACTIVE',
             'promo_code.available_discount' => 'PROMO_CODE_NOT_AVAILABLE',
+            'limit.pending' => 'FINISH_PENDING_FIRST',
+            'limit.purchase' => 'PURCHASE_TIME_LIMITED',
         ];
     }
 
@@ -77,5 +79,15 @@ class DigitalProductPurchaseRequest extends ValidateRequest
             $val = (new AvailableDiscountValidator())->user($this->user());
             return $val($attribute, $value, $parameters, $validators);
         });
+
+        Validator::extend(
+            'limit.pending',
+            'Orbit\Controller\API\v1\Pub\Purchase\Validator\PurchaseValidator@limitPending'
+        );
+
+        Validator::extend(
+            'limit.purchase',
+            'Orbit\Controller\API\v1\Pub\Purchase\Validator\PurchaseValidator@limitPurchase'
+        );
     }
 }
