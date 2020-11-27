@@ -25,9 +25,9 @@ class PurchaseAvailabilityRequest extends ValidateRequest
     public function rules()
     {
         return [
-            'object_id'         => 'required|orbit.product_exists',
+            'object_id'         => 'required|orbit.product_exists|orbit.product_active',
             'object_type'       => 'required|in:digital_product',
-            'quantity'          => 'required|min:1|max:1|orbit.allowed.quantity',
+            'quantity'          => 'required|min:1|max:1',
             'customer_number'   => 'required|min:10|orbit.limit.pending|orbit.limit.purchase',
         ];
     }
@@ -41,6 +41,7 @@ class PurchaseAvailabilityRequest extends ValidateRequest
     {
         return [
             'orbit.product_exists' => 'REQUESTED_ITEM_NOT_FOUND.',
+            'orbit.product_active' => 'REQUESTED_ITEM_NOT_FOUND.',
             'orbit.allowed.quantity' => 'REQUESTED_QUANTITY_NOT_AVAILABLE',
             'orbit.limit.purchase' => 'PURCHASE_TIME_LIMITED',
             'orbit.limit.pending' => 'FINISH_PENDING_FIRST',
@@ -50,10 +51,23 @@ class PurchaseAvailabilityRequest extends ValidateRequest
     protected function registerCustomValidations()
     {
         Validator::extend(
-            'product_exists',
+            'orbit.product_exists',
             'Orbit\Controller\API\v1\Pub\DigitalProduct\Validator\DigitalProductValidator@exists'
         );
 
+        Validator::extend(
+            'orbit.product_active',
+            'Orbit\Controller\API\v1\Pub\DigitalProduct\Validator\DigitalProductValidator@available'
+        );
 
+        Validator::extend(
+            'orbit.limit.pending',
+            'Orbit\Controller\API\v1\Pub\Purchase\Validator\PurchaseValidator@limitPending'
+        );
+
+        Validator::extend(
+            'orbit.limit.purchase',
+            'Orbit\Controller\API\v1\Pub\Purchase\Validator\PurchaseValidator@limitPurchase'
+        );
     }
 }
