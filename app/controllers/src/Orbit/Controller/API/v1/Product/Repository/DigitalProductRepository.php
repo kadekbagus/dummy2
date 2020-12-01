@@ -44,9 +44,35 @@ class DigitalProductRepository
      */
     public function findProducts()
     {
+        $sortBy = 'digital_products.updated_at';
+        $sortMode = 'desc';
+
+        OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
+        {
+            // Map the sortby request to the real column name
+            $sortByMapping = array(
+                'product_type'              => 'digital_products.product_type',
+                'product_name'              => 'digital_products.product_name',
+                'selling_price'             => 'digital_products.selling_price',
+                'updated_at'                => 'digital_products.updated_at',
+                'status'                    => 'digital_products.status',
+                'provider_product'          => 'provider_products.provider_name'
+            );
+
+            $sortBy = $sortByMapping[$_sortBy];
+        });
+
+        OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
+        {
+            if (strtolower($_sortMode) !== 'desc') {
+                $sortMode = 'asc';
+            }
+        });
+
         return DigitalProduct::select(
                 'digital_product_id', 'product_name',
-                'selling_price', 'product_type', 'status'
+                'selling_price', 'digital_products.product_type', 'digital_products.status',
+                'provider_products.provider_name as provider_product'
             )
             ->whenHas('product_type', function($query, $productType) {
                 $query->where('product_type', $productType);
@@ -55,12 +81,10 @@ class DigitalProductRepository
                 $query->where('product_name', 'like', "%{$keyword}%");
             })
             ->whenHas('status', function($query, $status) {
-                $query->where('status', $status);
+                $query->where('digital_products.status', $status);
             })
-            ->orderBy(
-                OrbitInput::get('sortby', 'updated_at'),
-                OrbitInput::get('sortmode', 'desc')
-            );
+            ->leftJoin('provider_products', 'provider_products.provider_product_id', '=', 'digital_products.selected_provider_product_id')
+            ->orderBy($sortBy, $sortMode);
     }
 
     /**
