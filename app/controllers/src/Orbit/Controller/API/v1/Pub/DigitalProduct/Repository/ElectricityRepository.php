@@ -43,7 +43,6 @@ class ElectricityRepository
                                            'provider_products.extra_field_metadata'
                                     )
                     ->leftJoin('provider_products', 'provider_products.provider_product_id', '=', 'digital_products.selected_provider_product_id')
-                    ->where('digital_products.status', '=', 'active')
                     ->where('digital_products.product_type', '=', 'electricity')
                     ->orderBy($sortBy, $sortMode);
 
