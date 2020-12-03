@@ -36,6 +36,9 @@ class ErrorServiceProvider extends ServiceProvider
                 $httpCode = 404;
                 $response['code'] = 404;
             }
+            else if ($e instanceof InvalidArgsException) {
+                $httpCode = 403;
+            }
             else {
                 if (! Config::get('app.debug')) {
                     return View::make('errors.general');
