@@ -214,6 +214,8 @@ class UpdatePurchase
 
                 $objectName = $this->resolveObjectName($this->purchase);
 
+                $apiParams = $this->buildAPIParams($this->purchase);
+
                 // Log activity...
                 // Should be done before issuing coupon for the sake of activity ordering,
                 // or at the end before returning the response??
@@ -230,7 +232,8 @@ class UpdatePurchase
 
                 Event::fire('orbit.payment.postupdatepayment.after.commit', [
                     $this->purchase,
-                    $mall
+                    $mall,
+                    $apiParams
                 ]);
 
                 // If previous status was starting and now is pending, we should trigger job transaction status check.
