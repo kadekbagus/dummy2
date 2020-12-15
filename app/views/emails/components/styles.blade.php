@@ -94,6 +94,11 @@
       color: #2196F3;
     }
 
+    .mx-4 {
+      margin-left: 4px;
+      margin-right: 4px;
+    }
+
     .coupon-img-container {
       margin-right: 5px;
       text-decoration: none;
