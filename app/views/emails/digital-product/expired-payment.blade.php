@@ -31,6 +31,9 @@ Transaction Expired
 
               <table width="600" cellpadding="0" cellspacing="0" border="0" class="container">
                 <tr>
+                  <td height="20" align="center">&nbsp;</td>
+                </tr>
+                <tr>
                   <td width="300" class="mobile" align="left" valign="top">
                     <h3 class="greeting-username">
                       {{ trans('email-expired-payment.body.greeting_digital_product.customer_name', ['customerName' => $customerName], '', $lang) }}</h3>
