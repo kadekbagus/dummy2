@@ -101,6 +101,18 @@
       margin-right: 4px;
     }
 
+    .text-left {
+      text-align: left;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
     .coupon-img-container {
       margin-right: 5px;
       text-decoration: none;
