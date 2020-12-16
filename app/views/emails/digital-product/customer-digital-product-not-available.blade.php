@@ -122,6 +122,8 @@ Product Not Available
                               <br>
                               {{{ trans('email-coupon-not-available.body.thank_you', [], '', $lang) }}}
                           </p>
+                          <br>
+                          &nbsp;
                         </td>
                       </tr>
                     </table>
