@@ -7,7 +7,7 @@ Transaction Canceled
 @section('content')
   <?php
     $langs = ['id', 'en'];
-    $originalProductType = $productType;
+    $originalProductType = isset($productType) ? $productType : 'default';
   ?>
 
   @foreach($langs as $lang)
