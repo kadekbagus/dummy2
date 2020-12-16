@@ -23,7 +23,7 @@ Receipt from Gotomalls.com
                 <tr>
                   <td align="center" valign="middle" height="184" class="greeting-title-container" style="border-radius: 5px 5px 0 0;">
                     <h1 class="greeting-title">
-                      {{ trans('email-receipt.header.invoice', [], '', 'id') }}
+                      {{ trans('email-receipt.header.invoice', [], '', $lang) }}
                     </h1>
                   </td>
                 </tr>
