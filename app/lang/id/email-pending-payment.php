@@ -12,11 +12,11 @@ return [
                         <br>
                         Terima kasih telah membeli Kupon di Gotomalls.com. Berikut ini instruksi untuk menyelesaikan pembayaran Anda.',
 
-        'greeting_pulsa' => 'Yth, :customerName
+        'greeting_pulsa' => '<strong>Yth, :customerName</strong>
                         <br>
                         Terima kasih telah membeli Pulsa di Gotomalls.com. Silakan lakukan pembayaran menggunakan aplikasi GOJEK di HP Anda. Berikut ini detail transaksi Anda.',
 
-        'greeting_data_plan' => 'Yth, :customerName
+        'greeting_data_plan' => '<strong>Yth, :customerName</strong>
                         <br>
                         Terima kasih telah membeli Paket Data di Gotomalls.com. Silakan lakukan pembayaran menggunakan aplikasi GOJEK di HP Anda. Berikut ini detail transaksi Anda.',
 
