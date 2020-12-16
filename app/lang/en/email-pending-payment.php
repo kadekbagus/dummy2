@@ -8,7 +8,7 @@ return [
     ],
 
     'body' => [
-        'greeting' => 'Dear, :customerName
+        'greeting' => '<strong>Dear, :customerName</strong>
                         <br>
                         Thank you for purchasing Coupon in Gotomalls.com. Below are the instructions to complete your payment.',
 
