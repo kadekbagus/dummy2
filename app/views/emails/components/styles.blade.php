@@ -1,6 +1,8 @@
   <style type="text/css">
     * {
       font-family:'Roboto', 'Arial', sans-serif;
+      color: #333;
+      line-height: 1.5em;
     }
 
     /* Outlines the grids, remove when sending */
