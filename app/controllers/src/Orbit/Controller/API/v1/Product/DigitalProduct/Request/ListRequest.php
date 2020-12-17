@@ -27,7 +27,7 @@ class ListRequest extends ValidateRequest
         return [
             'skip' => 'required|integer',
             'take' => 'required|integer',
-            'sortby' => 'sometimes|in:status,product_type,product_name,selling_price,updated_at',
+            'sortby' => 'sometimes|in:status,product_type,product_name,selling_price,updated_at,provider_product',
             'sortmode' => 'sometimes|in:asc,desc',
         ];
     }

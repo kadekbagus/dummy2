@@ -7,6 +7,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Orbit\Notifications\Payment\BeforeExpiredPaymentNotification;
 use Orbit\Notifications\Pulsa\ReminderPaymentNotification as PulsaReminderPaymentNotification;
 use Orbit\Notifications\DigitalProduct\ReminderPaymentNotification as DigitalProductReminderPaymentNotification;
+use Orbit\Notifications\DigitalProduct\Woodoos\ReminderPaymentNotification as WoodoosReminderPaymentNotification;
 
 /**
  * @author Budi <budi@dominopos.com>
@@ -86,7 +87,13 @@ class SendEmailBeforePaymentExpiredCommand extends Command {
                         $payment->user->notify(new PulsaReminderPaymentNotification($payment));
                     }
                     else if ($payment->forDigitalProduct()) {
-                        $payment->user->notify(new DigitalProductReminderPaymentNotification($payment));
+
+                        if ($payment->forWoodoos()) {
+                            $payment->user->notify(new WoodoosReminderPaymentNotification($payment));
+                        }
+                        else {
+                            $payment->user->notify(new DigitalProductReminderPaymentNotification($payment));
+                        }
                     }
                     else {
                         $payment->user->notify(new BeforeExpiredPaymentNotification($payment));

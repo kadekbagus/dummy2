@@ -11,7 +11,7 @@ use Orbit\Helper\DigitalProduct\Providers\Woodoos\Response\StatusAPIResponse;
  */
 class StatusAPI extends WoodoosAPI
 {
-    protected $endPoint = 'giftCardService/queryTransaction';
+    protected $endPoint = 'giftCardService/queryTransactions';
 
     // protected $shouldMockResponse = true;
 
@@ -25,7 +25,10 @@ class StatusAPI extends WoodoosAPI
     {
         return [
             'merchantId' => $this->config['merchant_id'],
+            'terminalId' => $this->config['terminal_id'],
+            'cashierId' => $this->config['cashier_id'],
             'transactionNumber' => $this->requestData['trx_id'],
+            'gencode' => $this->requestData['item_code'],
         ];
     }
 

@@ -45,6 +45,7 @@ class ResetGamePoint extends Command {
         // Setup end date
         $endDate = $this->option('end-date');
         $userId = $this->option('user-id');
+        $sleepInMicro = $this->option('usleep');
         $dryRun = $this->option('dry-run', FALSE);
 
         if (empty($endDate)) {
@@ -109,6 +110,8 @@ class ResetGamePoint extends Command {
                 }
 
                 $this->info(sprintf('User ID: "%s" total game points is adjusted by (-%s) points', $userGameEvent->user_id, $userGameEvent->point));
+
+                usleep($sleepInMicro);
             }
         } while (count($userGameEvents) > 0);
     }
@@ -133,6 +136,7 @@ class ResetGamePoint extends Command {
         return array(
             array('end-date', null, InputOption::VALUE_REQUIRED, 'Date limit for point reset', null),
             array('user-id', null, InputOption::VALUE_OPTIONAL, 'Date more than.', null),
+            array('usleep', null, InputOption::VALUE_OPTIONAL, 'Delay execution per game event in microseconds.', 100000),
             array('dry-run', null, InputOption::VALUE_NONE, 'Run in dry run mode, do not delete the data.'),
         );
     }

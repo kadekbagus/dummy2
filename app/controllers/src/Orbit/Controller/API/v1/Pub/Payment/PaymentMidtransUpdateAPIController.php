@@ -84,13 +84,13 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             $shouldUpdate = false;
             $currentUtmUrl = $this->generateUtmUrl($payment_transaction_id);
 
-            $payment_update = PaymentTransaction::onWriteConnection()->with(['details.coupon', 'details.pulsa', 'details.digital_product', 'midtrans', 'refunds', 'issued_coupons', 'user', 'discount_code'])->findOrFail($payment_transaction_id);
+            $payment_update = PaymentTransaction::onWriteConnection()->with(['details.coupon', 'details.pulsa', 'details.digital_product', 'details.provider_product', 'midtrans', 'refunds', 'issued_coupons', 'user', 'discount_code'])->findOrFail($payment_transaction_id);
 
             if ($payment_update->forPulsa()) {
                 $this->commit();
                 return (new PaymentPulsaUpdateAPIController())->postPaymentPulsaUpdate();
             }
-            else if ($payment_update->forDigitalProduct()) {
+            else if ($payment_update->forDigitalProduct() || $payment_update->forWoodoos()) {
                 $this->commit();
                 return (new PurchaseUpdateAPIController())->postUpdate();
             }

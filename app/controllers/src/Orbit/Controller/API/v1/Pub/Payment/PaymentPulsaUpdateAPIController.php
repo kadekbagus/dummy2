@@ -32,6 +32,7 @@ use Orbit\Notifications\Pulsa\AbortedPaymentNotification;
 use Orbit\Notifications\Pulsa\ExpiredPaymentNotification;
 use Orbit\Notifications\Pulsa\CustomerRefundNotification;
 use Mall;
+use Orbit\Controller\API\v1\Pub\Purchase\PurchaseUpdateAPIController;
 
 /**
  * Controller for update payment with midtrans
@@ -90,7 +91,12 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
             $refundReason = '';
             $currentUtmUrl = $this->generateUtmUrl($payment_transaction_id);
 
-            $payment_update = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'refunds', 'midtrans', 'user', 'discount_code'])->findOrFail($payment_transaction_id);
+            $payment_update = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'details.coupon', 'details.digital_product', 'details.provider_product', 'refunds', 'midtrans', 'user', 'discount_code'])->findOrFail($payment_transaction_id);
+
+            if ($payment_update->forWoodoos()) {
+                $this->commit();
+                return (new PurchaseUpdateAPIController())->postUpdate();
+            }
 
             $this->resolveObjectType($payment_update);
 

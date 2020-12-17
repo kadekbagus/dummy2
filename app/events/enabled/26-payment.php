@@ -31,7 +31,7 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
 
         DB::connection()->beginTransaction();
 
-        if (! $payment->forPulsa() && ! $payment->forDigitalProduct()) {
+        if (! $payment->forPulsa() && ! $payment->forDigitalProduct() && ! $payment->forWoodoos()) {
             $payment->cleanUp();
         }
 
@@ -104,6 +104,9 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
             }
             else if ($payment->forWoodoos()) {
                 $queue = 'Orbit\\Queue\\DigitalProduct\\GetWoodoosProductQueue';
+            }
+            else if ($payment->forMCashElectricity()) {
+                $queue = 'Orbit\\Queue\\DigitalProduct\\GetMCashElectricityQueue';
             }
 
             Queue::connection('sync')->push($queue, $queueData);

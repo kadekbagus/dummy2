@@ -101,7 +101,7 @@ class ElectricityPurchasedDetailAPIController extends PubControllerAPI
             }
 
             $electricity->payment_midtrans_info = json_decode(unserialize($electricity->payment_midtrans_info));
-            $electricity->activation_code = json_decode(unserialize($electricity->payload));
+            $electricity->activation_code = unserialize($electricity->payload);
 
             $this->response->data = $electricity;
         } catch (ACLForbiddenException $e) {

@@ -243,33 +243,30 @@ trait UPointHelper
 
     protected function buildUPointParams($purchase)
     {
-        $providerProduct = $purchase->getProviderProduct();
-
         $purchaseNotes = unserialize($purchase->notes);
         $inquiry = json_decode($purchaseNotes['inquiry']);
 
-        if ($providerProduct->provider_name === 'upoint-dtu') {
-
-                if (isset($inquiry->info) && isset($inquiry->info->details)) {
-                    if (is_array($inquiry->info->details) && isset($inquiry->info->details[0])) {
-                        return [
-                            'payment_info' => json_encode($inquiry->info->details[0])
-                        ];
-                    } else {
-                        return [
-                            'payment_info' => json_encode($inquiry->info->details)
-                        ];
-                    }
+        if ($purchase->forUPoint('dtu')) {
+            if (isset($inquiry->info) && isset($inquiry->info->details)) {
+                if (is_array($inquiry->info->details) && isset($inquiry->info->details[0])) {
+                    return [
+                        'payment_info' => json_encode($inquiry->info->details[0])
+                    ];
+                } else {
+                    return [
+                        'payment_info' => json_encode($inquiry->info->details)
+                    ];
                 }
             }
         }
-        else if ($providerProduct->provider_name === 'upoint-voucher') {
+        else if ($purchase->forUPoint('voucher')) {
             return [
                 'upoint_trx_id' => $inquiry->trx_id,
                 'trx_id' => $purchase->payment_transaction_id,
                 'request_status' => $inquiry->status,
             ];
         }
+
         return [];
     }
 }
