@@ -38,11 +38,16 @@ class ReceiptNotification extends BaseReceiptNotification
         return ['email'];
     }
 
+    protected function getVoucherData()
+    {
+        return $this->voucherData;
+    }
+
     public function getEmailData()
     {
         return array_merge(parent::getEmailData(), [
             'myWalletUrl' => $this->getMyPurchasesUrl('/game-voucher'),
-            'voucherData' => $this->voucherData,
+            'voucherData' => $this->getVoucherData(),
         ]);
     }
 }

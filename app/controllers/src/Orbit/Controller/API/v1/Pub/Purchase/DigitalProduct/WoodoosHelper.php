@@ -13,9 +13,15 @@ trait WoodoosHelper
         $providerProduct = $purchase->getProviderProduct();
 
         return [
-            'trx_id' => time(),
+            'trx_id' => $purchase->payment_transaction_id,
             'item_code' => $providerProduct->code,
-            'amount' => $purchase->amount,
+            'amount' => $providerProduct->price,
+            'electric_id' => $this->cleanUpElectricID($purchase->extra_data),
         ];
+    }
+
+    private function cleanUpElectricID($electricID = '')
+    {
+        return str_replace([' ', '-'], '', $electricID);
     }
 }

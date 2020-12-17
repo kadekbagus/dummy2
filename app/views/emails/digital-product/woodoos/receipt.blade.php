@@ -57,10 +57,10 @@
                                     <tr>
                                         <td width="600" class="mobile" align="left" valign="top">
                                             <h3 class="greeting-username">
-                                                {{ trans('email-receipt.body.greeting_digital_product.customer_name', ['customerName' => $customerName], '', $lang) }}
+                                                {{ trans('email-receipt.body.greeting_electricity.customer_name', ['customerName' => $customerName], '', $lang) }}
                                             </h3>
                                             <p class="greeting-text">
-                                                {{ trans('email-receipt.body.greeting_digital_product.body', ['itemName' => $transaction['items'][0]['shortName']], '', $lang) }}
+                                                {{ trans('email-receipt.body.greeting_electricity.body', ['itemName' => $transaction['items'][0]['shortName']], '', $lang) }}
                                             </p>
                                         </td>
                                     </tr>
@@ -138,12 +138,12 @@
                                                             <br>
                                                             <br>
                                                             <div class="voucher-data-label">
-                                                                {{ trans('email-receipt.body.voucher_code', [], '', $lang) }}
+                                                                {{ trans('email-receipt.body.voucher_code_electricity', [], '', $lang) }}
                                                             </div>
                                                             <div class="voucher-data-container">
                                                                 @foreach($voucherData as $voucherDataKey => $data)
                                                                     <div class="voucher-data-item">
-                                                                        {{ $voucherDataKey }}: {{ $data }}
+                                                                        {{ $data }}
                                                                     </div>
                                                                 @endforeach
                                                             </div>

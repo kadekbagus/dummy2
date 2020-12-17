@@ -1,7 +1,6 @@
 <?php namespace Orbit\Helper\DigitalProduct\Providers\Woodoos\Response;
 
 use Orbit\Helper\DigitalProduct\Providers\Woodoos\Response\WoodoosResponse;
-use Orbit\Helper\DigitalProduct\Response\HasVoucherData;
 
 /**
  * Woodoos Purchase API Response mapper.
@@ -10,15 +9,6 @@ use Orbit\Helper\DigitalProduct\Response\HasVoucherData;
  */
 class PurchaseAPIResponse extends WoodoosResponse
 {
-    use HasVoucherData;
-
-    public function __construct($response)
-    {
-        parent::__construct($response);
-
-        $this->parseVoucherData($this->response->data);
-    }
-
     public function getRefNumber()
     {
         return isset($this->response->data->referenceNumber)
@@ -26,10 +16,8 @@ class PurchaseAPIResponse extends WoodoosResponse
             : null;
     }
 
-    protected function parseVoucherData($responseData)
+    public function isSuccessWithoutToken()
     {
-        if (isset($responseData->cardNumber)) {
-            $this->voucherData['Token'] = wordwrap($responseData->cardNumber, 4, '-', true);
-        }
+        return $this->isSuccess() && empty($this->voucherData);
     }
 }

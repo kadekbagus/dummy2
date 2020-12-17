@@ -322,6 +322,18 @@ class PaymentTransaction extends Eloquent
         return false;
     }
 
+    public function forMCashElectricity()
+    {
+        foreach($this->details as $detail) {
+            if (! empty($detail->provider_product)) {
+                return $detail->provider_product->provider_name === 'mcash'
+                    && $detail->provider_product->product_type === 'electricity';
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Determine if the payment is for Pulsa.
      *
@@ -431,6 +443,10 @@ class PaymentTransaction extends Eloquent
         Log::info('Payment: Cleaning up payment... TransactionID: ' . $this->payment_transaction_id . ', current status: ' . $this->status);
 
         $issuedCoupons = $this->issued_coupons;
+
+        if (empty($issuedCoupons)) {
+            return;
+        }
 
         if ($issuedCoupons->count() === 0) {
             $issuedCoupons = IssuedCoupon::where('transaction_id', $this->payment_transaction_id)->get();
@@ -601,6 +617,19 @@ class PaymentTransaction extends Eloquent
         }
 
         return $productType;
+    }
+
+    public function getDigitalProduct()
+    {
+        $digitalProduct = null;
+        foreach($this->details as $detail) {
+            if (! empty($detail->digital_product)) {
+                $digitalProduct = $detail->digital_product;
+                break;
+            }
+        }
+
+        return $digitalProduct;
     }
 
     public function getProviderProduct()

@@ -20,6 +20,11 @@ return [
             'body' => 'Melalui email ini kami memberitahukan bahwa transaksi Anda telah dibatalkan. Berikut ini detail transaksi tersebut.',
         ],
 
+        'greeting_electricity' => [
+            'customer_name' => '<strong>Hai, :customerName</strong>',
+            'body' => 'Melalui email ini kami memberitahukan bahwa transaksi Anda telah dibatalkan. Berikut ini detail transaksi tersebut.',
+        ],
+
         'transaction_labels' => [
             'transaction_id' => 'No. Transaksi: ',
             'transaction_date' => 'Tanggal Transaksi: ',
@@ -36,6 +41,9 @@ return [
             'status' => 'Status: ',
             'status_canceled' => 'Dibatalkan',
             'product_name' => 'Produk: ',
+            'electricity_name' => 'Token Listrik: ',
+            'electricity_phone_number' => 'No. Pelanggan: ',
+            'electricity_price' => 'Harga Token Listrik: ',
         ],
 
         'payment-info-line-1' => 'Gotomalls.com mendeteksi bahwa kamu <strong>membatalkan</strong> transaksi pada tanggal :transactionDateTime.',
@@ -53,6 +61,11 @@ Apabila kamu mengalami kesulitan dalam pembelian pulsa, silahkan <strong>tanyaka
 Bantu Gotomalls.com dengan memberikan feedback dan membalas email ini dengan keluhan atau alasanmu tidak menyelesaikan pembelian paket data ini.
 Apabila kamu mengalami kesulitan dalam pembelian paket data, silahkan <strong>tanyakan keluhanmu</strong> melalui email <a style="text-decoration: none;color:#f43d3c;" href="mailto::email">:email</a> dan Gotomalls.com akan siap membantu.',
 
+        'payment-info-line-1-electricity' => 'Gotomalls.com mendeteksi bahwa kamu <strong>membatalkan</strong> transaksi token listrik pada tanggal :transactionDateTime.',
+        'payment-info-line-2-electricity' => 'Apakah terdapat kendala dalam melakukan transaksi pembelian token listrikmu?
+Bantu Gotomalls.com dengan memberikan feedback dan membalas email ini dengan keluhan atau alasanmu tidak menyelesaikan pembelian token listrik ini.
+Apabila kamu mengalami kesulitan dalam pembelian token listrik, silahkan <strong>tanyakan keluhanmu</strong> melalui email <a style="text-decoration: none;color:#f43d3c;" href="mailto::email">:email</a> dan Gotomalls.com akan siap membantu.',
+
         'regards' => 'Terima kasih.<br><br>Salam,<br>Gotomalls.com Customer Service Team',
 
         'buttons' => [
@@ -60,6 +73,7 @@ Apabila kamu mengalami kesulitan dalam pembelian paket data, silahkan <strong>ta
             'buy_pulsa' => 'Beli Pulsa Sekarang',
             'buy_data_plan' => 'Beli Paket Data Sekarang',
             'buy_digital_product' => 'Beli :productType Lain',
+            'buy_electricity' => 'Beli Token Listrik Sekarang',
         ]
     ],
 ];
