@@ -35,7 +35,7 @@ Transaction Expired | Gotomalls.com
                 </tr>
 
                 <tr>
-                  <td class="invoice-body" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
+                  <td class="greeting-text" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
                     <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                       {{ trans('email-expired-payment.body.greeting', ['customerName' => $customerName], '', $lang) }}
                     </p>

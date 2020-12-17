@@ -35,14 +35,14 @@ Refund Notice
                 </tr>
                 <tr>
                   <td width="600">
-                    <table border="0" cellpadding="0" cellspacing="0" class="no-border email-container" style="line-height:1.7em;font-size:14px;color:#222;width:100%;max-width:640px;border:0;border-spacing:0 !important;border-collapse:collapse !important;table-layout:fixed !important;margin:0 auto !important;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
+                    <table border="0" cellpadding="0" cellspacing="0" class="no-border email-container" style="line-height:1.7em;color:#222;width:100%;max-width:640px;border:0;border-spacing:0 !important;border-collapse:collapse !important;table-layout:fixed !important;margin:0 auto !important;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
                       <tbody>
                         <tr>
-                          <td class="text-left invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;"><strong>{{{ trans('email-coupon-not-available.header.order_number', ['transactionId' => $transaction['id']], '', $lang) }}}</strong></td>
-                          <td class="text-right invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;text-align:right;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $transactionDateTime }}}</td>
+                          <td class="text-left invoice-info greeting-text" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;"><strong>{{{ trans('email-coupon-not-available.header.order_number', ['transactionId' => $transaction['id']], '', $lang) }}}</strong></td>
+                          <td class="text-right invoice-info greeting-text" style="font-family:'Roboto', 'Arial', sans-serif;text-align:right;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $transactionDateTime }}}</td>
                         </tr>
                         <tr>
-                          <td colspan="2" class="invoice-body" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
+                          <td colspan="2" class="greeting-text" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
                             <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                               {{ trans('email-customer-refund.body.greeting_pulsa', ['customerName' => $customerName], '', $lang) }}
                             </p>
