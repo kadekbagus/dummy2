@@ -46,6 +46,7 @@ class DigitalProductCollection extends ResourceCollection
                 'type' => $this->transformProductType($item->product_type),
                 'price' => $item->selling_price,
                 'status' => $item->status,
+                'provider_product' => $item->provider_product,
             ];
         }
 
