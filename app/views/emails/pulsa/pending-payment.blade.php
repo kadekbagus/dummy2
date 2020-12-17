@@ -37,7 +37,7 @@ Waiting for Payment | Gotomalls.com
                   <td height="20" align="center">&nbsp;</td>
                 </tr>
                 <tr>
-                  <td colspan="2" class="invoice-body" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
+                  <td colspan="2" class="greeting-text" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
                     <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                       {{ trans('email-pending-payment.body.greeting_pulsa', ['customerName' => $customerName], '', $lang) }}
                     </p>

@@ -36,7 +36,7 @@ Transaction Canceled
 
                 <tr>
                   <td width="600" class="mobile" align="left" valign="top">
-                    <p class="greeting">
+                    <p class="greeting-text">
                       {{ trans('email-canceled-payment.body.greeting', ['customerName' => $customerName], '', $lang) }}
                     </p>
                   </td>
@@ -50,7 +50,7 @@ Transaction Canceled
                   <td width="600" class="mobile center" valign="middle">
                     <table width="100%">
                       <tr>
-                        <td colspan="2" class="invoice-body text-left" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:10px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
+                        <td colspan="2" class="greeting-text text-left" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:10px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
                           <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                             <strong>
                               {{{ trans('email-canceled-payment.body.transaction_labels.transaction_id', [], '', $lang) }}}
