@@ -34,6 +34,11 @@ Route::post('/api/v1/new-product/update', function()
 Route::post('/app/v1/new-product/update', ['as' => 'product-api-product-update', 'uses' => 'IntermediateProductAuthController@ProductUpdate_postUpdateProduct']);
 
 
+Route::post('/api/v1/new-product/mass-new', function()
+{
+    return Orbit\Controller\API\v1\Product\MassUpload\MassUploadAPIController::create()->postUploadProduct();
+});
+Route::post('/app/v1/new-product/mass-new', ['as' => 'product-api-product-new', 'uses' => 'IntermediateProductAuthController@MassUpload\MassUpload_postUploadProduct']);
 
 /**
  * List/Search country
