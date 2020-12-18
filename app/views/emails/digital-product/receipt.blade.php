@@ -43,7 +43,7 @@ Receipt from Gotomalls.com
                       {{ trans('email-receipt.body.greeting_digital_product.customer_name', ['customerName' => $customerName], '', $lang) }}
                     </h3>
                     <p class="greeting-text">
-                      {{ trans('email-receipt.body.greeting_digital_product.body', ['itemName' => $transaction['items'][0]['shortName']], '', $lang) }}
+                      {{ trans('email-receipt.body.greeting_digital_product.body', ['itemName' => $transaction['items'][0]['shortName'], 'gameName' => isset($gameName) ? $gameName : ''], '', $lang) }}
                     </p>
                   </td>
                 </tr>
