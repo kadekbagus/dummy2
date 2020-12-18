@@ -43,7 +43,7 @@ Unable to Get Data Plan for You
                           <td class="text-right invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;text-align:right;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $transactionDateTime }}}</td>
                         </tr>
                         <tr>
-                          <td colspan="2" class="invoice-body" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
+                          <td colspan="2" class="greeting-text" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
                             <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
                               {{ trans('email-coupon-not-available.body.greeting_data_plan', ['customerName' => $customerName], '', $lang) }}
                             </p>
