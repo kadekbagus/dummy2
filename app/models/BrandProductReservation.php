@@ -9,6 +9,13 @@ class BrandProductReservation extends Eloquent
 
     protected $table = 'brand_product_reservations';
 
+    const STATUS_NEW = 'new';
+    const STATUS_CANCELED = 'canceled';
+    const STATUS_ACCEPTED = 'accepted';
+    const STATUS_DECLINED = 'declined';
+    const STATUS_DONE = 'done';
+    const STATUS_EXPIRED = 'expired';
+
     public function users() {
         return $this->belongsTo('User', 'user_id', 'user_id');
     }

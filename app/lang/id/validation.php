@@ -531,6 +531,16 @@ return array(
         'rating' => array(
             'unique' => "Anda sudah melakukan review untuk lokasi/item ini.",
         ),
+
+        'brand_product' => array(
+            'exists' => 'Produk tidak ditemukan atau tidak aktif.',
+        ),
+
+        'brand_product_variant' => array(
+            'exists' => 'Selected Variant doesn\'t exist or inactive.',
+            'available' => 'Selected Variant not available.',
+            'quantity_available' => 'Requested quantity not available.',
+        ),
     ),
 
     /*

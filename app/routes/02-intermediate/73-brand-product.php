@@ -75,3 +75,11 @@ Route::get(
         'uses' => $intermediateController . '\AvailableStoreList_handle',
     ]
 );
+
+Route::post(
+    '/app/v1/pub/reserve',
+    [
+        'as' => 'reserve-new',
+        'uses' => 'IntermediatePubAuthController@Reservation\ReservationNew_handle',
+    ]
+);
