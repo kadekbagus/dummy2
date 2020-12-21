@@ -79,7 +79,7 @@ class GetDigitalProductQueue
                 'user',
                 'midtrans',
                 'discount_code'
-            ])->findOrFail($paymentId);
+            ])->leftJoin('games', 'games.game_id', '=', 'payment_transactions.extra_data')->findOrFail($paymentId);
 
             // Register payment into container, so can be accessed by other classes.
             App::instance('purchase', $payment);
