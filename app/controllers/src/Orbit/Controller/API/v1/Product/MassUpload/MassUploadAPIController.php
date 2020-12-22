@@ -9,6 +9,7 @@ use Orbit\Controller\API\v1\Product\MassUpload\MassProductParameterHelper as Pro
 use Validator;
 use Exception;
 use App;
+use Input;
 
 /**
  * Controller class for Mass upload product endpoint based on involve.asia datafeed file
@@ -25,9 +26,9 @@ class MassUploadAPIController extends ControllerAPI
             // check user
             $user = $this->api->user;
 
-            $marketplaceType = OrbitInput::post('marketplace_type');
+            $marketplaceType = strtolower(OrbitInput::post('marketplace_type'));
             $offerId = OrbitInput::post('offer_id');
-            $file = OrbitInput::files('file');
+            $file = Input::file('file');
 
             $validator = Validator::make(
                 array(
