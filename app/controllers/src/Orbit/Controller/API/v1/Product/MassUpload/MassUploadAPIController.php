@@ -71,7 +71,7 @@ class MassUploadAPIController extends ControllerAPI
 
                 // call new product controller
                 $createResponse = ProductNewAPIController::create('raw')
-                    ->callingFrom('massupload')
+                    ->setCalledFrom('massupload')
                     ->postNewProduct();
 
                 // reset $_POST variables
