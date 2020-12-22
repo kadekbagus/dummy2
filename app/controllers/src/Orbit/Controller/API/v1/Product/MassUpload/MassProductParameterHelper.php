@@ -56,7 +56,7 @@ class MassProductParameterHelper
                             'id' => $tokopedia->marketplace_id,
                             'website_url' => $websiteUrl,
                             'selling_price' => (string) $value->price_after_discount,
-                            'original_price' => (string) $value->price
+                            'original_price' => (string) $value->price === (string) $value->price_after_discount ? '' : (string) $value->price
                         ];
 
                         $marketplaceData = json_encode($marketplaceData);
