@@ -23,11 +23,16 @@ abstract class ReservationNotification extends Notification implements
 
     protected $signature = 'reservation-notification';
 
-    protected $shouldQueue = true;
+    // protected $shouldQueue = true;
 
     public function __construct($reservation)
     {
         $this->reservation = $reservation;
+    }
+
+    protected function notificationMethods()
+    {
+        return ['email'];
     }
 
     abstract public function getEmailTemplates();
@@ -37,7 +42,15 @@ abstract class ReservationNotification extends Notification implements
     public function getRecipientEmail()
     {
         return $this->reservation->brand_product_variant
-            ->brand_product->creator->user_email;
+            ->brand_product->creator->email;
+    }
+
+    protected function getCustomerData()
+    {
+        return [
+            'customerEmail' => $this->reservation->users->user_email,
+            'customerName'  => $this->reservation->users->getFullName(),
+        ];
     }
 
     /**
@@ -62,11 +75,16 @@ abstract class ReservationNotification extends Notification implements
         try {
             $this->reservation = $this->getReservation($data['reservationId']);
 
-            $data += [
-                'reservation' => $this->getReservationData(),
-                'recipientEmail' => $this->getRecipientEmail(),
-                'emailSubject' => $this->getEmailSubject(),
-            ];
+            $data = array_merge(
+                [
+                    'cs' => $this->getContactData(),
+                    'recipientEmail' => $this->getRecipientEmail(),
+                    'emailSubject' => $this->getEmailSubject(),
+                ],
+                $data,
+                $this->getCustomerData(),
+                $this->getReservationData()
+            );
 
             $emailConfig = Config::get('orbit.registration.mobile.sender');
 

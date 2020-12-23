@@ -62,10 +62,10 @@
                     <tr>
                       <td width="600" class="mobile" align="center" valign="middle">
                         <a href="{{{ $declineUrl }}}" class="btn btn-light mx-4">
-                          {{{ trans('email-reservation.made.labels.btn_decline', [], '', $lang) }}}
+                          {{{ trans('email-reservation.labels.btn_decline', [], '', $lang) }}}
                         </a>
                         <a href="{{{ $acceptUrl }}}" class="btn btn-primary mx-4">
-                            {{{ trans('email-reservation.made.labels.btn_accept', [], '', $lang) }}}
+                            {{{ trans('email-reservation.labels.btn_accept', [], '', $lang) }}}
                           </a>
                       </td>
                     </tr>

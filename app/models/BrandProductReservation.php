@@ -28,21 +28,20 @@ class BrandProductReservation extends Eloquent
         return $this->hasMany('BrandProductReservationDetail', 'brand_product_reservation_id', 'brand_product_reservation_id');
     }
 
-    public function store_detail()
+    public function brand_product_variant()
     {
-        return $this->hasOne(
-            'BrandProductReservationDetail',
-            'brand_product_reservation_id',
-            'brand_product_reservation_id'
-        )->where('option_type', 'merchant');
+        return $this->belongsTo(BrandProductVariant::class);
     }
 
-    public function variant_detail()
+    public function store()
     {
-        return $this->hasOne(
-            'BrandProductReservationDetail',
-            'brand_product_reservation_id',
-            'brand_product_reservation_id'
-        )->where('option_type', 'variant_option');
+        return $this->hasOne(BrandProductReservationDetail::class)
+            ->where('option_type', 'merchant');
+    }
+
+    public function variants()
+    {
+        return $this->hasMany(BrandProductReservationDetail::class)
+            ->where('option_type', 'variant_option');
     }
 }

@@ -16,7 +16,7 @@ class ReservationMadeNotification extends ReservationNotification
     public function getEmailTemplates()
     {
         return [
-            'html' => 'emails.reservation.reservation-made',
+            'html' => 'emails.reservation.made',
         ];
     }
 

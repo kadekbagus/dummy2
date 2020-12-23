@@ -9,6 +9,7 @@ Event::listen(
     'orbit.reservation.made',
     function($reservation) {
         if ($reservation instanceof BrandProductReservation) {
+
             (new ReservationMadeNotification(
                 $reservation->brand_product_reservation_id
             ))->send();

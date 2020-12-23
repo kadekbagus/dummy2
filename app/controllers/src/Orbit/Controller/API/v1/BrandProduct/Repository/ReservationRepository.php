@@ -2,10 +2,12 @@
 
 namespace Orbit\Controller\API\v1\BrandProduct\Repository;
 
+use Carbon\Carbon;
 use BrandProductReservation;
 use BrandProductReservationDetail;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Event;
 use Orbit\Controller\API\v1\Reservation\ReservationInterface;
 
 /**
@@ -33,7 +35,7 @@ class ReservationRepository implements ReservationInterface
         $reservation->quantity = $reservationData->quantity;
         $reservation->user_id = $reservationData->user()->user_id;
         $reservation->expired_at = Carbon::now()->addHours(
-            $item->brand_product->max_expiration_time
+            $item->brand_product->max_reservation_time
         )->format('Y-m-d H:i:s');
         $reservation->status = BrandProductReservation::STATUS_PENDING;
         $reservation->save();
@@ -60,7 +62,7 @@ class ReservationRepository implements ReservationInterface
         DB::commit();
 
         // fire event?
-        // Event::fire('orbit.reservation.made', [$reservation]);
+        Event::fire('orbit.reservation.made', [$reservation]);
 
         return $reservation;
     }

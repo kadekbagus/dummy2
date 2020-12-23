@@ -15,8 +15,8 @@ trait HasReservationTrait
             ->with([
                 'users',
                 'brand_product_variant.brand_product.creator',
-                'store_detail.stores.mall',
-                'variant_detail',
+                'store.store.mall',
+                'variants',
             ])
             ->where('brand_product_reservation_id', $reservationId)
             ->first();
@@ -25,8 +25,6 @@ trait HasReservationTrait
     protected function getReservationData()
     {
         $data = [
-            'customerEmail' => $this->reservation->users->user_email,
-            'customerName'  => $this->reservation->users->getFullName(),
             'store'         => $this->getStore(),
             'reservationTime' => $this->formatDate($this->reservation->created_at),
             'expirationTime' => $this->formatDate($this->reservation->expired_at),
@@ -35,8 +33,7 @@ trait HasReservationTrait
             'status'        => $this->reservation->status,
             'productDetails' => [
                 'name' => $this->reservation->product_name,
-                'variant' => $this->variant_detail->variant_name
-                    . ', ' . $this->variant_detail->value,
+                'variant' => $this->getVariant(),
                 'sku' => $this->reservation->brand_product_variant->sku,
                 'barcode' => '',
             ],
@@ -54,7 +51,7 @@ trait HasReservationTrait
 
     protected function getStore()
     {
-        $store = $this->reservation->store_detail->stores;
+        $store = $this->reservation->store->store;
         return [
             'storeName' => $store->name,
             'mallName' => $store->mall->name,
@@ -67,6 +64,11 @@ trait HasReservationTrait
             * $this->reservation->brand_product_variant->selling_price;
 
         return number_format($total, 2, '.', ',');
+    }
+
+    protected function getVariant()
+    {
+        return $this->reservation->variants->implode('value', ',');
     }
 
     protected function getAcceptUrl()
