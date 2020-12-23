@@ -2,8 +2,11 @@
 
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
+use Orbit\Notifications\Reservation\BrandProduct\ReservationAcceptedNotification;
 use Orbit\Notifications\Reservation\BrandProduct\ReservationMadeNotification;
 use Orbit\Notifications\Reservation\BrandProduct\ReservationCanceledNotification;
+use Orbit\Notifications\Reservation\BrandProduct\ReservationDeclinedNotification;
+use Orbit\Notifications\Reservation\BrandProduct\ReservationExpiredNotification;
 
 Event::listen(
     'orbit.reservation.made',
@@ -15,7 +18,7 @@ Event::listen(
             ))->send();
 
             // Check for expiration?
-            // should use a scheduled task instead of queue.
+            // should use a scheduled task instead of queue?
             // Queue::later(
             //     Carbon::parse($reservation->expired_at),
             //     'Orbit\Queue\Reservation\CheckExpiredReservationQueue',
@@ -39,12 +42,13 @@ Event::listen(
 
 Event::listen(
     'orbit.reservation.declined',
-    function($reservation) {
+    function($reservation, $reason = 'Out of Stock') {
 
         if ($reservation instanceof BrandProductReservation) {
-            $reservation->user->notify(
-                new ReservationCanceledNotification($reservation)
-            );
+            (new ReservationDeclinedNotification(
+                $reservation->brand_product_reservation_id,
+                $reason
+            ))->send();
         }
     }
 );
@@ -54,21 +58,21 @@ Event::listen(
     function($reservation) {
 
         if ($reservation instanceof BrandProductReservation) {
-            $reservation->user->notify(
-                new ReservationCanceledNotification($reservation)
-            );
+            (new ReservationExpiredNotification(
+                $reservation->brand_product_reservation_id
+            ))->send();
         }
     }
 );
 
 Event::listen(
-    'orbit.reservation.done',
+    'orbit.reservation.accepted',
     function($reservation) {
 
         if ($reservation instanceof BrandProductReservation) {
-            $reservation->user->notify(
-                new ReservationCanceledNotification($reservation)
-            );
+            (new ReservationAcceptedNotification(
+                $reservation->brand_product_reservation_id
+            ))->send();
         }
     }
 );

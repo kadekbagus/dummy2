@@ -3,12 +3,12 @@
 return [
     'labels' => [
         'reservation_details' => 'Reservation Details',
-        'transaction_id' => 'Transaction ID',
+        'transaction_id' => 'Reservation ID',
         'user_email' => 'User Email',
         'store_location' => 'Store Location',
         'store_location_detail' => ':storeName at :mallName',
         'reserve_date' => 'Reservation Date',
-        'expiration_date' => 'Expiration Data',
+        'expiration_date' => 'Expiration Date',
         'quantity' => 'Quantity',
         'total_payment' => 'Total Payment',
         'status' => 'Status',
@@ -19,11 +19,12 @@ return [
         'product_barcode' => 'Product Barcode',
         'btn_accept' => 'Accept',
         'btn_decline' => 'Decline',
-        'status' => [
+        'status_detail' => [
             'pending' => 'Pending',
             'cancelled' => 'Cancelled',
             'accepted' => 'Accepted',
             'declined' => 'Declined',
+            'expired' => 'Expired',
         ],
         'reason' => 'Decline Reason',
     ],
@@ -65,6 +66,15 @@ return [
         'greeting' => 'Hello :customerName,',
         'body' => [
             'line-1' => 'We are very sorry to inform you that your reservation was declined by :storeName at :mallName.',
+        ],
+    ],
+
+    'expired' => [
+        'subject' => 'Reservation Expired',
+        'title' => 'Reservation Expired',
+        'greeting' => 'Hello :customerName,',
+        'body' => [
+            'line-1' => 'Unfortunately, your product reservation was expired on :expirationTime. Below is your reservation details.',
         ],
     ],
 ];

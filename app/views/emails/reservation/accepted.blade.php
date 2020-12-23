@@ -4,7 +4,7 @@
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>{{ trans('email-reservation.canceled.subject') }}</title>
+  <title>{{ trans('email-reservation.accepted.subject') }}</title>
 
   @include('emails.components.styles')
 
@@ -32,7 +32,7 @@
                   <table width="640" cellpadding="0" cellspacing="0" border="0" class="container mobile-full-width">
                     <tr>
                       <td align="center" valign="middle" height="184" class="greeting-title-container" style="border-radius: 5px 5px 0 0;">
-                          <h1 class="greeting-title">{{ trans('email-reservation.canceled.title', [], '', $lang) }}</h1>
+                          <h1 class="greeting-title">{{ trans('email-reservation.accepted.title', [], '', $lang) }}</h1>
                       </td>
                     </tr>
                   </table>
@@ -41,10 +41,13 @@
                     <tr>
                       <td width="300" class="mobile" align="left" valign="top">
                         <h3 class="greeting-username">
-                          {{ trans('email-reservation.canceled.greeting', ['customerName' => $customerName], '', $lang) }}
+                          {{ trans('email-reservation.accepted.greeting', ['customerName' => $customerName], '', $lang) }}
                         </h3>
                         <p class="greeting-text">
-                          {{ trans('email-reservation.canceled.body.line-1', [], '', $lang) }}
+                          {{ trans('email-reservation.accepted.body.line-1', $store, '', $lang) }}
+                        </p>
+                        <p class="greeting-text">
+                          {{ trans('email-reservation.accepted.body.line-2', [], '', $lang) }}
                         </p>
                       </td>
                     </tr>

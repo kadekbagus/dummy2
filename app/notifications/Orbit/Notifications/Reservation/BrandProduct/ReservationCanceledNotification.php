@@ -16,7 +16,7 @@ class ReservationCanceledNotification extends ReservationNotification
     public function getEmailTemplates()
     {
         return [
-            'html' => 'emails.reservation.reservation-canceled',
+            'html' => 'emails.reservation.canceled',
         ];
     }
 
@@ -24,6 +24,4 @@ class ReservationCanceledNotification extends ReservationNotification
     {
         return trans('email-reservation.canceled.subject');
     }
-
-
 }

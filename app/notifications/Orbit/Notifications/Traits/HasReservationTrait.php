@@ -29,13 +29,13 @@ trait HasReservationTrait
             'reservationTime' => $this->formatDate($this->reservation->created_at),
             'expirationTime' => $this->formatDate($this->reservation->expired_at),
             'quantity'      => $this->reservation->quantity,
-            'total_payment' => $this->getTotalPayment(),
+            'totalPayment' => $this->getTotalPayment(),
             'status'        => $this->reservation->status,
-            'productDetails' => [
+            'product' => [
                 'name' => $this->reservation->product_name,
                 'variant' => $this->getVariant(),
                 'sku' => $this->reservation->brand_product_variant->sku,
-                'barcode' => '',
+                'barcode' => $this->reservation->brand_product_variant->product_code ?: '-',
             ],
         ];
 
@@ -63,7 +63,7 @@ trait HasReservationTrait
         $total = $this->reservation->quantity
             * $this->reservation->brand_product_variant->selling_price;
 
-        return number_format($total, 2, '.', ',');
+        return 'Rp ' . number_format($total, 2, '.', ',');
     }
 
     protected function getVariant()
