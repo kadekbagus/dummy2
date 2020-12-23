@@ -63,7 +63,7 @@ trait HasReservationTrait
         $total = $this->reservation->quantity
             * $this->reservation->brand_product_variant->selling_price;
 
-        return number_format($total, 2, '.', ',');
+        return 'Rp ' . number_format($total, 2, '.', ',');
     }
 
     protected function getVariant()
