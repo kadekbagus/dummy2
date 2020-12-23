@@ -24,6 +24,7 @@ return [
             'cancelled' => 'Cancelled',
             'accepted' => 'Accepted',
             'declined' => 'Declined',
+            'expired' => 'Expired',
         ],
         'reason' => 'Decline Reason',
     ],
@@ -65,6 +66,15 @@ return [
         'greeting' => 'Hello :customerName,',
         'body' => [
             'line-1' => 'We are very sorry to inform you that your reservation was declined by :storeName at :mallName.',
+        ],
+    ],
+
+    'expired' => [
+        'subject' => 'Reservation Expired',
+        'title' => 'Reservation Expired',
+        'greeting' => 'Hello :customerName,',
+        'body' => [
+            'line-1' => 'Unfortunately, your product reservation was expired on :expirationTime. Below is your reservation details.',
         ],
     ],
 ];
