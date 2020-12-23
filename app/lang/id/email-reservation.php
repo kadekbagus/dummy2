@@ -3,7 +3,7 @@
 return [
     'labels' => [
         'reservation_details' => 'Detil Reservasi',
-        'transaction_id' => 'Kode Transaksi',
+        'transaction_id' => 'Kode Reservasi',
         'user_email' => 'Email User',
         'store_location' => 'Lokasi Toko',
         'store_location_detail' => ':storeName di :mallName',
@@ -19,7 +19,7 @@ return [
         'product_barcode' => 'Barcode Produk',
         'btn_accept' => 'Terima',
         'btn_decline' => 'Tolak',
-        'status' => [
+        'status_detail' => [
             'pending' => 'Pending',
             'cancelled' => 'Dibatalkan',
             'accepted' => 'Diterima',
@@ -29,20 +29,19 @@ return [
     ],
 
     'made' => [
-        'subject' => 'New Product Reservation!',
-        'greeting' => 'Hello Admin,',
+        'subject' => 'Reservasi Produk!',
+        'greeting' => 'Halo Admin,',
         'body' => [
-            'line-1' => 'New reservation has been created.
-                Please make sure the product is available and in accordance with the reservation.',
-            'line-2' => 'Please confirm the reservation immediately.',
+            'line-1' => 'Ada reservasi yang baru saja dibuat, mohon untuk memastikan ketersediaan produk terkait. Berikut ini adalah detil reservasi.',
+            'line-2' => 'Mohon untuk segera melakukan tindak lanjut terhadap reservasi di atas.',
         ],
     ],
 
     'canceled' => [
-        'subject' => 'Product Reservation Canceled',
-        'greeting' => 'Hello Admin,',
+        'subject' => 'Reservasi Produk Dibatalkan',
+        'greeting' => 'Halo Admin,',
         'body' => [
-            'line-1' => 'Customer just canceled following reservation.',
+            'line-1' => 'Pelanggan baru saja membatalkan reservasi berikut ini.',
         ],
     ],
 

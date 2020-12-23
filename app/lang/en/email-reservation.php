@@ -3,12 +3,12 @@
 return [
     'labels' => [
         'reservation_details' => 'Reservation Details',
-        'transaction_id' => 'Transaction ID',
+        'transaction_id' => 'Reservation ID',
         'user_email' => 'User Email',
         'store_location' => 'Store Location',
         'store_location_detail' => ':storeName at :mallName',
         'reserve_date' => 'Reservation Date',
-        'expiration_date' => 'Expiration Data',
+        'expiration_date' => 'Expiration Date',
         'quantity' => 'Quantity',
         'total_payment' => 'Total Payment',
         'status' => 'Status',
@@ -19,7 +19,7 @@ return [
         'product_barcode' => 'Product Barcode',
         'btn_accept' => 'Accept',
         'btn_decline' => 'Decline',
-        'status' => [
+        'status_detail' => [
             'pending' => 'Pending',
             'cancelled' => 'Cancelled',
             'accepted' => 'Accepted',
