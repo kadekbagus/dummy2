@@ -7,8 +7,6 @@ use BaseMerchant;
 use BrandProduct;
 use DB;
 use Language;
-use Orbit\Controller\API\v1\BrandProduct\Product\DataBuilder\UpdateBrandProductBuilder;
-use Orbit\Controller\API\v1\BrandProduct\Repository\Handlers\HandleReservation;
 use Orbit\Controller\API\v1\BrandProduct\Repository\Handlers\HandleUpdate;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Helper\MediaQuery;
 use ProductLinkToObject;
@@ -25,7 +23,6 @@ use Category;
 class BrandProductRepository
 {
     use MediaQuery,
-        HandleReservation,
         HandleUpdate;
 
     protected $imagePrefix = 'brand_product_photos_';
