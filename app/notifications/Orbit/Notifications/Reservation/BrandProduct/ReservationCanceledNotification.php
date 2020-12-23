@@ -2,6 +2,7 @@
 
 namespace Orbit\Notifications\Reservation\BrandProduct;
 
+use BppUser;
 use Orbit\Notifications\Reservation\ReservationNotification;
 
 /**
