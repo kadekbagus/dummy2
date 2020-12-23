@@ -6,6 +6,7 @@ use Intervention\Image\ImageManagerStatic as Image;
 use Intervention\Image\File as ImageFile;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
  * Controller for Media image related task, all roles should be able to access this
@@ -116,7 +117,17 @@ class MediaAPIController extends ControllerAPI
             }
 
             if (empty($this->inputName)) {
-                $images = $images['images'];
+                if (isset($images['images'])) {
+                    $images = $images['images'];
+                } else {
+                    $images = [];
+                    $images[] = new UploadedFile(
+                            $_FILES['images']['tmp_name'],
+                            $_FILES['images']['type'],
+                            $_FILES['images']['size'],
+                            $_FILES['images']['error']
+                        );
+                    }
             }
 
             // TODO: Should be moved somewhere to keep this api clean.
