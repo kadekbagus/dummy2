@@ -53,6 +53,7 @@ trait HasReservationTrait
     {
         $store = $this->reservation->store->store;
         return [
+            'storeId' => $store->merchant_id,
             'storeName' => $store->name,
             'mallName' => $store->mall->name,
         ];
