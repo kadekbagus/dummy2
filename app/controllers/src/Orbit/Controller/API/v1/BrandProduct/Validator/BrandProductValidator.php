@@ -54,12 +54,39 @@ class BrandProductValidator
         $usedQuantity = BrandProductReservation::select('quantity')
             ->where('brand_product_variant_id', $variant->brand_product_variant_id)
             ->whereIn('status', [
-                BrandProductReservation::STATUS_NEW,
+                BrandProductReservation::STATUS_PENDING,
                 BrandProductReservation::STATUS_DONE
             ])
             ->sum('quantity');
 
         return $variant->quantity - $usedQuantity >= $value;
+    }
+
+    public function reservationExists($attrs, $value, $params)
+    {
+        $reservation = BrandProductReservation::with([
+            'brand_product_variant.brand_product',
+        ])
+        ->where('brand_product_reservation_id', $value)
+        ->first();
+
+        if (! empty($reservation)) {
+            App::instance('reservation', $reservation);
+        }
+
+        return ! empty($reservation);
+    }
+
+    public function reservationCanBeCanceled($attrs, $value, $params)
+    {
+        if (! App::bound('reservation')) {
+            return false;
+        }
+
+        $reservation = App::make('reservation');
+
+        return App::make('currentUser')->user_id === $reservation->user_id
+            && $reservation->status === BrandProductReservation::STATUS_PENDING;
     }
 
     private function getVariant($variantId = '')
@@ -70,8 +97,8 @@ class BrandProductValidator
 
         $variant = BrandProductVariant::with([
             'brand_product',
-            'variant_options.variant_option',
-            'variant_options.option',
+            'variant_options.option.variant',
+            'variant_options.store',
         ])->where('brand_product_variant_id', $variantId)->first();
 
         App::instance('productVariant', $variant);

@@ -548,6 +548,8 @@ return array(
             'exists' => 'Selected Variant doesn\'t exist or inactive.',
             'available' => 'Selected Variant not available.',
             'quantity_available' => 'Requested quantity not available.',
+            'reservation_exists' => 'Reservation doesn\'t exists.',
+            'can_cancel_rsvp' => 'Reservation cannot be canceled.',
         ),
 
         'rsvp' => array(

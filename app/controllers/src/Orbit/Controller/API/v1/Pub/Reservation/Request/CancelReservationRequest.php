@@ -10,7 +10,7 @@ use Orbit\Helper\Request\ValidateRequest;
  *
  * @author Budi <budi@gotomalls.com>
  */
-class MakeReservationRequest extends ValidateRequest
+class CancelReservationRequest extends ValidateRequest
 {
     protected $roles = ['consumer'];
 
@@ -23,9 +23,11 @@ class MakeReservationRequest extends ValidateRequest
         switch ($this->object_type) {
             case 'brand_product':
                 $rules += [
-                    'object_id' => 'required|orbit.brand_product_variant.exists|orbit.brand_product.exists',
-                    'quantity' => 'required|numeric|orbit.brand_product_variant.quantity_available',
-                    'store_id' => 'required', // orbit.brand_product_variant.store_available
+                    'reservation_id' => join('|', [
+                        'required',
+                        'orbit.brand_product_variant.rsvp_exists',
+                        'orbit.brand_product_variant.can_cancel_rsvp',
+                    ]),
                 ];
                 break;
 
@@ -44,18 +46,13 @@ class MakeReservationRequest extends ValidateRequest
     protected function registerCustomValidations()
     {
         Validator::extend(
-            'orbit.brand_product_variant.exists',
-            'Orbit\Controller\API\v1\BrandProduct\Validator\BrandProductValidator@variant_exists'
+            'orbit.brand_product_variant.rsvp_exists',
+            'Orbit\Controller\API\v1\BrandProduct\Validator\BrandProductValidator@reservationExists'
         );
 
         Validator::extend(
-            'orbit.brand_product.exists',
-            'Orbit\Controller\API\v1\BrandProduct\Validator\BrandProductValidator@product_exists'
-        );
-
-        Validator::extend(
-            'orbit.brand_product_variant.quantity_available',
-            'Orbit\Controller\API\v1\BrandProduct\Validator\BrandProductValidator@quantity_available'
+            'orbit.brand_product_variant.can_cancel_rsvp',
+            'Orbit\Controller\API\v1\BrandProduct\Validator\BrandProductValidator@reservationCanBeCanceled'
         );
     }
 }

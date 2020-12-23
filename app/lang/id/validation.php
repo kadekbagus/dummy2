@@ -537,9 +537,11 @@ return array(
         ),
 
         'brand_product_variant' => array(
-            'exists' => 'Selected Variant doesn\'t exist or inactive.',
-            'available' => 'Selected Variant not available.',
-            'quantity_available' => 'Requested quantity not available.',
+            'exists' => 'Varian Produk tidak ditemukan atau tidak aktif.',
+            'available' => 'Varian Produk tidak tersedia.',
+            'quantity_available' => 'Jumlah yang diinginkan tidak tersedia.',
+            'reservation_exists' => 'Reservasi tidak ditemukan.',
+            'can_cancel_rsvp' => 'Reservasi tidak dapat dibatalkan.',
         ),
     ),
 

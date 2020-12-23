@@ -4,6 +4,7 @@ namespace Orbit\Controller\API\v1\BrandProduct\Repository;
 
 use BrandProductReservation;
 use BrandProductReservationDetail;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Orbit\Controller\API\v1\Reservation\ReservationInterface;
 
@@ -31,21 +32,42 @@ class ReservationRepository implements ReservationInterface
         $reservation->selling_price = $item->selling_price;
         $reservation->quantity = $reservationData->quantity;
         $reservation->user_id = $reservationData->user()->user_id;
-        $reservation->status = BrandProductReservation::STATUS_NEW;
+        $reservation->expired_at = Carbon::now()->addHours(
+            $item->brand_product->max_expiration_time
+        )->format('Y-m-d H:i:s');
+        $reservation->status = BrandProductReservation::STATUS_PENDING;
         $reservation->save();
 
-        // foreach($item->variant_options as $variantOptions)  {
+        foreach($item->variant_options as $variantOption)  {
 
-        // }
+            if ($variantOption->option_type === 'merchant') {
+                continue;
+            }
 
-        // $reservationDetails = new BrandProductReservationDetail;
-        // $reservationDetails->brand_product_reservation_id = $reservation->brand_product_reservation_id;
-        // $reservationDetails->save();
+            $reservationDetails = new BrandProductReservationDetail;
+            $reservationDetails->option_type = $variantOption->option_type;
+            $reservationDetails->value = $variantOption->option->value;
+            $reservationDetails->variant_id =
+                $variantOption->option->variant_id;
+            $reservationDetails->variant_name =
+                $variantOption->option->variant->variant_name;
+            $reservationDetails->save();
+
+            $reservation->details()->save($reservationDetails);
+        }
+
+        // insert store info
+        $reservationDetails = new BrandProductReservationDetail;
+        $reservationDetails->option_type = 'merchant';
+        $reservationDetails->value = $reservationData->store_id;
+        $reservationDetails->save();
+
+        $reservation->details()->save($reservationDetails);
 
         DB::commit();
 
         // fire event?
-        // Event::fire();
+        // Event::fire('orbit.reservation.made', [$reservation]);
 
         return $reservation;
     }
@@ -60,21 +82,42 @@ class ReservationRepository implements ReservationInterface
         return $reservation;
     }
 
-    public function cancel($reservation)
+    public function cancel($reservation, $canceledByUserId = '')
     {
-        DB::transaction(function() use (&$reservation) {
+        DB::transaction(function() use (&$reservation, $canceledByUserId) {
             $reservation->status = BrandProductReservation::STATUS_CANCELED;
+            $reservation->cancelled_by = $canceledByUserId ?:
+                App::make('currentUser')->user_id;
             $reservation->save();
         });
 
         return $reservation;
     }
 
-    public function decline($reservation, $reason = 'Out of Stock')
-    {
-        DB::transaction(function() use ($reservation, $reason) {
+    public function decline(
+        $reservation,
+        $reason = 'Out of Stock',
+        $declinedByUserId = ''
+    ) {
+        DB::transaction(function() use (
+            $reservation,
+            $reason,
+            $declinedByUserId
+        ) {
             $reservation->status = BrandProductReservation::STATUS_DECLINED;
-            $reservation->
+            // $reservation->decline_reason = $reason;
+            // $reservation->declined_by = $declinedByUserId ?:
+            //     App::make('currentUser')->user_id;
+            $reservation->save();
+        });
+
+        return $reservation;
+    }
+
+    public function expire($reservation)
+    {
+        DB::transaction(function() use (&$reservation) {
+            $reservation->status = BrandProductReservation::STATUS_EXPIRED;
             $reservation->save();
         });
 
