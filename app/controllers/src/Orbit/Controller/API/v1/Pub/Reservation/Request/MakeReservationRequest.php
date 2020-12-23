@@ -25,7 +25,6 @@ class MakeReservationRequest extends ValidateRequest
                 $rules += [
                     'object_id' => 'required|orbit.brand_product_variant.exists|orbit.brand_product.exists',
                     'quantity' => 'required|numeric|orbit.brand_product_variant.quantity_available',
-                    'store_id' => 'required', // orbit.brand_product_variant.store_available
                 ];
                 break;
 

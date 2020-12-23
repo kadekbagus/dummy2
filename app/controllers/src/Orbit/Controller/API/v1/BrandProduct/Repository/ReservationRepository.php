@@ -40,29 +40,22 @@ class ReservationRepository implements ReservationInterface
 
         foreach($item->variant_options as $variantOption)  {
 
-            if ($variantOption->option_type === 'merchant') {
-                continue;
-            }
-
             $reservationDetails = new BrandProductReservationDetail;
             $reservationDetails->option_type = $variantOption->option_type;
-            $reservationDetails->value = $variantOption->option->value;
-            $reservationDetails->variant_id =
-                $variantOption->option->variant_id;
-            $reservationDetails->variant_name =
-                $variantOption->option->variant->variant_name;
-            $reservationDetails->save();
+
+            if ($variantOption->option_type === 'merchant') {
+                $reservationDetails->value = $variantOption->option_id;
+            }
+            else {
+                $reservationDetails->value = $variantOption->option->value;
+                $reservationDetails->variant_id =
+                    $variantOption->option->variant_id;
+                $reservationDetails->variant_name =
+                    $variantOption->option->variant->variant_name;
+            }
 
             $reservation->details()->save($reservationDetails);
         }
-
-        // insert store info
-        $reservationDetails = new BrandProductReservationDetail;
-        $reservationDetails->option_type = 'merchant';
-        $reservationDetails->value = $reservationData->store_id;
-        $reservationDetails->save();
-
-        $reservation->details()->save($reservationDetails);
 
         DB::commit();
 
