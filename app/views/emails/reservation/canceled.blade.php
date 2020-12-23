@@ -41,7 +41,7 @@
                     <tr>
                       <td width="300" class="mobile" align="left" valign="top">
                         <h3 class="greeting-username">
-                          {{ trans('email-reservation.canceled.greeting', ['customerName' => $customerName], '', $lang) }}
+                          {{ trans('email-reservation.canceled.greeting', ['recipientName' => $recipientName], '', $lang) }}
                         </h3>
                         <p class="greeting-text">
                           {{ trans('email-reservation.canceled.body.line-1', [], '', $lang) }}

@@ -41,8 +41,13 @@ abstract class ReservationNotification extends Notification implements
 
     public function getRecipientEmail()
     {
-        return $this->reservation->brand_product_variant
-            ->brand_product->creator->email;
+        return [
+            [
+                'name' => 'Admin',
+                'email' => $this->reservation->brand_product_variant
+                    ->brand_product->creator->email,
+            ],
+        ];
     }
 
     protected function getCustomerData()
@@ -96,15 +101,20 @@ abstract class ReservationNotification extends Notification implements
 
             $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-            Mail::send(
-                $this->getEmailTemplates(),
-                $data,
-                function($mail) use ($data, $emailConfig) {
-                    $mail->from($emailConfig['email'], $emailConfig['name']);
-                    $mail->to($data['recipientEmail']);
-                    $mail->subject($data['emailSubject']);
-                }
-            );
+            foreach($this->getRecipientEmail() as $recipient) {
+                $data['recipientEmail'] = $recipient['email'];
+                $data['recipientName'] = $recipient['name'];
+
+                Mail::send(
+                    $this->getEmailTemplates(),
+                    $data,
+                    function($mail) use ($data, $emailConfig) {
+                        $mail->from($emailConfig['email'], $emailConfig['name']);
+                        $mail->to($data['recipientEmail']);
+                        $mail->subject($data['emailSubject']);
+                    }
+                );
+            }
 
         } catch (Exception $e) {
             Log::debug('ReservationMade: Exception line: '

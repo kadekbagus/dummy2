@@ -52,7 +52,7 @@ return [
     'accepted' => [
         'subject' => 'Reservation Accepted',
         'title' => 'Reservation Accepted',
-        'greeting' => 'Hello :customerName,',
+        'greeting' => 'Hello :recipientName,',
         'body' => [
             'line-1' => 'Your reservation has been accepted by :storeName at :mallName.
                 You can make payments by showing the transaction id to the staff at the specified store location.',
@@ -63,7 +63,7 @@ return [
     'declined' => [
         'subject' => 'Reservation Declined',
         'title' => 'Reservation Declined',
-        'greeting' => 'Hello :customerName,',
+        'greeting' => 'Hello :recipientName,',
         'body' => [
             'line-1' => 'We are very sorry to inform you that your reservation was declined by :storeName at :mallName.',
         ],
@@ -72,7 +72,7 @@ return [
     'expired' => [
         'subject' => 'Reservation Expired',
         'title' => 'Reservation Expired',
-        'greeting' => 'Hello :customerName,',
+        'greeting' => 'Hello :recipientName,',
         'body' => [
             'line-1' => 'Unfortunately, your product reservation was expired on :expirationTime. Below is your reservation details.',
         ],

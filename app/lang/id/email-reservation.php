@@ -51,7 +51,7 @@ return [
     'accepted' => [
         'subject' => 'Reservasi Diterima!',
         'title' => 'Reservasi Diterima',
-        'greeting' => 'Halo :customerName,',
+        'greeting' => 'Halo :recipientName,',
         'body' => [
             'line-1' => 'Reservasi anda telah diterima oleh :storeName di :mallName.
                 Silakan melakukan pembayaran dengan menunjukkan Kode Reservasi pada staff di Toko yang telah ditentukan.',
@@ -62,7 +62,7 @@ return [
     'declined' => [
         'subject' => 'Reservasi Ditolak',
         'title' => 'Reservasi Ditolak',
-        'greeting' => 'Halo :customerName,',
+        'greeting' => 'Halo :recipientName,',
         'body' => [
             'line-1' => 'Kami mohon maaf karena reservasi Anda telah ditolak oleh :storeName di :mallName.',
         ],
@@ -71,7 +71,7 @@ return [
     'expired' => [
         'subject' => 'Reservasi Kadaluarsa',
         'title' => 'Reservasi Kadaluarsa',
-        'greeting' => 'Halo :customerName,',
+        'greeting' => 'Halo :recipientName,',
         'body' => [
             'line-1' => 'Sayang sekali reservasi produk Anda telah kadaluarsa pada :expirationTime. Berikut ini detil reservasi Anda.',
         ],
