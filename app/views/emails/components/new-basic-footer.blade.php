@@ -5,13 +5,13 @@
                   <tr>
                     <td valign="top" width="400" class="mobile full-width">
                       <address class="footer-address">
-                        <span>Copyright &copy; {{ date('Y') }} Dominopos</span>
+                        <span>Copyright &copy; {{ date('Y') }} GoToMalls</span>
                         <br>
-                        <strong>Gotomalls Bali Development Center</strong>
+                        <strong>PT. Digital Prima Sejahtera</strong>
                         <br>
-                        <span>Jl. Gunung Salak Utara, No. 31A</span>
+                        <span>Tower E - Lantai 2, 18 Parc Place, SCBD</span>
                         <br>
-                        <span>Padangsambian Kelod, Denpasar Barat 80117</span>
+                        <span>Jalan Jend. Sudirman Kav. 52-53, Senayan, Jakarta Selatan 12190</span>
                         <br>
                         <a href="tel:{{ $cs['phone'] }}" class="footer-telp">Telp. {{ $cs['phone'] }}</a>
                       </address>

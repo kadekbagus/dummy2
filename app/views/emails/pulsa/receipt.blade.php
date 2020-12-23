@@ -1,189 +1,157 @@
-<!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
-  <head>
-    <meta charset="utf-8"> <!-- utf-8 works for most cases -->
-    <meta name="viewport" content="width=device-width"> <!-- Forcing initial-scale shouldn't be necessary -->
-    <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Use the latest (edge) version of IE rendering engine -->
-    <title>Invoice from Gotomalls.com</title>
-    <!-- Web Font / @font-face : BEGIN -->
-    <!-- NOTE: If web fonts are not required, lines 10 - 27 can be safely removed. -->
-    <!-- All other clients get the webfont reference; some will render the font and others will silently fail to the fallbacks. More on that here: http://stylecampaign.com/blog/2015/02/webfont-support-in-email/ -->
-    <!--[if !mso]><!-->
-    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
-        <!--<![endif]-->
-      <!-- Web Font / @font-face : END -->
-    <style type="text/css">
-        /* What it does: Stops Outlook from adding extra spacing to tables. */
-        body, th, td, p, a {
-            font-family: 'Roboto', 'Arial', sans-serif;
-        }
+@extends('emails.layouts.default')
 
-        p {
-            margin: 0;
-        }
+@section('title')
+Receipt from Gotomalls.com
+@stop
 
-        body {
-            text-align: left;
-        }
+@section('content')
+  <?php
+    $langs = ['id', 'en'];
+    $originalProductType = isset($productType) ? $productType : 'default';
+  ?>
 
-        table.email-container {
+  @foreach($langs as $lang)
+    <?php $productType = trans("email-payment.product_type.{$originalProductType}", [], '', $lang); ?>
+    <tr>
+      <td align="center" valign="top">
 
-            max-width: 640px;
-        }
-
-        table {
-            line-height: 1.7em;
-            font-size: 14px;
-            color: #222;
-            width: 100%;
-            border-spacing: 0 !important;
-            border-collapse: collapse !important;
-            table-layout: fixed !important;
-            margin: 0 auto !important;
-        }
-
-        table.no-border  {
-            border: 0;
-        }
-
-        /* What it does: Stops Outlook from adding extra spacing to tables. */
-        table,
-        td {
-            mso-table-lspace: 0pt !important;
-            mso-table-rspace: 0pt !important;
-        }
-
-        /* What it does: Uses a better rendering method when resizing images in IE. */
-        img {
-            -ms-interpolation-mode:bicubic;
-        }
-
-        .text-red { color: #f43d3c; }
-
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
-        .text-left { text-align: left; }
-
-        thead tr.invoice-header th {
-            padding-bottom: 30px;
-        }
-
-        img.logo {
-            width: 80%;
-        }
-
-        .invoice-title {
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .invoice-info {
-            padding-top: 20px;
-            padding-bottom: 20px;
-        }
-
-        .invoice-body {
-            padding-top: 10px;
-            padding-bottom: 80px;
-        }
-
-        table.customer {
-            margin-top: 30px;
-        }
-
-        table.customer tr th {
-            padding-left: 15px;
-        }
-
-        table.customer tr td {
-            padding: 15px;
-        }
-
-        table.customer tr th.first,
-        table.customer tr td.first {
-            padding-left: 0;
-        }
-
-        table.transaction {
-            margin-top: 30px;
-        }
-
-        table.transaction tr th {
-            padding: 8px;
-        }
-
-        table.transaction tr td {
-            padding: 15px 8px;
-        }
-
-        table.transaction tr th.first,
-        table.transaction tr td.first {
-            padding-left: 0;
-        }
-
-        tr.transaction-item td {
-            border-bottom: 1px solid #999;
-            vertical-align: top;
-        }
-        tr.transaction-item:last-child td {
-            border-bottom: 0;
-        }
-
-        thead.bordered tr th {
-            border-top: 1px solid #999;
-            border-bottom: 1px solid #999;
-        }
-
-        tfoot.transaction-footer tr td {
-            border-top: 1px solid #999;
-        }
-
-        .btn-redeem {
-            border-radius: 5px;
-            background-color: #f43d3c;
-            color: #fff;
-            font-weight: bold;
-            font-size: 16px;
-            display: inline-block;
-            padding: 10px 20px;
-            text-decoration: none;
-        }
-    </style>
-  </head>
-  <body style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;">
-      <table border="0" cellpadding="0" cellspacing="0" class="no-border email-container" style="line-height:1.7em;font-size:14px;color:#222;width:100%;max-width:640px;border:0;border-spacing:0 !important;border-collapse:collapse !important;table-layout:fixed !important;margin:0 auto !important;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
-        <thead>
-          <tr class="invoice-header">
-            <th width="50%" class="text-left" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-bottom:30px;">
-              <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/themes/default/images/logo-en.png?t=1523326836" alt="Logo" class="logo" style="-ms-interpolation-mode:bicubic;width:80%;">
-            </th>
-            <th class="text-right" style="font-family:'Roboto', 'Arial', sans-serif;text-align:right;padding-bottom:30px;">
-              <span class="text-red invoice-title" style="color:#f43d3c;font-size:28px;font-weight:bold;">{{{ trans('email-receipt.header.invoice') }}}</span>
-            </th>
-          </tr>
-        </thead>
-
-        <tbody>
-          @include('emails.pulsa.receipt-id')
-
+        <table width="640" cellpadding="0" cellspacing="0" border="0" class="wrapper" bgcolor="#FFFFFF" style="background-color: transparent;">
           <tr>
-            <td colspan="2">
-              <hr>
+            <td align="center" valign="middle" style="box-shadow: 0 0 20px #e0e0e0; border-radius:5px;background-color: #FFF;">
+
+              <table width="640" cellpadding="0" cellspacing="0" border="0" class="container mobile-full-width">
+                <tr>
+                  <td align="center" valign="middle" height="184" class="greeting-title-container" style="border-radius: 5px 5px 0 0;">
+                      <h1 class="greeting-title">
+                        {{ trans('email-receipt.header.invoice', [], '', $lang) }}
+                      </h1>
+                  </td>
+                </tr>
+              </table>
+
+              <table width="600" cellpadding="0" cellspacing="0" border="0" class="container">
+                <tr>
+                  <td width="600" align="right" valign="top" class="transaction-date"><strong>{{{ $transactionDateTime }}}</strong></td>
+                </tr>
+                <tr>
+                  <td height="20" align="center">&nbsp;</td>
+                </tr>
+
+                <tr>
+                  <td width="600" class="mobile" align="left" valign="top">
+                    <p class="greeting-text">
+                      {{ trans(
+                        'email-receipt.body.greeting',
+                        [
+                            'customerName' => $customerName,
+                            'itemName' => $transaction['items'][0]['shortName']
+                        ], '', $lang) }}
+                    </p>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td height="20" align="center">&nbsp;</td>
+                </tr>
+
+                <tr>
+                  <td width="600" class="mobile center" valign="middle" style="text-align: center;">
+                    <table width="100%">
+                      <tr>
+                        <td colspan="2" class="greeting-text" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:10px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
+                          <table class="no-border customer" width="100%" style="line-height:1.7em;font-size:14px;color:#222;width:100%;border:0;margin-top:30px;border-spacing:0 !important;border-collapse:collapse !important;table-layout:fixed !important;margin:0 auto !important;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
+                            <tbody>
+                              <tr>
+                                <td class="mobile inline-mobile customer-info-block">
+                                  <span class="customer-info-label">{{{ trans('email-receipt.table_customer_info.header.trx_id', [], '', $lang) }}}</span>
+                                  <span class="customer-info-value">{{{ $transaction['id'] }}}</span>
+                                </td>
+                                <td class="mobile inline-mobile customer-info-block">
+                                  <span class="customer-info-label">{{{ trans('email-receipt.table_customer_info.header.customer', [], '', $lang) }}}</span>
+                                  <span class="customer-info-value">{{{ $customerName }}}</span>
+                                </td>
+                                <td class="mobile inline-mobile customer-info-block">
+                                  <span class="customer-info-label">{{{ trans('email-receipt.table_customer_info.header.email', [], '', $lang) }}}</span>
+                                  <span class="customer-info-value">{{{ $customerEmail }}}</span>
+                                </td>
+                                <td class="mobile inline-mobile customer-info-block">
+                                  <span class="customer-info-label">{{{ trans('email-receipt.table_customer_info.header.phone', [], '', $lang) }}}</span>
+                                  <span class="customer-info-value">{{{ $customerPhone }}}</span>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                          <br>
+                          <br>
+                          <table class="no-border transaction" width="100%">
+                            <thead class="bordered">
+                              <tr>
+                                  <th class="transaction-item-name">{{{ trans('email-receipt.table_transaction.header.item', [], '', $lang) }}}</th>
+                                  <th class="transaction-qty">{{{ trans('email-receipt.table_transaction.header.quantity', [], '', $lang) }}}</th>
+                                  <th class="transaction-amount">{{{ trans('email-receipt.table_transaction.header.price', [], '', $lang) }}}</th>
+                                  <th class="transaction-subtotal">{{{ trans('email-receipt.table_transaction.header.subtotal', [], '', $lang) }}}</th>
+                              </tr>
+                            </thead>
+                            <tbody class="transaction-items">
+                              @foreach($transaction['items'] as $item)
+                              <tr class="transaction-item">
+                                  <td class="transaction-item item-name">{{ $item['name'] }}</td>
+                                  <td class="transaction-item" style="text-align: center;">{{{ $item['quantity'] }}}</td>
+                                  <td class="transaction-item">{{{ $item['price'] }}}</td>
+                                  <td class="transaction-item">{{{ $item['total'] }}}</td>
+                              </tr>
+                              @endforeach
+                              @foreach($transaction['discounts'] as $item)
+                              <tr class="transaction-item">
+                                  <td class="transaction-item">{{{ trans('label.discount', [], '', $lang) }}} {{{ $item['name'] }}}</td>
+                                  <td class="transaction-item" style="text-align: center;">{{{ $item['quantity'] }}}</td>
+                                  <td class="transaction-item">{{{ $item['price'] }}}</td>
+                                  <td class="transaction-item">{{{ $item['total'] }}}</td>
+                              </tr>
+                              @endforeach
+                            </tbody>
+                            <tfoot class="transaction-footer">
+                              <tr>
+                                  <td colspan="2" class="transaction-item transaction-total"></td>
+                                  <td class="transaction-item transaction-total"><strong>{{{ trans('email-receipt.table_transaction.footer.total', [], '', $lang) }}}</strong></td>
+                                  <td class="transaction-item transaction-total">{{{ $transaction['total'] }}}</td>
+                              </tr>
+                            </tfoot>
+                          </table>
+
+                          <br>
+                          <br>
+                          <p class="help-text">
+                              {{ trans('email-receipt.body.view_my_purchases', [], '', $lang) }}
+                          </p>
+                          <br>
+                          <p class="text-center" style="font-family:'Roboto', 'Arial', sans-serif;margin:0;text-align:center;">
+                              <a href="{{{ $myWalletUrl }}}" class="btn btn-block">{{{ trans('email-receipt.buttons.my_purchases', [], '', $lang) }}}</a>
+                          </p>
+                          <br>
+                          <br>
+                          <p class="help-text">
+                              {{ trans('email-receipt.body.help', ['csPhone' => $cs['phone'], 'csEmail' => $cs['email']], '', $lang) }}
+                              <br>
+                              <br>
+                              {{{ trans('email-receipt.body.thank_you', [], '', $lang) }}}
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td height="20" align="center">&nbsp;</td>
+                </tr>
+              </table>
             </td>
           </tr>
-
-          @include('emails.pulsa.receipt-en')
-        </tbody>
-
-        <tfoot>
-          <tr>
-            <td colspan="2" class="text-left footer" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
-              <small>
-                @include('emails.components.basic-footer', $cs)
-              </small>
-            </td>
-          </tr>
-        </tfoot>
-    </table>
-  </body>
-</html>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td height="30" align="center" class="separator">&nbsp;</td>
+    </tr>
+  @endforeach
+@stop
