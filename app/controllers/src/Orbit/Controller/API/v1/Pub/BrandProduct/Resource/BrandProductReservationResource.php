@@ -50,6 +50,6 @@ class BrandProductReservationResource extends Resource
 
     private function getVariant()
     {
-        return $this->resource->variants->implode('value', ',');
+        return $this->resource->variants->implode('value', ', ');
     }
 }
