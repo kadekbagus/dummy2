@@ -4,6 +4,7 @@ namespace Orbit\Notifications\Traits;
 
 use Carbon\Carbon;
 use BrandProductReservation;
+use Illuminate\Support\Facades\Config;
 
 trait HasReservationTrait
 {
@@ -34,8 +35,8 @@ trait HasReservationTrait
             'product' => [
                 'name' => $this->reservation->product_name,
                 'variant' => $this->getVariant(),
-                'sku' => $this->reservation->brand_product_variant->sku,
-                'barcode' => $this->reservation->brand_product_variant->product_code ?: '-',
+                'sku' => $this->reservation->sku,
+                'barcode' => $this->reservation->product_code ?: '-',
             ],
         ];
 
@@ -62,7 +63,7 @@ trait HasReservationTrait
     protected function getTotalPayment()
     {
         $total = $this->reservation->quantity
-            * $this->reservation->brand_product_variant->selling_price;
+            * $this->reservation->selling_price;
 
         return 'Rp ' . number_format($total, 2, '.', ',');
     }
@@ -74,11 +75,17 @@ trait HasReservationTrait
 
     protected function getAcceptUrl()
     {
-        return '#';
+        return sprintf(
+            Config::get('orbit.reservation.accept_url', ''),
+            $this->reservation->brand_product_reservation_id
+        );
     }
 
     protected function getDeclineUrl()
     {
-        return '#';
+        return sprintf(
+            Config::get('orbit.reservation.decline_url', ''),
+            $this->reservation->brand_product_reservation_id
+        );
     }
 }

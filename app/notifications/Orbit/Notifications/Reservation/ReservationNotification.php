@@ -23,7 +23,7 @@ abstract class ReservationNotification extends Notification implements
 
     protected $signature = 'reservation-notification';
 
-    // protected $shouldQueue = true;
+    protected $shouldQueue = true;
 
     public function __construct($reservation)
     {
