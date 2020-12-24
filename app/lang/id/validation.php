@@ -542,6 +542,7 @@ return array(
             'quantity_available' => 'Jumlah yang diinginkan tidak tersedia.',
             'reservation_exists' => 'Reservasi tidak ditemukan.',
             'can_cancel_rsvp' => 'Reservasi tidak dapat dibatalkan.',
+            'rsvp_match_user' => 'Anda tidak berhak melihat/memproses reservasi tersebut.',
         ),
     ),
 

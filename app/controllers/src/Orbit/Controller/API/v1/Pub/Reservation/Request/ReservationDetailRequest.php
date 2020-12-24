@@ -10,7 +10,7 @@ use Orbit\Helper\Request\ValidateRequest;
  *
  * @author Budi <budi@gotomalls.com>
  */
-class CancelReservationRequest extends ValidateRequest
+class ReservationDetailRequest extends ValidateRequest
 {
     protected $roles = ['consumer'];
 
@@ -26,7 +26,6 @@ class CancelReservationRequest extends ValidateRequest
                     'reservation_id' => join('|', [
                         'required',
                         'orbit.brand_product_variant.rsvp_exists',
-                        'orbit.brand_product_variant.can_cancel_rsvp',
                         'orbit.brand_product_variant.rsvp_match_user',
                     ]),
                 ];
@@ -54,11 +53,6 @@ class CancelReservationRequest extends ValidateRequest
         Validator::extend(
             'orbit.brand_product_variant.rsvp_match_user',
             'Orbit\Controller\API\v1\BrandProduct\Validator\BrandProductValidator@matchReservationUser'
-        );
-
-        Validator::extend(
-            'orbit.brand_product_variant.can_cancel_rsvp',
-            'Orbit\Controller\API\v1\BrandProduct\Validator\BrandProductValidator@reservationCanBeCanceled'
         );
     }
 }

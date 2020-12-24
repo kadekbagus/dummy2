@@ -65,7 +65,9 @@ class BrandProductValidator
     public function reservationExists($attrs, $value, $params)
     {
         $reservation = BrandProductReservation::with([
-            'brand_product_variant.brand_product',
+            'store.store.mall',
+            'users',
+            'variants',
         ])
         ->where('brand_product_reservation_id', $value)
         ->first();
@@ -87,6 +89,16 @@ class BrandProductValidator
 
         return App::make('currentUser')->user_id === $reservation->user_id
             && $reservation->status === BrandProductReservation::STATUS_PENDING;
+    }
+
+    public function matchReservationUser($attrs, $value, $params)
+    {
+        if (! App::bound('reservation')) {
+            return false;
+        }
+
+        return App::make('reservation')->user_id
+            === App::make('currentUser')->user_id;
     }
 
     private function getVariant($variantId = '')

@@ -77,13 +77,13 @@ class ReservationRepository implements ReservationInterface
         return $reservation;
     }
 
-    public function cancel($reservation, $canceledByUserId = '')
+    public function cancel($reservation)
     {
-        DB::transaction(function() use (&$reservation, $canceledByUserId) {
+        DB::transaction(function() use (&$reservation) {
             $reservation->status = BrandProductReservation::STATUS_CANCELED;
-            $reservation->cancelled_by = $canceledByUserId ?:
-                App::make('currentUser')->user_id;
             $reservation->save();
+
+            Event::fire('orbit.reservation.canceled', [$reservation]);
         });
 
         return $reservation;
