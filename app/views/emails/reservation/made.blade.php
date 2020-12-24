@@ -186,7 +186,7 @@
                       <td height="30" align="center" class="separator">&nbsp;</td>
                     </tr>
                     <tr>
-                      <td width="600" class="mobile" align="center" valign="middle">
+                      <td width="600" class="mobile reservation-actions" align="center" valign="middle">
                         <a href="{{{ $declineUrl }}}" class="btn btn-light mx-4">
                           {{{ trans('email-reservation.labels.btn_decline', [], '', $lang) }}}
                         </a>

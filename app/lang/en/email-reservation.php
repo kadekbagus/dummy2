@@ -32,7 +32,7 @@ return [
     'made' => [
         'subject' => 'New Product Reservation!',
         'title' => 'New Reservation',
-        'greeting' => 'Hello Admin,',
+        'greeting' => 'Hello :recipientName,',
         'body' => [
             'line-1' => 'New reservation has been created.
                 Please make sure the product is available and in accordance with the reservation.',
@@ -43,7 +43,7 @@ return [
     'canceled' => [
         'subject' => 'Product Reservation Canceled',
         'title' => 'Reservation Canceled',
-        'greeting' => 'Hello Admin,',
+        'greeting' => 'Hello :recipientName,',
         'body' => [
             'line-1' => 'Customer just canceled following reservation.',
         ],

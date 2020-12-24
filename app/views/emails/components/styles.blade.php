@@ -448,6 +448,12 @@
       border-top: 0;
     }
 
+    .reservation-actions .btn {
+        box-shadow: none !important;
+        display: inline-block;
+        min-width: 20%;
+    }
+
     /* MEDIA QUERIES */
     @media all and (max-width:639px) {
       .wrapper{ width:95% !important; padding: 0 !important; }
@@ -679,6 +685,16 @@
 
       .reservation-table-item-value {
         border-left: 1px solid #e3e3e3;
+      }
+
+      .reservation-actions {
+        display: flex !important;
+        flex-direction: column-reverse;
+      }
+
+      .reservation-actions .btn {
+        display: block;
+        margin-bottom: 10px;
       }
     }
   </style>
