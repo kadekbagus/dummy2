@@ -21,9 +21,12 @@ use ProductLinkToObject;
 use ProductVideo;
 use ProductTag;
 use ProductTagObject;
+use App;
 
 class ProductNewAPIController extends ControllerAPI
 {
+    protected $calledFrom = '';
+
     protected $productRoles = ['product manager'];
 
     /**
@@ -38,25 +41,30 @@ class ProductNewAPIController extends ControllerAPI
 
             Event::fire('orbit.newproduct.postnewproduct.before.auth', array($this));
 
-            // Require authentication
-            $this->checkAuth();
+            if (! $this->callingFrom('massupload')) {
 
-            Event::fire('orbit.newproduct.postnewproduct.after.auth', array($this));
+                // Require authentication
+                $this->checkAuth();
 
-            // Try to check access control list, does this user allowed to
-            // perform this action
-            $user = $this->api->user;
-            Event::fire('orbit.newproduct.postnewproduct.before.authz', array($this, $user));
+                Event::fire('orbit.newproduct.postnewproduct.after.auth', array($this));
 
-            // @Todo: Use ACL authentication instead
-            $role = $user->role;
-            $validRoles = $this->productRoles;
-            if (! in_array(strtolower($role->role_name), $validRoles)) {
-                $message = 'Your role are not allowed to access this resource.';
-                ACL::throwAccessForbidden($message);
+                // Try to check access control list, does this user allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.newproduct.postnewproduct.before.authz', array($this, $user));
+
+                // @Todo: Use ACL authentication instead
+                $role = $user->role;
+                $validRoles = $this->productRoles;
+                if (! in_array(strtolower($role->role_name), $validRoles)) {
+                    $message = 'Your role are not allowed to access this resource.';
+                    ACL::throwAccessForbidden($message);
+                }
+
+                Event::fire('orbit.newproduct.postnewproduct.after.authz', array($this, $user));
+            } else {
+                $user = App::make('orbit.product.user');
             }
-
-            Event::fire('orbit.newproduct.postnewproduct.after.authz', array($this, $user));
 
             $productHelper = ProductHelper::create();
             $productHelper->productCustomValidator();
@@ -69,7 +77,7 @@ class ProductNewAPIController extends ControllerAPI
             $marketplaces = OrbitInput::post('marketplaces', []);
             $brandIds = OrbitInput::post('brand_ids', []);
             $youtubeIds = OrbitInput::post('youtube_ids', []);
-            $images = \Input::file('images');
+            $images = $_FILES['images'];
             $productTags = OrbitInput::post('product_tags');
             $productTags = (array) $productTags;
 
@@ -91,7 +99,7 @@ class ProductNewAPIController extends ControllerAPI
                     'name'              => 'required',
                     'status'            => 'in:active,inactive',
                     'country_id'        => 'required',
-                    'images'            => 'required|array',
+                    'images'            => 'required',
                     'short_description' => 'required',
                     'categories'        => 'required|array',
                     'brand_ids'         => 'array',
@@ -196,7 +204,7 @@ class ProductNewAPIController extends ControllerAPI
                 $productHelper->validateAndSaveMarketplaces($newProduct, $marketplace_json_string, $scenario = 'create');
             });
 
-            Event::fire('orbit.newproduct.postnewproduct.after.save', array($this, $newProduct));
+            Event::fire('orbit.newproduct.postnewproduct.after.save', array($user, $newProduct));
 
             $this->response->data = $newProduct;
 
@@ -258,4 +266,21 @@ class ProductNewAPIController extends ControllerAPI
         return $this->render($httpCode);
     }
 
+    public function callingFrom($list)
+    {
+        if (! is_array($list))
+        {
+            $list = explode(',', (string)$list);
+            $list = array_map('trim', $list);
+        }
+
+        return in_array($this->calledFrom, $list);
+    }
+
+    public function setCalledFrom($from)
+    {
+        $this->calledFrom = $from;
+
+        return $this;
+    }
 }

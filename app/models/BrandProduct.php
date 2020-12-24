@@ -79,4 +79,9 @@ class BrandProduct extends Eloquent
     {
     	return $this->media()->where('media_name_id', 'brand_product_photos');
     }
+
+    public function creator()
+    {
+        return $this->belongsTo(BppUser::class, 'created_by', 'bpp_user_id');
+    }
 }

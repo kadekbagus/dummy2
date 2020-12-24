@@ -5,33 +5,33 @@
  *
  * @author Budi <budi@dominopos.com>
  */
-interface EmailNotificationInterface 
+interface EmailNotificationInterface
 {
     /**
      * Get the recipient email address.
-     * 
-     * @return string
+     *
+     * @return array|string
      */
     public function getRecipientEmail();
 
     /**
      * Get the email templates that will be used.
-     * 
+     *
      * @return [type] [description]
      */
     public function getEmailTemplates();
 
     /**
      * Get the email data.
-     * 
+     *
      * @return array
      */
     public function getEmailData();
 
     /**
-     * We need $job and $data because this method 
+     * We need $job and $data because this method
      * will act as a custom Queue handler.
-     * 
+     *
      * @param  Illuminate\Queue\Job $job  [description]
      * @param  array $data [description]
      * @return void

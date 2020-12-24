@@ -63,3 +63,19 @@ Route::post(
         'uses' => $brandProductAuth . '@Product\ProductUpdateStatus_handle',
     ]
 );
+
+
+// Route for user list
+Route::get('/app/v1/brand-product/user/list', ['as' => 'brand-product-user-list', 'uses' => $brandProductAuth . '@User\BPPUserList_getSearchUser']);
+
+// Route for store list for user creation
+Route::get('/app/v1/brand-product/user/store/list', ['as' => 'brand-product-user-store-list', 'uses' => $brandProductAuth . '@User\BPPUserStoreList_getSearchStore']);
+
+// Route for create user
+Route::post('/app/v1/brand-product/user/new', ['as' => 'brand-product-user-new', 'uses' => $brandProductAuth . '@User\BPPUserNew_postNewUser']);
+
+// Route for update user
+Route::post('/app/v1/brand-product/user/update', ['as' => 'brand-product-user-update', 'uses' => $brandProductAuth . '@User\BPPUserUpdate_postUpdateUser']);
+
+// Route for user detail
+Route::get('/app/v1/brand-product/user/detail', ['as' => 'brand-product-user-detail', 'uses' => $brandProductAuth . '@User\BPPUserDetail_getDetail']);

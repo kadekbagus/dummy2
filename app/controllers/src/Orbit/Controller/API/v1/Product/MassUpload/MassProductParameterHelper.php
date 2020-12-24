@@ -4,6 +4,7 @@ namespace Orbit\Controller\API\v1\Product\MassUpload;
 use Marketplace;
 use Category;
 use Exception;
+use Config;
 
 
 /**
@@ -13,31 +14,34 @@ class MassProductParameterHelper
 {
     protected $marketplaceType = '';
 
+    protected $offerId = '';
+
     protected $file = null;
 
     protected $params = [];
 
-    public function __construct($marketplaceType, $file)
+    public function __construct($marketplaceType, $file, $offerId)
     {
         $this->marketplaceType = $marketplaceType;
         $this->file = $file;
+        $this->offerId = $offerId;
     }
 
-    public static function create($marketplaceType, $file)
+    public static function create($marketplaceType, $file, $offerId)
     {
-        return new static($marketplaceType, $file);
+        return new static($marketplaceType, $file, $offerId);
     }
 
-    public static function getParams()
+    public function getParams()
     {
         try {
 
             switch ($this->marketplaceType) {
                 case 'tokopedia':
-                    // $tokopedia = Marketplace::where('name', 'Tokopedia')->firstOrFail();
+                    $tokopedia = Marketplace::where('name', 'Tokopedia')->firstOrFail();
 
-                    $offerId = '100837';
-                    $trackingLinkId = '102758';
+                    $offerId = $this->offerId;
+                    $trackingLinkId = Config::get('orbit.partners_api.involve_asia.tracking_link_id', '');
 
                     // read file
                     $values = $this->readXML($this->file);
@@ -45,19 +49,33 @@ class MassProductParameterHelper
                     $param = [];
                     foreach ($values as $value) {
                         // build marketplace data string of object
-                        $websiteUrl = str_replace('OFFER-ID', $offerId, $values['tracking_url']);
+                        $websiteUrl = str_replace('OFFER-ID', $offerId, $value->tracking_url);
                         $websiteUrl = str_replace('TRACKING-LINK-ID', $trackingLinkId, $websiteUrl);
 
                         $marketplaceData = [
                             'id' => $tokopedia->marketplace_id,
                             'website_url' => $websiteUrl,
-                            'selling_price' => $values['price_after_discount'],
-                            'original_price' => $values['price']
+                            'selling_price' => (string) $value->price_after_discount,
+                            'original_price' => (string) $value->price === (string) $value->price_after_discount ? '' : (string) $value->price
                         ];
 
                         $marketplaceData = json_encode($marketplaceData);
-
-                        $image = file_get_contents($values['images/i/0']);
+                        $images = (array) $value->images->i;
+                        $uploadedFileData = [];
+                        if (! empty($images[0])) {
+                            $image = file_get_contents($images[0]);
+                            // put the image on tmp dir
+                            $imageFileName = 'upload-tokopedia-' . microtime() . '.jpg';
+                            $tmpDir = '/tmp/' . $imageFileName;
+                            file_put_contents($tmpDir, $image);
+                            $uploadedFileData = [
+                                'name' => $imageFileName,
+                                'type' => 'image/jpeg',
+                                'tmp_name' => $tmpDir,
+                                'error' => 0,
+                                'size' => filesize($tmpDir),
+                            ];
+                        }
 
                         $categories = [];
                         // for now map all products to 'Others' category
@@ -68,12 +86,12 @@ class MassProductParameterHelper
 
                         $categories[] = $otherCategory->category_id;
 
-                        $param['name'] = $values['name'];
+                        $param['name'] = (string) $value->name;
                         $param['short_description'] = '-';
                         $param['status'] = 'inactive';
                         $param['country_id'] = 101;
                         $param['marketplaces'] = $marketplaceData;
-                        $param['images'] = $image;
+                        $param['images'] = $uploadedFileData;
                         $param['categories'] = $categories;
 
                         $this->params[] = $param;
@@ -104,17 +122,10 @@ class MassProductParameterHelper
     private function readXML($xmlFile)
     {
         $params = [];
-        $xml = simplexml_load_string($xmlString);
-        foreach($xml->products->item as $item)
+        $xml = simplexml_load_file($xmlFile);
+        foreach($xml->i as $item)
         {
-           $param = array();
-
-           foreach($item as $key => $value)
-           {
-                $param[(string)$key] = $value;
-           }
-
-           $params[] = $param;
+           $params[] = $item;
         }
 
         return $params;
