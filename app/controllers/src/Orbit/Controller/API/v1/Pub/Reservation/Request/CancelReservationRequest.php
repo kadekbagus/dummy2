@@ -37,7 +37,6 @@ class CancelReservationRequest extends ValidateRequest
                 // break;
 
             default:
-                return $this->handleValidationFails();
                 break;
         }
 

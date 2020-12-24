@@ -36,7 +36,6 @@ class ReservationDetailRequest extends ValidateRequest
                 // break;
 
             default:
-                return $this->handleValidationFails();
                 break;
         }
 

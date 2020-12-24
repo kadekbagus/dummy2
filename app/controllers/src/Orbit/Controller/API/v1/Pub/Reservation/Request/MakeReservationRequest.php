@@ -33,7 +33,6 @@ class MakeReservationRequest extends ValidateRequest
                 // break;
 
             default:
-                return $this->handleValidationFails();
                 break;
         }
 
