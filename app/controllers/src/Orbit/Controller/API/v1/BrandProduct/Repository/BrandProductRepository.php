@@ -5,10 +5,9 @@ namespace Orbit\Controller\API\v1\BrandProduct\Repository;
 use App;
 use BaseMerchant;
 use BrandProduct;
+use BrandProductReservation;
 use DB;
 use Language;
-use Orbit\Controller\API\v1\BrandProduct\Product\DataBuilder\UpdateBrandProductBuilder;
-use Orbit\Controller\API\v1\BrandProduct\Repository\Handlers\HandleReservation;
 use Orbit\Controller\API\v1\BrandProduct\Repository\Handlers\HandleUpdate;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Helper\MediaQuery;
 use ProductLinkToObject;
@@ -25,7 +24,6 @@ use Category;
 class BrandProductRepository
 {
     use MediaQuery,
-        HandleReservation,
         HandleUpdate;
 
     protected $imagePrefix = 'brand_product_photos_';
@@ -66,6 +64,16 @@ class BrandProductRepository
                 'brand',
                 'videos',
                 'brand_product_variants.variant_options',
+                'brand_product_variants.reservations' => function($query) {
+                    $query->select(
+                        'brand_product_variant_id',
+                        'brand_product_reservation_id',
+                        'quantity'
+                    )->whereIn('status', [
+                        BrandProductReservation::STATUS_PENDING,
+                        BrandProductReservation::STATUS_ACCEPTED,
+                    ]);
+                },
                 'brand_product_main_photo',
                 'brand_product_photos',
             ])
