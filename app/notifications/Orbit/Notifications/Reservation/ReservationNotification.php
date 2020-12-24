@@ -25,7 +25,7 @@ abstract class ReservationNotification extends Notification implements
 
     protected $shouldQueue = true;
 
-    public function __construct($reservation)
+    public function __construct($reservation = null)
     {
         $this->reservation = $reservation;
     }
@@ -43,9 +43,8 @@ abstract class ReservationNotification extends Notification implements
     {
         return [
             [
-                'name' => 'Admin',
-                'email' => $this->reservation->brand_product_variant
-                    ->brand_product->creator->email,
+                'name' => $this->reservation->users->getFullName(),
+                'email' => $this->reservation->users->user_email,
             ],
         ];
     }
@@ -84,7 +83,6 @@ abstract class ReservationNotification extends Notification implements
                 [
                     'langs' => $this->getEnabledLanguages(),
                     'cs' => $this->getContactData(),
-                    'recipientEmail' => $this->getRecipientEmail(),
                     'emailSubject' => $this->getEmailSubject(),
                     'statusColor' => [
                         'pending' => 'orange',
