@@ -5,7 +5,7 @@
  *
  * @author Budi <budi@dominopos.com>
  */
-class NotificationMethodsNotSetException extends \Exception
+class NotificationMethodsEmptyException extends \Exception
 {
 
 }
