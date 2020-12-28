@@ -2,9 +2,9 @@
 
 namespace Orbit\Controller\API\v1\Pub\Reservation\Resource;
 
-use BrandProductReservation;
 use Orbit\Helper\Resource\Resource;
 use Orbit\Controller\API\v1\Pub\BrandProduct\Resource\BrandProductReservationResource;
+use ReflectionClass;
 
 /**
  * Brand Product reservation resource class.
@@ -13,11 +13,13 @@ use Orbit\Controller\API\v1\Pub\BrandProduct\Resource\BrandProductReservationRes
  */
 class ReservationResource extends Resource
 {
+    protected $resourceMap = [
+        'BrandProductReservation' => BrandProductReservationResource::class,
+    ];
+
     public function toArray()
     {
-        if ($this->resource instanceof BrandProductReservation) {
-            return (new BrandProductReservationResource($this->resource))
-                ->toArray();
-        }
+        $className = (new ReflectionClass($this->resource))->getShortName();
+        return (new $this->resourceMap[$className]($this->resource))->toArray();
     }
 }

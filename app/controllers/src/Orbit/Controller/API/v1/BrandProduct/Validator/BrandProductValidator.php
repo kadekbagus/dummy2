@@ -6,6 +6,7 @@ use App;
 use BrandProduct;
 use BrandProductVariant;
 use BrandProductReservation;
+use Orbit\Helper\Resource\MediaQuery;
 
 /**
  * Brand Product Validator.
@@ -14,6 +15,10 @@ use BrandProductReservation;
  */
 class BrandProductValidator
 {
+    use MediaQuery;
+
+    protected $imagePrefix = null;
+
     public function exists($attribute, $productId, $params, $validator)
     {
         $brandProduct = BrandProduct::where('brand_product_id', $productId)
@@ -64,10 +69,16 @@ class BrandProductValidator
 
     public function reservationExists($attrs, $value, $params)
     {
+        $this->setupImageUrlQuery();
+
         $reservation = BrandProductReservation::with([
             'store.store.mall',
             'users',
             'variants',
+            'brand_product_variant.brand_product' => function($query) {
+                $this->imagePrefix = 'brand_product_main_photo_';
+                $query->with($this->buildMediaQuery());
+            },
         ])
         ->where('brand_product_reservation_id', $value)
         ->first();
