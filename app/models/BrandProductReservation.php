@@ -9,6 +9,13 @@ class BrandProductReservation extends Eloquent
 
     protected $table = 'brand_product_reservations';
 
+    const STATUS_PENDING = 'pending';
+    const STATUS_ACCEPTED = 'accepted';
+    const STATUS_CANCELED = 'cancelled';
+    const STATUS_DECLINED = 'declined';
+    const STATUS_DONE = 'done';
+    const STATUS_EXPIRED = 'expired';
+
     public function users() {
         return $this->belongsTo('User', 'user_id', 'user_id');
     }
@@ -19,5 +26,22 @@ class BrandProductReservation extends Eloquent
 
     public function details() {
         return $this->hasMany('BrandProductReservationDetail', 'brand_product_reservation_id', 'brand_product_reservation_id');
+    }
+
+    public function brand_product_variant()
+    {
+        return $this->belongsTo(BrandProductVariant::class);
+    }
+
+    public function store()
+    {
+        return $this->hasOne(BrandProductReservationDetail::class)
+            ->where('option_type', 'merchant');
+    }
+
+    public function variants()
+    {
+        return $this->hasMany(BrandProductReservationDetail::class)
+            ->where('option_type', 'variant_option');
     }
 }

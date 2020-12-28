@@ -22,4 +22,14 @@ class BrandProductVariant extends Eloquent
         return $this->hasMany(BrandProductVariantOption::class)
             ->orderBy('brand_product_variant_options.option_type', 'desc');
     }
+
+    public function brand_product()
+    {
+        return $this->belongsTo(BrandProduct::class);
+    }
+
+    public function reservations()
+    {
+        return $this->hasMany(BrandProductReservation::class);
+    }
 }

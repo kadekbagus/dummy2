@@ -113,6 +113,42 @@
       text-align: center;
     }
 
+    .bold {
+      font-weight: bold;
+    }
+
+    .uppercase {
+      text-transform: uppercase;
+    }
+
+    .text-orange {
+      color: orange;
+    }
+
+    .text-green {
+      color: green;
+    }
+
+    .text-red {
+      color: #ef5350;
+    }
+
+    .text-gray {
+      color: gray;
+    }
+
+    .w-35 {
+      width: 35%;
+    }
+
+    .p-8 {
+      padding: 8px;
+    }
+
+    .block {
+      display: block;
+    }
+
     .coupon-img-container {
       margin-right: 5px;
       text-decoration: none;
@@ -392,6 +428,32 @@
       padding-bottom: 20px;
     }
 
+    .reservation-table-title {
+      padding-top: 8px;
+      padding-bottom:8px;
+      background-color: #eee;
+      border:1px solid #e3e3e3;
+      letter-spacing:4px;
+    }
+
+    .reservation-table-item-label {
+      border: 1px solid #e3e3e3;
+      border-right: 0;
+      border-top: 0;
+    }
+
+    .reservation-table-item-value {
+      border: 1px solid #e3e3e3;
+      border-left: 0;
+      border-top: 0;
+    }
+
+    .reservation-actions .btn {
+        box-shadow: none !important;
+        display: inline-block;
+        min-width: 20%;
+    }
+
     /* MEDIA QUERIES */
     @media all and (max-width:639px) {
       .wrapper{ width:95% !important; padding: 0 !important; }
@@ -615,6 +677,24 @@
         border-top: 1px solid #ddd;
         padding-top: 20px;
         padding-bottom: 20px;
+      }
+
+      .reservation-table-item-label {
+        border-right: 1px solid #e3e3e3;
+      }
+
+      .reservation-table-item-value {
+        border-left: 1px solid #e3e3e3;
+      }
+
+      .reservation-actions {
+        display: flex !important;
+        flex-direction: column-reverse;
+      }
+
+      .reservation-actions .btn {
+        display: block;
+        margin-bottom: 10px;
       }
     }
   </style>
