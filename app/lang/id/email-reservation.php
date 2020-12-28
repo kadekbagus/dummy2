@@ -32,7 +32,7 @@ return [
     'made' => [
         'subject' => 'Reservasi Produk!',
         'title' => 'Reservasi Baru',
-        'greeting' => 'Halo Admin,',
+        'greeting' => 'Halo :recipientName,',
         'body' => [
             'line-1' => 'Ada reservasi yang baru saja dibuat, mohon untuk memastikan ketersediaan produk terkait. Berikut ini adalah detil reservasi.',
             'line-2' => 'Mohon untuk segera melakukan tindak lanjut terhadap reservasi di atas.',
@@ -42,7 +42,7 @@ return [
     'canceled' => [
         'subject' => 'Reservasi Produk Dibatalkan',
         'title' => 'Reservasi Dibatalkan',
-        'greeting' => 'Halo Admin,',
+        'greeting' => 'Halo :recipientName,',
         'body' => [
             'line-1' => 'Pelanggan baru saja membatalkan reservasi berikut ini.',
         ],
