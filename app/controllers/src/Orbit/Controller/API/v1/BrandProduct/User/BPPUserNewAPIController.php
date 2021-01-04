@@ -64,7 +64,10 @@ class BPPUserNewAPIController extends ControllerAPI
                     'password'    => 'required',
                     'merchant_id' => 'required',
                     'status'      => 'in:inactive,active',
-                    )
+                ),
+                array(
+                    'merchant_id.required'  => 'The store name field is required'
+                )
             );
 
             // Begin database transaction
