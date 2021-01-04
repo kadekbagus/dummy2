@@ -15,7 +15,7 @@ class ReservationDeclinedNotification extends ReservationNotification
 
     protected $reason = '';
 
-    public function __construct($reservation, $reason = 'Out of Stock')
+    public function __construct($reservation = null, $reason = 'Out of Stock')
     {
         parent::__construct($reservation);
         $this->reason = $reason;

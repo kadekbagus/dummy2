@@ -67,7 +67,9 @@ class ReservationDetailAPIController extends ControllerAPI
                     {$prefix}brand_product_reservations.created_at,
                     {$prefix}brand_product_reservations.expired_at,
                     {$prefix}brand_product_reservations.quantity,
+                    {$prefix}brand_product_reservations.user_id,
                     {$prefix}brand_product_reservations.product_name,
+                    {$prefix}brand_product_reservations.brand_product_variant_id,
                     CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
                         THEN 'expired'
                         ELSE {$prefix}brand_product_reservations.status
@@ -75,28 +77,83 @@ class ReservationDetailAPIController extends ControllerAPI
                 "))
                 ->with([
                     'users' => function($q) {
-                        $q->select('user_firstname', 'user_lastname');
+                        $q->select('users.user_id', 'user_firstname', 'user_lastname');
+                    },
+                    'store' => function($q) {
+                        $q->with('store.mall');
+                    },
+                    'brand_product_variant' => function($q) {
+                        $q->select('brand_product_variant_id', 'brand_product_id', 'sku', 'product_code');
+                        $q->with([
+                            'brand_product' => function($q2) {
+                                $q2->select('brand_product_id');
+                                $q2->with([
+                                    'brand_product_main_photo' => function($q3) {
+                                        $q3->select('media_id', 'object_id', 'path', 'cdn_url');
+                                    }
+                                ]);
+                            }
+                        ]);
                     },
                     'details' => function($q) {
-                        $q->select('value')
-                            ->with('stores.mall');
-                    },
-                    'product.mediaMain' => function($q) {
-                        $q->select('path', 'cdn_url');
+                        $q->select('brand_product_reservation_detail_id', 'brand_product_reservation_id', 'value')
+                            ->where('option_type', 'variant_option');
                     }
                 ])
                 ->leftJoin('brand_product_reservation_details', 'brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
                 ->where('brand_product_reservations.brand_product_reservation_id', $brandProductReservationId)
-                ->where('brand_product_reservations.brand_id', $brandId)
+                ->where(DB::raw("{$prefix}brand_product_reservations.brand_id"), $brandId)
                 ->where('option_type', 'merchant');
 
             if (! empty($merchantId)) {
-                $reservations->where('brand_product_reservation_details.option_id', $merchantId);
+                $reservations = $reservations->where('brand_product_reservation_details.value', $merchantId);
             }
 
-            $reservations->firstOrFail();
+            $reservations = $reservations->firstOrFail();
 
-            $this->response->data = $reservations;
+            $returnedItem = new stdclass();
+            if (is_object($reservations)) {
+                $returnedItem->brand_product_reservation_id = $reservations->brand_product_reservation_id;
+                $returnedItem->user_name = $reservations->users->user_firstname . ' ' . $reservations->users->user_lastname;
+                $returnedItem->product_name = $reservations->product_name;
+                $returnedItem->quantity = $reservations->quantity;
+                $returnedItem->selling_price = $reservations->selling_price;
+                $returnedItem->created_at = (string) $reservations->created_at;
+                $returnedItem->expired_at = $reservations->expired_at;
+                $returnedItem->status = $reservations->status;
+                $imgPath = '';
+                $cdnUrl = '';
+                $sku = '';
+                $barcode = '';
+                if (is_object($reservations->brand_product_variant)) {
+                    if (! empty($reservations->brand_product_variant->sku)) {
+                        $sku = $reservations->brand_product_variant->sku;
+                    }
+                    if (! empty($reservations->brand_product_variant->product_code)) {
+                        $barcode = $reservations->brand_product_variant->product_code;
+                    }
+                    if (is_object($reservations->brand_product_variant->brand_product)) {
+                        if (! empty($reservations->brand_product_variant->brand_product->brand_product_main_photo)) {
+                            if (is_object($reservations->brand_product_variant->brand_product->brand_product_main_photo[0])) {
+                                $imgPath = $reservations->brand_product_variant->brand_product->brand_product_main_photo[0]->path;
+                                $cdnUrl = $reservations->brand_product_variant->brand_product->brand_product_main_photo[0]->cdn_url;
+                            }
+                        }
+                    }
+                }
+
+                $returnedItem->img_path = $imgPath;
+                $returnedItem->cdn_url = $cdnUrl;
+                $returnedItem->sku = $sku;
+                $returnedItem->barcode = $barcode;
+                $variants = [];
+                foreach ($reservations->details as $variantDetail) {
+                    $variants[] = $variantDetail->value;
+                }
+                $returnedItem->variants = implode(',', $variants);
+            }
+
+            $this->response->data = $returnedItem;
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';

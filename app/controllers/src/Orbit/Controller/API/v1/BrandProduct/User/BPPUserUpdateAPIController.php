@@ -97,6 +97,8 @@ class BPPUserUpdateAPIController extends ControllerAPI
             $this->response->data = $updatedBPPUser;
 
         } catch (Exception $e) {
+            // Rollback the changes
+            $this->rollBack();
             return $this->handleException($e);
         }
 
