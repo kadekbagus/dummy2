@@ -38,6 +38,7 @@ class ReservationRepository implements ReservationInterface
             $item->brand_product->max_reservation_time
         )->format('Y-m-d H:i:s');
         $reservation->status = BrandProductReservation::STATUS_PENDING;
+        $reservation->brand_id = $item->brand_product->brand_id;
         $reservation->save();
 
         foreach($item->variant_options as $variantOption)  {

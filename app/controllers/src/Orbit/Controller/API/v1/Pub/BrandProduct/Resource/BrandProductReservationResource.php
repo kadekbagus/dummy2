@@ -18,7 +18,7 @@ class BrandProductReservationResource extends Resource
             'id' => $this->brand_product_reservation_id,
             'user_email' => $this->resource->users->user_email,
             'store' => $this->getStore(),
-            'reservation_time' => Carbon::parse($this->created_at)->timezone('Asia/Jakarta')->format('Y-m-d H:i:s'),
+            'reservation_time' => $this->created_at->timezone('Asia/Jakarta')->format('Y-m-d H:i:s'),
             'expiration_time' => Carbon::parse($this->expired_at)->timezone('Asia/Jakarta')->format('Y-m-d H:i:s'),
             'quantity' => $this->quantity,
             'total_payment' => $this->getTotalPayment(),
@@ -31,6 +31,7 @@ class BrandProductReservationResource extends Resource
                 $this->resource->brand_product_variant->brand_product,
                 'brand_product_main_photo_'
             ),
+            'decline_reason' => $this->decline_reason,
         ];
     }
 
@@ -50,6 +51,6 @@ class BrandProductReservationResource extends Resource
 
     private function getVariant()
     {
-        return $this->resource->variants->implode('value', ',');
+        return $this->resource->variants->implode('value', ', ');
     }
 }
