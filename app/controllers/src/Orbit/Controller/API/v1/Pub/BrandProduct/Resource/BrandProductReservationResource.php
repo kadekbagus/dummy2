@@ -27,6 +27,10 @@ class BrandProductReservationResource extends Resource
             'variant' => $this->getVariant(),
             'sku' => $this->sku,
             'barcode' => $this->product_code,
+            'images' => $this->transformImages(
+                $this->resource->brand_product_variant->brand_product,
+                'brand_product_main_photo_'
+            ),
         ];
     }
 
