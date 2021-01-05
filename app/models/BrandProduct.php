@@ -84,4 +84,11 @@ class BrandProduct extends Eloquent
     {
         return $this->belongsTo(BppUser::class, 'created_by', 'bpp_user_id');
     }
+
+    public function marketplaces()
+    {
+        return $this->belongsToMany('Marketplace', 'brand_product_link_to_object', 'brand_product_id', 'object_id')
+            ->select('marketplace_id', 'name', 'brand_product_link_to_object.product_url', 'selling_price', 'original_price', 'sku')
+            ->where('brand_product_link_to_object.object_type', '=', 'marketplace');
+    }
 }
