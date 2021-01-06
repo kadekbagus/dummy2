@@ -60,6 +60,17 @@ class ReservationRepository implements ReservationInterface
             $reservation->details()->save($reservationDetails);
         }
 
+        // Save image, so that when a variant that linked to current reservation
+        // deleted or changed, we still be able to get the image.
+        foreach($item->brand_product->media as $media) {
+            if (stripos($media->media_name_long, 'orig') !== false) {
+                $reservationDetails = new BrandProductReservationDetail;
+                $reservationDetails->option_type = 'image';
+                $reservationDetails->value = $media->media_id;
+                $reservation->details()->save($reservationDetails);
+            }
+        }
+
         DB::commit();
 
         // fire event?
