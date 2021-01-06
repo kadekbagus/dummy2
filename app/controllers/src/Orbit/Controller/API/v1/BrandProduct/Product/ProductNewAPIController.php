@@ -8,6 +8,7 @@ use BrandProductCategory;
 use BrandProductVariant;
 use BrandProductVariantOption;
 use BrandProductVideo;
+use BrandProductLinkToObject;
 use Config;
 use DB;
 use DominoPOS\OrbitACL\ACL;
@@ -53,6 +54,7 @@ class ProductNewAPIController extends ControllerAPI
             $variants = OrbitInput::post('variants');
             $brandProductVariants = OrbitInput::post('brand_product_variants');
             $brandProductMainPhoto = Request::file('brand_product_main_photo');
+            $marketplaces = OrbitInput::post('marketplaces', []);
 
             // Begin database transaction
             $this->beginTransaction();
@@ -128,6 +130,11 @@ class ProductNewAPIController extends ControllerAPI
                 $brandProductVariants
             );
 
+            // save marketplaces
+            OrbitInput::post('marketplaces', function($marketplace_json_string) use ($newBrandProduct) {
+                $this->validateAndSaveMarketplaces($newBrandProduct, $marketplace_json_string, $scenario = 'create');
+            });
+            
             Event::fire(
                 'orbit.brandproduct.postnewbrandproduct.after.save',
                 [$newBrandProduct]
@@ -301,5 +308,65 @@ class ProductNewAPIController extends ControllerAPI
             'unique_sku',
             BrandProductValidator::class . '@uniqueSKU'
         );
+    }
+
+    private function validateAndSaveMarketplaces($newBrandProduct, $marketplace_json_string, $scenario = 'create')
+    {
+        $data = $marketplace_json_string;
+        $marketplaceData = [];
+
+        // delete existing links
+        $deletedLinks = BrandProductLinkToObject::where('brand_product_id', '=', $newBrandProduct->brand_product_id)
+                                                ->where('object_type', '=', 'marketplace')
+                                                ->get();
+
+        foreach ($deletedLinks as $deletedLink) {
+            $deletedLink->delete(true);
+        }
+
+        if (! empty($data) && $data[0] !== '') {
+            foreach ($data as $item) {
+                $itemObj = @json_decode($item);
+                if (json_last_error() != JSON_ERROR_NONE) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'marketplace']));
+                }
+                if (empty($itemObj->website_url)) {
+                    OrbitShopAPI::throwInvalidArgument('Product URL is required');
+                }
+
+                if (!isset($itemObj->selling_price)) {
+                    OrbitShopAPI::throwInvalidArgument('Selling price cannot empty');
+                }
+
+                if (!isset($itemObj->original_price)) {
+                    $itemObj->original_price = 0;
+                }
+
+                // selling price cannot empty
+                if ($itemObj->selling_price == "") {
+                    OrbitShopAPI::throwInvalidArgument('Selling price cannot empty');
+                }
+
+                if ($itemObj->original_price == "" || $itemObj->original_price == "0" || $itemObj->original_price == null) {
+
+                } else {
+                    if ($itemObj->selling_price > $itemObj->original_price) {
+                        OrbitShopAPI::throwInvalidArgument('Selling price cannot higher than original price');
+                    }
+                }
+
+                $saveObjectMarketPlaces = new BrandProductLinkToObject();
+                $saveObjectMarketPlaces->brand_product_id = $newBrandProduct->brand_product_id;
+                $saveObjectMarketPlaces->object_id = $itemObj->id;
+                $saveObjectMarketPlaces->object_type = 'marketplace';
+                $saveObjectMarketPlaces->product_url = $itemObj->website_url;
+                $saveObjectMarketPlaces->original_price = $itemObj->original_price;
+                $saveObjectMarketPlaces->selling_price = $itemObj->selling_price;
+                $saveObjectMarketPlaces->sku = isset($itemObj->sku) ? $itemObj->sku : null;
+                $saveObjectMarketPlaces->save();
+                $marketplaceData[] = $saveObjectMarketPlaces;
+            }
+            $newBrandProduct->marketplaces = $marketplaceData;
+        }
     }
 }
