@@ -29,15 +29,19 @@ trait ImageTransformer {
     protected function transformImages($item, $imagePrefix = '')
     {
         $images = null;
+        $mediaList = $item;
 
-        if ($item->media->count() > 0)
-        {
+        if (isset($item->media)) {
+            $mediaList = $item->media;
+        }
+
+        if ($mediaList->count() > 0) {
             $images = [];
             $imagePrefix = ! empty($imagePrefix)
                 ? $imagePrefix
                 : $this->imagePrefix;
 
-            foreach($item->media as $media) {
+            foreach($mediaList as $media) {
                 $variant = str_replace(
                     $imagePrefix,
                     '',

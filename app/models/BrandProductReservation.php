@@ -44,4 +44,10 @@ class BrandProductReservation extends Eloquent
         return $this->hasMany(BrandProductReservationDetail::class)
             ->where('option_type', 'variant_option');
     }
+
+    public function image()
+    {
+        return $this->hasOne(BrandProductReservationDetail::class)
+            ->where('option_type', 'image');
+    }
 }
