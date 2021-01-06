@@ -70,7 +70,7 @@ trait HasReservationTrait
 
     protected function getVariant()
     {
-        return $this->reservation->variants->implode('value', ',');
+        return $this->reservation->variants->implode('value', ', ');
     }
 
     protected function getAcceptUrl()
