@@ -18,6 +18,7 @@ use Config;
 use BrandProductReservation;
 use Exception;
 use App;
+use Illuminate\Support\Facades\Event;
 
 class ReservationUpdateStatusAPIController extends ControllerAPI
 {
@@ -94,6 +95,10 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             // Commit the changes
             $this->commit();
 
+            if ($status === BrandProductReservation::STATUS_ACCEPTED) {
+                Event::fire('orbit.reservation.accepted', [$reservation]);
+            }
+
             $this->response->data = $reservation;
         } catch (ACLForbiddenException $e) {
             // Rollback the changes
@@ -144,12 +149,12 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             $brandId = $parameters[0];
             $prefix = DB::getTablePrefix();
 
-            $reservation = BrandProductReservation::select(DB::raw("{$prefix}brand_product_reservations.*"),DB::raw("                    
+            $reservation = BrandProductReservation::select(DB::raw("{$prefix}brand_product_reservations.*"),DB::raw("
             CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
             THEN 'expired'
             ELSE {$prefix}brand_product_reservations.status
         END as status"))->where('brand_product_reservation_id', $value)->where('brand_id', '=', $brandId)->first();
-            
+
             if (empty($reservation)) {
                 return FALSE;
             }
@@ -158,7 +163,5 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
 
             return TRUE;
         });
-        
     }
-
 }
