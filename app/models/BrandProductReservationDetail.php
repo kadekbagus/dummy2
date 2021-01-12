@@ -10,4 +10,9 @@ class BrandProductReservationDetail extends Eloquent
     {
         return $this->hasOne('Tenant', 'merchant_id', 'value');
     }
+
+    public function media()
+    {
+        return $this->hasOne(Media::class, 'media_id', 'value');
+    }
 }

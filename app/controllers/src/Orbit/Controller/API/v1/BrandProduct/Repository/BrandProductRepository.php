@@ -14,6 +14,7 @@ use ProductLinkToObject;
 use Request;
 use Variant;
 use Category;
+use Config;
 
 /**
  * Brand Product Repository. An abstraction which unify various Brand Product
@@ -44,6 +45,16 @@ class BrandProductRepository
         $lang = Language::where('status', '=', 'active')
                             ->where('name', $lang)
                             ->first();
+        
+        $prefix = DB::getTablePrefix();
+        $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+        $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+        $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+        $image = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as cdn_url";
+        if ($usingCdn) {
+            $image = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as cdn_url";
+        }
 
         $brandProduct = BrandProduct::with([
                 'categories' => function($query) use ($lang) {
@@ -76,6 +87,26 @@ class BrandProductRepository
                 },
                 'brand_product_main_photo',
                 'brand_product_photos',
+                'marketplaces' => function ($q) use ($image) {
+                    $q->with(['media' => function ($q) use ($image) {
+                                    $q->select(
+                                            DB::raw("{$image}"),
+                                            'media.media_id',
+                                            'media.media_name_id',
+                                            'media.media_name_long',
+                                            'media.object_id',
+                                            'media.object_name',
+                                            'media.file_name',
+                                            'media.file_extension',
+                                            'media.file_size',
+                                            'media.mime_type',
+                                            'media.path',
+                                            'media.cdn_bucket_name',
+                                            'media.metadata'
+                                        );
+                              }]);
+                    $q->where('marketplaces.status', 'active');
+                }
             ])
             ->findOrFail($brandProductId);
 
@@ -169,5 +200,10 @@ class BrandProductRepository
             ->skip($request->skip)->take($request->take)->get();
 
         return compact('records', 'total');
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }

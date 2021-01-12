@@ -79,3 +79,6 @@ Route::post('/app/v1/brand-product/user/update', ['as' => 'brand-product-user-up
 
 // Route for user detail
 Route::get('/app/v1/brand-product/user/detail', ['as' => 'brand-product-user-detail', 'uses' => $brandProductAuth . '@User\BPPUserDetail_getDetail']);
+
+// Route for marketplace list on bpp
+Route::get('/app/v1/brand-product/marketplace/list', ['as' => 'brand-product-marketplace-list', 'uses' => $brandProductAuth . '@Marketplace\MarketplaceList_getSearchMarketplace']);
