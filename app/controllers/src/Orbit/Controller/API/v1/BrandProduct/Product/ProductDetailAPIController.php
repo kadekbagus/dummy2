@@ -99,6 +99,10 @@ class ProductDetailAPIController extends ControllerAPI
                                     );
                             }
                         ]);
+                    },
+                    'marketplaces' => function ($q) {
+                        $q->addSelect('marketplaces.status')
+                          ->where('marketplaces.status', '=', 'active');
                     }
                 ])
                 ->where('brand_products.brand_product_id', $productId)

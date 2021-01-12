@@ -7,6 +7,7 @@ use BrandProduct;
 use BrandProductVideo;
 use BrandProductVariant;
 use BrandProductVariantOption;
+use BrandProductLinkToObject;
 use DB;
 use Event;
 use Exception;
@@ -16,6 +17,8 @@ use Orbit\Controller\API\v1\BrandProduct\Product\DataBuilder\UpdateBrandProductB
 use Request;
 use Variant;
 use VariantOption;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use OrbitShop\API\v1\OrbitShopAPI;
 
 /**
  * A helper that provide Brand Product update routines.
@@ -32,8 +35,11 @@ trait HandleUpdate
      */
     public function update($request)
     {
-        // Get the Brand Product detail.
-        $brandProduct = $this->get($request->brand_product_id);
+        $brandProductSingle = BrandProduct::where('brand_product_id', '=', $request->brand_product_id)->first();
+
+        if (empty($brandProductSingle)) {
+            OrbitShopAPI::throwInvalidArgument('Product not found');
+        }
 
         // Build update data.
         $updateData = (new UpdateBrandProductBuilder($request))->build();
@@ -41,10 +47,13 @@ trait HandleUpdate
         // Update main data if needed.
         if (count($updateData['main']) > 0) {
             foreach($updateData['main'] as $key => $data) {
-                $brandProduct->{$key} = $data;
+                $brandProductSingle->{$key} = $data;
             }
-            $brandProduct->save();
+            $brandProductSingle->save();
         }
+
+        // Get the Brand Product detail.
+        $brandProduct = $this->get($request->brand_product_id);
 
         // Update categories
         if (! empty($updateData['categories'])) {
@@ -71,6 +80,11 @@ trait HandleUpdate
                 $updateData['brand_product_variants']
             );
         }
+
+        // save marketplaces
+        OrbitInput::post('marketplaces', function($marketplace_json_string) use ($brandProduct) {
+            $this->validateAndSaveMarketplaces($brandProduct, $marketplace_json_string, $scenario = 'create');
+        });
 
         // Reload relationship.
         $brandProduct->load(['brand_product_variants.variant_options']);
@@ -353,5 +367,66 @@ trait HandleUpdate
             'orbit.brandproduct.postnewbrandproduct.after.save',
             [$brandProduct]
         );
+    }
+
+    private function validateAndSaveMarketplaces($brandProduct, $marketplace_json_string, $scenario = 'create')
+    {
+        $data = $marketplace_json_string;
+        $marketplaceData = [];
+
+        // delete existing links
+        $deletedLinks = BrandProductLinkToObject::where('brand_product_id', '=', $brandProduct->brand_product_id)
+                                                ->where('object_type', '=', 'marketplace')
+                                                ->get();
+
+        foreach ($deletedLinks as $deletedLink) {
+            $deletedLink->delete(true);
+        }
+
+        if (! empty($data) && $data[0] !== '') {
+            foreach ($data as $item) {
+                $itemObj = @json_decode($item);
+                if (json_last_error() != JSON_ERROR_NONE) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'marketplace']));
+                }
+
+                if (empty($itemObj->website_url)) {
+                    OrbitShopAPI::throwInvalidArgument('Product URL is required');
+                }
+
+                if (!isset($itemObj->selling_price)) {
+                    OrbitShopAPI::throwInvalidArgument('Selling price cannot empty');
+                }
+
+                if (!isset($itemObj->original_price)) {
+                    $itemObj->original_price = 0;
+                }
+
+                // selling price cannot empty
+                if ($itemObj->selling_price == "") {
+                    OrbitShopAPI::throwInvalidArgument('Selling price cannot empty');
+                }
+
+                if ($itemObj->original_price == "" || $itemObj->original_price == "0" || $itemObj->original_price == null) {
+
+                } else {
+                    if ($itemObj->selling_price > $itemObj->original_price) {
+                        OrbitShopAPI::throwInvalidArgument('Selling price cannot higher than original price');
+                    }
+                }
+
+                $saveObjectMarketPlaces = new BrandProductLinkToObject();
+                $saveObjectMarketPlaces->brand_product_id = $brandProduct->brand_product_id;
+                $saveObjectMarketPlaces->object_id = $itemObj->id;
+                $saveObjectMarketPlaces->object_type = 'marketplace';
+                $saveObjectMarketPlaces->product_url = $itemObj->website_url;
+                $saveObjectMarketPlaces->original_price = $itemObj->original_price;
+                $saveObjectMarketPlaces->selling_price = $itemObj->selling_price;
+                $saveObjectMarketPlaces->sku = isset($itemObj->sku) ? $itemObj->sku : null;
+                $saveObjectMarketPlaces->save();
+                $marketplaceData[] = $saveObjectMarketPlaces;
+            }
+            $brandProduct->marketplaces = $marketplaceData;
+        }
     }
 }
