@@ -98,6 +98,9 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             if ($status === BrandProductReservation::STATUS_ACCEPTED) {
                 Event::fire('orbit.reservation.accepted', [$reservation]);
             }
+            else if ($status === BrandProductReservation::STATUS_DECLINED) {
+                Event::fire('orbit.reservation.declined', [$reservation]);
+            }
 
             $this->response->data = $reservation;
         } catch (ACLForbiddenException $e) {
