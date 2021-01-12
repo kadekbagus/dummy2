@@ -38,6 +38,7 @@ class ReservationRepository implements ReservationInterface
             $item->brand_product->max_reservation_time
         )->format('Y-m-d H:i:s');
         $reservation->status = BrandProductReservation::STATUS_PENDING;
+        $reservation->brand_id = $item->brand_product->brand_id;
         $reservation->save();
 
         foreach($item->variant_options as $variantOption)  {
@@ -57,6 +58,17 @@ class ReservationRepository implements ReservationInterface
             }
 
             $reservation->details()->save($reservationDetails);
+        }
+
+        // Save image, so that when a variant that linked to current reservation
+        // deleted or changed, we still be able to get the image.
+        foreach($item->brand_product->media as $media) {
+            if (stripos($media->media_name_long, 'orig') !== false) {
+                $reservationDetails = new BrandProductReservationDetail;
+                $reservationDetails->option_type = 'image';
+                $reservationDetails->value = $media->media_id;
+                $reservation->details()->save($reservationDetails);
+            }
         }
 
         DB::commit();

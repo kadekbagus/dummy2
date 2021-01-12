@@ -23,3 +23,19 @@ Route::post(
         'uses' => 'IntermediatePubAuthController@Reservation\ReservationCancel_handle',
     ]
 );
+
+Route::get(
+    '/app/v1/pub/reservation-purchased/list',
+    [
+        'as' => 'reservation-purchased-list',
+        'uses' => 'IntermediatePubAuthController@Reservation\ReservationPurchasedList_getReservationPurchasedList',
+    ]
+);
+
+Route::get(
+    '/app/v1/pub/reservation-purchased/detail',
+    [
+        'as' => 'reservation-purchased-detail',
+        'uses' => 'IntermediatePubAuthController@Reservation\ReservationPurchasedDetail_getReservationPurchasedDetail',
+    ]
+);
