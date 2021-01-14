@@ -2900,5 +2900,21 @@ return array(
             'object_type' => 'DigitalProduct',
             'parameter_name' => 'object_id',
         ),
+        '317' => array(
+            'name' => 'click_brand_product_cancel',
+            'name_long' => 'Click Brand Product Cancel Reservation',
+            'module_name' => 'Brand Product',
+            'type' => 'click',
+            'object_type' => 'BrandProductReservation',
+            'parameter_name' => 'object_id',
+        ),
+        '318' => array(
+            'name' => 'click_brand_product_reserve',
+            'name_long' => 'Click Brand Product Reserve',
+            'module_name' => 'Brand Product',
+            'type' => 'click',
+            'object_type' => 'BrandProduct',
+            'parameter_name' => 'object_id',
+        ),
     ),
 );

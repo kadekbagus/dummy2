@@ -50,6 +50,7 @@ class BrandProductResource extends Resource
                 $arrVariants
             ),
             'category_names' => $this->category_names,
+            'marketplaces' => $this->marketplaces,
         ];
     }
 

@@ -79,6 +79,7 @@ class BrandProductValidator
                 $this->imagePrefix = 'brand_product_main_photo_';
                 $query->with($this->buildMediaQuery());
             },
+            'image.media',
         ])
         ->where('brand_product_reservation_id', $value)
         ->first();
@@ -119,7 +120,7 @@ class BrandProductValidator
         }
 
         $variant = BrandProductVariant::with([
-            'brand_product',
+            'brand_product.media',
             'variant_options.option.variant',
             'variant_options.store',
         ])->where('brand_product_variant_id', $variantId)->first();
