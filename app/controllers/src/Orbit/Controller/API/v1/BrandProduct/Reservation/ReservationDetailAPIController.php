@@ -41,7 +41,7 @@ class ReservationDetailAPIController extends ControllerAPI
             $merchantId = $user->merchant_id;
             $brandProductReservationId = OrbitInput::get('brand_product_reservation_id');
 
-            if (! $this->isRoleAllowed()) {
+            if (! $this->isRoleAllowed($brandProductReservationId)) {
                 $this->response->code = 403;
                 $this->response->status = 'error';
                 $this->response->message = 'You are not allowed to access this resource.';
