@@ -73,18 +73,10 @@ trait HasReservationTrait
         return $this->reservation->variants->implode('value', ', ');
     }
 
-    protected function getAcceptUrl()
+    protected function getSeeReservationUrl()
     {
         return sprintf(
-            Config::get('orbit.reservation.accept_url', ''),
-            $this->reservation->brand_product_reservation_id
-        );
-    }
-
-    protected function getDeclineUrl()
-    {
-        return sprintf(
-            Config::get('orbit.reservation.decline_url', ''),
+            Config::get('orbit.reservation.see_reservation_url', '#'),
             $this->reservation->brand_product_reservation_id
         );
     }
