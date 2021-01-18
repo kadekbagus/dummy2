@@ -41,6 +41,16 @@ class ReservationDetailAPIController extends ControllerAPI
             $merchantId = $user->merchant_id;
             $brandProductReservationId = OrbitInput::get('brand_product_reservation_id');
 
+            if (! $this->isRoleAllowed($brandProductReservationId)) {
+                $this->response->code = 403;
+                $this->response->status = 'error';
+                $this->response->message = 'You are not allowed to access this resource.';
+                $this->response->data = null;
+                $httpCode = 403;
+
+                return $this->render($httpCode);
+            }
+
             $validator = Validator::make(
                 array(
                     'reservation_id'      => $brandProductReservationId,
@@ -186,6 +196,43 @@ class ReservationDetailAPIController extends ControllerAPI
         }
 
         return $this->render($httpCode);
+    }
+
+    /**
+     * @return boolean
+     */
+    protected function isRoleAllowed($brandProductReservationId)
+    {
+        $user = App::make('currentUser');
+        $brandId = $user->base_merchant_id;
+        $userType = $user->user_type;
+        $merchantId = $user->merchant_id;
+
+        if ($userType === 'brand') {
+            $brandProductReservation = BrandProductReservation::where('brand_product_reservation_id', $brandProductReservationId)
+                ->where('brand_id', $brandId)
+                ->first();
+
+            if (is_object($brandProductReservation)) {
+                return true;
+            }
+
+            return false;
+        }
+
+        if ($userType === 'store') {
+            $brandProductReservation = BrandProductReservation::leftJoin('brand_product_reservation_details', 'brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
+                ->where('brand_product_reservation_id', $brandProductReservationId)
+                ->where('brand_id', $brandId)
+                ->where('brand_product_reservation_details.value', $merchantId)
+                ->first();
+
+            if (is_object($brandProductReservation)) {
+                return true;
+            }
+
+            return false;
+        }
     }
 
 }

@@ -76,11 +76,8 @@ class ReservationPurchasedDetailAPIController extends PubControllerAPI
                                                             'brand_product_reservations.quantity',
                                                             'brand_product_reservations.sku',
                                                             'brand_product_reservations.product_code',
+                                                            'brand_product_reservations.status',
                                                     DB::raw("{$image} as image"),         
-                                                    DB::raw("CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
-                                                                THEN 'expired'
-                                                                ELSE {$prefix}brand_product_reservations.status
-                                                            END as status"),
                                                     DB::raw("CONCAT(m1.name,' ', m2.name, ', ', m2.city) as store_name"))
                                                     ->with([
                                                         'users' => function($q) {
