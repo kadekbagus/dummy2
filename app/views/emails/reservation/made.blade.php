@@ -187,7 +187,7 @@
                     </tr>
                     <tr>
                       <td width="600" class="mobile reservation-actions" align="center" valign="middle">
-                        <a href="{{{ $seeReservationUrl }}}" class="btn btn-light mx-4">
+                        <a href="{{{ $seeReservationUrl }}}" class="btn btn-primary mx-4">
                           {{{ trans('email-reservation.labels.btn_see_reservation', [], '', $lang) }}}
                         </a>
                       </td>
