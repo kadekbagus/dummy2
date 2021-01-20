@@ -17,8 +17,7 @@ return [
         'product_variant' => 'Variasi Produk',
         'product_sku' => 'No. SKU',
         'product_barcode' => 'Barcode Produk',
-        'btn_accept' => 'Terima',
-        'btn_decline' => 'Tolak',
+        'btn_see_reservation' => 'Lihat Reservasi',
         'status_detail' => [
             'pending' => 'Pending',
             'cancelled' => 'Dibatalkan',

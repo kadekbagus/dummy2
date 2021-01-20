@@ -60,7 +60,8 @@ class ESBrandProductUpdateQueue
                 'brand',
                 'brand_product_variants.variant_options',
                 'categories',
-                'brand_product_main_photo'
+                'brand_product_main_photo',
+                'marketplaces'
             ])
             ->where('brand_product_id', $brandProductId)
             ->first();
@@ -127,6 +128,7 @@ class ESBrandProductUpdateQueue
                 'highest_original_price' => 0.0,
                 'lowest_selling_price' => 0.0,
                 'highest_selling_price' => 0.0,
+                'link_to_marketplaces' => [],
             ];
 
             // Add linked SKUs
@@ -176,10 +178,6 @@ class ESBrandProductUpdateQueue
                 }
             }
 
-            // var_dump($body); die;
-
-            // var_dump($linkedMerchantIds); die;
-
             // Add linked categories
             foreach($brandProduct->categories as $category) {
                 $body['link_to_categories'][] = [
@@ -194,8 +192,6 @@ class ESBrandProductUpdateQueue
 
             $body['lowest_original_price'] = $lowestOriginalPrice;
             $body['highest_original_price'] = $highestOriginalPrice;
-
-            // var_dump($body); die;
 
             // Add linked stores
             if (count($linkedMerchantIds) > 0) {
@@ -291,7 +287,11 @@ class ESBrandProductUpdateQueue
                 }
             }
 
-            // var_dump($body); die;
+            foreach($brandProduct->marketplaces as $marketplace) {
+                $body['link_to_marketplaces'][] = [
+                    'marketplace_name' => $marketplace->name,
+                ];
+            }
 
             // Delete old document before inserting/updating new one.
             if ($response_search['hits']['total'] > 0) {

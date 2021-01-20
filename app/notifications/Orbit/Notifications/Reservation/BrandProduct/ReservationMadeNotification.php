@@ -53,8 +53,7 @@ class ReservationMadeNotification extends ReservationNotification
     protected function getReservationData()
     {
         return array_merge(parent::getReservationData(), [
-            'acceptUrl' => $this->getAcceptUrl(),
-            'declineUrl' => $this->getDeclineUrl(),
+            'seeReservationUrl' => $this->getSeeReservationUrl(),
         ]);
     }
 }

@@ -23,9 +23,11 @@ class ProductAffiliationCollection extends ResourceCollection
             ['cdn' => $cdnConfig], 'cdn'
         );
 
+        $logos = Config::get('orbit.marketplace_logo', []);
+
         foreach($this->collection as $item) {
             $data = $item['_source'];
-            $logos = Config::get('orbit.marketplace_logo', null);
+
             if (isset($data['marketplace_names']) && ! empty($logos)) {
                 foreach($data['marketplace_names'] as &$marketplace) {
                     $marketplace['marketplace_logo'] = null;
