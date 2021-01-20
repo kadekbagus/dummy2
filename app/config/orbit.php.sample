@@ -6552,7 +6552,6 @@ return array(
     ],
 
     'reservation' => [
-        'accept_url' => 'https://bpp-v426.gotomalls.cool/#!/reservations/%s/accept',
-        'decline_url' => 'https://bpp-v426.gotomalls.cool/#!/reservations/%s/decline',
+        'see_reservation_url' => 'https://bpp-v426.gotomalls.cool/#!/reservations/%s',
     ],
 );
