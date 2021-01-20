@@ -68,12 +68,9 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
                                                            'brand_product_reservations.selling_price', 
                                                            'brand_product_reservations.created_at', 
                                                            'brand_product_reservations.expired_at',
+                                                           'brand_product_reservations.status',
                                                            'brand_product_variants.brand_product_id',
                                                     DB::raw("{$image} as image"),         
-                                                    DB::raw("CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
-                                                                THEN 'expired'
-                                                                ELSE {$prefix}brand_product_reservations.status
-                                                            END as status"),
                                                     DB::raw("CONCAT(m1.name,' ', m2.name) as store_name"))
                                                     ->join('brand_product_reservation_details', function ($join) {
                                                             $join->on('brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')

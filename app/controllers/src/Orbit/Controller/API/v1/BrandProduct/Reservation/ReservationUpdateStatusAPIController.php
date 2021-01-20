@@ -40,6 +40,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             $merchantId = $user->merchant_id;
             $brandProductReservationId = OrbitInput::post('brand_product_reservation_id');
             $status = OrbitInput::post('status');
+            $reason = OrbitInput::post('reason');
 
             $this->registerCustomValidation();
 
@@ -99,7 +100,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                 Event::fire('orbit.reservation.accepted', [$reservation]);
             }
             else if ($status === BrandProductReservation::STATUS_DECLINED) {
-                Event::fire('orbit.reservation.declined', [$reservation]);
+                Event::fire('orbit.reservation.declined', [$reservation, $reason]);
             }
 
             $this->response->data = $reservation;
