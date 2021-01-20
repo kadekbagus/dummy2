@@ -23,6 +23,7 @@ class BrandProductCollection extends ResourceCollection
             ['cdn' => $cdnConfig], 'cdn'
         );
 
+        $logo = Config::get('orbit.marketplace_logo', []);
         foreach($this->collection as $item) {
             $data = $item['_source'];
             $this->data['records'][] = [
@@ -39,6 +40,7 @@ class BrandProductCollection extends ResourceCollection
                 'brandName' => $data['brand_name'],
                 'image' => $this->transformImages($data),
                 'stores' => $this->transformStores($data),
+                'marketplaces' => $this->transformMarketplaces($data, $logo),
             ];
         }
 
@@ -80,5 +82,25 @@ class BrandProductCollection extends ResourceCollection
         //     'sellingPrice' => $item->selling_price,
         //     'originalPrice' => $item->original_price,
         // ];
+    }
+
+    protected function transformMarketplaces($data, $logo)
+    {
+        if (! isset($data['link_to_marketplaces'])) {
+            return [];
+        }
+
+        if (empty($data['link_to_marketplaces'])) {
+            return [];
+        }
+
+        return array_map(function($marketplace) use ($logo) {
+            return [
+                'marketplace_name' => $marketplace['marketplace_name'],
+                'marketplace_logo' =>
+                    isset($logo[$marketplace['marketplace_name']])
+                        ? $logo[$marketplace['marketplace_name']] : '',
+            ];
+        }, $data['link_to_marketplaces']);
     }
 }
