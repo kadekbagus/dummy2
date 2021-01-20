@@ -36,7 +36,7 @@ class BrandProductReservationResource extends Resource
                 $this->resource,
                 'brand_product_main_photo_'
             ),
-            'decline_reason' => $this->decline_reason,
+            'decline_reason' => $this->cancel_reason,
         ];
     }
 
