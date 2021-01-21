@@ -32,6 +32,7 @@ trait HasReservationTrait
             'quantity'      => $this->reservation->quantity,
             'totalPayment' => $this->getTotalPayment(),
             'status'        => $this->reservation->status,
+            'reason' => $this->reservation->cancel_reason,
             'product' => [
                 'name' => $this->reservation->product_name,
                 'variant' => $this->getVariant(),

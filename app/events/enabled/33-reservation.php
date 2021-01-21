@@ -1,12 +1,13 @@
 <?php
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
-use Orbit\Notifications\Reservation\BrandProduct\ReservationAcceptedNotification;
 use Orbit\Notifications\Reservation\BrandProduct\ReservationMadeNotification;
+use Orbit\Notifications\Reservation\BrandProduct\ReservationExpiredNotification;
+use Orbit\Notifications\Reservation\BrandProduct\ReservationAcceptedNotification;
 use Orbit\Notifications\Reservation\BrandProduct\ReservationCanceledNotification;
 use Orbit\Notifications\Reservation\BrandProduct\ReservationDeclinedNotification;
-use Orbit\Notifications\Reservation\BrandProduct\ReservationExpiredNotification;
 
 Event::listen(
     'orbit.reservation.made',
@@ -20,7 +21,7 @@ Event::listen(
             // Check for expiration?
             // should use a scheduled task instead of queue?
             // Queue::later(
-            //     Carbon::parse($reservation->expired_at),
+            //     Carbon::parse($reservation->expired_at)->addSeconds(3),
             //     'Orbit\Queue\Reservation\CheckExpiredReservationQueue',
             //     ['reservationId' => $reservation->brand_product_reservation_id]
             // );
@@ -46,8 +47,7 @@ Event::listen(
 
         if ($reservation instanceof BrandProductReservation) {
             (new ReservationDeclinedNotification(
-                $reservation->brand_product_reservation_id,
-                $reason
+                $reservation->brand_product_reservation_id
             ))->send();
         }
     }
