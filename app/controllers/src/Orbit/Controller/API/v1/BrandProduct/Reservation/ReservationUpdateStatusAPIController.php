@@ -40,7 +40,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             $merchantId = $user->merchant_id;
             $brandProductReservationId = OrbitInput::post('brand_product_reservation_id');
             $status = OrbitInput::post('status');
-            $reason = OrbitInput::post('reason');
+            $cancelReason = OrbitInput::post('cancel_reason', 'Out of Stock');
 
             $this->registerCustomValidation();
 
@@ -89,6 +89,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
 
             if ($status === BrandProductReservation::STATUS_DECLINED) {
                 $reservation->declined_by = $userId;
+                $reservation->cancel_reason = $cancelReason;
             }
 
             $reservation->save();
@@ -100,7 +101,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                 Event::fire('orbit.reservation.accepted', [$reservation]);
             }
             else if ($status === BrandProductReservation::STATUS_DECLINED) {
-                Event::fire('orbit.reservation.declined', [$reservation, $reason]);
+                Event::fire('orbit.reservation.declined', [$reservation]);
             }
 
             $this->response->data = $reservation;

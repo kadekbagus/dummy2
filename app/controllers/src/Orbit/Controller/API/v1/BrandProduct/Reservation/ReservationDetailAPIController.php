@@ -80,9 +80,14 @@ class ReservationDetailAPIController extends ControllerAPI
                     {$prefix}brand_product_reservations.user_id,
                     {$prefix}brand_product_reservations.product_name,
                     {$prefix}brand_product_reservations.brand_product_variant_id,
-                    CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
-                        THEN 'expired'
-                        ELSE {$prefix}brand_product_reservations.status
+                    CASE {$prefix}brand_product_reservations.status
+                        WHEN 'pending' THEN
+                            CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
+                                THEN 'expired'
+                                ELSE {$prefix}brand_product_reservations.status
+                            END
+                    ELSE
+                        {$prefix}brand_product_reservations.status
                     END as status
                 "))
                 ->with([
@@ -222,7 +227,7 @@ class ReservationDetailAPIController extends ControllerAPI
 
         if ($userType === 'store') {
             $brandProductReservation = BrandProductReservation::leftJoin('brand_product_reservation_details', 'brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
-                ->where('brand_product_reservation_id', $brandProductReservationId)
+                ->where('brand_product_reservations.brand_product_reservation_id', $brandProductReservationId)
                 ->where('brand_id', $brandId)
                 ->where('brand_product_reservation_details.value', $merchantId)
                 ->first();
