@@ -1,26 +1,10 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html lang="en">
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Transaction Aborted</title>
+@extends('emails.layouts.default')
 
-  @include('emails.components.styles')
+@section('title')
+Transaction Aborted
+@stop
 
-</head>
-<body style="margin:0; padding:0; background-color:#F2F2F2;">
-
-  <span style="display: block; width: 640px !important; max-width: 640px; height: 1px" class="mobileOff"></span>
-
-  <center>
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#F2F2F2">
-      <tr>
-        <td align="center" valign="middle">
-          <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/gtm-logo.png" class="logo" alt="Logo">
-        </td>
-      </tr>
-
+@section('content')
       <?php
         $langs = ['id', 'en'];
         $originalProductType = $productType;
@@ -38,7 +22,9 @@
                   <table width="640" cellpadding="0" cellspacing="0" border="0" class="container mobile-full-width">
                     <tr>
                       <td align="center" valign="middle" height="184" class="greeting-title-container" style="border-radius: 5px 5px 0 0;">
-                          <h1 class="greeting-title">{{ trans('email-aborted-payment.header.email-type', [], '', $lang) }}</h1>
+                          <h1 class="greeting-title">
+                            {{ trans('email-aborted-payment.header.email-type', [], '', $lang) }}
+                          </h1>
                       </td>
                     </tr>
                   </table>
@@ -47,7 +33,8 @@
                     <tr>
                       <td width="300" class="mobile" align="left" valign="top">
                         <h3 class="greeting-username">
-                          {{ trans('email-aborted-payment.body.greeting_digital_product.customer_name', ['customerName' => $customerName], '', $lang) }}</h3>
+                          {{ trans('email-aborted-payment.body.greeting_digital_product.customer_name', ['customerName' => $customerName], '', $lang) }}
+                        </h3>
                         <p class="greeting-text">
                           {{ trans('email-aborted-payment.body.greeting_digital_product.body', [], '', $lang) }}
                         </p>
@@ -56,9 +43,13 @@
                     <tr>
                       <td width="600" class="mobile" valign="middle">
                         <p class="transaction-details">
-                          <strong>{{{ trans('email-aborted-payment.body.transaction_labels.product_name', [], '', $lang) }}}</strong> {{ $transaction['items'][0]['name'] }}
+                          <strong>
+                            {{{ trans('email-aborted-payment.body.transaction_labels.product_name', [], '', $lang) }}}
+                          </strong> {{ $transaction['items'][0]['name'] }}
                           <br>
-                          <strong>{{{ trans('email-aborted-payment.body.transaction_labels.transaction_id', [], '', $lang) }}}</strong> {{ $transaction['id'] }}
+                          <strong>
+                            {{{ trans('email-aborted-payment.body.transaction_labels.transaction_id', [], '', $lang) }}}
+                          </strong> {{ $transaction['id'] }}
                         </p>
 
                         <p class="greeting-text">
@@ -114,13 +105,4 @@
           <td height="30" align="center" class="separator">&nbsp;</td>
         </tr>
       @endforeach
-
-      <tr>
-        <td align="center" valign="top">
-          @include('emails.components.new-basic-footer')
-        </td>
-      </tr>
-    </table>
-  </center>
-</body>
-</html>
+@stop
