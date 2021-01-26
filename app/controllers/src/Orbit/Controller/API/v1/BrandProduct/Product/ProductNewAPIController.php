@@ -312,7 +312,8 @@ class ProductNewAPIController extends ControllerAPI
 
     private function validateAndSaveMarketplaces($newBrandProduct, $marketplace_json_string, $scenario = 'create')
     {
-        $data = $marketplace_json_string;
+        $data = @json_decode($marketplace_json_string, true);
+        $data = $data ?: [];
         $marketplaceData = [];
 
         // delete existing links
@@ -326,43 +327,43 @@ class ProductNewAPIController extends ControllerAPI
 
         if (! empty($data) && $data[0] !== '') {
             foreach ($data as $item) {
-                $itemObj = @json_decode($item);
-                if (json_last_error() != JSON_ERROR_NONE) {
-                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'marketplace']));
+
+                if (!isset($item['id']) || $item['id'] == "" || $item['id'] == null) {
+                    OrbitShopAPI::throwInvalidArgument('Marketplace id cannot empty');
                 }
-                if (empty($itemObj->website_url)) {
+
+                if (!isset($item['website_url']) || $item['website_url'] == "" || $item['website_url'] == null) {
                     OrbitShopAPI::throwInvalidArgument('Product URL is required');
                 }
 
-                if (!isset($itemObj->selling_price)) {
+                if (!isset($item['selling_price']) || $item['selling_price'] == "" || $item['selling_price'] == null) {
                     OrbitShopAPI::throwInvalidArgument('Selling price cannot empty');
                 }
 
-                if (!isset($itemObj->original_price)) {
-                    $itemObj->original_price = 0;
+                if (!isset($item['original_price']) || $item['original_price'] == "" || $item['original_price'] == null) {
+                    $item['original_price'] = 0;
                 }
 
-                // selling price cannot empty
-                if ($itemObj->selling_price == "") {
+                if ($item['selling_price'] == "" || $item['selling_price'] == null) {
                     OrbitShopAPI::throwInvalidArgument('Selling price cannot empty');
                 }
 
-                if ($itemObj->original_price == "" || $itemObj->original_price == "0" || $itemObj->original_price == null) {
+                if ($item['original_price'] == "" || $item['original_price'] == "0" || $item['original_price'] == null) {
 
                 } else {
-                    if ($itemObj->selling_price > $itemObj->original_price) {
+                    if ($item['selling_price'] > $item['original_price']) {
                         OrbitShopAPI::throwInvalidArgument('Selling price cannot higher than original price');
                     }
                 }
 
                 $saveObjectMarketPlaces = new BrandProductLinkToObject();
                 $saveObjectMarketPlaces->brand_product_id = $newBrandProduct->brand_product_id;
-                $saveObjectMarketPlaces->object_id = $itemObj->id;
+                $saveObjectMarketPlaces->object_id = $item['id'];
                 $saveObjectMarketPlaces->object_type = 'marketplace';
-                $saveObjectMarketPlaces->product_url = $itemObj->website_url;
-                $saveObjectMarketPlaces->original_price = $itemObj->original_price;
-                $saveObjectMarketPlaces->selling_price = $itemObj->selling_price;
-                $saveObjectMarketPlaces->sku = isset($itemObj->sku) ? $itemObj->sku : null;
+                $saveObjectMarketPlaces->product_url = $item['website_url'];
+                $saveObjectMarketPlaces->original_price = $item['original_price'];
+                $saveObjectMarketPlaces->selling_price = $item['selling_price'];
+                $saveObjectMarketPlaces->sku = isset($item['sku']) ? $item['sku'] : null;
                 $saveObjectMarketPlaces->save();
                 $marketplaceData[] = $saveObjectMarketPlaces;
             }

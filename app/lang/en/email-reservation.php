@@ -17,8 +17,7 @@ return [
         'product_variant' => 'Product Variant',
         'product_sku' => 'Product SKU',
         'product_barcode' => 'Product Barcode',
-        'btn_accept' => 'Accept',
-        'btn_decline' => 'Decline',
+        'btn_see_reservation' => 'See Reservation',
         'status_detail' => [
             'pending' => 'Pending',
             'cancelled' => 'Cancelled',

@@ -32,6 +32,7 @@ trait HasReservationTrait
             'quantity'      => $this->reservation->quantity,
             'totalPayment' => $this->getTotalPayment(),
             'status'        => $this->reservation->status,
+            'reason' => $this->reservation->cancel_reason,
             'product' => [
                 'name' => $this->reservation->product_name,
                 'variant' => $this->getVariant(),
@@ -73,18 +74,10 @@ trait HasReservationTrait
         return $this->reservation->variants->implode('value', ', ');
     }
 
-    protected function getAcceptUrl()
+    protected function getSeeReservationUrl()
     {
         return sprintf(
-            Config::get('orbit.reservation.accept_url', ''),
-            $this->reservation->brand_product_reservation_id
-        );
-    }
-
-    protected function getDeclineUrl()
-    {
-        return sprintf(
-            Config::get('orbit.reservation.decline_url', ''),
+            Config::get('orbit.reservation.see_reservation_url', '#'),
             $this->reservation->brand_product_reservation_id
         );
     }

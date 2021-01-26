@@ -62,9 +62,14 @@ class ReservationListAPIController extends ControllerAPI
                     {$prefix}brand_product_reservations.user_id,
                     {$prefix}brand_product_reservations.product_name,
                     {$prefix}brand_product_reservations.brand_product_variant_id,
-                    CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
-                        THEN 'expired'
-                        ELSE {$prefix}brand_product_reservations.status
+                    CASE {$prefix}brand_product_reservations.status
+                        WHEN 'pending' THEN
+                            CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
+                                THEN 'expired'
+                                ELSE {$prefix}brand_product_reservations.status
+                            END
+                    ELSE
+                        {$prefix}brand_product_reservations.status
                     END as status
                 "))
                 ->with([
@@ -108,10 +113,20 @@ class ReservationListAPIController extends ControllerAPI
 
             OrbitInput::get('status', function($status) use ($reservations)
             {
-                if ($status == 'expired') {
-                    $reservations->where('expired_at', '<', DB::raw("NOW()"));
-                } else {
-                    $reservations->where('status', $status);
+                switch (strtolower($status)) {
+                    case 'expired':
+                        $reservations->where('status', 'pending')
+                            ->where('expired_at', '<', DB::raw("NOW()"));
+                        break;
+
+                    case 'pending':
+                        $reservations->where('status', 'pending')
+                            ->where('expired_at', '>=', DB::raw("NOW()"));
+                        break;
+
+                    default:
+                        $reservations->where('status', $status);
+                        break;
                 }
             });
 

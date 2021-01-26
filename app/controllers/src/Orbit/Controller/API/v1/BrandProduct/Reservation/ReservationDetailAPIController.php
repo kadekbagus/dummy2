@@ -41,6 +41,16 @@ class ReservationDetailAPIController extends ControllerAPI
             $merchantId = $user->merchant_id;
             $brandProductReservationId = OrbitInput::get('brand_product_reservation_id');
 
+            if (! $this->isRoleAllowed($brandProductReservationId)) {
+                $this->response->code = 403;
+                $this->response->status = 'error';
+                $this->response->message = 'You are not allowed to access this resource.';
+                $this->response->data = null;
+                $httpCode = 403;
+
+                return $this->render($httpCode);
+            }
+
             $validator = Validator::make(
                 array(
                     'reservation_id'      => $brandProductReservationId,
@@ -70,9 +80,14 @@ class ReservationDetailAPIController extends ControllerAPI
                     {$prefix}brand_product_reservations.user_id,
                     {$prefix}brand_product_reservations.product_name,
                     {$prefix}brand_product_reservations.brand_product_variant_id,
-                    CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
-                        THEN 'expired'
-                        ELSE {$prefix}brand_product_reservations.status
+                    CASE {$prefix}brand_product_reservations.status
+                        WHEN 'pending' THEN
+                            CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
+                                THEN 'expired'
+                                ELSE {$prefix}brand_product_reservations.status
+                            END
+                    ELSE
+                        {$prefix}brand_product_reservations.status
                     END as status
                 "))
                 ->with([
@@ -186,6 +201,43 @@ class ReservationDetailAPIController extends ControllerAPI
         }
 
         return $this->render($httpCode);
+    }
+
+    /**
+     * @return boolean
+     */
+    protected function isRoleAllowed($brandProductReservationId)
+    {
+        $user = App::make('currentUser');
+        $brandId = $user->base_merchant_id;
+        $userType = $user->user_type;
+        $merchantId = $user->merchant_id;
+
+        if ($userType === 'brand') {
+            $brandProductReservation = BrandProductReservation::where('brand_product_reservation_id', $brandProductReservationId)
+                ->where('brand_id', $brandId)
+                ->first();
+
+            if (is_object($brandProductReservation)) {
+                return true;
+            }
+
+            return false;
+        }
+
+        if ($userType === 'store') {
+            $brandProductReservation = BrandProductReservation::leftJoin('brand_product_reservation_details', 'brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
+                ->where('brand_product_reservations.brand_product_reservation_id', $brandProductReservationId)
+                ->where('brand_id', $brandId)
+                ->where('brand_product_reservation_details.value', $merchantId)
+                ->first();
+
+            if (is_object($brandProductReservation)) {
+                return true;
+            }
+
+            return false;
+        }
     }
 
 }
