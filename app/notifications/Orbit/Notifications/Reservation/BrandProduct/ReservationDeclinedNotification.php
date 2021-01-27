@@ -13,12 +13,9 @@ class ReservationDeclinedNotification extends ReservationNotification
 {
     protected $signature = 'reservation-declined-notification';
 
-    protected $reason = '';
-
-    public function __construct($reservation = null, $reason = 'Out of Stock')
+    public function __construct($reservation = null)
     {
         parent::__construct($reservation);
-        $this->reason = $reason;
     }
 
     public function getEmailTemplates()
@@ -31,13 +28,6 @@ class ReservationDeclinedNotification extends ReservationNotification
     public function getEmailSubject()
     {
         return trans('email-reservation.declined.subject', [], '', 'id');
-    }
-
-    public function getEmailData()
-    {
-        return array_merge(parent::getEmailData(), [
-            'reason' => $this->reason,
-        ]);
     }
 
     protected function getEnabledLanguages()

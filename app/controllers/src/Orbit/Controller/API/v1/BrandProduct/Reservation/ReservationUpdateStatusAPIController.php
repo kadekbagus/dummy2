@@ -18,6 +18,7 @@ use Config;
 use BrandProductReservation;
 use Exception;
 use App;
+use Illuminate\Support\Facades\Event;
 
 class ReservationUpdateStatusAPIController extends ControllerAPI
 {
@@ -39,6 +40,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             $merchantId = $user->merchant_id;
             $brandProductReservationId = OrbitInput::post('brand_product_reservation_id');
             $status = OrbitInput::post('status');
+            $cancelReason = OrbitInput::post('cancel_reason', 'Out of Stock');
 
             $this->registerCustomValidation();
 
@@ -87,12 +89,20 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
 
             if ($status === BrandProductReservation::STATUS_DECLINED) {
                 $reservation->declined_by = $userId;
+                $reservation->cancel_reason = $cancelReason;
             }
 
             $reservation->save();
 
             // Commit the changes
             $this->commit();
+
+            if ($status === BrandProductReservation::STATUS_ACCEPTED) {
+                Event::fire('orbit.reservation.accepted', [$reservation]);
+            }
+            else if ($status === BrandProductReservation::STATUS_DECLINED) {
+                Event::fire('orbit.reservation.declined', [$reservation]);
+            }
 
             $this->response->data = $reservation;
         } catch (ACLForbiddenException $e) {
@@ -144,12 +154,12 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             $brandId = $parameters[0];
             $prefix = DB::getTablePrefix();
 
-            $reservation = BrandProductReservation::select(DB::raw("{$prefix}brand_product_reservations.*"),DB::raw("                    
+            $reservation = BrandProductReservation::select(DB::raw("{$prefix}brand_product_reservations.*"),DB::raw("
             CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
             THEN 'expired'
             ELSE {$prefix}brand_product_reservations.status
         END as status"))->where('brand_product_reservation_id', $value)->where('brand_id', '=', $brandId)->first();
-            
+
             if (empty($reservation)) {
                 return FALSE;
             }
@@ -158,7 +168,5 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
 
             return TRUE;
         });
-        
     }
-
 }

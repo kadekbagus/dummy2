@@ -100,7 +100,10 @@ class BrandProductValidator
         $reservation = App::make('reservation');
 
         return App::make('currentUser')->user_id === $reservation->user_id
-            && $reservation->status === BrandProductReservation::STATUS_PENDING;
+            && in_array($reservation->status, [
+                BrandProductReservation::STATUS_PENDING,
+                BrandProductReservation::STATUS_ACCEPTED,
+            ]);
     }
 
     public function matchReservationUser($attrs, $value, $params)

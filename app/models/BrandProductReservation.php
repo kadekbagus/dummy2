@@ -5,6 +5,8 @@
  */
 class BrandProductReservation extends Eloquent
 {
+    use ModelStatusTrait;
+
     protected $primaryKey = 'brand_product_reservation_id';
 
     protected $table = 'brand_product_reservations';
