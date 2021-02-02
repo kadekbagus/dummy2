@@ -74,5 +74,8 @@ return [
         'body' => [
             'line-1' => 'Sayang sekali reservasi produk Anda telah kadaluarsa pada :expirationTime. Berikut ini detil reservasi Anda.',
         ],
+        'body-admin' => [
+            'line-1' => 'Reservasi berikut ini baru saja kadaluarsa.',
+        ],
     ],
 ];

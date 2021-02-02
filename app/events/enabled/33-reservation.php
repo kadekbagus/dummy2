@@ -8,6 +8,7 @@ use Orbit\Notifications\Reservation\BrandProduct\ReservationExpiredNotification;
 use Orbit\Notifications\Reservation\BrandProduct\ReservationAcceptedNotification;
 use Orbit\Notifications\Reservation\BrandProduct\ReservationCanceledNotification;
 use Orbit\Notifications\Reservation\BrandProduct\ReservationDeclinedNotification;
+use Orbit\Notifications\Reservation\BrandProduct\ReservationExpiredAdminNotification;
 
 Event::listen(
     'orbit.reservation.made',
@@ -51,6 +52,10 @@ Event::listen(
 
         if ($reservation instanceof BrandProductReservation) {
             (new ReservationExpiredNotification(
+                $reservation->brand_product_reservation_id
+            ))->send();
+
+            (new ReservationExpiredAdminNotification(
                 $reservation->brand_product_reservation_id
             ))->send();
         }

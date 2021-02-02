@@ -16,26 +16,7 @@ class ReservationMadeNotification extends ReservationNotification
 
     public function getRecipientEmail()
     {
-        $recipients = [];
-
-        $store = $this->getStore();
-        $brandId = $this->reservation->brand_product_variant->brand_product->brand_id;
-        $allAdmin = BppUser::where('status', 'active')
-            ->where('base_merchant_id', $brandId)
-            ->where(function($query) use ($store) {
-                $query->where('user_type', 'brand')
-                    ->orWhere('merchant_id', $store['storeId']);
-            })
-            ->get();
-
-        foreach($allAdmin as $admin) {
-            $recipients[$admin->bpp_user_id] = [
-                'name' => $admin->name,
-                'email' => $admin->email,
-            ];
-        }
-
-        return $recipients;
+        return $this->getAdminRecipients();
     }
 
     public function getEmailTemplates()
