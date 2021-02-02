@@ -17,14 +17,6 @@ Event::listen(
             (new ReservationMadeNotification(
                 $reservation->brand_product_reservation_id
             ))->send();
-
-            // Check for expiration?
-            // should use a scheduled task instead of queue?
-            // Queue::later(
-            //     Carbon::parse($reservation->expired_at)->addSeconds(3),
-            //     'Orbit\Queue\Reservation\CheckExpiredReservationQueue',
-            //     ['reservationId' => $reservation->brand_product_reservation_id]
-            // );
         }
     }
 );
@@ -73,6 +65,17 @@ Event::listen(
             (new ReservationAcceptedNotification(
                 $reservation->brand_product_reservation_id
             ))->send();
+
+            // Check for expiration?
+            // should use a scheduled task instead of queue?
+            Queue::later(
+                Carbon::parse($reservation->expired_at),
+                'Orbit\Queue\Reservation\CheckExpiredReservationQueue',
+                [
+                    'reservationId' => $reservation->brand_product_reservation_id,
+                    'type' => 'brand_product',
+                ]
+            );
         }
     }
 );
