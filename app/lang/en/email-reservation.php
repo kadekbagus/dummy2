@@ -21,7 +21,7 @@ return [
         'status_detail' => [
             'pending' => 'Pending',
             'cancelled' => 'Cancelled',
-            'accepted' => 'Accepted',
+            'accepted' => 'Reserved',
             'declined' => 'Declined',
             'expired' => 'Expired',
         ],
