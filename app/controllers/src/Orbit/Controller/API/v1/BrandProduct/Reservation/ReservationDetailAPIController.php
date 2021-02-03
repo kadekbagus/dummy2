@@ -80,6 +80,7 @@ class ReservationDetailAPIController extends ControllerAPI
                     {$prefix}brand_product_reservations.user_id,
                     {$prefix}brand_product_reservations.product_name,
                     {$prefix}brand_product_reservations.brand_product_variant_id,
+                    {$prefix}brand_product_reservations.cancel_reason,
                     CASE {$prefix}brand_product_reservations.status
                         WHEN 'pending' THEN
                             CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
@@ -136,6 +137,7 @@ class ReservationDetailAPIController extends ControllerAPI
                 $returnedItem->created_at = (string) $reservations->created_at;
                 $returnedItem->expired_at = $reservations->expired_at;
                 $returnedItem->status = $reservations->status;
+                $returnedItem->cancel_reason = $reservations->cancel_reason;
                 $imgPath = '';
                 $cdnUrl = '';
                 $sku = '';

@@ -33,7 +33,7 @@ class BrandProductResource extends Resource
             'description' => $this->product_description,
             'tnc' => $this->tnc,
             'status' => $this->status,
-            'maxReservationTime' => $this->max_reservation_time,
+            'maxReservationTime' => ceil($this->max_reservation_time/60),
             'category' => $this->getCategory($this->resource),
             'brandId' => $this->brand_id,
             'brandName' => $this->brand->name,
