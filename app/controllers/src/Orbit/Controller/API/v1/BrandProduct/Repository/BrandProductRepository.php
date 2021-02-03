@@ -45,7 +45,7 @@ class BrandProductRepository
         $lang = Language::where('status', '=', 'active')
                             ->where('name', $lang)
                             ->first();
-        
+
         $prefix = DB::getTablePrefix();
         $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
         $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
@@ -83,6 +83,7 @@ class BrandProductRepository
                     )->whereIn('status', [
                         BrandProductReservation::STATUS_PENDING,
                         BrandProductReservation::STATUS_ACCEPTED,
+                        BrandProductReservation::STATUS_DONE,
                     ]);
                 },
                 'brand_product_main_photo',

@@ -63,7 +63,7 @@ class ProductDetailAPIController extends ControllerAPI
                     {$prefix}brand_products.product_name,
                     {$prefix}brand_products.product_description,
                     {$prefix}brand_products.tnc,
-                    {$prefix}brand_products.max_reservation_time,
+                    ceil({$prefix}brand_products.max_reservation_time/60) as max_reservation_time,
                     {$prefix}brand_products.status
                 "))
                 ->with([

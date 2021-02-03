@@ -60,7 +60,8 @@ class BrandProductValidator
             ->where('brand_product_variant_id', $variant->brand_product_variant_id)
             ->whereIn('status', [
                 BrandProductReservation::STATUS_PENDING,
-                BrandProductReservation::STATUS_DONE
+                BrandProductReservation::STATUS_ACCEPTED,
+                BrandProductReservation::STATUS_DONE,
             ])
             ->sum('quantity');
 
