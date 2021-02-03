@@ -165,11 +165,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             $brandId = $parameters[0];
             $prefix = DB::getTablePrefix();
 
-            $reservation = BrandProductReservation::select(DB::raw("{$prefix}brand_product_reservations.*"),DB::raw("
-            CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
-            THEN 'expired'
-            ELSE {$prefix}brand_product_reservations.status
-        END as status"))->where('brand_product_reservation_id', $value)->where('brand_id', '=', $brandId)->first();
+            $reservation = BrandProductReservation::where('brand_product_reservation_id', $value)->where('brand_id', '=', $brandId)->first();
 
             if (empty($reservation)) {
                 return FALSE;
