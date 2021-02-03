@@ -51,7 +51,11 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                 ),
                 array(
                     'reservation_id'      => 'required|orbit.reservation.exists:'.$brandId,
-                    'status'              => 'required|in:'.BrandProductReservation::STATUS_ACCEPTED.','.BrandProductReservation::STATUS_DECLINED
+                    'status'              => 'required|in:'. join(',', [
+                            BrandProductReservation::STATUS_ACCEPTED,
+                            BrandProductReservation::STATUS_DECLINED,
+                            BrandProductReservation::STATUS_DONE,
+                        ]),
                 ),
                 array(
                     'reservation_id.required' => 'Reservation ID is required',
@@ -82,6 +86,11 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
 
             if ($reservation->status === BrandProductReservation::STATUS_DECLINED) {
                 $errorMessage = 'Reservation already declined';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if ($reservation->status === BrandProductReservation::STATUS_DONE) {
+                $errorMessage = 'Reservation already done';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
