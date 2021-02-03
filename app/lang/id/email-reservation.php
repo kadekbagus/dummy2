@@ -21,7 +21,7 @@ return [
         'status_detail' => [
             'pending' => 'Pending',
             'cancelled' => 'Dibatalkan',
-            'accepted' => 'Diterima',
+            'accepted' => 'Dipesan',
             'declined' => 'Ditolak',
             'expired' => 'Kadaluarsa',
         ],
