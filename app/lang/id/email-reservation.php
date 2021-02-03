@@ -21,7 +21,7 @@ return [
         'status_detail' => [
             'pending' => 'Pending',
             'cancelled' => 'Dibatalkan',
-            'accepted' => 'Diterima',
+            'accepted' => 'Dipesan',
             'declined' => 'Ditolak',
             'expired' => 'Kadaluarsa',
         ],
@@ -73,6 +73,9 @@ return [
         'greeting' => 'Halo :recipientName,',
         'body' => [
             'line-1' => 'Sayang sekali reservasi produk Anda telah kadaluarsa pada :expirationTime. Berikut ini detil reservasi Anda.',
+        ],
+        'body-admin' => [
+            'line-1' => 'Reservasi berikut ini baru saja kadaluarsa.',
         ],
     ],
 ];

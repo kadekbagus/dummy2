@@ -9,25 +9,25 @@ use Orbit\Notifications\Reservation\ReservationNotification;
  *
  * @author Budi <budi@gotomalls.com>
  */
-class ReservationDeclinedNotification extends ReservationNotification
+class ReservationExpiredAdminNotification extends ReservationNotification
 {
-    protected $signature = 'reservation-declined-notification';
+    protected $signature = 'reservation-expired-admin-notification';
 
-    public function __construct($reservation = null)
+    public function getRecipientEmail()
     {
-        parent::__construct($reservation);
+        return $this->getAdminRecipients();
     }
 
     public function getEmailTemplates()
     {
         return [
-            'html' => 'emails.reservation.declined',
+            'html' => 'emails.reservation.expired-admin',
         ];
     }
 
     public function getEmailSubject()
     {
-        return trans('email-reservation.declined.subject', [], '', 'id');
+        return trans('email-reservation.expired.subject', [], '', 'id');
     }
 
     protected function getEnabledLanguages()

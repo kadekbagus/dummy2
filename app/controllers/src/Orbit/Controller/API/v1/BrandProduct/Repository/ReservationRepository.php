@@ -16,6 +16,20 @@ use Orbit\Controller\API\v1\Reservation\ReservationInterface;
  */
 class ReservationRepository implements ReservationInterface
 {
+    protected $reservation = null;
+
+    public function get($id)
+    {
+        return $this->reservation = BrandProductReservation::onWriteConnection()
+            // enable later when needed.
+            // ->with([
+            //     'users',
+            //     'details',
+            // ])
+            ->where('brand_product_reservation_id', $id)
+            ->first();
+    }
+
     /**
      * @param BrandProductVariant $item
      * @param Orbit\Helper\Request\ValidateRequest $reservationData
@@ -34,7 +48,7 @@ class ReservationRepository implements ReservationInterface
         $reservation->selling_price = $item->selling_price;
         $reservation->quantity = $reservationData->quantity;
         $reservation->user_id = $reservationData->user()->user_id;
-        $reservation->expired_at = Carbon::now()->addHours(
+        $reservation->expired_at = Carbon::now()->addMinutes(
             $item->brand_product->max_reservation_time
         )->format('Y-m-d H:i:s');
         $reservation->status = BrandProductReservation::STATUS_PENDING;
@@ -123,21 +137,22 @@ class ReservationRepository implements ReservationInterface
 
     public function expire($reservation)
     {
-        DB::transaction(function() use (&$reservation) {
-            $reservation->status = BrandProductReservation::STATUS_EXPIRED;
-            $reservation->save();
-        });
+        $reservation->status = BrandProductReservation::STATUS_EXPIRED;
+        $reservation->save();
 
         return $reservation;
     }
 
     public function done($reservation)
     {
-        DB::transaction(function() use (&$reservation) {
-            $reservation->status = BrandProductReservation::STATUS_DONE;
-            $reservation->save();
-        });
+        $reservation->status = BrandProductReservation::STATUS_DONE;
+        $reservation->save();
 
         return $reservation;
+    }
+
+    public function accepted($reservation)
+    {
+        return $reservation->status === BrandProductReservation::STATUS_ACCEPTED;
     }
 }
