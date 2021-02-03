@@ -74,7 +74,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
 
             $reservation = App::make('orbit.reservation.exists');
 
-            if ($status === BrandProductReservation::STATUS_DONE) {
+            if ($reservation->status === BrandProductReservation::STATUS_DONE) {
                 $errorMessage = 'Reservation already done';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
