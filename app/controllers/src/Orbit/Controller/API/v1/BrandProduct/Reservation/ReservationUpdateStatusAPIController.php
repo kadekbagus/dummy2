@@ -84,7 +84,9 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            if ($reservation->status === BrandProductReservation::STATUS_ACCEPTED) {
+            if ($reservation->status === BrandProductReservation::STATUS_ACCEPTED
+                && $status === BrandProductReservation::STATUS_ACCEPTED
+            ) {
                 $errorMessage = 'Reservation already accepted';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
