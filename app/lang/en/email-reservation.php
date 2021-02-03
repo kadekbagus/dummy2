@@ -21,7 +21,7 @@ return [
         'status_detail' => [
             'pending' => 'Pending',
             'cancelled' => 'Cancelled',
-            'accepted' => 'Accepted',
+            'accepted' => 'Reserved',
             'declined' => 'Declined',
             'expired' => 'Expired',
         ],
@@ -73,7 +73,10 @@ return [
         'title' => 'Reservation Expired',
         'greeting' => 'Hello :recipientName,',
         'body' => [
-            'line-1' => 'Unfortunately, your product reservation was expired on :expirationTime. Below is your reservation details.',
+            'line-1' => 'Unfortunately, your product reservation was expired on :expirationTime. Below are the details.',
+        ],
+        'body-admin' => [
+            'line-1' => 'We have an expired reservation below.',
         ],
     ],
 ];

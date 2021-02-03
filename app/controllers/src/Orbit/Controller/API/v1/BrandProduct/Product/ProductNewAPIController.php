@@ -100,7 +100,7 @@ class ProductNewAPIController extends ControllerAPI
             );
             $newBrandProduct->tnc = strip_tags($tnc);
             $newBrandProduct->status = $status;
-            $newBrandProduct->max_reservation_time = $maxReservationTime;
+            $newBrandProduct->max_reservation_time = $maxReservationTime * 60;
             $newBrandProduct->created_by = $userId;
             $newBrandProduct->save();
 
@@ -134,7 +134,7 @@ class ProductNewAPIController extends ControllerAPI
             OrbitInput::post('marketplaces', function($marketplace_json_string) use ($newBrandProduct) {
                 $this->validateAndSaveMarketplaces($newBrandProduct, $marketplace_json_string, $scenario = 'create');
             });
-            
+
             Event::fire(
                 'orbit.brandproduct.postnewbrandproduct.after.save',
                 [$newBrandProduct]
