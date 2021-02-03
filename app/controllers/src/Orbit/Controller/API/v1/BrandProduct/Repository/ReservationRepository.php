@@ -48,7 +48,7 @@ class ReservationRepository implements ReservationInterface
         $reservation->selling_price = $item->selling_price;
         $reservation->quantity = $reservationData->quantity;
         $reservation->user_id = $reservationData->user()->user_id;
-        $reservation->expired_at = Carbon::now()->addHours(
+        $reservation->expired_at = Carbon::now()->addMinutes(
             $item->brand_product->max_reservation_time
         )->format('Y-m-d H:i:s');
         $reservation->status = BrandProductReservation::STATUS_PENDING;
