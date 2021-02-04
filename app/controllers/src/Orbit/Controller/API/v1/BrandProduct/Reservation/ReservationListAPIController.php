@@ -47,7 +47,7 @@ class ReservationListAPIController extends ControllerAPI
                     'status'      => $status,
                 ),
                 array(
-                    'status'      => 'in:pending,accepted,cancelled,declined,expired',
+                    'status'      => 'in:pending,accepted,cancelled,declined,expired,done',
                 )
             );
 
@@ -63,7 +63,7 @@ class ReservationListAPIController extends ControllerAPI
                     {$prefix}brand_product_reservations.product_name,
                     {$prefix}brand_product_reservations.brand_product_variant_id,
                     CASE {$prefix}brand_product_reservations.status
-                        WHEN 'pending' THEN
+                        WHEN 'accepted' THEN
                             CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
                                 THEN 'expired'
                                 ELSE {$prefix}brand_product_reservations.status
@@ -115,12 +115,12 @@ class ReservationListAPIController extends ControllerAPI
             {
                 switch (strtolower($status)) {
                     case 'expired':
-                        $reservations->where('status', 'pending')
+                        $reservations->where('status', 'accepted')
                             ->where('expired_at', '<', DB::raw("NOW()"));
                         break;
 
-                    case 'pending':
-                        $reservations->where('status', 'pending')
+                    case 'accepted':
+                        $reservations->where('status', 'accepted')
                             ->where('expired_at', '>=', DB::raw("NOW()"));
                         break;
 
