@@ -82,7 +82,7 @@ class ReservationDetailAPIController extends ControllerAPI
                     {$prefix}brand_product_reservations.brand_product_variant_id,
                     {$prefix}brand_product_reservations.cancel_reason,
                     CASE {$prefix}brand_product_reservations.status
-                        WHEN 'pending' THEN
+                        WHEN 'accepted' THEN
                             CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
                                 THEN 'expired'
                                 ELSE {$prefix}brand_product_reservations.status
