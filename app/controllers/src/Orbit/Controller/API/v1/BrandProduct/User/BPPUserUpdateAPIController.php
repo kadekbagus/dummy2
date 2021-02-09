@@ -82,6 +82,10 @@ class BPPUserUpdateAPIController extends ControllerAPI
             });
 
             OrbitInput::post('merchant_id', function($merchantId) use ($updatedBPPUser) {
+                if (! is_array($merchantId)) {
+                    $merchantId = [$merchantId];
+                }
+
                 $updatedBPPUser->stores()->sync($merchantId);
             });
 
