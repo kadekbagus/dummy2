@@ -68,8 +68,9 @@ class ReservationListAPIController extends ControllerAPI
                                 THEN 'expired'
                                 ELSE {$prefix}brand_product_reservations.status
                             END
-                    ELSE
-                        {$prefix}brand_product_reservations.status
+                        WHEN 'done' THEN 'sold'
+                        ELSE
+                            {$prefix}brand_product_reservations.status
                     END as status
                 "))
                 ->with([
@@ -122,6 +123,11 @@ class ReservationListAPIController extends ControllerAPI
                     case 'accepted':
                         $reservations->where('status', 'accepted')
                             ->where('expired_at', '>=', DB::raw("NOW()"));
+                        break;
+
+                    case 'sold':
+                    case 'done':
+                        $reservations->where('status', 'done');
                         break;
 
                     default:
