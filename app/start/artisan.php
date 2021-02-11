@@ -362,3 +362,5 @@ Artisan::add(new GetListActiveProductAffiliationCommand);
 
 // Reset user game points
 Artisan::add(new ResetGamePoint);
+
+Artisan::add(new UpdateBPPUserMerchantsCommand);
