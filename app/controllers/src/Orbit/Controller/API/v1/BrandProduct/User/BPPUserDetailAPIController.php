@@ -61,7 +61,11 @@ class BPPUserDetailAPIController extends ControllerAPI
             $userDetail->setRelation(
                 'stores',
                 $userDetail->stores->map(function($store) {
-                    return $store->merchant_id;
+                    return [
+                        'merchant_id' => $store->merchant_id,
+                        'store_name' => $store->name . ' ' .
+                            ($store->mall ? $store->mall->name : '')
+                    ];
                 })
             );
 
@@ -79,9 +83,16 @@ class BPPUserDetailAPIController extends ControllerAPI
     {
         // Check the existance of bpp_user id
         Validator::extend('orbit.bpp_user.exists', function ($attribute, $value, $parameters) {
-            $BPPUser = BppUser::with(['stores' => function($query) {
-                $query->select('merchants.merchant_id');
-            }])->where('bpp_user_id', $value)->first();
+            $BPPUser = BppUser::with([
+                'stores' => function($query) {
+                    $query->select(
+                        'merchants.merchant_id',
+                        'merchants.name',
+                        'merchants.parent_id'
+                    )->with(['mall']);
+                }
+            ])
+            ->where('bpp_user_id', $value)->first();
 
             if (empty($BPPUser)) {
                 return FALSE;
