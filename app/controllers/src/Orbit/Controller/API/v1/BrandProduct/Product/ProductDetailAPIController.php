@@ -159,7 +159,7 @@ class ProductDetailAPIController extends ControllerAPI
             foreach ($variants as &$variantItem) {
                 foreach ($product->brand_product_variants as $key => $bpv) {
                     foreach ($bpv->variant_options as $key => $vo) {
-                        if ($vo->option_type = 'variant_options' && isset($vo->option->variant)) {
+                        if ($vo->option_type === 'variant_option' && isset($vo->option->variant)) {
                             if ($variantItem->name === $vo->option->variant->variant_name) {
                                 $option = new stdclass();
                                 $option->option_id = $vo->option->variant_option_id;
@@ -181,10 +181,25 @@ class ProductDetailAPIController extends ControllerAPI
                 }
             }
 
+            $userStores = [];
+            if ($user->user_type === 'store') {
+                $user->load('stores');
+                $userStores = $user->stores->map(function($store) {
+                    return $store->merchant_id;
+                })->toArray();
+            }
+
             $selectedStores = [];
             foreach ($product->brand_product_variants as $key => $bpv) {
                 foreach ($bpv->variant_options as $key => $vo) {
                     if ($vo->option_type = 'merchant' && ! is_null($vo->store)) {
+
+                        if ($user->user_type === 'store'
+                            && ! in_array($vo->store->merchant_id, $userStores)
+                        ) {
+                            continue;
+                        }
+
                         $store = new stdclass();
                         $store->id = $vo->store->merchant_id;
                         $store->name = $vo->store->name;
