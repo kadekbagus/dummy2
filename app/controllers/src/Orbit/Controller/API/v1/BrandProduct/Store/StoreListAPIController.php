@@ -2,6 +2,7 @@
 
 namespace Orbit\Controller\API\v1\BrandProduct\Store;
 
+use BppUser;
 use DB;
 use Exception;
 use OrbitShop\API\v1\ControllerAPI;
@@ -54,7 +55,15 @@ class StoreListAPIController extends ControllerAPI
                     ->orderBy($sortBy, $sortMode);
             }
             else if ($user->user_type === 'store') {
-                $records->where('merchants.merchant_id', $user->merchant_id)
+                $stores = BppUser::with(['stores' => function($query) {
+                    $query->select('bpp_user_merchants.merchant_id');
+                }])
+                ->findOrFail($user->bpp_user_id)
+                ->stores->map(function($store) {
+                    return $store->merchant_id;
+                })->toArray();
+
+                $records->whereIn('merchants.merchant_id', $stores)
                     ->where('merchants.status', 'active');
             }
 
