@@ -37,6 +37,10 @@ class ProductUpdateAPIController extends ControllerAPI
                 [$this->response->data->brand_product_id]
             );
 
+            if (isset($this->response->data->online_product->product_id)) {
+                Event::fire('orbit.newproduct.postnewproduct.after.commit', array($this, $this->response->data->online_product));
+            }
+
         } catch (Exception $e) {
             return $this->handleException($e);
         }

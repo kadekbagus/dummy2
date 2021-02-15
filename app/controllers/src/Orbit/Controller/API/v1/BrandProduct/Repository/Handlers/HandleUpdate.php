@@ -19,6 +19,10 @@ use Variant;
 use VariantOption;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\OrbitShopAPI;
+use Product;
+use ProductLinkToObject;
+use ProductVideo;
+use BaseMerchant;
 
 /**
  * A helper that provide Brand Product update routines.
@@ -35,7 +39,12 @@ trait HandleUpdate
      */
     public function update($request)
     {
+        $user = App::make('currentUser');
+        $brandId = $user->base_merchant_id;
+        $disableOnlineProduct = FALSE;
+
         $brandProductSingle = BrandProduct::where('brand_product_id', '=', $request->brand_product_id)->first();
+        $onlineProduct = Product::where('brand_product_id', '=', $request->brand_product_id)->first();
 
         if (empty($brandProductSingle)) {
             OrbitShopAPI::throwInvalidArgument('Product not found');
@@ -81,13 +90,105 @@ trait HandleUpdate
             );
         }
 
+        // Update online product
+        if ($onlineProduct) {
+
+            OrbitInput::post('product_name', function($name) use ($onlineProduct) {
+                $onlineProduct->name = $name;
+            });
+
+            OrbitInput::post('product_description', function($short_description) use ($onlineProduct) {
+                $onlineProduct->short_description = $short_description;
+            });
+
+            OrbitInput::post('online_product_status', function($status) use ($onlineProduct) {
+                $onlineProduct->status = $status;
+            });
+
+            // disable online product if marketplace deleted
+            $disableOnlineProduct = $this->checkMarketplaceDeletion($request);    
+
+            if ($disableOnlineProduct) {
+                $onlineProduct->status = 'inactive';
+            }
+
+            $onlineProduct->save();
+
+            // update category
+            OrbitInput::post('category_id', function($category_id) use ($onlineProduct) {
+                $updateOnlineProductCategory = ProductLinkToObject::where('product_id', '=', $onlineProduct->product_id)
+                                                                ->where('object_type', '=', 'category')
+                                                                ->first();
+
+                $updateOnlineProductCategory->object_id = $category_id;
+                $updateOnlineProductCategory->save();
+                $onlineProduct->category = $updateOnlineProductCategory;
+            });
+
+            // update youtube links
+            OrbitInput::post('youtube_ids', function($youtubeIds) use ($onlineProduct) {
+                $deletedOldData = ProductVideo::where('product_id', '=', $onlineProduct->product_id)->delete();
+
+                $videos = array();
+                foreach ($youtubeIds as $youtubeId) {
+                    $productVideos = new ProductVideo();
+                    $productVideos->product_id = $onlineProduct->product_id;
+                    $productVideos->youtube_id = $youtubeId;
+                    $productVideos->save();
+                    $videos[] = $productVideos;
+                }
+                $onlineProduct->product_videos = $videos;
+            });
+        }
+
         // save marketplaces
-        OrbitInput::post('marketplaces', function($marketplace_json_string) use ($brandProduct) {
-            $this->validateAndSaveMarketplaces($brandProduct, $marketplace_json_string, $scenario = 'create');
+        OrbitInput::post('marketplaces', function($marketplace_json_string) use ($brandProduct, $onlineProduct, $request, $brandId) {
+            if (!$onlineProduct) {
+                // create online product
+                $onlineProduct = new Product;
+                $onlineProduct->name = $request->product_name;
+                $onlineProduct->short_description = $request->product_description;
+                $onlineProduct->status = $request->status;
+                $onlineProduct->country_id = $this->getCountryId($brandId);
+                $onlineProduct->brand_product_id = $brandProduct->brand_product_id;
+                $onlineProduct->save();
+
+                // create category
+                $newCategory = new ProductLinkToObject();
+                $newCategory->product_id = $onlineProduct->product_id;
+                $newCategory->object_id = $request->category_id;
+                $newCategory->object_type = 'category';
+                $newCategory->save();
+
+                // create link to brand
+                $newLinkToBrand = new ProductLinkToObject();
+                $newLinkToBrand->product_id = $onlineProduct->product_id;
+                $newLinkToBrand->object_id = $brandId;
+                $newLinkToBrand->object_type = 'brand';
+                $newLinkToBrand->save();
+
+                // create product video
+                $videos = array();
+                foreach ($request->youtube_ids as $youtubeId) {
+                    $productVideos = new ProductVideo();
+                    $productVideos->product_id = $onlineProduct->product_id;
+                    $productVideos->youtube_id = $youtubeId;
+                    $productVideos->save();
+                    $videos[] = $productVideos;
+                }
+
+                $onlineProduct->category = $newCategory;
+                $onlineProduct->link_to_brand = $newLinkToBrand;
+                $onlineProduct->product_videos = $videos;
+            }
+            $this->validateAndSaveMarketplaces($brandProduct, $onlineProduct, $marketplace_json_string, $scenario = 'create');
         });
 
         // Reload relationship.
         $brandProduct->load(['brand_product_variants.variant_options']);
+
+        // online product
+        $brandProduct->online_product = $onlineProduct;
 
         // Update images if changed.
         $this->updateImages($brandProduct, $updateData);
@@ -338,6 +439,21 @@ trait HandleUpdate
                     $updateData['deleted_images'][] = $mediaId;
                 }
             }
+
+            // online product
+            if (isset($brandProduct->online_product->product_id)) {
+                $mainPhotosOnlineProduct = Media::select('media_id')
+                                    ->where('object_id', $brandProduct->online_product->product_id)
+                                    ->where('media_name_id', 'product_image')
+                                    ->get();
+    
+                foreach($mainPhotosOnlineProduct as $mainPhotoOnlineProduct) {
+                    $mediaId = $mainPhotoOnlineProduct->media_id;
+                    if (! in_array($mediaId, $updateData['deleted_images'])) {
+                        $updateData['deleted_images'][] = $mediaId;
+                    }
+                }
+            }
         }
 
         // Delete old media if needed.
@@ -365,11 +481,11 @@ trait HandleUpdate
         // Process new images
         $images = Event::fire(
             'orbit.brandproduct.postnewbrandproduct.after.save',
-            [$brandProduct]
+            [$brandProduct, $brandProduct->online_product]
         );
     }
 
-    private function validateAndSaveMarketplaces($brandProduct, $marketplace_json_string, $scenario = 'create')
+    private function validateAndSaveMarketplaces($brandProduct, $onlineProduct, $marketplace_json_string, $scenario = 'create')
     {
         $data = @json_decode($marketplace_json_string, true);
         $data = $data ?: [];
@@ -382,6 +498,16 @@ trait HandleUpdate
 
         foreach ($deletedLinks as $deletedLink) {
             $deletedLink->delete(true);
+        }
+
+        if (isset($onlineProduct->product_id)) {
+            $deletedProductLinks = ProductLinkToObject::where('product_id', '=', $onlineProduct->product_id)
+                                                    ->where('object_type', '=', 'marketplace')
+                                                    ->get();
+            
+            foreach ($deletedProductLinks as $deletedProductLink) {
+                $deletedProductLink->delete(true);
+            }
         }
 
         if (! empty($data) && $data[0] !== '') {
@@ -425,8 +551,47 @@ trait HandleUpdate
                 $saveObjectMarketPlaces->sku = isset($item['sku']) ? $item['sku'] : null;
                 $saveObjectMarketPlaces->save();
                 $marketplaceData[] = $saveObjectMarketPlaces;
+
+                if (isset($onlineProduct->product_id)) {
+                    $saveObjectMarketPlacesOnlineProduct = new ProductLinkToObject();
+                    $saveObjectMarketPlacesOnlineProduct->product_id = $onlineProduct->product_id;
+                    $saveObjectMarketPlacesOnlineProduct->object_id = $item['id'];
+                    $saveObjectMarketPlacesOnlineProduct->object_type = 'marketplace';
+                    $saveObjectMarketPlacesOnlineProduct->product_url = $item['website_url'];
+                    $saveObjectMarketPlacesOnlineProduct->original_price = $item['original_price'];
+                    $saveObjectMarketPlacesOnlineProduct->selling_price = $item['selling_price'];
+                    $saveObjectMarketPlacesOnlineProduct->sku = isset($item['sku']) ? $item['sku'] : null;
+                    $saveObjectMarketPlacesOnlineProduct->save();
+                    $marketplaceDataOnlineProduct[] = $saveObjectMarketPlacesOnlineProduct;
+                }
             }
             $brandProduct->marketplaces = $marketplaceData;
+
+            if (isset($onlineProduct->product_id)) {
+                $onlineProduct->marketplaces = $marketplaceDataOnlineProduct;
+            }
         }
+    }
+
+    private function checkMarketplaceDeletion($request)
+    {
+        $marketplaceRequest = @json_decode($request->marketplaces, true);
+        $marketplaceRequest = $marketplaceRequest ?: [];
+        
+        if (count($marketplaceRequest) === 0) {
+            return TRUE;
+        }
+
+        return FALSE;
+    }
+
+    private function getCountryId($base_merchant_id)
+    {
+        // get country id from base merchant
+        $country = BaseMerchant::select('country_id')->where('base_merchant_id', $base_merchant_id)->first();
+        if (!$country) {
+            OrbitShopAPI::throwInvalidArgument('Country Id not found');
+        }
+        return $country->country_id;
     }
 }
