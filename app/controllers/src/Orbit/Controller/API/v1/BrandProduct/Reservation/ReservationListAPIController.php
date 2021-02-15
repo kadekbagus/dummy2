@@ -47,7 +47,7 @@ class ReservationListAPIController extends ControllerAPI
                     'status'      => $status,
                 ),
                 array(
-                    'status'      => 'in:pending,accepted,cancelled,declined,expired',
+                    'status'      => 'in:pending,accepted,cancelled,declined,expired,done',
                 )
             );
 
@@ -63,13 +63,14 @@ class ReservationListAPIController extends ControllerAPI
                     {$prefix}brand_product_reservations.product_name,
                     {$prefix}brand_product_reservations.brand_product_variant_id,
                     CASE {$prefix}brand_product_reservations.status
-                        WHEN 'pending' THEN
+                        WHEN 'accepted' THEN
                             CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
                                 THEN 'expired'
                                 ELSE {$prefix}brand_product_reservations.status
                             END
-                    ELSE
-                        {$prefix}brand_product_reservations.status
+                        WHEN 'done' THEN 'sold'
+                        ELSE
+                            {$prefix}brand_product_reservations.status
                     END as status
                 "))
                 ->with([
@@ -108,20 +109,26 @@ class ReservationListAPIController extends ControllerAPI
 
             OrbitInput::get('product_name_like', function($keyword) use ($reservations)
             {
-                $reservations->where('product_name', 'like', "%$keyword%");
+                $reservations->where('product_name', 'like', "%$keyword%")
+                    ->orWhere('brand_product_reservations.brand_product_reservation_id', 'like', "%{$keyword}%");
             });
 
             OrbitInput::get('status', function($status) use ($reservations)
             {
                 switch (strtolower($status)) {
                     case 'expired':
-                        $reservations->where('status', 'pending')
+                        $reservations->where('status', 'accepted')
                             ->where('expired_at', '<', DB::raw("NOW()"));
                         break;
 
-                    case 'pending':
-                        $reservations->where('status', 'pending')
+                    case 'accepted':
+                        $reservations->where('status', 'accepted')
                             ->where('expired_at', '>=', DB::raw("NOW()"));
+                        break;
+
+                    case 'sold':
+                    case 'done':
+                        $reservations->where('status', 'done');
                         break;
 
                     default:

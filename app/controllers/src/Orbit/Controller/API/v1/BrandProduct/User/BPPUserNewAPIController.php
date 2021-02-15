@@ -49,7 +49,7 @@ class BPPUserNewAPIController extends ControllerAPI
                 $errorMessage = 'you are not allowed to create new user';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-            
+
             $validator = Validator::make(
                 array(
                     'email'         => $email,
@@ -86,8 +86,11 @@ class BPPUserNewAPIController extends ControllerAPI
             $newBppUser->status = $status;
             $newBppUser->user_type = 'store';
             $newBppUser->base_merchant_id = $brandId;
-            $newBppUser->merchant_id = $merchantId;
+            $newBppUser->merchant_id = is_array($merchantId)
+                ? $merchantId[0] : $merchantId;
             $newBppUser->save();
+
+            $newBppUser->stores()->attach($merchantId);
 
             // Commit the changes
             $this->commit();

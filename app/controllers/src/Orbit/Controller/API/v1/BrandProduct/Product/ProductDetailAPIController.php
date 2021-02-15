@@ -64,7 +64,10 @@ class ProductDetailAPIController extends ControllerAPI
                     {$prefix}brand_products.product_description,
                     {$prefix}brand_products.tnc,
                     ceil({$prefix}brand_products.max_reservation_time/60) as max_reservation_time,
-                    {$prefix}brand_products.status
+                    {$prefix}brand_products.status,
+                    {$prefix}products.status as online_product_status,
+                    {$prefix}bpp_users.name as creator_name,
+                    {$prefix}bpp_users.email as creator_email
                 "))
                 ->with([
                     'brand_product_main_photo' => function($q) {
@@ -105,6 +108,8 @@ class ProductDetailAPIController extends ControllerAPI
                           ->where('marketplaces.status', '=', 'active');
                     }
                 ])
+                ->leftJoin('products', 'brand_products.brand_product_id', '=', 'products.brand_product_id')
+                ->join('bpp_users', 'brand_products.created_by', '=', 'bpp_users.bpp_user_id')
                 ->where('brand_products.brand_product_id', $productId)
                 ->where('brand_products.brand_id', $brandId);
 
@@ -154,7 +159,7 @@ class ProductDetailAPIController extends ControllerAPI
             foreach ($variants as &$variantItem) {
                 foreach ($product->brand_product_variants as $key => $bpv) {
                     foreach ($bpv->variant_options as $key => $vo) {
-                        if ($vo->option_type = 'variant_options' && isset($vo->option->variant)) {
+                        if ($vo->option_type === 'variant_option' && isset($vo->option->variant)) {
                             if ($variantItem->name === $vo->option->variant->variant_name) {
                                 $option = new stdclass();
                                 $option->option_id = $vo->option->variant_option_id;
@@ -176,10 +181,25 @@ class ProductDetailAPIController extends ControllerAPI
                 }
             }
 
+            $userStores = [];
+            if ($user->user_type === 'store') {
+                $user->load('stores');
+                $userStores = $user->stores->map(function($store) {
+                    return $store->merchant_id;
+                })->toArray();
+            }
+
             $selectedStores = [];
             foreach ($product->brand_product_variants as $key => $bpv) {
                 foreach ($bpv->variant_options as $key => $vo) {
                     if ($vo->option_type = 'merchant' && ! is_null($vo->store)) {
+
+                        if ($user->user_type === 'store'
+                            && ! in_array($vo->store->merchant_id, $userStores)
+                        ) {
+                            continue;
+                        }
+
                         $store = new stdclass();
                         $store->id = $vo->store->merchant_id;
                         $store->name = $vo->store->name;
