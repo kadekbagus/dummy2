@@ -5940,6 +5940,13 @@ return array(
                 // the object for 1 month 2592000 seconds
                 'CacheControl' => 'public, max-age=2592000'
             ],
+        ],
+
+        'cloudfront-prefix' => [
+            // enable cloudfront prefix, uploaded images will have this prefix instead of s3 http prefix
+            'enabled' => false,
+
+            'prefix' => 'https://cfdevdotcool.gotomalls.com'
         ]
     ],
 
