@@ -68,8 +68,9 @@ class ReservationListAPIController extends ControllerAPI
                                 THEN 'expired'
                                 ELSE {$prefix}brand_product_reservations.status
                             END
-                    ELSE
-                        {$prefix}brand_product_reservations.status
+                        WHEN 'done' THEN 'sold'
+                        ELSE
+                            {$prefix}brand_product_reservations.status
                     END as status
                 "))
                 ->with([
@@ -108,7 +109,8 @@ class ReservationListAPIController extends ControllerAPI
 
             OrbitInput::get('product_name_like', function($keyword) use ($reservations)
             {
-                $reservations->where('product_name', 'like', "%$keyword%");
+                $reservations->where('product_name', 'like', "%$keyword%")
+                    ->orWhere('brand_product_reservations.brand_product_reservation_id', 'like', "%{$keyword}%");
             });
 
             OrbitInput::get('status', function($status) use ($reservations)
@@ -122,6 +124,11 @@ class ReservationListAPIController extends ControllerAPI
                     case 'accepted':
                         $reservations->where('status', 'accepted')
                             ->where('expired_at', '>=', DB::raw("NOW()"));
+                        break;
+
+                    case 'sold':
+                    case 'done':
+                        $reservations->where('status', 'done');
                         break;
 
                     default:

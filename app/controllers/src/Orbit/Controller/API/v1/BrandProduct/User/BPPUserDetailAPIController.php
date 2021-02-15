@@ -55,8 +55,20 @@ class BPPUserDetailAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-            
+
             $userDetail = App::make('orbit.bpp_user.exists');
+
+            $userDetail->setRelation(
+                'stores',
+                $userDetail->stores->map(function($store) {
+                    return [
+                        'merchant_id' => $store->merchant_id,
+                        'store_name' => $store->name . ' ' .
+                            ($store->mall ? $store->mall->name : '')
+                    ];
+                })
+            );
+
 
             $this->response->data = $userDetail;
 
@@ -71,7 +83,16 @@ class BPPUserDetailAPIController extends ControllerAPI
     {
         // Check the existance of bpp_user id
         Validator::extend('orbit.bpp_user.exists', function ($attribute, $value, $parameters) {
-            $BPPUser = BppUser::where('bpp_user_id', $value)->first();
+            $BPPUser = BppUser::with([
+                'stores' => function($query) {
+                    $query->select(
+                        'merchants.merchant_id',
+                        'merchants.name',
+                        'merchants.parent_id'
+                    )->with(['mall']);
+                }
+            ])
+            ->where('bpp_user_id', $value)->first();
 
             if (empty($BPPUser)) {
                 return FALSE;

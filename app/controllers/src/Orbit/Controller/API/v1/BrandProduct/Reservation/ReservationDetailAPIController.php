@@ -87,8 +87,9 @@ class ReservationDetailAPIController extends ControllerAPI
                                 THEN 'expired'
                                 ELSE {$prefix}brand_product_reservations.status
                             END
-                    ELSE
-                        {$prefix}brand_product_reservations.status
+                        WHEN 'done' THEN 'sold'
+                        ELSE
+                            {$prefix}brand_product_reservations.status
                     END as status
                 "))
                 ->with([

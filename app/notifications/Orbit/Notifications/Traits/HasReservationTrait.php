@@ -89,11 +89,14 @@ trait HasReservationTrait
 
         $store = $this->getStore();
         $brandId = $this->reservation->brand_product_variant->brand_product->brand_id;
-        $allAdmin = BppUser::where('status', 'active')
+        $allAdmin = BppUser::with(['stores'])
+            ->where('status', 'active')
             ->where('base_merchant_id', $brandId)
             ->where(function($query) use ($store) {
                 $query->where('user_type', 'brand')
-                    ->orWhere('merchant_id', $store['storeId']);
+                    ->orWhereHas('stores', function($query) use ($store) {
+                        $query->where('bpp_user_merchants.merchant_id', $store['storeId']);
+                    });
             })
             ->get();
 
