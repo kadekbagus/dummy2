@@ -110,7 +110,7 @@ class ReservationListAPIController extends ControllerAPI
             OrbitInput::get('product_name_like', function($keyword) use ($reservations)
             {
                 $reservations->where('product_name', 'like', "%$keyword%")
-                    ->orWhere('brand_product_reservation_id', 'like', "%{$keyword}%");
+                    ->orWhere('brand_product_reservations.brand_product_reservation_id', 'like', "%{$keyword}%");
             });
 
             OrbitInput::get('status', function($status) use ($reservations)
