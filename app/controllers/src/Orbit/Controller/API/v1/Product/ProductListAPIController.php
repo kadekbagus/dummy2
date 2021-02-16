@@ -83,7 +83,7 @@ class ProductListAPIController extends ControllerAPI
                                         INNER JOIN {$prefix}base_merchants ON {$prefix}base_merchants.base_merchant_id = {$prefix}product_link_to_object.object_id
                                         WHERE {$prefix}product_link_to_object.product_id = {$prefix}products.product_id
                                         AND {$prefix}product_link_to_object.object_type = 'brand') as link_to_brand"
-                                ));
+                                ))->whereNull('products.brand_product_id');
 
             OrbitInput::get('product_id', function($product_id) use ($product)
             {
