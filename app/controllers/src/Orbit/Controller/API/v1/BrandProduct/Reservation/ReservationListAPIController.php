@@ -205,7 +205,7 @@ class ReservationListAPIController extends ControllerAPI
                 foreach ($item->details as $variantDetail) {
                     $variants[] = $variantDetail->value;
                 }
-                $returnedItem->variants = implode(',', $variants);
+                $returnedItem->variants = implode(', ', strtoupper($variants));
                 $returnedData[] = $returnedItem;
             }
 
