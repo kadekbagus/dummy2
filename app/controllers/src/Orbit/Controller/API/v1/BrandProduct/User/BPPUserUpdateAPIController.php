@@ -66,9 +66,9 @@ class BPPUserUpdateAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-            
+
             $updatedBPPUser = App::make('orbit.bpp_user.exists');
-            
+
             OrbitInput::post('name', function($name) use ($updatedBPPUser) {
                 $updatedBPPUser->name = $name;
             });
@@ -82,7 +82,11 @@ class BPPUserUpdateAPIController extends ControllerAPI
             });
 
             OrbitInput::post('merchant_id', function($merchantId) use ($updatedBPPUser) {
-                $updatedBPPUser->merchant_id = $merchantId;
+                if (! is_array($merchantId)) {
+                    $merchantId = [$merchantId];
+                }
+
+                $updatedBPPUser->stores()->sync($merchantId);
             });
 
             OrbitInput::post('status', function($status) use ($updatedBPPUser) {
@@ -131,7 +135,7 @@ class BPPUserUpdateAPIController extends ControllerAPI
 
             return FALSE;
         });
-        
+
     }
 
 }

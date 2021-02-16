@@ -13,7 +13,7 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
  * @param ProductNewAPIController $controller - The instance of the ProductNewAPIController or its subclass
  * @param Product $product - Instance of object Product
  */
-Event::listen('orbit.brandproduct.postnewbrandproduct.after.save', function($product)
+Event::listen('orbit.brandproduct.postnewbrandproduct.after.save', function($product, $onlineProduct)
 {
     // This will be used on MediaAPIController
     $media = [];
@@ -41,10 +41,34 @@ Event::listen('orbit.brandproduct.postnewbrandproduct.after.save', function($pro
         }
 
         $media[] = $response->data;
+
+        // product main photos for online product
+        if (isset($onlineProduct->product_id)) {
+
+            $_POST['media_name_id'] = 'product_image';
+            $_POST['object_id'] = $onlineProduct->product_id;
+    
+            $response = MediaAPIController::create('raw')
+                                        ->setEnableTransaction(false)
+                                        ->setInputName('brand_product_main_photo')
+                                        ->setSkipRoleChecking()
+                                        ->upload();
+    
+            if ($response->code !== 0)
+            {
+                throw new \Exception($response->message, $response->code);
+            }
+    
+            $mediaOnlineProduct[] = $response->data;
+    
+            unset($_POST['media_name_id']);
+            unset($_POST['object_id']);
+        }
     }
 
     // Process brand product photos...
     $_POST['media_name_id'] = 'brand_product_photos';
+    $_POST['object_id'] = $product->brand_product_id;
 
     for($i = 0; $i < $maxPhotos; $i++) {
 
@@ -75,6 +99,38 @@ Event::listen('orbit.brandproduct.postnewbrandproduct.after.save', function($pro
 
     unset($_POST['media_name_id']);
     unset($_POST['object_id']);
+ 
+    // product photos for online product
+    if (isset($onlineProduct->product_id)) {
+        
+        $_POST['media_name_id'] = 'product_photos';
+        $_POST['object_id'] = $onlineProduct->product_id;
+    
+        for($i = 0; $i < $maxPhotos; $i++) {
+    
+            $inputName = "images{$i}";
+            if (Request::hasFile($inputName)) {
+    
+                $response = MediaAPIController::create('raw')
+                                            ->setInputName($inputName)
+                                            ->setEnableTransaction(false)
+                                            ->setSkipRoleChecking()
+                                            ->upload();
+    
+                if ($response->code !== 0)
+                {
+                    throw new \Exception($response->message, $response->code);
+                }
+    
+                $mediaOnlineProduct[] = $response->data;
+            }
+        }
+    
+        $onlineProduct->media = $mediaOnlineProduct;
+
+        unset($_POST['media_name_id']);
+        unset($_POST['object_id']);
+    }
 });
 
 /**
