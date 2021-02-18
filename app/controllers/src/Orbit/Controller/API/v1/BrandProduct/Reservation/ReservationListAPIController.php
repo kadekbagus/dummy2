@@ -203,9 +203,9 @@ class ReservationListAPIController extends ControllerAPI
                 $returnedItem->cdn_url = $cdnUrl;
                 $variants = [];
                 foreach ($item->details as $variantDetail) {
-                    $variants[] = $variantDetail->value;
+                    $variants[] = strtoupper($variantDetail->value);
                 }
-                $returnedItem->variants = implode(',', $variants);
+                $returnedItem->variants = implode(', ', $variants);
                 $returnedData[] = $returnedItem;
             }
 
