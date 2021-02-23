@@ -17,6 +17,7 @@ Event::listen('orbit.brandproduct.postnewbrandproduct.after.save', function($pro
 {
     // This will be used on MediaAPIController
     $media = [];
+    $mediaOnlineProduct = [];
     $maxPhotos = 4;
     $user = App::make('currentUser');
     App::instance('orbit.upload.user', $user);
