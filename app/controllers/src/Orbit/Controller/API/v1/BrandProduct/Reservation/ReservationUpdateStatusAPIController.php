@@ -2,23 +2,24 @@
 
 namespace Orbit\Controller\API\v1\BrandProduct\Reservation;
 
-use OrbitShop\API\v1\ControllerAPI;
-use OrbitShop\API\v1\OrbitShopAPI;
-use OrbitShop\API\v1\Helper\Input as OrbitInput;
-use OrbitShop\API\v1\Exception\InvalidArgsException;
-use DominoPOS\OrbitACL\ACL;
-use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
-use Illuminate\Database\QueryException;
-use Validator;
-use stdclass;
-
 use DB;
+use App;
 use Lang;
 use Config;
-use BrandProductReservation;
+use stdclass;
 use Exception;
-use App;
+use Validator;
+use Carbon\Carbon;
+use DominoPOS\OrbitACL\ACL;
+
+use BrandProductReservation;
+use OrbitShop\API\v1\OrbitShopAPI;
+use OrbitShop\API\v1\ControllerAPI;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Database\QueryException;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use OrbitShop\API\v1\Exception\InvalidArgsException;
+use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 
 class ReservationUpdateStatusAPIController extends ControllerAPI
 {
@@ -101,6 +102,22 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             if ($status === BrandProductReservation::STATUS_DECLINED) {
                 $reservation->declined_by = $userId;
                 $reservation->cancel_reason = $cancelReason;
+            }
+
+            if ($status === BrandProductReservation::STATUS_ACCEPTED) {
+                $reservation->load(['brand_product_variant.brand_product']);
+                if (empty($reservation->brand_product_variant)) {
+                    OrbitShopAPI::throwInvalidArgument('Change status failed! Unable to find linked product variant for this reservation. Variant might be changed or deleted.');
+                }
+
+                if (empty($reservation->brand_product_variant->brand_product)) {
+                    OrbitShopAPI::throwInvalidArgument('Change status failed! Unable to find linked brand product for this reservation. It might be changed or deleted.');
+                }
+
+                $reservation->expired_at = Carbon::now()->addMinutes(
+                    $reservation->brand_product_variant->brand_product
+                        ->max_reservation_time
+                );
             }
 
             $reservation->save();
