@@ -36,6 +36,7 @@ class UserReportMailQueue
             $dataView['landing_page_url'] = Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com');
             $dataView['pulsa_page_url'] = $dataView['landing_page_url'].'/pulsa?country=Indonesia';
             $dataView['game_voucher_page_url'] = $dataView['landing_page_url'].'/game-voucher?country=Indonesia';
+            $dataView['pln_page_url'] = $dataView['landing_page_url'].'/pln-token?country=Indonesia';
             $dataView['mall_list_page_url'] = $dataView['landing_page_url'].'/malls';
             $dataView['store_list_page_url'] = $dataView['landing_page_url'].'/stores';
             $dataView['coupon_list_page_url'] = $dataView['landing_page_url'].'/coupons';
