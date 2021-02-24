@@ -8,6 +8,8 @@ Rank {{$user_rank}}
 Gotomalls Points {{$user_point}}
 Vouchers Purchased {{$coupon_purchased}}
 Pulsa Purchased {{$pulsa_purchased}}
+Game Voucher Purchased {{$game_voucher_purchased}}
+PLN Token Purchased {{$pln_purchased}}
 
 Malls View {{$mall_view}}
 Brands & Stores View {{$store_view}}
