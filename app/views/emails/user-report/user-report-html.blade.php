@@ -18,7 +18,7 @@
     <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#F2F2F2">
       <tr>
         <td align="center" valign="middle">
-          <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/gtm-logo.png" class="logo" alt="Logo">
+          <img src="https://cloudfront.gotomalls.com/uploads/emails/gtm-logo.png" class="logo" alt="Logo">
         </td>
       </tr>
 
@@ -121,6 +121,32 @@
                     </td>
                   </tr>
                   <tr>
+                    <td width="100%" class="mobile statistic-item" valign="middle">
+                      <table width="100%">
+                        <tr>
+                          <td valign="middle">
+                            <h3 class="statistic-title">{{ trans('email-report.body.game_voucher_purchased') }}</h3>
+                          </td>
+                          <td valign="middle">
+                            <h3 class="statistic-title">{{ trans('email-report.body.pln_purchased') }}</h3>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>
+                            <div class="statistic-value" valign="bottom">
+                              {{$game_voucher_purchased}}
+                            </div>
+                          </td>
+                          <td>
+                            <div class="statistic-value" valign="bottom">
+                              {{$pln_purchased}}
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
                     <td align="center" colspan="4">
                       <hr class="separator" style="border: 0; height: 1px;background-color:#ddd;">
                     </td>
@@ -129,10 +155,17 @@
 
                 <table width="600" cellpadding="0" cellspacing="0" class="container container-pulsa-banner">
                   <tr>
-                    <td class="mobile" width="600">
+                    <td class="mobile" width="300">
                       <div style="" class="pulsa-banner-container">
                         <a href="{{ $pulsa_page_url }}">
-                          <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/pulsa-banner-email.png" class="pulsa-banner-img">
+                          <img src="https://cloudfront.gotomalls.com/uploads/emails/email-pulsa-sm.jpg" class="pulsa-banner-img">
+                        </a>
+                      </div>
+                    </td>
+                    <td class="mobile" width="300">
+                      <div style="" class="pulsa-banner-container">
+                        <a href="{{ $pln_page_url }}">
+                          <img src="https://cloudfront.gotomalls.com/uploads/emails/email-pln-sm.jpg" class="pulsa-banner-img">
                         </a>
                       </div>
                     </td>
@@ -141,7 +174,7 @@
                   <tr>
                     <td class="mobile" width="600">
                       <a href="{{ $game_voucher_page_url }}">
-                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/game-voucher-banner-03-2020.jpg" alt="game-voucher-banner" style="width: 100%;margin-top:5px;margin-bottom:20px;">
+                        <img src="https://cloudfront.gotomalls.com/uploads/emails/game-voucher-banner-03-2020.jpg" alt="game-voucher-banner" style="width: 100%;margin-top:5px;margin-bottom:20px;">
                       </a>
                     </td>
                   </tr>
@@ -380,23 +413,23 @@
                         {{ trans('email-report.footer.follow_us') }}
                       </p>
                       <a href="https://www.facebook.com/Gotomalls.Indo" class="contact-link" target="_blank">
-                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/socmed-icon-02.png" alt="FB icon" class="contact-img" style="margin-left: 0;">
+                        <img src="https://cloudfront.gotomalls.com/uploads/emails/socmed-icon-02.png" alt="FB icon" class="contact-img" style="margin-left: 0;">
                       </a>
 
                       <a href="https://twitter.com/gotomalls" class="contact-link" target="_blank">
-                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/socmed-icon-03.png" alt="Twitter icon" class="contact-img">
+                        <img src="https://cloudfront.gotomalls.com/uploads/emails/socmed-icon-03.png" alt="Twitter icon" class="contact-img">
                       </a>
 
                       <a href="https://www.instagram.com/gotomalls/" class="contact-link" target="_blank">
-                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/socmed-icon-04.png" alt="Instagram icon" class="contact-img">
+                        <img src="https://cloudfront.gotomalls.com/uploads/emails/socmed-icon-04.png" alt="Instagram icon" class="contact-img">
                       </a>
 
                       <a href="https://www.youtube.com/gotomallscom" class="contact-link" target="_blank">
-                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/socmed-icon-05.png" alt="Youtube icon" class="contact-img">
+                        <img src="https://cloudfront.gotomalls.com/uploads/emails/socmed-icon-05.png" alt="Youtube icon" class="contact-img">
                       </a>
 
                       <a href="https://id.linkedin.com/company/gotomalls" class="contact-link" target="_blank">
-                        <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/socmed-icon-06.png" alt="LinkedIn icon" class="contact-img" style="margin-right: 0;">
+                        <img src="https://cloudfront.gotomalls.com/uploads/emails/socmed-icon-06.png" alt="LinkedIn icon" class="contact-img" style="margin-right: 0;">
                       </a>
                     </td>
                   </tr>
