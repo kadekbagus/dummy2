@@ -121,6 +121,14 @@
                     </td>
                   </tr>
                   <tr>
+                    <td align="center" colspan="4">
+                      <hr class="separator" style="border: 0; height: 1px;background-color:#ddd;">
+                    </td>
+                  </tr>
+                </table>
+
+                <table width="600" cellpadding="0" cellspacing="0" border="0" class="container statistic-container">
+                  <tr>
                     <td width="100%" class="mobile statistic-item" valign="middle">
                       <table width="100%">
                         <tr>
@@ -170,7 +178,9 @@
                       </div>
                     </td>
                   </tr>
+                </table>
 
+                <table width="600" cellpadding="0" cellspacing="0" class="container container-pulsa-banner">
                   <tr>
                     <td class="mobile" width="600">
                       <a href="{{ $game_voucher_page_url }}">
