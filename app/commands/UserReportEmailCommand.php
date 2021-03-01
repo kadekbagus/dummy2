@@ -264,13 +264,14 @@ class UserReportEmailCommand extends Command {
                                    and (created_at between ".DB::getPdo()->quote($startDate)." and ".DB::getPdo()->quote($endDate).")) as total,
                                     {$image},
                                     {$prefix}merchants.name"))
-                         ->join('merchants', 'merchants.merchant_id', '=', 'activities.object_id')
+                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'activities.object_id')
                          ->leftJoin('media', 'media.object_id', '=', 'activities.object_id')
-                         ->where('media.media_name_long', 'mall_logo_orig')
-                         ->where('activities.activity_name', 'view_mall')
                          ->where('activities.user_id', $userId)
+                         // ->where('media.media_name_long', 'mall_logo_orig')
+                         ->where('activities.activity_name', 'view_mall')
                          ->whereBetween('activities.created_at', [$startDate, $endDate])
-                         ->orderBy('activities.created_at', 'desc')
+                         // ->orderBy('activities.created_at', 'desc')
+                         ->groupBy('activities.object_id')
                          ->take(3)
                          ->get();
 
@@ -302,13 +303,14 @@ class UserReportEmailCommand extends Command {
                                    and (created_at between ".DB::getPdo()->quote($startDate)." and ".DB::getPdo()->quote($endDate).")) as total,
                                     {$image},
                                     {$prefix}merchants.name"))
-                         ->join('merchants', 'merchants.merchant_id', '=', 'activities.object_id')
+                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'activities.object_id')
                          ->leftJoin('media', 'media.object_id', '=', 'activities.object_id')
-                         ->where('media.media_name_long', 'retailer_logo_orig')
-                         ->whereIn('activities.activity_name', ['view_landing_page_store_detail', 'view_mall_store_detail'])
+                         // ->where('media.media_name_long', 'retailer_logo_orig')
                          ->where('activities.user_id', $userId)
+                         ->whereIn('activities.activity_name', ['view_landing_page_store_detail', 'view_mall_store_detail'])
                          ->whereBetween('activities.created_at', [$startDate, $endDate])
-                         ->orderBy('activities.created_at', 'desc')
+                         // ->orderBy('activities.created_at', 'desc')
+                         ->groupBy('activities.object_id')
                          ->take(3)
                          ->get();
 
@@ -538,13 +540,14 @@ class UserReportEmailCommand extends Command {
                                    and (created_at between ".DB::getPdo()->quote($startDate)." and ".DB::getPdo()->quote($endDate).")) as total,
                                     {$image},
                                     {$prefix}articles.title"))
-                         ->join('articles', 'articles.article_id', '=', 'activities.object_id')
+                         ->leftJoin('articles', 'articles.article_id', '=', 'activities.object_id')
                          ->leftJoin('media', 'media.object_id', '=', 'activities.object_id')
-                         ->where('media.media_name_long', 'article_cover_image_orig')
-                         ->where('activities.activity_name', 'view_article_detail')
+                         // ->where('media.media_name_long', 'article_cover_image_orig')
                          ->where('activities.user_id', $userId)
+                         ->where('activities.activity_name', 'view_article_detail')
                          ->whereBetween('activities.created_at', [$startDate, $endDate])
-                         ->orderBy('activities.created_at', 'desc')
+                         // ->orderBy('activities.created_at', 'desc')
+                         ->groupBy('activities.object_id')
                          ->take(3)
                          ->get();
 
