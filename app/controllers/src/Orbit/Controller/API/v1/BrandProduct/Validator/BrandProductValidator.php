@@ -21,8 +21,9 @@ class BrandProductValidator
 
     public function exists($attribute, $productId, $params, $validator)
     {
-        $brandProduct = BrandProduct::where('brand_product_id', $productId)
-                            ->first();
+        $brandProduct = BrandProduct::with(['creator'])
+            ->where('brand_product_id', $productId)
+            ->first();
 
         if (! empty($brandProduct)) {
             App::instance('brandProduct', $brandProduct);
