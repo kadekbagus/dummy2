@@ -81,7 +81,7 @@ class UpdatePriceAPIController extends ControllerAPI
                 ->where('status', 'success')
                 ->firstOrFail();
 
-            $transactionDetail = PaymentTransactionDetail::where('payment_transaction_id')
+            $transactionDetail = PaymentTransactionDetail::where('payment_transaction_id', $transactionId)
                 ->firstOrFail();
 
             $transactionDetail->vendor_price = $newPrice;
