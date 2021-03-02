@@ -17,6 +17,8 @@ return [
         'gtm_point' => 'Gotomalls Point',
         'voucher_purchased' => 'Vouchers Purchased',
         'pulsa_purchased' => 'Pulsa Purchased',
+        'game_voucher_purchased' => 'Game Voucher Purchased',
+        'pln_purchased' => 'PLN Token Purchased',
 
         'campaigns' => [
             'mall_title' => 'Malls View',
