@@ -73,7 +73,7 @@ class UpdateStatusAPIController extends ControllerAPI
 
             // query
             $transaction = PaymentTransaction::where('payment_transaction_id', $transactionId)
-                ->where('status', 'success_no_pulsa_failed')
+                ->whereIn('status', ['success_no_pulsa_failed', 'success_no_product_failed'])
                 ->firstOrFail();
 
             $transaction->status = 'success';
