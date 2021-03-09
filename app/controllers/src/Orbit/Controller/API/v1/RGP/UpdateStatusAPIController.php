@@ -77,6 +77,7 @@ class UpdateStatusAPIController extends ControllerAPI
                 ->firstOrFail();
 
             $transaction->status = 'success';
+            $transaction->timestamp = false;
             $transaction->save();
 
         } catch (Exception $e) {

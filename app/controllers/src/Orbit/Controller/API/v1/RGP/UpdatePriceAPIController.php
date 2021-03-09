@@ -85,6 +85,7 @@ class UpdatePriceAPIController extends ControllerAPI
                 ->firstOrFail();
 
             $transactionDetail->vendor_price = $newPrice;
+            $transaction->timestamp = false;
             $transactionDetail->save();
 
         } catch (Exception $e) {
