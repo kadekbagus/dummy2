@@ -392,7 +392,7 @@ class ProductNewAPIController extends ControllerAPI
 
                 } else {
                     if ($item['selling_price'] > $item['original_price']) {
-                        OrbitShopAPI::throwInvalidArgument('Selling price cannot higher than original price');
+                        OrbitShopAPI::throwInvalidArgument('Link to marketplace selling price cannot higher than original price');
                     }
                 }
 
