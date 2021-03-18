@@ -81,14 +81,18 @@ class ProductNewAPIController extends ControllerAPI
                     'status'              => 'in:active,inactive',
                     'category_id'         => 'required',
                     'variants'            => 'required|orbit.brand_product.variants',
-                    'brand_product_variants' => 'required'
-                        . '|orbit.brand_product.product_variants'
-                        . '|orbit.brand_product.selling_price_lt_original_price',
+                    'brand_product_variants' => join('|', [
+                        'required',
+                        'orbit.brand_product.product_variants',
+                        'orbit.brand_product.selling_price_lt_original_price',
+                        'orbit.brand_product.can_create',
+                    ]),
                     'brand_product_main_photo' => 'required|image|max:1024',
                 ),
                 array(
                     'product_name.required' => 'Product Name is required.',
                     'category_id.required' => 'The Category is required.',
+                    'orbit.brand_product.can_create' => 'You are not allowed to create the product.',
                 )
             );
 
@@ -137,7 +141,7 @@ class ProductNewAPIController extends ControllerAPI
             );
 
             // prepare data for online product
-            $onlineProductData = array('name' => $productName, 
+            $onlineProductData = array('name' => $productName,
                                        'shortDescription' => $productDescription,
                                        'status' => $status,
                                        'categoryId' => $categoryId,
@@ -169,7 +173,7 @@ class ProductNewAPIController extends ControllerAPI
             if (isset($newOnlineProduct->product_id)) {
                 Event::fire('orbit.newproduct.postnewproduct.after.commit', array($this, $newOnlineProduct));
             }
-            
+
             $newBrandProduct->online_product = isset($newOnlineProduct->product_id) ? $newOnlineProduct : null;
             $this->response->data = $newBrandProduct;
 
@@ -313,6 +317,11 @@ class ProductNewAPIController extends ControllerAPI
     private function registerCustomValidations()
     {
         Validator::extend(
+            'orbit.brand_product.can_create',
+            BrandProductValidator::class . '@canCreate'
+        );
+
+        Validator::extend(
             'orbit.brand_product.variants',
             BrandProductValidator::class . '@variants'
         );
@@ -343,7 +352,7 @@ class ProductNewAPIController extends ControllerAPI
         $deletedLinks = BrandProductLinkToObject::where('brand_product_id', '=', $newBrandProduct->brand_product_id)
                                                 ->where('object_type', '=', 'marketplace')
                                                 ->get();
-        
+
         $deletedProductLinks = ProductLinkToObject::where('product_id', '=', $newOnlineProduct->product_id)
                                                 ->where('object_type', '=', 'marketplace')
                                                 ->get();
@@ -383,7 +392,7 @@ class ProductNewAPIController extends ControllerAPI
 
                 } else {
                     if ($item['selling_price'] > $item['original_price']) {
-                        OrbitShopAPI::throwInvalidArgument('Selling price cannot higher than original price');
+                        OrbitShopAPI::throwInvalidArgument('Link to marketplace selling price cannot higher than original price');
                     }
                 }
 
