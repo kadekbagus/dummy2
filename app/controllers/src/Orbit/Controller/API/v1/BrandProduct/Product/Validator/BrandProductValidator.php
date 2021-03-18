@@ -3,9 +3,10 @@
 namespace Orbit\Controller\API\v1\BrandProduct\Product\Validator;
 
 use App;
-use BrandProductVariant;
-use Request;
 use Media;
+use Request;
+use BaseStore;
+use BrandProductVariant;
 
 /**
  * Brand Product Validator.
@@ -229,5 +230,131 @@ class BrandProductValidator
         }
 
         return $valid;
+    }
+
+    /**
+     * Validate that current user can create a product or not.
+     *
+     */
+    public function canCreate($attrs, $value, $params)
+    {
+        return $this->requestedStoresBelongToUser();
+    }
+
+    /**
+     * Validate that current user can update a given product.
+     */
+    public function canUpdate($attrs, $id, $params)
+    {
+        $valid = false;
+
+        if (! App::bound('brandProduct')) {
+            return false;
+        }
+
+        $brandProduct = App::make('brandProduct');
+
+        // Only able to update product created by logged in user.
+        if ($brandProduct->createdBy('me')) {
+            $valid = true;
+        }
+        else {
+            if (! $this->requestHasProductMainData()) {
+                $valid = $this->requestedStoresBelongToUser();
+            }
+        }
+
+        return $valid;
+    }
+
+    private function getStoresFromRequest()
+    {
+        $stores = [];
+
+        if (App::bound('productVariants')) {
+            $productVariants = App::make('productVariants');
+
+            foreach($productVariants as $productVariant) {
+                if (isset($productVariant['variant_options'])) {
+                    foreach($productVariant['variant_options'] as $vo) {
+                        if ($vo['option_type'] === 'merchant'
+                            && ! empty($vo['value'])
+                            && ! in_array($vo['value'], $stores)
+                        ) {
+                            $stores[] = $vo['value'];
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $stores;
+    }
+
+    /**
+     * Determine if current requested stores belong to user.
+     *
+     * @return bool
+     */
+    private function requestedStoresBelongToUser()
+    {
+        $valid = false;
+
+        $user = App::make('currentUser');
+
+        // Get store list from request
+        $requestedStores = $this->getStoresFromRequest();
+
+        if ($user->isAdmin()) {
+            // Get list of stores belongs to this user.
+            $userStores = BaseStore::select('base_store_id')
+            ->where('base_merchant_id', $user->base_merchant_id)
+            ->get()
+            ->map(function($store) {
+                return $store->base_store_id;
+            })->toArray();
+        }
+        else if ($user->isStore()) {
+            // Get list of stores belongs to this user.
+            $user->load(['stores']);
+            $userStores = $user->stores->map(function($store) {
+                return $store->merchant_id;
+            })->toArray();
+        }
+
+        if (empty($userStores)) {
+            return false;
+        }
+
+        // If any requested store NOT in the list of user's stores,
+        // then assume it is an invalid request (not authorized to create).
+        foreach($requestedStores as $requestedStore) {
+            if (! in_array($requestedStore, $userStores)) {
+                $valid = false;
+                break;
+            }
+            else {
+                $valid = true;
+            }
+        }
+
+        return $valid;
+    }
+
+    /**
+     * Determine if request has product main data.
+     *
+     * @return bool
+     */
+    private function requestHasProductMainData()
+    {
+        return Request::has('product_name')
+            || Request::has('product_description')
+            || Request::has('tnc')
+            || Request::has('max_reservation_time')
+            || Request::has('status')
+            || Request::has('category_id')
+            || Request::hasFile('brand_product_main_photo');
     }
 }

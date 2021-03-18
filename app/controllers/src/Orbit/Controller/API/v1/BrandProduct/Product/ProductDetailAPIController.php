@@ -67,7 +67,8 @@ class ProductDetailAPIController extends ControllerAPI
                     {$prefix}brand_products.status,
                     {$prefix}products.status as online_product_status,
                     {$prefix}bpp_users.name as creator_name,
-                    {$prefix}bpp_users.email as creator_email
+                    {$prefix}bpp_users.email as creator_email,
+                    {$prefix}bpp_users.user_type as creator_type
                 "))
                 ->with([
                     'brand_product_main_photo' => function($q) {

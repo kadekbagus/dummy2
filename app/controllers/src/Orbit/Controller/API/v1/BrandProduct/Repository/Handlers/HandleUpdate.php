@@ -2,27 +2,28 @@
 
 namespace Orbit\Controller\API\v1\BrandProduct\Repository\Handlers;
 
-use App;
-use BrandProduct;
-use BrandProductVideo;
-use BrandProductVariant;
-use BrandProductVariantOption;
-use BrandProductLinkToObject;
 use DB;
+use App;
 use Event;
-use Exception;
 use Media;
-use MediaAPIController;
-use Orbit\Controller\API\v1\BrandProduct\Product\DataBuilder\UpdateBrandProductBuilder;
+use Product;
 use Request;
 use Variant;
-use VariantOption;
-use OrbitShop\API\v1\Helper\Input as OrbitInput;
-use OrbitShop\API\v1\OrbitShopAPI;
-use Product;
-use ProductLinkToObject;
-use ProductVideo;
+use BaseStore;
+use Exception;
 use BaseMerchant;
+use BrandProduct;
+use ProductVideo;
+use VariantOption;
+use BrandProductVideo;
+use MediaAPIController;
+use BrandProductVariant;
+use ProductLinkToObject;
+use BrandProductLinkToObject;
+use BrandProductVariantOption;
+use OrbitShop\API\v1\OrbitShopAPI;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use Orbit\Controller\API\v1\BrandProduct\Product\DataBuilder\UpdateBrandProductBuilder;
 
 /**
  * A helper that provide Brand Product update routines.
@@ -54,15 +55,15 @@ trait HandleUpdate
         $updateData = (new UpdateBrandProductBuilder($request))->build();
 
         // Update main data if needed.
+        // Get the Brand Product detail.
+        $brandProduct = $this->get($request->brand_product_id);
+
         if (count($updateData['main']) > 0) {
             foreach($updateData['main'] as $key => $data) {
                 $brandProductSingle->{$key} = $data;
             }
             $brandProductSingle->save();
         }
-
-        // Get the Brand Product detail.
-        $brandProduct = $this->get($request->brand_product_id);
 
         // Update categories
         if (! empty($updateData['categories'])) {
@@ -106,7 +107,7 @@ trait HandleUpdate
             });
 
             // disable online product if marketplace deleted
-            $disableOnlineProduct = $this->checkMarketplaceDeletion($request);    
+            $disableOnlineProduct = $this->checkMarketplaceDeletion($request);
 
             if ($disableOnlineProduct) {
                 $onlineProduct->status = 'inactive';
@@ -407,7 +408,7 @@ trait HandleUpdate
                     $variantOptionId = $selectedVariant[$optionValue];
                 }
 
-                $newBpVariantOption = BrandProductVariantOption::create([
+                BrandProductVariantOption::create([
                     'brand_product_variant_id' => $brandProductVariantId,
                     'option_type' => $optionType,
                     'option_id' => $variantOptionId,
@@ -446,7 +447,7 @@ trait HandleUpdate
                                     ->where('object_id', $brandProduct->online_product->product_id)
                                     ->where('media_name_id', 'product_image')
                                     ->get();
-    
+
                 foreach($mainPhotosOnlineProduct as $mainPhotoOnlineProduct) {
                     $mediaId = $mainPhotoOnlineProduct->media_id;
                     if (! in_array($mediaId, $updateData['deleted_images'])) {
@@ -504,7 +505,7 @@ trait HandleUpdate
             $deletedProductLinks = ProductLinkToObject::where('product_id', '=', $onlineProduct->product_id)
                                                     ->where('object_type', '=', 'marketplace')
                                                     ->get();
-            
+
             foreach ($deletedProductLinks as $deletedProductLink) {
                 $deletedProductLink->delete(true);
             }
@@ -537,7 +538,7 @@ trait HandleUpdate
 
                 } else {
                     if ($item['selling_price'] > $item['original_price']) {
-                        OrbitShopAPI::throwInvalidArgument('Selling price cannot higher than original price');
+                        OrbitShopAPI::throwInvalidArgument('Link to marketplace selling price cannot higher than original price');
                     }
                 }
 
@@ -577,7 +578,7 @@ trait HandleUpdate
     {
         $marketplaceRequest = @json_decode($request->marketplaces, true);
         $marketplaceRequest = $marketplaceRequest ?: [];
-        
+
         if (count($marketplaceRequest) === 0) {
             return TRUE;
         }
