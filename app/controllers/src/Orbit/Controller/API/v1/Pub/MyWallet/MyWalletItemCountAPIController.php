@@ -34,10 +34,12 @@ class MyWalletItemCountAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($message);
             }
 
-            $itemCount = (object) [
-                'my_coupon_count' => 0,
-                'my_reward_count' => 0,
-                'my_purchase_count' => 0,
+            $itemCount = [
+                (object) [
+                    'my_coupon_count' => 0,
+                    'my_reward_count' => 0,
+                    'my_purchase_count' => 0,
+                ],
             ];
 
             $this->response->code = 0;
