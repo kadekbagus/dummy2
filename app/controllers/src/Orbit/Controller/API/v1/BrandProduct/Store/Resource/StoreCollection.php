@@ -24,6 +24,7 @@ class StoreCollection extends EloquentResourceCollection
                 'name' => $item->store_name,
                 'mall_name' => $item->mall_name,
                 'location' => $this->transformLocation($item),
+                'store_location' => $item->store_location,
             ];
         }
 

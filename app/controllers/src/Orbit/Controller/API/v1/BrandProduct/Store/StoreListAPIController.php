@@ -34,10 +34,13 @@ class StoreListAPIController extends ControllerAPI
             $sortBy = $sortByMapping[$request->sortby ?: 'name'];
             $sortMode = $request->sortmode ?: 'asc';
 
+            $prefix = DB::getTablePrefix();
+
             $records = Tenant::select(
                     'merchants.merchant_id',
                     'merchants.name as store_name',
                     DB::raw('mall.name as mall_name'),
+                    DB::raw("CONCAT({$prefix}merchants.name, ' at ', mall.name) as store_location"),
                     'merchants.floor', 'merchants.unit'
                 )
                 ->join('merchants as mall', 'merchants.parent_id', '=',
