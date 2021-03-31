@@ -59,6 +59,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                         ]),
                 ),
                 array(
+                    'orbit.reservation.exists' => 'Reservation not found',
                     'reservation_id.required' => 'Reservation ID is required',
                     'status.in' => 'available status are: '.BrandProductReservation::STATUS_ACCEPTED.','.BrandProductReservation::STATUS_DECLINED
                 )
@@ -130,6 +131,12 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             }
             else if ($status === BrandProductReservation::STATUS_DECLINED) {
                 Event::fire('orbit.reservation.declined', [$reservation]);
+            }
+
+            // frontend should reload reservation detail endpoint
+            // this is not right
+            if ($reservation->status === BrandProductReservation::STATUS_DONE) {
+                $reservation->status = 'sold';
             }
 
             $this->response->data = $reservation;
