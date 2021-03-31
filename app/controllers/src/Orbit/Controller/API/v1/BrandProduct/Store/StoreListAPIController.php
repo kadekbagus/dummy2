@@ -2,6 +2,7 @@
 
 namespace Orbit\Controller\API\v1\BrandProduct\Store;
 
+use BppUser;
 use DB;
 use Exception;
 use OrbitShop\API\v1\ControllerAPI;
@@ -33,10 +34,13 @@ class StoreListAPIController extends ControllerAPI
             $sortBy = $sortByMapping[$request->sortby ?: 'name'];
             $sortMode = $request->sortmode ?: 'asc';
 
+            $prefix = DB::getTablePrefix();
+
             $records = Tenant::select(
                     'merchants.merchant_id',
                     'merchants.name as store_name',
                     DB::raw('mall.name as mall_name'),
+                    DB::raw("CONCAT({$prefix}merchants.name, ' at ', mall.name) as store_location"),
                     'merchants.floor', 'merchants.unit'
                 )
                 ->join('merchants as mall', 'merchants.parent_id', '=',
@@ -54,7 +58,15 @@ class StoreListAPIController extends ControllerAPI
                     ->orderBy($sortBy, $sortMode);
             }
             else if ($user->user_type === 'store') {
-                $records->where('merchants.merchant_id', $user->merchant_id)
+                $stores = BppUser::with(['stores' => function($query) {
+                    $query->select('bpp_user_merchants.merchant_id');
+                }])
+                ->findOrFail($user->bpp_user_id)
+                ->stores->map(function($store) {
+                    return $store->merchant_id;
+                })->toArray();
+
+                $records->whereIn('merchants.merchant_id', $stores)
                     ->where('merchants.status', 'active');
             }
 

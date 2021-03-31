@@ -537,10 +537,24 @@ return array(
             'product_variants' => 'Brand Product Variant is required and the selling price and stock/quantity are required and must be numeric.',
             'selling_price_lt_original_price' => 'Selling Price must be lower than Original Price.',
             'main_photo' => 'Brand Product Main Photo is required.',
+            'exists' => 'Product doesn\'t exist or inactive.',
         ),
 
         'rating' => array(
             'unique' => "You already review this location/item.",
+        ),
+
+        'brand_product_variant' => array(
+            'exists' => 'Selected Variant doesn\'t exist or inactive.',
+            'available' => 'Selected Variant not available.',
+            'quantity_available' => 'Requested quantity not available.',
+            'reservation_exists' => 'Reservation doesn\'t exists.',
+            'can_cancel_rsvp' => 'Reservation cannot be canceled.',
+            'rsvp_match_user' => 'You are not allowed to view/process requested reservation.',
+        ),
+
+        'rsvp' => array(
+            'quantity_available' => 'Requested quantity not available.',
         ),
     ),
 

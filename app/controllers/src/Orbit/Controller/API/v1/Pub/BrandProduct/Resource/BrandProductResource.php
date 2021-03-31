@@ -3,6 +3,7 @@
 namespace Orbit\Controller\API\v1\Pub\BrandProduct\Resource;
 
 use Orbit\Helper\Resource\Resource;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use VariantOption;
 use Tenant;
 use DB;
@@ -33,7 +34,7 @@ class BrandProductResource extends Resource
             'description' => $this->product_description,
             'tnc' => $this->tnc,
             'status' => $this->status,
-            'maxReservationTime' => $this->max_reservation_time,
+            'maxReservationTime' => ceil($this->max_reservation_time/60),
             'category' => $this->getCategory($this->resource),
             'brandId' => $this->brand_id,
             'brandName' => $this->brand->name,
@@ -50,6 +51,7 @@ class BrandProductResource extends Resource
                 $arrVariants
             ),
             'category_names' => $this->category_names,
+            'marketplaces' => $this->marketplaces,
         ];
     }
 
@@ -90,7 +92,7 @@ class BrandProductResource extends Resource
                 'originalPrice' => $variant->original_price,
                 'sellingPrice' => $variant->selling_price,
                 'discount' => $discount,
-                'quantity' => $variant->quantity,
+                'quantity' => $variant->quantity - $variant->reservations->sum('quantity'),
                 'options' => $this->transformVariantOptions(
                     $variant->variant_options, $variantOptions
                 ),
@@ -127,7 +129,7 @@ class BrandProductResource extends Resource
         $storeList = [];
 
         // Fetch store info
-        $linkedStores = Tenant::select(
+        $storeInfo = Tenant::select(
                     'merchants.merchant_id as store_id',
                     'merchants.name as store_name',
                     'merchants.floor',
@@ -142,9 +144,25 @@ class BrandProductResource extends Resource
                 ->join('merchants as mall', 'merchants.parent_id', '=',
                     DB::raw('mall.merchant_id')
                 )
-                ->whereIn('merchants.merchant_id', $this->storeIds)
-                ->orderBy(DB::raw('mall.name'), 'asc')
-                ->get();
+                ->whereIn('merchants.merchant_id', $this->storeIds);
+
+        // filter by country
+        OrbitInput::get('country', function($country) use ($storeInfo) {
+            $country = strip_tags($country);
+            $storeInfo->where(DB::raw('mall.country'), $country);
+        });
+
+        // filter by city
+        OrbitInput::get('city', function($city) use ($storeInfo) {
+            $city = (array) $city;
+            $storeInfo->whereIn(DB::raw('mall.city'), $city);
+        });
+
+        $storeInfo->orderBy(DB::raw('mall.name'), 'asc');
+                
+        $_storeInfo = clone $storeInfo;
+
+        $linkedStores = $_storeInfo->get();
 
         // Transform options per store
         foreach($linkedStores as $store) {
@@ -174,7 +192,7 @@ class BrandProductResource extends Resource
                                 'product_code' => $bpVariant->product_code,
                                 'original_price' => $bpVariant->original_price,
                                 'selling_price' => $bpVariant->selling_price,
-                                'quantity' => $bpVariant->quantity,
+                                'quantity' => $bpVariant->quantity - $bpVariant->reservations->sum('quantity'),
                                 'options' => $optionList,
                             ];
 
@@ -195,7 +213,17 @@ class BrandProductResource extends Resource
             return $store;
         }, $storeList);
 
-        return array_values($storeList);
+        $storeListRawData = array_values($storeList);
+
+        // remove empty store
+        $storeListData = [];
+        foreach($storeListRawData as $data) {
+            if (isset($data['store_id'])) {
+                $storeListData[] = $data;
+            }
+        }
+
+        return $storeListData;
     }
 
     protected function transformVideos($item)

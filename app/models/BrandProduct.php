@@ -79,4 +79,43 @@ class BrandProduct extends Eloquent
     {
     	return $this->media()->where('media_name_id', 'brand_product_photos');
     }
+
+    public function creator()
+    {
+        return $this->belongsTo(BppUser::class, 'created_by', 'bpp_user_id');
+    }
+
+    public function marketplaces()
+    {
+        return $this->belongsToMany('Marketplace', 'brand_product_link_to_object', 'brand_product_id', 'object_id')
+            ->select('marketplace_id', 'name', 'brand_product_link_to_object.product_url', 'selling_price', 'original_price', 'sku')
+            ->where('brand_product_link_to_object.object_type', '=', 'marketplace');
+    }
+
+    /**
+     * Determine if product created by given creator.
+     *
+     * @param string|BppUser $creator the creator instance/signature.
+     * @return bool
+     */
+    public function createdBy($creator)
+    {
+        if ($creator instanceof BppUser) {
+            return $this->created_by === $creator->bpp_user_id;
+        }
+
+        if ($creator === 'me') {
+            return $this->created_by === App::make('currentUser')->bpp_user_id;
+        }
+
+        if ($creator === 'admin') {
+            return $this->creator->user_type === 'brand';
+        }
+
+        if ($creator === 'store') {
+            return $this->creator->user_type === 'store';
+        }
+
+        return false;
+    }
 }

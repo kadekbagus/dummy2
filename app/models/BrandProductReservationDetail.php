@@ -6,8 +6,13 @@ class BrandProductReservationDetail extends Eloquent
 
     protected $table = 'brand_product_reservation_details';
 
-    public function stores() {
-        return $this->hasOne('Tenant', 'object_id', 'merchant_id')
-            ->where('brand_product_reservation_details.object_type', 'merchant');
+    public function store()
+    {
+        return $this->hasOne('Tenant', 'merchant_id', 'value');
+    }
+
+    public function media()
+    {
+        return $this->hasOne(Media::class, 'media_id', 'value');
     }
 }

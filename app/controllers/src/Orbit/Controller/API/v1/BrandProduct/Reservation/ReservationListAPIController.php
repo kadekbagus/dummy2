@@ -25,7 +25,6 @@ class ReservationListAPIController extends ControllerAPI
 
     /**
      * List brand product reservation for BPP
-     * @todo: add status param validation
      *
      * @author Ahmad <ahmad@dominopos.com>
      */
@@ -47,7 +46,7 @@ class ReservationListAPIController extends ControllerAPI
                     'status'      => $status,
                 ),
                 array(
-                    'status'      => 'in:pending,accepted,cancelled,declined,expired',
+                    'status'      => 'in:pending,accepted,cancelled,declined,expired,done,sold',
                 )
             );
 
@@ -59,22 +58,43 @@ class ReservationListAPIController extends ControllerAPI
                     {$prefix}brand_product_reservations.created_at,
                     {$prefix}brand_product_reservations.expired_at,
                     {$prefix}brand_product_reservations.quantity,
+                    {$prefix}brand_product_reservations.user_id,
                     {$prefix}brand_product_reservations.product_name,
-                    CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
-                        THEN 'expired'
-                        ELSE {$prefix}brand_product_reservations.status
-                    END as status
+                    {$prefix}brand_product_reservations.brand_product_variant_id,
+                    CASE {$prefix}brand_product_reservations.status
+                        WHEN 'accepted' THEN
+                            CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
+                                THEN 'expired'
+                                ELSE {$prefix}brand_product_reservations.status
+                            END
+                        WHEN 'done' THEN 'sold'
+                        ELSE
+                            {$prefix}brand_product_reservations.status
+                    END as status_label
                 "))
                 ->with([
                     'users' => function($q) {
-                        $q->select('user_firstname', 'user_lastname');
+                        $q->select('users.user_id', 'user_firstname', 'user_lastname');
+                    },
+                    'store' => function($q) {
+                        $q->with('store.mall');
+                    },
+                    'brand_product_variant' => function($q) {
+                        $q->select('brand_product_variant_id', 'brand_product_id');
+                        $q->with([
+                            'brand_product' => function($q2) {
+                                $q2->select('brand_product_id');
+                                $q2->with([
+                                    'brand_product_main_photo' => function($q3) {
+                                        $q3->select('media_id', 'object_id', 'path', 'cdn_url');
+                                    }
+                                ]);
+                            }
+                        ]);
                     },
                     'details' => function($q) {
-                        $q->select('value')
-                            ->with('stores.mall');
-                    },
-                    'product.mediaMain' => function($q) {
-                        $q->select('path', 'cdn_url');
+                        $q->select('brand_product_reservation_detail_id', 'brand_product_reservation_id', 'value')
+                            ->where('option_type', 'variant_option');
                     }
                 ])
                 ->leftJoin('brand_product_reservation_details', 'brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
@@ -83,20 +103,39 @@ class ReservationListAPIController extends ControllerAPI
                 ->groupBy(DB::raw("{$prefix}brand_product_reservations.brand_product_reservation_id"));
 
             if (! empty($merchantId)) {
-                $reservations->where('brand_product_reservation_details.option_id', $merchantId);
+                $reservations->where('brand_product_reservation_details.value', $merchantId);
             }
 
             OrbitInput::get('product_name_like', function($keyword) use ($reservations)
             {
-                $reservations->where('product_name', 'like', "%$keyword%");
+                $reservations->where(function($query) use($keyword, $reservations)
+                {
+                    $query->where('product_name', 'like', "%$keyword%")
+                        ->orWhere('brand_product_reservations.brand_product_reservation_id', 'like', "%{$keyword}%");
+                });
             });
 
             OrbitInput::get('status', function($status) use ($reservations)
             {
-                if ($status == 'expired') {
-                    $reservations->where('expired_at', '<', DB::raw("NOW()"));
-                } else {
-                    $reservations->where('status', $status);
+                switch (strtolower($status)) {
+                    case 'expired':
+                        $reservations->where('brand_product_reservations.status', 'accepted')
+                            ->where('expired_at', '<', DB::raw("NOW()"));
+                        break;
+
+                    case 'accepted':
+                        $reservations->where('brand_product_reservations.status', 'accepted')
+                            ->where('expired_at', '>=', DB::raw("NOW()"));
+                        break;
+
+                    case 'sold':
+                    case 'done':
+                        $reservations->where('brand_product_reservations.status', 'done');
+                        break;
+
+                    default:
+                        $reservations->where('brand_product_reservations.status', $status);
+                        break;
                 }
             });
 
@@ -139,10 +178,43 @@ class ReservationListAPIController extends ControllerAPI
             $totalItems = RecordCounter::create($_reservations)->count();
             $listOfItems = $reservations->get();
 
+            $returnedData = [];
+            foreach ($listOfItems as $item) {
+                $returnedItem = new stdclass();
+                $returnedItem->brand_product_reservation_id = $item->brand_product_reservation_id;
+                $returnedItem->user_name = $item->users->user_firstname . ' ' . $item->users->user_lastname;
+                $returnedItem->product_name = $item->product_name;
+                $returnedItem->selling_price = $item->selling_price;
+                $returnedItem->created_at = (string) $item->created_at;
+                $returnedItem->expired_at = $item->expired_at;
+                $returnedItem->status = $item->status_label;
+                $imgPath = '';
+                $cdnUrl = '';
+                if (is_object($item->brand_product_variant)) {
+                    if (is_object($item->brand_product_variant->brand_product)) {
+                        if (! empty($item->brand_product_variant->brand_product->brand_product_main_photo)) {
+                            if (is_object($item->brand_product_variant->brand_product->brand_product_main_photo[0])) {
+                                $imgPath = $item->brand_product_variant->brand_product->brand_product_main_photo[0]->path;
+                                $cdnUrl = $item->brand_product_variant->brand_product->brand_product_main_photo[0]->cdn_url;
+                            }
+                        }
+                    }
+                }
+
+                $returnedItem->img_path = $imgPath;
+                $returnedItem->cdn_url = $cdnUrl;
+                $variants = [];
+                foreach ($item->details as $variantDetail) {
+                    $variants[] = strtoupper($variantDetail->value);
+                }
+                $returnedItem->variants = implode(', ', $variants);
+                $returnedData[] = $returnedItem;
+            }
+
             $data = new stdclass();
             $data->total_records = $totalItems;
             $data->returned_records = count($listOfItems);
-            $data->records = $listOfItems;
+            $data->records = $returnedData;
 
             if ($totalItems === 0) {
                 $data->records = NULL;

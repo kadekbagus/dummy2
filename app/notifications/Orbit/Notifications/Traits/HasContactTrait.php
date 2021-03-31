@@ -32,5 +32,4 @@ trait HasContactTrait
     {
         return Config::get('orbit.registration.mobile.sender');
     }
-
 }
