@@ -26,6 +26,10 @@ use Request;
 use Validator;
 use Variant;
 use VariantOption;
+use Product;
+use ProductLinkToObject;
+use ProductVideo;
+use BaseMerchant;
 
 class ProductNewAPIController extends ControllerAPI
 {
@@ -55,6 +59,8 @@ class ProductNewAPIController extends ControllerAPI
             $brandProductVariants = OrbitInput::post('brand_product_variants');
             $brandProductMainPhoto = Request::file('brand_product_main_photo');
             $marketplaces = OrbitInput::post('marketplaces', []);
+            $onlineProductStatus = OrbitInput::post('online_product_status', 'inactive');
+            $newOnlineProduct = null;
 
             // Begin database transaction
             $this->beginTransaction();
@@ -75,14 +81,18 @@ class ProductNewAPIController extends ControllerAPI
                     'status'              => 'in:active,inactive',
                     'category_id'         => 'required',
                     'variants'            => 'required|orbit.brand_product.variants',
-                    'brand_product_variants' => 'required'
-                        . '|orbit.brand_product.product_variants'
-                        . '|orbit.brand_product.selling_price_lt_original_price',
+                    'brand_product_variants' => join('|', [
+                        'required',
+                        'orbit.brand_product.product_variants',
+                        'orbit.brand_product.selling_price_lt_original_price',
+                        'orbit.brand_product.can_create',
+                    ]),
                     'brand_product_main_photo' => 'required|image|max:1024',
                 ),
                 array(
                     'product_name.required' => 'Product Name is required.',
                     'category_id.required' => 'The Category is required.',
+                    'orbit.brand_product.can_create' => 'You are not allowed to create the product.',
                 )
             );
 
@@ -100,7 +110,7 @@ class ProductNewAPIController extends ControllerAPI
             );
             $newBrandProduct->tnc = strip_tags($tnc);
             $newBrandProduct->status = $status;
-            $newBrandProduct->max_reservation_time = $maxReservationTime;
+            $newBrandProduct->max_reservation_time = $maxReservationTime * 60;
             $newBrandProduct->created_by = $userId;
             $newBrandProduct->save();
 
@@ -130,14 +140,26 @@ class ProductNewAPIController extends ControllerAPI
                 $brandProductVariants
             );
 
+            // prepare data for online product
+            $onlineProductData = array('name' => $productName,
+                                       'shortDescription' => $productDescription,
+                                       'status' => $status,
+                                       'categoryId' => $categoryId,
+                                       'youtubeIds' => $youtubeIds,
+                                       'brandId' => $brandId,
+                                       'onlineProductStatus' => $onlineProductStatus
+                                    );
+
             // save marketplaces
-            OrbitInput::post('marketplaces', function($marketplace_json_string) use ($newBrandProduct) {
-                $this->validateAndSaveMarketplaces($newBrandProduct, $marketplace_json_string, $scenario = 'create');
+            OrbitInput::post('marketplaces', function($marketplace_json_string) use ($newBrandProduct, &$newOnlineProduct, $onlineProductData) {
+                // create online product
+                $newOnlineProduct = $this->createOnlineProduct($onlineProductData, $newBrandProduct);
+                $this->validateAndSaveMarketplaces($newBrandProduct, $newOnlineProduct, $marketplace_json_string, $scenario = 'create');
             });
-            
+
             Event::fire(
                 'orbit.brandproduct.postnewbrandproduct.after.save',
-                [$newBrandProduct]
+                [$newBrandProduct, $newOnlineProduct]
             );
 
             // Commit the changes
@@ -148,6 +170,11 @@ class ProductNewAPIController extends ControllerAPI
                 [$newBrandProduct->brand_product_id]
             );
 
+            if (isset($newOnlineProduct->product_id)) {
+                Event::fire('orbit.newproduct.postnewproduct.after.commit', array($this, $newOnlineProduct));
+            }
+
+            $newBrandProduct->online_product = isset($newOnlineProduct->product_id) ? $newOnlineProduct : null;
             $this->response->data = $newBrandProduct;
 
         } catch (Exception $e) {
@@ -290,6 +317,11 @@ class ProductNewAPIController extends ControllerAPI
     private function registerCustomValidations()
     {
         Validator::extend(
+            'orbit.brand_product.can_create',
+            BrandProductValidator::class . '@canCreate'
+        );
+
+        Validator::extend(
             'orbit.brand_product.variants',
             BrandProductValidator::class . '@variants'
         );
@@ -310,7 +342,7 @@ class ProductNewAPIController extends ControllerAPI
         );
     }
 
-    private function validateAndSaveMarketplaces($newBrandProduct, $marketplace_json_string, $scenario = 'create')
+    private function validateAndSaveMarketplaces($newBrandProduct, $newOnlineProduct, $marketplace_json_string, $scenario = 'create')
     {
         $data = @json_decode($marketplace_json_string, true);
         $data = $data ?: [];
@@ -321,8 +353,16 @@ class ProductNewAPIController extends ControllerAPI
                                                 ->where('object_type', '=', 'marketplace')
                                                 ->get();
 
+        $deletedProductLinks = ProductLinkToObject::where('product_id', '=', $newOnlineProduct->product_id)
+                                                ->where('object_type', '=', 'marketplace')
+                                                ->get();
+
         foreach ($deletedLinks as $deletedLink) {
             $deletedLink->delete(true);
+        }
+
+        foreach ($deletedProductLinks as $deletedProductLink) {
+            $deletedProductLink->delete(true);
         }
 
         if (! empty($data) && $data[0] !== '') {
@@ -352,7 +392,7 @@ class ProductNewAPIController extends ControllerAPI
 
                 } else {
                     if ($item['selling_price'] > $item['original_price']) {
-                        OrbitShopAPI::throwInvalidArgument('Selling price cannot higher than original price');
+                        OrbitShopAPI::throwInvalidArgument('Link to marketplace selling price cannot higher than original price');
                     }
                 }
 
@@ -365,9 +405,74 @@ class ProductNewAPIController extends ControllerAPI
                 $saveObjectMarketPlaces->selling_price = $item['selling_price'];
                 $saveObjectMarketPlaces->sku = isset($item['sku']) ? $item['sku'] : null;
                 $saveObjectMarketPlaces->save();
+
+                $saveObjectMarketPlacesOnlineProduct = new ProductLinkToObject();
+                $saveObjectMarketPlacesOnlineProduct->product_id = $newOnlineProduct->product_id;
+                $saveObjectMarketPlacesOnlineProduct->object_id = $item['id'];
+                $saveObjectMarketPlacesOnlineProduct->object_type = 'marketplace';
+                $saveObjectMarketPlacesOnlineProduct->product_url = $item['website_url'];
+                $saveObjectMarketPlacesOnlineProduct->original_price = $item['original_price'];
+                $saveObjectMarketPlacesOnlineProduct->selling_price = $item['selling_price'];
+                $saveObjectMarketPlacesOnlineProduct->sku = isset($item['sku']) ? $item['sku'] : null;
+                $saveObjectMarketPlacesOnlineProduct->save();
+
                 $marketplaceData[] = $saveObjectMarketPlaces;
+                $marketplaceDataOnlineProduct[] = $saveObjectMarketPlacesOnlineProduct;
             }
             $newBrandProduct->marketplaces = $marketplaceData;
+            $newOnlineProduct->marketplaces = $marketplaceDataOnlineProduct;
         }
+    }
+
+    private function createOnlineProduct($data, $newBrandProduct)
+    {
+        // create product
+        $newProduct = new Product;
+        $newProduct->name = $data['name'];
+        $newProduct->short_description = $data['shortDescription'];
+        $newProduct->status = $data['onlineProductStatus'];
+        $newProduct->country_id = $this->getCountryId($data['brandId']);
+        $newProduct->brand_product_id = $newBrandProduct->brand_product_id;
+        $newProduct->save();
+
+        // create category
+        $newCategory = new ProductLinkToObject();
+        $newCategory->product_id = $newProduct->product_id;
+        $newCategory->object_id = $data['categoryId'];
+        $newCategory->object_type = 'category';
+        $newCategory->save();
+
+        // create link to brand
+        $newLinkToBrand = new ProductLinkToObject();
+        $newLinkToBrand->product_id = $newProduct->product_id;
+        $newLinkToBrand->object_id = $data['brandId'];
+        $newLinkToBrand->object_type = 'brand';
+        $newLinkToBrand->save();
+
+        // create product video
+        $videos = array();
+        foreach ($data['youtubeIds'] as $youtubeId) {
+            $productVideos = new ProductVideo();
+            $productVideos->product_id = $newProduct->product_id;
+            $productVideos->youtube_id = $youtubeId;
+            $productVideos->save();
+            $videos[] = $productVideos;
+        }
+
+        $newProduct->category = $newCategory;
+        $newProduct->link_to_brand = $newLinkToBrand;
+        $newProduct->product_videos = $videos;
+
+        return $newProduct;
+    }
+
+    private function getCountryId($base_merchant_id)
+    {
+        // get country id from base merchant
+        $country = BaseMerchant::select('country_id')->where('base_merchant_id', $base_merchant_id)->first();
+        if (!$country) {
+            OrbitShopAPI::throwInvalidArgument('Country Id not found');
+        }
+        return $country->country_id;
     }
 }

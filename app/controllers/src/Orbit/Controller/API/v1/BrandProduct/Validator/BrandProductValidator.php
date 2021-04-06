@@ -21,8 +21,9 @@ class BrandProductValidator
 
     public function exists($attribute, $productId, $params, $validator)
     {
-        $brandProduct = BrandProduct::where('brand_product_id', $productId)
-                            ->first();
+        $brandProduct = BrandProduct::with(['creator'])
+            ->where('brand_product_id', $productId)
+            ->first();
 
         if (! empty($brandProduct)) {
             App::instance('brandProduct', $brandProduct);
@@ -60,7 +61,8 @@ class BrandProductValidator
             ->where('brand_product_variant_id', $variant->brand_product_variant_id)
             ->whereIn('status', [
                 BrandProductReservation::STATUS_PENDING,
-                BrandProductReservation::STATUS_DONE
+                BrandProductReservation::STATUS_ACCEPTED,
+                BrandProductReservation::STATUS_DONE,
             ])
             ->sum('quantity');
 

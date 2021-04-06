@@ -25,7 +25,6 @@ class ReservationListAPIController extends ControllerAPI
 
     /**
      * List brand product reservation for BPP
-     * @todo: add status param validation
      *
      * @author Ahmad <ahmad@dominopos.com>
      */
@@ -47,7 +46,7 @@ class ReservationListAPIController extends ControllerAPI
                     'status'      => $status,
                 ),
                 array(
-                    'status'      => 'in:pending,accepted,cancelled,declined,expired',
+                    'status'      => 'in:pending,accepted,cancelled,declined,expired,done,sold',
                 )
             );
 
@@ -63,14 +62,15 @@ class ReservationListAPIController extends ControllerAPI
                     {$prefix}brand_product_reservations.product_name,
                     {$prefix}brand_product_reservations.brand_product_variant_id,
                     CASE {$prefix}brand_product_reservations.status
-                        WHEN 'pending' THEN
+                        WHEN 'accepted' THEN
                             CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
                                 THEN 'expired'
                                 ELSE {$prefix}brand_product_reservations.status
                             END
-                    ELSE
-                        {$prefix}brand_product_reservations.status
-                    END as status
+                        WHEN 'done' THEN 'sold'
+                        ELSE
+                            {$prefix}brand_product_reservations.status
+                    END as status_label
                 "))
                 ->with([
                     'users' => function($q) {
@@ -108,24 +108,33 @@ class ReservationListAPIController extends ControllerAPI
 
             OrbitInput::get('product_name_like', function($keyword) use ($reservations)
             {
-                $reservations->where('product_name', 'like', "%$keyword%");
+                $reservations->where(function($query) use($keyword, $reservations)
+                {
+                    $query->where('product_name', 'like', "%$keyword%")
+                        ->orWhere('brand_product_reservations.brand_product_reservation_id', 'like', "%{$keyword}%");
+                });
             });
 
             OrbitInput::get('status', function($status) use ($reservations)
             {
                 switch (strtolower($status)) {
                     case 'expired':
-                        $reservations->where('status', 'pending')
+                        $reservations->where('brand_product_reservations.status', 'accepted')
                             ->where('expired_at', '<', DB::raw("NOW()"));
                         break;
 
-                    case 'pending':
-                        $reservations->where('status', 'pending')
+                    case 'accepted':
+                        $reservations->where('brand_product_reservations.status', 'accepted')
                             ->where('expired_at', '>=', DB::raw("NOW()"));
                         break;
 
+                    case 'sold':
+                    case 'done':
+                        $reservations->where('brand_product_reservations.status', 'done');
+                        break;
+
                     default:
-                        $reservations->where('status', $status);
+                        $reservations->where('brand_product_reservations.status', $status);
                         break;
                 }
             });
@@ -178,7 +187,7 @@ class ReservationListAPIController extends ControllerAPI
                 $returnedItem->selling_price = $item->selling_price;
                 $returnedItem->created_at = (string) $item->created_at;
                 $returnedItem->expired_at = $item->expired_at;
-                $returnedItem->status = $item->status;
+                $returnedItem->status = $item->status_label;
                 $imgPath = '';
                 $cdnUrl = '';
                 if (is_object($item->brand_product_variant)) {
@@ -196,9 +205,9 @@ class ReservationListAPIController extends ControllerAPI
                 $returnedItem->cdn_url = $cdnUrl;
                 $variants = [];
                 foreach ($item->details as $variantDetail) {
-                    $variants[] = $variantDetail->value;
+                    $variants[] = strtoupper($variantDetail->value);
                 }
-                $returnedItem->variants = implode(',', $variants);
+                $returnedItem->variants = implode(', ', $variants);
                 $returnedData[] = $returnedItem;
             }
 

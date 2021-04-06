@@ -29,4 +29,20 @@ class BppUser extends Eloquent
 
         return $apikey;
     }
+
+    public function stores()
+    {
+        return $this->belongsToMany(Tenant::class, 'bpp_user_merchants', 'bpp_user_id', 'merchant_id', null, 'bpp_user_merchant_id')
+            ->withTimestamps();
+    }
+
+    public function isAdmin()
+    {
+        return $this->user_type === 'brand';
+    }
+
+    public function isStore()
+    {
+        return $this->user_type === 'store';
+    }
 }

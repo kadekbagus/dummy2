@@ -2,6 +2,7 @@
 
 namespace Orbit\Notifications\Traits;
 
+use BppUser;
 use Carbon\Carbon;
 use BrandProductReservation;
 use Illuminate\Support\Facades\Config;
@@ -71,7 +72,7 @@ trait HasReservationTrait
 
     protected function getVariant()
     {
-        return $this->reservation->variants->implode('value', ', ');
+        return strtoupper($this->reservation->variants->implode('value', ', '));
     }
 
     protected function getSeeReservationUrl()
@@ -80,5 +81,32 @@ trait HasReservationTrait
             Config::get('orbit.reservation.see_reservation_url', '#'),
             $this->reservation->brand_product_reservation_id
         );
+    }
+
+    protected function getAdminRecipients()
+    {
+        $recipients = [];
+
+        $store = $this->getStore();
+        $brandId = $this->reservation->brand_product_variant->brand_product->brand_id;
+        $allAdmin = BppUser::with(['stores'])
+            ->where('status', 'active')
+            ->where('base_merchant_id', $brandId)
+            ->where(function($query) use ($store) {
+                $query->where('user_type', 'brand')
+                    ->orWhereHas('stores', function($query) use ($store) {
+                        $query->where('bpp_user_merchants.merchant_id', $store['storeId']);
+                    });
+            })
+            ->get();
+
+        foreach($allAdmin as $admin) {
+            $recipients[$admin->bpp_user_id] = [
+                'name' => $admin->name,
+                'email' => $admin->email,
+            ];
+        }
+
+        return $recipients;
     }
 }

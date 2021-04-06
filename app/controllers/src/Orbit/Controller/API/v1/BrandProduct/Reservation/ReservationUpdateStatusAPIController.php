@@ -2,23 +2,24 @@
 
 namespace Orbit\Controller\API\v1\BrandProduct\Reservation;
 
-use OrbitShop\API\v1\ControllerAPI;
-use OrbitShop\API\v1\OrbitShopAPI;
-use OrbitShop\API\v1\Helper\Input as OrbitInput;
-use OrbitShop\API\v1\Exception\InvalidArgsException;
-use DominoPOS\OrbitACL\ACL;
-use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
-use Illuminate\Database\QueryException;
-use Validator;
-use stdclass;
-
 use DB;
+use App;
 use Lang;
 use Config;
-use BrandProductReservation;
+use stdclass;
 use Exception;
-use App;
+use Validator;
+use Carbon\Carbon;
+use DominoPOS\OrbitACL\ACL;
+
+use BrandProductReservation;
+use OrbitShop\API\v1\OrbitShopAPI;
+use OrbitShop\API\v1\ControllerAPI;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Database\QueryException;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use OrbitShop\API\v1\Exception\InvalidArgsException;
+use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 
 class ReservationUpdateStatusAPIController extends ControllerAPI
 {
@@ -51,9 +52,14 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                 ),
                 array(
                     'reservation_id'      => 'required|orbit.reservation.exists:'.$brandId,
-                    'status'              => 'required|in:'.BrandProductReservation::STATUS_ACCEPTED.','.BrandProductReservation::STATUS_DECLINED
+                    'status'              => 'required|in:'. join(',', [
+                            BrandProductReservation::STATUS_ACCEPTED,
+                            BrandProductReservation::STATUS_DECLINED,
+                            BrandProductReservation::STATUS_DONE,
+                        ]),
                 ),
                 array(
+                    'orbit.reservation.exists' => 'Reservation not found',
                     'reservation_id.required' => 'Reservation ID is required',
                     'status.in' => 'available status are: '.BrandProductReservation::STATUS_ACCEPTED.','.BrandProductReservation::STATUS_DECLINED
                 )
@@ -70,12 +76,19 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
 
             $reservation = App::make('orbit.reservation.exists');
 
+            if ($reservation->status === BrandProductReservation::STATUS_DONE) {
+                $errorMessage = 'Reservation already done';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             if ($reservation->status === BrandProductReservation::STATUS_EXPIRED) {
                 $errorMessage = 'Reservation is expired';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            if ($reservation->status === BrandProductReservation::STATUS_ACCEPTED) {
+            if ($reservation->status === BrandProductReservation::STATUS_ACCEPTED
+                && $status === BrandProductReservation::STATUS_ACCEPTED
+            ) {
                 $errorMessage = 'Reservation already accepted';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
@@ -92,6 +105,22 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                 $reservation->cancel_reason = $cancelReason;
             }
 
+            if ($status === BrandProductReservation::STATUS_ACCEPTED) {
+                $reservation->load(['brand_product_variant.brand_product']);
+                if (empty($reservation->brand_product_variant)) {
+                    OrbitShopAPI::throwInvalidArgument('Change status failed! Unable to find linked product variant for this reservation. Variant might be changed or deleted.');
+                }
+
+                if (empty($reservation->brand_product_variant->brand_product)) {
+                    OrbitShopAPI::throwInvalidArgument('Change status failed! Unable to find linked brand product for this reservation. It might be changed or deleted.');
+                }
+
+                $reservation->expired_at = Carbon::now()->addMinutes(
+                    $reservation->brand_product_variant->brand_product
+                        ->max_reservation_time
+                );
+            }
+
             $reservation->save();
 
             // Commit the changes
@@ -102,6 +131,12 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             }
             else if ($status === BrandProductReservation::STATUS_DECLINED) {
                 Event::fire('orbit.reservation.declined', [$reservation]);
+            }
+
+            // frontend should reload reservation detail endpoint
+            // this is not right
+            if ($reservation->status === BrandProductReservation::STATUS_DONE) {
+                $reservation->status = 'sold';
             }
 
             $this->response->data = $reservation;
@@ -154,11 +189,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             $brandId = $parameters[0];
             $prefix = DB::getTablePrefix();
 
-            $reservation = BrandProductReservation::select(DB::raw("{$prefix}brand_product_reservations.*"),DB::raw("
-            CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
-            THEN 'expired'
-            ELSE {$prefix}brand_product_reservations.status
-        END as status"))->where('brand_product_reservation_id', $value)->where('brand_id', '=', $brandId)->first();
+            $reservation = BrandProductReservation::where('brand_product_reservation_id', $value)->where('brand_id', '=', $brandId)->first();
 
             if (empty($reservation)) {
                 return FALSE;

@@ -6,6 +6,7 @@ use App;
 use Config;
 use DB;
 use Orbit\Helper\Resource\ResourceCollection;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Tenant;
 
 /**
@@ -32,6 +33,10 @@ class AvailableStoreCollection extends ResourceCollection
             $currentStoreId = $request->store_id;
         }
 
+        $country = OrbitInput::get('country');
+        $cities = OrbitInput::get('cities');
+        $cities = (array) $cities;
+
         $storeCount = 0;
         foreach($this->collection as $item) {
 
@@ -48,14 +53,66 @@ class AvailableStoreCollection extends ResourceCollection
                     continue;
                 }
 
-                $this->data['records'][$storeId] = [
-                    'store_id' => $storeId,
-                    'store_name' => $store['store_name'],
-                    'mall_id' => $store['mall_id'],
-                    'mall_name' => $store['mall_name'],
-                ];
+                // filter by city
+                if (count($cities) !== 0) {
 
-                $storeCount++;
+                    if (in_array($store['city'], $cities)) {
+
+                        // filter by country
+                         if (isset($country)) {
+                             if ($store['country'] === $country) {
+                                $this->data['records'][$storeId] = [
+                                    'store_id' => $storeId,
+                                    'store_name' => $store['store_name'],
+                                    'mall_id' => $store['mall_id'],
+                                    'mall_name' => $store['mall_name'],
+                                    'city' => $store['city'],
+                                    'country' => $store['country'],
+                                ];
+                             }
+
+                         } else {
+                             $this->data['records'][$storeId] = [
+                                 'store_id' => $storeId,
+                                 'store_name' => $store['store_name'],
+                                 'mall_id' => $store['mall_id'],
+                                 'mall_name' => $store['mall_name'],
+                                 'city' => $store['city'],
+                                 'country' => $store['country'],
+                             ];
+                         }
+
+                    }
+
+                } else {
+                    
+                        // filter by country
+                        if (isset($country)) {
+                            if ($store['country'] === $country) {
+                               $this->data['records'][$storeId] = [
+                                   'store_id' => $storeId,
+                                   'store_name' => $store['store_name'],
+                                   'mall_id' => $store['mall_id'],
+                                   'mall_name' => $store['mall_name'],
+                                   'city' => $store['city'],
+                                   'country' => $store['country'],
+                               ];
+                            }
+
+                        } else {
+                            $this->data['records'][$storeId] = [
+                                'store_id' => $storeId,
+                                'store_name' => $store['store_name'],
+                                'mall_id' => $store['mall_id'],
+                                'mall_name' => $store['mall_name'],
+                                'city' => $store['city'],
+                                'country' => $store['country'],
+                            ];
+                        }
+
+                }
+
+                $storeCount = count($this->data['records']);
 
                 if ($storeCount === $maxRecord) {
                     break;
@@ -66,13 +123,14 @@ class AvailableStoreCollection extends ResourceCollection
                 break;
             }
         }
+        
 
         if (! empty($currentStoreId)) {
             $this->data['store'] = $this->getStore($currentStoreId);
         }
 
         $this->data['records'] = array_values($this->data['records']);
-        $this->data['returned_records'] = $storeCount;
+        $this->data['returned_records'] = count($this->data['records']);
 
         return $this->data;
     }
