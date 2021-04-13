@@ -3335,17 +3335,10 @@ class CouponAPIController extends ControllerAPI
                         {$table_prefix}promotions.status
                     END as 'coupon_status'"),
                     DB::raw("COUNT(DISTINCT {$table_prefix}promotion_retailer.promotion_retailer_id) as total_location"),
-                    DB::raw("
-                    CASE WHEN {$table_prefix}promotions.redemption_link IS NULL THEN
-                        (SELECT GROUP_CONCAT(url separator '\n')
+                    DB::raw("(SELECT GROUP_CONCAT((CASE WHEN ic.issued_coupon_code = 'shortlink' THEN ic.url ELSE ic.issued_coupon_code END) separator '\n')
                         FROM {$table_prefix}issued_coupons ic
-                        WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id)
-                    ELSE
-                        (SELECT GROUP_CONCAT(issued_coupon_code separator '\n')
-                        FROM {$table_prefix}issued_coupons ic
-                        WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id)
-                    END
-                        as coupon_codes"),
+                        WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id
+                            ) as coupon_codes"),
                     DB::raw("CASE
                                 WHEN is_3rd_party_promotion = 'Y' AND is_3rd_party_field_complete = 'N' THEN 'not_available'
                                 WHEN is_3rd_party_promotion = 'Y' AND {$table_prefix}pre_exports.object_id IS NOT NULL AND {$table_prefix}pre_exports.object_type = 'coupon' THEN 'in_progress'
