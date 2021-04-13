@@ -182,6 +182,8 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     {$prefix}issued_coupons.expired_date as coupon_validity_in_date,
                                     {$prefix}promotions.status,
                                     {$prefix}promotions.promotion_type,
+                                    {$prefix}promotions.is_3rd_party_promotion,
+                                    {$prefix}promotions.redemption_link,
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                                         THEN {$prefix}campaign_status.campaign_status_name
                                         ELSE (
