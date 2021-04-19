@@ -343,35 +343,35 @@ class CouponAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            if ($payByWallet === 'N' && $payByNormal === 'N') {
-                $errorMessage = 'Select one payment method.';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            } elseif ($payByWallet === 'Y' && $payByNormal === 'N') {
-                $dataPayment = @json_decode($paymentProviders);
-                if (count($dataPayment) != count($retailer_ids)) {
-                    $errorMessage = 'Not all redemption place support wallet payment method';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-            }
+            // if ($payByWallet === 'N' && $payByNormal === 'N') {
+            //     $errorMessage = 'Select one payment method.';
+            //     OrbitShopAPI::throwInvalidArgument($errorMessage);
+            // } elseif ($payByWallet === 'Y' && $payByNormal === 'N') {
+            //     $dataPayment = @json_decode($paymentProviders);
+            //     if (count($dataPayment) != count($retailer_ids)) {
+            //         $errorMessage = 'Not all redemption place support wallet payment method';
+            //         OrbitShopAPI::throwInvalidArgument($errorMessage);
+            //     }
+            // }
 
-            if ($payByNormal === 'Y') {
-                $validator = Validator::make(
-                    array(
-                        'amount_commission'       => $amountCommission,
-                        'fixed_amount_commission' => $fixedAmountCommission,
+            // if ($payByNormal === 'Y') {
+            //     $validator = Validator::make(
+            //         array(
+            //             'amount_commission'       => $amountCommission,
+            //             'fixed_amount_commission' => $fixedAmountCommission,
 
-                    ),
-                    array(
-                        'amount_commission'       => 'required',
-                        'fixed_amount_commission' => 'required',
-                    )
-                );
+            //         ),
+            //         array(
+            //             'amount_commission'       => 'required',
+            //             'fixed_amount_commission' => 'required',
+            //         )
+            //     );
 
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-            }
+            //     if ($validator->fails()) {
+            //         $errorMessage = $validator->messages()->first();
+            //         OrbitShopAPI::throwInvalidArgument($errorMessage);
+            //     }
+            // }
 
             if ($payByWallet === 'Y') {
                 $dataPayment = @json_decode($paymentProviders);
@@ -1297,35 +1297,35 @@ class CouponAPIController extends ControllerAPI
                 }
             }
 
-            if ($payByWallet === 'N' && $payByNormal === 'N') {
-                $errorMessage = 'Select one payment method.';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            } elseif ($payByWallet === 'Y' && $payByNormal === 'N') {
-                $dataPayment = @json_decode($paymentProviders);
-                if (count($dataPayment) != count($retailer_ids)) {
-                    $errorMessage = 'Not all redemption place support wallet payment method';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-            }
+            // if ($payByWallet === 'N' && $payByNormal === 'N') {
+            //     $errorMessage = 'Select one payment method.';
+            //     OrbitShopAPI::throwInvalidArgument($errorMessage);
+            // } elseif ($payByWallet === 'Y' && $payByNormal === 'N') {
+            //     $dataPayment = @json_decode($paymentProviders);
+            //     if (count($dataPayment) != count($retailer_ids)) {
+            //         $errorMessage = 'Not all redemption place support wallet payment method';
+            //         OrbitShopAPI::throwInvalidArgument($errorMessage);
+            //     }
+            // }
 
-            if ($payByNormal === 'Y') {
-                $validator = Validator::make(
-                    array(
-                        'amount_commission'       => $amountCommission,
-                        'fixed_amount_commission' => $fixedAmountCommission,
+            // if ($payByNormal === 'Y') {
+            //     $validator = Validator::make(
+            //         array(
+            //             'amount_commission'       => $amountCommission,
+            //             'fixed_amount_commission' => $fixedAmountCommission,
 
-                    ),
-                    array(
-                        'amount_commission'       => 'required',
-                        'fixed_amount_commission' => 'required',
-                    )
-                );
+            //         ),
+            //         array(
+            //             'amount_commission'       => 'required',
+            //             'fixed_amount_commission' => 'required',
+            //         )
+            //     );
 
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-            }
+            //     if ($validator->fails()) {
+            //         $errorMessage = $validator->messages()->first();
+            //         OrbitShopAPI::throwInvalidArgument($errorMessage);
+            //     }
+            // }
 
             if ($payByWallet === 'Y') {
                 $dataPayment = @json_decode($paymentProviders);
@@ -1338,13 +1338,13 @@ class CouponAPIController extends ControllerAPI
             if ($promotion_type === 'hot_deals') {
                 // validation for hot deals
                 $hotDealsValue = [
-                    'price_old' => $price_old,
-                    'merchant_commision' => $merchant_commision,
+                    // 'price_old' => $price_old,
+                    // 'merchant_commision' => $merchant_commision,
                     'price_selling' => $price_selling,
                 ];
                 $hotDealsValidation = [
-                    'price_old' => 'required',
-                    'merchant_commision' => 'required',
+                    // 'price_old' => 'required',
+                    // 'merchant_commision' => 'required',
                     'price_selling' => 'required',
                 ];
                 $thirdValidator = Validator::make(
@@ -5022,7 +5022,7 @@ class CouponAPIController extends ControllerAPI
          * value null it means set to null (use main language content instead).
          */
 
-        $valid_fields = ['promotion_name', 'description', 'long_description', 'short_description', 'terms_and_condition'];
+        $valid_fields = ['promotion_name', 'description', 'long_description', 'short_description', 'terms_and_conditions', 'how_to_buy_and_redeem'];
         $user = $this->api->user;
         $operations = [];
 
