@@ -1338,13 +1338,13 @@ class CouponAPIController extends ControllerAPI
             if ($promotion_type === 'hot_deals') {
                 // validation for hot deals
                 $hotDealsValue = [
-                    'price_old' => $price_old,
-                    'merchant_commision' => $merchant_commision,
+                    // 'price_old' => $price_old,
+                    // 'merchant_commision' => $merchant_commision,
                     'price_selling' => $price_selling,
                 ];
                 $hotDealsValidation = [
-                    'price_old' => 'required',
-                    'merchant_commision' => 'required',
+                    // 'price_old' => 'required',
+                    // 'merchant_commision' => 'required',
                     'price_selling' => 'required',
                 ];
                 $thirdValidator = Validator::make(
@@ -5022,7 +5022,7 @@ class CouponAPIController extends ControllerAPI
          * value null it means set to null (use main language content instead).
          */
 
-        $valid_fields = ['promotion_name', 'description', 'long_description', 'short_description', 'terms_and_condition'];
+        $valid_fields = ['promotion_name', 'description', 'long_description', 'short_description', 'terms_and_conditions', 'how_to_buy_and_redeem'];
         $user = $this->api->user;
         $operations = [];
 
