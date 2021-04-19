@@ -179,7 +179,16 @@ class CouponDetailAPIController extends PubControllerAPI
                             'promotions.max_quantity_per_purchase',
                             'promotions.max_quantity_per_user',
                             'promotions.currency',
-                            'promotions.long_description',
+                            DB::raw("
+                                CASE WHEN (
+                                    {$prefix}coupon_translations.long_description = '' OR
+                                    {$prefix}coupon_translations.long_description is null
+                                ) THEN
+                                    default_translation.long_description
+                                ELSE
+                                    {$prefix}coupon_translations.long_description
+                                END as long_description
+                            "),
                             DB::raw("
                                 CASE WHEN ({$prefix}promotions.promotion_type = 'sepulsa') THEN
                                     {$prefix}coupon_sepulsa.how_to_buy_and_redeem
