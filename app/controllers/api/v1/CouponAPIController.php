@@ -158,8 +158,8 @@ class CouponAPIController extends ControllerAPI
             $employee_user_ids = (array) $employee_user_ids;
             $id_language_default = OrbitInput::post('id_language_default');
             $is_popup = OrbitInput::post('is_popup', 'N');
-            $rule_begin_date = OrbitInput::post('rule_begin_date');
-            $rule_end_date = OrbitInput::post('rule_end_date');
+            // $rule_begin_date = OrbitInput::post('rule_begin_date');
+            // $rule_end_date = OrbitInput::post('rule_end_date');
             $keywords = OrbitInput::post('keywords');
             $translations = OrbitInput::post('translations');
             $keywords = (array) $keywords;
@@ -241,8 +241,8 @@ class CouponAPIController extends ControllerAPI
                 'is_all_retailer'         => $is_all_retailer,
                 'is_all_employee'         => $is_all_employee,
                 'id_language_default'     => $id_language_default,
-                'rule_begin_date'         => $rule_begin_date,
-                'rule_end_date'           => $rule_end_date,
+                // 'rule_begin_date'         => $rule_begin_date,
+                // 'rule_end_date'           => $rule_end_date,
                 'sticky_order'            => $sticky_order,
                 'is_popup'                => $is_popup,
                 'coupon_codes'            => $couponCodes,
@@ -264,8 +264,8 @@ class CouponAPIController extends ControllerAPI
                 'is_all_retailer'         => 'orbit.empty.status_link_to',
                 'is_all_employee'         => 'orbit.empty.status_link_to',
                 'id_language_default'     => 'required|orbit.empty.language_default',
-                'rule_begin_date'         => 'date_format:Y-m-d H:i:s',
-                'rule_end_date'           => 'date_format:Y-m-d H:i:s',
+                // 'rule_begin_date'         => 'date_format:Y-m-d H:i:s',
+                // 'rule_end_date'           => 'date_format:Y-m-d H:i:s',
                 'sticky_order'            => 'in:0,1',
                 'is_popup'                => 'in:Y,N',
                 'coupon_codes'            => 'required',
@@ -623,8 +623,8 @@ class CouponAPIController extends ControllerAPI
             $couponrule->is_cumulative_with_coupons = $is_cumulative_with_coupons;
             $couponrule->is_cumulative_with_promotions = $is_cumulative_with_promotions;
             $couponrule->coupon_redeem_rule_value = $coupon_redeem_rule_value;
-            $couponrule->rule_begin_date = $rule_begin_date;
-            $couponrule->rule_end_date = $rule_end_date;
+            // $couponrule->rule_begin_date = $rule_begin_date;
+            // $couponrule->rule_end_date = $rule_end_date;
             $couponrule = $newcoupon->couponRule()->save($couponrule);
             $newcoupon->coupon_rule = $couponrule;
 
@@ -1159,8 +1159,8 @@ class CouponAPIController extends ControllerAPI
             $discount_value = OrbitInput::post('discount_value');
             $rule_value = OrbitInput::post('rule_value');
             $id_language_default = OrbitInput::post('id_language_default');
-            $rule_begin_date = OrbitInput::post('rule_begin_date');
-            $rule_end_date = OrbitInput::post('rule_end_date');
+            // $rule_begin_date = OrbitInput::post('rule_begin_date');
+            // $rule_end_date = OrbitInput::post('rule_end_date');
             $translations = OrbitInput::post('translations');
             $coupon_codes = OrbitInput::post('coupon_codes');
             $retailer_ids = OrbitInput::post('retailer_ids');
@@ -1219,8 +1219,8 @@ class CouponAPIController extends ControllerAPI
                 'is_all_retailer'         => $is_all_retailer,
                 'is_all_employee'         => $is_all_employee,
                 'id_language_default'     => $id_language_default,
-                'rule_begin_date'         => $rule_begin_date,
-                'rule_end_date'           => $rule_end_date,
+                // 'rule_begin_date'         => $rule_begin_date,
+                // 'rule_end_date'           => $rule_end_date,
                 'partner_exclusive'       => $is_exclusive,
                 'is_visible'              => $is_visible,
                 'is_3rd_party_promotion'  => $is_3rd_party_promotion,
@@ -1249,8 +1249,8 @@ class CouponAPIController extends ControllerAPI
                     'is_all_retailer'         => 'orbit.empty.status_link_to',
                     'is_all_employee'         => 'orbit.empty.status_link_to',
                     'id_language_default'     => 'required|orbit.empty.language_default',
-                    'rule_begin_date'         => 'date_format:Y-m-d H:i:s',
-                    'rule_end_date'           => 'date_format:Y-m-d H:i:s',
+                    // 'rule_begin_date'         => 'date_format:Y-m-d H:i:s',
+                    // 'rule_end_date'           => 'date_format:Y-m-d H:i:s',
                     'partner_exclusive'       => 'in:Y,N|orbit.empty.exclusive_partner',
                     'is_visible'              => 'in:Y,N',
                     'is_3rd_party_promotion'  => 'in:Y,N',
@@ -1793,13 +1793,13 @@ class CouponAPIController extends ControllerAPI
                 $couponrule->coupon_redeem_rule_value = $coupon_redeem_rule_value;
             });
 
-            OrbitInput::post('rule_begin_date', function($rule_begin_date) use ($couponrule) {
-                $couponrule->rule_begin_date = $rule_begin_date;
-            });
+            // OrbitInput::post('rule_begin_date', function($rule_begin_date) use ($couponrule) {
+            //     $couponrule->rule_begin_date = $rule_begin_date;
+            // });
 
-            OrbitInput::post('rule_end_date', function($rule_end_date) use ($couponrule) {
-                $couponrule->rule_end_date = $rule_end_date;
-            });
+            // OrbitInput::post('rule_end_date', function($rule_end_date) use ($couponrule) {
+            //     $couponrule->rule_end_date = $rule_end_date;
+            // });
 
             $couponrule->save();
             $updatedcoupon->setRelation('couponRule', $couponrule);
@@ -5022,7 +5022,7 @@ class CouponAPIController extends ControllerAPI
          * value null it means set to null (use main language content instead).
          */
 
-        $valid_fields = ['promotion_name', 'description', 'long_description', 'short_description'];
+        $valid_fields = ['promotion_name', 'description', 'long_description', 'short_description', 'terms_and_condition'];
         $user = $this->api->user;
         $operations = [];
 
