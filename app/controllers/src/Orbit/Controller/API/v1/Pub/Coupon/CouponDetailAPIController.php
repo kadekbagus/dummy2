@@ -180,14 +180,18 @@ class CouponDetailAPIController extends PubControllerAPI
                             'promotions.max_quantity_per_user',
                             'promotions.currency',
                             DB::raw("
-                                CASE WHEN (
-                                    {$prefix}coupon_translations.long_description = '' OR
-                                    {$prefix}coupon_translations.long_description is null
-                                ) THEN
-                                    default_translation.long_description
+                                CASE WHEN ({$prefix}promotions.promotion_type = 'sepulsa') THEN
+                                    {$prefix}coupon_sepulsa.terms_and_conditions
                                 ELSE
-                                    {$prefix}coupon_translations.long_description
-                                END as long_description
+                                    CASE WHEN (
+                                        {$prefix}coupon_translations.long_description = '' OR
+                                        {$prefix}coupon_translations.long_description is null
+                                    ) THEN
+                                        default_translation.long_description
+                                    ELSE
+                                        {$prefix}coupon_translations.long_description
+                                    END
+                                END as terms_and_conditions
                             "),
                             DB::raw("
                                 CASE WHEN ({$prefix}promotions.promotion_type = 'sepulsa') THEN
@@ -203,7 +207,6 @@ class CouponDetailAPIController extends PubControllerAPI
                                     END
                                 END as how_to_buy_and_redeem
                             "),
-                            'coupon_sepulsa.terms_and_conditions',
                             'issued_coupons.url as redeem_url',
                             'issued_coupons.user_id',
                             'issued_coupons.original_user_id',
