@@ -187,6 +187,7 @@ class CouponAPIController extends ControllerAPI
             $isVisible = OrbitInput::post('is_hidden', 'N') === 'Y' ? 'N' : 'Y';
             $thirdPartyName = OrbitInput::post('third_party_name', NULL);
             $maximumRedeem = OrbitInput::post('maximum_redeem', NULL);
+            $maximumIssuedCoupon = OrbitInput::post('maximum_issued_coupon', NULL);
             $maxQuantityPerPurchase = OrbitInput::post('max_quantity_per_purchase', NULL);
             $maxQuantityPerUser = OrbitInput::post('max_quantity_per_user', NULL);
 
@@ -451,10 +452,25 @@ class CouponAPIController extends ControllerAPI
                 }
             }
 
+            // maximum issued coupon validation
+            if (! empty($maximumIssuedCoupon)) {
+                if ($maximumIssuedCoupon > count($arrayCouponCode)) {
+                    $errorMessage = 'Maximum Issued Coupons should not great than total of coupon codes';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                if ($maximumIssuedCoupon < 1) {
+                    $errorMessage = 'Minimum amount of maximum issued coupon is 1';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            } else {
+                $maximumIssuedCoupon = count($arrayCouponCode);
+            }
+
             // maximum redeem validation
             if (! empty($maximumRedeem)) {
                 if ($maximumRedeem > count($arrayCouponCode)) {
-                    $errorMessage = 'The total maximum redeemed coupon can not be more than amount of coupon code';
+                    $errorMessage = 'Maximum Redeemed Coupons should not great than total of coupon codes';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
@@ -489,7 +505,6 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->is_all_retailer = $is_all_retailer;
             $newcoupon->is_all_employee = $is_all_employee;
             $newcoupon->maximum_issued_coupon_type = $maximum_issued_coupon_type;
-            $newcoupon->maximum_issued_coupon = count($arrayCouponCode);
             $newcoupon->coupon_validity_in_days = $coupon_validity_in_days;
             $newcoupon->coupon_validity_in_date = $coupon_validity_in_date;
             $newcoupon->coupon_notification = $coupon_notification;
@@ -500,6 +515,7 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->sticky_order = $sticky_order;
             $newcoupon->is_exclusive = $is_exclusive;
             $newcoupon->is_visible = $isVisible;
+            $newcoupon->maximum_issued_coupon = $maximumIssuedCoupon;
             $newcoupon->maximum_redeem = $maximumRedeem;
             $newcoupon->is_payable_by_wallet = $payByWallet;
             $newcoupon->is_payable_by_normal = $payByNormal;
@@ -3335,10 +3351,10 @@ class CouponAPIController extends ControllerAPI
                         {$table_prefix}promotions.status
                     END as 'coupon_status'"),
                     DB::raw("COUNT(DISTINCT {$table_prefix}promotion_retailer.promotion_retailer_id) as total_location"),
-                    DB::raw("(SELECT GROUP_CONCAT((CASE WHEN ic.issued_coupon_code = 'shortlink' THEN ic.url ELSE ic.issued_coupon_code END) separator '\n')
-                        FROM {$table_prefix}issued_coupons ic
-                        WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id
-                            ) as coupon_codes"),
+                    // DB::raw("(SELECT GROUP_CONCAT((CASE WHEN ic.issued_coupon_code = 'shortlink' THEN ic.url ELSE ic.issued_coupon_code END) separator '\n')
+                    //     FROM {$table_prefix}issued_coupons ic
+                    //     WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id
+                    //         ) as coupon_codes"),
                     DB::raw("CASE
                                 WHEN is_3rd_party_promotion = 'Y' AND is_3rd_party_field_complete = 'N' THEN 'not_available'
                                 WHEN is_3rd_party_promotion = 'Y' AND {$table_prefix}pre_exports.object_id IS NOT NULL AND {$table_prefix}pre_exports.object_type = 'coupon' THEN 'in_progress'
