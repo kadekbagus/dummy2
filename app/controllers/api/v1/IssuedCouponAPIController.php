@@ -1213,7 +1213,7 @@ class IssuedCouponAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
             // Builder object
-            $issuedcoupons = IssuedCoupon::select(DB::raw(`${prefix}${col} as items`))
+            $issuedcoupons = IssuedCoupon::select(DB::raw($col . ' as items'))
                 ->where('promotion_id', $promotionId)
                 ->excludeDeleted();
 
