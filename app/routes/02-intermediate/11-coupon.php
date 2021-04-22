@@ -64,6 +64,11 @@ Route::post('/app/v1/issued-coupon/delete', 'IntermediateAuthController@IssuedCo
 Route::get('/app/v1/issued-coupon/search', 'IntermediateAuthController@IssuedCoupon_getSearchIssuedCoupon');
 
 /**
+ * List issued coupon as text
+ */
+Route::get('/app/v1/issued-coupon/list-as-text', 'IntermediateAuthController@IssuedCoupon_getCouponCodesForCouponId');
+
+/**
  * List issued coupon by redeem retailer
  */
 Route::get('/app/v1/issued-coupon/by-redeem-retailer/search', 'IntermediateAuthController@IssuedCoupon_getSearchIssuedCouponByRedeemRetailer');
