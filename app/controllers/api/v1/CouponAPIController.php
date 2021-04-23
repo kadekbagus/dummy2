@@ -487,6 +487,27 @@ class CouponAPIController extends ControllerAPI
                 $maximumRedeem = count($arrayCouponCode);
             }
 
+            // maximum purchase per transaction validation
+            if ($promotion_type === 'hot_deals') {
+
+                if (! empty($maxQuantityPerPurchase)) {
+
+                    if ($maxQuantityPerPurchase > count($arrayCouponCode)) {
+                        $errorMessage = 'The Maximum Purchase per Transaction should not great than the total of coupon codes';
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    if ($maxQuantityPerPurchase < 1) {
+                        $errorMessage = 'Minimum amount of maximum purchase per transaction is 1';
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                } else {
+                    $maxQuantityPerPurchase = count($arrayCouponCode);
+                }
+
+            }
+
             // A means all gender
             if ($gender === 'A') {
                 $gender = 'Y';
