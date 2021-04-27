@@ -508,6 +508,24 @@ class CouponAPIController extends ControllerAPI
 
             }
 
+            // validate redeem to stores/malls
+            if (count($linkToTenantIds) !== 0) {
+                $availableLinkToTenant = [];
+                foreach ($linkToTenantIds as $link_to_tenant_json) {
+                    $data = @json_decode($link_to_tenant_json);
+                    $availableLinkToTenant[] = $data->tenant_id;
+                }
+
+                foreach ($retailer_ids as $retailer_id) {
+                    $data = @json_decode($retailer_id);
+                    $tenant_id = $data->tenant_id;
+                    if (! in_array($tenant_id, $availableLinkToTenant)) {
+                        $errorMessage = 'Redeem to stores/malls does not match with Link to stores/malls';
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+                }
+            }     
+
             // A means all gender
             if ($gender === 'A') {
                 $gender = 'Y';
@@ -1875,6 +1893,7 @@ class CouponAPIController extends ControllerAPI
                 }
             });
 
+            // Link to stores/malls
             OrbitInput::post('link_to_tenant_ids', function($retailer_ids) use ($promotion_id, $paymentProviders, $payByWallet, $currentCampaignStatus) {
                 if ($currentCampaignStatus !== 'ongoing') 
                 {
@@ -1992,9 +2011,28 @@ class CouponAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('retailer_ids', function($retailer_ids) use ($promotion_id, $paymentProviders, $payByWallet, $currentCampaignStatus) {
+            // Redeem to stores/malls
+            OrbitInput::post('retailer_ids', function($retailer_ids) use ($promotion_id, $paymentProviders, $payByWallet, $currentCampaignStatus, $linkToTenantIds) {
                 if ($currentCampaignStatus !== 'ongoing') 
                 {
+                    // validate link to tenants/malls
+                    if (count($linkToTenantIds) !== 0) {
+                        $availableLinkToTenant = [];
+                        foreach ($linkToTenantIds as $link_to_tenant_json) {
+                            $data = @json_decode($link_to_tenant_json);
+                            $availableLinkToTenant[] = $data->tenant_id;
+                        }
+
+                        foreach ($retailer_ids as $retailer_id) {
+                            $data = @json_decode($retailer_id);
+                            $tenant_id = $data->tenant_id;
+                            if (! in_array($tenant_id, $availableLinkToTenant)) {
+                                $errorMessage = 'Redeem to stores/malls does not match with Link to stores/malls';
+                                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                            }
+                        }
+                    }
+                    
                     $existRetailer = CouponRetailerRedeem::where('promotion_id', '=', $promotion_id)->lists('promotion_retailer_redeem_id');
                     if (! empty($existRetailer)) {
                         $delete_provider = CouponPaymentProvider::whereIn('promotion_retailer_redeem_id', $existRetailer)->delete();
