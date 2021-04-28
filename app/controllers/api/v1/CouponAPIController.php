@@ -210,6 +210,7 @@ class CouponAPIController extends ControllerAPI
             $howToBuyAndRedeem = OrbitInput::post('how_to_buy_and_redeem');
             $termsAndCondition = OrbitInput::post('terms_and_condition');
             $priceToGtm = OrbitInput::post('price_to_gtm', 0);
+            $couponCodeType = OrbitInput::post('coupon_code_type', 'code');
 
             if ($payByNormal === 'N') {
                 $fixedAmountCommission = 0;
@@ -574,6 +575,7 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->long_description = $termsAndCondition;
             $newcoupon->price_to_gtm = $priceToGtm;
             $newcoupon->redemption_link = $redemptionLink;
+            $newcoupon->coupon_code_type = $couponCodeType;
 
             // save 3rd party coupon fields
             if ($is3rdPartyPromotion === 'Y') {
@@ -1679,6 +1681,10 @@ class CouponAPIController extends ControllerAPI
 
             OrbitInput::post('redemption_link', function($redemptionLink) use ($updatedcoupon) {
                 $updatedcoupon->redemption_link = $redemptionLink;
+            });
+
+            OrbitInput::post('coupon_code_type', function($couponCodeType) use ($updatedcoupon) {
+                $updatedcoupon->coupon_code_type = $couponCodeType;
             });
 
             OrbitInput::post('amount_commission', function($amount_commission) use ($updatedcoupon, $payByWallet) {
