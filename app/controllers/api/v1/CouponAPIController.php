@@ -573,13 +573,10 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->max_quantity_per_user = $maxQuantityPerUser;
             $newcoupon->long_description = $termsAndCondition;
             $newcoupon->price_to_gtm = $priceToGtm;
+            $newcoupon->redemption_link = $redemptionLink;
 
             // save 3rd party coupon fields
             if ($is3rdPartyPromotion === 'Y') {
-
-                if (!empty($redemptionLink)) {
-                     $newcoupon->redemption_link = $redemptionLink;
-                }
                 $newcoupon->is_3rd_party_promotion = $is3rdPartyPromotion;
                 $newcoupon->is_3rd_party_field_complete = 'Y';
                 $newcoupon->how_to_buy_and_redeem = $howToBuyAndRedeem;
@@ -1678,6 +1675,10 @@ class CouponAPIController extends ControllerAPI
 
             OrbitInput::post('price_to_gtm', function($priceToGtm) use ($updatedcoupon) {
                 $updatedcoupon->price_to_gtm = $priceToGtm;
+            });
+
+            OrbitInput::post('redemption_link', function($redemptionLink) use ($updatedcoupon) {
+                $updatedcoupon->redemption_link = $redemptionLink;
             });
 
             OrbitInput::post('amount_commission', function($amount_commission) use ($updatedcoupon, $payByWallet) {
