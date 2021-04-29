@@ -1,6 +1,8 @@
   <style type="text/css">
     * {
       font-family:'Roboto', 'Arial', sans-serif;
+      color: #333;
+      line-height: 1.5em;
     }
 
     /* Outlines the grids, remove when sending */
@@ -92,6 +94,23 @@
     .btn.btn-light.btn-blue {
       border: 1px solid #2196F3;
       color: #2196F3;
+    }
+
+    .mx-4 {
+      margin-left: 4px;
+      margin-right: 4px;
+    }
+
+    .text-left {
+      text-align: left;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+
+    .text-center {
+      text-align: center;
     }
 
     .coupon-img-container {

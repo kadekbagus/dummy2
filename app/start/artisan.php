@@ -362,3 +362,7 @@ Artisan::add(new GetListActiveProductAffiliationCommand);
 
 // Reset user game points
 Artisan::add(new ResetGamePoint);
+
+// Update pulsa status
+Artisan::add(new PulsaStatusUpdateCommand);
+

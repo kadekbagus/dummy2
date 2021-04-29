@@ -22,7 +22,10 @@ class UPointResponse extends BaseResponse
 
         parent::__construct($response);
 
-        if (isset($this->response->data->status_msg)) {
+        if (isset($this->response->data->error_info)) {
+            $this->response->setMessage($this->response->data->error_info);
+        }
+        else if (isset($this->response->data->status_msg)) {
             $this->response->setMessage($this->response->data->status_msg);
         }
     }

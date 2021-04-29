@@ -4075,19 +4075,56 @@ class CouponAPIController extends ControllerAPI
                     $redeemLocationInfo->save();
                 }
             }
-            else {
-                $paymentConfig = Config::get('orbit.payment_server');
-                $paymentClient = PaymentClient::create($paymentConfig)->setFormParam($body);
-                $response = $paymentClient->setEndPoint('api/v1/pay')
-                                        ->request('POST');
+            elseif (in_array($coupon->promotion_type, [Coupon::TYPE_NORMAL])) {
+                // Saving to payment_transaction
+                $transaction = new PaymentTransaction();
+                $transaction->user_email = $body['user_email'];
+                $transaction->user_name = $body['user_name'];
+                $transaction->user_id = $body['user_id'];
+                $transaction->country_id = $body['country_id'];
+                $transaction->payment_provider_id = $body['payment_provider_id'];
+                $transaction->payment_method = $body['payment_method'];
+                $transaction->currency = $body['currency'];
+                $transaction->status = 'success';
+                $transaction->timezone_name = $body['timezone_name'];
+                $transaction->post_data = '-';
+                $transaction->save();
 
-                if ($response->status !== 'success') {
-                    $errorMessage = 'Transaction Failed';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
+                // Saving to payment transaction detail
+                $paymentTransactionDetail = new PaymentTransactionDetail();
+                $paymentTransactionDetail->payment_transaction_id = $transaction->payment_transaction_id;
+                $paymentTransactionDetail->object_id = $body['object_id'];
+                $paymentTransactionDetail->object_type = $body['object_type'];
+                $paymentTransactionDetail->object_name = $body['object_name'];
+                $paymentTransactionDetail->currency = $body['currency'];
+                $paymentTransactionDetail->save();
 
-                $transactionId = $response->data->transaction_id;
+                //Saving to payment_normal_paypro_detail
+                $paymentNormalPayproDetail = new PaymentTransactionDetailNormalPaypro();
+                $paymentNormalPayproDetail->payment_transaction_detail_id = $paymentTransactionDetail->payment_transaction_detail_id;
+                $paymentNormalPayproDetail->merchant_id = $body['merchant_id'];
+                $paymentNormalPayproDetail->merchant_name = $body['merchant_name'];
+                $paymentNormalPayproDetail->store_id = $body['store_id'];
+                $paymentNormalPayproDetail->store_name = $body['store_name'];
+                $paymentNormalPayproDetail->building_id = $body['building_id'];
+                $paymentNormalPayproDetail->building_name = $body['building_name'];
+                $paymentNormalPayproDetail->save();
+
+                $transactionId = $transaction->payment_transaction_id;
             }
+            // else {
+            //     $paymentConfig = Config::get('orbit.payment_server');
+            //     $paymentClient = PaymentClient::create($paymentConfig)->setFormParam($body);
+            //     $response = $paymentClient->setEndPoint('api/v1/pay')
+            //                             ->request('POST');
+
+            //     if ($response->status !== 'success') {
+            //         $errorMessage = 'Transaction Failed';
+            //         OrbitShopAPI::throwInvalidArgument($errorMessage);
+            //     }
+
+            //     $transactionId = $response->data->transaction_id;
+            // }
 
             $mall = App::make('orbit.empty.merchant');
 
@@ -4176,16 +4213,19 @@ class CouponAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
 
-            // send google analytics event
-            GMP::create(Config::get('orbit.partners_api.google_measurement'))
-                ->setQueryString([
-                    'cid' => time(),
-                    't' => 'event',
-                    'ea' => 'Redeem Coupon Failed',
-                    'ec' => 'Coupon',
-                    'el' => $issuedcoupon->coupon->promotion_name
-                ])
-                ->request();
+            if (isset($issuedcoupon->coupon)) {
+
+                // send google analytics event
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                    ->setQueryString([
+                        'cid' => time(),
+                        't' => 'event',
+                        'ea' => 'Redeem Coupon Failed',
+                        'ec' => 'Coupon',
+                        'el' => $issuedcoupon->coupon->promotion_name
+                    ])
+                    ->request();
+            }
 
             // Deletion failed Activity log
             if ($paymentProvider === '0') {
@@ -4212,16 +4252,18 @@ class CouponAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
 
-            // send google analytics event
-            GMP::create(Config::get('orbit.partners_api.google_measurement'))
-                ->setQueryString([
-                    'cid' => time(),
-                    't' => 'event',
-                    'ea' => 'Redeem Coupon Failed',
-                    'ec' => 'Coupon',
-                    'el' => $issuedcoupon->coupon->promotion_name
-                ])
-                ->request();
+            if (isset($issuedcoupon->coupon)) {
+                // send google analytics event
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                    ->setQueryString([
+                        'cid' => time(),
+                        't' => 'event',
+                        'ea' => 'Redeem Coupon Failed',
+                        'ec' => 'Coupon',
+                        'el' => $issuedcoupon->coupon->promotion_name
+                    ])
+                    ->request();
+            }
 
             // Deletion failed Activity log
             if ($paymentProvider === '0') {
@@ -4254,16 +4296,18 @@ class CouponAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
 
-            // send google analytics event
-            GMP::create(Config::get('orbit.partners_api.google_measurement'))
-                ->setQueryString([
-                    'cid' => time(),
-                    't' => 'event',
-                    'ea' => 'Redeem Coupon Failed',
-                    'ec' => 'Coupon',
-                    'el' => $issuedcoupon->coupon->promotion_name
-                ])
-                ->request();
+            if (isset($issuedcoupon->coupon)) {
+                // send google analytics event
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                    ->setQueryString([
+                        'cid' => time(),
+                        't' => 'event',
+                        'ea' => 'Redeem Coupon Failed',
+                        'ec' => 'Coupon',
+                        'el' => $issuedcoupon->coupon->promotion_name
+                    ])
+                    ->request();
+            }
 
             // Deletion failed Activity log
             if ($paymentProvider === '0') {
@@ -4289,16 +4333,19 @@ class CouponAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
 
-            // send google analytics event
-            GMP::create(Config::get('orbit.partners_api.google_measurement'))
-                ->setQueryString([
-                    'cid' => time(),
-                    't' => 'event',
-                    'ea' => 'Redeem Coupon Failed',
-                    'ec' => 'Coupon',
-                    'el' => $issuedcoupon->coupon->promotion_name
-                ])
-                ->request();
+
+            if (isset($issuedcoupon->coupon)) {
+                // send google analytics event
+                GMP::create(Config::get('orbit.partners_api.google_measurement'))
+                    ->setQueryString([
+                        'cid' => time(),
+                        't' => 'event',
+                        'ea' => 'Redeem Coupon Failed',
+                        'ec' => 'Coupon',
+                        'el' => $issuedcoupon->coupon->promotion_name
+                    ])
+                    ->request();
+            }
 
             // Deletion failed Activity log
             if ($paymentProvider === '0') {

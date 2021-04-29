@@ -28,6 +28,7 @@ class PulsaUpdateStatusRepository {
                 $this->pulsa->status = 'active';
             }
 
+            $this->pulsa->updated_by = null;
             $this->pulsa->save();
 
         });

@@ -5940,6 +5940,13 @@ return array(
                 // the object for 1 month 2592000 seconds
                 'CacheControl' => 'public, max-age=2592000'
             ],
+        ],
+
+        'cloudfront-prefix' => [
+            // enable cloudfront prefix, uploaded images will have this prefix instead of s3 http prefix
+            'enabled' => false,
+
+            'prefix' => 'https://cfdevdotcool.gotomalls.com'
         ]
     ],
 
@@ -6378,6 +6385,11 @@ return array(
             // tracking ID (eg: UA-XXXXX-1)
             'tid' => '',
         ],
+
+        // involve.asia datafeeds
+        'involve_asia' => [
+            'tracking_link_id' => '102758'
+        ]
     ],
 
     // Config related to transaction.

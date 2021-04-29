@@ -13,17 +13,19 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
  * @param ProductNewAPIController $controller - The instance of the ProductNewAPIController or its subclass
  * @param Product $product - Instance of object Product
  */
-Event::listen('orbit.newproduct.postnewproduct.after.save', function($controller, $product)
+Event::listen('orbit.newproduct.postnewproduct.after.save', function($user, $product)
 {
     $media = [];
     $maxPhotos = 4;
     $images = Input::file(null);
     if (! $images) {
-        return;
+        if (empty($_FILES['images']['tmp_name'])) {
+            return;
+        }
     }
 
     // This will be used on MediaAPIController
-    App::instance('orbit.upload.user', $controller->api->user);
+    App::instance('orbit.upload.user', $user);
 
     // Use MediaAPIController class to upload the image
     $_POST['media_name_id'] = 'product_image';

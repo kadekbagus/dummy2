@@ -8,15 +8,15 @@ return [
     ],
 
     'body' => [
-        'greeting' => 'Dear, :customerName
+        'greeting' => '<strong>Dear, :customerName</strong>
                         <br>
                         Thank you for purchasing Coupon in Gotomalls.com. Below are the instructions to complete your payment.',
 
-        'greeting_pulsa' => 'Dear, :customerName
+        'greeting_pulsa' => '<strong>Dear, :customerName</strong>
                         <br>
                         Thank you for purchasing Pulsa in Gotomalls.com. Please perform the payment using your GOJEK App (GoPay). Below are your transaction details. ',
 
-        'greeting_data_plan' => 'Dear, :customerName
+        'greeting_data_plan' => '<strong>Dear, :customerName</strong>
                         <br>
                         Thank you for purchasing Data Plan in Gotomalls.com. Please perform the payment using your GOJEK App (GoPay). Below are your transaction details. ',
 

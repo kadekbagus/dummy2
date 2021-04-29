@@ -88,8 +88,16 @@ class CdnUploadNewQueue
                     $uploadConfig = $uploadConfig + $genericUploadConfig;
                     $response = $s3->putObject($uploadConfig);
 
+                    $cdnUrl = '';
+                    if (Config::get('orbit.aws-sdk.cloudfront-prefix.enabled', false)) {
+                        $httpPrefix = Config::get('orbit.aws-sdk.cloudfront-prefix.prefix');
+                        $cdnUrl = "{$httpPrefix}/{$localFile->path}";
+                    } else {
+                        $cdnUrl = $response['ObjectURL'];
+                    }
+
                     $s3Media = Media::find($localFile->media_id);
-                    $s3Media->cdn_url = $response['ObjectURL'];
+                    $s3Media->cdn_url = $cdnUrl;
                     $s3Media->cdn_bucket_name = $bucketName;
                     $s3Media->save();
 
