@@ -118,6 +118,20 @@ class BrandProductValidator
             === App::make('currentUser')->user_id;
     }
 
+    public function pickupLocationValid($attrs, $value, $params)
+    {
+        $variant = $this->getVariant();
+
+        $isValid =
+
+        return $isValid;
+    }
+
+    public function quantityAvailableOnPickupLocation($attrs, $value, $params)
+    {
+
+    }
+
     private function getVariant($variantId = '')
     {
         if (App::bound('productVariant')) {
