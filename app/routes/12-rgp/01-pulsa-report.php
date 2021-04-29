@@ -32,3 +32,13 @@ Route::get('/app/v1/rgp/check-ayopay-balance', function()
 {
     return Orbit\Controller\API\v1\RGP\CheckAyoPayBalanceAPIController::create()->get();
 });
+
+Route::post('/app/v1/rgp/update-status', function()
+{
+    return Orbit\Controller\API\v1\RGP\UpdateStatusAPIController::create()->post();
+});
+
+Route::post('/app/v1/rgp/update-price', function()
+{
+    return Orbit\Controller\API\v1\RGP\UpdatePriceAPIController::create()->post();
+});

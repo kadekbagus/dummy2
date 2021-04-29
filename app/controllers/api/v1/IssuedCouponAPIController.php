@@ -1160,4 +1160,151 @@ class IssuedCouponAPIController extends ControllerAPI
         });
 
     }
+
+    public function getCouponCodesForCouponId()
+    {
+        try {
+            $httpCode = 200;
+
+            // Require authentication
+            $this->checkAuth();
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->viewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $this->registerCustomValidation();
+
+            $sort_by = OrbitInput::get('sortby');
+            $promotionId = OrbitInput::get('promotion_id');
+            $type = OrbitInput::get('code_type', 'code');
+
+            $validator = Validator::make(
+                array(
+                    'promotion_id' => $promotionId,
+                    'type' => $type,
+                    'sort_by' => $sort_by,
+                ),
+                array(
+                    'promotion_id' => 'required',
+                    'type' => 'in:code,url',
+                    'sort_by' => 'in:issued_coupon_id,registered_date,issued_coupon_code,expired_date,issued_date,redeemed_date,status',
+                ),
+                array(
+                    'in' => Lang::get('validation.orbit.empty.issued_coupon_sortby'),
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $col = $type === 'code' ? 'issued_coupon_code' : 'url';
+
+            $prefix = DB::getTablePrefix();
+            // Builder object
+            $issuedcoupons = IssuedCoupon::select(DB::raw($col . ' as items'))
+                ->where('promotion_id', $promotionId)
+                ->excludeDeleted();
+
+            // Clone the query builder which still does not include the take,
+            // skip, and order by
+            $_issuedcoupons = clone $issuedcoupons;
+
+            // Default sort by
+            $sortBy = 'issued_coupons.issued_coupon_code';
+            // Default sort mode
+            $sortMode = 'asc';
+
+            OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
+            {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'issued_coupon_id'   => 'issued_coupons.issued_coupon_id',
+                    'registered_date'    => 'issued_coupons.created_at',
+                    'issued_coupon_code' => 'issued_coupons.issued_coupon_code',
+                    'expired_date'       => 'issued_coupons.expired_date',
+                    'issued_date'        => 'issued_coupons.issued_date',
+                    'redeemed_date'      => 'issued_coupons.redeemed_date',
+                    'status'             => 'issued_coupons.status'
+                );
+
+                $sortBy = $sortByMapping[$_sortBy];
+            });
+
+            OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
+            {
+                if (strtolower($_sortMode) !== 'asc') {
+                    $sortMode = 'desc';
+                }
+            });
+            $issuedcoupons->orderBy($sortBy, $sortMode);
+
+            $listOfIssuedCoupons = $issuedcoupons->get();
+
+            $data = null;
+
+            if (count($listOfIssuedCoupons) > 0) {
+                foreach ($listOfIssuedCoupons as $issuedCoupon) {
+                    $data = $data . $issuedCoupon->items . "\n";
+                }
+                $data = rtrim($data);
+            } else {
+                $this->response->message = Lang::get('statuses.orbit.nodata.issued_coupon');
+            }
+
+            $this->response->data = $data;
+        } catch (ACLForbiddenException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+
+        return $output;
+    }
 }

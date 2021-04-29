@@ -167,7 +167,7 @@ class IssuedCoupon extends Eloquent
         }
     }
 
-    public static function bulkIssueGiftN($couponCodes, $promotionId, $couponValidityDate, $admin = NULL) {
+    public static function bulkIssueGiftN($couponCodes, $promotionId, $couponValidityDate, $admin = NULL, $code='gift_n_coupon') {
         $issuerUserId = NULL;
         if (! is_null($admin)) {
             $issuerUserId = $admin->user_id;
@@ -180,7 +180,7 @@ class IssuedCoupon extends Eloquent
             $data[] = array(
                     'issued_coupon_id' => ObjectID::make(),
                     'promotion_id' => $promotionId,
-                    'issued_coupon_code' => 'gift_n_coupon',
+                    'issued_coupon_code' => $code,
                     'url' => $couponCodes[$i],
                     'expired_date' => $couponValidityDate,
                     'issuer_user_id' => $issuerUserId,
