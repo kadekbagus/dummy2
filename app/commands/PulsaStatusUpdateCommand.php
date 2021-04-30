@@ -45,18 +45,22 @@ class PulsaStatusUpdateCommand extends Command {
             $pulsa = Pulsa::where('pulsa_code', $code)
                 ->first();
 
-            if ($pulsa->status == $status) {
-                $this->info($code . ' is already ' . $status . '. No changes made.');
-            } elseif ($pulsa->status == $previousStatus) {
-                if ($pulsa->status == 'inactive' && $pulsa->updated_by != 'cron-job') {
-                    $this->info($code . ' is made inactive by admin. No changes made.');
-                } else {
-                    $pulsa->status = $status;
-                    $pulsa->updated_by = 'cron-job';
-                    $pulsa->save();
+            if (is_object($pulsa)) {
+                if ($pulsa->status == $status) {
+                    $this->info($code . ' is already ' . $status . '. No changes made.');
+                } elseif ($pulsa->status == $previousStatus) {
+                    if ($pulsa->status == 'inactive' && $pulsa->updated_by != 'cron-job') {
+                        $this->info($code . ' is made inactive by admin. No changes made.');
+                    } else {
+                        $pulsa->status = $status;
+                        $pulsa->updated_by = 'cron-job';
+                        $pulsa->save();
 
-                    $this->info('Updating ' . $code . ' status to ' . $status . ' successful.');
+                        $this->info('Updating ' . $code . ' status to ' . $status . ' successful.');
+                    }
                 }
+            } else {
+                throw new Exception("Pulsa not found", 1);
             }
         } catch (\Exception $e) {
             $this->error($e->getMessage());
