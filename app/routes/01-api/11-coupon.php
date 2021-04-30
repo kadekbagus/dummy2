@@ -116,6 +116,14 @@ Route::post('/api/v1/issued-coupon/redeem', function()
 });
 
 /**
+ * Redeem coupon for consumer
+ */
+Route::post('/api/v1/issued-coupon/list-as-text', function()
+{
+    return IssuedCouponAPIController::create()->getCouponCodesForCouponId();
+});
+
+/**
  * Coupon Report By Name
  */
 Route::post('/api/v1/coupon-report/list', function()
