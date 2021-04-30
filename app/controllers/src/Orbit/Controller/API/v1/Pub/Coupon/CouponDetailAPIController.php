@@ -184,12 +184,19 @@ class CouponDetailAPIController extends PubControllerAPI
                                     {$prefix}coupon_sepulsa.terms_and_conditions
                                 ELSE
                                     CASE WHEN (
-                                        {$prefix}coupon_translations.long_description = '' OR
-                                        {$prefix}coupon_translations.long_description is null
+                                        {$prefix}coupon_translations.terms_and_conditions <> '' OR
+                                        {$prefix}coupon_translations.terms_and_conditions is not null
                                     ) THEN
-                                        default_translation.long_description
+                                        {$prefix}coupon_translations.terms_and_conditions
                                     ELSE
-                                        {$prefix}coupon_translations.long_description
+                                        CASE WHEN (
+                                            {$prefix}coupon_translations.long_description <> '' OR
+                                            {$prefix}coupon_translations.long_description is not null
+                                        ) THEN
+                                            {$prefix}coupon_translations.long_description
+                                        ELSE
+                                            default_translation.long_description
+                                        END
                                     END
                                 END as terms_and_conditions
                             "),
