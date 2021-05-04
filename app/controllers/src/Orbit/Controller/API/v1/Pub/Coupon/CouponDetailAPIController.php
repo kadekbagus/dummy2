@@ -184,19 +184,26 @@ class CouponDetailAPIController extends PubControllerAPI
                                     {$prefix}coupon_sepulsa.terms_and_conditions
                                 ELSE
                                     CASE WHEN (
-                                        {$prefix}coupon_translations.terms_and_conditions <> '' OR
-                                        {$prefix}coupon_translations.terms_and_conditions is not null
+                                        {$prefix}coupon_translations.terms_and_conditions = '' OR
+                                        {$prefix}coupon_translations.terms_and_conditions is null
                                     ) THEN
-                                        {$prefix}coupon_translations.terms_and_conditions
-                                    ELSE
                                         CASE WHEN (
-                                            {$prefix}coupon_translations.long_description <> '' OR
-                                            {$prefix}coupon_translations.long_description is not null
+                                            default_translation.terms_and_conditions = '' OR
+                                            default_translation.terms_and_conditions is null
                                         ) THEN
-                                            {$prefix}coupon_translations.long_description
+                                            CASE WHEN (
+                                                {$prefix}coupon_translations.long_description = '' OR
+                                                {$prefix}coupon_translations.long_description is null
+                                            ) THEN
+                                                default_translation.long_description
+                                            ELSE
+                                                {$prefix}coupon_translations.long_description
+                                            END
                                         ELSE
-                                            default_translation.long_description
+                                            default_translation.terms_and_conditions
                                         END
+                                    ELSE
+                                        {$prefix}coupon_translations.terms_and_conditions
                                     END
                                 END as terms_and_conditions
                             "),
