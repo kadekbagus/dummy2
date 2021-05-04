@@ -15,7 +15,7 @@ use Validator;
 use App;
 use Lang;
 use \Exception;
-use PromotionRetailer;
+use CouponRetailerRedeem;
 use Helper\EloquentRecordCounter as RecordCounter;
 
 class CouponWalletLocationAPIController extends PubControllerAPI
@@ -77,7 +77,7 @@ class CouponWalletLocationAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $mall = PromotionRetailer::select(
+            $mall = CouponRetailerRedeem::select(
                     DB::raw("{$prefix}merchants.merchant_id as merchant_id"),
                     DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.parent_id ELSE {$prefix}merchants.merchant_id END as mall_id"),
                     DB::raw("{$prefix}merchants.object_type as location_type"),
@@ -85,7 +85,7 @@ class CouponWalletLocationAPIController extends PubControllerAPI
                     DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.ci_domain ELSE {$prefix}merchants.ci_domain END as ci_domain"),
                     DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END as city"),
                     DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.description ELSE {$prefix}merchants.description END as description"),
-                    'promotion_retailer.promotion_id as coupon_id',
+                    'promotion_retailer_redeem.promotion_id as coupon_id',
                     'promotions.begin_date as begin_date',
                     'promotions.end_date as end_date',
                     'promotions.coupon_validity_in_date as coupon_validity_in_date',
@@ -97,9 +97,9 @@ class CouponWalletLocationAPIController extends PubControllerAPI
                     DB::Raw("img.path as location_logo"),
                     DB::Raw("{$prefix}merchants.phone as phone")
                 )
-                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
                 ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                ->leftJoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
+                ->leftJoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer_redeem.promotion_id')
                 ->join('issued_coupons', function ($join) {
                     $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                     $join->where('issued_coupons.status', '=', 'issued');
@@ -118,7 +118,7 @@ class CouponWalletLocationAPIController extends PubControllerAPI
                         ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
                 })
                 ->where('issued_coupons.user_id', $user->user_id)
-                ->where('promotion_retailer.promotion_id', '=', $couponId)
+                ->where('promotion_retailer_redeem.promotion_id', '=', $couponId)
                 ->where('merchants.status', 'active')
                 ->groupBy('merchant_id')
                 ->havingRaw('tz <= coupon_validity_in_date AND tz >= begin_date');
