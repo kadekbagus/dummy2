@@ -968,7 +968,7 @@ class CouponAPIController extends ControllerAPI
             if (! empty($arrayCouponCode)) {
 
                 if ($is3rdPartyPromotion === 'Y') {
-                    if (empty($redemptionLink)) {
+                    if ($couponCodeType === 'url') {
                         // shortlink
                         IssuedCoupon::bulkIssueGiftN($arrayCouponCode, $newcoupon->promotion_id, $newcoupon->coupon_validity_in_date, $user, 'shortlink');
                     } else {
