@@ -103,7 +103,7 @@ class PaymentPulsaCreateAPIController extends PubControllerAPI
                     'object_id'  => 'required|orbit.exists.pulsa',
                     'quantity'   => 'required|min:1',
                     'promo_code' => 'orbit.reserved.promo',
-                    'payment_method' => 'required|in:midtrans,midtrans-qris,dana,stripe',
+                    'payment_method' => 'required|in:midtrans,midtrans-qris,midtrans-shopeepay,dana,stripe',
                 ),
                 array(
                     'orbit.exists.pulsa' => 'REQUESTED_ITEM_NOT_FOUND',

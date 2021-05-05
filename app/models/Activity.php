@@ -463,7 +463,7 @@ class Activity extends Eloquent
                     break;
 
                 case 'PaymentTransaction':
-                    if (in_array($object->payment_method, ['midtrans', 'midtrans-qris'])) {
+                    if (in_array($object->payment_method, ['midtrans', 'midtrans-qris', 'midtrans-shopeepay'])) {
                         $this->object_display_name = $object->details->count() > 0 ?
                                                         $object->details->first()->object_name :
                                                         'Can not get payment detail record.';

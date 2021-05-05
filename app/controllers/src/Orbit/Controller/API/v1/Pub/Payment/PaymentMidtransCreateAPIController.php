@@ -97,7 +97,7 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                     'mall_id'    => 'required',
                     'object_id'  => 'required|orbit.exists.coupon',
                     'promo_code' => 'orbit.reserved.promo',
-                    'payment_method' => 'required|in:midtrans,midtrans-qris,dana,stripe',
+                    'payment_method' => 'required|in:midtrans,midtrans-qris,midtrans-shopeepay,dana,stripe',
                 ),
                 array(
                     'orbit.allowed.quantity' => 'REQUESTED_QUANTITY_NOT_AVAILABLE',
