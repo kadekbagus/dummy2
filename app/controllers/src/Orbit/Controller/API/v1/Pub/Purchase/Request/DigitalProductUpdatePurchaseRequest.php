@@ -27,6 +27,7 @@ class DigitalProductUpdatePurchaseRequest extends ValidateRequest
         return [
             'payment_transaction_id'   => 'required|purchase_exists',
             'status'                   => 'required|in:pending,success,canceled,failed,expired,denied,suspicious,abort,refund,partial_refund',
+            'payment_method'           => 'sometimes|required|in:midtrans,midtrans-qris,midtrans-shopeepay,stripe,dana',
         ];
     }
 
