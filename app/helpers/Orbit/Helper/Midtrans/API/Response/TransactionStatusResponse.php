@@ -188,6 +188,14 @@ class TransactionStatusResponse
         return false;
     }
 
+    public function paidWithShopee()
+    {
+        return $this->paidWith(['shopeepay'])
+            || (! empty($this->data)
+                && isset($this->data->acquirer)
+                && stripos($this->data->acquirer, 'shopee') >= 0);
+    }
+
     /**
      * Map midtrans response to our internal payment status.
      * This method MUST BE synced to Frontend transaction status/midtrans notification response mapper.

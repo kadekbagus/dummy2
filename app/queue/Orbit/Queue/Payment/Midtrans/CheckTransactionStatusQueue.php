@@ -157,7 +157,7 @@ class CheckTransactionStatusQueue
                     }
                 }
 
-                if ($transaction->paidWith(['shopeepay'])) {
+                if ($transaction->paidWithShopee()) {
                     $payment->payment_method = 'midtrans-shopeepay';
                 }
 
