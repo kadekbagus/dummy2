@@ -157,6 +157,10 @@ class CheckTransactionStatusQueue
                     }
                 }
 
+                if ($transaction->paidWith(['shopeepay'])) {
+                    $payment->payment_method = 'midtrans-shopeepay';
+                }
+
                 // Only update our payment status
                 // if midtrans trx doesnt have refund properties.
                 if (! $transaction->wasRefunded()) {

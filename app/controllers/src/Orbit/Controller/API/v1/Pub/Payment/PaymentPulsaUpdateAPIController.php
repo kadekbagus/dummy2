@@ -20,6 +20,7 @@ use Carbon\Carbon as Carbon;
 use Orbit\Controller\API\v1\Pub\Payment\PaymentHelper;
 use Event;
 use Activity;
+use Request;
 
 use Orbit\Helper\Midtrans\API\TransactionStatus;
 use Orbit\Helper\Midtrans\API\TransactionCancel;
@@ -58,16 +59,11 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
             $mallId = OrbitInput::post('mall_id', null);
             $fromSnap = OrbitInput::post('from_snap', false);
             $refundData = OrbitInput::post('refund_data', null);
-            $paymentMethod = OrbitInput::post('payment_method');
 
             $paymentHelper = PaymentHelper::create();
             $paymentHelper->registerCustomValidation();
             $validator = Validator::make(
-                array(
-                    'payment_transaction_id'   => $payment_transaction_id,
-                    'status'                   => $status,
-                    'payment_method'           => $paymentMethod,
-                ),
+                Request::all(),
                 array(
                     'payment_transaction_id'   => 'required|orbit.exist.payment_transaction_id',
                     'status'                   => 'required|in:pending,success,canceled,failed,expired,denied,suspicious,abort,refund,partial_refund',

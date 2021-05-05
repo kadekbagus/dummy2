@@ -30,6 +30,7 @@ use PaymentTransactionDetail;
 use Queue;
 use User;
 use Validator;
+use Request;
 
 /**
  * Controller for update payment with midtrans
@@ -53,16 +54,11 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             $status = OrbitInput::post('status');
             $mallId = OrbitInput::post('mall_id', null);
             $fromSnap = OrbitInput::post('from_snap', false);
-            $paymentMethod = OrbitInput::post('payment_method');
 
             $paymentHelper = PaymentHelper::create();
             $paymentHelper->registerCustomValidation();
             $validator = Validator::make(
-                array(
-                    'payment_transaction_id'   => $payment_transaction_id,
-                    'status'                   => $status,
-                    'payment_method'           => $paymentMethod,
-                ),
+                Request::all(),
                 array(
                     'payment_transaction_id'   => 'required|orbit.exist.payment_transaction_id',
                     'status'                   => 'required|in:pending,success,canceled,failed,expired,denied,suspicious,abort,refund,partial_refund',
