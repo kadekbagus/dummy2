@@ -172,6 +172,23 @@ class TransactionStatusResponse
     }
 
     /**
+     * Determine if current transaction was paid by specific payment method(s).
+     *
+     * @return bool
+     */
+    public function paidWith($method = [])
+    {
+        if (! empty($this->data)
+            && isset($this->data->payment_type)
+            && ! empty($method)
+        ) {
+            return in_array($this->data->payment_type, $method);
+        }
+
+        return false;
+    }
+
+    /**
      * Map midtrans response to our internal payment status.
      * This method MUST BE synced to Frontend transaction status/midtrans notification response mapper.
      *
