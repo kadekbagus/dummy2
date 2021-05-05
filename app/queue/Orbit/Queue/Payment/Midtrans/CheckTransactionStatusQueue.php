@@ -126,6 +126,10 @@ class CheckTransactionStatusQueue
             $payment->provider_response_code = $transaction->getCode();
             $payment->provider_response_message = $transaction->getMessage();
 
+            if ($transaction->paidWithShopee()) {
+                $payment->payment_method = 'midtrans-shopeepay';
+            }
+
             $payment->save();
 
             // Re-run this job if the status is still pending (and not reached maximum try yet)
@@ -155,10 +159,6 @@ class CheckTransactionStatusQueue
                             $transactionStatus = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
                         }
                     }
-                }
-
-                if ($transaction->paidWithShopee()) {
-                    $payment->payment_method = 'midtrans-shopeepay';
                 }
 
                 // Only update our payment status
