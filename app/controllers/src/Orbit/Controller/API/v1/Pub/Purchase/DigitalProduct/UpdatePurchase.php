@@ -343,6 +343,12 @@ class UpdatePurchase
                 }
             }
             else {
+                OrbitInput::post('payment_method', function($paymentMethod) {
+                    $this->purchase->payment_method = $paymentMethod;
+                });
+
+                $this->purchase->save();
+
                 DB::commit();
             }
 

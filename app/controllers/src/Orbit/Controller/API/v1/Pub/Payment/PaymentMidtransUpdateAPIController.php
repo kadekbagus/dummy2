@@ -388,6 +388,15 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                     }
                 }
             }
+            else {
+                OrbitInput::post('payment_method', function($paymentMethod) use ($payment_update) {
+                    $payment_update->payment_method = $paymentMethod;
+                });
+
+                $payment_update->save();
+
+                $this->commit();
+            }
 
             $this->response->data = $payment_update;
             $this->response->code = 0;

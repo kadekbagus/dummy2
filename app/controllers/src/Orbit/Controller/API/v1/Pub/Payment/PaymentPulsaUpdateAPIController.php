@@ -412,6 +412,12 @@ class PaymentPulsaUpdateAPIController extends PubControllerAPI
                 }
             }
             else {
+                OrbitInput::post('payment_method', function($paymentMethod) use ($payment_update) {
+                    $payment_update->payment_method = $paymentMethod;
+                });
+
+                $payment_update->save();
+
                 $this->commit();
             }
 
