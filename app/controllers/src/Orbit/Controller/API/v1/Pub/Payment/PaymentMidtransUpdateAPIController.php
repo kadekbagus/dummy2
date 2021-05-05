@@ -53,6 +53,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             $status = OrbitInput::post('status');
             $mallId = OrbitInput::post('mall_id', null);
             $fromSnap = OrbitInput::post('from_snap', false);
+            $paymentMethod = OrbitInput::post('payment_method');
 
             $paymentHelper = PaymentHelper::create();
             $paymentHelper->registerCustomValidation();
@@ -60,10 +61,12 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 array(
                     'payment_transaction_id'   => $payment_transaction_id,
                     'status'                   => $status,
+                    'payment_method'           => $paymentMethod,
                 ),
                 array(
                     'payment_transaction_id'   => 'required|orbit.exist.payment_transaction_id',
-                    'status'                   => 'required|in:pending,success,canceled,failed,expired,denied,suspicious,abort,refund,partial_refund'
+                    'status'                   => 'required|in:pending,success,canceled,failed,expired,denied,suspicious,abort,refund,partial_refund',
+                    'payment_method'           => 'sometimes|required|in:midtrans,midtrans-qris,midtrans-shopeepay,stripe,dana',
                 ),
                 array(
                     'orbit.exist.payment_transaction_id' => 'payment transaction id not found'
@@ -211,6 +214,10 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 OrbitInput::post('payment_midtrans_info', function($payment_midtrans_info) use ($payment_update) {
                     $payment_update->midtrans->payment_midtrans_info = serialize($payment_midtrans_info);
                     $payment_update->midtrans->save();
+                });
+
+                OrbitInput::post('payment_method', function($paymentMethod) use ($payment_update) {
+                    $payment_update->payment_method = $paymentMethod;
                 });
 
                 $payment_update->responded_at = Carbon::now('UTC');
