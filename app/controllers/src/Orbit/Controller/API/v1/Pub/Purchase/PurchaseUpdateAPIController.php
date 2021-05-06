@@ -18,12 +18,14 @@ class PurchaseUpdateAPIController extends PubControllerAPI
      *
      * @return [type] [description]
      */
-    public function postUpdate(DigitalProductUpdatePurchaseRequest $request)
+    public function postUpdate()
     {
         $httpCode = 200;
 
         try {
             // $this->enableQueryLog();
+
+            with($request = new DigitalProductUpdatePurchaseRequest($this))->validate();
 
             $purchase = App::make('purchase');
 
