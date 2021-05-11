@@ -185,6 +185,10 @@ class UpdatePurchase
                     $this->purchase->midtrans->save();
                 });
 
+                OrbitInput::post('payment_method', function($paymentMethod) {
+                    $this->purchase->payment_method = $paymentMethod;
+                });
+
                 $this->purchase->responded_at = Carbon::now('UTC');
 
                 // If payment was success, set purchase to processing/purchasing product to provider.
@@ -339,6 +343,12 @@ class UpdatePurchase
                 }
             }
             else {
+                OrbitInput::post('payment_method', function($paymentMethod) {
+                    $this->purchase->payment_method = $paymentMethod;
+                });
+
+                $this->purchase->save();
+
                 DB::commit();
             }
 
