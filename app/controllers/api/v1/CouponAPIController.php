@@ -382,33 +382,6 @@ class CouponAPIController extends ControllerAPI
                 }
             }
 
-            // validating retailer_ids.
-            foreach ($retailer_ids as $retailer_json) {
-                $data = @json_decode($retailer_json);
-                $tenant_id = $data->tenant_id;
-                $mall_id = $data->mall_id;
-
-                $validator = Validator::make(
-                    array(
-                        'retailer_id'   => $tenant_id,
-
-                    ),
-                    array(
-                        'retailer_id'   => 'orbit.empty.tenant',
-                    )
-                );
-
-                Event::fire('orbit.coupon.postnewcoupon.before.retailervalidation', array($this, $validator));
-
-                // Run the validation
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                Event::fire('orbit.coupon.postnewcoupon.after.retailervalidation', array($this, $validator));
-            }
-
             // validating employee_user_ids.
             foreach ($employee_user_ids as $employee_user_id_check) {
                 $validator = Validator::make(
@@ -968,7 +941,7 @@ class CouponAPIController extends ControllerAPI
             if (! empty($arrayCouponCode)) {
 
                 if ($is3rdPartyPromotion === 'Y') {
-                    if (empty($redemptionLink)) {
+                    if ($couponCodeType === 'url') {
                         // shortlink
                         IssuedCoupon::bulkIssueGiftN($arrayCouponCode, $newcoupon->promotion_id, $newcoupon->coupon_validity_in_date, $user, 'shortlink');
                     } else {
