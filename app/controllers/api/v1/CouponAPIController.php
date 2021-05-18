@@ -210,6 +210,7 @@ class CouponAPIController extends ControllerAPI
             $howToBuyAndRedeem = OrbitInput::post('how_to_buy_and_redeem');
             $termsAndCondition = OrbitInput::post('terms_and_condition');
             $priceToGtm = OrbitInput::post('price_to_gtm', 0);
+            $couponCodeType = OrbitInput::post('coupon_code_type', 'code');
 
             if ($payByNormal === 'N') {
                 $fixedAmountCommission = 0;
@@ -381,33 +382,6 @@ class CouponAPIController extends ControllerAPI
                 }
             }
 
-            // validating retailer_ids.
-            foreach ($retailer_ids as $retailer_json) {
-                $data = @json_decode($retailer_json);
-                $tenant_id = $data->tenant_id;
-                $mall_id = $data->mall_id;
-
-                $validator = Validator::make(
-                    array(
-                        'retailer_id'   => $tenant_id,
-
-                    ),
-                    array(
-                        'retailer_id'   => 'orbit.empty.tenant',
-                    )
-                );
-
-                Event::fire('orbit.coupon.postnewcoupon.before.retailervalidation', array($this, $validator));
-
-                // Run the validation
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                Event::fire('orbit.coupon.postnewcoupon.after.retailervalidation', array($this, $validator));
-            }
-
             // validating employee_user_ids.
             foreach ($employee_user_ids as $employee_user_id_check) {
                 $validator = Validator::make(
@@ -474,6 +448,11 @@ class CouponAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
+                if ($maximumRedeem > $maximumIssuedCoupon) {
+                    $errorMessage = 'Maximum Redeemed Coupons should not great than Maximum Issued Coupons';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
                 if ($maximumRedeem < 1) {
                     $errorMessage = 'Minimum amount of maximum redeemed coupon is 1';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
@@ -481,6 +460,45 @@ class CouponAPIController extends ControllerAPI
             } else {
                 $maximumRedeem = count($arrayCouponCode);
             }
+
+            // maximum purchase per transaction validation
+            if ($promotion_type === 'hot_deals') {
+
+                if (! empty($maxQuantityPerPurchase)) {
+
+                    if ($maxQuantityPerPurchase > count($arrayCouponCode)) {
+                        $errorMessage = 'The Maximum Purchase per Transaction should not great than the total of coupon codes';
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    if ($maxQuantityPerPurchase < 1) {
+                        $errorMessage = 'Minimum amount of maximum purchase per transaction is 1';
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                } else {
+                    $maxQuantityPerPurchase = count($arrayCouponCode);
+                }
+
+            }
+
+            // validate redeem to stores/malls
+            if (count($linkToTenantIds) !== 0) {
+                $availableLinkToTenant = [];
+                foreach ($linkToTenantIds as $link_to_tenant_json) {
+                    $data = @json_decode($link_to_tenant_json);
+                    $availableLinkToTenant[] = $data->tenant_id;
+                }
+
+                foreach ($retailer_ids as $retailer_id) {
+                    $data = @json_decode($retailer_id);
+                    $tenant_id = $data->tenant_id;
+                    if (! in_array($tenant_id, $availableLinkToTenant)) {
+                        $errorMessage = 'Redeem to stores/malls does not match with Link to stores/malls';
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+                }
+            }     
 
             // A means all gender
             if ($gender === 'A') {
@@ -529,13 +547,11 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->max_quantity_per_user = $maxQuantityPerUser;
             $newcoupon->long_description = $termsAndCondition;
             $newcoupon->price_to_gtm = $priceToGtm;
+            $newcoupon->redemption_link = $redemptionLink;
+            $newcoupon->coupon_code_type = $couponCodeType;
 
             // save 3rd party coupon fields
             if ($is3rdPartyPromotion === 'Y') {
-
-                if (!empty($redemptionLink)) {
-                     $newcoupon->redemption_link = $redemptionLink;
-                }
                 $newcoupon->is_3rd_party_promotion = $is3rdPartyPromotion;
                 $newcoupon->is_3rd_party_field_complete = 'Y';
                 $newcoupon->how_to_buy_and_redeem = $howToBuyAndRedeem;
@@ -925,7 +941,7 @@ class CouponAPIController extends ControllerAPI
             if (! empty($arrayCouponCode)) {
 
                 if ($is3rdPartyPromotion === 'Y') {
-                    if (empty($redemptionLink)) {
+                    if ($couponCodeType === 'url') {
                         // shortlink
                         IssuedCoupon::bulkIssueGiftN($arrayCouponCode, $newcoupon->promotion_id, $newcoupon->coupon_validity_in_date, $user, 'shortlink');
                     } else {
@@ -1426,6 +1442,8 @@ class CouponAPIController extends ControllerAPI
             // $statusdb = $updatedcoupon->status;
             // $enddatedb = $updatedcoupon->end_date;
 
+            $currentCampaignStatus = $this->getCampaignStatus($promotion_id);
+
             // save Coupon
             OrbitInput::post('merchant_id', function($merchant_id) use ($updatedcoupon) {
                 $updatedcoupon->merchant_id = $merchant_id;
@@ -1632,6 +1650,14 @@ class CouponAPIController extends ControllerAPI
 
             OrbitInput::post('price_to_gtm', function($priceToGtm) use ($updatedcoupon) {
                 $updatedcoupon->price_to_gtm = $priceToGtm;
+            });
+
+            OrbitInput::post('redemption_link', function($redemptionLink) use ($updatedcoupon) {
+                $updatedcoupon->redemption_link = $redemptionLink;
+            });
+
+            OrbitInput::post('coupon_code_type', function($couponCodeType) use ($updatedcoupon) {
+                $updatedcoupon->coupon_code_type = $couponCodeType;
             });
 
             OrbitInput::post('amount_commission', function($amount_commission) use ($updatedcoupon, $payByWallet) {
@@ -1847,118 +1873,202 @@ class CouponAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('link_to_tenant_ids', function($retailer_ids) use ($promotion_id, $paymentProviders, $payByWallet) {
-                // validating retailer_ids.
-                foreach ($retailer_ids as $retailer_id_json) {
-                    $data = @json_decode($retailer_id_json);
-                    $tenant_id = $data->tenant_id;
-                    $mall_id = $data->mall_id;
-
-                    $validatorRule = $tenant_id === $mall_id ? 'orbit.empty.merchant' : 'orbit.empty.tenant';
-
-                    $validator = Validator::make(
-                        array(
-                            'retailer_id'   => $tenant_id,
-
-                        ),
-                        array(
-                            'retailer_id'   => $validatorRule,
-                        )
-                    );
-
-                    Event::fire('orbit.coupon.postupdatecoupon.before.retailervalidation', array($this, $validator));
-
-                    // Run the validation
-                    if ($validator->fails()) {
-                        $errorMessage = $validator->messages()->first();
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+            // Link to stores/malls
+            OrbitInput::post('link_to_tenant_ids', function($retailer_ids) use ($promotion_id, $paymentProviders, $payByWallet, $currentCampaignStatus) {
+                if ($currentCampaignStatus !== 'ongoing') 
+                {
+                    // validating retailer_ids.
+                    foreach ($retailer_ids as $retailer_id_json) {
+                        $data = @json_decode($retailer_id_json);
+                        $tenant_id = $data->tenant_id;
+                        $mall_id = $data->mall_id;
+    
+                        $validatorRule = $tenant_id === $mall_id ? 'orbit.empty.merchant' : 'orbit.empty.tenant';
+    
+                        $validator = Validator::make(
+                            array(
+                                'retailer_id'   => $tenant_id,
+    
+                            ),
+                            array(
+                                'retailer_id'   => $validatorRule,
+                            )
+                        );
+    
+                        Event::fire('orbit.coupon.postupdatecoupon.before.retailervalidation', array($this, $validator));
+    
+                        // Run the validation
+                        if ($validator->fails()) {
+                            $errorMessage = $validator->messages()->first();
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+    
+                        Event::fire('orbit.coupon.postupdatecoupon.after.retailervalidation', array($this, $validator));
+                    }
+    
+                    $mallid = array();
+                    // $existRetailer = CouponRetailerRedeem::where('promotion_id', '=', $promotion_id)->lists('promotion_retailer_redeem_id');
+                    // if (! empty($existRetailer)) {
+                    //     $delete_provider = CouponPaymentProvider::whereIn('promotion_retailer_redeem_id', $existRetailer)->delete();
+                    // }
+    
+                    // // Delete old data
+                    // $delete_retailer = CouponRetailerRedeem::where('promotion_id', '=', $promotion_id);
+                    // $delete_retailer->delete();
+    
+                    // // Insert new data
+                    // $retailers = array();
+                    // $isMall = 'tenant';
+                    // $mallid = array();
+                    // foreach ($retailer_ids as $retailer_id) {
+                    //     $data = @json_decode($retailer_id);
+                    //     $tenant_id = $data->tenant_id;
+                    //     $mall_id = $data->mall_id;
+    
+                    //     if(! in_array($mall_id, $mallid)) {
+                    //         $mallid[] = $mall_id;
+                    //     }
+    
+                    //     if ($tenant_id === $mall_id) {
+                    //         $isMall = 'mall';
+                    //     } else {
+                    //         $isMall = 'tenant';
+                    //     }
+    
+    
+                    //     $retailer = new CouponRetailerRedeem();
+                    //     $retailer->promotion_id = $promotion_id;
+                    //     $retailer->retailer_id = $tenant_id;
+                    //     $retailer->object_type = $isMall;
+                    //     $retailer->save();
+    
+                    //     $retailerRedeemId = $retailer->promotion_retailer_redeem_id;
+    
+                    //     // save coupon payment provider
+                    //     if ($payByWallet === 'Y') {
+                    //         $dataPayment = @json_decode($paymentProviders);
+                    //         foreach ($dataPayment as $data) {
+                    //             foreach ((array) $data as $key => $value) {
+                    //                 if ($key === $tenant_id) {
+                    //                     foreach ($value as $provider) {
+                    //                         $couponPayment = new CouponPaymentProvider();
+                    //                         $couponPayment->payment_provider_id = $provider;
+                    //                         $couponPayment->promotion_retailer_redeem_id = $retailerRedeemId;
+                    //                         $couponPayment->save();
+                    //                     }
+                    //                 }
+                    //             }
+                    //         }
+                    //     }
+                    // }
+    
+                    // Insert to promotion retailer, with delete first old data
+                    $delete_coupon_retailer = CouponRetailer::where('promotion_id', '=', $promotion_id);
+                    $delete_coupon_retailer->delete();
+    
+                    foreach ($retailer_ids as $retailer_id) {
+                        $data = @json_decode($retailer_id);
+                        $tenant_id = $data->tenant_id;
+                        $mall_id = $data->mall_id;
+    
+                        if(! in_array($mall_id, $mallid)) {
+                            $mallid[] = $mall_id;
+                        }
+    
+                        if ($tenant_id === $mall_id) {
+                            $isMall = 'mall';
+                        } else {
+                            $isMall = 'tenant';
+                        }
+                        // Insert new coupon retailer
+                        $couponretailer = new CouponRetailer();
+                        $couponretailer->retailer_id = $tenant_id;
+                        $couponretailer->promotion_id = $promotion_id;
+                        $couponretailer->object_type = $isMall;
+                        $couponretailer->save();
                     }
 
-                    Event::fire('orbit.coupon.postupdatecoupon.after.retailervalidation', array($this, $validator));
                 }
+            });
 
-                $existRetailer = CouponRetailerRedeem::where('promotion_id', '=', $promotion_id)->lists('promotion_retailer_redeem_id');
-                if (! empty($existRetailer)) {
-                    $delete_provider = CouponPaymentProvider::whereIn('promotion_retailer_redeem_id', $existRetailer)->delete();
-                }
+            // Redeem to stores/malls
+            OrbitInput::post('retailer_ids', function($retailer_ids) use ($promotion_id, $paymentProviders, $payByWallet, $currentCampaignStatus, $linkToTenantIds) {
+                if ($currentCampaignStatus !== 'ongoing') 
+                {
+                    // validate link to tenants/malls
+                    if (count($linkToTenantIds) !== 0) {
+                        $availableLinkToTenant = [];
+                        foreach ($linkToTenantIds as $link_to_tenant_json) {
+                            $data = @json_decode($link_to_tenant_json);
+                            $availableLinkToTenant[] = $data->tenant_id;
+                        }
 
-                // Delete old data
-                $delete_retailer = CouponRetailerRedeem::where('promotion_id', '=', $promotion_id);
-                $delete_retailer->delete();
-
-                // Insert new data
-                $retailers = array();
-                $isMall = 'tenant';
-                $mallid = array();
-                foreach ($retailer_ids as $retailer_id) {
-                    $data = @json_decode($retailer_id);
-                    $tenant_id = $data->tenant_id;
-                    $mall_id = $data->mall_id;
-
-                    if(! in_array($mall_id, $mallid)) {
-                        $mallid[] = $mall_id;
+                        foreach ($retailer_ids as $retailer_id) {
+                            $data = @json_decode($retailer_id);
+                            $tenant_id = $data->tenant_id;
+                            if (! in_array($tenant_id, $availableLinkToTenant)) {
+                                $errorMessage = 'Redeem to stores/malls does not match with Link to stores/malls';
+                                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                            }
+                        }
                     }
-
-                    if ($tenant_id === $mall_id) {
-                        $isMall = 'mall';
-                    } else {
-                        $isMall = 'tenant';
+                    
+                    $existRetailer = CouponRetailerRedeem::where('promotion_id', '=', $promotion_id)->lists('promotion_retailer_redeem_id');
+                    if (! empty($existRetailer)) {
+                        $delete_provider = CouponPaymentProvider::whereIn('promotion_retailer_redeem_id', $existRetailer)->delete();
                     }
-
-
-                    $retailer = new CouponRetailerRedeem();
-                    $retailer->promotion_id = $promotion_id;
-                    $retailer->retailer_id = $tenant_id;
-                    $retailer->object_type = $isMall;
-                    $retailer->save();
-
-                    $retailerRedeemId = $retailer->promotion_retailer_redeem_id;
-
-                    // save coupon payment provider
-                    if ($payByWallet === 'Y') {
-                        $dataPayment = @json_decode($paymentProviders);
-                        foreach ($dataPayment as $data) {
-                            foreach ((array) $data as $key => $value) {
-                                if ($key === $tenant_id) {
-                                    foreach ($value as $provider) {
-                                        $couponPayment = new CouponPaymentProvider();
-                                        $couponPayment->payment_provider_id = $provider;
-                                        $couponPayment->promotion_retailer_redeem_id = $retailerRedeemId;
-                                        $couponPayment->save();
+    
+                    // Delete old data
+                    $delete_retailer = CouponRetailerRedeem::where('promotion_id', '=', $promotion_id);
+                    $delete_retailer->delete();
+    
+                    // Insert new data
+                    $retailers = array();
+                    $isMall = 'tenant';
+                    $mallid = array();
+                    foreach ($retailer_ids as $retailer_id) {
+                        $data = @json_decode($retailer_id);
+                        $tenant_id = $data->tenant_id;
+                        $mall_id = $data->mall_id;
+    
+                        if(! in_array($mall_id, $mallid)) {
+                            $mallid[] = $mall_id;
+                        }
+    
+                        if ($tenant_id === $mall_id) {
+                            $isMall = 'mall';
+                        } else {
+                            $isMall = 'tenant';
+                        }
+    
+    
+                        $retailer = new CouponRetailerRedeem();
+                        $retailer->promotion_id = $promotion_id;
+                        $retailer->retailer_id = $tenant_id;
+                        $retailer->object_type = $isMall;
+                        $retailer->save();
+    
+                        $retailerRedeemId = $retailer->promotion_retailer_redeem_id;
+    
+                        // save coupon payment provider
+                        if ($payByWallet === 'Y') {
+                            $dataPayment = @json_decode($paymentProviders);
+                            foreach ($dataPayment as $data) {
+                                foreach ((array) $data as $key => $value) {
+                                    if ($key === $tenant_id) {
+                                        foreach ($value as $provider) {
+                                            $couponPayment = new CouponPaymentProvider();
+                                            $couponPayment->payment_provider_id = $provider;
+                                            $couponPayment->promotion_retailer_redeem_id = $retailerRedeemId;
+                                            $couponPayment->save();
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
-
-                // Insert to promotion retailer, with delete first old data
-                $delete_coupon_retailer = CouponRetailer::where('promotion_id', '=', $promotion_id);
-                $delete_coupon_retailer->delete();
-
-                foreach ($retailer_ids as $retailer_id) {
-                    $data = @json_decode($retailer_id);
-                    $tenant_id = $data->tenant_id;
-                    $mall_id = $data->mall_id;
-
-                    if(! in_array($mall_id, $mallid)) {
-                        $mallid[] = $mall_id;
-                    }
-
-                    if ($tenant_id === $mall_id) {
-                        $isMall = 'mall';
-                    } else {
-                        $isMall = 'tenant';
-                    }
-                    // Insert new coupon retailer
-                    $couponretailer = new CouponRetailer();
-                    $couponretailer->retailer_id = $tenant_id;
-                    $couponretailer->promotion_id = $promotion_id;
-                    $couponretailer->object_type = $isMall;
-                    $couponretailer->save();
-                }
             });
-
 
             OrbitInput::post('employee_user_ids', function($employee_user_ids) use ($updatedcoupon) {
                 // validate employee_user_ids
@@ -2248,7 +2358,7 @@ class CouponAPIController extends ControllerAPI
 
             // Only shows full query error when we are in debug mode
             if (Config::get('app.debug')) {
-                $this->response->message = $e->getMessage();
+                $this->response->message = $e->getMessage()." Line:".$e->getLine();
             } else {
                 $this->response->message = Lang::get('validation.orbit.queryerror');
             }
@@ -5219,4 +5329,28 @@ class CouponAPIController extends ControllerAPI
         return $newDiscounts;
     }
 
+    private function getCampaignStatus($coupon_id)
+    {
+        $status = 'not started';
+        $table_prefix = DB::getTablePrefix();
+        $getCampaignStatus = Coupon::select(DB::raw("CASE WHEN {$table_prefix}campaign_status.campaign_status_name = 'expired' 
+                                                        THEN {$table_prefix}campaign_status.campaign_status_name 
+                                                    ELSE (CASE WHEN {$table_prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                                FROM {$table_prefix}merchants om
+                                                                LEFT JOIN {$table_prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                                                WHERE om.merchant_id = {$table_prefix}promotions.merchant_id)
+                                                            THEN 'expired' 
+                                                            ELSE {$table_prefix}campaign_status.campaign_status_name 
+                                                          END) 
+                                                    END AS campaign_status"))
+                            ->where('promotion_id', $coupon_id)
+                            ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                            ->first();
+
+        if ($getCampaignStatus) {
+            $status = $getCampaignStatus->campaign_status;
+        }
+
+        return $status;
+    }
 }
