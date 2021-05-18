@@ -19,16 +19,6 @@ Refund Notice
           <tr>
             <td align="center" valign="middle" style="box-shadow: 0 0 20px #e0e0e0; border-radius:5px;background-color: #FFF;">
 
-              <table width="640" cellpadding="0" cellspacing="0" border="0" class="container mobile-full-width">
-                <tr>
-                  <td align="center" valign="middle" height="184" class="greeting-title-container" style="border-radius: 5px 5px 0 0;">
-                      <h1 class="greeting-title">
-                        {{ trans('email-coupon-not-available.header.email-type', [], '', $lang) }}
-                      </h1>
-                  </td>
-                </tr>
-              </table>
-
               <table width="600" cellpadding="0" cellspacing="0" border="0" class="container">
                 <tr>
                   <td align="center" valign="top">
