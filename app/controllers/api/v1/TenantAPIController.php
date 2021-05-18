@@ -2311,8 +2311,8 @@ class TenantAPIController extends ControllerAPI
                                     ->whereRaw("pr.promotion_id = {$this->quote($campaign_id)}");
                 } elseif ($link_type === 'coupon_redeem') {
                     $tenants = $tenants->join('promotion_retailer_redeem as prr', function ($q) use ($campaign_id) {
-                                                $q->on(DB::raw("prr.retailer_id"), '=', 'merchants.merchant_id')
-                                                  ->on(DB::raw("prr.object_type"), '=', DB::raw("'tenant'"));
+                                                $q->on(DB::raw("prr.retailer_id"), '=', 'merchants.merchant_id');
+                                                  //->on(DB::raw("prr.object_type"), '=', DB::raw("'tenant'"));
                                             })
                                         ->whereRaw("prr.promotion_id = {$this->quote($campaign_id)}");
                 }
