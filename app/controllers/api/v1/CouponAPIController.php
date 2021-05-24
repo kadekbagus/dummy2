@@ -3716,12 +3716,19 @@ class CouponAPIController extends ControllerAPI
                     ->where('masterbox_number', $verificationNumber)
                     ->first();
 
+                // added mall masterbox_number (setup from admin portal)
+                $mall = Mall::active()
+                    ->where('merchant_id', $storeId)
+                    ->where('masterbox_number', $verificationNumber)
+                    ->first();
+
+                // @todo: remove any Mall CS Verification as the portal is not exist anymore
                 $csVerificationNumber = UserVerificationNumber::
                     where('merchant_id', $mall_id)
                     ->where('verification_number', $verificationNumber)
                     ->first();
 
-                if (! is_object($tenant) && ! is_object($csVerificationNumber)) {
+                if (! is_object($tenant) && ! is_object($mall)) {
                     // @Todo replace with language
                     $message = Lang::get('validation.orbit.formaterror.verification_code');
                     ACL::throwAccessForbidden($message);
@@ -3729,8 +3736,8 @@ class CouponAPIController extends ControllerAPI
                     if (is_object($tenant)) {
                         $redeem_retailer_id = $tenant->merchant_id;
                     }
-                    if (is_object($csVerificationNumber)) {
-                        $redeem_user_id = $csVerificationNumber->user_id;
+                    if (is_object($mall)) {
+                        $redeem_user_id = $mall->merchant_id;
                         $redeem_retailer_id = $mall_id;
                     }
                 }
