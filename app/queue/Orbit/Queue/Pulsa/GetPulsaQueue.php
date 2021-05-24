@@ -80,7 +80,8 @@ class GetPulsaQueue
 
             $this->log("Getting item for PaymentID: {$paymentId}");
 
-            $payment = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'user', 'midtrans', 'discount_code'])->findOrFail($paymentId);
+            $payment = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'user', 'midtrans', 'discount_code'])
+                ->lockForUpdate()->findOrFail($paymentId);
 
             $activity->setUser($payment->user);
 

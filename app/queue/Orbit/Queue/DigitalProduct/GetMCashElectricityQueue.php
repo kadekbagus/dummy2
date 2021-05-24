@@ -72,7 +72,7 @@ class GetMCashElectricityQueue
                 'user',
                 'midtrans',
                 'discount_code'
-            ])->findOrFail($paymentId);
+            ])->lockForUpdate()->findOrFail($paymentId);
 
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired() || $payment->canceled()
