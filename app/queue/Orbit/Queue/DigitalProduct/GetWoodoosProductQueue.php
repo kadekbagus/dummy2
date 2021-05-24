@@ -76,7 +76,7 @@ class GetWoodoosProductQueue
                 'user',
                 'midtrans',
                 'discount_code'
-            ])->findOrFail($paymentId);
+            ])->lockForUpdate()->findOrFail($paymentId);
 
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired() || $payment->canceled()
@@ -128,6 +128,11 @@ class GetWoodoosProductQueue
             $detail->payload = serialize($purchase->getData());
 
             if ($purchase->isSuccessWithoutToken() && $this->shouldRetry($data)) {
+                $payment->save();
+                $detail->save();
+
+                // Commit the changes ASAP.
+                DB::connection()->commit();
 
                 $this->log("Purchase still pending/no token on the response.");
 
@@ -135,6 +140,11 @@ class GetWoodoosProductQueue
             }
             else if ($purchase->isSuccessWithToken()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
+                $payment->save();
+                $detail->save();
+
+                // Commit the changes ASAP.
+                DB::connection()->commit();
 
                 $this->log("Issued for payment {$paymentId}..");
 
@@ -159,12 +169,6 @@ class GetWoodoosProductQueue
                 $this->log("Purchase Response: " . serialize($purchase->getData()));
                 throw new Exception($failureMessage);
             }
-
-            $payment->save();
-            $detail->save();
-
-            // Commit the changes ASAP.
-            DB::connection()->commit();
 
             // If purchase success, then...
             if (in_array($payment->status, [PaymentTransaction::STATUS_SUCCESS])) {
