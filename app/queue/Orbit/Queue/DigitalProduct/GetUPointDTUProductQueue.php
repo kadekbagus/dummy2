@@ -144,6 +144,11 @@ class GetUPointDTUProductQueue
             ) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
 
+                $payment->save();
+
+                // Commit the changes ASAP.
+                DB::connection()->commit();
+
                 $this->log("Issued for payment {$paymentId}..");
 
                 // Notify Customer.
@@ -224,11 +229,6 @@ class GetUPointDTUProductQueue
                 $this->log("Purchase Response: " . serialize($confirmPurchase->getData()));
                 throw new Exception($confirmPurchase->getFailureMessage());
             }
-
-            $payment->save();
-
-            // Commit the changes ASAP.
-            DB::connection()->commit();
 
             // Increase point when the transaction is success.
             if (in_array($payment->status, [PaymentTransaction::STATUS_SUCCESS])) {

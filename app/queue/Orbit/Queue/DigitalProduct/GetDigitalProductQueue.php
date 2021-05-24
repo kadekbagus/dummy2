@@ -134,6 +134,11 @@ class GetDigitalProductQueue
             if ($purchase->isSuccess()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
 
+                $payment->save();
+
+                // Commit the changes ASAP.
+                DB::connection()->commit();
+
                 $this->log("Issued for payment {$paymentId}..");
 
                 // Notify Customer.
@@ -219,11 +224,6 @@ class GetDigitalProductQueue
                 $this->log("Purchase Response: " . serialize($purchase->getData()));
                 throw new Exception($purchase->getFailureMessage());
             }
-
-            $payment->save();
-
-            // Commit the changes ASAP.
-            DB::connection()->commit();
 
             // Increase point when the transaction is success.
             if (in_array($payment->status, [PaymentTransaction::STATUS_SUCCESS])) {
