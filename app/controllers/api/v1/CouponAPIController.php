@@ -438,7 +438,7 @@ class CouponAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
             } else {
-                $maximumIssuedCoupon = count($arrayCouponCode);
+                $maximumIssuedCoupon = 0;
             }
 
             // maximum redeem validation
@@ -458,7 +458,7 @@ class CouponAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
             } else {
-                $maximumRedeem = count($arrayCouponCode);
+                $maximumRedeem = 0;
             }
 
             // maximum purchase per transaction validation
