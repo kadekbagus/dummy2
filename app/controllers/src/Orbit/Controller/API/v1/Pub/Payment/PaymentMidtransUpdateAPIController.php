@@ -30,6 +30,7 @@ use PaymentTransactionDetail;
 use Queue;
 use User;
 use Validator;
+use Request;
 
 /**
  * Controller for update payment with midtrans
@@ -57,13 +58,11 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             $paymentHelper = PaymentHelper::create();
             $paymentHelper->registerCustomValidation();
             $validator = Validator::make(
-                array(
-                    'payment_transaction_id'   => $payment_transaction_id,
-                    'status'                   => $status,
-                ),
+                Request::all(),
                 array(
                     'payment_transaction_id'   => 'required|orbit.exist.payment_transaction_id',
-                    'status'                   => 'required|in:pending,success,canceled,failed,expired,denied,suspicious,abort,refund,partial_refund'
+                    'status'                   => 'required|in:pending,success,canceled,failed,expired,denied,suspicious,abort,refund,partial_refund',
+                    'payment_method'           => 'sometimes|required|in:midtrans,midtrans-qris,midtrans-shopeepay,stripe,dana',
                 ),
                 array(
                     'orbit.exist.payment_transaction_id' => 'payment transaction id not found'
@@ -211,6 +210,10 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 OrbitInput::post('payment_midtrans_info', function($payment_midtrans_info) use ($payment_update) {
                     $payment_update->midtrans->payment_midtrans_info = serialize($payment_midtrans_info);
                     $payment_update->midtrans->save();
+                });
+
+                OrbitInput::post('payment_method', function($paymentMethod) use ($payment_update) {
+                    $payment_update->payment_method = $paymentMethod;
                 });
 
                 $payment_update->responded_at = Carbon::now('UTC');
@@ -384,6 +387,15 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                         $admin->notify(new SuspiciousPaymentNotification($payment_update), 3);
                     }
                 }
+            }
+            else {
+                OrbitInput::post('payment_method', function($paymentMethod) use ($payment_update) {
+                    $payment_update->payment_method = $paymentMethod;
+                });
+
+                $payment_update->save();
+
+                $this->commit();
             }
 
             $this->response->data = $payment_update;

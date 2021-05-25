@@ -21,7 +21,7 @@ class IssuedCouponRepository
 
     private function getTotalIssued($couponId)
     {
-        return IssuedCoupon::where('status', 'issued')
+        return IssuedCoupon::whereIn('status', ['issued', 'reserved'])
             ->where('promotion_id', $couponId)
             ->count();
     }
@@ -125,6 +125,12 @@ class IssuedCouponRepository
         );
         // get total issued
         $coupon->total_issued = $stats->total;
+
+        // Force availability to 0 if max issued coupon reached
+        if ($coupon->total_issued >= $coupon->maximum_issued_coupon) {
+            $coupon->available = 0;
+            $coupon->available_coupons_count = 0;
+        }
 
         $coupon->hasRedeemableCoupon = $this->userHasRedeemableCoupon(
             $user->user_id,

@@ -42,7 +42,7 @@ class DigitalProductPurchaseRequest extends ValidateRequest
             'last_name' => 'required',
             'email' => 'required|email',
             'phone' => '',
-            'payment_method' => 'required|in:midtrans,midtrans-qris,dana,stripe',
+            'payment_method' => 'required|in:midtrans,midtrans-qris,midtrans-shopeepay,dana,stripe',
         ];
     }
 
