@@ -31,12 +31,14 @@ class UserReportEmailCommand extends Command {
     protected $promotionView;
     protected $eventView;
     protected $articleView;
+    protected $productView;
     protected $mallData;
     protected $storeData;
     protected $couponData;
     protected $promotionData;
     protected $eventData;
     protected $articleData;
+    protected $productData;
     protected $validLanguage;
 
     /**
@@ -113,6 +115,9 @@ class UserReportEmailCommand extends Command {
             // get article view and 3 latest articles
             $this->getViewArticle($input, $startDate, $endDate);
 
+            // get product view and 3 latest products
+            $this->getViewProduct($input, $startDate, $endDate);
+
             if ($this->option('dry-run')) {
                 $this->info(sprintf('user "%s" rank "%s"', $user->user_id, $this->userRank));
                 $this->info(sprintf('user "%s" point "%s"', $user->user_id, $this->userPoints));
@@ -126,6 +131,7 @@ class UserReportEmailCommand extends Command {
                 $this->info(sprintf('user "%s" promotion view "%s"', $user->user_id, $this->promotionView));
                 $this->info(sprintf('user "%s" event view "%s"', $user->user_id, $this->eventView));
                 $this->info(sprintf('user "%s" article view "%s"', $user->user_id, $this->articleView));
+                $this->info(sprintf('user "%s" product view "%s"', $user->user_id, $this->productView));
             } else {
                 // send email
                 Queue::push('Orbit\\Queue\\UserReportMailQueue', [
@@ -143,12 +149,14 @@ class UserReportEmailCommand extends Command {
                     'promotion_view'        => $this->promotionView,
                     'event_view'            => $this->eventView,
                     'article_view'          => $this->articleView,
+                    'product_view'          => $this->productView,
                     'mall_data'             => $this->mallData,
                     'store_data'            => $this->storeData,
                     'coupon_data'           => $this->couponData,
                     'promotion_data'        => $this->promotionData,
                     'event_data'            => $this->eventData,
-                    'article_data'          => $this->articleData
+                    'article_data'          => $this->articleData,
+                    'product_data'          => $this->productData
                 ]);
                 $this->info(sprintf('email for user "%s" has been sent!', $user->user_id));
             }
@@ -561,6 +569,55 @@ class UserReportEmailCommand extends Command {
         $this->articleData = (count($article)) ? $article : null;
     }
 
+    public function getViewProduct($userId, $startDate, $endDate)
+    {
+        $prefix = DB::getTablePrefix();
+        $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+        $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+        $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+        $image = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as cdn_url";
+        if ($usingCdn) {
+            $image = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as cdn_url";
+        }
+
+        // @todo: change temporary query after fixing view_product_detail_page issue
+        $product = Activity::select(DB::raw("(select count({$prefix}activities.activity_id) from {$prefix}activities
+                                   where activity_name = 'view_brand_product_detail_page' and user_id = ".DB::getPdo()->quote($userId)."
+                                   and (created_at between ".DB::getPdo()->quote($startDate)." and ".DB::getPdo()->quote($endDate).")) as total,
+                                    post_data"))
+                         ->where('activities.user_id', $userId)
+                         ->where('activities.activity_name', 'view_brand_product_detail_page')
+                         ->whereBetween('activities.created_at', [$startDate, $endDate])
+                         ->groupBy('activities.object_id')
+                         ->take(3)
+                         ->get();
+
+        foreach ($product as $item) {
+            $postData = serialize($item->post_data);
+            $item->object_id = isset($postData['object_id']) ? $postData['object_id'] : null;
+            $product = Product::select(DB::raw("
+                    {$prefix}products.product_id,
+                    {$prefix}products.name,
+                    {$image}"
+                ))
+                ->leftJoin('media', 'media.object_id', '=', 'activities.object_id')
+                ->where('product_id', $item->object_id)
+                ->firstOrFail();
+            $item->title = $product->name;
+            $item->cdn_url = $product->cdn_url;
+        }
+
+
+        if (count($product)) {
+            foreach ($product as $key => $value) {
+               $product[$key]->link_url = $this->generateProductUrl($value->title);
+            }
+        }
+        $this->productView = (count($product)) ? $product[0]->total : 0;
+        $this->productData = (count($product)) ? $product : null;
+    }
+
     public function generateCampaignUrl($objectType = '', $campaignId, $campaignName)
     {
         $format = "/{$objectType}/%s/%s?country=Indonesia";
@@ -573,6 +630,13 @@ class UserReportEmailCommand extends Command {
         $format = "/{$objectType}/%s?country=Indonesia";
         return Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com')
             . sprintf($format, Str::slug($articleName));
+    }
+
+    public function generateProductUrl($productName)
+    {
+        $format = "/products/affiliate/%s?country=Indonesia";
+        return Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com')
+            . sprintf($format, Str::slug($productName));
     }
 
     protected function quote($arg)

@@ -35,6 +35,9 @@ return [
 
             'article_title' => 'Articles View',
             'article_desc' => 'The number of articles you have read this month.',
+
+            'product_title' => 'Products View',
+            'product_desc' => 'The number of products you have seen this month.',
         ],
 
         'help_line_1' => 'Just ignore this email if you never created an
