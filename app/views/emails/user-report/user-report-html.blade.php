@@ -191,7 +191,7 @@
                     </td>
                     <td class="mobile" width="300">
                       <div style="padding-left: 4px" class="pulsa-banner-container">
-                        <a href="{{ $product_page_url }}">
+                        <a href="{{ $product_list_page_url }}">
                           <img src="https://cloudfront.gotomalls.com/uploads/emails/product-may-2021.jpg" class="pulsa-banner-img">
                         </a>
                       </div>

@@ -594,24 +594,24 @@ class UserReportEmailCommand extends Command {
                          ->get();
 
         foreach ($product as $item) {
-            $postData = serialize($item->post_data);
+            $postData = unserialize($item->post_data);
             $item->object_id = isset($postData['object_id']) ? $postData['object_id'] : null;
-            $product = Product::select(DB::raw("
+            $singleProduct = Product::select(DB::raw("
                     {$prefix}products.product_id,
                     {$prefix}products.name,
                     {$image}"
                 ))
-                ->leftJoin('media', 'media.object_id', '=', 'activities.object_id')
+                ->leftJoin('media', 'media.object_id', '=', 'products.product_id')
                 ->where('product_id', $item->object_id)
                 ->firstOrFail();
-            $item->title = $product->name;
-            $item->cdn_url = $product->cdn_url;
+            $item->title = $singleProduct->name;
+            $item->cdn_url = $singleProduct->cdn_url;
         }
 
 
         if (count($product)) {
             foreach ($product as $key => $value) {
-               $product[$key]->link_url = $this->generateProductUrl($value->title);
+               $product[$key]->link_url = $this->generateProductUrl($value->object_id, $value->title);
             }
         }
         $this->productView = (count($product)) ? $product[0]->total : 0;
@@ -632,11 +632,11 @@ class UserReportEmailCommand extends Command {
             . sprintf($format, Str::slug($articleName));
     }
 
-    public function generateProductUrl($productName)
+    public function generateProductUrl($productId, $productName)
     {
-        $format = "/products/affiliate/%s?country=Indonesia";
+        $format = "/products/affiliate/%s/%s?country=Indonesia";
         return Config::get('orbit.base_landing_page_url', 'https://www.gotomalls.com')
-            . sprintf($format, Str::slug($productName));
+            . sprintf($format, $productId, Str::slug($productName));
     }
 
     protected function quote($arg)
