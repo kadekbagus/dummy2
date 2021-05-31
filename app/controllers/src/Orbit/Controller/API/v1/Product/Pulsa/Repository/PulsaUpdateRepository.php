@@ -24,6 +24,8 @@ class PulsaUpdateRepository {
 
             $this->createModelFromRequest($request);
 
+            $this->pulsa->updated_by = null;
+
             $this->pulsa->save();
         });
 
