@@ -2194,8 +2194,6 @@ class TenantAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            DB::enableQueryLog();
-
             Event::fire('orbit.tenant.getsearchtenant.before.auth', array($this));
 
             // Require authentication
@@ -2311,8 +2309,8 @@ class TenantAPIController extends ControllerAPI
                                     ->whereRaw("pr.promotion_id = {$this->quote($campaign_id)}");
                 } elseif ($link_type === 'coupon_redeem') {
                     $tenants = $tenants->join('promotion_retailer_redeem as prr', function ($q) use ($campaign_id) {
-                                                $q->on(DB::raw("prr.retailer_id"), '=', 'merchants.merchant_id')
-                                                  ->on(DB::raw("prr.object_type"), '=', DB::raw("'tenant'"));
+                                                $q->on(DB::raw("prr.retailer_id"), '=', 'merchants.merchant_id');
+                                                  //->on(DB::raw("prr.object_type"), '=', DB::raw("'tenant'"));
                                             })
                                         ->whereRaw("prr.promotion_id = {$this->quote($campaign_id)}");
                 }
@@ -2439,8 +2437,16 @@ class TenantAPIController extends ControllerAPI
             }
 
             // filter by mall name and store name
-            if (!empty($parent_ids) && $account_name !== 'Mall') {
-                $tenants->whereIn('merchants.parent_id', $parent_ids);
+            if (!empty($parent_ids)
+                && $account_name !== 'Mall'
+            ) {
+                $tenants->where(function($query) use ($user, $parent_ids) {
+                    $query->whereIn('merchants.parent_id', $parent_ids);
+
+                    if ($user->campaignAccount->accountType->type_name === 'Dominopos') {
+                        $query->orWhereIn('merchants.merchant_id', $parent_ids);
+                    }
+                });
             }
 
             // filter by country
