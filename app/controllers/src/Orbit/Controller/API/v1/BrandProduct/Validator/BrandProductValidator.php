@@ -118,18 +118,25 @@ class BrandProductValidator
             === App::make('currentUser')->user_id;
     }
 
+    /**
+     * Determine if pickup location is valid (linked to the product) or not.
+     *
+     * @param  array
+     * @param  array
+     * @param  array
+     * @return bool valid or not.
+     */
     public function pickupLocationValid($attrs, $value, $params)
     {
         $variant = $this->getVariant();
 
-        $isValid =
+        foreach ($variant->variant_options as $option) {
+            if ($option->store && $option->option_id === $value) {
+                return true;
+            }
+        }
 
-        return $isValid;
-    }
-
-    public function quantityAvailableOnPickupLocation($attrs, $value, $params)
-    {
-
+        return false;
     }
 
     private function getVariant($variantId = '')

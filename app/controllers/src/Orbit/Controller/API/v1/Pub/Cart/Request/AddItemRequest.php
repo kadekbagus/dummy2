@@ -14,6 +14,10 @@ class AddItemRequest extends ValidateRequest
 {
     protected $roles = ['consumer'];
 
+    /**
+     * @override
+     * @return array the final rules for request validation.
+     */
     public function rules()
     {
         $rules = [
@@ -22,11 +26,7 @@ class AddItemRequest extends ValidateRequest
 
         switch ($this->object_type) {
             case 'brand_product':
-                $rules += [
-                    'object_id' => 'required|orbit.brand_product_variant.exists|orbit.brand_product.exists',
-                    'pickup_location' => 'required|orbit.brand_product_variant.pickup_location_valid',
-                    'quantity' => 'required|numeric|orbit.brand_product_variant.quantity_available_on_pickup_location',
-                ];
+                $this->applyBrandProductRules($rules);
                 break;
 
             // specific rules for other type goes here...
@@ -40,7 +40,52 @@ class AddItemRequest extends ValidateRequest
         return $rules;
     }
 
+    /**
+     * @param  array $rules the validation rules.
+     * @return void
+     */
+    private function applyBrandProductRules(&$rules)
+    {
+        $rules = [
+            'object_id' => implode('|', [
+                'required',
+                'orbit.brand_product_variant.exists',
+                'orbit.brand_product.exists',
+            ]),
+            'pickup_location' => implode('|', [
+                'required',
+                'orbit.brand_product_variant.pickup_location_valid',
+            ]),
+            'quantity' => implode('|', [
+                'required',
+                'numeric',
+                'orbit.brand_product_variant.quantity_available',
+            ]),
+        ];
+    }
+
+    /**
+     * @return void
+     */
     protected function registerCustomValidations()
+    {
+        switch ($this->object_type) {
+            case 'brand_product':
+                $this->registerBrandProductValidations();
+                break;
+
+            default:
+                // code...
+                break;
+        }
+    }
+
+    /**
+     * Register BrandProduct-specific validator.
+     *
+     * @return $void
+     */
+    private function registerBrandProductValidations()
     {
         Validator::extend(
             'orbit.brand_product_variant.exists',
@@ -53,13 +98,13 @@ class AddItemRequest extends ValidateRequest
         );
 
         Validator::extend(
-            'orbit.brand_product_variant.quantity_available',
-            'Orbit\Controller\API\v1\BrandProduct\Validator\BrandProductValidator@quantity_available'
+            'orbit.brand_product_variant.pickup_location_valid',
+            'Orbit\Controller\API\v1\BrandProduct\Validator\BrandProductValidator@pickupLocationValid'
         );
 
         Validator::extend(
-            'orbit.brand_product_variant.quantity_available_on_pickup_location',
-            'Orbit\Controller\API\v1\BrandProduct\Validator\BrandProductValidator@quantityAvailableOnPickupLocation'
+            'orbit.brand_product_variant.quantity_available',
+            'Orbit\Controller\API\v1\BrandProduct\Validator\BrandProductValidator@quantity_available'
         );
     }
 }

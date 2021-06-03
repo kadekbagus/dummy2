@@ -2,6 +2,13 @@
 
 namespace Orbit\Controller\API\v1\Pub\Cart;
 
+use Orbit\Helper\Cart\Cart;
+
+/**
+ * Add an item into cart.
+ *
+ * @author Budi <budi@gotomalls.com>
+ */
 class CartAddItemAPIController extends PubControllerAPI
 {
     public function handle(AddItemRequest $request)
@@ -9,12 +16,7 @@ class CartAddItemAPIController extends PubControllerAPI
         try {
 
             $this->response->data = new CartItemResource(
-                Cart::add(
-                    $request->user(),
-                    App::make('brandProductVariant'),
-                    $request->quantity,
-                    $request->pickup_location
-                )
+                Cart::addItem($request)
             );
 
         } catch (Exception $e) {
