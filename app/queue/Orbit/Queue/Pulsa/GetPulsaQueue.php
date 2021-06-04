@@ -80,7 +80,8 @@ class GetPulsaQueue
 
             $this->log("Getting item for PaymentID: {$paymentId}");
 
-            $payment = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'user', 'midtrans', 'discount_code'])->findOrFail($paymentId);
+            $payment = PaymentTransaction::onWriteConnection()->with(['details.pulsa', 'user', 'midtrans', 'discount_code'])
+                ->lockForUpdate()->findOrFail($paymentId);
 
             $activity->setUser($payment->user);
 
@@ -125,6 +126,10 @@ class GetPulsaQueue
 
             if ($pulsaPurchase->isSuccess()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
+                $payment->save();
+
+                // Commit the changes ASAP.
+                DB::connection()->commit();
 
                 $this->log("Issued for payment {$paymentId}..");
 
@@ -201,11 +206,15 @@ class GetPulsaQueue
                 $this->log("Purchase response: " . serialize($pulsaPurchase));
             }
             else if ($pulsaPurchase->isPending()) {
+                $payment->status = PaymentTransaction::STATUS_SUCCESS;
+                $payment->save();
+
+                // Commit the changes ASAP.
+                DB::connection()->commit();
+
                 $this->log("Pulsa purchase is PENDING for payment {$paymentId}.");
                 $this->log("pulsaData: " . serialize([$pulsa->pulsa_code, $phoneNumber, $paymentId]));
                 $this->log("Purchase response: " . serialize($pulsaPurchase));
-
-                $payment->status = PaymentTransaction::STATUS_SUCCESS;
 
                 if (! empty($discount)) {
                     // Mark promo code as issued.
@@ -266,6 +275,11 @@ class GetPulsaQueue
                 }
             }
             else if ($pulsaPurchase->shouldRetry($data['retry'])) {
+                $payment->save();
+
+                // Commit the changes ASAP.
+                DB::connection()->commit();
+
                 $data['retry']++;
 
                 GMP::create(Config::get('orbit.partners_api.google_measurement'))
@@ -320,11 +334,6 @@ class GetPulsaQueue
                 $this->log("Purchase response: " . serialize($pulsaPurchase));
                 throw new Exception($pulsaPurchase->getFailureMessage());
             }
-
-            $payment->save();
-
-            // Commit the changes ASAP.
-            DB::connection()->commit();
 
             // Send notification to admin if pulsa purchase is pending.
             if ($pulsaPurchase->isPending()) {
