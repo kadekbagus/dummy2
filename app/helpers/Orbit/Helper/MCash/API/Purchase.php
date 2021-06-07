@@ -46,6 +46,8 @@ class Purchase
     {
         $this->config = ! empty($config) ? $config : Config::get('orbit.partners_api.mcash');
         $this->client = MCashClient::create($this->config);
+
+        $this->initMockResponse();
     }
 
     public static function create($config=[])
@@ -53,28 +55,29 @@ class Purchase
         return new static($config);
     }
 
-    public function mockSuccess($data = [])
+    private function initMockResponse()
     {
-        $this->mockData = (object) array_merge($data, [
-            'status' => 0,
-            'message' => 'TRX SUCCESS',
-            'data' => (object) [
-                'serial_number' => '12313131',
-            ]
-        ]);
-
-        return $this;
+        if (! $this->config['is_production']
+            && isset($this->config['mock_response'])
+            && ! empty($this->config['mock_response'])
+        ) {
+            $this->mockResponse(
+                $this->config['mock_response_data'][
+                    $this->config['mock_response']
+                ]
+            );
+        }
     }
 
     public function mockResponse($data = [])
     {
         $this->mockData = (object) array_merge([
-            'status' => 0,
-            'message' => 'TRX SUCCESS',
-            'data' => (object) [
-                'serial_number' => '12313131',
-            ]
-        ], $data);
+                'status' => 0,
+                'message' => 'TRX SUCCESS',
+                'data' => (object) [
+                    'serial_number' => '12313131',
+                ]
+            ], $data);
 
         return $this;
     }
@@ -87,15 +90,15 @@ class Purchase
     public function doPurchase($product, $customer, $partnerTrxid=null)
     {
     	try {
-            if (! empty($this->mockData)) {
-                return new PurchaseResponse($this->mockData);
-            }
-
-    		if (empty($product)) {
+            if (empty($product)) {
                 throw new \Exception("Product code is required", 1);
             }
             if (empty($customer)) {
                 throw new \Exception("Customer phone number is required", 1);
+            }
+
+            if (! empty($this->mockData)) {
+                return new PurchaseResponse($this->mockData);
             }
 
             $requestParams = [
