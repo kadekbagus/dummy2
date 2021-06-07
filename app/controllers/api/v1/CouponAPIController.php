@@ -212,6 +212,13 @@ class CouponAPIController extends ControllerAPI
             $priceToGtm = OrbitInput::post('price_to_gtm', 0);
             $couponCodeType = OrbitInput::post('coupon_code_type', 'code');
 
+            $minPurchasePulsa = OrbitInput::post('min_purchase_pulsa');
+            $minPurchasePln = OrbitInput::post('min_purchase_pln');
+            $minPurchaseGameVoucher = OrbitInput::post('min_purchase_game_voucher');
+            $autoIssuedOnPulsa = OrbitInput::post('auto_issued_on_pulsa');
+            $autoIssuedOnPln = OrbitInput::post('auto_issued_on_pln');
+            $autoIssuedOnGameVoucher = OrbitInput::post('auto_issued_on_game_voucher');
+
             if ($payByNormal === 'N') {
                 $fixedAmountCommission = 0;
             }
@@ -553,6 +560,12 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->price_to_gtm = $priceToGtm;
             $newcoupon->redemption_link = $redemptionLink;
             $newcoupon->coupon_code_type = $couponCodeType;
+            $newcoupon->auto_issued_on_pulsa = $autoIssuedOnPulsa;
+            $newcoupon->auto_issued_on_pln = $autoIssuedOnPln;
+            $newcoupon->auto_issued_on_game_voucher = $autoIssuedOnGameVoucher;
+            $newcoupon->min_purchase_pulsa = $minPurchasePulsa;
+            $newcoupon->min_purchase_pln = $minPurchasePln;
+            $newcoupon->min_purchase_game_voucher = $minPurchaseGameVoucher;
 
             // save 3rd party coupon fields
             if ($is3rdPartyPromotion === 'Y') {
