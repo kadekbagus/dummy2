@@ -56,6 +56,7 @@ class AutoIssueCoupon
                 ->where('auto_issued_on_' . $productType, 1)
                 ->where('min_purchase_' . $productType, '<=', $payment->amount)
                 ->where('status', 'active')
+                ->orderBy('min_purchase_' . $productType, 'desc')
                 ->first();
 
             if (! empty($coupon) && ! empty($coupon->issued_coupon)) {
