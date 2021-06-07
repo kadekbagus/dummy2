@@ -1,33 +1,26 @@
 <?php namespace Orbit\Queue\DigitalProduct;
 
-use Activity;
 use App;
-use Carbon\Carbon;
 use Config;
-use Coupon;
 use DB;
 use Event;
 use Exception;
-use IssuedCoupon;
 use Log;
 use Mall;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedProductActivity;
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
+use Orbit\Helper\AutoIssueCoupon\AutoIssueCoupon;
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
 use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotification;
 use Orbit\Notifications\DigitalProduct\DigitalProductNotAvailableNotification;
-use Orbit\Notifications\DigitalProduct\PulsaRetryNotification;
 use Orbit\Notifications\DigitalProduct\ReceiptNotification;
 use PaymentTransaction;
-use Queue;
 use User;
 
 /**
- * A job to get/issue Hot Deals Coupon after payment completed.
- * At this point, we assume the payment was completed (paid) so anything wrong
- * while trying to issue the coupon will make the status success_no_coupon_failed.
+ * A job to get/issue Digital Product after payment completed.
  *
  * @author Budi <budi@dominopos.com>
  */
@@ -135,6 +128,9 @@ class GetDigitalProductQueue
                 DB::connection()->commit();
 
                 $this->log("Issued for payment {$paymentId}..");
+
+                // Auto issue free coupon if trx meet certain criteria.
+                AutoIssueCoupon::issue($payment, $digitalProduct->product_type);
 
                 // Notify Customer.
                 $payment->user->notify(new ReceiptNotification(
