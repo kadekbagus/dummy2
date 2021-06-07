@@ -352,36 +352,6 @@ class CouponAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // if ($payByWallet === 'N' && $payByNormal === 'N') {
-            //     $errorMessage = 'Select one payment method.';
-            //     OrbitShopAPI::throwInvalidArgument($errorMessage);
-            // } elseif ($payByWallet === 'Y' && $payByNormal === 'N') {
-            //     $dataPayment = @json_decode($paymentProviders);
-            //     if (count($dataPayment) != count($retailer_ids)) {
-            //         $errorMessage = 'Not all redemption place support wallet payment method';
-            //         OrbitShopAPI::throwInvalidArgument($errorMessage);
-            //     }
-            // }
-
-            // if ($payByNormal === 'Y') {
-            //     $validator = Validator::make(
-            //         array(
-            //             'amount_commission'       => $amountCommission,
-            //             'fixed_amount_commission' => $fixedAmountCommission,
-
-            //         ),
-            //         array(
-            //             'amount_commission'       => 'required',
-            //             'fixed_amount_commission' => 'required',
-            //         )
-            //     );
-
-            //     if ($validator->fails()) {
-            //         $errorMessage = $validator->messages()->first();
-            //         OrbitShopAPI::throwInvalidArgument($errorMessage);
-            //     }
-            // }
-
             if ($payByWallet === 'Y') {
                 $dataPayment = @json_decode($paymentProviders);
                 if (json_last_error() != JSON_ERROR_NONE) {
