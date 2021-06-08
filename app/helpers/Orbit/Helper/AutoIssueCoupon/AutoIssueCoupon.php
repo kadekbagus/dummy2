@@ -39,15 +39,10 @@ class AutoIssueCoupon
             throw new Exception("Invalid productType: {$productType} !");
         }
 
-        // This limits the same user_email for getting auto-issued/
-        // free coupon more than once. Might be removed later.
-        // if (! self::eligible($productType, $payment)) {
-        //     Log::info(sprintf(
-        //         "AutoIssuedCoupon: Trx %s is not eligible for free coupons.",
-        //         $payment->payment_transaction_id
-        //     ));
-        //     return;
-        // }
+        // Limit the same user_email for getting auto-issued.
+        if (! self::eligible($productType, $payment)) {
+            return;
+        }
 
         DB::transaction(function() use ($productType, $payment) {
             $coupon = Coupon::with(['issued_coupon' => function($query) {
@@ -82,18 +77,68 @@ class AutoIssueCoupon
      */
     public static function eligible($productType, $payment)
     {
-        return Coupon::join(
-            'issued_coupons',
-            'promotions.promotion_id',
-            '=',
-            'issued_coupons.promotion_id'
-        )
-        ->where('auto_issued_on_' . $productType, 1)
-        ->where('min_purchase_' . $productType, '<=', $payment->amount)
-        ->where('is_auto_issued', 1)
-        ->where('user_email', $payment->user_email)
-        ->where('issued_coupons.status', IssuedCoupon::STATUS_ISSUED)
-        ->first() === null;
+        // Check if there's coupon that match minimum purchase.
+        $coupon = Coupon::whereHas('issued_coupon', function($query) {
+                $query->where('status', IssuedCoupon::STATUS_AVAILABLE);
+            })
+            ->where('auto_issued_on_' . $productType, 1)
+            ->where('min_purchase_' . $productType, '<=', $payment->amount)
+            ->where('status', 'active')
+            ->orderBy('min_purchase_' . $productType, 'desc')
+            ->first();
+
+        if (empty($coupon)) {
+            Log::info("AutoIssuedCoupon: no coupons meet the criteria.");
+            return false;
+        }
+
+        // Check if user already has the same coupon.
+        $hasCoupon = IssuedCoupon::where('user_id', $payment->user_id)
+            ->whereIn('issued_coupons.status', [
+                IssuedCoupon::STATUS_ISSUED,
+                IssuedCoupon::STATUS_RESERVED,
+                IssuedCoupon::STATUS_REDEEMED
+            ])
+            ->where('promotion_id', $coupon->promotion_id)
+            ->first();
+
+        if ($hasCoupon) {
+            Log::info("AutoIssuedCoupon: no coupons, user already got the coupon.");
+            return false;
+        }
+
+        // Check if reached max issued/redeemed count.
+        $prefix = DB::getTablePrefix();
+        $status = [
+            'issued' => implode("','", [
+                IssuedCoupon::STATUS_ISSUED,
+                IssuedCoupon::STATUS_RESERVED
+            ]),
+            'redeemed' => IssuedCoupon::STATUS_REDEEMED,
+        ];
+        $usedCount = Coupon::select(DB::raw("
+                (select count({$prefix}issued_coupons.issued_coupon_id)
+                    from {$prefix}issued_coupons
+                    where {$prefix}issued_coupons.status in ('{$status['issued']}')
+                        and promotion_id = '{$coupon->promotion_id}'
+                ) as issued,
+                (select count({$prefix}issued_coupons.issued_coupon_id)
+                    from {$prefix}issued_coupons
+                    where {$prefix}issued_coupons.status = '{$status['redeemed']}'
+                        and promotion_id = '{$coupon->promotion_id}'
+                ) as redeemed
+            "))
+            ->where('promotion_id', $coupon->promotion_id)
+            ->first();
+
+        if ($usedCount->issued >= $coupon->maximum_issued_coupon
+            || $usedCount->redeemed >= $coupon->maximum_redeem
+        ) {
+            Log::info("AutoIssueCoupon: no free coupons, maximum issued/redeemed reached.");
+            return false;
+        }
+
+        return true;
     }
 
     /**
