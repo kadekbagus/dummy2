@@ -68,7 +68,8 @@ class GetUPointDTUProductQueue
                 'user',
                 'midtrans',
                 'discount_code'
-            ])->leftJoin('games', 'games.game_id', '=', 'payment_transactions.extra_data')->findOrFail($paymentId);
+            ])->leftJoin('games', 'games.game_id', '=', 'payment_transactions.extra_data')
+            ->lockForUpdate()->findOrFail($paymentId);
 
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired() || $payment->canceled()
@@ -142,6 +143,11 @@ class GetUPointDTUProductQueue
                 && 100 === (int) $responseData->status)
             ) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
+
+                $payment->save();
+
+                // Commit the changes ASAP.
+                DB::connection()->commit();
 
                 $this->log("Issued for payment {$paymentId}..");
 
@@ -223,11 +229,6 @@ class GetUPointDTUProductQueue
                 $this->log("Purchase Response: " . serialize($confirmPurchase->getData()));
                 throw new Exception($confirmPurchase->getFailureMessage());
             }
-
-            $payment->save();
-
-            // Commit the changes ASAP.
-            DB::connection()->commit();
 
             // Increase point when the transaction is success.
             if (in_array($payment->status, [PaymentTransaction::STATUS_SUCCESS])) {

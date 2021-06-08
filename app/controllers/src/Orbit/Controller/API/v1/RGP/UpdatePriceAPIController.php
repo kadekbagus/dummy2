@@ -81,12 +81,10 @@ class UpdatePriceAPIController extends ControllerAPI
                 ->where('status', 'success')
                 ->firstOrFail();
 
-            $transactionDetail = PaymentTransactionDetail::where('payment_transaction_id', $transactionId)
-                ->firstOrFail();
-
-            $transactionDetail->vendor_price = $newPrice;
-            $transaction->timestamp = false;
-            $transactionDetail->save();
+            // query, use builder so that updated_at is not touched
+            DB::table('payment_transaction_details')
+                ->where('payment_transaction_id', $transactionId)
+                ->update(['vendor_price' => $newPrice]);
 
         } catch (Exception $e) {
             $this->response->code = $e->getCode();

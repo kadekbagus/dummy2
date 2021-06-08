@@ -345,6 +345,8 @@ class MallAPIController extends ControllerAPI
             $mall_google_indoor_map = OrbitInput::post('mall_google_indoor_map');
             $mall_google_indoor_streetview = OrbitInput::post('mall_google_indoor_streetview');
 
+            $coupon_verification_code = OrbitInput::post('coupon_verification_code');
+
             $validation_data = [
                 'name'                          => $mall_name,
                 'email'                         => $email,
@@ -553,7 +555,7 @@ class MallAPIController extends ControllerAPI
             if (! empty($domain)) {
                 $newmall->ci_domain = $domain . Config::get('orbit.shop.ci_domain');
             }
-            $newmall->masterbox_number = $masterbox_number;
+            $newmall->masterbox_number = $coupon_verification_code;
             $newmall->slavebox_number = $slavebox_number;
             if (in_array($mobile_default_language, $languages)) {
                 $newmall->mobile_default_language = $mobile_default_language;
@@ -974,6 +976,7 @@ class MallAPIController extends ControllerAPI
             $mall = Mall::excludeDeleted('merchants')
                 ->select(
                     'merchants.*',
+                    'merchants.masterbox_number as coupon_verification_code',
                     'countries.code as country_code',
                     DB::raw("LEFT({$prefix}merchants.ci_domain, instr({$prefix}merchants.ci_domain, '.') - 1) as subdomain"),
                     DB::raw('count(tenant.merchant_id) AS total_tenant'),
@@ -1704,21 +1707,25 @@ class MallAPIController extends ControllerAPI
 
             OrbitInput::post('password', function($password) use ($updatedUser) {
                 if (! empty(trim($password))) {
-                    $updatedUser->user_password = Hash::make($password);
+                    if ($updatedUser) {
+                        $updatedUser->user_password = Hash::make($password);
+                    }
                 }
             });
 
             OrbitInput::post('name', function($name) use ($updatedUser) {
                 if (! empty(trim($name))) {
-                    $updatedUser->user_firstname = $name;
+                    if ($updatedUser) {
+                        $updatedUser->user_firstname = $name;
+                    }
                 }
             });
 
-            $updatedUser->modified_by = $this->api->user->user_id;
-
-            Event::fire('orbit.mallgroup.postupdateuser.before.save', array($this, $updatedUser));
-
-            $updatedUser->save();
+            if ($updatedUser) {
+                $updatedUser->modified_by = $this->api->user->user_id;
+                Event::fire('orbit.mallgroup.postupdateuser.before.save', array($this, $updatedUser));
+                $updatedUser->save();
+            }
 
             OrbitInput::post('is_subscribed', function($is_subscribed) use ($updatedmall) {
                 $updatedmall->is_subscribed = $is_subscribed;
@@ -1884,6 +1891,10 @@ class MallAPIController extends ControllerAPI
 
             OrbitInput::post('masterbox_number', function($masterbox_number) use ($updatedmall) {
                 $updatedmall->masterbox_number = $masterbox_number;
+            });
+
+            OrbitInput::post('coupon_verification_code', function($coupon_verification_code) use ($updatedmall) {
+                $updatedmall->masterbox_number = $coupon_verification_code;
             });
 
             OrbitInput::post('slavebox_number', function($slavebox_number) use ($updatedmall) {
@@ -2369,11 +2380,13 @@ class MallAPIController extends ControllerAPI
             // update user status
             OrbitInput::post('status', function($status) use ($updatedmall) {
                 $updateuser = User::with(array('role'))->excludeDeleted()->find($updatedmall->user_id);
-                if (! $updateuser->isSuperAdmin()) {
-                    $updateuser->status = $status;
-                    $updateuser->modified_by = $this->api->user->user_id;
-
-                    $updateuser->save();
+                if ($updateuser) {
+                    if (! $updateuser->isSuperAdmin()) {
+                        $updateuser->status = $status;
+                        $updateuser->modified_by = $this->api->user->user_id;
+    
+                        $updateuser->save();
+                    }
                 }
             });
 
@@ -2485,7 +2498,7 @@ class MallAPIController extends ControllerAPI
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
+            $this->response->message = $e->getMessage().' on line: '.$e->getLine();
             $this->response->data = null;
             $httpCode = 403;
 
@@ -2504,7 +2517,7 @@ class MallAPIController extends ControllerAPI
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
+            $this->response->message = $e->getMessage().' on line: '.$e->getLine();
             $this->response->data = null;
             $httpCode = 403;
 
@@ -2526,7 +2539,7 @@ class MallAPIController extends ControllerAPI
 
             // Only shows full query error when we are in debug mode
             if (Config::get('app.debug')) {
-                $this->response->message = $e->getMessage();
+                $this->response->message = $e->getMessage().' on line: '.$e->getLine();
             } else {
                 $this->response->message = Lang::get('validation.orbit.queryerror');
             }
@@ -2548,7 +2561,7 @@ class MallAPIController extends ControllerAPI
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
+            $this->response->message = $e->getMessage().' on line: '.$e->getLine();
             $this->response->data = null;
 
             // Rollback the changes
