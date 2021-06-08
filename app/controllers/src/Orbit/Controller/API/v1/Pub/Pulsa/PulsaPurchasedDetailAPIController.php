@@ -123,6 +123,9 @@ class PulsaPurchasedDetailAPIController extends PubControllerAPI
                                 $discountQuery->select('discount_id', 'discount_code as parent_discount_code', 'discount_title', 'value_in_percent as percent_discount');
                             }]);
                         }])
+                        ->with(['issued_coupon' => function($query) {
+                            $query->with(['coupon'])->where('is_auto_issued', 1);
+                        }])
                         ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                         ->leftJoin('payment_midtrans', 'payment_midtrans.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                         ->join('pulsa', 'pulsa.pulsa_item_id', '=', 'payment_transaction_details.object_id')
@@ -163,6 +166,8 @@ class PulsaPurchasedDetailAPIController extends PubControllerAPI
             }
 
             $pulsa->payment_midtrans_info = json_decode(unserialize($pulsa->payment_midtrans_info));
+
+            $pulsa->getRewards();
 
             $this->response->data = $pulsa;
         } catch (ACLForbiddenException $e) {
