@@ -82,9 +82,7 @@ class ElectricityPurchasedDetailAPIController extends PubControllerAPI
                                                     $discountQuery->select('discount_id', 'discount_code as parent_discount_code', 'discount_title', 'value_in_percent as percent_discount');
                                                 }]);
                                             }])
-                                            ->with(['issued_coupon' => function($query) {
-                                                $query->with(['coupon'])->where('is_auto_issued', 1);
-                                            }])
+                                            ->with(['auto_issued_coupons'])
                                         ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                                         ->join('digital_products', 'digital_products.digital_product_id', '=', 'payment_transaction_details.object_id')
                                         ->leftJoin('payment_midtrans', 'payment_midtrans.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
