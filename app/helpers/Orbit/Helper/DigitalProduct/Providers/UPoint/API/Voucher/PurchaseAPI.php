@@ -36,16 +36,14 @@ class PurchaseAPI extends UPointVoucherAPI
 
     protected function mockResponseData()
     {
-        $this->randomizeResponseChance[0] = 1;
-
-        if ($this->randomizeResponseChance[0] === 1) {
+        if ($this->config['mock_response'] === 'success') {
             $this->mockResponse = json_decode('{
                 "status":1,
                 "trx_id":"12345678",
                 "ref_no":"' . $this->requestData['trx_id'] . '"
             }');
         }
-        else {
+        else if ($this->config['mock_response'] === 'failed') {
             $this->mockResponse = json_decode('{
                 "status":0,
                 "error_code":"E004",
