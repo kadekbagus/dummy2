@@ -35,12 +35,6 @@ class GetDigitalProductQueue
     private $objectType = 'digital_product';
 
     /**
-     * Purchased object's name (e.g the game name: Ragnarok M, Candy Crush, etc)
-     * @var string
-     */
-    private $purchasedItem = '';
-
-    /**
      * Issue hot deals coupon.
      *
      * @param  Illuminate\Queue\Jobs\Job | Orbit\FakeJob $job  the job
@@ -189,9 +183,7 @@ class GetDigitalProductQueue
                         ->request();
                 }
 
-                $payment->user->activity(
-                    new PurchaseSuccessActivity($payment, $this->purchasedItem)
-                );
+                $payment->user->activity(new PurchaseSuccessActivity($payment, $this->objectType));
 
                 if (! empty($discount)) {
                     // Mark promo code as issued.
@@ -285,13 +277,7 @@ class GetDigitalProductQueue
                     ])
                     ->request();
 
-                $payment->user->activity(
-                    new PurchaseFailedProductActivity(
-                        $payment,
-                        $this->objectType,
-                        $notes
-                    )
-                );
+                $payment->user->activity(new PurchaseFailedProductActivity($payment, $this->objectType, $notes));
             }
             else {
                 DB::connection()->rollBack();
@@ -310,8 +296,6 @@ class GetDigitalProductQueue
         foreach($payment->details as $detail) {
             if (! empty($detail->digital_product)) {
                 $digitalProduct = $detail->digital_product;
-                $this->resolvePurchasedItem($payment, $digitalProduct);
-
                 break;
             }
         }
@@ -321,30 +305,6 @@ class GetDigitalProductQueue
         }
 
         return $digitalProduct;
-    }
-
-    /**
-     * Resolve purchased item name/game name (e.g Ragnarok M, Candy Crush)
-     * based on purchased digital product type.
-     *
-     * @param  [type] $payment        [description]
-     * @param  [type] $digitalProduct [description]
-     * @return [type]                 [description]
-     */
-    private function resolvePurchasedItem($payment, $digitalProduct)
-    {
-        switch ($digitalProduct->product_type) {
-            case 'game_voucher':
-                $this->purchasedItem = Game::findOrFail($payment->extra_data)
-                    ->game_name;
-                break;
-
-            case 'electricity':
-                break;
-
-            default:
-                break;
-        }
     }
 
     private function getProviderProduct($payment)
