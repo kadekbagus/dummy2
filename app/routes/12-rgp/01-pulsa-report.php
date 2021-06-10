@@ -42,3 +42,8 @@ Route::post('/app/v1/rgp/update-price', function()
 {
     return Orbit\Controller\API\v1\RGP\UpdatePriceAPIController::create()->post();
 });
+
+Route::post('/app/v1/rgp/issue-coupon', function()
+{
+    return Orbit\Controller\API\v1\RGP\CouponManualIssueAPIController::create()->post();
+});

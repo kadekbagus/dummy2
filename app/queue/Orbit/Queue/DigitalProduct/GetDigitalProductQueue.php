@@ -1,32 +1,26 @@
 <?php namespace Orbit\Queue\DigitalProduct;
 
-use Activity;
 use App;
-use Carbon\Carbon;
 use Config;
 use DB;
 use Event;
 use Exception;
-use Game;
 use Log;
 use Mall;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedProductActivity;
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
+use Orbit\Helper\AutoIssueCoupon\AutoIssueCoupon;
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
 use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotification;
 use Orbit\Notifications\DigitalProduct\DigitalProductNotAvailableNotification;
-use Orbit\Notifications\DigitalProduct\PulsaRetryNotification;
 use Orbit\Notifications\DigitalProduct\ReceiptNotification;
 use PaymentTransaction;
-use Queue;
 use User;
 
 /**
  * A job to get/issue Digital Product after payment completed.
- * At this point, we assume the payment was completed (paid) so anything wrong
- * while trying to issue the will make the status success_no_product_failed.
  *
  * @author Budi <budi@dominopos.com>
  */
@@ -39,12 +33,6 @@ class GetDigitalProductQueue
     protected $retryDelay = 3;
 
     private $objectType = 'digital_product';
-
-    /**
-     * Purchased object's name (e.g the game name: Ragnarok M, Candy Crush, etc)
-     * @var string
-     */
-    private $purchasedItem = '';
 
     /**
      * Issue hot deals coupon.
@@ -141,6 +129,9 @@ class GetDigitalProductQueue
 
                 $this->log("Issued for payment {$paymentId}..");
 
+                // Auto issue free coupon if trx meet certain criteria.
+                AutoIssueCoupon::issue($payment, $digitalProduct->product_type);
+
                 // Notify Customer.
                 $payment->user->notify(new ReceiptNotification(
                     $payment,
@@ -192,9 +183,7 @@ class GetDigitalProductQueue
                         ->request();
                 }
 
-                $payment->user->activity(
-                    new PurchaseSuccessActivity($payment, $this->purchasedItem)
-                );
+                $payment->user->activity(new PurchaseSuccessActivity($payment, $this->objectType));
 
                 if (! empty($discount)) {
                     // Mark promo code as issued.
@@ -288,13 +277,7 @@ class GetDigitalProductQueue
                     ])
                     ->request();
 
-                $payment->user->activity(
-                    new PurchaseFailedProductActivity(
-                        $payment,
-                        $this->objectType,
-                        $notes
-                    )
-                );
+                $payment->user->activity(new PurchaseFailedProductActivity($payment, $this->objectType, $notes));
             }
             else {
                 DB::connection()->rollBack();
@@ -313,8 +296,6 @@ class GetDigitalProductQueue
         foreach($payment->details as $detail) {
             if (! empty($detail->digital_product)) {
                 $digitalProduct = $detail->digital_product;
-                $this->resolvePurchasedItem($payment, $digitalProduct);
-
                 break;
             }
         }
@@ -324,30 +305,6 @@ class GetDigitalProductQueue
         }
 
         return $digitalProduct;
-    }
-
-    /**
-     * Resolve purchased item name/game name (e.g Ragnarok M, Candy Crush)
-     * based on purchased digital product type.
-     *
-     * @param  [type] $payment        [description]
-     * @param  [type] $digitalProduct [description]
-     * @return [type]                 [description]
-     */
-    private function resolvePurchasedItem($payment, $digitalProduct)
-    {
-        switch ($digitalProduct->product_type) {
-            case 'game_voucher':
-                $this->purchasedItem = Game::findOrFail($payment->extra_data)
-                    ->game_name;
-                break;
-
-            case 'electricity':
-                break;
-
-            default:
-                break;
-        }
     }
 
     private function getProviderProduct($payment)

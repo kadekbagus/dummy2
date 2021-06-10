@@ -18,12 +18,11 @@ use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
 use Orbit\Notifications\DigitalProduct\DigitalProductNotAvailableNotification;
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedProductActivity;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
+use Orbit\Helper\AutoIssueCoupon\AutoIssueCoupon;
 use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotification;
 
 /**
- * A job to get/issue Hot Deals Coupon after payment completed.
- * At this point, we assume the payment was completed (paid) so anything wrong
- * while trying to issue the coupon will make the status success_no_coupon_failed.
+ * A job to get/issue PLN Token from MCash after payment completed.
  *
  * @author Budi <budi@dominopos.com>
  */
@@ -40,7 +39,7 @@ class GetMCashElectricityQueue
     private $objectType = 'digital_product';
 
     /**
-     * Issue hot deals coupon.
+     * Issue PLN token.
      *
      * @param  Illuminate\Queue\Jobs\Job | Orbit\FakeJob $job  the job
      * @param  array $data the data needed to run this job
@@ -127,6 +126,9 @@ class GetMCashElectricityQueue
                 DB::connection()->commit();
 
                 $this->log("Electricity Purchase is SUCCESS for payment {$paymentId}.");
+
+                // Auto issue free coupon if trx meet certain criteria.
+                AutoIssueCoupon::issue($payment, 'pln');
 
                 $this->recordSuccessGMP($payment, $digitalProduct, $providerProduct, $detail);
             }
