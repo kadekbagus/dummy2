@@ -36,16 +36,14 @@ class ConfirmAPI extends UPointVoucherAPI
 
     protected function mockResponseData()
     {
-        $this->randomizeResponseChance[0] = 1;
-
-        if ($this->randomizeResponseChance[0] === 1) {
+        if ($this->config['mock_response'] === 'success') {
             $this->mockResponse = json_decode('{
                 "status":1,
                 "trx_id":"12345678",
                 "item":[{"name": "voucher","value": "Serial=7211600208;Pins=99997211600208"}]
             }');
         }
-        else {
+        else if ($this->config['mock_response'] === 'failed') {
             $this->mockResponse = json_decode('{
                 "status":0,
                 "error_code":"E004",
