@@ -43,9 +43,7 @@ class PurchaseAPI extends WoodoosAPI
 
     protected function mockResponseData()
     {
-        $this->randomizeResponseChance[0] = 2;
-
-        if ($this->randomizeResponseChance[0] === 1) {
+        if ($this->config['mock_response'] === 'success') {
             $this->mockResponse = '{
                 "isSuccessful":true,
                 "referenceNumber":"12345678",
@@ -69,14 +67,14 @@ class PurchaseAPI extends WoodoosAPI
                 "barcodeNumber":"123456789"
             }';
         }
-        else if ($this->randomizeResponseChance[0] === 2) {
-            $this->mockResponse = '{
-                "isSuccessful":true,
-                "referenceNumber":"12345678",
-                "mobileNo":"62123121111"
-            }';
-        }
-        else {
+        // else if ($this->randomizeResponseChance[0] === 2) {
+        //     $this->mockResponse = '{
+        //         "isSuccessful":true,
+        //         "referenceNumber":"12345678",
+        //         "mobileNo":"62123121111"
+        //     }';
+        // }
+        else if ($this->config['mock_response'] === 'failed') {
             $this->mockResponse = '{
                 "errorCode":"500",
                 "errorMessage":"Internal Server Error"
