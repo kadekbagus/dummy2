@@ -1,5 +1,7 @@
 <?php
 
+use Orbit\Helper\AutoIssueCoupon\HasRewards;
+
 // use Orbit\Helper\Presenters\Presentable;
 
 class PaymentTransaction extends Eloquent
@@ -11,7 +13,8 @@ class PaymentTransaction extends Eloquent
      * @author Firmansyah <firmansyah@dominopos.com>
      */
 
-    use ModelStatusTrait;
+    use ModelStatusTrait,
+        HasRewards;
 
     protected $primaryKey = 'payment_transaction_id';
 

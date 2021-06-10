@@ -16,7 +16,7 @@ class ExamplePubActivity extends PubActivity
      * Optional method that return array of additional data
      * that will be merged before recording the activity.
      */
-    protected function getAdditionalData()
+    protected function getAdditionalActivityData()
     {
         return [
             'notes' => 'Notes of Example Pub Activity.',
