@@ -1666,7 +1666,9 @@ class CouponAPIController extends ControllerAPI
 
             $updatedcoupon->is_visible = $is_visible;
 
-            OrbitInput::post('maximum_redeem', function($maximumRedeem) use ($updatedcoupon) {
+            $couponCode = IssuedCoupon::where('promotion_id', $updatedcoupon->promotion_id)->count();
+
+            OrbitInput::post('maximum_redeem', function($maximumRedeem) use ($updatedcoupon, $couponCode) {
                 if (! empty($maximumRedeem)) {
                     if ($maximumRedeem < 1) {
                         $errorMessage = 'Minimum amount of maximum redeemed coupon is 1';
@@ -1695,7 +1697,11 @@ class CouponAPIController extends ControllerAPI
             });
 
             if (empty($maximumRedeem)) {
-               $updatedcoupon->maximum_redeem = 0;
+                if (! empty($maximumIssuedCoupon)) {
+                    $updatedcoupon->maximum_redeem = $updatedcoupon->maximum_issued_coupon;
+                } else {
+                    $updatedcoupon->maximum_redeem = $couponCode;
+                }
             }
 
             if ($rule_type === 'unique_coupon_per_user') {
