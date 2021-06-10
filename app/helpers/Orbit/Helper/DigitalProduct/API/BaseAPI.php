@@ -93,8 +93,6 @@ class BaseAPI
         ]);
 
         $this->requestData = $requestData;
-
-        $this->mockRequestException
     }
 
     public static function create($requestData = [], $customConfig = [])
