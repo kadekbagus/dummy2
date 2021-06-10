@@ -6392,9 +6392,9 @@ return array(
         ],
 
         // Mock partner api response to success or failed.
-        // Leave empty for production.
-        // Valid value: null, 'success', 'failed'
-        'mock_response' => null,
+        // Always set to false for production.
+        // Valid value: false, 'success', 'failed'
+        'mock_response' => false,
     ],
 
     // Config related to transaction.
