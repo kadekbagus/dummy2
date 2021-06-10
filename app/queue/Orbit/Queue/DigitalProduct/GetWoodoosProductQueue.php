@@ -12,13 +12,13 @@ use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInte
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedProductActivity;
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
 use Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct\APIHelper;
+use Orbit\Helper\AutoIssueCoupon\AutoIssueCoupon;
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
 use Orbit\Helper\DigitalProduct\Providers\Woodoos\WoodoosRequestException;
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
 use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotification;
 use Orbit\Notifications\DigitalProduct\DigitalProductNotAvailableNotification;
 use Orbit\Notifications\DigitalProduct\Woodoos\ReceiptNotification;
-use Orbit\Queue\DigitalProduct\CheckWoodoosPurchaseStatusQueue;
 use PaymentTransaction;
 use User;
 
@@ -147,6 +147,9 @@ class GetWoodoosProductQueue
                 DB::connection()->commit();
 
                 $this->log("Issued for payment {$paymentId}..");
+
+                // Auto issue free coupon if trx meet certain criteria.
+                AutoIssueCoupon::issue($payment, $digitalProduct->product_type);
 
                 $this->recordGMP($payment, $detail, $digitalProduct, $digitalProductName, $productCode);
 

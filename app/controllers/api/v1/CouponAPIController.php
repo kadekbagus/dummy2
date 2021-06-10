@@ -212,6 +212,13 @@ class CouponAPIController extends ControllerAPI
             $priceToGtm = OrbitInput::post('price_to_gtm', 0);
             $couponCodeType = OrbitInput::post('coupon_code_type', 'code');
 
+            $minPurchasePulsa = OrbitInput::post('min_purchase_pulsa');
+            $minPurchasePln = OrbitInput::post('min_purchase_pln');
+            $minPurchaseGameVoucher = OrbitInput::post('min_purchase_game_voucher');
+            $autoIssuedOnPulsa = OrbitInput::post('auto_issued_on_pulsa');
+            $autoIssuedOnPln = OrbitInput::post('auto_issued_on_pln');
+            $autoIssuedOnGameVoucher = OrbitInput::post('auto_issued_on_game_voucher');
+
             if ($payByNormal === 'N') {
                 $fixedAmountCommission = 0;
             }
@@ -344,36 +351,6 @@ class CouponAPIController extends ControllerAPI
                 $errorMessage = 'The validity redeem date should be greater than the end date.';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-
-            // if ($payByWallet === 'N' && $payByNormal === 'N') {
-            //     $errorMessage = 'Select one payment method.';
-            //     OrbitShopAPI::throwInvalidArgument($errorMessage);
-            // } elseif ($payByWallet === 'Y' && $payByNormal === 'N') {
-            //     $dataPayment = @json_decode($paymentProviders);
-            //     if (count($dataPayment) != count($retailer_ids)) {
-            //         $errorMessage = 'Not all redemption place support wallet payment method';
-            //         OrbitShopAPI::throwInvalidArgument($errorMessage);
-            //     }
-            // }
-
-            // if ($payByNormal === 'Y') {
-            //     $validator = Validator::make(
-            //         array(
-            //             'amount_commission'       => $amountCommission,
-            //             'fixed_amount_commission' => $fixedAmountCommission,
-
-            //         ),
-            //         array(
-            //             'amount_commission'       => 'required',
-            //             'fixed_amount_commission' => 'required',
-            //         )
-            //     );
-
-            //     if ($validator->fails()) {
-            //         $errorMessage = $validator->messages()->first();
-            //         OrbitShopAPI::throwInvalidArgument($errorMessage);
-            //     }
-            // }
 
             if ($payByWallet === 'Y') {
                 $dataPayment = @json_decode($paymentProviders);
@@ -553,6 +530,12 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->price_to_gtm = $priceToGtm;
             $newcoupon->redemption_link = $redemptionLink;
             $newcoupon->coupon_code_type = $couponCodeType;
+            $newcoupon->auto_issued_on_pulsa = $autoIssuedOnPulsa;
+            $newcoupon->auto_issued_on_pln = $autoIssuedOnPln;
+            $newcoupon->auto_issued_on_game_voucher = $autoIssuedOnGameVoucher;
+            $newcoupon->min_purchase_pulsa = $minPurchasePulsa;
+            $newcoupon->min_purchase_pln = $minPurchasePln;
+            $newcoupon->min_purchase_game_voucher = $minPurchaseGameVoucher;
 
             // save 3rd party coupon fields
             if ($is3rdPartyPromotion === 'Y') {
