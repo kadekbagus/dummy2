@@ -166,20 +166,41 @@
                     <td class="mobile" width="300">
                       <div style="padding-right: 4px" class="pulsa-banner-container">
                         <a href="{{ $pulsa_page_url }}">
-                          <img src="https://cloudfront.gotomalls.com/uploads/emails/email-pulsa-sm.jpg" class="pulsa-banner-img">
+                          <img src="https://cloudfront.gotomalls.com/uploads/emails/pulsa-may-2021.jpg" class="pulsa-banner-img">
                         </a>
                       </div>
                     </td>
                     <td class="mobile" width="300">
                       <div style="padding-left: 4px" class="pulsa-banner-container">
                         <a href="{{ $pln_page_url }}">
-                          <img src="https://cloudfront.gotomalls.com/uploads/emails/email-pln-sm.jpg" class="pulsa-banner-img">
+                          <img src="https://cloudfront.gotomalls.com/uploads/emails/pln-token-may-2021.jpg" class="pulsa-banner-img">
                         </a>
                       </div>
                     </td>
                   </tr>
                 </table>
 
+                <table width="600" cellpadding="0" cellspacing="0" class="container container-pulsa-banner">
+                  <tr>
+                    <td class="mobile" width="300">
+                      <div style="padding-right: 4px" class="pulsa-banner-container">
+                        <a href="{{ $game_voucher_page_url }}">
+                          <img src="https://cloudfront.gotomalls.com/uploads/emails/voucher-game-may-2021.jpg" class="pulsa-banner-img">
+                        </a>
+                      </div>
+                    </td>
+                    <td class="mobile" width="300">
+                      <div style="padding-left: 4px" class="pulsa-banner-container">
+                        <a href="{{ $product_list_page_url }}">
+                          <img src="https://cloudfront.gotomalls.com/uploads/emails/product-may-2021.jpg" class="pulsa-banner-img">
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+
+{{-- single column banner area --}}
+{{--
                 <table width="600" cellpadding="0" cellspacing="0" class="container container-pulsa-banner">
                   <tr>
                     <td class="mobile" width="600">
@@ -189,6 +210,7 @@
                     </td>
                   </tr>
                 </table>
+--}}
 
                 <table width="600" cellpadding="0" cellspacing="0" class="container campaigns-container">
                   <tr>
@@ -373,8 +395,37 @@
                     <td class="mobile hide-on-mobile campaigns-item-separator">&nbsp;</td>
 
                     <td width="280" class="mobile campaigns-item-container hide-on-mobile" valign="top">
-                      {{-- empty --}}
-                      &nbsp;
+                      <table cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td width="220" valign="top">
+                            <h3 class="campaigns-title">{{ trans('email-report.body.campaigns.product_title') }}</h3>
+                            <p class="campaigns-desc">{{ trans('email-report.body.campaigns.product_desc') }}</p>
+                          </td>
+                          <td class="statistic-value number-of-views" valign="top" align="right">
+                            <h3 class="campaigns-views">{{ $product_view }}</h3>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>
+                            <table>
+                              <tr>
+                                @if(!empty($product_data))
+                                  @foreach($product_data as $product)
+                                    <td width="70" height="70" style="padding-right: 10px;" valign="middle">
+                                      <a href="{{ $product['link_url'] }}" style="position:relative;width: 100%;height: 100%;display:block;border:1px solid #eee;">
+                                        <img src="{{ $product['cdn_url'] }}" alt="" style="width: 100%;height:100%;position:absolute;object-fit:contain;">
+                                      </a>
+                                    </td>
+                                  @endforeach
+                                @endif
+                              </tr>
+                            </table>
+                          </td>
+                          <td align="right">
+                            <a href="{{ $product_list_page_url }}" class="see-all">See All</a>
+                          </td>
+                        </tr>
+                      </table>
                     </td>
                   </tr>
                 </table>

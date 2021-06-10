@@ -1,40 +1,36 @@
 <?php namespace Orbit\Queue\Pulsa;
 
 use DB;
+use App;
 use Log;
+use Mall;
+use User;
 use Event;
+
 use Queue;
 use Config;
-use Exception;
-use Carbon\Carbon;
-
-use User;
-use PaymentTransaction;
-use IssuedCoupon;
-use Coupon;
-use Mall;
 use Activity;
+use Exception;
 
-use Orbit\Helper\MCash\API\Purchase;
+use PaymentTransaction;
 
 // Notifications
+use Orbit\Helper\MCash\API\Purchase;
+use Orbit\Helper\AutoIssueCoupon\AutoIssueCoupon;
 use Orbit\Notifications\Pulsa\ReceiptNotification;
-use Orbit\Notifications\Pulsa\PulsaNotAvailableNotification;
-use Orbit\Notifications\Pulsa\CustomerPulsaNotAvailableNotification;
-use Orbit\Notifications\Pulsa\PulsaPendingNotification;
-use Orbit\Notifications\Pulsa\CustomerPulsaPendingNotification;
 use Orbit\Notifications\Pulsa\PulsaRetryNotification;
-use Orbit\Notifications\Pulsa\PulsaSuccessWithoutSerialNumberNotification;
-
+use Orbit\Notifications\Pulsa\PulsaPendingNotification;
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
 
-use App;
+use Orbit\Notifications\Pulsa\PulsaNotAvailableNotification;
+
+use Orbit\Notifications\Pulsa\CustomerPulsaNotAvailableNotification;
+use Orbit\Notifications\Pulsa\PulsaSuccessWithoutSerialNumberNotification;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
 
 /**
- * A job to get/issue Hot Deals Coupon after payment completed.
- * At this point, we assume the payment was completed (paid) so anything wrong
- * while trying to issue the coupon will make the status success_no_coupon_failed.
+ * A job to get Pulsa from 3rd-party/partner after payment completed.
+ * Anything wrong during this routine will result to payment with failed-state.
  *
  * @author Budi <budi@dominopos.com>
  */
@@ -132,6 +128,9 @@ class GetPulsaQueue
                 DB::connection()->commit();
 
                 $this->log("Issued for payment {$paymentId}..");
+
+                // Issue free coupon if this payment meet certain criteria.
+                AutoIssueCoupon::issue($payment, 'pulsa');
 
                 // Notify Customer.
                 $payment->user->notify(new ReceiptNotification($payment, $pulsaPurchase->getSerialNumber()));

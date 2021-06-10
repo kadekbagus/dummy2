@@ -367,3 +367,4 @@ Artisan::add(new UpdateBPPUserMerchantsCommand);
 
 // Update pulsa status
 Artisan::add(new PulsaStatusUpdateCommand);
+
