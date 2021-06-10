@@ -6436,7 +6436,12 @@ return array(
         // involve.asia datafeeds
         'involve_asia' => [
             'tracking_link_id' => '102758'
-        ]
+        ],
+
+        // Mock partner api response to success or failed.
+        // Leave empty for production.
+        // Valid value: null, 'success', 'failed'
+        'mock_response' => 'success',
     ],
 
     // Config related to transaction.
