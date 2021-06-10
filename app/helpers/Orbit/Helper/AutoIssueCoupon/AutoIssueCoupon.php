@@ -94,6 +94,11 @@ class AutoIssueCoupon
             return false;
         }
 
+        // Skip issued/redeemed check if both are unlimited.
+        if ($coupon->maximum_redeem === 0 && $coupon->maximum_issued_coupon === 0) {
+            return true;
+        }
+
         // Check if reached max issued/redeemed count.
         $prefix = DB::getTablePrefix();
         $usedCount = Coupon::select(DB::raw("
@@ -111,10 +116,17 @@ class AutoIssueCoupon
             ->where('promotion_id', $coupon->promotion_id)
             ->first();
 
-        if ($usedCount->issued >= $coupon->maximum_issued_coupon
-            || $usedCount->redeemed >= $coupon->maximum_redeem
+        if ($coupon->maximum_issued_coupon > 0
+            && $usedCount->issued >= $coupon->maximum_issued_coupon
         ) {
-            Log::info("AutoIssueCoupon: no coupon {$coupon->promotion_id}, maximum issued/redeemed reached.");
+           Log::info("AutoIssueCoupon: no coupon {$coupon->promotion_id}, maximum issued reached.");
+           return false;
+        }
+
+        if ($coupon->maximum_redeem > 0
+            && $usedCount->redeemed >= $coupon->maximum_redeem
+        ) {
+            Log::info("AutoIssueCoupon: no coupon {$coupon->promotion_id}, maximum redeemed reached.");
             return false;
         }
 
