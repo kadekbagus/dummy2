@@ -212,12 +212,12 @@ class CouponAPIController extends ControllerAPI
             $priceToGtm = OrbitInput::post('price_to_gtm', 0);
             $couponCodeType = OrbitInput::post('coupon_code_type', 'code');
 
-            $minPurchasePulsa = OrbitInput::post('min_purchase_pulsa');
-            $minPurchasePln = OrbitInput::post('min_purchase_pln');
-            $minPurchaseGameVoucher = OrbitInput::post('min_purchase_game_voucher');
             $autoIssuedOnPulsa = OrbitInput::post('auto_issued_on_pulsa');
             $autoIssuedOnPln = OrbitInput::post('auto_issued_on_pln');
             $autoIssuedOnGameVoucher = OrbitInput::post('auto_issued_on_game_voucher');
+            $minPurchasePulsa = ($autoIssuedOnPulsa == 1) ? OrbitInput::post('min_purchase_pulsa') : null;
+            $minPurchasePln = ($autoIssuedOnPln == 1) ? OrbitInput::post('min_purchase_pln') : null;
+            $minPurchaseGameVoucher = ($autoIssuedOnGameVoucher == 1) ? OrbitInput::post('min_purchase_game_voucher') : null;
 
             if ($payByNormal === 'N') {
                 $fixedAmountCommission = 0;
