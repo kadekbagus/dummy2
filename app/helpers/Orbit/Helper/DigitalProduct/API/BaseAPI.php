@@ -54,13 +54,16 @@ class BaseAPI
      */
     protected $contentType = 'application/json';
 
-
+    /**
+     * @deprecated since 4.27
+     */
     protected $randomizeResponseChance = [1, 1, 1, 1, 0, 0];
 
     /**
      * Indicate that we should mock the response.
      * For local usage only/when we can not access 3rd party API.
      * @var boolean
+     * @deprecated since 4.27
      */
     protected $shouldMockResponse = false;
 
@@ -122,6 +125,7 @@ class BaseAPI
     protected function getConfig($customConfig = [])
     {
         $orbitConfig = Config::get("orbit.digital_product.providers.{$this->providerId}.config.{$this->getEnv()}", []);
+        $orbitConfig['mock_response'] = Config::get("orbit.partners_api.mock_response", false);
 
         return array_merge($orbitConfig, $customConfig);
     }
@@ -187,7 +191,7 @@ class BaseAPI
             $this->setHeaders();
 
             // Do the request...
-            if (! $this->shouldMockResponse) {
+            if ($this->config['mock_response'] === false) {
 
                 $response = $this->client->request(
                     $this->method,
@@ -199,6 +203,7 @@ class BaseAPI
             }
             else {
                 $this->mockRequestException();
+                $this->mockResponseData();
                 $response = $this->mockResponse;
             }
 
@@ -281,10 +286,6 @@ class BaseAPI
         $this->requestData = array_merge($this->requestData, $requestData);
 
         $this->setBodyParams();
-
-        if ($this->shouldMockResponse) {
-            $this->mockResponseData();
-        }
 
         return $this->request();
     }
