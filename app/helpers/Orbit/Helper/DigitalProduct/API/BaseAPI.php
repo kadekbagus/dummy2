@@ -93,8 +93,6 @@ class BaseAPI
         ]);
 
         $this->requestData = $requestData;
-
-        $this->mockRequestException
     }
 
     public static function create($requestData = [], $customConfig = [])
@@ -127,7 +125,7 @@ class BaseAPI
     protected function getConfig($customConfig = [])
     {
         $orbitConfig = Config::get("orbit.digital_product.providers.{$this->providerId}.config.{$this->getEnv()}", []);
-        $orbitConfig['mock_response'] = Config::get("orbit.partners_api.mock_response", null);
+        $orbitConfig['mock_response'] = Config::get("orbit.partners_api.mock_response", false);
 
         return array_merge($orbitConfig, $customConfig);
     }
@@ -193,7 +191,7 @@ class BaseAPI
             $this->setHeaders();
 
             // Do the request...
-            if (empty($this->config['mock_response'])) {
+            if ($this->config['mock_response'] === false) {
 
                 $response = $this->client->request(
                     $this->method,

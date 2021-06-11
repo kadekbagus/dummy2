@@ -212,12 +212,12 @@ class CouponAPIController extends ControllerAPI
             $priceToGtm = OrbitInput::post('price_to_gtm', 0);
             $couponCodeType = OrbitInput::post('coupon_code_type', 'code');
 
-            $minPurchasePulsa = OrbitInput::post('min_purchase_pulsa');
-            $minPurchasePln = OrbitInput::post('min_purchase_pln');
-            $minPurchaseGameVoucher = OrbitInput::post('min_purchase_game_voucher');
             $autoIssuedOnPulsa = OrbitInput::post('auto_issued_on_pulsa');
             $autoIssuedOnPln = OrbitInput::post('auto_issued_on_pln');
             $autoIssuedOnGameVoucher = OrbitInput::post('auto_issued_on_game_voucher');
+            $minPurchasePulsa = ($autoIssuedOnPulsa == 1) ? OrbitInput::post('min_purchase_pulsa') : null;
+            $minPurchasePln = ($autoIssuedOnPln == 1) ? OrbitInput::post('min_purchase_pln') : null;
+            $minPurchaseGameVoucher = ($autoIssuedOnGameVoucher == 1) ? OrbitInput::post('min_purchase_game_voucher') : null;
 
             if ($payByNormal === 'N') {
                 $fixedAmountCommission = 0;
@@ -1666,7 +1666,9 @@ class CouponAPIController extends ControllerAPI
 
             $updatedcoupon->is_visible = $is_visible;
 
-            OrbitInput::post('maximum_redeem', function($maximumRedeem) use ($updatedcoupon) {
+            $couponCode = IssuedCoupon::where('promotion_id', $updatedcoupon->promotion_id)->count();
+
+            OrbitInput::post('maximum_redeem', function($maximumRedeem) use ($updatedcoupon, $couponCode) {
                 if (! empty($maximumRedeem)) {
                     if ($maximumRedeem < 1) {
                         $errorMessage = 'Minimum amount of maximum redeemed coupon is 1';
@@ -1695,7 +1697,11 @@ class CouponAPIController extends ControllerAPI
             });
 
             if (empty($maximumRedeem)) {
-               $updatedcoupon->maximum_redeem = 0;
+                if (! empty($maximumIssuedCoupon)) {
+                    $updatedcoupon->maximum_redeem = $updatedcoupon->maximum_issued_coupon;
+                } else {
+                    $updatedcoupon->maximum_redeem = $couponCode;
+                }
             }
 
             if ($rule_type === 'unique_coupon_per_user') {

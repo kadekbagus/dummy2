@@ -6374,53 +6374,6 @@ return array(
             // Interval/cooldown before customer can purchase
             // same pulsa code with same phone number. In minutes.
             'interval_before_next_purchase' => 60,
-
-            // Mock mcash api response. Always set to null/'' on production.
-            // Valid value (case-sensitive):
-            // - Success
-            // - Pending
-            // - Failed
-            // - OutOfStock
-            // - SuccessWithoutSN
-            'mock_response' => 'Success',
-            'mock_response_data' => [
-                'Success' => [
-                    'status' => 0,
-                    'message' => 'TRX SUCCESS',
-                    'data' => (object) [
-                        'serial_number' => '12313131',
-                    ]
-                ],
-                'Pending' => [
-                    'status' => 1,
-                    'message' => 'TRX PENDING',
-                    'pending' => 1,
-                    'data' => (object) [
-                        'serial_number' => null,
-                    ]
-                ],
-                'Failed' => [
-                    'status' => 1,
-                    'message' => 'TRX FAILED',
-                    'data' => (object) [
-                        'serial_number' => null,
-                    ]
-                ],
-                'OutOfStock' => [
-                    'status' => 618,
-                    'message' => 'Out Of Stock',
-                    'data' => (object) [
-                        'serial_number' => null,
-                    ]
-                ],
-                'SuccessWithoutSN' => [
-                    'status' => 0,
-                    'message' => 'TRX SUCCESS WITHOUT SN',
-                    'data' => (object) [
-                        'serial_number' => null,
-                    ]
-                ],
-            ]
         ],
 
         // Google Measurement Protocol
@@ -6439,9 +6392,9 @@ return array(
         ],
 
         // Mock partner api response to success or failed.
-        // Leave empty for production.
-        // Valid value: null, 'success', 'failed'
-        'mock_response' => 'success',
+        // Always set to false for production.
+        // Valid value: false, 'success', 'failed'
+        'mock_response' => false,
     ],
 
     // Config related to transaction.
