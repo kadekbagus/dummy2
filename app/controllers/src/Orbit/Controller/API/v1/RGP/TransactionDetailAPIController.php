@@ -21,7 +21,7 @@ class TransactionDetailAPIController extends ControllerAPI
     /**
      * Issue an automatic issuancance coupon manually incase of some failure
      */
-    public function post()
+    public function get()
     {
         try {
             $httpCode = 200;
@@ -55,7 +55,7 @@ class TransactionDetailAPIController extends ControllerAPI
             }
 
             // get inputs
-            $transactionId = OrbitInput::post('transaction_id');
+            $transactionId = OrbitInput::get('transaction_id');
 
             $validator = Validator::make(
                 array(
@@ -74,7 +74,7 @@ class TransactionDetailAPIController extends ControllerAPI
 
             // check if transaction is valid: status success and success response from provider
             $payment = PaymentTransaction::with('details')
-                ->where('transaction_id', $transactionId)
+                ->where('payment_transaction_id', $transactionId)
                 ->first();
 
             if (! is_object($payment)) {

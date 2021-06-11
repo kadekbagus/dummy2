@@ -73,7 +73,7 @@ class CouponManualIssueAPIController extends ControllerAPI
             }
 
             // check if transaction is valid: status success and success response from provider
-            $payment = PaymentTransaction::where('transaction_id', $transactionId)
+            $payment = PaymentTransaction::where('payment_transaction_id', $transactionId)
                 ->where('status', PaymentTransaction::STATUS_SUCCESS)
                 ->first();
 
