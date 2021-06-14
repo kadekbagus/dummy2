@@ -83,7 +83,9 @@ class GetDigitalProductQueue
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired() || $payment->canceled()
                 || $payment->status === PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT_FAILED
-                || $payment->status === PaymentTransaction::STATUS_SUCCESS_REFUND) {
+                || $payment->status === PaymentTransaction::STATUS_SUCCESS_REFUND
+                || $payment->status === PaymentTransaction::STATUS_SUCCESS
+            ) {
 
                 $this->log("Payment {$paymentId} was denied/canceled/failed/refunded. We should not issue any item.");
 
