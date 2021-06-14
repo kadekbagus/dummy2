@@ -5,6 +5,7 @@ namespace Orbit\Helper\AutoIssueCoupon;
 use Coupon;
 use Exception;
 use IssuedCoupon;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -49,6 +50,7 @@ class AutoIssueCoupon
                 ->where('auto_issued_on_' . $productType, 1)
                 ->where('min_purchase_' . $productType, '<=', $payment->amount)
                 ->where('status', 'active')
+                ->where('end_date', '>=', Carbon::now('UTC')->format('Y-m-d H:i:s'))
                 ->orderBy('min_purchase_' . $productType, 'desc')
                 ->get();
 
