@@ -74,7 +74,9 @@ class GetDigitalProductQueue
                 'user',
                 'midtrans',
                 'discount_code'
-            ])->leftJoin('games', 'games.game_id', '=', 'payment_transactions.extra_data')
+            ])
+            ->select('payment_transactions.*')
+            ->leftJoin('games', 'games.game_id', '=', 'payment_transactions.extra_data')
             ->lockForUpdate()->findOrFail($paymentId);
 
             // Register payment into container, so can be accessed by other classes.
