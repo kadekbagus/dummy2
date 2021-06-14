@@ -47,11 +47,15 @@ class AutoIssueCoupon
                 ->whereHas('issued_coupon', function($query) {
                     $query->where('status', IssuedCoupon::STATUS_AVAILABLE);
                 })
-                ->where('auto_issued_on_' . $productType, 1)
-                ->where('min_purchase_' . $productType, '<=', $payment->amount)
+                ->where("auto_issued_on_{$productType}", 1)
+                ->where(function($query) use ($productType, $payment) {
+                    // might use case when to cast null min_purchase to 0 ?
+                    $query->whereNull("min_purchase_{$productType}")
+                        ->orWhere("min_purchase_{$productType}", "<=", $payment->amount);
+                })
                 ->where('status', 'active')
                 ->where('end_date', '>=', Carbon::now('UTC')->format('Y-m-d H:i:s'))
-                ->orderBy('min_purchase_' . $productType, 'desc')
+                ->orderBy("min_purchase_{$productType}", 'desc')
                 ->get();
 
             foreach($coupons as $coupon) {
@@ -65,7 +69,7 @@ class AutoIssueCoupon
 
                     (new AutoIssueCouponActivity($payment, $coupon))->record();
 
-                    Log::info("AutoIssueCoupon: coupon {$coupon->promotion_id} issued.");
+                    Log::info("AutoIssueCoupon: coupon {$coupon->promotion_id} issued for trx {$payment->payment_transaction_id}");
                 }
             }
         });

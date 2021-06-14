@@ -139,6 +139,13 @@ Receipt from Gotomalls.com
                             </div>
                           @endif
 
+                          @foreach($purchaseRewards as $rewardType => $rewards)
+                              @include(
+                                  'emails.components.purchase-rewards-' . $rewardType,
+                                  compact('rewards', 'lang', 'redeemUrl')
+                              )
+                          @endforeach
+
                           <br>
                           <br>
                           <p class="help-text">

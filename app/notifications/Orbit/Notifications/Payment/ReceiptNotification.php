@@ -27,9 +27,11 @@ use Orbit\Notifications\Traits\HasContactTrait;
  *
  * @author Budi <budi@dominopos.com>
  */
-class ReceiptNotification extends CustomerNotification implements EmailNotificationInterface, InAppNotificationInterface
+class ReceiptNotification extends CustomerNotification implements
+    EmailNotificationInterface,
+    InAppNotificationInterface
 {
-    use HasPaymentTrait, HasContactTrait;
+    use HasPaymentTrait, HasContactTrait, HasPurchaseRewards;
 
     protected $shouldQueue = true;
 
@@ -98,6 +100,7 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
             'transactionDateTime' => $this->payment->getTransactionDate('d F Y, H:i ') . " {$this->getLocalTimezoneName($this->payment->timezone_name)}",
             'emailSubject'      => $this->getEmailSubject(),
             'gameName'          => $this->getGameName(),
+            'purchaseRewards'   => $this->getPurchaseRewards(),
         ];
     }
 
