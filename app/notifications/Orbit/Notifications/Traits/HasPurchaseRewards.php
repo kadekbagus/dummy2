@@ -16,6 +16,8 @@ trait HasPurchaseRewards
 {
     protected function getPurchaseRewards()
     {
+        return [];
+
         $rewards = [];
 
         // Re-query free coupons.
