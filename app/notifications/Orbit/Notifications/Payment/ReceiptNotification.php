@@ -1,26 +1,24 @@
 <?php namespace Orbit\Notifications\Payment;
 
-use DB;
-use Mail;
-use Config;
-use Log;
-use Queue;
-use Exception;
-use Coupon;
-use PromotionRetailer;
-use CouponTranslation;
-
-use Orbit\Helper\MongoDB\Client as MongoClient;
-use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
-use Orbit\Helper\Util\CdnUrlGenerator;
 use Carbon\Carbon;
-
-use Orbit\Helper\Notifications\CustomerNotification;
+use Config;
+use Coupon;
+use CouponTranslation;
+use DB;
+use Exception;
+use Log;
+use Mail;
+use Orbit\Helper\MongoDB\Client as MongoClient;
 use Orbit\Helper\Notifications\Contracts\EmailNotificationInterface;
 use Orbit\Helper\Notifications\Contracts\InAppNotificationInterface;
-
-use Orbit\Notifications\Traits\HasPaymentTrait;
+use Orbit\Helper\Notifications\CustomerNotification;
+use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
 use Orbit\Notifications\Traits\HasContactTrait;
+use Orbit\Notifications\Traits\HasPaymentTrait;
+use Orbit\Notifications\Traits\HasPurchaseRewards;
+use PromotionRetailer;
+use Queue;
 
 /**
  * Base Receipt Notification class.
