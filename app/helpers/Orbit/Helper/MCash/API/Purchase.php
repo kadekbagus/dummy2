@@ -44,7 +44,9 @@ class Purchase
 
     public function __construct($config=[])
     {
-        $this->config = ! empty($config) ? $config : Config::get('orbit.partners_api.mcash');
+        $this->config = Config::get('orbit.partners_api.mcash', []);
+        $this->config = array_merge($this->config, $config);
+        $this->config['mock_response'] = Config::get('orbit.partners_api.mock_response', false);
         $this->client = MCashClient::create($this->config);
 
         $this->initMockResponse();
@@ -57,16 +59,45 @@ class Purchase
 
     private function initMockResponse()
     {
-        if (! $this->config['is_production']
-            && isset($this->config['mock_response'])
-            && ! empty($this->config['mock_response'])
-        ) {
-            $this->mockResponse(
-                $this->config['mock_response_data'][
-                    $this->config['mock_response']
-                ]
-            );
+        if ($this->config['is_production']) {
+            return;
         }
+
+        if ($this->config['mock_response'] === 'success') {
+            $this->mockSuccessResponse();
+        }
+        else if ($this->config['mock_response'] === 'failed') {
+            $this->mockFailedResponse();
+        }
+    }
+
+    public function mockSuccessResponse()
+    {
+        $serialNumber = '12313131';
+        if (isset($this->config['product_type'])
+            && $this->config['product_type'] === 'electricity'
+        ) {
+            $serialNumber = '1231231231231*Bambang*500000*2200*240';
+        }
+
+        return $this->mockResponse([
+            'status' => 0,
+            'message' => 'TRX SUCCESS',
+            'data' => (object) [
+                'serial_number' => $serialNumber,
+            ]
+        ]);
+    }
+
+    public function mockFailedResponse()
+    {
+        return $this->mockResponse([
+                'status' => 1,
+                'message' => 'TRX FAILED',
+                'data' => (object) [
+                    'serial_number' => null,
+                ]
+            ]);
     }
 
     public function mockResponse($data = [])
