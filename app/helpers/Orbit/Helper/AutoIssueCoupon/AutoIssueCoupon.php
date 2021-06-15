@@ -54,7 +54,7 @@ class AutoIssueCoupon
                         ->orWhere("min_purchase_{$productType}", "<=", $payment->amount);
                 })
                 ->where('status', 'active')
-                ->where('end_date', '>=', Carbon::now('UTC')->format('Y-m-d H:i:s'))
+                ->where('end_date', '>=', Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s'))
                 ->orderBy("min_purchase_{$productType}", 'desc')
                 ->get();
 
