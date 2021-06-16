@@ -493,9 +493,8 @@
     }
 
     .rewards-item .rewards-item-name {
-      font-size: 16px;
+      font-size: 15px;
       display: block;
-      margin-top: 10px;
       font-weight: bold;
       text-align: left;
     }

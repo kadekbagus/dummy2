@@ -48,15 +48,17 @@ trait HasPurchaseRewards
             ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
             ->leftJoin('coupon_translations as default_translation', function ($q) {
                 $q->on(DB::raw('default_translation.promotion_id'), '=', 'promotions.promotion_id')
-                ->on(DB::raw('default_translation.merchant_language_id'), '=', DB::raw('default_languages.language_id'));
+                    ->on(DB::raw('default_translation.merchant_language_id'), '=', DB::raw('default_languages.language_id'));
             })
             ->leftJoin('media', function ($q) {
-                $q->on('media.object_id', '=', DB::raw('default_translation.coupon_translation_id'));
-                $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
+                $q->on('media.object_id', '=', DB::raw('default_translation.coupon_translation_id'))
+                    ->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
             })
             ->where('payment_transaction_id', $this->payment->payment_transaction_id)
             ->where('promotions.status', 'active')
-            ->where('promotions.end_date', '>=', Carbon::now('UTC')->format('Y-m-d H:i:s'))
+            ->where('promotions.end_date', '>=', Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s'))
+            ->where('issued_coupons.is_auto_issued', 1)
+            ->whereIn('issued_coupons.status', [IssuedCoupon::STATUS_ISSUED])
             ->groupBy('promotions.promotion_id')
             ->get();
 
@@ -64,7 +66,9 @@ trait HasPurchaseRewards
             $rewards['coupon'][] = [
                 'id' => $reward->coupon_id,
                 'name' => $reward->name,
-                'image_url' => $reward->image_url,
+                'image_url' => ! empty($reward->image_url)
+                    ? $reward->image_url
+                    : 'https://www.gotomalls.com/themes/default/images/campaign-default.png',
             ];
         }
 
