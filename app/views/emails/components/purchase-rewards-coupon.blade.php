@@ -13,7 +13,7 @@
                           </p>
                           <br>
 
-                          <a href="http://gotomalls.budi/my/coupons" class="btn btn-light" role="button">
+                          <a href="{{ $redeemUrl }}" class="btn btn-light" role="button">
                               {{{ trans('email-purchase-rewards.coupon.btn_my_wallet', [], '', $lang) }}}
                           </a>
                         </td>
