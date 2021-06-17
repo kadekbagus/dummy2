@@ -86,12 +86,28 @@ class AutoIssueCoupon
      */
     public static function eligible($payment, $coupon)
     {
+        // Check for unique coupon
+        $hasUniqueCoupon = IssuedCoupon::join('promotions',
+                'issued_coupons.promotion_id', '=', 'promotions.promotion_id'
+            )
+            ->where('user_id', $payment->user_id)
+            ->where('issued_coupons.promotion_id', $coupon->promotion_id)
+            ->where('promotions.is_unique_redeem', 'Y')
+            ->first();
+
+        if ($hasUniqueCoupon) {
+            Log::info("AutoIssueCoupon: no coupon {$coupon->promotion_id}, it is unique and user already got one.");
+            return false;
+        }
+
         // Check if user already has the same coupon.
         $hasCoupon = IssuedCoupon::where('user_id', $payment->user_id)
-            ->whereIn('issued_coupons.status', [
-                IssuedCoupon::STATUS_ISSUED,
-                IssuedCoupon::STATUS_RESERVED
-            ])
+            ->where(function($query) {
+                $query->whereIn('issued_coupons.status', [
+                    IssuedCoupon::STATUS_ISSUED,
+                    IssuedCoupon::STATUS_RESERVED
+                ]);
+            })
             ->where('promotion_id', $coupon->promotion_id)
             ->first();
 
