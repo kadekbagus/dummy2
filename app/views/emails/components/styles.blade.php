@@ -449,9 +449,61 @@
     }
 
     .reservation-actions .btn {
-        box-shadow: none !important;
-        display: inline-block;
-        min-width: 20%;
+      box-shadow: none !important;
+      display: inline-block;
+      min-width: 20%;
+    }
+
+    .rewards-container {
+      border-top: 1px solid #ccc;
+      border-bottom: 1px solid #ccc;
+    }
+
+    .rewards-heading {
+      font-size: 24px;
+    }
+
+    .rewards-list-container {
+      width: 80%;
+      display: inline-block;
+      padding-bottom: 20px;
+    }
+
+    .rewards-item {
+      width: 128px;
+      max-width: 180px;
+      min-height: 96px;
+      display: inline-block;
+      margin-bottom: 10px;
+      margin-left:  10px;
+      margin-right: 10px;
+      text-align: center;
+      margin-bottom: 20px;
+      float: left;
+    }
+
+    .rewards-item .rewards-item-img {
+      display: inline-block;
+      border: 1px solid #ccc;
+      width: 128px;
+      height: 128px;
+      min-height: 96px;
+      max-width: 128px;
+      object-fit: contain;
+    }
+
+    .rewards-item .rewards-item-name {
+      font-size: 15px;
+      display: block;
+      font-weight: bold;
+      text-align: left;
+    }
+
+    .desktop-spacer {
+      width: 100%;
+      height: 5px;
+      display: block;
+      clear: left;
     }
 
     /* MEDIA QUERIES */
@@ -575,11 +627,9 @@
 
       .mobile.inline-mobile {
         width: auto !important;
-        display: inline-block !important;
       }
 
       .mobile.inline-mobile.customer-info-block {
-        width: 49% !important;
         margin-bottom: 15px;
         font-size: 22px;
         line-height: 1.2em;
@@ -592,6 +642,7 @@
 
       .customer-info-value {
         font-size: 20px;
+        padding: 0;
       }
 
       .transaction-item-name,
@@ -695,6 +746,55 @@
       .reservation-actions .btn {
         display: block;
         margin-bottom: 10px;
+      }
+
+      .rewards-list-container {
+        width: 100%;
+      }
+
+      .rewards-heading {
+        font-size: 26px;
+      }
+
+      .rewards-item {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        max-height: auto;
+        margin-bottom: 10px;
+        margin-left: 0;
+        margin-right: 0;
+        clear: left;
+      }
+
+      .rewards-item .rewards-item-img {
+          width: 30%;
+          height: auto;
+          min-height: 96px;
+          max-height: 100px;
+          max-width: 118px;
+          object-fit: contain;
+          display: inline-block;
+          border: 1px solid #ccc;
+          vertical-align: top;
+        float: left;
+
+      }
+
+      .rewards-item .rewards-item-name {
+        font-size: 20px;
+        margin-left: 10px;
+        display: inline-block;
+        width: 60%;
+        position: relative;
+        top: -5px;
+        margin-top: 0;
+        float: left;
+      }
+
+      .desktop-spacer {
+        display: none;
       }
     }
   </style>

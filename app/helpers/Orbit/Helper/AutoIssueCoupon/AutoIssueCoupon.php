@@ -2,12 +2,13 @@
 
 namespace Orbit\Helper\AutoIssueCoupon;
 
+use Carbon\Carbon;
 use Coupon;
 use Exception;
-use IssuedCoupon;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
+use IssuedCoupon;
 
 /**
  * Helper which handle free/auto-issued coupon if given transaction meet
@@ -40,18 +41,23 @@ class AutoIssueCoupon
             throw new Exception("Invalid productType: {$productType} !");
         }
 
-        DB::transaction(function() use ($productType, $payment) {
+        $updatedCoupons = [];
+        DB::transaction(function() use ($productType, $payment, &$updatedCoupons) {
             $coupons = Coupon::with(['issued_coupon' => function($query) {
                     $query->where('status', IssuedCoupon::STATUS_AVAILABLE);
                 }])
                 ->whereHas('issued_coupon', function($query) {
                     $query->where('status', IssuedCoupon::STATUS_AVAILABLE);
                 })
-                ->where('auto_issued_on_' . $productType, 1)
-                ->where('min_purchase_' . $productType, '<=', $payment->amount)
+                ->where("auto_issued_on_{$productType}", 1)
+                ->where(function($query) use ($productType, $payment) {
+                    // might use case when to cast null min_purchase to 0 ?
+                    $query->whereNull("min_purchase_{$productType}")
+                        ->orWhere("min_purchase_{$productType}", "<=", $payment->amount);
+                })
                 ->where('status', 'active')
-                ->where('end_date', '>=', Carbon::now('UTC')->format('Y-m-d H:i:s'))
-                ->orderBy('min_purchase_' . $productType, 'desc')
+                ->where('end_date', '>=', Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s'))
+                ->orderBy("min_purchase_{$productType}", 'desc')
                 ->get();
 
             foreach($coupons as $coupon) {
@@ -65,10 +71,21 @@ class AutoIssueCoupon
 
                     (new AutoIssueCouponActivity($payment, $coupon))->record();
 
-                    Log::info("AutoIssueCoupon: coupon {$coupon->promotion_id} issued.");
+                    $updatedCoupons[] = $coupon->promotion_id;
+
+                    Log::info("AutoIssueCoupon: coupon {$coupon->promotion_id} issued for trx {$payment->payment_transaction_id}");
                 }
             }
         });
+
+        // Trigger event to update coupon ES if necessary.
+        if (! empty($updatedCoupons)) {
+            foreach($updatedCoupons as $couponId) {
+                Event::fire('orbit.coupon.postaddtowallet.after.commit', [
+                    null, $couponId
+                ]);
+            }
+        }
     }
 
     /**
@@ -82,12 +99,28 @@ class AutoIssueCoupon
      */
     public static function eligible($payment, $coupon)
     {
+        // Check for unique coupon
+        $hasUniqueCoupon = IssuedCoupon::join('promotions',
+                'issued_coupons.promotion_id', '=', 'promotions.promotion_id'
+            )
+            ->where('user_id', $payment->user_id)
+            ->where('issued_coupons.promotion_id', $coupon->promotion_id)
+            ->where('promotions.is_unique_redeem', 'Y')
+            ->first();
+
+        if ($hasUniqueCoupon) {
+            Log::info("AutoIssueCoupon: no coupon {$coupon->promotion_id}, it is unique and user already got one.");
+            return false;
+        }
+
         // Check if user already has the same coupon.
         $hasCoupon = IssuedCoupon::where('user_id', $payment->user_id)
-            ->whereIn('issued_coupons.status', [
-                IssuedCoupon::STATUS_ISSUED,
-                IssuedCoupon::STATUS_RESERVED
-            ])
+            ->where(function($query) {
+                $query->whereIn('issued_coupons.status', [
+                    IssuedCoupon::STATUS_ISSUED,
+                    IssuedCoupon::STATUS_RESERVED
+                ]);
+            })
             ->where('promotion_id', $coupon->promotion_id)
             ->first();
 
