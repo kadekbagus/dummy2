@@ -2,12 +2,13 @@
 
 namespace Orbit\Helper\AutoIssueCoupon;
 
+use Carbon\Carbon;
 use Coupon;
 use Exception;
-use IssuedCoupon;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
+use IssuedCoupon;
 
 /**
  * Helper which handle free/auto-issued coupon if given transaction meet
@@ -40,7 +41,8 @@ class AutoIssueCoupon
             throw new Exception("Invalid productType: {$productType} !");
         }
 
-        DB::transaction(function() use ($productType, $payment) {
+        $updatedCoupons = [];
+        DB::transaction(function() use ($productType, $payment, &$updatedCoupons) {
             $coupons = Coupon::with(['issued_coupon' => function($query) {
                     $query->where('status', IssuedCoupon::STATUS_AVAILABLE);
                 }])
@@ -69,10 +71,21 @@ class AutoIssueCoupon
 
                     (new AutoIssueCouponActivity($payment, $coupon))->record();
 
+                    $updatedCoupons[] = $coupon->promotion_id;
+
                     Log::info("AutoIssueCoupon: coupon {$coupon->promotion_id} issued for trx {$payment->payment_transaction_id}");
                 }
             }
         });
+
+        // Trigger event to update coupon ES if necessary.
+        if (! empty($updatedCoupons)) {
+            foreach($updatedCoupons as $couponId) {
+                Event::fire('orbit.coupon.postaddtowallet.after.commit', [
+                    null, $couponId
+                ]);
+            }
+        }
     }
 
     /**
