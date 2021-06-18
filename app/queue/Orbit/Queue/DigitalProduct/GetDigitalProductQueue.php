@@ -102,6 +102,18 @@ class GetDigitalProductQueue
                 return;
             }
 
+            $notes = $payment->notes;
+            if (! empty($notes)) {
+                // If notes isn't empty, assume we already made
+                // a digital product purchase for given transaction, thus
+                // we should skip any further actions.
+                $this->log("Skip purchasing digital product because we found purchase notes.");
+
+                DB::connection()->commit();
+                $job->delete();
+                return;
+            }
+
             $detail = $payment->details->first();
             $digitalProduct = $this->getDigitalProduct($payment);
             $providerProduct = $this->getProviderProduct($payment);
@@ -123,11 +135,8 @@ class GetDigitalProductQueue
             $purchase = App::make(PurchaseProviderInterface::class)->purchase($purchaseData);
 
             // Append noted
-            $notes = $payment->notes;
             if (empty($notes)) {
                 $notes = '[' . json_encode($purchase->getData()) .']';
-            } else {
-                $notes = substr_replace($notes, "," . json_encode($purchase->getData()), -1, 0);
             }
 
             $payment->notes = $notes;
