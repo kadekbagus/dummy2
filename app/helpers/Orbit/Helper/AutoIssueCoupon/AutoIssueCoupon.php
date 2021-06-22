@@ -104,8 +104,24 @@ class AutoIssueCoupon
                 'issued_coupons.promotion_id', '=', 'promotions.promotion_id'
             )
             ->where(function($query) use ($payment) {
-                $query->where('user_id', $payment->user_id)
-                    ->orWhere('original_user_id', $payment->user_id);
+                // If user gave it to other user,
+                // assume limit reached, no more coupon should be issued.
+                $query->where('original_user_id', $payment->user_id)
+
+                    // If user get it manually/issued automatically for them,
+                    // then no more coupon should be issued.
+                    ->orWhere(function($query) use ($payment) {
+                        $query->where('user_id', $payment->user_id)
+                            ->whereNull('original_user_id');
+                    })
+
+                    // If user get it by transfer from other user, and still not redeemed
+                    // yet, then no more coupon should be issued.
+                    ->orWhere(function($query) use ($payment) {
+                        $query->where('user_id', $payment->user_id)
+                            ->whereNotNull('original_user_id')
+                            ->where('status', IssuedCoupon::STATUS_ISSUED);
+                    });
             })
             ->where('issued_coupons.promotion_id', $coupon->promotion_id)
             ->where('promotions.is_unique_redeem', 'Y')
