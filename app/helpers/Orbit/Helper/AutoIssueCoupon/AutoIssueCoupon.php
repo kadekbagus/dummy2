@@ -120,7 +120,7 @@ class AutoIssueCoupon
                     ->orWhere(function($query) use ($payment) {
                         $query->where('user_id', $payment->user_id)
                             ->whereNotNull('original_user_id')
-                            ->where('status', IssuedCoupon::STATUS_ISSUED);
+                            ->where('issued_coupons.status', IssuedCoupon::STATUS_ISSUED);
                     });
             })
             ->where('issued_coupons.promotion_id', $coupon->promotion_id)
