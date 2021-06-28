@@ -107,7 +107,7 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
                                                 $discountQuery->select('discount_id', 'discount_code as parent_discount_code', 'discount_title', 'value_in_percent as percent_discount');
                                             }]);
                                         }])
-
+                                        ->with(['auto_issued_coupons'])
                                         ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                                         ->join('digital_products', 'digital_products.digital_product_id', '=', 'payment_transaction_details.object_id')
                                         ->leftJoin('games', 'games.game_id', '=', 'payment_transactions.extra_data')
@@ -134,6 +134,8 @@ class GameVoucherPurchasedDetailAPIController extends PubControllerAPI
 
             $game_voucher->payment_midtrans_info = json_decode(unserialize($game_voucher->payment_midtrans_info));
             $game_voucher->digital_product_code = $this->getVoucherCode($game_voucher);
+
+            $game_voucher->getRewards();
 
             $this->response->data = $game_voucher;
         } catch (ACLForbiddenException $e) {

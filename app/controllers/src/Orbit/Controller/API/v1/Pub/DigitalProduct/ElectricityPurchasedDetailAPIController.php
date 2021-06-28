@@ -82,6 +82,7 @@ class ElectricityPurchasedDetailAPIController extends PubControllerAPI
                                                     $discountQuery->select('discount_id', 'discount_code as parent_discount_code', 'discount_title', 'value_in_percent as percent_discount');
                                                 }]);
                                             }])
+                                            ->with(['auto_issued_coupons'])
                                         ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                                         ->join('digital_products', 'digital_products.digital_product_id', '=', 'payment_transaction_details.object_id')
                                         ->leftJoin('payment_midtrans', 'payment_midtrans.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
@@ -102,6 +103,8 @@ class ElectricityPurchasedDetailAPIController extends PubControllerAPI
 
             $electricity->payment_midtrans_info = json_decode(unserialize($electricity->payment_midtrans_info));
             $electricity->activation_code = unserialize($electricity->payload);
+
+            $electricity->getRewards();
 
             $this->response->data = $electricity;
         } catch (ACLForbiddenException $e) {

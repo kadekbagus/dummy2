@@ -82,9 +82,7 @@ class ConfirmAPI extends UPointDTUAPI
 
     protected function mockResponseData()
     {
-        $this->randomizeResponseChance[0] = 1;
-
-        if ($this->randomizeResponseChance[0] === 1) {
+        if ($this->config['mock_response'] === 'success') {
             $this->mockResponse = json_decode('{
                 "status":100,
                 "status_msg":"OK",
@@ -104,7 +102,7 @@ class ConfirmAPI extends UPointDTUAPI
                 }
             }');
         }
-        else {
+        else if ($this->config['mock_response'] === 'failed') {
             $this->mockResponse = json_decode('{
                 "status":200,
                 "status_msg":"Bad Request"
