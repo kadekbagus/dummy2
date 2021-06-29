@@ -166,7 +166,7 @@ class AutoIssueCoupon
         $usedCount = Coupon::select(DB::raw("
                 (select count({$prefix}issued_coupons.issued_coupon_id)
                     from {$prefix}issued_coupons
-                    where {$prefix}issued_coupons.status in ('issued', 'reserved')
+                    where {$prefix}issued_coupons.status in ('issued', 'reserved', 'redeemed')
                         and promotion_id = '{$coupon->promotion_id}'
                 ) as issued,
                 (select count({$prefix}issued_coupons.issued_coupon_id)
