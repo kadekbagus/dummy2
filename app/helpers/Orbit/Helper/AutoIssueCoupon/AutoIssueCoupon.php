@@ -43,6 +43,7 @@ class AutoIssueCoupon
 
         $updatedCoupons = [];
         DB::transaction(function() use ($productType, $payment, &$updatedCoupons) {
+            $now = Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
             $coupons = Coupon::with(['issued_coupon' => function($query) {
                     $query->where('status', IssuedCoupon::STATUS_AVAILABLE);
                 }])
@@ -53,10 +54,14 @@ class AutoIssueCoupon
                 ->where(function($query) use ($productType, $payment) {
                     // might use case when to cast null min_purchase to 0 ?
                     $query->whereNull("min_purchase_{$productType}")
-                        ->orWhere("min_purchase_{$productType}", "<=", $payment->amount);
+                        ->orWhere("min_purchase_{$productType}", "<=",
+                            $payment->amount
+                        );
                 })
                 ->where('status', 'active')
-                ->where('end_date', '>=', Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s'))
+                ->where('is_visible', 'Y')
+                ->where('end_date', '>=', $now)
+                ->where('begin_date', '<=', $now)
                 ->orderBy("min_purchase_{$productType}", 'desc')
                 ->get();
 
@@ -120,7 +125,10 @@ class AutoIssueCoupon
                     ->orWhere(function($query) use ($payment) {
                         $query->where('user_id', $payment->user_id)
                             ->whereNotNull('original_user_id')
-                            ->where('issued_coupons.status', IssuedCoupon::STATUS_ISSUED);
+                            ->where(
+                                'issued_coupons.status',
+                                IssuedCoupon::STATUS_ISSUED
+                            );
                     });
             })
             ->where('issued_coupons.promotion_id', $coupon->promotion_id)
@@ -147,7 +155,9 @@ class AutoIssueCoupon
         }
 
         // Skip issued/redeemed check if both are unlimited.
-        if ($coupon->maximum_redeem === 0 && $coupon->maximum_issued_coupon === 0) {
+        if ($coupon->maximum_redeem === 0
+            && $coupon->maximum_issued_coupon === 0
+        ) {
             return true;
         }
 
