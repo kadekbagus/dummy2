@@ -1696,13 +1696,13 @@ class CouponAPIController extends ControllerAPI
                 }
             });
 
-            if (empty($maximumRedeem)) {
-                if (! empty($maximumIssuedCoupon)) {
-                    $updatedcoupon->maximum_redeem = $updatedcoupon->maximum_issued_coupon;
-                } else {
-                    $updatedcoupon->maximum_redeem = $couponCode;
-                }
-            }
+            // if (empty($maximumRedeem)) {
+            //     if (! empty($maximumIssuedCoupon)) {
+            //         $updatedcoupon->maximum_redeem = $updatedcoupon->maximum_issued_coupon;
+            //     } else {
+            //         $updatedcoupon->maximum_redeem = $couponCode;
+            //     }
+            // }
 
             if ($rule_type === 'unique_coupon_per_user') {
                 $updatedcoupon->is_unique_redeem = 'Y';
