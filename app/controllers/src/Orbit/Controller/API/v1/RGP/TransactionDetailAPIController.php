@@ -16,12 +16,12 @@ use RgpUser;
 use PaymentTransaction;
 use Orbit\Helper\AutoIssueCoupon\AutoIssueCoupon;
 
-class CouponManualIssueAPIController extends ControllerAPI
+class TransactionDetailAPIController extends ControllerAPI
 {
     /**
      * Issue an automatic issuancance coupon manually incase of some failure
      */
-    public function post()
+    public function get()
     {
         try {
             $httpCode = 200;
@@ -55,7 +55,7 @@ class CouponManualIssueAPIController extends ControllerAPI
             }
 
             // get inputs
-            $transactionId = OrbitInput::post('transaction_id');
+            $transactionId = OrbitInput::get('transaction_id');
 
             $validator = Validator::make(
                 array(
@@ -73,18 +73,15 @@ class CouponManualIssueAPIController extends ControllerAPI
             }
 
             // check if transaction is valid: status success and success response from provider
-            $payment = PaymentTransaction::where('payment_transaction_id', $transactionId)
-                ->where('status', PaymentTransaction::STATUS_SUCCESS)
+            $payment = PaymentTransaction::with('details')
+                ->where('payment_transaction_id', $transactionId)
                 ->first();
 
             if (! is_object($payment)) {
                 throw new Exception("Transaction is not found, wrong ID or the status is not success", 1);
             }
 
-            // trigger automatic issueance event
-            AutoIssueCoupon::issue($payment, null);
-
-            // return success message with detail coupons that are being issued
+            $this->response->data = $payment;
 
         } catch (Exception $e) {
             $this->response->code = $e->getCode();

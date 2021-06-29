@@ -44,7 +44,8 @@ class Purchase
 
     public function __construct($config=[])
     {
-        $this->config = ! empty($config) ? $config : Config::get('orbit.partners_api.mcash');
+        $this->config = Config::get('orbit.partners_api.mcash', []);
+        $this->config = array_merge($this->config, $config);
         $this->config['mock_response'] = Config::get('orbit.partners_api.mock_response', false);
         $this->client = MCashClient::create($this->config);
 
@@ -72,11 +73,18 @@ class Purchase
 
     public function mockSuccessResponse()
     {
+        $serialNumber = '12313131';
+        if (isset($this->config['product_type'])
+            && $this->config['product_type'] === 'electricity'
+        ) {
+            $serialNumber = '1231231231231*Bambang*500000*2200*240';
+        }
+
         return $this->mockResponse([
             'status' => 0,
             'message' => 'TRX SUCCESS',
             'data' => (object) [
-                'serial_number' => '12313131',
+                'serial_number' => $serialNumber,
             ]
         ]);
     }
