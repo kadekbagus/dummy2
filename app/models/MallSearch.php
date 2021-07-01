@@ -1,5 +1,6 @@
 <?php
 
+use Orbit\Helper\Elasticsearch\Search;
 
 use Orbit\Helper\Util\FollowStatusChecker;
 
@@ -498,4 +499,23 @@ class MallSearch extends ObjectTypeSearch
             ]
         ]);
     }
+
+    public function exclude($excludedIds = [])
+    {
+        $this->mustNot([
+            'terms' => [
+                '_id' => $excludedIds,
+            ]
+        ]);
+    }
+
+    public function getMallPerBank($mallIds = [])
+    {
+        $this->must([
+            'terms' => [
+                '_id' => $mallIds,
+            ]
+        ]);
+    }
+
 }
