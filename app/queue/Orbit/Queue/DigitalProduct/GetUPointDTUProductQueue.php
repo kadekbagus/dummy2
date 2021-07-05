@@ -16,12 +16,11 @@ use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
 use Orbit\Notifications\DigitalProduct\DigitalProductNotAvailableNotification;
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedProductActivity;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
+use Orbit\Helper\AutoIssueCoupon\AutoIssueCoupon;
 use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotification;
 
 /**
- * A job to get/issue Hot Deals Coupon after payment completed.
- * At this point, we assume the payment was completed (paid) so anything wrong
- * while trying to issue the coupon will make the status success_no_coupon_failed.
+ * A job to get/issue UPoint DTU game voucher after payment completed.
  *
  * @author Budi <budi@dominopos.com>
  */
@@ -36,7 +35,7 @@ class GetUPointDTUProductQueue
     private $objectType = 'digital_product';
 
     /**
-     * Issue hot deals coupon.
+     * Issue game voucher.
      *
      * @param  Illuminate\Queue\Jobs\Job | Orbit\FakeJob $job  the job
      * @param  array $data the data needed to run this job
@@ -68,7 +67,8 @@ class GetUPointDTUProductQueue
                 'user',
                 'midtrans',
                 'discount_code'
-            ])->leftJoin('games', 'games.game_id', '=', 'payment_transactions.extra_data')->findOrFail($paymentId);
+            ])->leftJoin('games', 'games.game_id', '=', 'payment_transactions.extra_data')
+            ->lockForUpdate()->findOrFail($paymentId);
 
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired() || $payment->canceled()
@@ -143,7 +143,15 @@ class GetUPointDTUProductQueue
             ) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
 
+                $payment->save();
+
+                // Commit the changes ASAP.
+                DB::connection()->commit();
+
                 $this->log("Issued for payment {$paymentId}..");
+
+                // Auto issue free coupon if trx meet certain criteria.
+                AutoIssueCoupon::issue('game_voucher', $payment);
 
                 // Notify Customer.
                 $payment->user->notify(new ReceiptNotification($payment, []));
@@ -223,11 +231,6 @@ class GetUPointDTUProductQueue
                 $this->log("Purchase Response: " . serialize($confirmPurchase->getData()));
                 throw new Exception($confirmPurchase->getFailureMessage());
             }
-
-            $payment->save();
-
-            // Commit the changes ASAP.
-            DB::connection()->commit();
 
             // Increase point when the transaction is success.
             if (in_array($payment->status, [PaymentTransaction::STATUS_SUCCESS])) {

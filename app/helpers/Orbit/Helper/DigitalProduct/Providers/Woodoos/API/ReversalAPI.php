@@ -31,9 +31,7 @@ class ReversalAPI extends WoodoosAPI
 
     protected function mockResponseData()
     {
-        $this->randomizeResponseChance[0] = 0;
-
-        if ($this->randomizeResponseChance[0] === 1) {
+        if ($this->config['mock_response'] === 'success') {
             $this->mockResponse = '{
                 "isSuccessful":true,
                 "errorCode":null,
@@ -44,7 +42,7 @@ class ReversalAPI extends WoodoosAPI
                 "note":""
             }';
         }
-        else {
+        else if ($this->config['mock_response'] === 'failed') {
             $this->mockResponse = '{
                 "isSuccessful":false,
                 "errorCode":"500",

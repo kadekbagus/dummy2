@@ -12,8 +12,6 @@ use Orbit\Helper\DigitalProduct\Providers\Ayopay\Response\PurchaseAPIResponse;
  */
 class PurchaseAPI extends AyoPayAPI
 {
-    // protected $shouldMockResponse = true;
-
     /**
      * Build purchase api request param (body).
      * Should return text/xml string.
@@ -34,9 +32,7 @@ class PurchaseAPI extends AyoPayAPI
 
     protected function mockResponseData()
     {
-        shuffle($this->randomizeResponseChance);
-
-        if ($this->randomizeResponseChance[0] === 1) {
+        if ($this->config['mock_response'] === 'success') {
             $this->mockResponse = "<?xml version='1.0'?>
                 <ayopay>
                     <trx_ayopay>46737726</trx_ayopay>
@@ -46,7 +42,7 @@ class PurchaseAPI extends AyoPayAPI
                     <message>Sukses</message>
                 </ayopay>";
         }
-        else {
+        else if ($this->config['mock_response'] === 'failed') {
             $this->mockResponse = "<?xml version='1.0'?>
                 <ayopay>
                     <status>500</status>

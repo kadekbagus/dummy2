@@ -1,33 +1,26 @@
 <?php namespace Orbit\Queue\DigitalProduct;
 
-use Activity;
 use App;
-use Carbon\Carbon;
 use Config;
-use Coupon;
 use DB;
 use Event;
 use Exception;
-use IssuedCoupon;
 use Log;
 use Mall;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedProductActivity;
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
+use Orbit\Helper\AutoIssueCoupon\AutoIssueCoupon;
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
 use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotification;
 use Orbit\Notifications\DigitalProduct\DigitalProductNotAvailableNotification;
-use Orbit\Notifications\DigitalProduct\PulsaRetryNotification;
 use Orbit\Notifications\DigitalProduct\ReceiptNotification;
 use PaymentTransaction;
-use Queue;
 use User;
 
 /**
- * A job to get/issue Hot Deals Coupon after payment completed.
- * At this point, we assume the payment was completed (paid) so anything wrong
- * while trying to issue the coupon will make the status success_no_coupon_failed.
+ * A job to get/issue Digital Product after payment completed.
  *
  * @author Budi <budi@dominopos.com>
  */
@@ -74,7 +67,14 @@ class GetDigitalProductQueue
                 'user',
                 'midtrans',
                 'discount_code'
-            ])->leftJoin('games', 'games.game_id', '=', 'payment_transactions.extra_data')->findOrFail($paymentId);
+            ])
+            ->select('payment_transactions.*', 'games.game_name')
+            ->leftJoin('games', 'games.game_id', '=', 'payment_transactions.extra_data')
+            ->lockForUpdate()->findOrFail($paymentId);
+
+            $st = isset($payment->status) ? $payment->status : 'not set';
+            \Log::info('*** GetDigitalProductQueue Payment STATUS: ' . $st);
+            \Log::info('*** GetDigitalProductQueue Payment NOTES: ' . $payment->notes);
 
             // Register payment into container, so can be accessed by other classes.
             App::instance('purchase', $payment);
@@ -82,14 +82,28 @@ class GetDigitalProductQueue
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired() || $payment->canceled()
                 || $payment->status === PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT_FAILED
-                || $payment->status === PaymentTransaction::STATUS_SUCCESS_REFUND) {
+                || $payment->status === PaymentTransaction::STATUS_SUCCESS_REFUND
+                || $payment->status === PaymentTransaction::STATUS_SUCCESS
+            ) {
 
-                $this->log("Payment {$paymentId} was denied/canceled/failed/refunded. We should not issue any item.");
+                $this->log("Payment {$paymentId} was already success/denied/canceled/failed/refunded. We should not issue any item.");
 
                 DB::connection()->commit();
 
                 $job->delete();
 
+                return;
+            }
+
+            $notes = $payment->notes;
+            if (! empty($notes)) {
+                // If notes isn't empty, assume we already made
+                // a digital product purchase for given transaction, thus
+                // we should skip any further actions.
+                $this->log("Skip purchasing digital product because we found purchase notes.");
+
+                DB::connection()->commit();
+                $job->delete();
                 return;
             }
 
@@ -114,11 +128,8 @@ class GetDigitalProductQueue
             $purchase = App::make(PurchaseProviderInterface::class)->purchase($purchaseData);
 
             // Append noted
-            $notes = $payment->notes;
             if (empty($notes)) {
                 $notes = '[' . json_encode($purchase->getData()) .']';
-            } else {
-                $notes = substr_replace($notes, "," . json_encode($purchase->getData()), -1, 0);
             }
 
             $payment->notes = $notes;
@@ -128,7 +139,15 @@ class GetDigitalProductQueue
             if ($purchase->isSuccess()) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
 
+                $payment->save();
+
+                // Commit the changes ASAP.
+                DB::connection()->commit();
+
                 $this->log("Issued for payment {$paymentId}..");
+
+                // Auto issue free coupon if trx meet certain criteria.
+                AutoIssueCoupon::issue($payment, $digitalProduct->product_type);
 
                 // Notify Customer.
                 $payment->user->notify(new ReceiptNotification(
@@ -211,11 +230,6 @@ class GetDigitalProductQueue
                 $this->log("Purchase Response: " . serialize($purchase->getData()));
                 throw new Exception($purchase->getFailureMessage());
             }
-
-            $payment->save();
-
-            // Commit the changes ASAP.
-            DB::connection()->commit();
 
             // Increase point when the transaction is success.
             if (in_array($payment->status, [PaymentTransaction::STATUS_SUCCESS])) {

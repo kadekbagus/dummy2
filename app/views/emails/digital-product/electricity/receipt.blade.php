@@ -135,8 +135,23 @@ Receipt from Gotomalls.com
                                     @endforeach
                                 </div>
                             @endif
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
 
-                            <br>
+              @foreach($purchaseRewards as $rewardType => $rewards)
+                  @include("emails.components.purchase-rewards-{$rewardType}", compact('rewards', 'lang', 'redeemUrl'))
+              @endforeach
+
+              <table width="600" cellpadding="0" cellspacing="0" border="0" class="container">
+                <tr>
+                  <td width="600" class="mobile center" valign="middle" style="text-align: center;">
+                    <table width="100%">
+                      <tr>
+                        <td colspan="2" class="greeting-text" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:10px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
                             <br>
                             <p class="help-text">
                                 {{ trans('email-receipt.body.view_my_purchases', [], '', $lang) }}

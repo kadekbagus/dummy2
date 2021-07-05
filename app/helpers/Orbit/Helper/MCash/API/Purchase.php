@@ -44,8 +44,12 @@ class Purchase
 
     public function __construct($config=[])
     {
-        $this->config = ! empty($config) ? $config : Config::get('orbit.partners_api.mcash');
+        $this->config = Config::get('orbit.partners_api.mcash', []);
+        $this->config = array_merge($this->config, $config);
+        $this->config['mock_response'] = Config::get('orbit.partners_api.mock_response', false);
         $this->client = MCashClient::create($this->config);
+
+        $this->initMockResponse();
     }
 
     public static function create($config=[])
@@ -53,28 +57,58 @@ class Purchase
         return new static($config);
     }
 
-    public function mockSuccess($data = [])
+    private function initMockResponse()
     {
-        $this->mockData = (object) array_merge($data, [
+        if ($this->config['is_production']) {
+            return;
+        }
+
+        if ($this->config['mock_response'] === 'success') {
+            $this->mockSuccessResponse();
+        }
+        else if ($this->config['mock_response'] === 'failed') {
+            $this->mockFailedResponse();
+        }
+    }
+
+    public function mockSuccessResponse()
+    {
+        $serialNumber = '12313131';
+        if (isset($this->config['product_type'])
+            && $this->config['product_type'] === 'electricity'
+        ) {
+            $serialNumber = '1231231231231*Bambang*500000*2200*240';
+        }
+
+        return $this->mockResponse([
             'status' => 0,
             'message' => 'TRX SUCCESS',
             'data' => (object) [
-                'serial_number' => '12313131',
+                'serial_number' => $serialNumber,
             ]
         ]);
+    }
 
-        return $this;
+    public function mockFailedResponse()
+    {
+        return $this->mockResponse([
+                'status' => 1,
+                'message' => 'TRX FAILED',
+                'data' => (object) [
+                    'serial_number' => null,
+                ]
+            ]);
     }
 
     public function mockResponse($data = [])
     {
         $this->mockData = (object) array_merge([
-            'status' => 0,
-            'message' => 'TRX SUCCESS',
-            'data' => (object) [
-                'serial_number' => '12313131',
-            ]
-        ], $data);
+                'status' => 0,
+                'message' => 'TRX SUCCESS',
+                'data' => (object) [
+                    'serial_number' => '12313131',
+                ]
+            ], $data);
 
         return $this;
     }
@@ -87,15 +121,15 @@ class Purchase
     public function doPurchase($product, $customer, $partnerTrxid=null)
     {
     	try {
-            if (! empty($this->mockData)) {
-                return new PurchaseResponse($this->mockData);
-            }
-
-    		if (empty($product)) {
+            if (empty($product)) {
                 throw new \Exception("Product code is required", 1);
             }
             if (empty($customer)) {
                 throw new \Exception("Customer phone number is required", 1);
+            }
+
+            if (! empty($this->mockData)) {
+                return new PurchaseResponse($this->mockData);
             }
 
             $requestParams = [

@@ -64,25 +64,23 @@ class StatusAPI extends AyoPayAPI
 
     protected function mockResponseData()
     {
-        shuffle($this->randomizeResponseChance);
-
-        if ($this->randomizeResponseChance[0] === 1) {
-            $this->mockResponse = "<?xml version="1.0"?>
+        if ($this->config['mock_response'] === 'success') {
+            $this->mockResponse = '<?xml version="1.0"?>
                 <ayopay>
                     <trx_ayopay>IP01000533</trx_ayopay>
                     <voucher>Serial Number=CCAC997201516025,Security code=997201516025</voucher>
                     <status>100</status>
                     <message>Sukses</message>
-                </ayopay>";
+                </ayopay>';
         }
-        else {
-            $this->mockResponse = "<?xml version="1.0"?>
+        else if ($this->config['mock_response'] === 'failed') {
+            $this->mockResponse = '<?xml version="1.0"?>
                 <ayopay>
                     <trx_ayopay>IP01000533</trx_ayopay>
                     <voucher>Serial Number=CCAC997201516025,Security code=997201516025</voucher>
                     <status>500</status>
                     <message>Gagal</message>
-                </ayopay>";
+                </ayopay>';
         }
     }
 }
