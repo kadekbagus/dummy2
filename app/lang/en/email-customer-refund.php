@@ -29,7 +29,7 @@ return [
 
         'content_digital_product' => [
             'line_1' => 'Your payment was successful, but we cannot get pulsa/data plan from the Operator.',
-            'line_2' => 'We are sorry for the inconvenience. We just refunded the payment to your GOPAY/DANA account. Please help confirming once you received it.',
+            'line_2' => 'We are sorry for the inconvenience. We just refunded the payment to your GOPAY/Shopeepay account. Please help confirming once you received it.',
         ],
 
         'content_1_data_plan' => 'Your payment was successful, but we cannot get data plan from the Operator.',

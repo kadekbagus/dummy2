@@ -67,8 +67,14 @@ class GetDigitalProductQueue
                 'user',
                 'midtrans',
                 'discount_code'
-            ])->leftJoin('games', 'games.game_id', '=', 'payment_transactions.extra_data')
+            ])
+            ->select('payment_transactions.*', 'games.game_name')
+            ->leftJoin('games', 'games.game_id', '=', 'payment_transactions.extra_data')
             ->lockForUpdate()->findOrFail($paymentId);
+
+            $st = isset($payment->status) ? $payment->status : 'not set';
+            \Log::info('*** GetDigitalProductQueue Payment STATUS: ' . $st);
+            \Log::info('*** GetDigitalProductQueue Payment NOTES: ' . $payment->notes);
 
             // Register payment into container, so can be accessed by other classes.
             App::instance('purchase', $payment);
@@ -76,14 +82,28 @@ class GetDigitalProductQueue
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired() || $payment->canceled()
                 || $payment->status === PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT_FAILED
-                || $payment->status === PaymentTransaction::STATUS_SUCCESS_REFUND) {
+                || $payment->status === PaymentTransaction::STATUS_SUCCESS_REFUND
+                || $payment->status === PaymentTransaction::STATUS_SUCCESS
+            ) {
 
-                $this->log("Payment {$paymentId} was denied/canceled/failed/refunded. We should not issue any item.");
+                $this->log("Payment {$paymentId} was already success/denied/canceled/failed/refunded. We should not issue any item.");
 
                 DB::connection()->commit();
 
                 $job->delete();
 
+                return;
+            }
+
+            $notes = $payment->notes;
+            if (! empty($notes)) {
+                // If notes isn't empty, assume we already made
+                // a digital product purchase for given transaction, thus
+                // we should skip any further actions.
+                $this->log("Skip purchasing digital product because we found purchase notes.");
+
+                DB::connection()->commit();
+                $job->delete();
                 return;
             }
 
@@ -108,11 +128,8 @@ class GetDigitalProductQueue
             $purchase = App::make(PurchaseProviderInterface::class)->purchase($purchaseData);
 
             // Append noted
-            $notes = $payment->notes;
             if (empty($notes)) {
                 $notes = '[' . json_encode($purchase->getData()) .']';
-            } else {
-                $notes = substr_replace($notes, "," . json_encode($purchase->getData()), -1, 0);
             }
 
             $payment->notes = $notes;

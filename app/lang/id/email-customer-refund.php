@@ -31,7 +31,7 @@ Kami telah mengembalikan pembayaran ke GOPAY Kakak, mohon dibantu konfirmasi bil
         'content_digital_product' => [
             'line_1' => 'Pembayaran Kakak telah berhasil, namun produk game/token tidak diterima dari penyedia pihak ketiga.',
             'line_2' => 'Kami mohon maaf atas ketidaknyamanannya.
-Kami telah mengembalikan pembayaran ke GOPAY/DANA Kakak, mohon dibantu konfirmasi bila pengembalian dana telah diterima.',
+Kami telah mengembalikan pembayaran ke GOPAY/Shopeepay Kakak, mohon dibantu konfirmasi bila pengembalian dana telah diterima.',
         ],
 
         'thank_you' => 'Semoga Kakak tetap setia menggunakan Gotomalls.com!',
