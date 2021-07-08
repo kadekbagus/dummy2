@@ -10,7 +10,7 @@ use Orbit\Helper\Request\ValidateRequest;
  *
  * @author Budi <budi@gotomalls.com>
  */
-class AddItemRequest extends ValidateRequest
+class AddItemToCartRequest extends ValidateRequest
 {
     protected $roles = ['consumer'];
 
@@ -44,9 +44,9 @@ class AddItemRequest extends ValidateRequest
      * @param  array $rules the validation rules.
      * @return void
      */
-    private function applyBrandProductRules(&$rules)
+    protected function applyBrandProductRules(&$rules)
     {
-        $rules = [
+        $rules += [
             'object_id' => implode('|', [
                 'required',
                 'orbit.brand_product_variant.exists',
@@ -57,8 +57,7 @@ class AddItemRequest extends ValidateRequest
                 'orbit.brand_product_variant.pickup_location_valid',
             ]),
             'quantity' => implode('|', [
-                'required',
-                'numeric',
+                'required', 'numeric', 'min:1',
                 'orbit.brand_product_variant.quantity_available',
             ]),
         ];
@@ -85,7 +84,7 @@ class AddItemRequest extends ValidateRequest
      *
      * @return $void
      */
-    private function registerBrandProductValidations()
+    protected function registerBrandProductValidations()
     {
         Validator::extend(
             'orbit.brand_product_variant.exists',
@@ -104,7 +103,7 @@ class AddItemRequest extends ValidateRequest
 
         Validator::extend(
             'orbit.brand_product_variant.quantity_available',
-            'Orbit\Controller\API\v1\BrandProduct\Validator\BrandProductValidator@quantity_available'
+            'Orbit\Controller\API\v1\BrandProduct\Validator\BrandProductValidator@quantityAvailableForCart'
         );
     }
 }

@@ -2,8 +2,8 @@
 
 namespace Orbit\Helper\Cart;
 
-use Orbit\Helper\Request\ValidateRequest;
-use Orbit\Helper\Resource\MediaQuery;
+use BrandProductCartItem;
+use Illuminate\Support\Facades\App;
 
 /**
  * A class that helps interacting with cart.
@@ -12,109 +12,84 @@ use Orbit\Helper\Resource\MediaQuery;
  */
 class Cart implements CartInterface
 {
-    use MediaQuery;
-    use BrandProductCartItem;
+    // Cart item model instance.
+    protected $cartItem;
 
-    protected $user;
+    /**
+     * List of handler for each cart item type.
+     * @var [type]
+     */
+    protected $cartItemHandlers = [
+        'default' => CartItem::class,
+        'brand_product' => BrandProductCartItem::class,
+    ];
 
-    protected $imagePrefix = 'brand_product_photos_';
-
-    public function __construct($user = null)
+    /**
+     * Load cart item object based on the product type.
+     *
+     * @param [type] $productType [description]
+     * @param [type] $user        [description]
+     */
+    public function __construct($productType = 'default')
     {
-        $this->user = $user ? $user : App::make('currentUser');
+        $this->cartItem = new $this->cartItemHandlers[$productType]();
     }
 
     /**
-     * @param ArrayAccess|object $item the item.
-     * @param string $itemType the type of cart item.
+     * Add an item to cart.
+     *
+     * @param ArrayAccess|object - $item the item.
+     * @param string $itemType - the type of cart item.
      */
-    public function addItem($item, $itemType = '')
+    public function addItem($item)
     {
-        $item = !is_array($item) ? $item : (object) $item;
-
-        $itemType = !empty($itemType)
-            ? $itemType
-            : $this->resolveItemType($item);
-
-        if ($itemType === 'brand_product') {
-            return $this->addBrandProductItem($item);
-        }
+        return $this->cartItem->addItem($item);
     }
 
-    public function updateItem($itemId, $quantity = 0)
+    /**
+     * Update a single cart item.
+     *
+     * @param  [type] $itemId     [description]
+     * @param  array  $updateData [description]
+     * @return [type]             [description]
+     */
+    public function updateItem($itemId, $updateData)
     {
-        DB::beginTransaction();
-
-        $cartItem = App::bound('cartItem')
-            ? App::make('cartItem')
-            : CartItem::findOrFail($itemId);
-
-        $cartItem->quantity = $quantity;
-
-        if ($quantity === 0) {
-            $cartItem->status = CartItem::STATUS_INACTIVE;
-        }
-
-        $cartItem->save();
-
-        DB::commit();
-
-        return $cartItem;
+        return $this->cartItem->updateItem($itemId, $updateData);
     }
 
-    public function removeItem($itemId)
+    /**
+     * Remove one or more cart item(s).
+     *
+     * @param  array  $itemId [description]
+     * @return [type]         [description]
+     */
+    public function removeItem($itemId = [])
     {
-        DB::beginTransaction();
-
-        $cartItem = CartItem::whereIn('cart_item_id', $itemId)->update([
-            'status' => CartItem::STATUS_INACTIVE
-        ]);
-
-        DB::commit();
-
-        return $cartItem;
+        return $this->cartItem->removeItem($itemId);
     }
 
+    /**
+     * Get all cart items.
+     *
+     * @todo This should be made generic instead of specific for each type.
+     * @param  [type] $request [description]
+     * @return [type]          [description]
+     */
     public function items($request)
     {
-        $this->setupImageUrlQuery();
+        return $this->cartItem->items($request);
+    }
 
-        $cartItems = CartItem::select(
-                'cart_items.*',
-                DB::raw('bp.product_name as product_name'),
-                DB::raw($this->imageQuery)
-            )
-            ->leftJoin(
-                'brand_product_variants bpv',
-                'brand_product_variant_id',
-                '=',
-                'bpv.brand_product_variant_id'
-            )
-            ->leftJoin(
-                'brand_product bp',
-                'bpv.brand_product_id', '=', 'bp.brand_product_id'
-            )
-            ->leftJoin(
-                'media', 'bp.brand_product_id', '=', 'media.object_id'
-            )
-            ->where('user_id', $this->user->user_id)
-            ->where('status', CartItem::STATUS_ACTIVE);
-
-        $imageVariants = $this->resolveImageVariants();
-        if (! empty($imageVariants))
-
-        if ($request->has('merchant_id')) {
-            $cartItems->where('merchant_id', $request->merchant_id);
-        }
-
-        if ($request->has('skip')) {
-            $cartItems->skip($request->skip);
-        }
-
-        if ($request->has('take')) {
-            $cartItems->take($request->getTake());
-        }
-
-        return $cartItems;
+    /**
+     * Try calling method in the cartItem instance.
+     *
+     * @param  string $method [description]
+     * @param  array  $args   [description]
+     * @return [type]         [description]
+     */
+    public function __call(string $method, array $args)
+    {
+        return $this->cartItem->{$method}($args);
     }
 }

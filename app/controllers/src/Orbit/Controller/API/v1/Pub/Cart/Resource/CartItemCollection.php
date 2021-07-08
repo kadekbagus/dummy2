@@ -15,16 +15,31 @@ class CartItemCollection extends ResourceCollection
 
     public function toArray()
     {
-        foreach($this->collection as $item) {
-            $this->data['records'] = [
-                'cart_item_id' => $item->cart_item_id,
-                'quantity' => $item->quantity,
-                'status' => $item->status,
-            ];
+        $this->data['records'] = ['merchants' => [], 'items' => []];
 
-            if (! empty($item->brand_product_variant)) {
-                $this->data['records'] += $this->parseBrandProductInfo($item);
+        foreach($this->collection as $item) {
+
+            if (! isset($this->data['records']['merchants'][$item->store_id])) {
+                $this->data['records']['merchants'][$item->store_id] = [
+                    'store_id' => $item->store_id,
+                    'store_name' => $item->store_name,
+                    'floor' => $item->floor,
+                    'unit' => $item->unit,
+                    'mall_id' => $item->mall_id,
+                    'mall_name' => $item->mall_name,
+                ];
             }
+
+            if (! empty($item->brand_product_variant_id)) {
+                $this->transformToBrandProductCartItem($item);
+            }
+
         }
+
+        $this->data['returned_records'] = count($this->data['records']['items']);
+        $this->data['records']['items'] = array_values($this->data['records']['items']);
+        $this->data['records']['merchants'] = array_values($this->data['records']['merchants']);
+
+        return $this->data;
     }
 }

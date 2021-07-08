@@ -5,11 +5,11 @@ namespace Orbit\Controller\API\v1\Pub\Cart\Request;
 use Orbit\Helper\Request\ValidateRequest;
 
 /**
- * List request.
+ * Cart item list request.
  *
  * @author Budi <budi@gotomalls.com>
  */
-class ListRequest extends ValidateRequest
+class CartItemListRequest extends ValidateRequest
 {
     protected $roles = ['consumer'];
 
