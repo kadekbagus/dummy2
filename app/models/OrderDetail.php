@@ -7,5 +7,5 @@
  */
 class OrderDetail extends Eloquent
 {
-
+    protected $guarded = [];
 }

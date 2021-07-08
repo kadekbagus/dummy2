@@ -556,6 +556,11 @@ return array(
         'rsvp' => array(
             'quantity_available' => 'Requested quantity not available.',
         ),
+
+        'cart_item' => array(
+            'exists' => 'Cart Item not found.',
+            'quantity_available' => 'Requested quantity not available.',
+        ),
     ),
 
     /*

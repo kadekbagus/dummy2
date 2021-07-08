@@ -151,7 +151,7 @@ class GetUPointDTUProductQueue
                 $this->log("Issued for payment {$paymentId}..");
 
                 // Auto issue free coupon if trx meet certain criteria.
-                AutoIssueCoupon::issue('game_voucher', $payment);
+                AutoIssueCoupon::issue($payment, 'game_voucher');
 
                 // Notify Customer.
                 $payment->user->notify(new ReceiptNotification($payment, []));

@@ -544,6 +544,15 @@ return array(
             'can_cancel_rsvp' => 'Reservasi tidak dapat dibatalkan.',
             'rsvp_match_user' => 'Anda tidak berhak melihat/memproses reservasi tersebut.',
         ),
+
+        'rsvp' => array(
+            'quantity_available' => 'Jumlah yg diminta tidak tersedia.',
+        ),
+
+        'cart_item' => array(
+            'exists' => 'Item keranjang tidak ditemukan.',
+            'quantity_available' => 'Jumlah yang diinginkan tidak tersedia.',
+        ),
     ),
 
     /*
