@@ -17,6 +17,8 @@ trait BrandProductCartItemResource
                 'cart_item_id' => $item->cart_item_id,
                 'cart_item_status' => $item->status,
                 'quantity' => $item->quantity,
+                'original_price' => $item->original_price,
+                'selling_price' => $item->selling_price,
                 'product_type' => 'brand_product',
                 'product_id' => $item->brand_product_id,
                 'product_name' => $item->product_name,
