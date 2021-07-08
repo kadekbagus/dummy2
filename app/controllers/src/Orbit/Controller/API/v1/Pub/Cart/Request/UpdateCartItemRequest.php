@@ -12,6 +12,8 @@ use Orbit\Helper\Request\ValidateRequest;
  */
 class UpdateCartItemRequest extends ValidateRequest
 {
+    protected $roles = ['consumer'];
+
     /**
      * @param  array $rules the validation rules.
      * @return void

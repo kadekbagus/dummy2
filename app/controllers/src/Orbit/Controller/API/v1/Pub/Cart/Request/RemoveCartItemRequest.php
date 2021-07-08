@@ -12,6 +12,8 @@ use Orbit\Helper\Request\ValidateRequest;
  */
 class RemoveCartItemRequest extends ValidateRequest
 {
+    protected $roles = ['consumer'];
+
     /**
      * @param  array $rules the validation rules.
      * @return void
