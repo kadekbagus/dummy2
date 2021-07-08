@@ -74,7 +74,7 @@ class UpdateStatusAPIController extends ControllerAPI
             // query, use builder so that updated_at is not touched
             DB::table('payment_transactions')
                 ->where('payment_transaction_id', $transactionId)
-                ->whereIn('status', ['success_no_pulsa_failed', 'success_no_product_failed'])
+                ->whereIn('status', ['success_no_pulsa_failed', 'success_no_product_failed', 'success_no_product'])
                 ->update(['status' => 'success']);
 
         } catch (Exception $e) {
