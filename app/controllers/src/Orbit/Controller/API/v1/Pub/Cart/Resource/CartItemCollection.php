@@ -15,12 +15,12 @@ class CartItemCollection extends ResourceCollection
 
     public function toArray()
     {
-        $this->data['records'] = ['merchants' => [], 'items' => []];
+        $this->data['records'] = ['stores' => [], 'items' => []];
 
         foreach($this->collection as $item) {
 
-            if (! isset($this->data['records']['merchants'][$item->store_id])) {
-                $this->data['records']['merchants'][$item->store_id] = [
+            if (! isset($this->data['records']['stores'][$item->store_id])) {
+                $this->data['records']['stores'][$item->store_id] = [
                     'store_id' => $item->store_id,
                     'store_name' => $item->store_name,
                     'floor' => $item->floor,
@@ -38,7 +38,7 @@ class CartItemCollection extends ResourceCollection
 
         $this->data['returned_records'] = count($this->data['records']['items']);
         $this->data['records']['items'] = array_values($this->data['records']['items']);
-        $this->data['records']['merchants'] = array_values($this->data['records']['merchants']);
+        $this->data['records']['stores'] = array_values($this->data['records']['stores']);
 
         return $this->data;
     }
