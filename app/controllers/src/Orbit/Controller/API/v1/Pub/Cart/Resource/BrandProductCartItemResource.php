@@ -17,6 +17,8 @@ trait BrandProductCartItemResource
                 'cart_item_id' => $item->cart_item_id,
                 'cart_item_status' => $item->status,
                 'quantity' => $item->quantity,
+                'product_type' => 'brand_product',
+                'product_id' => $item->brand_product_id,
                 'product_name' => $item->product_name,
                 'product_status' => $item->product_status,
                 'max_quantity' => $this->getMaxQuantity($item),
