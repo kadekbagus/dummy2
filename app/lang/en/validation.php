@@ -551,9 +551,15 @@ return array(
             'reservation_exists' => 'Reservation doesn\'t exists.',
             'can_cancel_rsvp' => 'Reservation cannot be canceled.',
             'rsvp_match_user' => 'You are not allowed to view/process requested reservation.',
+            'pikcup_location_valid' => 'Invalid pickup location for selected item.',
         ),
 
         'rsvp' => array(
+            'quantity_available' => 'Requested quantity not available.',
+        ),
+
+        'cart_item' => array(
+            'exists' => 'Cart Item not found.',
             'quantity_available' => 'Requested quantity not available.',
         ),
     ),
