@@ -22,6 +22,7 @@ class CartItemListAPIController extends PubControllerAPI
     {
         try {
             $this->setupImageUrlQuery();
+            $storeLogoImageQuery = $this->setupStoreImageUrlQuery();
 
             $prefix = DB::getTablePrefix();
 
@@ -46,6 +47,7 @@ class CartItemListAPIController extends PubControllerAPI
                         {$prefix}brand_product_variants.selling_price,
                         {$prefix}brand_product_variants.brand_product_id,
                         group_concat({$prefix}variant_options.value separator ', ') as variant,
+                        {$prefix}brand_products.brand_id,
                         {$prefix}brand_products.product_name,
                         {$prefix}brand_products.status as product_status,
                         {$prefix}merchants.merchant_id as store_id,
@@ -54,7 +56,8 @@ class CartItemListAPIController extends PubControllerAPI
                         {$prefix}merchants.unit,
                         mall.merchant_id as mall_id,
                         mall.name as mall_name,
-                        {$this->imageQuery}
+                        {$this->imageQuery},
+                        {$storeLogoImageQuery}
                     ")
                 )
                 ->leftJoin('brand_product_variants',
@@ -110,7 +113,15 @@ class CartItemListAPIController extends PubControllerAPI
                 'media.object_id'
             );
 
-            $cartItems->whereIn('media_name_long', ['brand_product_main_photo_desktop_thumb']);
+            $cartItems->leftJoin(
+                'media as storeMedia',
+                'brand_products.brand_id',
+                '=',
+                DB::raw('storeMedia.object_id')
+            );
+
+            $cartItems->whereIn('media.media_name_long', ['brand_product_main_photo_desktop_thumb']);
+            $cartItems->whereIn(DB::raw('storeMedia.media_name_long'), ['base_merchant_logo_resized_default']);
 
             if ($request->has('skip')) {
                 $cartItems->skip($request->skip);
@@ -130,5 +141,14 @@ class CartItemListAPIController extends PubControllerAPI
         }
 
         return $this->render();
+    }
+
+    protected function setupStoreImageUrlQuery()
+    {
+        if ($this->mediaUsingCdn) {
+            return "CASE WHEN storeMedia.cdn_url IS NULL THEN CONCAT({$this->quote($this->mediaUrlPrefix)}, storeMedia.path) ELSE storeMedia.cdn_url END as store_image_url";
+        }
+
+        return "CONCAT({$this->quote($this->mediaUrlPrefix)}, storeMedia.path) as store_image_url";
     }
 }
