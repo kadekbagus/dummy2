@@ -8,4 +8,6 @@
 class OrderDetail extends Eloquent
 {
     protected $guarded = [];
+
+    protected $primaryKey = 'order_detail_id';
 }

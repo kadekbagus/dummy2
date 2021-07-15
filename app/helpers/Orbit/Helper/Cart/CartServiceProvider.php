@@ -33,10 +33,15 @@ class CartServiceProvider extends ServiceProvider
             return Request::input('object_type');
         }
         else if (Request::has('cart_item_id')) {
+            $cartItemId = Request::input('cart_item_id', []);
+            if (is_string($cartItemId)) {
+                $cartItemId = [$cartItemId];
+            }
+
             $cartItem = CartItem::with([
                     'brand_product_variant',
                 ])
-                ->whereIn('cart_item_id', Request::input('cart_item_id', []))
+                ->whereIn('cart_item_id', $cartItemId)
                 ->first();
 
             if (! empty($cartItem->brand_product_variant)) {
