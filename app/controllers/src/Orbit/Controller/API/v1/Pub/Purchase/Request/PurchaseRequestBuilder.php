@@ -1,6 +1,8 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Purchase\Request;
 
 use Exception;
+use OrbitShop\API\v1\Exception\InvalidArgsException;
+use Orbit\Controller\API\v1\Pub\Purchase\Request\Order\NewOrderPurchaseRequest;
 use Orbit\Controller\API\v1\Pub\Purchase\Request\DigitalProductPurchaseRequest;
 use Request;
 
@@ -12,26 +14,23 @@ use Request;
  */
 class PurchaseRequestBuilder
 {
-    public function build($controller)
+    public function build($controller = null)
     {
         $productType = Request::input('object_type');
 
         switch ($productType) {
-            // case 'pulsa':
-            //      'data_plan':
-            //     return new PulsaPurchaseRequest($controller);
-            //     break;
-
-            // case 'coupon':
-            //     return new CouponPurchaseRequest($controller);
-            //     break;
-
             case 'digital_product':
                 return new DigitalProductPurchaseRequest($controller);
                 break;
 
+            case 'order':
+                return new NewOrderPurchaseRequest();
+                break;
+
+            // other type goes here...
+
             default:
-                throw new Exception('Unknown product type.');
+                throw new InvalidArgsException('Unknown product type.');
                 break;
         }
     }
