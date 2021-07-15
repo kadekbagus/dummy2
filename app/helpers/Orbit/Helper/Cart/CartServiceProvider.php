@@ -36,7 +36,7 @@ class CartServiceProvider extends ServiceProvider
             $cartItem = CartItem::with([
                     'brand_product_variant',
                 ])
-                ->where('cart_item_id', Request::input('cart_item_id'))
+                ->whereIn('cart_item_id', Request::input('cart_item_id', []))
                 ->first();
 
             if (! empty($cartItem->brand_product_variant)) {
