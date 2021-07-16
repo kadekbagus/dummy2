@@ -20,6 +20,8 @@ class PaymentTransaction extends Eloquent
 
     protected $table = 'payment_transactions';
 
+    protected $guarded = [];
+
     // use Presentable;
 
     // protected $presenter = 'Orbit\\Presenters\\Payment\\TransactionPresenter';
