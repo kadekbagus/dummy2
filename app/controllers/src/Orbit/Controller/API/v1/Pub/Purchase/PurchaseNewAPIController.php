@@ -21,7 +21,7 @@ class PurchaseNewAPIController extends PubControllerAPI
     public function postNew()
     {
         try {
-            $this->enableQueryLog();
+            // $this->enableQueryLog();
 
             // Use request builder to determine which validation rules should be used
             // depends on the object_type in the request.

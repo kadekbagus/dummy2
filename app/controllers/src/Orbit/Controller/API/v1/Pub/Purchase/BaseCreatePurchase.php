@@ -123,7 +123,7 @@ class BaseCreatePurchase
             'phone' => $this->request->phone,
             'country_id' => $this->countryId,
             'payment_method' => $this->request->payment_method,
-            'amount' => $this->item->total_amount,
+            'amount' => $this->getTotalAmount(),
             'currency' => $this->request->currency,
             'status' => PaymentTransaction::STATUS_STARTING,
             'timezone_name' => $this->mallTimeZone,
@@ -230,6 +230,11 @@ class BaseCreatePurchase
     protected function afterCommitHooks()
     {
         $this->recordActivity();
+    }
+
+    protected function getTotalAmount()
+    {
+        return $this->item->total_amount;
     }
 
     /**

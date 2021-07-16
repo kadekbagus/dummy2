@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -9,6 +10,8 @@ use Illuminate\Support\Facades\DB;
  */
 class Order extends Eloquent
 {
+    use ModelStatusTrait;
+
     const STATUS_PENDING = 'pending';
     const STATUS_CANCELLING = 'cancelling';
     const STATUS_CANCELLED = 'cancelled';
@@ -33,43 +36,54 @@ class Order extends Eloquent
     /**
      * Create a new Order from request object.
      *
-     * @param  ValidateRequest|ArrayAccess $data - the request object
+     * @param  ValidateRequest $data - the request object
      * @return static
      */
     public static function createFromRequest($request)
     {
         $cartItems = CartItem::with(['brand_product_variant.brand_product'])
             ->whereIn('cart_item_id', $request->object_id)
+            ->where('user_id', $request->user()->user_id)
             ->get();
 
-        $totalAmount = 0;
+        $orderData = [];
         $orderDetails = [];
         foreach($cartItems as $cartItem) {
-            $product = $cartItem->brand_product_variant;
+            $variant = $cartItem->brand_product_variant;
 
-            $totalAmount += $product->selling_price * $cartItem->quantity;
-            $orderDetails[] = new OrderDetail([
-                'sku' => $product->sku,
-                'product_code' => $product->product_code,
+            if (! isset($orderData[$cartItem->merchant_id])) {
+                $orderData[$cartItem->merchant_id] = [
+                    'user_id' => $request->user()->user_id,
+                    'status' => self::STATUS_PENDING,
+                    'total_amount' => 0,
+                    'merchant_id' => $cartItem->merchant_id,
+                    'brand_id' => $variant->brand_product->brand_id,
+                ];
+            }
+
+            $orderData[$cartItem->merchant_id]['total_amount'] +=
+                $cartItem->quantity * $variant->selling_price;
+
+            $orderDetails[$cartItem->merchant_id][] = new OrderDetail([
+                'sku' => $variant->sku,
+                'product_code' => $variant->product_code,
                 'quantity' => $cartItem->quantity,
-                'brand_id' => $product->brand_product->brand_id,
-                'merchant_id' => $cartItem->merchant_id,
-                'original_price' => $product->original_price,
-                'selling_price' => $product->selling_price,
+                'brand_product_variant_id' => $variant->brand_product_variant_id,
+                'original_price' => $variant->original_price,
+                'selling_price' => $variant->selling_price,
             ]);
         }
 
-        $order = Order::create([
-                'user_id' => $request->user()->user_id,
-                'status' => self::STATUS_PENDING,
-                'total_amount' => $totalAmount,
-            ]);
+        foreach($orderData as $pickupLocation => $data) {
 
-        $order->details()->saveMany($orderDetails);
+            $orders[$pickupLocation] = Order::create($data);
+            $orders[$pickupLocation]->details()
+                ->saveMany($orderDetails[$pickupLocation]);
+        }
 
         // Event::fire('orbit.cart.order-created', [$order]);
 
-        return $order;
+        return $orders;
     }
 
     public static function requestCancel($orderId)
@@ -108,6 +122,7 @@ class Order extends Eloquent
     public static function readyForPickup($orderId)
     {
         $order = Order::where('order_id', $orderId)->update([
+                'pick_up_code' => self::createPickUpCode(),
                 'status' => self::STATUS_READY_FOR_PICKUP,
             ]);
 
@@ -126,4 +141,18 @@ class Order extends Eloquent
 
         return $order;
     }
+
+    public static function createPickUpCode()
+    {
+        return substr(md5(time() . Str::random(6)), 6);
+    }
+
+    // public function removeFromCart()
+    // {
+    //     $variantId = $this->details->lists('brand_product_variant_id');
+
+    //     CartItem::where('user_id', $this->user_id)
+    //         ->whereIn('brand_product')
+    //         ->
+    // }
 }
