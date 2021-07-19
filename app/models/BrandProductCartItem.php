@@ -53,45 +53,4 @@ class BrandProductCartItem extends CartItem
 
         return $cartItem;
     }
-
-    public function updateItem($cartItemId, $request)
-    {
-        if ($request->quantity == 0) {
-            return $this->removeItem([$cartItemId]);
-        }
-
-        DB::beginTransaction();
-
-        $cartItem = CartItem::where('cart_item_id', $cartItemId)->firstOrFail();
-        $cartItem->quantity = $request->quantity;
-        $cartItem->save();
-
-        DB::commit();
-
-        // Event::fire('orbit.cart.item-updated', [$cartItem]);
-
-        return $cartItem;
-    }
-
-    public function removeItem($cartItemId)
-    {
-        if (! is_array($cartItemId)) {
-            $cartItemId = [$cartItemId];
-        }
-
-        DB::beginTransaction();
-
-        $cartItems = CartItem::whereIn('cart_item_id', $cartItemId)->get();
-
-        foreach($cartItems as $cartItem) {
-            $cartItem->status = self::STATUS_INACTIVE;
-            $cartItem->save();
-        }
-
-        DB::commit();
-
-        // Event::fire('orbit.cart.item-removed', [$cartItem]);
-
-        return $cartItems;
-    }
 }

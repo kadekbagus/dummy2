@@ -52,6 +52,7 @@ class CheckTransactionStatusQueue
                 'details.pulsa',
                 'details.digital_product',
                 'details.provider_product',
+                'details.order',
                 'refunds',
                 'midtrans',
                 'issued_coupons',
@@ -152,7 +153,9 @@ class CheckTransactionStatusQueue
                         if ($payment->forPulsa()) {
                             $transactionStatus = PaymentTransaction::STATUS_SUCCESS_NO_PULSA;
                         }
-                        else if ($payment->forDigitalProduct()) {
+                        else if ($payment->forDigitalProduct()
+                                || $payment->forOrder()
+                        ) {
                             $transactionStatus = PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT;
                         }
                         else {

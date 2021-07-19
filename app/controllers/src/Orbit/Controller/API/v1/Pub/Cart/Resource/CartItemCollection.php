@@ -27,6 +27,7 @@ class CartItemCollection extends ResourceCollection
                     'unit' => $item->unit,
                     'mall_id' => $item->mall_id,
                     'mall_name' => $item->mall_name,
+                    'image_url' => $item->store_image_url,
                 ];
             }
 

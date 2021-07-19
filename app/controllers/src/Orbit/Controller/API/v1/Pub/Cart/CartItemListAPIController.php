@@ -97,7 +97,8 @@ class CartItemListAPIController extends PubControllerAPI
                 ->where(DB::raw('mall.status'), 'active')
                 ->where('brand_product_variant_options.option_type', 'variant_option')
                 ->groupBy('cart_item_id')
-                ->groupBy('cart_items.brand_product_variant_id');
+                ->groupBy('cart_items.brand_product_variant_id')
+                ->orderBy('cart_items.created_at', 'desc');
 
             if ($request->has('merchant_id')) {
                 $cartItems->where('merchants.merchant_id', $request->merchant_id);

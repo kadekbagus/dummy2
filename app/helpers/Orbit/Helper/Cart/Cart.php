@@ -3,6 +3,7 @@
 namespace Orbit\Helper\Cart;
 
 use BrandProductCartItem;
+use CartItem;
 use Illuminate\Support\Facades\App;
 
 /**

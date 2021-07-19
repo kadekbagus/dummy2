@@ -17,6 +17,8 @@ class PaymentTransactionDetail extends Eloquent
 
     protected $table = 'payment_transaction_details';
 
+    protected $guarded = [];
+
     /**
      * Link to Payment.
      *
@@ -95,6 +97,11 @@ class PaymentTransactionDetail extends Eloquent
     public function provider_product()
     {
         return $this->belongsTo('ProviderProduct');
+    }
+
+    public function order()
+    {
+        return $this->belongsTo('Order', 'object_id', 'order_id');
     }
 
     /**
