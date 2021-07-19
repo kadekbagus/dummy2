@@ -160,4 +160,9 @@ class PaymentTransactionDetail extends Eloquent
 
         return $this->currency . ' ' . number_format($total, 2, '.', ',');
     }
+
+    public function order()
+    {
+        return $this->belongsTo('Order', 'object_id', 'order_id');
+    }
 }
