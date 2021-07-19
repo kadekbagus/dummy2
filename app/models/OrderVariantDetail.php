@@ -7,5 +7,7 @@
  */
 class OrderVariantDetail extends Eloquent
 {
+    protected $primaryKey = 'order_variant_detail_id';
 
+    protected $table = 'order_variant_details';
 }

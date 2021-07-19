@@ -14,6 +14,10 @@ class Order extends Eloquent
     const STATUS_CANCELLED = 'cancelled';
     const STATUS_PAID = 'paid';
 
+    protected $primaryKey = 'order_id';
+
+    protected $table = 'orders';
+
     protected $guarded = [];
 
     /**
@@ -80,5 +84,15 @@ class Order extends Eloquent
                 'status' => self::STATUS_CANCELLED,
             ]);
         });
+    }
+
+    public function order_details() 
+    {
+        return $this->hasMany('OrderDetail', 'order_id', 'order_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo('User', 'user_id', 'user_id');
     }
 }
