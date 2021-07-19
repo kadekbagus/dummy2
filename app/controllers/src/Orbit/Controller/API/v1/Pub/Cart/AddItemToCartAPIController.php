@@ -17,7 +17,6 @@ class AddItemToCartAPIController extends PubControllerAPI
     public function handle(AddItemToCartRequest $request, Cart $cart)
     {
         try {
-
             // $this->enableQueryLog();
 
             $this->response->data = $cart->addItem($request);

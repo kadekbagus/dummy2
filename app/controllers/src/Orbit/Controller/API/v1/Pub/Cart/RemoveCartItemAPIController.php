@@ -3,6 +3,7 @@
 namespace Orbit\Controller\API\v1\Pub\Cart;
 
 use Exception;
+use Illuminate\Support\Facades\DB;
 use OrbitShop\API\v1\PubControllerAPI;
 use Orbit\Controller\API\v1\Pub\Cart\Request\RemoveCartItemRequest;
 use Orbit\Helper\Cart\CartInterface as Cart;
@@ -18,10 +19,13 @@ class RemoveCartItemAPIController extends PubControllerAPI
     {
         try {
             // $this->enableQueryLog();
+            DB::beginTransaction();
 
             $this->response->data = $cart->removeItem(
                 $request->cart_item_id
             );
+
+            DB::commit();
 
         } catch (Exception $e) {
             return $this->handleException($e);

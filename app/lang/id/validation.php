@@ -563,6 +563,12 @@ return array(
             'exists' => 'Item keranjang tidak ditemukan.',
             'quantity_available' => 'Jumlah yang diinginkan tidak tersedia.',
         ),
+
+        'order' => array(
+            'exists' => 'Order tidak ditemukan.',
+            'can_order' => 'Satu atau beberapa item tidak tersedia. Mohon refresh laman dan ulang checkout.',
+            'match_user' => 'Order tidak sesuai dengan profil Anda, silakan gunakan akun lain.',
+        ),
     ),
 
     /*
