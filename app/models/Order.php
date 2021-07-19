@@ -19,6 +19,10 @@ class Order extends Eloquent
     const STATUS_READY_FOR_PICKUP = 'ready_for_pickup';
     const STATUS_DONE = 'done';
 
+    protected $primaryKey = 'order_id';
+
+    protected $table = 'orders';
+
     protected $guarded = [];
 
     protected $primaryKey = 'order_id';
@@ -176,5 +180,15 @@ class Order extends Eloquent
         // Event::fire('orbit.cart.order-done', [$order]);
 
         return $order;
+    }
+
+    public function order_details() 
+    {
+        return $this->hasMany('OrderDetail', 'order_id', 'order_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo('User', 'user_id', 'user_id');
     }
 }
