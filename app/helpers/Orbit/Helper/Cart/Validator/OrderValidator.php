@@ -48,6 +48,7 @@ class OrderValidator
                     $query->active();
                 }
             ])
+            ->active()
             ->whereIn('cart_item_id', $cartItemIds)
             ->where('user_id', App::make('currentUser')->user_id)
             ->get();

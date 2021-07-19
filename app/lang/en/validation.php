@@ -562,6 +562,12 @@ return array(
             'exists' => 'Cart Item not found.',
             'quantity_available' => 'Requested quantity not available.',
         ),
+
+        'order' => array(
+            'exists' => 'The Order doesn\'t exists.',
+            'can_order' => 'One or more item(s) are not available. Please refresh the page and try again.',
+            'match_user' => 'Order doesn\'t match your credential. Try using another GTM account.',
+        ),
     ),
 
     /*

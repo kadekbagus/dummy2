@@ -40,6 +40,7 @@ class CreatePurchase extends BaseCreatePurchase
                 'object_id' => $item->order_id,
                 'object_type' => $this->request->object_type,
                 'object_name' => "Product Order {$item->order_id}",
+                'payload' => $item->cart_item_ids,
             ]);
         }
     }

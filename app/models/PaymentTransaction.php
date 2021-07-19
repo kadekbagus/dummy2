@@ -339,6 +339,17 @@ class PaymentTransaction extends Eloquent
         return false;
     }
 
+    public function forOrder()
+    {
+        foreach($this->details as $detail) {
+            if (isset($detail->order) && ! empty($detail->order)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Determine if the payment is for Pulsa.
      *
@@ -606,22 +617,13 @@ class PaymentTransaction extends Eloquent
      */
     public function getProductType()
     {
-        $productType = null;
-        $availableProductType = [
-            'coupon',
-            'pulsa',
-            'data_plan',
-            'digital_product',
-        ];
-
         foreach($this->details as $detail) {
-            if (in_array($detail->object_type, $availableProductType)) {
-                $productType = $detail->object_type;
-                break;
+            if ($detail->object_type !== 'discount') {
+                return $detail->object_type;
             }
         }
 
-        return $productType;
+        return null;
     }
 
     public function getDigitalProduct()
