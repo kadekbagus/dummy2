@@ -25,16 +25,9 @@ class Order extends Eloquent
 
     protected $guarded = [];
 
-    protected $primaryKey = 'order_id';
-
     public function details()
     {
         return $this->hasMany('OrderDetail');
-    }
-
-    public function user()
-    {
-        return $this->belongsTo('User');
     }
 
     /**
