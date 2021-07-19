@@ -27,7 +27,6 @@ use Activity;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 use Mall;
-use Tenant;
 use Coupon;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
@@ -44,6 +43,8 @@ use BrandProduct;
 use Orbit\Controller\API\v1\Pub\BrandProduct\Request\ListRequest;
 use Orbit\Controller\API\v1\Pub\Product\Request\ListRequest as ProductAffiliationListRequest;
 use Product;
+use BaseMerchant;
+use Tenant;
 
 class MenuCounterAPIController extends PubControllerAPI
 {
@@ -95,6 +96,7 @@ class MenuCounterAPIController extends PubControllerAPI
             $ratingHigh = OrbitInput::get('rating_high', 5);
             $ratingLow = empty($ratingLow) ? 0 : $ratingLow;
             $ratingHigh = empty($ratingHigh) ? 5 : $ratingHigh;
+            $bankBaseMerchantId = OrbitInput::get('bank_base_merchant_id', null);
 
             $prefix = DB::getTablePrefix();
 
@@ -636,6 +638,35 @@ class MenuCounterAPIController extends PubControllerAPI
             if (! empty($keywordMallFilterShould)) {
                 $mallJsonQuery['query']['bool']['should'][] = $keywordMallFilterShould;
             }
+
+
+            // This scope for et list mall per bank, klik button location in bank detail page
+            // There is no data bank in mall ES, so we need to get data mall id per bank
+            if ($bankBaseMerchantId != null) {
+                if ($bankBaseMerchantId != null) {
+                    $mallIdsPerBank = [];
+
+                    $bankBaseMerchant = BaseMerchant::select('base_merchant_id', 'name', 'country_id')
+                    ->where('base_merchant_id', $bankBaseMerchantId)
+                    ->where('status', 'active')
+                    ->first();
+
+                    if (! empty($bankBaseMerchant)) {
+                        // Get mall list which have bank
+                        $mallIdsPerBank = Tenant::select(DB::raw('mall.merchant_id'))
+                                        ->join('merchants as mall', DB::raw('mall.merchant_id'), '=', 'merchants.parent_id')
+                                        ->where('merchants.name', $bankBaseMerchant['name'])
+                                        ->where('merchants.country_id', $bankBaseMerchant['country_id'])
+                                        ->where('merchants.status', 'active')
+                                        ->where(DB::raw('mall.status'), 'active')
+                                        ->get();
+                    }
+
+                    $mallJsonQuery['query']['bool']['filter'][]['bool']['must']['terms']['_id'] = $mallIdsPerBank;
+                }
+            }
+            // end scope list mall per bank
+
 
             if (! empty($categoryCampaignFilter)) {
                 $campaignJsonQuery['query']['bool']['must'][] = $categoryCampaignFilter;

@@ -147,6 +147,8 @@ class GetCouponQueue
                     ])
                     ->request();
 
+                // @todo: need to have google analytics transaction and item hit
+
                 // Log Activity
                 $activity->setActivityNameLong('Transaction is Successful')
                         ->setModuleName('Midtrans Transaction')

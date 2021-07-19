@@ -15,9 +15,15 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
  *
  * @author Budi <budi@gotomalls.com>
  */
-trait MediaQuery {
-
+trait MediaQuery
+{
     protected $imageQuery;
+
+    protected $mediaUsingCdn = false;
+
+    protected $defaultMediaUrlPrefix = '';
+
+    protected $mediaUrlPrefix = '';
 
     /**
      * Resolve image variant that will be used to query from table media.
@@ -66,20 +72,26 @@ trait MediaQuery {
             }, $imageVariants);
     }
 
+    protected function loadUrlConfigAndPrefix()
+    {
+        $this->mediaUsingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+        $this->defaultMediaUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+        $this->mediaUrlPrefix = ($this->defaultMediaUrlPrefix != '') ? $this->defaultMediaUrlPrefix . '/' : '';
+    }
+
     /**
      * Setup image url query.
      * @return [type] [description]
      */
     protected function setupImageUrlQuery()
     {
-        $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
-        $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
-        $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+        $this->loadUrlConfigAndPrefix();
+
         $tablePrefix = DB::getTablePrefix();
 
-        $this->imageQuery = "CONCAT({$this->quote($urlPrefix)}, {$tablePrefix}media.path) as image_url";
-        if ($usingCdn) {
-            $this->imageQuery = "CASE WHEN {$tablePrefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$tablePrefix}media.path) ELSE {$tablePrefix}media.cdn_url END as image_url";
+        $this->imageQuery = "CONCAT({$this->quote($this->mediaUrlPrefix)}, {$tablePrefix}media.path) as image_url";
+        if ($this->mediaUsingCdn) {
+            $this->imageQuery = "CASE WHEN {$tablePrefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($this->mediaUrlPrefix)}, {$tablePrefix}media.path) ELSE {$tablePrefix}media.cdn_url END as image_url";
         }
     }
 

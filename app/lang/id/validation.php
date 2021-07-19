@@ -552,6 +552,22 @@ return array(
             'reservation_exists' => 'Reservasi tidak ditemukan.',
             'can_cancel_rsvp' => 'Reservasi tidak dapat dibatalkan.',
             'rsvp_match_user' => 'Anda tidak berhak melihat/memproses reservasi tersebut.',
+            'pikcup_location_valid' => 'Lokasi pengambilan item tidak sesuai.',
+        ),
+
+        'rsvp' => array(
+            'quantity_available' => 'Jumlah yg diminta tidak tersedia.',
+        ),
+
+        'cart_item' => array(
+            'exists' => 'Item keranjang tidak ditemukan.',
+            'quantity_available' => 'Jumlah yang diinginkan tidak tersedia.',
+        ),
+
+        'order' => array(
+            'exists' => 'Order tidak ditemukan.',
+            'can_order' => 'Satu atau beberapa item tidak tersedia. Mohon refresh laman dan ulang checkout.',
+            'match_user' => 'Order tidak sesuai dengan profil Anda, silakan gunakan akun lain.',
         ),
     ),
 
