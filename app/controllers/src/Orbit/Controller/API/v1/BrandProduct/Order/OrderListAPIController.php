@@ -78,7 +78,7 @@ class OrderListAPIController extends ControllerAPI
                                     $q->where('payment_transaction_details.object_type', '=', 'order');
                             })
                             ->join('payment_transactions', 'payment_transactions.payment_transaction_id','=','payment_transaction_details.payment_transaction_id')
-                            ->leftJoin('users', 'users.user_id', '=', 'orders.user_id')
+                            ->leftjoin('users', 'users.user_id', '=', 'orders.user_id')
                             ->leftjoin('media', function ($q) {
                                     $q->on('media.object_id', '=', 'users.user_id');
                                     $q->where('media.object_name', '=', 'user');
@@ -106,6 +106,12 @@ class OrderListAPIController extends ControllerAPI
                             ->where('orders.brand_id', '=', $brandId);
 
             isset($merchantId) ? $orders->where('orders.merchant_id', '=', $merchantId) : null;
+
+            OrbitInput::get('payment_status', function($status) use ($orders)
+            {
+                $status = (array) $status;
+                $orders->whereIn('payment_transactions.status', $status);
+            });
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
