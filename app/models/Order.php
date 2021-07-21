@@ -25,16 +25,9 @@ class Order extends Eloquent
 
     protected $guarded = [];
 
-    protected $primaryKey = 'order_id';
-
     public function details()
     {
         return $this->hasMany('OrderDetail');
-    }
-
-    public function user()
-    {
-        return $this->belongsTo('User');
     }
 
     /**
@@ -107,7 +100,7 @@ class Order extends Eloquent
                 ->saveMany($orderDetails[$pickupLocation]);
 
             foreach($orders[$pickupLocation]->details as $detail) {
-                $detail->variant_details()->saveMany($orderVariantDetails[$detail->brand_product_variant_id]);
+                $detail->order_variant_details()->saveMany($orderVariantDetails[$detail->brand_product_variant_id]);
             }
         }
 
@@ -150,8 +143,10 @@ class Order extends Eloquent
             $orders = [$orders];
         }
 
+        $now = Carbon::now('UTC')->format('Y-m-d H:i:s');
         $orders = Order::with(['user'])->whereIn('order_id', $orders)->update([
             'status' => self::STATUS_PAID,
+            'paid_at' => $now,
         ]);
 
         // Event::fire('orbit.cart.order-paid', [$order]);
