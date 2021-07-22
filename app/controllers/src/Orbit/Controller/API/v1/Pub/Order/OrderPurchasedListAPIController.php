@@ -75,7 +75,7 @@ class OrderPurchasedListAPIController extends PubControllerAPI
                 ->where('payment_transactions.status', '<>', PaymentTransaction::STATUS_STARTING)
                 ->where('payment_transaction_details.object_type', 'order')
                 ->groupBy('orders.order_id')
-                ->groupBy('order_details.brand_product_variant_id');
+                ->groupBy('order_details.order_detail_id');
 
             $purchasesCount = clone $purchases;
 
