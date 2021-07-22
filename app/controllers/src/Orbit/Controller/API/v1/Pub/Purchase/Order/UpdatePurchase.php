@@ -25,6 +25,7 @@ use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseExpiredActivity;
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchasePendingActivity;
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseCanceledActivity;
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseProcessingProductActivity;
+use Order;
 
 /**
  * Order Purchase Update handler.
@@ -183,6 +184,24 @@ class UpdatePurchase
                 // If payment was success, set purchase to processing/purchasing product to provider.
                 if ($status === PaymentTransaction::STATUS_SUCCESS) {
                     $this->purchase->status = PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT;
+                }
+
+                if ($status === PaymentTransaction::STATUS_PENDING) {
+                    foreach($this->purchase->details as $detail) {
+                        if ($detail->order) {
+                            $detail->order->status = Order::STATUS_WAITING_PAYMENT;
+                            $detail->order->save();
+                        }
+                    }
+                }
+
+                if ($status === PaymentTransaction::STATUS_EXPIRED) {
+                    foreach($this->purchase->details as $detail) {
+                        if ($detail->order) {
+                            $detail->order->status = Order::STATUS_CANCELLED;
+                            $detail->order->save();
+                        }
+                    }
                 }
 
                 // If new status is 'aborted', then keep it as 'starting' after cleaning up
