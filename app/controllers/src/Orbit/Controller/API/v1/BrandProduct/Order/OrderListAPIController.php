@@ -68,7 +68,6 @@ class OrderListAPIController extends ControllerAPI
 
             $orders = Order::select('orders.order_id',
                                     'orders.status',
-                                    'orders.total_amount as total_payment',
                                     'orders.user_id',
                                     DB::raw("CONCAT({$prefix}users.user_firstname,' ',{$prefix}users.user_lastname) as username"),
                                     DB::raw("{$prefix}media.path as user_picture"),
@@ -86,7 +85,10 @@ class OrderListAPIController extends ControllerAPI
                                     $q->where('media.media_name_long', '=', 'user_profile_picture_orig');
                                 })
                             ->with(['order_details' => function($q) use ($prefix) {
-                                        $q->addSelect('order_detail_id','order_id','brand_product_variant_id');
+                                        $q->addSelect('order_detail_id',
+                                                      'order_id',
+                                                      'brand_product_variant_id', 
+                                                      DB::raw("{$prefix}order_details.selling_price*{$prefix}order_details.quantity as total_payment"));
                                         $q->with(['brand_product_variant' => function($q) use ($prefix) {
                                             $q->addSelect('brand_product_id','brand_product_variant_id');
                                             $q->with(['brand_product' => function($q) use ($prefix) {
