@@ -280,7 +280,7 @@ class UpdatePurchase
                 if ($oldStatus === PaymentTransaction::STATUS_PENDING
                     && $status === PaymentTransaction::STATUS_EXPIRED
                 ) {
-                    $this->purchase->user->notify(new ExpiredPaymentNotification($this->purchase));
+                    // $this->purchase->user->notify(new ExpiredPaymentNotification($this->purchase));
 
                     $this->purchase->user->activity(new PurchaseExpiredActivity($this->purchase, $objectName));
                 }

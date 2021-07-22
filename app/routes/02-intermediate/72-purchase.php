@@ -19,3 +19,8 @@ Route::get('/app/v1/pub/purchase/availability', [
     'as' => 'pub-digital-product-purchase-availability',
     'uses' => 'IntermediatePubAuthController@Purchase\PurchaseAvailability_getAvailability',
 ]);
+
+Route::get('/app/v1/pub/order-purchased/detail', [
+    'as' => 'pub-order-purchased-detail',
+    'uses' => 'IntermediatePubAuthController@Order\OrderPurchasedDetail_handle'
+]);

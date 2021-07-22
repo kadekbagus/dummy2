@@ -17,7 +17,8 @@ class PurchaseValidator
 {
     public function exists($attribute, $purchaseId, $parameters)
     {
-        $purchase = PaymentTransaction::with(['details'])->where('payment_transaction_id', $purchaseId)->first();
+        $purchase = PaymentTransaction::with(['details'])
+            ->where('payment_transaction_id', $purchaseId)->first();
 
         App::instance('purchase', $purchase);
 
@@ -101,5 +102,15 @@ class PurchaseValidator
                         ->count();
 
         return $samePurchase === 0;
+    }
+
+    public function matchUser($attrs, $value, $params)
+    {
+        if (App::bound('currentUser') && App::bound('purchase')) {
+            return App::make('currentUser')->user_id ===
+                App::make('purchase')->user_id;
+        }
+
+        return false;
     }
 }
