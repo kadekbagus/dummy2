@@ -560,6 +560,11 @@ return array(
             'can_order' => 'Satu atau beberapa item tidak tersedia. Mohon refresh laman dan ulang checkout.',
             'match_user' => 'Order tidak sesuai dengan profil Anda, silakan gunakan akun lain.',
         ),
+
+        'purchase' => array(
+            'exists' => 'Pembelian tidak ditemukan.',
+            'match_user' => 'Pembelian tidak cocok dengan profil Anda, silakan gunakan akun GTM yang lain.',
+        ),
     ),
 
     /*

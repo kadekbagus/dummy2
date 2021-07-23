@@ -25,6 +25,7 @@ use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseExpiredActivity;
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchasePendingActivity;
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseCanceledActivity;
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseProcessingProductActivity;
+use Order;
 
 /**
  * Order Purchase Update handler.
@@ -185,6 +186,24 @@ class UpdatePurchase
                     $this->purchase->status = PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT;
                 }
 
+                if ($status === PaymentTransaction::STATUS_PENDING) {
+                    foreach($this->purchase->details as $detail) {
+                        if ($detail->order) {
+                            $detail->order->status = Order::STATUS_WAITING_PAYMENT;
+                            $detail->order->save();
+                        }
+                    }
+                }
+
+                if ($status === PaymentTransaction::STATUS_EXPIRED) {
+                    foreach($this->purchase->details as $detail) {
+                        if ($detail->order) {
+                            $detail->order->status = Order::STATUS_CANCELLED;
+                            $detail->order->save();
+                        }
+                    }
+                }
+
                 // If new status is 'aborted', then keep it as 'starting' after cleaning up
                 // any related (issued) coupons.
                 if ($oldStatus === PaymentTransaction::STATUS_STARTING
@@ -280,7 +299,7 @@ class UpdatePurchase
                 if ($oldStatus === PaymentTransaction::STATUS_PENDING
                     && $status === PaymentTransaction::STATUS_EXPIRED
                 ) {
-                    $this->purchase->user->notify(new ExpiredPaymentNotification($this->purchase));
+                    // $this->purchase->user->notify(new ExpiredPaymentNotification($this->purchase));
 
                     $this->purchase->user->activity(new PurchaseExpiredActivity($this->purchase, $objectName));
                 }

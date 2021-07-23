@@ -568,6 +568,11 @@ return array(
             'can_order' => 'One or more item(s) are not available. Please refresh the page and try again.',
             'match_user' => 'Order doesn\'t match your credential. Try using another GTM account.',
         ),
+
+        'purchase' => array(
+            'exists' => 'Purchase does not exists.',
+            'match_user' => 'Purchase does not match your credential. Try using another GTM account?',
+        ),
     ),
 
     /*
