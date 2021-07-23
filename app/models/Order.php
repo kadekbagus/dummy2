@@ -1,5 +1,6 @@
 <?php
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -13,6 +14,7 @@ class Order extends Eloquent
     use ModelStatusTrait;
 
     const STATUS_PENDING = 'pending';
+    const STATUS_WAITING_PAYMENT = 'waiting_payment';
     const STATUS_CANCELLING = 'cancelling';
     const STATUS_CANCELLED = 'cancelled';
     const STATUS_PAID = 'paid';

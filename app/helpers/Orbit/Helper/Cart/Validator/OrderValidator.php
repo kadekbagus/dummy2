@@ -85,7 +85,12 @@ class OrderValidator
                 'orders.order_id', '=', 'order_details.order_id'
             )
             ->where('brand_product_variant_id', $variant->brand_product_variant_id)
-            ->whereIn('orders.status', [Order::STATUS_PAID])
+            ->whereIn('orders.status', [
+                // Order::STATUS_WAITING_PAYMENT,
+                Order::STATUS_PAID,
+                Order::STATUS_CANCELLING,
+                Order::STATUS_DONE
+            ])
             ->sum('quantity');
 
         return $variant->quantity - $usedQuantity >= $requestedQuantity;
