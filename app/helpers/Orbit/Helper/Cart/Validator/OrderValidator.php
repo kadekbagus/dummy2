@@ -86,7 +86,7 @@ class OrderValidator
             )
             ->where('brand_product_variant_id', $variant->brand_product_variant_id)
             ->whereIn('orders.status', [
-                Order::STATUS_WAITING_PAYMENT,
+                // Order::STATUS_WAITING_PAYMENT,
                 Order::STATUS_PAID,
                 Order::STATUS_CANCELLING,
                 Order::STATUS_DONE
