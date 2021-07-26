@@ -110,7 +110,8 @@ class OrderListAPIController extends ControllerAPI
                                         }]);
                                     }
                                 ])
-                            ->where('orders.brand_id', '=', $brandId);
+                            ->where('orders.brand_id', '=', $brandId)
+                            ->whereNotIn('orders.status', ['pending', 'waiting_payment', 'expired']);
 
             isset($merchantId) ? $orders->where('orders.merchant_id', '=', $merchantId) : null;
 
