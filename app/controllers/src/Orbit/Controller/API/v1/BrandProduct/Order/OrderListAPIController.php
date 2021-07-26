@@ -53,7 +53,7 @@ class OrderListAPIController extends ControllerAPI
                 ),
                 array(
                     'status'      => 'in:inactive,active',
-                    'sortBy'      => 'in:product_name,min_price,total_quantity,total_reserved,status',
+                    'sortBy'      => 'in:created_at,updated_at,payment_status,status',
                     'sortMode'    => 'in:asc,desc',
                 )
             );
@@ -71,7 +71,8 @@ class OrderListAPIController extends ControllerAPI
                                     'orders.user_id',
                                     DB::raw("CONCAT({$prefix}users.user_firstname,' ',{$prefix}users.user_lastname) as username"),
                                     DB::raw("{$prefix}media.path as user_picture"),
-                                    'payment_transactions.status as payment_status')
+                                    'payment_transactions.status as payment_status',
+                                    'orders.created_at as order_date')
                             ->join('payment_transaction_details', function ($q) {
                                     $q->on('payment_transaction_details.object_id','=','orders.order_id');
                                     $q->where('payment_transaction_details.object_type', '=', 'order');
@@ -83,11 +84,14 @@ class OrderListAPIController extends ControllerAPI
                                     $q->where('media.object_name', '=', 'user');
                                     $q->where('media.media_name_id', '=', 'user_profile_picture');
                                     $q->where('media.media_name_long', '=', 'user_profile_picture_orig');
-                                })
+                            })
                             ->with(['order_details' => function($q) use ($prefix) {
-                                        $q->addSelect('order_detail_id',
-                                                      'order_id',
-                                                      'brand_product_variant_id', 
+                                        $q->addSelect('order_details.order_id',
+                                                      'order_details.order_detail_id',
+                                                      'order_details.brand_product_variant_id',
+                                                      'order_details.original_price',
+                                                      'order_details.selling_price',
+                                                      'order_details.quantity', 
                                                       DB::raw("{$prefix}order_details.selling_price*{$prefix}order_details.quantity as total_payment"));
                                         $q->with(['brand_product_variant' => function($q) use ($prefix) {
                                             $q->addSelect('brand_product_id','brand_product_variant_id');
@@ -115,6 +119,11 @@ class OrderListAPIController extends ControllerAPI
                 $orders->whereIn('payment_transactions.status', $status);
             });
 
+            OrbitInput::get('order_id', function($orderId) use ($orders)
+            {
+                $orders->where('orders.order_id', $orderId);
+            });
+
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_orders = clone $orders;
@@ -137,6 +146,8 @@ class OrderListAPIController extends ControllerAPI
                 $sortByMapping = array(
                     'status' => 'orders.status',
                     'updated_at' => 'orders.updated_at',
+                    'created_at' => 'orders.created_at',
+                    'payment_status' => 'payment_transactions.status',
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
