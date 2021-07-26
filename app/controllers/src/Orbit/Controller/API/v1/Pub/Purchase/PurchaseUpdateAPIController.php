@@ -4,7 +4,8 @@ use App;
 use Exception;
 use OrbitShop\API\v1\PubControllerAPI;
 use Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct\UpdatePurchase as DigitalProductUpdatePurchase;
-use Orbit\Controller\API\v1\Pub\Purchase\Request\DigitalProductUpdatePurchaseRequest;
+use Orbit\Controller\API\v1\Pub\Purchase\Order\UpdatePurchase as UpdateOrderPurchase;
+use Orbit\Controller\API\v1\Pub\Purchase\Request\DigitalProductUpdatePurchaseRequest as UpdatePurchaseRequest;
 
 /**
  * Handle purchase update request.
@@ -20,25 +21,20 @@ class PurchaseUpdateAPIController extends PubControllerAPI
      */
     public function postUpdate()
     {
-        $httpCode = 200;
-
         try {
             // $this->enableQueryLog();
 
-            with($request = new DigitalProductUpdatePurchaseRequest($this))->validate();
+            $request = new UpdatePurchaseRequest();
 
-            $purchase = App::make('purchase');
-
-            switch ($purchase->getProductType()) {
-                case 'coupon':
-                    break;
-
-                case 'pulsa':
-                case 'data_plan':
-                    break;
-
+            switch (App::make('purchase')->getProductType()) {
                 case 'digital_product':
-                    $purchase = (new DigitalProductUpdatePurchase)->update($request);
+                    $this->response->data = (new DigitalProductUpdatePurchase)
+                        ->update($request);
+                    break;
+
+                case 'order':
+                    $this->response->data = (new UpdateOrderPurchase)
+                        ->update($request);
                     break;
 
                 default:
@@ -46,12 +42,10 @@ class PurchaseUpdateAPIController extends PubControllerAPI
                     break;
             }
 
-            $this->response->data = $purchase;
-
         } catch(Exception $e) {
             return $this->handleException($e);
         }
 
-        return $this->render($httpCode);
+        return $this->render();
     }
 }

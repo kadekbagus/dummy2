@@ -52,6 +52,7 @@ class CheckTransactionStatusQueue
                 'details.pulsa',
                 'details.digital_product',
                 'details.provider_product',
+                'details.order',
                 'refunds',
                 'midtrans',
                 'issued_coupons',
@@ -148,11 +149,13 @@ class CheckTransactionStatusQueue
                 // @todo Should we assume the payment is failed or just let it as what it is (pending or whatever its status is)?
                 $transactionStatus = $transaction->mapToInternalStatus();
                 if ($transaction->isSuccess()) {
-                    if ($payment->forSepulsa() || $payment->paidWith(['bank_transfer', 'echannel', 'gopay', 'dana', 'qris'])) {
+                    if ($payment->forSepulsa() || $payment->paidWith(['bank_transfer', 'echannel', 'gopay', 'dana', 'qris', 'shopeepay'])) {
                         if ($payment->forPulsa()) {
                             $transactionStatus = PaymentTransaction::STATUS_SUCCESS_NO_PULSA;
                         }
-                        else if ($payment->forDigitalProduct()) {
+                        else if ($payment->forDigitalProduct()
+                                || $payment->forOrder()
+                        ) {
                             $transactionStatus = PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT;
                         }
                         else {
