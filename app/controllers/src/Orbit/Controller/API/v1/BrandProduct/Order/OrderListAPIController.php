@@ -120,6 +120,12 @@ class OrderListAPIController extends ControllerAPI
                 $orders->whereIn('payment_transactions.status', $status);
             });
 
+            OrbitInput::get('order_status', function($orderStatus) use ($orders)
+            {
+                $orderStatus = (array) $orderStatus;
+                $orders->whereIn('orders.status', $orderStatus);
+            });
+
             OrbitInput::get('order_id', function($orderId) use ($orders)
             {
                 $orders->where('orders.order_id', $orderId);
