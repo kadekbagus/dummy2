@@ -72,7 +72,8 @@ class OrderListAPIController extends ControllerAPI
                                     DB::raw("CONCAT({$prefix}users.user_firstname,' ',{$prefix}users.user_lastname) as username"),
                                     DB::raw("{$prefix}media.path as user_picture"),
                                     'payment_transactions.status as payment_status',
-                                    'orders.created_at as order_date')
+                                    'orders.created_at as order_date',
+                                    'orders.total_amount')
                             ->join('payment_transaction_details', function ($q) {
                                     $q->on('payment_transaction_details.object_id','=','orders.order_id');
                                     $q->where('payment_transaction_details.object_type', '=', 'order');
