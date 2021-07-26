@@ -561,10 +561,27 @@ return array(
             'reservation_exists' => 'Reservation doesn\'t exists.',
             'can_cancel_rsvp' => 'Reservation cannot be canceled.',
             'rsvp_match_user' => 'You are not allowed to view/process requested reservation.',
+            'pikcup_location_valid' => 'Invalid pickup location for selected item.',
         ),
 
         'rsvp' => array(
             'quantity_available' => 'Requested quantity not available.',
+        ),
+
+        'cart_item' => array(
+            'exists' => 'Cart Item not found.',
+            'quantity_available' => 'Requested quantity not available.',
+        ),
+
+        'order' => array(
+            'exists' => 'The Order doesn\'t exists.',
+            'can_order' => 'One or more item(s) are not available. Please refresh the page and try again.',
+            'match_user' => 'Order doesn\'t match your credential. Try using another GTM account.',
+        ),
+
+        'purchase' => array(
+            'exists' => 'Purchase does not exists.',
+            'match_user' => 'Purchase does not match your credential. Try using another GTM account?',
         ),
     ),
 

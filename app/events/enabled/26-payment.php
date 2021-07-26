@@ -111,6 +111,11 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
 
             Queue::connection('sync')->push($queue, $queueData);
         }
+        else if ($payment->forOrder()) {
+            $queue = 'Orbit\\Queue\\Order\\GetProductQueue';
+
+            Queue::connection('sync')->push($queue, $queueData);
+        }
         else if ($payment->forSepulsa() || $payment->paidWith(['bank_transfer', 'echannel', 'gopay'])) {
             $delay = Config::get('orbit.transaction.delay_before_issuing_coupon', 75);
 

@@ -6,7 +6,9 @@ use App;
 use BrandProduct;
 use BrandProductVariant;
 use BrandProductReservation;
+use CartItem;
 use Orbit\Helper\Resource\MediaQuery;
+use Order;
 
 /**
  * Brand Product Validator.
@@ -66,6 +68,14 @@ class BrandProductValidator
             ])
             ->sum('quantity');
 
+        $usedQuantity += Order::select('quantity')
+            ->join('order_details',
+                'orders.order_id', '=', 'order_details.order_id'
+            )
+            ->where('brand_product_variant_id', $variant->brand_product_variant_id)
+            ->whereIn('orders.status', [Order::STATUS_PAID])
+            ->sum('quantity');
+
         return $variant->quantity - $usedQuantity >= $value;
     }
 
@@ -116,6 +126,67 @@ class BrandProductValidator
 
         return App::make('reservation')->user_id
             === App::make('currentUser')->user_id;
+    }
+
+    /**
+     * Determine if pickup location is valid (linked to the product) or not.
+     *
+     * @param  array
+     * @param  array
+     * @param  array
+     * @return bool valid or not.
+     */
+    public function pickupLocationValid($attrs, $value, $params)
+    {
+        $variant = $this->getVariant();
+
+        foreach ($variant->variant_options as $option) {
+            if ($option->store && $option->option_id === $value) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * This method assumes brand product variant is available inside container.
+     */
+    public function quantityAvailableForCart($attrs, $value, $params)
+    {
+        $variant = $this->getVariant();
+
+        if ($variant->quantity === 0) {
+            return true;
+        }
+
+        // Count reserved items as used quantity.
+        $usedQuantity = BrandProductReservation::select('quantity')
+            ->where('brand_product_variant_id', $variant->brand_product_variant_id)
+            ->whereIn('status', [
+                BrandProductReservation::STATUS_PENDING,
+                BrandProductReservation::STATUS_ACCEPTED,
+                BrandProductReservation::STATUS_DONE,
+            ])
+            ->sum('quantity');
+
+        // Add purchased items' count as used quantity.
+        $usedQuantity += Order::select('quantity')
+            ->join('order_details',
+                'orders.order_id', '=', 'order_details.order_id'
+            )
+            ->where('brand_product_variant_id', $variant->brand_product_variant_id)
+            ->whereIn('orders.status', [Order::STATUS_PAID])
+            ->sum('quantity');
+
+        // Add in-cart items' count as used quantity.
+        $usedQuantity += CartItem::select('quantity')
+            ->where('user_id', App::make('currentUser')->user_id)
+            ->where('brand_product_variant_id', $variant->brand_product_variant_id)
+            ->active()
+            ->sum('quantity');
+
+        return $variant->quantity - $usedQuantity >= $value;
     }
 
     private function getVariant($variantId = '')
