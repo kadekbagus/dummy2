@@ -188,6 +188,7 @@ class ReservationListAPIController extends ControllerAPI
                 $returnedItem->created_at = (string) $item->created_at;
                 $returnedItem->expired_at = $item->expired_at;
                 $returnedItem->status = $item->status_label;
+                $returnedItem->quantity = $item->quantity;
                 $imgPath = '';
                 $cdnUrl = '';
                 if (is_object($item->brand_product_variant)) {
