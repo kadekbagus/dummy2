@@ -115,6 +115,11 @@ class ReservationListAPIController extends ControllerAPI
                 });
             });
 
+            OrbitInput::get('reservation_id', function($reservationId) use ($reservations)
+            {
+                $reservations->where('brand_product_reservations.brand_product_reservation_id', $reservationId);
+            });
+
             OrbitInput::get('status', function($status) use ($reservations)
             {
                 switch (strtolower($status)) {
