@@ -110,7 +110,8 @@ class OrderListAPIController extends ControllerAPI
                                         }]);
                                     }
                                 ])
-                            ->where('orders.brand_id', '=', $brandId);
+                            ->where('orders.brand_id', '=', $brandId)
+                            ->whereNotIn('orders.status', ['pending', 'waiting_payment', 'expired']);
 
             isset($merchantId) ? $orders->where('orders.merchant_id', '=', $merchantId) : null;
 
@@ -118,6 +119,12 @@ class OrderListAPIController extends ControllerAPI
             {
                 $status = (array) $status;
                 $orders->whereIn('payment_transactions.status', $status);
+            });
+
+            OrbitInput::get('order_status', function($orderStatus) use ($orders)
+            {
+                $orderStatus = (array) $orderStatus;
+                $orders->whereIn('orders.status', $orderStatus);
             });
 
             OrbitInput::get('order_id', function($orderId) use ($orders)
