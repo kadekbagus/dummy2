@@ -115,6 +115,11 @@ class ReservationListAPIController extends ControllerAPI
                 });
             });
 
+            OrbitInput::get('reservation_id', function($reservationId) use ($reservations)
+            {
+                $reservations->where('brand_product_reservations.brand_product_reservation_id', $reservationId);
+            });
+
             OrbitInput::get('status', function($status) use ($reservations)
             {
                 switch (strtolower($status)) {
@@ -188,6 +193,7 @@ class ReservationListAPIController extends ControllerAPI
                 $returnedItem->created_at = (string) $item->created_at;
                 $returnedItem->expired_at = $item->expired_at;
                 $returnedItem->status = $item->status_label;
+                $returnedItem->quantity = $item->quantity;
                 $imgPath = '';
                 $cdnUrl = '';
                 if (is_object($item->brand_product_variant)) {
