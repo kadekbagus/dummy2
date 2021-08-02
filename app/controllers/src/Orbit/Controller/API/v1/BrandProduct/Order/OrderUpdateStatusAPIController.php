@@ -158,7 +158,7 @@ class OrderUpdateStatusAPIController extends ControllerAPI
 
             $order = App::make('orbit.order.exists');
 
-            if ($order->status !== Order::STATUS_PENDING) {
+            if ($order->status !== Order::STATUS_PAID) {
                 return FALSE;
             }
 
