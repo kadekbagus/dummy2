@@ -132,6 +132,11 @@ class OrderListAPIController extends ControllerAPI
                 $orders->where('orders.order_id', $orderId);
             });
 
+            OrbitInput::get('pick_up_code', function($pickUpCode) use ($orders)
+            {
+                $orders->where('orders.pick_up_code', $pickUpCode);
+            });
+
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_orders = clone $orders;
