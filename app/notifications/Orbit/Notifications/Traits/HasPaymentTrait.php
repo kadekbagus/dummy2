@@ -298,4 +298,9 @@ trait HasPaymentTrait
 
         return ucwords($providerName);
     }
+
+    protected function formatCurrency($amount, $currency)
+    {
+        return $currency . ' ' . number_format($amount, 0, ',', '.');
+    }
 }
