@@ -13,8 +13,8 @@ use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
 use Orbit\Helper\AutoIssueCoupon\AutoIssueCoupon;
 use Orbit\Helper\Cart\CartInterface;
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
-use Orbit\Notifications\Order\CustomerDigitalProductNotAvailableNotification;
-use Orbit\Notifications\Order\DigitalProductNotAvailableNotification;
+// use Orbit\Notifications\Order\CustomerDigitalProductNotAvailableNotification;
+// use Orbit\Notifications\Order\DigitalProductNotAvailableNotification;
 use Orbit\Notifications\Order\ReceiptNotification;
 use Order;
 use PaymentTransaction;
@@ -108,10 +108,7 @@ class GetProductQueue
             // AutoIssueCoupon::issue($payment, $digitalProduct->product_type);
 
             // Notify Customer.
-            // $payment->user->notify(new ReceiptNotification(
-            //     $payment,
-            //     $purchase->getVoucherData()
-            // ));
+            $payment->user->notify(new ReceiptNotification($payment), 5);
 
             // $this->recordSuccessGMP();
 
