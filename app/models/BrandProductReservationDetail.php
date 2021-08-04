@@ -20,4 +20,9 @@ class BrandProductReservationDetail extends Eloquent
     {
         return $this->hasMany(BrandProductReservationVariantDetail::class);
     }
+
+    public function product_variant()
+    {
+        return $this->belongsTo(BrandProductVariant::class);
+    }
 }
