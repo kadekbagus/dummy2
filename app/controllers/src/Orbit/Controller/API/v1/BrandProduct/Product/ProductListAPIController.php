@@ -72,7 +72,7 @@ class ProductListAPIController extends ControllerAPI
                     max({$prefix}brand_product_variants.selling_price) as max_price,
                     sum({$prefix}brand_product_variants.quantity) as total_quantity,
                     {$prefix}brand_products.status,
-                    count(brand_product_reservation_id) as total_reserved
+                    count(brand_product_reservation_detail_id) as total_reserved
                 "))
                 ->with([
                     'brand_product_main_photo' => function($q) {
@@ -81,7 +81,7 @@ class ProductListAPIController extends ControllerAPI
                     }
                 ])
                 ->leftJoin('brand_product_variants', 'brand_products.brand_product_id', '=', 'brand_product_variants.brand_product_id')
-                ->leftJoin('brand_product_reservations', 'brand_product_variants.brand_product_variant_id', '=', 'brand_product_reservations.brand_product_variant_id')
+                ->leftJoin('brand_product_reservation_details', 'brand_product_variants.brand_product_variant_id', '=', 'brand_product_reservation_details.brand_product_variant_id')
                 ->where(DB::raw("{$prefix}brand_products.brand_id"), $brandId)
                 ->where('brand_products.status', '<>', 'deleted')
                 ->groupBy(DB::raw("{$prefix}brand_products.brand_product_id"));
