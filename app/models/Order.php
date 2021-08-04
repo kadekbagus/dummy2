@@ -3,6 +3,7 @@
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Orbit\Database\ObjectID;
 
 /**
  * Order model.
@@ -20,6 +21,7 @@ class Order extends Eloquent
     const STATUS_PAID = 'paid';
     const STATUS_READY_FOR_PICKUP = 'ready_for_pickup';
     const STATUS_DONE = 'done';
+    const STATUS_DECLINED = 'declined';
 
     protected $primaryKey = 'order_id';
 
@@ -187,5 +189,10 @@ class Order extends Eloquent
     public function user()
     {
         return $this->belongsTo('User', 'user_id', 'user_id');
+    }
+
+    public static function createPickUpCode()
+    {
+        return ObjectID::make();
     }
 }
