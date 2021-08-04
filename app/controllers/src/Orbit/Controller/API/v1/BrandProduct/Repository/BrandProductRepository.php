@@ -75,12 +75,8 @@ class BrandProductRepository
                 'brand',
                 'videos',
                 'brand_product_variants.variant_options',
-                'brand_product_variants.reservations' => function($query) {
-                    $query->select(
-                        'brand_product_variant_id',
-                        'brand_product_reservation_id',
-                        'quantity'
-                    )->whereIn('status', [
+                'brand_product_variants.reservation_details.reservation' => function($query) {
+                    $query->whereIn('status', [
                         BrandProductReservation::STATUS_PENDING,
                         BrandProductReservation::STATUS_ACCEPTED,
                         BrandProductReservation::STATUS_DONE,

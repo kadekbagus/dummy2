@@ -92,7 +92,7 @@ class BrandProductResource extends Resource
                 'originalPrice' => $variant->original_price,
                 'sellingPrice' => $variant->selling_price,
                 'discount' => $discount,
-                'quantity' => $variant->quantity - $variant->reservations->sum('quantity'),
+                'quantity' => $variant->quantity - $variant->reservation_details->sum('quantity'),
                 'options' => $this->transformVariantOptions(
                     $variant->variant_options, $variantOptions
                 ),
@@ -192,7 +192,7 @@ class BrandProductResource extends Resource
                                 'product_code' => $bpVariant->product_code,
                                 'original_price' => $bpVariant->original_price,
                                 'selling_price' => $bpVariant->selling_price,
-                                'quantity' => $bpVariant->quantity - $bpVariant->reservations->sum('quantity'),
+                                'quantity' => $bpVariant->quantity - $bpVariant->reservation_details->sum('quantity'),
                                 'options' => $optionList,
                             ];
 

@@ -15,4 +15,14 @@ class BrandProductReservationDetail extends Eloquent
     {
         return $this->hasOne(Media::class, 'media_id', 'value');
     }
+
+    public function variant_details()
+    {
+        return $this->hasMany(BrandProductReservationVariantDetail::class);
+    }
+
+    public function reservation()
+    {
+        return $this->belongsTo(BrandProductReservation::class);
+    }
 }
