@@ -25,4 +25,9 @@ class BrandProductReservationDetail extends Eloquent
     {
         return $this->belongsTo(BrandProductVariant::class);
     }
+
+    public function reservation()
+    {
+        return $this->belongsTo(BrandProductReservation::class);
+    }
 }
