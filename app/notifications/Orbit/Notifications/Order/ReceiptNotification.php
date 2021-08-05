@@ -105,8 +105,6 @@ class ReceiptNotification extends BaseReceiptNotification
 
     private function prepareMailData($data)
     {
-        $mailData = [];
-
         $this->payment = PaymentTransaction::onWriteConnection()->with([
                 'details.order.details.order_variant_details',
                 'details.order.details.brand_product_variant.brand_product',

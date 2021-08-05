@@ -299,8 +299,10 @@ trait HasPaymentTrait
         return ucwords($providerName);
     }
 
-    protected function formatCurrency($amount, $currency)
+    protected function getProductName()
     {
-        return $currency . ' ' . number_format($amount, 0, ',', '.');
+        return $this->payment->details->filter(function($item) {
+            return $item->object_type === 'order';
+        })->first()->order->details->first()->product_name;
     }
 }
