@@ -54,13 +54,13 @@ class ReservationListAPIController extends ControllerAPI
 
             $reservations = BrandProductReservation::select(DB::raw("
                     {$prefix}brand_product_reservations.brand_product_reservation_id,
-                    {$prefix}brand_product_reservations.selling_price,
+                    {$prefix}brand_product_reservation_details.selling_price,
                     {$prefix}brand_product_reservations.created_at,
                     {$prefix}brand_product_reservations.expired_at,
-                    {$prefix}brand_product_reservations.quantity,
+                    {$prefix}brand_product_reservation_details.quantity,
                     {$prefix}brand_product_reservations.user_id,
-                    {$prefix}brand_product_reservations.product_name,
-                    {$prefix}brand_product_reservations.brand_product_variant_id,
+                    {$prefix}brand_product_reservation_details.product_name,
+                    {$prefix}brand_product_reservation_details.brand_product_variant_id,
                     CASE {$prefix}brand_product_reservations.status
                         WHEN 'accepted' THEN
                             CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
@@ -79,25 +79,29 @@ class ReservationListAPIController extends ControllerAPI
                     'store' => function($q) {
                         $q->with('store.mall');
                     },
-                    'brand_product_variant' => function($q) {
-                        $q->select('brand_product_variant_id', 'brand_product_id');
+                    'details' => function($q) {
                         $q->with([
-                            'brand_product' => function($q2) {
-                                $q2->select('brand_product_id');
-                                $q2->with([
-                                    'brand_product_main_photo' => function($q3) {
-                                        $q3->select('media_id', 'object_id', 'path', 'cdn_url');
+                            'product_variant' => function($q1) {
+                                $q1->with([
+                                    'brand_product' => function($q3) {
+                                        $q3->select('brand_product_id');
+                                        $q3->with([
+                                            'brand_product_main_photo' => function($q4) {
+                                                $q4->select('media_id', 'object_id', 'path', 'cdn_url');
+                                            }
+                                        ]);
                                     }
                                 ]);
+                            },
+                            'variant_details' => function($q12) {
+                                $q12->select('brand_product_reservation_detail_id', 'brand_product_reservation_id', 'value')
+                                    ->where('option_type', 'variant_option');
                             }
                         ]);
-                    },
-                    'details' => function($q) {
-                        $q->select('brand_product_reservation_detail_id', 'brand_product_reservation_id', 'value')
-                            ->where('option_type', 'variant_option');
                     }
                 ])
                 ->leftJoin('brand_product_reservation_details', 'brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
+                ->leftJoin('brand_product_reservation_variant_details', 'brand_product_reservation_variant_details.brand_product_reservation_detail_id', '=', 'brand_product_reservation_details.brand_product_reservation_detail_id')
                 ->where(DB::raw("{$prefix}brand_product_reservations.brand_id"), $brandId)
                 ->where('option_type', 'merchant')
                 ->groupBy(DB::raw("{$prefix}brand_product_reservations.brand_product_reservation_id"));

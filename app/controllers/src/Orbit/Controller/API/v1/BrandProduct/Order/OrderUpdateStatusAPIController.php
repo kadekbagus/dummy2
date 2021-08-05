@@ -20,12 +20,13 @@ use Illuminate\Database\QueryException;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
+use Orbit\Database\ObjectID;
 
 class OrderUpdateStatusAPIController extends ControllerAPI
 {
 
     /**
-     * Decline or accept brand product order
+     * Update status of order 
      *
      * @author Kadek <kadek@dominopos.com>
      */
@@ -41,6 +42,7 @@ class OrderUpdateStatusAPIController extends ControllerAPI
             $merchantId = $user->merchant_id;
             $orderId = OrbitInput::post('order_id');
             $status = OrbitInput::post('status');
+            $cancelReason = OrbitInput::post('cancel_reason', 'Out of Stock');
 
             $this->registerCustomValidation();
 
@@ -52,15 +54,18 @@ class OrderUpdateStatusAPIController extends ControllerAPI
                 array(
                     'order_id'      => 'required|orbit.order.exists:'.$brandId.'|orbit.order.status',
                     'status'        => 'required|in:'. join(',', [
-                            Order::STATUS_READY_FOR_PICKUP,
-                            Order::STATUS_CANCELLED,
-                        ]),
+                                                                    Order::STATUS_READY_FOR_PICKUP,
+                                                                    Order::STATUS_DECLINED,
+                                                                    Order::STATUS_DONE,
+                                        ]),
                 ),
                 array(
                     'orbit.order.exists' => 'Order not found',
                     'orbit.order.status' => 'Cannot update this order',
                     'order_id.required'  => 'Order ID is required',
-                    'status.in' => 'available status are: '.Order::STATUS_READY_FOR_PICKUP.','.Order::STATUS_CANCELLED
+                    'status.in' => 'available status are: '.Order::STATUS_READY_FOR_PICKUP.','
+                                                           .Order::STATUS_DECLINED.','
+                                                           .Order::STATUS_DONE
                 )
             );
 
@@ -73,22 +78,25 @@ class OrderUpdateStatusAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $order = App::make('orbit.order.exists');
+            // ready for pickup order
+            if ($status === Order::STATUS_READY_FOR_PICKUP) {
+                Order::readyForPickup($orderId);
+            }
 
-            $order->status = $status;
+            // cancelled/denied order
+            if ($status === Order::STATUS_CANCELLED) {
+                Order::cancel($orderId, $cancelReason);
+            }
 
-            $order->save();
+            // done/confirm order
+            if ($status === Order::STATUS_DONE) {
+                Order::done($orderId);
+            }
 
             // Commit the changes
             $this->commit();
 
-            if ($status === Order::STATUS_CANCELLED) {
-                Event::fire('orbit.order.cancelled', [$order]);
-            }
-
-            if ($status === Order::STATUS_READY_FOR_PICKUP) {
-                Event::fire('orbit.order.ready_for_pickup', [$order]);
-            }
+            $order = Order::where('order_id', $orderId)->where('brand_id', '=', $brandId)->first();
 
             $this->response->data = $order;
         } catch (ACLForbiddenException $e) {
@@ -155,11 +163,19 @@ class OrderUpdateStatusAPIController extends ControllerAPI
         // Check the order status
         Validator::extend('orbit.order.status', function ($attribute, $value, $parameters) {
             $prefix = DB::getTablePrefix();
-
+            $status = OrbitInput::post('status');
             $order = App::make('orbit.order.exists');
 
-            if ($order->status !== Order::STATUS_PAID) {
-                return FALSE;
+            if ($status === Order::STATUS_READY_FOR_PICKUP || $status === Order::STATUS_DECLINED) {
+                if ($order->status !== Order::STATUS_PAID) {
+                    return FALSE;
+                }
+            }
+
+            if ($status === Order::STATUS_DONE) {
+                if ($order->status !== Order::STATUS_READY_FOR_PICKUP) {
+                    return FALSE;
+                }
             }
 
             return TRUE;
