@@ -57,6 +57,7 @@ class ReservationListAPIController extends ControllerAPI
                     {$prefix}brand_product_reservation_details.selling_price,
                     {$prefix}brand_product_reservations.created_at,
                     {$prefix}brand_product_reservations.expired_at,
+                    {$prefix}brand_product_reservations.total_amount,
                     {$prefix}brand_product_reservation_details.quantity,
                     {$prefix}brand_product_reservations.user_id,
                     {$prefix}brand_product_reservation_details.product_name,
@@ -76,9 +77,7 @@ class ReservationListAPIController extends ControllerAPI
                     'users' => function($q) {
                         $q->select('users.user_id', 'user_firstname', 'user_lastname');
                     },
-                    'store' => function($q) {
-                        $q->with('store.mall');
-                    },
+                    'store.mall',
                     'details' => function($q) {
                         $q->with([
                             'product_variant' => function($q1) {
@@ -94,7 +93,7 @@ class ReservationListAPIController extends ControllerAPI
                                 ]);
                             },
                             'variant_details' => function($q12) {
-                                $q12->select('brand_product_reservation_detail_id', 'brand_product_reservation_id', 'value')
+                                $q12->select('brand_product_reservation_detail_id', 'brand_product_reservation_variant_detail_id', 'value')
                                     ->where('option_type', 'variant_option');
                             }
                         ]);
@@ -103,12 +102,9 @@ class ReservationListAPIController extends ControllerAPI
                 ->leftJoin('brand_product_reservation_details', 'brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
                 ->leftJoin('brand_product_reservation_variant_details', 'brand_product_reservation_variant_details.brand_product_reservation_detail_id', '=', 'brand_product_reservation_details.brand_product_reservation_detail_id')
                 ->where(DB::raw("{$prefix}brand_product_reservations.brand_id"), $brandId)
-                ->where('option_type', 'merchant')
                 ->groupBy(DB::raw("{$prefix}brand_product_reservations.brand_product_reservation_id"));
 
-            if (! empty($merchantId)) {
-                $reservations->where('brand_product_reservation_details.value', $merchantId);
-            }
+            isset($merchantId) ? $reservations->where('brand_product_reservations.merchant_id', '=', $merchantId) : null;
 
             OrbitInput::get('product_name_like', function($keyword) use ($reservations)
             {
@@ -192,32 +188,43 @@ class ReservationListAPIController extends ControllerAPI
                 $returnedItem = new stdclass();
                 $returnedItem->brand_product_reservation_id = $item->brand_product_reservation_id;
                 $returnedItem->user_name = $item->users->user_firstname . ' ' . $item->users->user_lastname;
-                $returnedItem->product_name = $item->product_name;
-                $returnedItem->selling_price = $item->selling_price;
                 $returnedItem->created_at = (string) $item->created_at;
                 $returnedItem->expired_at = $item->expired_at;
                 $returnedItem->status = $item->status_label;
-                $returnedItem->quantity = $item->quantity;
-                $imgPath = '';
-                $cdnUrl = '';
-                if (is_object($item->brand_product_variant)) {
-                    if (is_object($item->brand_product_variant->brand_product)) {
-                        if (! empty($item->brand_product_variant->brand_product->brand_product_main_photo)) {
-                            if (is_object($item->brand_product_variant->brand_product->brand_product_main_photo[0])) {
-                                $imgPath = $item->brand_product_variant->brand_product->brand_product_main_photo[0]->path;
-                                $cdnUrl = $item->brand_product_variant->brand_product->brand_product_main_photo[0]->cdn_url;
+                $returnedItem->total_amount = $item->total_amount;
+                $returnedItem->details = [];
+
+                foreach ($item->details as $detail) {
+                    $dtl = new stdclass();
+
+                    $dtl->product_name = $detail->product_name;
+                    $dtl->quantity = $detail->quantity;
+                    $dtl->selling_price = $detail->selling_price;
+                    $dtl->original_price = $detail->original_price;
+                    $imgPath = '';
+                    $cdnUrl = '';
+                    if (is_object($detail->product_variant)) {
+                        if (is_object($detail->product_variant->brand_product)) {
+                            if (! empty($detail->product_variant->brand_product->brand_product_main_photo)) {
+                                if (is_object($detail->product_variant->brand_product->brand_product_main_photo[0])) {
+                                    $imgPath = $detail->product_variant->brand_product->brand_product_main_photo[0]->path;
+                                    $cdnUrl = $detail->product_variant->brand_product->brand_product_main_photo[0]->cdn_url;
+                                }
                             }
                         }
                     }
+
+                    $dtl->img_path = $imgPath;
+                    $dtl->cdn_url = $cdnUrl;
+
+                    $variants = [];
+                    foreach ($detail->variant_details as $variantDetail) {
+                        $variants[] = strtoupper($variantDetail->value);
+                    }
+                    $dtl->variants = implode(', ', $variants);
+                    $returnedItem->details[] = $dtl;
                 }
 
-                $returnedItem->img_path = $imgPath;
-                $returnedItem->cdn_url = $cdnUrl;
-                $variants = [];
-                foreach ($item->details as $variantDetail) {
-                    $variants[] = strtoupper($variantDetail->value);
-                }
-                $returnedItem->variants = implode(', ', $variants);
                 $returnedData[] = $returnedItem;
             }
 
@@ -265,5 +272,4 @@ class ReservationListAPIController extends ControllerAPI
 
         return $this->render($httpCode);
     }
-
 }
