@@ -64,6 +64,7 @@ class OrderDetailAPIController extends ControllerAPI
                                     'orders.total_amount as total_payment',
                                     'orders.user_id',
                                     'orders.created_at as order_date',
+                                    'orders.pick_up_code',
                                     DB::raw("CONCAT({$prefix}users.user_firstname,' ',{$prefix}users.user_lastname) as username"),
                                     DB::raw("{$prefix}media.path as user_picture"),
                                     'payment_transactions.status as payment_status')
