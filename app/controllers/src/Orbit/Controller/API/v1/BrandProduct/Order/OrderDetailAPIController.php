@@ -63,6 +63,7 @@ class OrderDetailAPIController extends ControllerAPI
                                     'orders.status',
                                     'orders.total_amount as total_payment',
                                     'orders.user_id',
+                                    'orders.merchant_id',
                                     'orders.created_at as order_date',
                                     'orders.pick_up_code',
                                     DB::raw("CONCAT({$prefix}users.user_firstname,' ',{$prefix}users.user_lastname) as username"),
@@ -80,7 +81,9 @@ class OrderDetailAPIController extends ControllerAPI
                                     $q->where('media.media_name_id', '=', 'user_profile_picture');
                                     $q->where('media.media_name_long', '=', 'user_profile_picture_orig');
                                 })
-                            ->with(['order_details' => function($q) use ($prefix) {
+                            ->with([
+                                'store.mall',
+                                'order_details' => function($q) use ($prefix) {
                                         $q->addSelect('order_detail_id','order_id','brand_product_variant_id','sku','product_code','quantity','selling_price');
                                         $q->with(['brand_product_variant' => function($q) use ($prefix) {
                                             $q->addSelect('brand_product_id','brand_product_variant_id');
@@ -100,14 +103,33 @@ class OrderDetailAPIController extends ControllerAPI
                                 ])
                             ->where('orders.brand_id', '=', $brandId)
                             ->where('orders.order_id', '=', $orderId);
-                            
+
             isset($merchantId) ? $order->where('orders.merchant_id', '=', $merchantId) : null;
             $order = $order->first();
-            
+
             if (! is_object($order)) {
                 $errorMessage = 'Order that you specify is not found';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            $storeName = '';
+            $mallName = '';
+            if (is_object($order->store)) {
+                if (! empty($order->store->name)) {
+                    $storeName = $order->store->name;
+                }
+                if (is_object($order->store->mall)) {
+                    if (! empty($order->store->mall->name)) {
+                        $mallName = $order->store->mall->name;
+                    }
+                }
+            }
+            $order->pick_up_location = '';
+            if (!empty($storeName) && !empty($mallName)) {
+                $order->pick_up_location = $storeName . ' at ' . $mallName;
+            }
+
+            unset($order->store);
 
             foreach ($order->order_details as $key => $value) {
                 $order->order_details[$key]->product_name = $value->brand_product_variant->brand_product->product_name;

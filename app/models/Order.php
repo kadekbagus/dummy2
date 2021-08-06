@@ -113,6 +113,11 @@ class Order extends Eloquent
         return $orders;
     }
 
+    public function store()
+    {
+        return $this->belongsTo(Tenant::class, 'merchant_id', 'merchant_id');
+    }
+
     public static function requestCancel($orderId)
     {
         $order = Order::where('order_id', $orderId)->update([
