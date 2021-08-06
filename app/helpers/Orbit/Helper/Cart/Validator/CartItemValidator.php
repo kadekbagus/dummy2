@@ -49,6 +49,12 @@ class CartItemValidator
     {
         // Count reserved items as used quantity.
         $usedQuantity = BrandProductReservation::select('quantity')
+            ->join(
+                'brand_product_reservation_details',
+                'brand_product_reservations.brand_product_reservation_id',
+                '=',
+                'brand_product_reservation_details.brand_product_reservation_id'
+            )
             ->where('brand_product_variant_id', $variant->brand_product_variant_id)
             ->whereIn('status', [
                 BrandProductReservation::STATUS_PENDING,

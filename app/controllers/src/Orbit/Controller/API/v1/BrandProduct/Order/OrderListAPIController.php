@@ -73,7 +73,8 @@ class OrderListAPIController extends ControllerAPI
                                     DB::raw("{$prefix}media.path as user_picture"),
                                     'payment_transactions.status as payment_status',
                                     'orders.created_at as order_date',
-                                    'orders.total_amount')
+                                    'orders.total_amount',
+                                    'orders.pick_up_code')
                             ->join('payment_transaction_details', function ($q) {
                                     $q->on('payment_transaction_details.object_id','=','orders.order_id');
                                     $q->where('payment_transaction_details.object_type', '=', 'order');
@@ -135,6 +136,7 @@ class OrderListAPIController extends ControllerAPI
             OrbitInput::get('pick_up_code', function($pickUpCode) use ($orders)
             {
                 $orders->where('orders.pick_up_code', $pickUpCode);
+                $orders->whereNotIn('orders.status', [Order::STATUS_DONE]);
             });
 
             // Clone the query builder which still does not include the take,
