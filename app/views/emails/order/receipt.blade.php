@@ -98,6 +98,7 @@ Receipt from Gotomalls.com
                             <thead class="bordered">
                               <tr>
                                   <th class="transaction-item-name">{{{ trans('email-receipt.table_transaction.header.item', [], '', $lang) }}}</th>
+                                  <th class="transaction-variant">{{{ trans('email-receipt.table_transaction.header.variant', [], '', $lang) }}}</th>
                                   <th class="transaction-qty">{{{ trans('email-receipt.table_transaction.header.quantity', [], '', $lang) }}}</th>
                                   <th class="transaction-amount">{{{ trans('email-receipt.table_transaction.header.price', [], '', $lang) }}}</th>
                                   <th class="transaction-subtotal">{{{ trans('email-receipt.table_transaction.header.subtotal', [], '', $lang) }}}</th>
@@ -109,6 +110,7 @@ Receipt from Gotomalls.com
                                   <td class="transaction-item item-name">
                                     {{ $item['name'] }}
                                   </td>
+                                  <td class="transaction-item">{{{ $item['variant'] }}}</td>
                                   <td class="transaction-item" style="text-align: center;">{{{ $item['quantity'] }}}</td>
                                   <td class="transaction-item">{{{ $item['price'] }}}</td>
                                   <td class="transaction-item">{{{ $item['total'] }}}</td>

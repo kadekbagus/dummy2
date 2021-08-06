@@ -305,4 +305,10 @@ trait HasPaymentTrait
             return $item->object_type === 'order';
         })->first()->order->details->first()->product_name;
     }
+
+    protected function getTransactionDateTime($format = 'd F Y, H:i')
+    {
+        return $this->payment->getTransactionDate($format)
+            . " {$this->getLocalTimezoneName($this->payment->timezone_name)}";
+    }
 }

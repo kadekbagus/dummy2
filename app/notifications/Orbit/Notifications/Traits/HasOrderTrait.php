@@ -8,10 +8,19 @@ use BrandProductReservation;
 use Illuminate\Support\Facades\Config;
 use PaymentTransaction;
 
+/**
+ * Common method helpers related to notification for Product/Order transaction.
+ *
+ * @author Budi <budi@gotomalls.com>
+ */
 trait HasOrderTrait
 {
-    protected $transactionData = [];
-
+    /**
+     * Get the payment object instance based on given transaction id.
+     *
+     * @param  string $paymentId - payment transaction id
+     * @return PaymentTransaction - payment transaction object instance.
+     */
     protected function getPayment($paymentId)
     {
         return PaymentTransaction::onWriteConnection()->with([
@@ -25,7 +34,6 @@ trait HasOrderTrait
 
     /**
      * @override
-     * @todo move to HasPaymentTrait
      * @return [type] [description]
      */
     protected function getTransactionData()
@@ -45,6 +53,7 @@ trait HasOrderTrait
             $detailItem = [
                 'name'      => $item->object_name,
                 'shortName' => $item->object_name,
+                'variant'   => '',
                 'quantity'  => $item->quantity,
                 'price'     => $item->getPrice(),
                 'total'     => $item->getTotal(),
@@ -56,6 +65,7 @@ trait HasOrderTrait
                     $detailItem = [
                         'name'      => $product->brand_product->product_name,
                         'shortName' => $product->brand_product->product_name,
+                        'variant'   => $this->getVariant($orderDetail),
                         'quantity'  => $orderDetail->quantity,
                         'price'     => $this->formatCurrency($orderDetail->selling_price, $item->currency),
                         'total'     => $this->formatCurrency($item->order->total_amount, $item->currency),
@@ -81,26 +91,22 @@ trait HasOrderTrait
         return $transaction;
     }
 
-    protected function formatDate($date)
+    /**
+     * Get product variant information.
+     *
+     * @param  OrderDetail $orderDetail Order Detail object instance.
+     * @return string - variant information separated by comma (,).
+     */
+    protected function getVariant($orderDetail)
     {
-        return Carbon::parse($date)
-            ->timezone('Asia/Jakarta')
-            ->format('D, d F Y, H:i') . ' (WIB)';
+        return $orderDetail->order_variant_details->implode('value', ', ');
     }
 
-    protected function getTotalPayment()
-    {
-        $total = $this->reservation->quantity
-            * $this->reservation->selling_price;
-
-        return 'Rp ' . number_format($total, 2, '.', ',');
-    }
-
-    protected function getVariant()
-    {
-        return strtoupper($this->reservation->variants->implode('value', ', '));
-    }
-
+    /**
+     * Get admin/store user email recipients details.
+     *
+     * @return array $recipients - list of admin/store user recipient details
+     */
     protected function getAdminRecipients()
     {
         $recipients = [];

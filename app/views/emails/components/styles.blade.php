@@ -295,6 +295,7 @@
     }
 
     .transaction-item-name,
+    .transaction-variant,
     .transaction-qty,
     .transaction-amount,
     .transaction-subtotal {
