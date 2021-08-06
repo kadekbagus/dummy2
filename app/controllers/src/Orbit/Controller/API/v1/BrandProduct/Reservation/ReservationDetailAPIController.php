@@ -75,6 +75,7 @@ class ReservationDetailAPIController extends ControllerAPI
                     {$prefix}brand_product_reservations.brand_product_reservation_id,
                     {$prefix}brand_product_reservation_details.selling_price,
                     {$prefix}brand_product_reservations.created_at,
+                    {$prefix}brand_product_reservations.merchant_id,
                     {$prefix}brand_product_reservations.expired_at,
                     {$prefix}brand_product_reservation_details.quantity,
                     {$prefix}brand_product_reservations.user_id,
@@ -138,6 +139,22 @@ class ReservationDetailAPIController extends ControllerAPI
                 $returnedItem->status = $reservations->status;
                 $returnedItem->cancel_reason = $reservations->cancel_reason;
                 $returnedItem->total_amount = $reservations->total_amount;
+                $storeName = '';
+                $mallName = '';
+                if (is_object($reservations->store)) {
+                    if (! empty($reservations->store->name)) {
+                        $storeName = $reservations->store->name;
+                    }
+                    if (is_object($reservations->store->mall)) {
+                        if (! empty($reservations->store->mall->name)) {
+                            $mallName = $reservations->store->mall->name;
+                        }
+                    }
+                }
+                $returnedItem->pick_up_location = '';
+                if (!empty($storeName) && !empty($mallName)) {
+                    $returnedItem->pick_up_location = $storeName . ' at ' . $mallName;
+                }
 
                 foreach ($reservations->details as $detail) {
                     $dtl = new stdclass();

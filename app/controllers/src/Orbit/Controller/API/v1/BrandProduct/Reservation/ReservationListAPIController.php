@@ -77,7 +77,9 @@ class ReservationListAPIController extends ControllerAPI
                     'users' => function($q) {
                         $q->select('users.user_id', 'user_firstname', 'user_lastname');
                     },
-                    'store.mall',
+                    'store' => function($q) {
+                        $q->select('merchants.merchant_id', 'merchants.name');
+                    },
                     'details' => function($q) {
                         $q->with([
                             'product_variant' => function($q1) {
