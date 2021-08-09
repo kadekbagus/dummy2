@@ -69,7 +69,7 @@ trait HasOrderTrait
                         'variant'   => $this->getVariant($orderDetail),
                         'quantity'  => $orderDetail->quantity,
                         'price'     => $this->formatCurrency($orderDetail->selling_price, $item->currency),
-                        'total'     => $this->formatCurrency($item->order->total_amount, $item->currency),
+                        'total'     => $this->formatCurrency($orderDetail->selling_price * $orderDetail->quantity, $item->currency),
                     ];
 
                     if (empty($transaction['itemName'])) {
