@@ -127,7 +127,7 @@ Receipt from Gotomalls.com
                             </tbody>
                             <tfoot class="transaction-footer">
                               <tr>
-                                  <td colspan="2" class="transaction-item transaction-total"></td>
+                                  <td colspan="3" class="transaction-item transaction-total"></td>
                                   <td class="transaction-item transaction-total"><strong>{{{ trans('email-receipt.table_transaction.footer.total', [], '', $lang) }}}</strong></td>
                                   <td class="transaction-item transaction-total">{{{ $transaction['total'] }}}</td>
                               </tr>
