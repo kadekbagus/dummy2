@@ -295,6 +295,7 @@
     }
 
     .transaction-item-name,
+    .transaction-variant,
     .transaction-qty,
     .transaction-amount,
     .transaction-subtotal {
@@ -504,6 +505,11 @@
       height: 5px;
       display: block;
       clear: left;
+    }
+
+    .product-details-subtitle {
+      background-color: transparent;
+      padding: 10px;
     }
 
     /* MEDIA QUERIES */
