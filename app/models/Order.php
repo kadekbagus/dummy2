@@ -113,6 +113,11 @@ class Order extends Eloquent
         return $orders;
     }
 
+    public function store()
+    {
+        return $this->belongsTo(Tenant::class, 'merchant_id', 'merchant_id');
+    }
+
     public static function requestCancel($orderId)
     {
         $order = Order::where('order_id', $orderId)->update([
@@ -194,5 +199,18 @@ class Order extends Eloquent
     public static function createPickUpCode()
     {
         return ObjectID::make();
+    }
+
+    public static function declined($orderId, $reason, $userId)
+    {
+        $order = Order::where('order_id', $orderId)->update([
+                'status' => self::STATUS_DECLINED,
+                'cancel_reason' => $reason,
+                'declined_by' => $userId,
+            ]);
+
+        // Event::fire('orbit.cart.order-declined', [$order]);
+
+        return $order;
     }
 }
