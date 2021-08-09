@@ -6571,4 +6571,8 @@ return array(
     'reservation' => [
         'see_reservation_url' => 'https://bpp-v426.gotomalls.cool/#!/reservations/%s',
     ],
+
+    'product_order' => [
+        'follow_up_url' => 'https://bpp.gotomalls.com/#!/orders/%s',
+    ],
 );

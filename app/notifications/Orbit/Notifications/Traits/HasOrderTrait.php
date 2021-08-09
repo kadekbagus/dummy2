@@ -63,6 +63,7 @@ trait HasOrderTrait
                 foreach($item->order->details as $orderDetail) {
                     $product = $orderDetail->brand_product_variant;
                     $detailItem = [
+                        'storeId'   => $item->order->merchant_id,
                         'name'      => $product->brand_product->product_name,
                         'shortName' => $product->brand_product->product_name,
                         'variant'   => $this->getVariant($orderDetail),
@@ -103,34 +104,105 @@ trait HasOrderTrait
     }
 
     /**
+     * Get list of store id and brand id from the purchase.
+     *
+     * @return array $stores - array of the store id.
+     */
+    protected function getStoresAndBrands()
+    {
+        $data = [[], []];
+
+        $this->payment->details->filter(function($detail) {
+                return ! empty($detail->order);
+            })->each(function($detail) use (&$data) {
+                 $data[0][$detail->order->merchant_id] = $detail->order->merchant_id;
+                 $data[1][$detail->order->brand_id] = $detail->order->brand_id;
+            });
+
+        return $data;
+    }
+
+    protected function getFollowUpOrderUrl($order)
+    {
+        $baseUrl = Config::get(
+            'orbit.product_order.follow_up_url',
+            'https://bpp.gotomalls.com/#!/orders/%s'
+        );
+
+        return  sprintf($baseUrl, $order->order_id);
+    }
+
+    /**
      * Get admin/store user email recipients details.
      *
      * @return array $recipients - list of admin/store user recipient details
      */
     protected function getAdminRecipients()
     {
-        $recipients = [];
+        $storeAdmins = [];
 
-        $stores = $this->getStores();
-        $brandId = $this->reservation->brand_product_variant->brand_product->brand_id;
-        $allAdmin = BppUser::with(['stores'])
+        list($stores, $brands) = $this->getStoresAndBrands();
+        $allAdmin = BppUser::with(['stores' => function($query) use ($stores) {
+                $query->whereIn('merchants.merchant_id', $stores)
+                    ->with(['mall']);
+            }])
             ->where('status', 'active')
-            ->where('base_merchant_id', $brandId)
-            ->where(function($query) use ($store) {
+            ->whereIn('base_merchant_id', $brands)
+            ->where(function($query) use ($stores) {
                 $query->where('user_type', 'brand')
-                    ->orWhereHas('stores', function($query) use ($store) {
-                        $query->where('bpp_user_merchants.merchant_id', $store['storeId']);
+                    ->orWhereHas('stores', function($query) use ($stores) {
+                        $query->whereIn('bpp_user_merchants.merchant_id', $stores);
                     });
             })
             ->get();
 
+        $brandUsers = [];
+
+        $allAdmin->each(function($admin) use (&$brandUsers) {
+            if ($admin->user_type === 'brand') {
+                $brandUsers[$admin->bpp_user_id] = [
+                    'brand_id' => $admin->base_merchant_id,
+                    'name' => $admin->name,
+                    'email' => $admin->email,
+                ];
+            }
+        });
+
         foreach($allAdmin as $admin) {
-            $recipients[$admin->bpp_user_id] = [
-                'name' => $admin->name,
-                'email' => $admin->email,
-            ];
+            $adminId = $admin->bpp_user_id;
+            $brandId = $admin->base_merchant_id;
+
+            foreach($admin->stores as $store) {
+                $storeId = $store->merchant_id;
+
+                if (! isset($storeAdmins[$storeId])) {
+                    $storeAdmins[$storeId] = [
+                        'admins' => [],
+                        'details' => [
+                            'storeName' => $store->name,
+                            'mallName' => $store->mall->name,
+                            'floor' => $store->floor,
+                            'unit' => $store->unit,
+                        ],
+                    ];
+                }
+
+                foreach($brandUsers as $brandUserId => $brandUser) {
+                    if ($brandUser['brand_id'] === $brandId) {
+                        $storeAdmins[$storeId]['admins'][$brandUserId] = $brandUser;
+                        break;
+                    }
+                }
+
+                if (! isset($storeAdmins[$storeId]['admins'][$adminId])) {
+                    $storeAdmins[$storeId]['admins'][$adminId] = [
+                        'name' => $admin->name,
+                        'email' => $admin->email,
+                    ];
+                }
+            }
         }
 
-        return $recipients;
+        return $storeAdmins;
     }
 }

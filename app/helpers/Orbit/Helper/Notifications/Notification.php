@@ -305,6 +305,6 @@ abstract class Notification {
      */
     protected function getSupportedLanguages()
     {
-        return ['en'];
+        return ['id', 'en'];
     }
 }

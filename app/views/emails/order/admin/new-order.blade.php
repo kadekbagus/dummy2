@@ -1,164 +1,203 @@
-@extends('emails.layouts.default')
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>{{ trans('email-order.new-order.subject') }}</title>
 
-@section('title')
-New Order from Gotomalls.com
-@stop
+  @include('emails.components.styles')
 
-@section('content')
-  @foreach($supportedLangs as $lang)
-    <tr>
-      <td align="center" valign="top">
+</head>
+<body style="margin:0; padding:0; background-color:#F2F2F2;">
 
-        <table width="640" cellpadding="0" cellspacing="0" border="0" class="wrapper" bgcolor="#FFFFFF" style="background-color: transparent;">
-          <tr>
-            <td align="center" valign="middle" style="box-shadow: 0 0 20px #e0e0e0; border-radius:5px;background-color: #FFF;">
+  <span style="display: block; width: 640px !important; max-width: 640px; height: 1px" class="mobileOff"></span>
 
-              <table width="640" cellpadding="0" cellspacing="0" border="0" class="container mobile-full-width">
-                <tr>
-                  <td align="center" valign="middle" height="184" class="greeting-title-container" style="border-radius: 5px 5px 0 0;">
-                      <h1 class="greeting-title">
-                        {{ trans('email-order.new-order.title', [], '', $lang) }}
-                      </h1>
-                  </td>
-                </tr>
-              </table>
+  <center>
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#F2F2F2">
+      <tr>
+        <td align="center" valign="middle">
+          <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/gtm-logo.png" class="logo" alt="Logo">
+        </td>
+      </tr>
 
-              <table width="600" cellpadding="0" cellspacing="0" border="0" class="container">
-                <tr>
-                  <td width="600" align="right" valign="top" class="transaction-date"><strong>{{{ $transactionDateTime }}}</strong></td>
-                </tr>
-                <tr>
-                  <td height="20" align="center">&nbsp;</td>
-                </tr>
+      @foreach($supportedLangs as $lang)
+        <tr>
+          <td align="center" valign="top">
 
-                <tr>
-                  <td width="600" class="mobile" align="left" valign="top">
-                    <h3 class="greeting-username">
-                      {{ trans('email-order.new-order.body.greeting', ['recipientName' => $recipientName], '', $lang) }}
-                    </h3>
-                    <p class="greeting-text">
-                      {{ trans('email-order.body.body_1', [
-                            'customerName' => $customerName ?: '',
-                          ], '', $lang
-                         )
-                      }}
-                    </p>
-                  </td>
-                </tr>
+            <table width="640" cellpadding="0" cellspacing="0" border="0" class="wrapper" bgcolor="#FFFFFF" style="background-color: transparent;">
+              <tr>
+                <td align="center" valign="middle" style="box-shadow: 0 0 20px #e0e0e0; border-radius:5px;background-color: #FFF;">
 
-                <tr>
-                  <td height="20" align="center">&nbsp;</td>
-                </tr>
+                  <table width="640" cellpadding="0" cellspacing="0" border="0" class="container mobile-full-width">
+                    <tr>
+                      <td align="center" valign="middle" height="184" class="greeting-title-container" style="border-radius: 5px 5px 0 0;">
+                          <h1 class="greeting-title">{{ trans('email-order.new-order.title', [], '', $lang) }}</h1>
+                      </td>
+                    </tr>
+                  </table>
 
-                <tr>
-                  <td width="600" class="mobile center" valign="middle" style="text-align: center;">
-                    <table width="100%">
-                      <tr>
-                        <td colspan="2" class="greeting-text" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:10px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
-                          <table class="no-border customer" width="100%" style="line-height:1.7em;font-size:14px;color:#222;width:100%;border:0;margin-top:30px;border-spacing:0 !important;border-collapse:collapse !important;table-layout:fixed !important;margin:0 auto !important;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
-                            <tbody>
+                  <table width="600" cellpadding="0" cellspacing="0" border="0" class="container">
+                    <tr>
+                      <td width="300" class="mobile" align="left" valign="top">
+                        <h3 class="greeting-username">
+                          {{ trans('email-order.new-order.greeting', ['recipientName' => $recipientName], '', $lang) }}</h3>
+                        <p class="greeting-text">
+                          {{ trans('email-order.new-order.body.line-1', [], '', $lang) }}
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td width="600" class="mobile greeting-text" valign="middle">
+                        <table width="100%">
+                          <thead>
+                            <tr>
+                              <th colspan="2" class="uppercase reservation-table-title">
+                                {{ trans('email-order.labels.order_details', [], '', $lang) }}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td class="mobile w-35 bold reservation-table-item-label">
+                                <span class="p-8 block">{{ trans('email-order.labels.order_id', [], '', $lang) }}</span>
+                              </td>
+                              <td class="mobile reservation-table-item-value">
+                                <span class="p-8 block">{{ $transaction['orderId'] }}</span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td class="mobile w-35 bold reservation-table-item-label">
+                                <span class="p-8 block">{{ trans('email-order.labels.order_date', [], '', $lang) }}</span>
+                              </td>
+                              <td class="mobile reservation-table-item-value">
+                                <span class="p-8 block">{{ $transactionDateTime }}</span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td class="mobile bold reservation-table-item-label">
+                                <span class="p-8 block">{{ trans('email-order.labels.customer_name', [], '', $lang) }}</span>
+                              </td>
+                              <td class="mobile reservation-table-item-value">
+                                <span class="p-8 block">{{ $customer->name }}</span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td class="mobile bold reservation-table-item-label">
+                                <span class="p-8 block">{{ trans('email-order.labels.customer_email', [], '', $lang) }}</span>
+                              </td>
+                              <td class="mobile reservation-table-item-value">
+                                <span class="p-8 block">{{ $customer->email }}</span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td class="mobile bold reservation-table-item-label">
+                                <span class="p-8 block">{{ trans('email-order.labels.customer_phone', [], '', $lang) }}</span>
+                              </td>
+                              <td class="mobile reservation-table-item-value">
+                                <span class="p-8 block">{{ $customer->phone }}</span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td class="mobile bold reservation-table-item-label">
+                                <span class="p-8 block">{{ trans('email-order.labels.store_location', [], '', $lang) }}</span>
+                              </td>
+                              <td class="mobile reservation-table-item-value">
+                                <span class="p-8 block">
+                                  {{ trans('email-order.labels.store_location_detail', $store, '', $lang) }}
+                                </span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td class="mobile bold reservation-table-item-label">
+                                <span class="p-8 block">{{ trans('email-order.labels.total_payment', [], '', $lang) }}</span>
+                              </td>
+                              <td class="mobile reservation-table-item-value">
+                                <span class="p-8 block">{{ $transaction['total'] }}</span>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+
+                        <br>
+
+                        <table width="100%">
+                          <thead>
+                            <tr>
+                              <th colspan="3" class="uppercase reservation-table-title">
+                                {{ trans('email-order.labels.product_details', [], '', $lang) }}
+                              </th>
+                            </tr>
+                            <tr>
+                              <th class="reservation-table-item-label text-left product-details-subtitle" width="50%">
+                                {{ trans('email-order.labels.product_name', [], '', $lang) }}
+                              </th>
+                              {{-- <th>{{ trans('email-order.labels.product_variant', [], '', $lang) }}</th> --}}
+                              {{-- <th>{{ trans('email-order.labels.product_sku', [], '', $lang) }}</th> --}}
+                              <th class="reservation-table-item-label product-details-subtitle">
+                                {{ trans('email-order.labels.quantity', [], '', $lang) }}
+                              </th>
+                              <th class="reservation-table-item-label product-details-subtitle" style="border-right: 1px solid #ddd;">
+                                {{ trans('email-order.labels.product_price', [], '', $lang) }}
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @foreach($transaction['items'] as $item)
                               <tr>
-                                <td class="mobile inline-mobile customer-info-block">
-                                  <span class="customer-info-label">{{{ trans('email-receipt.table_customer_info.header.trx_id', [], '', $lang) }}}</span>
-                                  <span class="customer-info-value">{{{ $transaction['id'] }}}</span>
-                                </td>
-                                <td class="mobile inline-mobile customer-info-block">
-                                  <span class="customer-info-label">{{{ trans('email-receipt.table_customer_info.header.customer', [], '', $lang) }}}</span>
-                                  <span class="customer-info-value">{{{ $customerName }}}</span>
-                                </td>
-                                <td class="mobile inline-mobile customer-info-block">
-                                  <span class="customer-info-label">{{{ trans('email-receipt.table_customer_info.header.email', [], '', $lang) }}}</span>
-                                  <span class="customer-info-value">{{{ $customerEmail }}}</span>
-                                </td>
-                                <td class="mobile inline-mobile customer-info-block">
-                                  <span class="customer-info-label">{{{ trans('email-receipt.table_customer_info.header.phone', [], '', $lang) }}}</span>
-                                  <span class="customer-info-value">{{{ $customerPhone }}}</span>
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                          <br>
-                          <br>
-                          <table class="no-border transaction" width="100%">
-                            <thead class="bordered">
-                              <tr>
-                                  <th class="transaction-item-name">{{{ trans('email-receipt.table_transaction.header.item', [], '', $lang) }}}</th>
-                                  <th class="transaction-qty">{{{ trans('email-receipt.table_transaction.header.quantity', [], '', $lang) }}}</th>
-                                  <th class="transaction-amount">{{{ trans('email-receipt.table_transaction.header.price', [], '', $lang) }}}</th>
-                                  <th class="transaction-subtotal">{{{ trans('email-receipt.table_transaction.header.subtotal', [], '', $lang) }}}</th>
-                              </tr>
-                            </thead>
-                            <tbody class="transaction-items">
-                              @foreach($transaction['items'] as $item)
-                              <tr class="transaction-item">
-                                  <td class="transaction-item item-name">
+                                <td class="reservation-table-item-value" style="border-left: 1px solid #ddd;">
+                                  <span class="p-8 block">
                                     {{ $item['name'] }}
-                                  </td>
-                                  <td class="transaction-item" style="text-align: center;">{{{ $item['quantity'] }}}</td>
-                                  <td class="transaction-item">{{{ $item['price'] }}}</td>
-                                  <td class="transaction-item">{{{ $item['total'] }}}</td>
+                                    <br>
+                                    <em>
+                                      <small>
+                                        {{ trans('email-order.labels.product_variant', [], '', $lang) }}:
+                                        {{ $item['variant'] }} {{-- $item['sku'] --}}
+                                      </small>
+                                    </em>
+                                  </span>
+                                </td>
+                                <td class="mobile reservation-table-item-value">
+                                  <span class="p-8 block text-center">{{ $item['quantity'] }}</span>
+                                </td>
+                                <td class="mobile reservation-table-item-value">
+                                  <span class="p-8 block text-center">{{ $item['price'] }}</span>
+                                </td>
                               </tr>
-                              @endforeach
-                              @foreach($transaction['discounts'] as $item)
-                              <tr class="transaction-item">
-                                  <td class="transaction-item">{{{ trans('label.discount', [], '', $lang) }}} {{{ $item['name'] }}}</td>
-                                  <td class="transaction-item" style="text-align: center;">{{{ $item['quantity'] }}}</td>
-                                  <td class="transaction-item">{{{ $item['price'] }}}</td>
-                                  <td class="transaction-item">{{{ $item['total'] }}}</td>
-                              </tr>
-                              @endforeach
-                            </tbody>
-                            <tfoot class="transaction-footer">
-                              <tr>
-                                  <td colspan="2" class="transaction-item transaction-total"></td>
-                                  <td class="transaction-item transaction-total"><strong>{{{ trans('email-receipt.table_transaction.footer.total', [], '', $lang) }}}</strong></td>
-                                  <td class="transaction-item transaction-total">{{{ $transaction['total'] }}}</td>
-                              </tr>
-                            </tfoot>
-                          </table>
+                            @endforeach
+                          </tbody>
+                        </table>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td height="30" align="center" class="separator">&nbsp;</td>
+                    </tr>
+                    <tr>
+                      <td width="600" class="mobile reservation-actions" align="center" valign="middle">
+                        <a href="{{{ $transaction['followUpUrl'] }}}" class="btn btn-primary mx-4">
+                          {{{ trans('email-order.labels.btn_follow_up', [], '', $lang) }}}
+                        </a>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td height="30" align="center" class="separator">&nbsp;</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td height="30" align="center" class="separator">&nbsp;</td>
+        </tr>
+      @endforeach
 
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-
-              <table width="600" cellpadding="0" cellspacing="0" border="0" class="container">
-                <tr>
-                  <td width="600" class="mobile center" valign="middle" style="text-align: center;">
-                    <table width="100%">
-                      <tr>
-                        <td class="greeting-text" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:10px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
-                          <br>
-                          <p class="help-text">
-                              {{ trans('email-order.body.view_my_purchases', [], '', $lang) }}
-                          </p>
-                          <br>
-                          <p class="text-center" style="font-family:'Roboto', 'Arial', sans-serif;margin:0;text-align:center;">
-                              <a href="{{{ $myProcessOrderUrl }}}" class="btn btn-block">{{{ trans('email-order.buttons.follow_up_order', [], '', $lang) }}}</a>
-                          </p>
-                          <br>
-                          <br>
-                          <p class="help-text">
-                              {{ trans('email-order.body.help', ['csPhone' => $cs['phone'], 'csEmail' => $cs['email']], '', $lang) }}
-                              <br>
-                              <br>
-                              &nbsp;
-                          </p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-    <tr>
-      <td height="30" align="center" class="separator">&nbsp;</td>
-    </tr>
-  @endforeach
-@stop
+      <tr>
+        <td align="center" valign="top">
+          @include('emails.components.new-basic-footer')
+        </td>
+      </tr>
+    </table>
+  </center>
+</body>
+</html>
