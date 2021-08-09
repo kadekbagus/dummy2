@@ -37,8 +37,7 @@ class BrandProductReservation extends Eloquent
 
     public function store()
     {
-        return $this->hasOne(BrandProductReservationDetail::class)
-            ->where('option_type', 'merchant');
+        return $this->belongsTo(Tenant::class, 'merchant_id', 'merchant_id');
     }
 
     public function variants()

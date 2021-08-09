@@ -73,13 +73,16 @@ class ReservationDetailAPIController extends ControllerAPI
 
             $reservations = BrandProductReservation::select(DB::raw("
                     {$prefix}brand_product_reservations.brand_product_reservation_id,
-                    {$prefix}brand_product_reservations.selling_price,
+                    {$prefix}brand_product_reservation_details.selling_price,
                     {$prefix}brand_product_reservations.created_at,
+                    {$prefix}brand_product_reservations.merchant_id,
                     {$prefix}brand_product_reservations.expired_at,
-                    {$prefix}brand_product_reservations.quantity,
+                    {$prefix}brand_product_reservation_details.quantity,
                     {$prefix}brand_product_reservations.user_id,
-                    {$prefix}brand_product_reservations.product_name,
-                    {$prefix}brand_product_reservations.brand_product_variant_id,
+                    {$prefix}brand_product_reservations.total_amount,
+                    {$prefix}brand_product_reservation_details.product_name,
+                    {$prefix}brand_product_reservation_details.product_name,
+                    {$prefix}brand_product_reservation_details.brand_product_variant_id,
                     {$prefix}brand_product_reservations.cancel_reason,
                     CASE {$prefix}brand_product_reservations.status
                         WHEN 'accepted' THEN
@@ -96,35 +99,34 @@ class ReservationDetailAPIController extends ControllerAPI
                     'users' => function($q) {
                         $q->select('users.user_id', 'user_firstname', 'user_lastname');
                     },
-                    'store' => function($q) {
-                        $q->with('store.mall');
-                    },
-                    'brand_product_variant' => function($q) {
-                        $q->select('brand_product_variant_id', 'brand_product_id', 'sku', 'product_code');
+                    'store.mall',
+                    'details' => function($q) {
                         $q->with([
-                            'brand_product' => function($q2) {
-                                $q2->select('brand_product_id');
-                                $q2->with([
-                                    'brand_product_main_photo' => function($q3) {
-                                        $q3->select('media_id', 'object_id', 'path', 'cdn_url');
+                            'product_variant' => function($q1) {
+                                $q1->with([
+                                    'brand_product' => function($q3) {
+                                        $q3->select('brand_product_id');
+                                        $q3->with([
+                                            'brand_product_main_photo' => function($q4) {
+                                                $q4->select('media_id', 'object_id', 'path', 'cdn_url');
+                                            }
+                                        ]);
                                     }
                                 ]);
+                            },
+                            'variant_details' => function($q12) {
+                                $q12->select('brand_product_reservation_detail_id', 'brand_product_reservation_variant_detail_id', 'value')
+                                    ->where('option_type', 'variant_option');
                             }
                         ]);
-                    },
-                    'details' => function($q) {
-                        $q->select('brand_product_reservation_detail_id', 'brand_product_reservation_id', 'value')
-                            ->where('option_type', 'variant_option');
                     }
                 ])
                 ->leftJoin('brand_product_reservation_details', 'brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
+                ->leftJoin('brand_product_reservation_variant_details', 'brand_product_reservation_variant_details.brand_product_reservation_detail_id', '=', 'brand_product_reservation_details.brand_product_reservation_detail_id')
                 ->where('brand_product_reservations.brand_product_reservation_id', $brandProductReservationId)
-                ->where(DB::raw("{$prefix}brand_product_reservations.brand_id"), $brandId)
-                ->where('option_type', 'merchant');
+                ->where(DB::raw("{$prefix}brand_product_reservations.brand_id"), $brandId);
 
-            if (! empty($merchantId)) {
-                $reservations = $reservations->where('brand_product_reservation_details.value', $merchantId);
-            }
+            isset($merchantId) ? $reservations->where('brand_product_reservations.merchant_id', '=', $merchantId) : null;
 
             $reservations = $reservations->firstOrFail();
 
@@ -132,43 +134,68 @@ class ReservationDetailAPIController extends ControllerAPI
             if (is_object($reservations)) {
                 $returnedItem->brand_product_reservation_id = $reservations->brand_product_reservation_id;
                 $returnedItem->user_name = $reservations->users->user_firstname . ' ' . $reservations->users->user_lastname;
-                $returnedItem->product_name = $reservations->product_name;
-                $returnedItem->quantity = $reservations->quantity;
-                $returnedItem->selling_price = $reservations->selling_price;
                 $returnedItem->created_at = (string) $reservations->created_at;
                 $returnedItem->expired_at = $reservations->expired_at;
                 $returnedItem->status = $reservations->status;
                 $returnedItem->cancel_reason = $reservations->cancel_reason;
-                $imgPath = '';
-                $cdnUrl = '';
-                $sku = '';
-                $barcode = '';
-                if (is_object($reservations->brand_product_variant)) {
-                    if (! empty($reservations->brand_product_variant->sku)) {
-                        $sku = $reservations->brand_product_variant->sku;
+                $returnedItem->total_amount = $reservations->total_amount;
+                $storeName = '';
+                $mallName = '';
+                if (is_object($reservations->store)) {
+                    if (! empty($reservations->store->name)) {
+                        $storeName = $reservations->store->name;
                     }
-                    if (! empty($reservations->brand_product_variant->product_code)) {
-                        $barcode = $reservations->brand_product_variant->product_code;
-                    }
-                    if (is_object($reservations->brand_product_variant->brand_product)) {
-                        if (! empty($reservations->brand_product_variant->brand_product->brand_product_main_photo)) {
-                            if (is_object($reservations->brand_product_variant->brand_product->brand_product_main_photo[0])) {
-                                $imgPath = $reservations->brand_product_variant->brand_product->brand_product_main_photo[0]->path;
-                                $cdnUrl = $reservations->brand_product_variant->brand_product->brand_product_main_photo[0]->cdn_url;
-                            }
+                    if (is_object($reservations->store->mall)) {
+                        if (! empty($reservations->store->mall->name)) {
+                            $mallName = $reservations->store->mall->name;
                         }
                     }
                 }
-
-                $returnedItem->img_path = $imgPath;
-                $returnedItem->cdn_url = $cdnUrl;
-                $returnedItem->sku = $sku;
-                $returnedItem->barcode = $barcode;
-                $variants = [];
-                foreach ($reservations->details as $variantDetail) {
-                    $variants[] = $variantDetail->value;
+                $returnedItem->pick_up_location = '';
+                if (!empty($storeName) && !empty($mallName)) {
+                    $returnedItem->pick_up_location = $storeName . ' at ' . $mallName;
                 }
-                $returnedItem->variants = implode(',', $variants);
+
+                foreach ($reservations->details as $detail) {
+                    $dtl = new stdclass();
+
+                    $dtl->product_name = $detail->product_name;
+                    $dtl->quantity = $detail->quantity;
+                    $dtl->selling_price = $detail->selling_price;
+                    $dtl->original_price = $detail->original_price;
+                    $imgPath = '';
+                    $cdnUrl = '';
+                    $sku = '';
+                    $barcode = '';
+                    if (! empty($detail->sku)) {
+                        $sku = $detail->sku;
+                    }
+                    if (! empty($detail->product_code)) {
+                        $barcode = $detail->product_code;
+                    }
+                    if (is_object($detail->product_variant)) {
+                        if (is_object($detail->product_variant->brand_product)) {
+                            if (! empty($detail->product_variant->brand_product->brand_product_main_photo)) {
+                                if (is_object($detail->product_variant->brand_product->brand_product_main_photo[0])) {
+                                    $imgPath = $detail->product_variant->brand_product->brand_product_main_photo[0]->path;
+                                    $cdnUrl = $detail->product_variant->brand_product->brand_product_main_photo[0]->cdn_url;
+                                }
+                            }
+                        }
+                    }
+
+                    $dtl->img_path = $imgPath;
+                    $dtl->cdn_url = $cdnUrl;
+                    $dtl->sku = $sku;
+                    $dtl->barcode = $barcode;
+
+                    $variants = [];
+                    foreach ($detail->variant_details as $variantDetail) {
+                        $variants[] = strtoupper($variantDetail->value);
+                    }
+                    $dtl->variants = implode(', ', $variants);
+                    $returnedItem->details[] = $dtl;
+                }
             }
 
             $this->response->data = $returnedItem;
