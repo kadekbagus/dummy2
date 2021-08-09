@@ -153,7 +153,7 @@ Receipt from Gotomalls.com
                           </p>
                           <br>
                           <p class="text-center" style="font-family:'Roboto', 'Arial', sans-serif;margin:0;text-align:center;">
-                              <a href="{{{ $myWalletUrl }}}&lang={{ $lang }}" class="btn btn-block">{{{ trans('email-receipt.buttons.my_purchases', [], '', $lang) }}}</a>
+                              <a href="{{{ $myWalletUrl }}}?lang={{ $lang }}" class="btn btn-block">{{{ trans('email-receipt.buttons.my_purchases', [], '', $lang) }}}</a>
                           </p>
                           <br>
                           <br>
