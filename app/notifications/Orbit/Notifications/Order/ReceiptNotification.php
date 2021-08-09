@@ -61,7 +61,7 @@ class ReceiptNotification extends BaseReceiptNotification
             'customerPhone'     => $this->getCustomerPhone(),
             'transaction'       => $this->getTransactionData(),
             'cs'                => $this->getContactData(),
-            'myWalletUrl'       => $this->getMyPurchasesUrl('/orders?country=Indonesia'),
+            'myWalletUrl'       => $this->getMyPurchasesUrl('/orders'),
             'transactionDateTime' => $this->getTransactionDateTime(),
             'emailSubject'      => $this->getEmailSubject(),
         ];
