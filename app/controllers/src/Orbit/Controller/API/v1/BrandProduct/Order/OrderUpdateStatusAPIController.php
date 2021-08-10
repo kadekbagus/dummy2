@@ -83,9 +83,9 @@ class OrderUpdateStatusAPIController extends ControllerAPI
                 Order::readyForPickup($orderId);
             }
 
-            // cancelled/denied order
-            if ($status === Order::STATUS_CANCELLED) {
-                Order::cancel($orderId, $cancelReason);
+            // declined order
+            if ($status === Order::STATUS_DECLINED) {
+                Order::declined($orderId, $cancelReason, $userId);
             }
 
             // done/confirm order
