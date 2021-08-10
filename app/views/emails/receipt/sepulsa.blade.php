@@ -238,7 +238,7 @@
           <tr>
             <td colspan="2" class="text-left footer" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
               <small>
-                <strong>PT. Dominopos Kreasi Jaya</strong><br>
+                <strong>PT. Digital Prima Sentosa</strong><br>
                 Tower E - Lantai 2, 18 Parc Place, SCBD <br>
                 Jalan Jend. Sudirman Kav. 52-53, Senayan, Jakarta Selatan 12190
               </small>
