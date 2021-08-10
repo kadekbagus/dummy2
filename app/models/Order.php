@@ -213,4 +213,20 @@ class Order extends Eloquent
 
         return $order;
     }
+
+    public static function getPurchasedQuantity($variantId)
+    {
+        return Order::select('quantity')
+            ->join('order_details',
+                'orders.order_id', '=', 'order_details.order_id'
+            )
+            ->where('brand_product_variant_id', $variantId)
+            ->whereIn('orders.status', [
+                Order::STATUS_PAID,
+                Order::STATUS_CANCELLING,
+                Order::STATUS_READY_FOR_PICKUP,
+                Order::STATUS_DONE,
+            ])
+            ->sum('quantity');
+    }
 }

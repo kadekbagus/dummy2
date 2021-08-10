@@ -23,6 +23,6 @@ class BrandProductReservationDetail extends Eloquent
 
     public function reservation()
     {
-        return $this->belongsTo(BrandProductReservation::class);
+        return $this->belongsTo(BrandProductReservation::class, 'brand_product_reservation_id', 'brand_product_reservation_id');
     }
 }
