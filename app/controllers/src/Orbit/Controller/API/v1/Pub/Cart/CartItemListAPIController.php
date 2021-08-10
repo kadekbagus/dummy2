@@ -33,7 +33,7 @@ class CartItemListAPIController extends PubControllerAPI
                             select sum({$prefix}order_details.quantity) as purchased_quantity
                             from {$prefix}orders
                             join {$prefix}order_details on {$prefix}orders.order_id = {$prefix}order_details.order_id
-                            where {$prefix}orders.status in ('paid', 'cancelling', 'done')
+                            where {$prefix}orders.status in ('paid', 'cancelling', 'ready_for_pickup', 'done')
                             and {$prefix}order_details.brand_product_variant_id = {$prefix}cart_items.brand_product_variant_id
                         ) as purchased_quantity,
                         (
