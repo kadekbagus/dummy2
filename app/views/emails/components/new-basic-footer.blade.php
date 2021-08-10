@@ -7,7 +7,7 @@
                       <address class="footer-address">
                         <span>Copyright &copy; {{ date('Y') }} GoToMalls</span>
                         <br>
-                        <strong>PT. Digital Prima Sejahtera</strong>
+                        <strong>PT. Digital Prima Sentosa</strong>
                         <br>
                         <span>Tower E - Lantai 2, 18 Parc Place, SCBD</span>
                         <br>
