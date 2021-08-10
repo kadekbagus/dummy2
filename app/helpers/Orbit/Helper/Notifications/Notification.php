@@ -296,4 +296,15 @@ abstract class Notification {
     {
         Log::{$logType}(($this->logID ? "{$this->logID}: " : '') . $message);
     }
+
+    /**
+     * Get supported languages for email/notification template.
+     *
+     * @todo move to a trait or other helper file.
+     * @return array - array of language.
+     */
+    protected function getSupportedLanguages()
+    {
+        return ['id', 'en'];
+    }
 }

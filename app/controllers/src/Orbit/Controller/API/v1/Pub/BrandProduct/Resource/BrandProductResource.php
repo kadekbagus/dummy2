@@ -92,7 +92,7 @@ class BrandProductResource extends Resource
                 'originalPrice' => $variant->original_price,
                 'sellingPrice' => $variant->selling_price,
                 'discount' => $discount,
-                'quantity' => $variant->quantity - $variant->reservation_details->sum('quantity'),
+                'quantity' => $this->getMaxQuantity($variant),
                 'options' => $this->transformVariantOptions(
                     $variant->variant_options, $variantOptions
                 ),
@@ -192,7 +192,7 @@ class BrandProductResource extends Resource
                                 'product_code' => $bpVariant->product_code,
                                 'original_price' => $bpVariant->original_price,
                                 'selling_price' => $bpVariant->selling_price,
-                                'quantity' => $bpVariant->quantity - $bpVariant->reservation_details->sum('quantity'),
+                                'quantity' => $this->getMaxQuantity($bpVariant),
                                 'options' => $optionList,
                             ];
 
@@ -231,5 +231,14 @@ class BrandProductResource extends Resource
         return array_map(function($video) {
             return $video['youtube_id'];
         }, $item->videos->toArray());
+    }
+
+    private function getMaxQuantity($bpVariant)
+    {
+        $maxQuantity = $bpVariant->quantity
+            - $bpVariant->reservation_details->sum('quantity')
+            - $bpVariant->order_details->sum('quantity');
+
+        return $maxQuantity < 0 ? 0 : $maxQuantity;
     }
 }
