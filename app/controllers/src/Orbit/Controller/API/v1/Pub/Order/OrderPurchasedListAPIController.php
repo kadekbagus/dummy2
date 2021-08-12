@@ -37,6 +37,7 @@ class OrderPurchasedListAPIController extends PubControllerAPI
                         {$prefix}order_details.quantity,
                         {$prefix}payment_transactions.payment_transaction_id,
                         {$prefix}payment_transactions.status as payment_status,
+                        {$prefix}payment_transactions.created_at as transaction_time,
                         GROUP_CONCAT({$prefix}order_variant_details.value separator ', ') as variant,
                         {$prefix}order_details.original_price,
                         {$prefix}order_details.selling_price,

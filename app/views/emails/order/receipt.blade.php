@@ -98,6 +98,7 @@ Receipt from Gotomalls.com
                             <thead class="bordered">
                               <tr>
                                   <th class="transaction-item-name">{{{ trans('email-receipt.table_transaction.header.item', [], '', $lang) }}}</th>
+                                  <th class="transaction-variant">{{{ trans('email-receipt.table_transaction.header.variant', [], '', $lang) }}}</th>
                                   <th class="transaction-qty">{{{ trans('email-receipt.table_transaction.header.quantity', [], '', $lang) }}}</th>
                                   <th class="transaction-amount">{{{ trans('email-receipt.table_transaction.header.price', [], '', $lang) }}}</th>
                                   <th class="transaction-subtotal">{{{ trans('email-receipt.table_transaction.header.subtotal', [], '', $lang) }}}</th>
@@ -109,6 +110,7 @@ Receipt from Gotomalls.com
                                   <td class="transaction-item item-name">
                                     {{ $item['name'] }}
                                   </td>
+                                  <td class="transaction-item">{{{ $item['variant'] }}}</td>
                                   <td class="transaction-item" style="text-align: center;">{{{ $item['quantity'] }}}</td>
                                   <td class="transaction-item">{{{ $item['price'] }}}</td>
                                   <td class="transaction-item">{{{ $item['total'] }}}</td>
@@ -125,7 +127,7 @@ Receipt from Gotomalls.com
                             </tbody>
                             <tfoot class="transaction-footer">
                               <tr>
-                                  <td colspan="2" class="transaction-item transaction-total"></td>
+                                  <td colspan="3" class="transaction-item transaction-total"></td>
                                   <td class="transaction-item transaction-total"><strong>{{{ trans('email-receipt.table_transaction.footer.total', [], '', $lang) }}}</strong></td>
                                   <td class="transaction-item transaction-total">{{{ $transaction['total'] }}}</td>
                               </tr>
@@ -151,7 +153,7 @@ Receipt from Gotomalls.com
                           </p>
                           <br>
                           <p class="text-center" style="font-family:'Roboto', 'Arial', sans-serif;margin:0;text-align:center;">
-                              <a href="{{{ $myWalletUrl }}}" class="btn btn-block">{{{ trans('email-receipt.buttons.my_purchases', [], '', $lang) }}}</a>
+                              <a href="{{{ $myWalletUrl }}}?lang={{ $lang }}" class="btn btn-block">{{{ trans('email-receipt.buttons.my_purchases', [], '', $lang) }}}</a>
                           </p>
                           <br>
                           <br>

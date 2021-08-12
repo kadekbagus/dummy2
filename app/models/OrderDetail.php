@@ -22,4 +22,9 @@ class OrderDetail extends Eloquent
     {
         return $this->hasMany('OrderVariantDetail', 'order_detail_id', 'order_detail_id');
     }
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
 }

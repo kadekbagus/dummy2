@@ -13,8 +13,7 @@ use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
 use Orbit\Helper\AutoIssueCoupon\AutoIssueCoupon;
 use Orbit\Helper\Cart\CartInterface;
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
-// use Orbit\Notifications\Order\CustomerDigitalProductNotAvailableNotification;
-// use Orbit\Notifications\Order\DigitalProductNotAvailableNotification;
+use Orbit\Notifications\Order\Admin\NewOrderNotification;
 use Orbit\Notifications\Order\ReceiptNotification;
 use Order;
 use PaymentTransaction;
@@ -82,7 +81,6 @@ class GetProductQueue
                 return;
             }
 
-
             $payment->status = PaymentTransaction::STATUS_SUCCESS;
             $payment->save();
 
@@ -91,52 +89,24 @@ class GetProductQueue
             });
 
             $orderIds = $orderPaymentDetails->lists('object_id');
+            Order::markAsPaid($orderIds);
 
             // should store cart item ids in order details instead?
             $cartItemIds = $orderPaymentDetails->implode('payload', ',');
-
-            Order::markAsPaid($orderIds);
-
             App::make(CartInterface::class)->removeItem($cartItemIds);
 
             // Commit the changes ASAP.
             DB::connection()->commit();
 
-            $this->log("Issued for payment {$paymentId}..");
+            $this->log("Order for payment {$paymentId} ..");
 
-            // Auto issue free coupon if trx meet certain criteria.
-            // AutoIssueCoupon::issue($payment, $digitalProduct->product_type);
-
-            // Notify Customer.
+            // Send receipt to customer.
             $payment->user->notify(new ReceiptNotification($payment), 5);
 
-            // $this->recordSuccessGMP();
+            // Notify admin/store user for new order.
+            (new NewOrderNotification($payment))->send();
 
             $payment->user->activity(new PurchaseSuccessActivity($payment, $this->objectType));
-
-            // if (! empty($discount)) {
-            //     // Mark promo code as issued.
-            //     $promoCodeReservation = App::make(ReservationInterface::class);
-            //     $promoData = (object) [
-            //         'promo_code' => $discount->discount_code,
-            //         'object_id' => $product,
-            //         'object_type' => 'order'
-            //     ];
-            //     $promoCodeReservation->markAsIssued($payment->user, $promoData);
-            //     $this->log("Promo code {$discount->discount_code} issued for purchase {$paymentId}");
-            // }
-
-            // Increase point when the transaction is success.
-            // if (in_array($payment->status, [PaymentTransaction::STATUS_SUCCESS])) {
-            //     $rewardObject = (object) [
-            //         'object_id' => $digitalProductId,
-            //         'object_type' => 'brand_product',
-            //         'object_name' => $digitalProduct->product_name,
-            //         'country_id' => $payment->country_id,
-            //     ];
-
-            //     Event::fire('orbit.purchase.pulsa.success', [$payment->user, $rewardObject]);
-            // }
 
         } catch (Exception $e) {
 
@@ -145,36 +115,9 @@ class GetProductQueue
                 $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT_FAILED;
                 $payment->save();
 
-                // if (! empty($discount) && ! empty($digitalProduct)) {
-                //     // Mark promo code as available.
-                //     $discountCode = $discount->discount_code;
-                //     $promoCodeReservation = App::make(ReservationInterface::class);
-                //     $promoData = (object) [
-                //         'promo_code' => $discountCode,
-                //         'object_id' => $digitalProductId,
-                //         'object_type' => 'digital_product'
-                //     ];
-                //     $promoCodeReservation->markAsAvailable($payment->user, $promoData);
-                //     $this->log("Promo code {$discountCode} reverted back/marked as available...");
-                // }
-
                 DB::connection()->commit();
 
-                // Notify admin for this failure.
-                foreach($adminEmails as $email) {
-                    // $admin              = new User;
-                    // $admin->email       = $email;
-                    // $admin->notify(new DigitalProductNotAvailableNotification($payment, $e->getMessage()));
-                }
-
-                // Notify customer that coupon is not available.
-                // $payment->user->notify(new CustomerDigitalProductNotAvailableNotification($payment));
-
                 $notes = $e->getMessage();
-
-                // $digitalProductName = ! empty($digitalProduct) ? $digitalProduct->product_name : '-';
-
-                // $this->recordFailedGMP();
 
                 $payment->user->activity(new PurchaseFailedProductActivity($payment, $this->objectType, $notes));
             }
@@ -182,7 +125,13 @@ class GetProductQueue
                 DB::connection()->rollBack();
             }
 
-            $this->log(sprintf("Get {$this->objectType} exception: %s:%s, %s", $e->getFile(), $e->getLine(), $e->getMessage()));
+            $this->log(sprintf(
+                "Get {$this->objectType} exception: %s:%s, %s",
+                $e->getFile(),
+                $e->getLine(),
+                $e->getMessage()
+            ));
+
             $this->log(serialize($data));
         }
 

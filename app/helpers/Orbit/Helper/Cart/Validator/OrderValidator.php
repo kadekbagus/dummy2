@@ -70,34 +70,10 @@ class OrderValidator
     private function validateBrandProductQuantity($variant, $requestedQuantity)
     {
         // Count reserved items as used quantity.
-        $usedQuantity = BrandProductReservation::select('quantity')
-            ->join(
-                'brand_product_reservation_details',
-                'brand_product_reservations.brand_product_reservation_id',
-                '=',
-                'brand_product_reservation_details.brand_product_reservation_id'
-            )
-            ->where('brand_product_variant_id', $variant->brand_product_variant_id)
-            ->whereIn('status', [
-                BrandProductReservation::STATUS_PENDING,
-                BrandProductReservation::STATUS_ACCEPTED,
-                BrandProductReservation::STATUS_DONE,
-            ])
-            ->sum('quantity');
+        $usedQuantity = BrandProductReservation::getReservedQuantity($variant->brand_product_variant_id);
 
         // Add purchased items' count as used quantity.
-        $usedQuantity += Order::select('quantity')
-            ->join('order_details',
-                'orders.order_id', '=', 'order_details.order_id'
-            )
-            ->where('brand_product_variant_id', $variant->brand_product_variant_id)
-            ->whereIn('orders.status', [
-                // Order::STATUS_WAITING_PAYMENT,
-                Order::STATUS_PAID,
-                Order::STATUS_CANCELLING,
-                Order::STATUS_DONE
-            ])
-            ->sum('quantity');
+        $usedQuantity += Order::getPurchasedQuantity($variant->brand_product_variant_id);
 
         return $variant->quantity - $usedQuantity >= $requestedQuantity;
     }
