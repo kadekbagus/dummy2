@@ -80,7 +80,7 @@ class OrderUpdateStatusAPIController extends ControllerAPI
 
             // ready for pickup order
             if ($status === Order::STATUS_READY_FOR_PICKUP) {
-                Order::readyForPickup($orderId);
+                Order::readyForPickup($orderId, $userId);
             }
 
             // declined order

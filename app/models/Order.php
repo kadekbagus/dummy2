@@ -163,14 +163,14 @@ class Order extends Eloquent
         return $orders;
     }
 
-    public static function readyForPickup($orderId)
+    public static function readyForPickup($orderId, $bppUserId)
     {
         $order = Order::where('order_id', $orderId)->update([
                 'pick_up_code' => self::createPickUpCode(),
                 'status' => self::STATUS_READY_FOR_PICKUP,
             ]);
-
-        // Event::fire('orbit.cart.order-ready-for-pickup', [$order]);
+            
+        Event::fire('orbit.order.ready-for-pickup', [$orderId, $bppUserId]);
 
         return $order;
     }
@@ -229,4 +229,22 @@ class Order extends Eloquent
             ])
             ->sum('quantity');
     }
+
+    
+   public static function getLocalTimezoneName($timezone = 'UTC')
+   {
+        $timezoneMapping = [
+            'asia/jakarta' => 'WIB',
+            'asia/makassar' => 'WITA',
+            'asia/jayapura' => 'WIT',
+            'utc' => 'UTC',
+            '' => 'UTC',
+        ];
+
+       $timezone = strtolower($timezone);
+       return isset($timezoneMapping[$timezone])
+                   ? $timezoneMapping[$timezone]
+                   : '';
+   }
+
 }
