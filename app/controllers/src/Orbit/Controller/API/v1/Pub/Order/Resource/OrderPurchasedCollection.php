@@ -2,6 +2,7 @@
 
 namespace Orbit\Controller\API\v1\Pub\Order\Resource;
 
+use Carbon\Carbon;
 use Orbit\Helper\Resource\ResourceCollection;
 
 /**
@@ -24,6 +25,8 @@ class OrderPurchasedCollection extends ResourceCollection
                     'order_amount' => 0,
                     'payment_transaction_id' => $item->payment_transaction_id,
                     'payment_status' => $item->payment_status,
+                    'transaction_time' => Carbon::parse($item->transaction_time)
+                        ->timezone('Asia/Jakarta')->format('Y-m-d H:i:s'),
                     'store_id' => $item->store_id,
                     'store_name' => $item->store_name,
                     'floor' => $item->floor,
