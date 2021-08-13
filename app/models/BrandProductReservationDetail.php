@@ -6,6 +6,8 @@ class BrandProductReservationDetail extends Eloquent
 
     protected $table = 'brand_product_reservation_details';
 
+    protected $guarded = [];
+
     public function media()
     {
         return $this->hasOne(Media::class, 'media_id', 'value');

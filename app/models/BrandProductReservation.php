@@ -11,6 +11,8 @@ class BrandProductReservation extends Eloquent
 
     protected $table = 'brand_product_reservations';
 
+    protected $guarded = [];
+
     const STATUS_PENDING = 'pending';
     const STATUS_ACCEPTED = 'accepted';
     const STATUS_CANCELED = 'cancelled';

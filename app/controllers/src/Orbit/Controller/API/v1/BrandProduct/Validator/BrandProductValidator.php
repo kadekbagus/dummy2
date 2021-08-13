@@ -159,6 +159,40 @@ class BrandProductValidator
         return $variant->quantity - $usedQuantity >= $value;
     }
 
+    public function canReserve($attrs, $cartItemIds, $params)
+    {
+        $cartItems = CartItem::with(['brand_product_variant'])
+            ->whereIn('cart_item_id', $cartItemIds)
+            ->where('user_id', App::make('currentUser')->user_id)
+            ->active()
+            ->get();
+
+        $available = 0;
+        foreach($cartItems as $cartItem) {
+            $variant = $cartItem->brand_product_variant;
+
+            if ($variant
+                && $this->validateBrandProductQuantity($variant, $cartItem->quantity)
+            ) {
+                $available++;
+                App::instance('productVariant', $variant);
+            }
+        }
+
+        return $available > 0 && $available === $cartItems->count();
+    }
+
+    private function validateBrandProductQuantity($variant, $requestedQuantity)
+    {
+        // Count reserved items as used quantity.
+        $usedQuantity = BrandProductReservation::getReservedQuantity($variant->brand_product_variant_id);
+
+        // Add purchased items' count as used quantity.
+        $usedQuantity += Order::getPurchasedQuantity($variant->brand_product_variant_id);
+
+        return $variant->quantity - $usedQuantity >= $requestedQuantity;
+    }
+
     private function getVariant($variantId = '')
     {
         if (App::bound('productVariant')) {
