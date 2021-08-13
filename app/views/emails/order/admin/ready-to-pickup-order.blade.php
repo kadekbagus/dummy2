@@ -85,7 +85,7 @@
                                 <span class="p-8 block">{{ trans('email-order.labels.customer_name', [], '', $lang) }}</span>
                               </td>
                               <td class="mobile reservation-table-item-value">
-                                <span class="p-8 block">{{ $customer->name }}</span>
+                                <span class="p-8 block">{{ $customer['name'] }}</span>
                               </td>
                             </tr>
                             <tr>
@@ -93,7 +93,7 @@
                                 <span class="p-8 block">{{ trans('email-order.labels.customer_email', [], '', $lang) }}</span>
                               </td>
                               <td class="mobile reservation-table-item-value">
-                                <span class="p-8 block">{{ $customer->email }}</span>
+                                <span class="p-8 block">{{ $customer['email'] }}</span>
                               </td>
                             </tr>
                             <tr>
@@ -101,7 +101,7 @@
                                 <span class="p-8 block">{{ trans('email-order.labels.customer_phone', [], '', $lang) }}</span>
                               </td>
                               <td class="mobile reservation-table-item-value">
-                                <span class="p-8 block">{{ $customer->phone }}</span>
+                                <span class="p-8 block">{{ $customer['phone'] }}</span>
                               </td>
                             </tr>
                             <tr>
@@ -110,7 +110,7 @@
                               </td>
                               <td class="mobile reservation-table-item-value">
                                 <span class="p-8 block">
-                                  {{ trans('email-order.labels.store_location_detail', $store, '', $lang) }}
+                                  {{ $store }}
                                 </span>
                               </td>
                             </tr>
