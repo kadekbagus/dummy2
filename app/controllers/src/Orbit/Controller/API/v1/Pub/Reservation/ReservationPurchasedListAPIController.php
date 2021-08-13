@@ -64,21 +64,28 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
             }
 
             $reservation = BrandProductReservation::select('brand_product_reservations.brand_product_reservation_id', 
-                                                           'brand_product_reservations.product_name', 
-                                                           'brand_product_reservations.selling_price', 
+                                                           'brand_product_reservation_details.product_name',
+                                                           'brand_product_reservation_details.selling_price',
                                                            'brand_product_reservations.created_at', 
                                                            'brand_product_reservations.expired_at',
                                                            'brand_product_reservations.status',
                                                            'brand_product_variants.brand_product_id',
                                                     DB::raw("{$image} as image"),         
                                                     DB::raw("CONCAT(m1.name,' ', m2.name) as store_name"))
-                                                    ->join('brand_product_reservation_details', function ($join) {
-                                                            $join->on('brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
-                                                                ->where('brand_product_reservation_details.option_type', '=', 'merchant');
-                                                    })
-                                                    ->join(DB::raw("{$prefix}merchants as m1"), DB::raw('m1.merchant_id'), '=', 'brand_product_reservation_details.value')
+                                                    ->join(DB::raw("{$prefix}merchants as m1"), DB::raw('m1.merchant_id'), '=', 'brand_product_reservations.merchant_id')
                                                     ->join(DB::raw("{$prefix}merchants as m2"), DB::raw('m2.merchant_id'), '=', DB::raw('m1.parent_id'))
-                                                    ->leftjoin('brand_product_variants', 'brand_product_variants.brand_product_variant_id', '=', 'brand_product_reservations.brand_product_variant_id')
+                                                    ->join(
+                                                        'brand_product_reservation_details',
+                                                        'brand_product_reservations.brand_product_reservation_id',
+                                                        '=',
+                                                        'brand_product_reservation_details.brand_product_reservation_id'
+                                                    )
+                                                    ->leftjoin(
+                                                        'brand_product_variants',
+                                                        'brand_product_reservation_details.brand_product_variant_id',
+                                                        '=',
+                                                        'brand_product_variants.brand_product_variant_id'
+                                                    )
                                                     ->leftjoin('media', function ($join) {
                                                         $join->on('media.object_id', '=', 'brand_product_variants.brand_product_id')
                                                             ->where('media.media_name_id', '=', 'brand_product_main_photo')
