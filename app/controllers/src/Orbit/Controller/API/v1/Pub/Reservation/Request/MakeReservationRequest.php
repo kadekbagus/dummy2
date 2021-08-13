@@ -23,7 +23,7 @@ class MakeReservationRequest extends ValidateRequest
         switch ($this->object_type) {
             case 'brand_product':
                 $rules += [
-                    'object_id' => 'required|array|orbit.brand_product_variant.can_reserve',
+                    'object_id' => 'required|orbit.brand_product_variant.can_reserve',
                 ];
                 break;
 
