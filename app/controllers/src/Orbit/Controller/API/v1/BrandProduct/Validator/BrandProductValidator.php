@@ -71,14 +71,13 @@ class BrandProductValidator
         $this->setupImageUrlQuery();
 
         $reservation = BrandProductReservation::with([
-            'store.store.mall',
             'users',
-            'variants',
-            'brand_product_variant.brand_product' => function($query) {
+            'store.mall',
+            'details.variant_details',
+            'details.product_variant.brand_product' => function($query) {
                 $this->imagePrefix = 'brand_product_main_photo_';
                 $query->with($this->buildMediaQuery());
             },
-            'image.media',
         ])
         ->where('brand_product_reservation_id', $value)
         ->first();
