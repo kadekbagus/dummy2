@@ -39,10 +39,12 @@ class ReadyToPickupMailQueue
                 'message' => $message
             ];
         } catch (Exception $e) {
-            $message = sprintf('[Job ID: `%s`] Ready to pickup mail; Status: FAIL; Code: %s; Message: %s',
+            $message = sprintf('[Job ID: `%s`] Ready to pickup mail; Status: FAIL; Code: %s; Message: %s Line: %s',
                     $job->getJobId(),
                     $e->getCode(),
-                    $e->getMessage());
+                    $e->getMessage(), 
+                    $e->getLine()
+                );
             Log::info($message);
         }
 
