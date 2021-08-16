@@ -161,6 +161,10 @@ class BrandProductValidator
 
     public function canReserve($attrs, $cartItemIds, $params)
     {
+        if (is_string($cartItemIds)) {
+            $cartItemIds = [$cartItemIds];
+        }
+
         $cartItems = CartItem::with(['brand_product_variant'])
             ->whereIn('cart_item_id', $cartItemIds)
             ->where('user_id', App::make('currentUser')->user_id)
