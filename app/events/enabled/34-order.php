@@ -80,6 +80,7 @@ Event::listen('orbit.order.ready-for-pickup', function($orderId, $bppUserId)
             $transaction = ['orderId' => $order->order_id,
                             'total'   => $order->total_payment,
                             'items'   => $order->order_details->toArray(),
+                            'followUpUrl' => '',
                             ];
 
             $format = 'd F Y, H:i';
