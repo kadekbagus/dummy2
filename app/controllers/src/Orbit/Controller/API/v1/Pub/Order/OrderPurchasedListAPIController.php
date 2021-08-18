@@ -72,11 +72,13 @@ class OrderPurchasedListAPIController extends PubControllerAPI
                     DB::raw('mall.merchant_id')
                 )
                 ->where('orders.user_id', $request->user()->user_id)
-                ->where('orders.status', '<>', Order::STATUS_PENDING)
+                // ->where('orders.status', '<>', Order::STATUS_PENDING)
                 ->where('payment_transactions.status', '<>', PaymentTransaction::STATUS_STARTING)
+                ->whereNotNull('payment_transactions.external_payment_transaction_id')
                 ->where('payment_transaction_details.object_type', 'order')
                 ->groupBy('orders.order_id')
-                ->groupBy('order_details.order_detail_id');
+                ->groupBy('order_details.order_detail_id')
+                ->orderBy('orders.created_at', 'desc');
 
             $purchasesCount = clone $purchases;
 

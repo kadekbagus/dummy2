@@ -2,6 +2,7 @@
 
 namespace Orbit\Controller\API\v1\Pub\Purchase\Order;
 
+use App;
 use DB;
 use Log;
 use Mall;
@@ -12,6 +13,7 @@ use Config;
 use Exception;
 use Carbon\Carbon;
 use PaymentTransaction;
+use Orbit\Helper\Cart\CartInterface;
 use Orbit\Helper\Midtrans\API\TransactionStatus;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Notifications\Order\AbortedPaymentNotification;
@@ -187,10 +189,12 @@ class UpdatePurchase
                 }
 
                 if ($status === PaymentTransaction::STATUS_PENDING) {
+                    $cart = App::make(CartInterface::class);
                     foreach($this->purchase->details as $detail) {
                         if ($detail->order) {
                             $detail->order->status = Order::STATUS_WAITING_PAYMENT;
                             $detail->order->save();
+                            $cart->removeItem($detail->payload);
                         }
                     }
                 }
