@@ -106,19 +106,28 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             }
 
             if ($status === BrandProductReservation::STATUS_ACCEPTED) {
-                $reservation->load(['brand_product_variant.brand_product']);
-                if (empty($reservation->brand_product_variant)) {
-                    OrbitShopAPI::throwInvalidArgument('Change status failed! Unable to find linked product variant for this reservation. Variant might be changed or deleted.');
+                $reservation->load(['details']);
+                $max_reservation_time = 0;
+                foreach ($reservation->details as $detail) {
+                    $detail->load(['product_variant.brand_product']);
+
+                    if (!is_object($detail->product_variant)) {
+                        OrbitShopAPI::throwInvalidArgument('Change status failed! Unable to find linked product variant for one or more of the product in this reservation. Variant might be changed or deleted.');
+                    }
+
+                    if (!is_object($detail->product_variant->brand_product)) {
+                        OrbitShopAPI::throwInvalidArgument('Change status failed! Unable to find linked brand product for one or more of the product in this reservation. It might be changed or deleted.');
+                    }
+
+                    // take the longest max reservation time from each products
+                    $max_reservation_time = $max_reservation_time <= $detail->product_variant->brand_product->max_reservation_time ? $detail->product_variant->brand_product->max_reservation_time : $max_reservation_time;
                 }
 
-                if (empty($reservation->brand_product_variant->brand_product)) {
-                    OrbitShopAPI::throwInvalidArgument('Change status failed! Unable to find linked brand product for this reservation. It might be changed or deleted.');
-                }
+                $reservation->expired_at = Carbon::now()->addMinutes($max_reservation_time);
+            }
 
-                $reservation->expired_at = Carbon::now()->addMinutes(
-                    $reservation->brand_product_variant->brand_product
-                        ->max_reservation_time
-                );
+            if ($status === BrandProductReservation::STATUS_DONE) {
+                $reservation->status = 'done';
             }
 
             $reservation->save();
@@ -131,12 +140,6 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             }
             else if ($status === BrandProductReservation::STATUS_DECLINED) {
                 Event::fire('orbit.reservation.declined', [$reservation]);
-            }
-
-            // frontend should reload reservation detail endpoint
-            // this is not right
-            if ($reservation->status === BrandProductReservation::STATUS_DONE) {
-                $reservation->status = 'sold';
             }
 
             $this->response->data = $reservation;
