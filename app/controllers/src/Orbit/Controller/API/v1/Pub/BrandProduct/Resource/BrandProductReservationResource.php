@@ -25,25 +25,17 @@ class BrandProductReservationResource extends Resource
             'store' => $this->getStore(),
             'reservation_time' => $this->created_at->timezone('Asia/Jakarta')->format('Y-m-d H:i:s'),
             'expiration_time' => Carbon::parse($this->expired_at)->timezone('Asia/Jakarta')->format('Y-m-d H:i:s'),
-            'quantity' => $this->quantity,
-            'total_payment' => $this->getTotalPayment(),
+            'total_payment' => $this->resource->total_amount,
             'status' => $this->status,
-            'product_name' => $this->resource->product_name,
-            'variant' => $this->getVariant(),
-            'sku' => $this->sku,
-            'barcode' => $this->product_code,
-            'images' => $this->transformImages(
-                $this->resource,
-                'brand_product_main_photo_'
-            ),
             'decline_reason' => $this->cancel_reason,
+            'items' => $this->transformItems(),
         ];
     }
 
     protected function transformImages($item, $imagePrefix = '')
     {
-        if ($item->brand_product_variant) {
-            return parent::transformImages($item->brand_product_variant->brand_product, $imagePrefix);
+        if ($item->product_variant) {
+            return parent::transformImages($item->product_variant->brand_product, $imagePrefix);
         }
         else if ($item->image && $item->image->media) {
             $this->setupImageUrlQuery();
@@ -73,20 +65,36 @@ class BrandProductReservationResource extends Resource
 
     private function getStore()
     {
-        $store = $this->resource->store->store;
+        $store = $this->resource->store;
         return [
             'store_name' => $store->name,
             'mall_name' => $store->mall->name,
         ];
     }
 
-    private function getTotalPayment()
-    {
-        return $this->quantity * $this->selling_price;
-    }
-
     private function getVariant()
     {
-        return $this->resource->variants->implode('value', ', ');
+        return $this->resource->details->implode('value', ', ');
+    }
+
+    private function transformItems()
+    {
+        $items = [];
+
+        foreach($this->resource->details as $detail) {
+            $items[] = [
+                'variant_id' => $detail->brand_product_variant_id,
+                'product_name' => $detail->product_name,
+                'barcode' => $detail->product_code,
+                'sku' => $detail->sku,
+                'quantity' => $detail->quantity,
+                'original_price' => $detail->original_price,
+                'selling_price' => $detail->selling_price,
+                'variant' => $detail->variant_details->implode('value', ', '),
+                'images' => $this->transformImages($detail, 'brand_product_main_photo_'),
+            ];
+        }
+
+        return $items;
     }
 }

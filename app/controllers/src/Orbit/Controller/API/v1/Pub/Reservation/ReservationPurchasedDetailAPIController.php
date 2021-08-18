@@ -67,15 +67,15 @@ class ReservationPurchasedDetailAPIController extends PubControllerAPI
             }
 
             $reservation = BrandProductReservation::select('brand_product_reservations.brand_product_reservation_id', 
-                                                            'brand_product_reservations.product_name', 
-                                                            'brand_product_reservations.selling_price', 
                                                             'brand_product_reservations.created_at', 
                                                             'brand_product_reservations.expired_at',
                                                             'brand_product_variants.brand_product_id',
                                                             'brand_product_reservations.user_id',
-                                                            'brand_product_reservations.quantity',
-                                                            'brand_product_reservations.sku',
-                                                            'brand_product_reservations.product_code',
+                                                            'brand_product_reservation_details.product_name',
+                                                            'brand_product_reservation_details.selling_price',
+                                                            'brand_product_reservation_details.quantity',
+                                                            'brand_product_reservation_details.sku',
+                                                            'brand_product_reservation_details.product_code',
                                                             'brand_product_reservations.status',
                                                     DB::raw("{$image} as image"),         
                                                     DB::raw("CONCAT(m1.name,' ', m2.name, ', ', m2.city) as store_name"))
@@ -83,18 +83,34 @@ class ReservationPurchasedDetailAPIController extends PubControllerAPI
                                                         'users' => function($q) {
                                                             $q->select('users.user_id', 'user_firstname', 'user_lastname');
                                                         },
-                                                        'details' => function($q) {
-                                                            $q->select('brand_product_reservation_detail_id', 'brand_product_reservation_id', 'value')
-                                                                ->where('option_type', 'variant_option');
+                                                        'details.variant_details' => function($q) {
+                                                            $q->where('option_type', 'variant_option');
                                                         }
                                                     ])
-                                                    ->join('brand_product_reservation_details', function ($join) {
-                                                            $join->on('brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
-                                                                ->where('brand_product_reservation_details.option_type', '=', 'merchant');
-                                                    })
-                                                    ->join(DB::raw("{$prefix}merchants as m1"), DB::raw('m1.merchant_id'), '=', 'brand_product_reservation_details.value')
-                                                    ->join(DB::raw("{$prefix}merchants as m2"), DB::raw('m2.merchant_id'), '=', DB::raw('m1.parent_id'))
-                                                    ->leftjoin('brand_product_variants', 'brand_product_variants.brand_product_variant_id', '=', 'brand_product_reservations.brand_product_variant_id')
+                                                    ->join(
+                                                        DB::raw("{$prefix}merchants as m1"),
+                                                        'brand_product_reservations.merchant_id',
+                                                        '=',
+                                                        DB::raw('m1.merchant_id')
+                                                    )
+                                                    ->join(
+                                                        DB::raw("{$prefix}merchants as m2"),
+                                                        DB::raw('m1.parent_id'),
+                                                        '=',
+                                                        DB::raw('m2.merchant_id')
+                                                    )
+                                                    ->join(
+                                                        'brand_product_reservation_details',
+                                                        'brand_product_reservations.brand_product_reservation_id',
+                                                        '=',
+                                                        'brand_product_reservation_details.brand_product_reservation_id'
+                                                    )
+                                                    ->leftjoin(
+                                                        'brand_product_variants',
+                                                        'brand_product_reservation_details.brand_product_variant_id',
+                                                        '=',
+                                                        'brand_product_variants.brand_product_variant_id'
+                                                    )
                                                     ->leftjoin('media', function ($join) {
                                                         $join->on('media.object_id', '=', 'brand_product_variants.brand_product_id')
                                                             ->where('media.media_name_id', '=', 'brand_product_main_photo')
@@ -102,7 +118,7 @@ class ReservationPurchasedDetailAPIController extends PubControllerAPI
                                                             ->where('media.object_name', '=', 'brand_product');
                                                     })
                                                     ->where('brand_product_reservations.user_id', '=', $user->user_id)
-                                                    ->where('brand_product_reservations.brand_product_reservation_id', '=', $brandProductReservationId)
+                                                    ->where('brand_product_reservations.brand_product_reservation_id', $brandProductReservationId)
                                                     ->first();
 
             if (empty($reservation)) {

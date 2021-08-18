@@ -37,4 +37,9 @@ class BrandProductVariant extends Eloquent
     {
         return $this->hasMany(BrandProductReservationDetail::class);
     }
+
+    public function order_details()
+    {
+        return $this->hasMany(OrderDetail::class);
+    }
 }

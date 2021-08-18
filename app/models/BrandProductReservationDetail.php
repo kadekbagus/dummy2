@@ -6,6 +6,8 @@ class BrandProductReservationDetail extends Eloquent
 
     protected $table = 'brand_product_reservation_details';
 
+    protected $guarded = [];
+
     public function media()
     {
         return $this->hasOne(Media::class, 'media_id', 'value');
@@ -23,6 +25,6 @@ class BrandProductReservationDetail extends Eloquent
 
     public function reservation()
     {
-        return $this->belongsTo(BrandProductReservation::class);
+        return $this->belongsTo(BrandProductReservation::class, 'brand_product_reservation_id', 'brand_product_reservation_id');
     }
 }

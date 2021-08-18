@@ -11,6 +11,8 @@ class BrandProductReservation extends Eloquent
 
     protected $table = 'brand_product_reservations';
 
+    protected $guarded = [];
+
     const STATUS_PENDING = 'pending';
     const STATUS_ACCEPTED = 'accepted';
     const STATUS_CANCELED = 'cancelled';
@@ -50,5 +52,23 @@ class BrandProductReservation extends Eloquent
     {
         return $this->hasOne(BrandProductReservationDetail::class)
             ->where('option_type', 'image');
+    }
+
+    public static function getReservedQuantity($variantId)
+    {
+        return BrandProductReservation::select('quantity')
+            ->join(
+                'brand_product_reservation_details',
+                'brand_product_reservations.brand_product_reservation_id',
+                '=',
+                'brand_product_reservation_details.brand_product_reservation_id'
+            )
+            ->where('brand_product_variant_id', $variantId)
+            ->whereIn('status', [
+                BrandProductReservation::STATUS_PENDING,
+                BrandProductReservation::STATUS_ACCEPTED,
+                BrandProductReservation::STATUS_DONE,
+            ])
+            ->sum('quantity');
     }
 }
