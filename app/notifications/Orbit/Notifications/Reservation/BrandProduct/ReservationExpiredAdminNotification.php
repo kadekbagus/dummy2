@@ -29,9 +29,4 @@ class ReservationExpiredAdminNotification extends ReservationNotification
     {
         return trans('email-reservation.expired.subject', [], '', 'id');
     }
-
-    protected function getEnabledLanguages()
-    {
-        return ['id', 'en'];
-    }
 }

@@ -7,10 +7,12 @@ use BrandProductReservationDetail;
 use BrandProductReservationVariantDetail;
 use Carbon\Carbon;
 use CartItem;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Request;
 use Orbit\Controller\API\v1\Reservation\ReservationInterface;
+use Orbit\Helper\Cart\CartInterface;
 
 /**
  *
@@ -38,62 +40,11 @@ class ReservationRepository implements ReservationInterface
      */
     public function make($item, $reservationData)
     {
-        if (is_array($reservationData->object_id)) {
-            return $this->makeMultiple($reservationData);
+        if (is_string($reservationData->object_id)) {
+            Request::replace(['object_id' => [$reservationData->object_id]]);
         }
 
-        DB::beginTransaction();
-
-        $reservation = new BrandProductReservation;
-        // $reservation->brand_product_id = $item->brand_product->brand_product_id;
-        $reservation->brand_product_variant_id = $item->brand_product_variant_id;
-        $reservation->product_name = $item->brand_product->product_name;
-        $reservation->sku = $item->sku;
-        $reservation->product_code = $item->product_code;
-        $reservation->original_price = $item->original_price;
-        $reservation->selling_price = $item->selling_price;
-        $reservation->quantity = $reservationData->quantity;
-        $reservation->user_id = $reservationData->user()->user_id;
-        $reservation->status = BrandProductReservation::STATUS_PENDING;
-        $reservation->brand_id = $item->brand_product->brand_id;
-        $reservation->save();
-
-        foreach($item->variant_options as $variantOption)  {
-
-            $reservationDetails = new BrandProductReservationDetail;
-            $reservationDetails->option_type = $variantOption->option_type;
-
-            if ($variantOption->option_type === 'merchant') {
-                $reservationDetails->value = $variantOption->option_id;
-            }
-            else {
-                $reservationDetails->value = $variantOption->option->value;
-                $reservationDetails->variant_id =
-                    $variantOption->option->variant_id;
-                $reservationDetails->variant_name =
-                    $variantOption->option->variant->variant_name;
-            }
-
-            $reservation->details()->save($reservationDetails);
-        }
-
-        // Save image, so that when a variant that linked to current reservation
-        // deleted or changed, we still be able to get the image.
-        foreach($item->brand_product->media as $media) {
-            if (stripos($media->media_name_long, 'orig') !== false) {
-                $reservationDetails = new BrandProductReservationDetail;
-                $reservationDetails->option_type = 'image';
-                $reservationDetails->value = $media->media_id;
-                $reservation->details()->save($reservationDetails);
-            }
-        }
-
-        DB::commit();
-
-        // fire event?
-        Event::fire('orbit.reservation.made', [$reservation]);
-
-        return $reservation;
+        return $this->makeMultiple($reservationData);
     }
 
     /**
@@ -145,9 +96,11 @@ class ReservationRepository implements ReservationInterface
             );
         }
 
+        App::make(CartInterface::class)->removeItem($reservationsData->object_id);
+
         DB::commit();
 
-        // Event::fire('orbit.reservation.made_multiple', [$reservations]);
+        Event::fire('orbit.reservation.made_multiple', [$reservations]);
 
         return array_values($reservations);
     }
@@ -159,7 +112,7 @@ class ReservationRepository implements ReservationInterface
      * @param User  $customer       the customer object
      * @param array $storeData      reservation data for the given store
      *
-     * @return array $reservations  updated reservation list
+     * @return void
      */
     private function createReservationsByStore(&$reservations, $customer, $storeData)
     {
