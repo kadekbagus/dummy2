@@ -81,7 +81,7 @@ abstract class ReservationNotification extends Notification implements
 
             $data = array_merge(
                 [
-                    'langs' => $this->getEnabledLanguages(),
+                    'langs' => $this->getSupportedLanguages(),
                     'cs' => $this->getContactData(),
                     'emailSubject' => $this->getEmailSubject(),
                     'statusColor' => [
@@ -121,10 +121,5 @@ abstract class ReservationNotification extends Notification implements
         }
 
         $job->delete();
-    }
-
-    protected function getEnabledLanguages()
-    {
-        return ['en'];
     }
 }

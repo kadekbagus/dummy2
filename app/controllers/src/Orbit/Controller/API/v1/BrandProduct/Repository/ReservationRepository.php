@@ -100,7 +100,7 @@ class ReservationRepository implements ReservationInterface
 
         DB::commit();
 
-        // Event::fire('orbit.reservation.made_multiple', [$reservations]);
+        Event::fire('orbit.reservation.made_multiple', [$reservations]);
 
         return array_values($reservations);
     }
@@ -182,7 +182,7 @@ class ReservationRepository implements ReservationInterface
             $reservation->status = BrandProductReservation::STATUS_CANCELED;
             $reservation->save();
 
-            // Event::fire('orbit.reservation.canceled', [$reservation]);
+            Event::fire('orbit.reservation.canceled', [$reservation]);
         });
 
         return $reservation;

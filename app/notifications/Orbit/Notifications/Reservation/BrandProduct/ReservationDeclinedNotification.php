@@ -30,7 +30,7 @@ class ReservationDeclinedNotification extends ReservationNotification
         return trans('email-reservation.declined.subject', [], '', 'id');
     }
 
-    protected function getEnabledLanguages()
+    protected function getSupportedLanguages()
     {
         return ['id', 'en'];
     }
