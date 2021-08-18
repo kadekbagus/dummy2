@@ -553,6 +553,7 @@ return array(
             'can_cancel_rsvp' => 'Reservasi tidak dapat dibatalkan.',
             'rsvp_match_user' => 'Anda tidak berhak melihat/memproses reservasi tersebut.',
             'pikcup_location_valid' => 'Lokasi pengambilan item tidak sesuai.',
+            'can_reserve' => 'Tidak dapat melakukan reservasi untuk 1 atau lebih produk. Silakan ulang beberapa saat lagi atau hubungi layanan pelanggan Gotomalls.',
         ),
 
         'rsvp' => array(

@@ -562,6 +562,7 @@ return array(
             'can_cancel_rsvp' => 'Reservation cannot be canceled.',
             'rsvp_match_user' => 'You are not allowed to view/process requested reservation.',
             'pikcup_location_valid' => 'Invalid pickup location for selected item.',
+            'can_reserve' => 'Unable to make reservation because one or more item(s) not available. Please try again later or contact Gotomalls support.',
         ),
 
         'rsvp' => array(

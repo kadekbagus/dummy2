@@ -78,6 +78,7 @@ return [
     'table_transaction' => [
         'header' => [
             'item' => 'Item',
+            'variant' => 'Variation',
             'quantity' => 'Quantity',
             'price'     => 'Price',
             'subtotal'  => 'Subtotal',

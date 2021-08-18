@@ -68,4 +68,13 @@ class CartItem extends Eloquent
 
         return $cartItems;
     }
+
+    public static function getCartItemQuantity($variantId)
+    {
+        return CartItem::select('quantity')
+            ->where('user_id', App::make('currentUser')->user_id)
+            ->where('brand_product_variant_id', $variantId)
+            ->active()
+            ->sum('quantity');
+    }
 }

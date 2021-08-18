@@ -14,6 +14,7 @@ use Orbit\Helper\Notifications\Contracts\InAppNotificationInterface;
 use Orbit\Helper\Notifications\CustomerNotification;
 use Orbit\Helper\Util\CdnUrlGenerator;
 use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
+use Orbit\Notifications\Traits\CommonHelper;
 use Orbit\Notifications\Traits\HasContactTrait;
 use Orbit\Notifications\Traits\HasPaymentTrait;
 use Orbit\Notifications\Traits\HasPurchaseRewards;
@@ -29,7 +30,10 @@ class ReceiptNotification extends CustomerNotification implements
     EmailNotificationInterface,
     InAppNotificationInterface
 {
-    use HasPaymentTrait, HasContactTrait, HasPurchaseRewards;
+    use CommonHelper,
+        HasPaymentTrait,
+        HasContactTrait,
+        HasPurchaseRewards;
 
     protected $shouldQueue = true;
 

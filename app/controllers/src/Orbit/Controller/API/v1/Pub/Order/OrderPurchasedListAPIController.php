@@ -37,6 +37,7 @@ class OrderPurchasedListAPIController extends PubControllerAPI
                         {$prefix}order_details.quantity,
                         {$prefix}payment_transactions.payment_transaction_id,
                         {$prefix}payment_transactions.status as payment_status,
+                        {$prefix}payment_transactions.created_at as transaction_time,
                         GROUP_CONCAT({$prefix}order_variant_details.value separator ', ') as variant,
                         {$prefix}order_details.original_price,
                         {$prefix}order_details.selling_price,
@@ -71,11 +72,13 @@ class OrderPurchasedListAPIController extends PubControllerAPI
                     DB::raw('mall.merchant_id')
                 )
                 ->where('orders.user_id', $request->user()->user_id)
-                ->where('orders.status', '<>', Order::STATUS_PENDING)
+                // ->where('orders.status', '<>', Order::STATUS_PENDING)
                 ->where('payment_transactions.status', '<>', PaymentTransaction::STATUS_STARTING)
+                ->whereNotNull('payment_transactions.external_payment_transaction_id')
                 ->where('payment_transaction_details.object_type', 'order')
                 ->groupBy('orders.order_id')
-                ->groupBy('order_details.order_detail_id');
+                ->groupBy('order_details.order_detail_id')
+                ->orderBy('orders.created_at', 'desc');
 
             $purchasesCount = clone $purchases;
 
