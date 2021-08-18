@@ -182,7 +182,7 @@ class ReservationRepository implements ReservationInterface
             $reservation->status = BrandProductReservation::STATUS_CANCELED;
             $reservation->save();
 
-            Event::fire('orbit.reservation.canceled', [$reservation]);
+            // Event::fire('orbit.reservation.canceled', [$reservation]);
         });
 
         return $reservation;
