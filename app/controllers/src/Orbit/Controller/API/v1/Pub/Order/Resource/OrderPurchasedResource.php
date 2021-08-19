@@ -25,8 +25,6 @@ class OrderPurchasedResource extends Resource
             'verification_code' => $this->notes,
             'transaction_time' => $this->created_at->format('Y-m-d H:i:s'),
             'payment_midtrans_info' => $this->midtrans->payment_midtrans_info,
-            'discount' => $this->discount,
-            'discount_code' => $this->discount_code,
             'items' => $this->transformPurchaseItems(),
         ];
 
@@ -53,6 +51,10 @@ class OrderPurchasedResource extends Resource
                         'floor' => $order->store->floor,
                         'unit' => $order->store->unit,
                         'amount' => $order->total_amount,
+                        'store_image_url' => $this->transformImages(
+                            $order->store,
+                            'retailer_logo_'
+                        ),
                         'items' => [],
                     ];
                 }
@@ -78,6 +80,14 @@ class OrderPurchasedResource extends Resource
     {
         $images = parent::transformImages($item, $imagePrefix);
 
-        return isset($images['desktop_thumb']) ? $images['desktop_thumb'] : '';
+        if (isset($images['desktop_thumb'])) {
+            return $images['desktop_thumb'];
+        }
+
+        if (isset($images['orig'])) {
+            return $images['orig'];
+        }
+
+        return null;
     }
 }
