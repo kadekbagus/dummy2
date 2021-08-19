@@ -15,6 +15,8 @@ class OrderPurchasedDetailAPIController extends PubControllerAPI
 
     protected $imagePrefix = 'brand_product_main_photo_';
 
+    protected $imageVariants = ['desktop_thumb'];
+
     /**
      * GET - get detail of order transaction detail
      *
@@ -32,6 +34,7 @@ class OrderPurchasedDetailAPIController extends PubControllerAPI
             $this->response->data = new OrderPurchasedResource(
                 PaymentTransaction::with([
                         'details.order.details.order_variant_details',
+                        'details.order.store.mall',
                         'details.order.details.brand_product_variant.brand_product' => function($query) {
                             $query->with($this->buildMediaQuery());
                         },
