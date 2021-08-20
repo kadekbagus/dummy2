@@ -13,6 +13,8 @@ class BrandProductReservation extends Eloquent
 
     protected $guarded = [];
 
+    protected $dates = ['expired_at'];
+
     const STATUS_PENDING = 'pending';
     const STATUS_ACCEPTED = 'accepted';
     const STATUS_CANCELED = 'cancelled';
