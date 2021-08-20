@@ -74,7 +74,7 @@ class OrderPurchasedCollection extends ResourceCollection
                 'brand_id' => $item->brand_id,
                 'product_type' => 'brand_product',
                 'product_id' => $product->brand_product_id,
-                'product_name' => $product->name,
+                'product_name' => $product->product_name,
                 'product_status' => $product->status,
                 'variant' => $detail->order_variant_details->implode('value', ', '),
                 'image_url' => $imageUrl,
