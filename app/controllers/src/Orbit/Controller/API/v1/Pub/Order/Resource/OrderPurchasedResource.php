@@ -61,6 +61,7 @@ class OrderPurchasedResource extends Resource
                 }
 
                 $items[$storeId]['items'][] = [
+                    'product_id' => $orderDetail->brand_product_variant->brand_product_id,
                     'name' => $orderDetail->brand_product_variant->brand_product->product_name,
                     'variant' => $orderDetail->order_variant_details->implode('value', ', '),
                     'quantity' => $orderDetail->quantity,
