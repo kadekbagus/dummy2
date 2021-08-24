@@ -34,6 +34,12 @@ class Order extends Eloquent
         return $this->hasMany('OrderDetail');
     }
 
+    public function payment_detail()
+    {
+        return $this->hasOne(PaymentTransactionDetail::class, 'object_id', 'order_id')
+            ->where('payment_transaction_details.object_type', 'order');
+    }
+
     /**
      * Create a new Order from request object.
      *
