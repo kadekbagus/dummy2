@@ -178,7 +178,7 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
             $reservationItem->expired_at = ! empty($reservation->expired_at)
                         ? $reservation->expired_at->format('Y-m-d H:i:s')
                         : null;
-            $reservationItem->products = [];
+            $reservationItem->items = [];
 
             foreach ($reservation->details as $detail) {
                 $dtl = new stdclass();
@@ -208,7 +208,7 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
                     $variants[] = strtoupper($variantDetail->value);
                 }
                 $dtl->variants = implode(', ', $variants);
-                $reservationItem->products[] = $dtl;
+                $reservationItem->items[] = $dtl;
             }
             $listReservation[] = $reservationItem;
         }
