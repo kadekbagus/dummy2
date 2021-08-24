@@ -26,6 +26,7 @@ class OrderPurchasedCollection extends ResourceCollection
                 $this->data['records'][$item->order_id] = [
                     'order_id' => $item->order_id,
                     'order_status' => $item->status,
+                    'verification_code' => $item->pick_up_code,
                     'order_amount' => $item->total_amount,
                     'payment_transaction_id' => $item->payment_detail->payment_transaction_id,
                     'payment_status' => $item->payment_detail->payment->status,

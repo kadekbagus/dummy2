@@ -22,7 +22,7 @@ class OrderPurchasedResource extends Resource
             'currency' => $this->currency,
             'amount' => $this->amount,
             'payment_status' => $this->status,
-            'verification_code' => $this->notes,
+            // 'verification_code' => $this->notes,
             'transaction_time' => $this->created_at->timezone('Asia/Jakarta')
                 ->format('Y-m-d H:i:s'),
             'payment_midtrans_info' => $this->midtrans->payment_midtrans_info,
@@ -47,6 +47,7 @@ class OrderPurchasedResource extends Resource
                     $items[$storeId] = [
                         'order_id' => $order->order_id,
                         'order_status' => $order->status,
+                        'verification_code' => $order->pick_up_code,
                         'store_name' => $order->store->name,
                         'mall_name' => $order->store->mall->name,
                         'floor' => $order->store->floor,
