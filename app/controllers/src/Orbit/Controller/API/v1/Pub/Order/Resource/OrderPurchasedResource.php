@@ -23,7 +23,8 @@ class OrderPurchasedResource extends Resource
             'amount' => $this->amount,
             'payment_status' => $this->status,
             'verification_code' => $this->notes,
-            'transaction_time' => $this->created_at->format('Y-m-d H:i:s'),
+            'transaction_time' => $this->created_at->timezone('Asia/Jakarta')
+                ->format('Y-m-d H:i:s'),
             'payment_midtrans_info' => $this->midtrans->payment_midtrans_info,
             'items' => $this->transformPurchaseItems(),
         ];
