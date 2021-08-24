@@ -18,7 +18,8 @@ Event::listen('orbit.order.ready-for-pickup', function($orderId, $bppUserId)
                                 'payment_transactions.user_name as name',
                                 'payment_transactions.phone',
                                 'payment_transactions.created_at',
-                                'payment_transactions.timezone_name'
+                                'payment_transactions.timezone_name',
+                                'payment_transactions.currency'
                             )
                         ->join('payment_transaction_details', function ($q) {
                                 $q->on('payment_transaction_details.object_id','=','orders.order_id');
@@ -48,81 +49,112 @@ Event::listen('orbit.order.ready-for-pickup', function($orderId, $bppUserId)
                         ->where('orders.order_id', '=', $orderId)
                         ->first();
 
-            $bppUser = BppUser::select('name','email')->where('bpp_user_id', $bppUserId)->first();
+                        
+    if ($order) {              
+        // bpp user that confirm ready to pickup
+        $bppUser = BppUser::select('bpp_user_id','name','email')->where('bpp_user_id', $bppUserId)->first();
 
-        if ($order) {
+        // bpp user where the pickup happened
+        $bppUserPickup = BppUser::select('bpp_user_id','name','email')->where('merchant_id', $order->store->merchant_id)->first();
 
-            foreach ($order->order_details as $key => $value) {
-                $order->order_details[$key]->name = $value->brand_product_variant->brand_product->product_name;
-                unset($value->brand_product_variant);
-                $var = null;
-                foreach ($order->order_details[$key]->order_variant_details as $key3 => $value3) {
-                    $var[] = $value3->value;
-                }
-                $order->order_details[$key]->variant = implode(",", $var);
-                unset($value->order_variant_details);
+        foreach ($order->order_details as $key => $value) {
+            $order->order_details[$key]->name = $value->brand_product_variant->brand_product->product_name;
+            unset($value->brand_product_variant);
+            $var = null;
+            foreach ($order->order_details[$key]->order_variant_details as $key3 => $value3) {
+                $var[] = $value3->value;
             }
+            $order->order_details[$key]->variant = implode(",", $var);
+            unset($value->order_variant_details);
+            $order->order_details[$key]->total = Order::formatCurrency($order->order_details[$key]->total, $order->currency);
+        }
 
-            // generate data for email
-            $supportedLangs = ['en'];
+        // generate data for email
+        $supportedLangs = ['en'];
 
-            $store = isset($order->store->location) ? $order->store->location : null;
+        $store = isset($order->store->location) ? $order->store->location : null;
 
-            $pickUpCode = isset($order->pick_up_code) ? $order->pick_up_code : null;
+        $pickUpCode = isset($order->pick_up_code) ? $order->pick_up_code : null;
 
-            $cs = Config::get('orbit.contact_information.customer_service');
+        $cs = Config::get('orbit.contact_information.customer_service');
 
-            $customer = (object) ['email' => $order->email,
-                                  'name'  => $order->name,
-                                  'phone' => $order->phone
-                                ];
-                                    
-            $transaction = ['orderId' => $order->order_id,
-                            'total'   => $order->total_payment,
-                            'items'   => $order->order_details->toArray(),
-                            'followUpUrl' => '',
+        $customer = (object) ['email' => $order->email,
+                                'name'  => $order->name,
+                                'phone' => $order->phone
                             ];
+                                
+        $transaction = ['orderId' => $order->order_id,
+                        'total'   => Order::formatCurrency($order->total_payment, $order->currency),
+                        'items'   => $order->order_details->toArray(),
+                        'followUpUrl' => Config::get('orbit.shop.gtm_url').'/my/purchases/orders',
+                        ];
 
-            $format = 'd F Y, H:i';
-            $transactionDateTime = isset($order->timezone_name) ? 
-                                   $order->created_at->timezone($order->timezone_name)->format($format) : 
-                                   $order->created_at->format($format);
-            
-            $localTimeZone = Order::getLocalTimezoneName($order->timezone_name);
-            $transactionDateTime =  $transactionDateTime.' '.$localTimeZone;
-                            
-            // send email to the user
+        $format = 'd F Y, H:i';
+        $transactionDateTime = isset($order->timezone_name) ? 
+                                $order->created_at->timezone($order->timezone_name)->format($format) : 
+                                $order->created_at->format($format);
+        
+        $localTimeZone = Order::getLocalTimezoneName($order->timezone_name);
+        $transactionDateTime =  $transactionDateTime.' '.$localTimeZone;
+
+        $bppUrl = Config::get('orbit.product_order.follow_up_url', 'https://bpp.gotomalls.com/#!/orders/%s');
+        $bppOrderUrl = sprintf($bppUrl, $order->order_id);                       
+                        
+        // send email to the user
+        Queue::push('Orbit\\Queue\\Order\\ReadyToPickupMailQueue', [
+            'recipientEmail'      => $order->email,
+            'recipientName'       => $order->name,
+            'transaction'         => $transaction,
+            'customer'            => $customer,
+            'transactionDateTime' => $transactionDateTime,
+            'emailSubject'        => trans('email-order.pickup-order.subject', [], '', 'en'),
+            'supportedLangs'      => $supportedLangs,
+            'cs'                  => $cs,
+            'pickUpCode'          => $pickUpCode,
+            'store'               => $store,
+            'type'                => 'user',
+        ]);
+
+        $transaction['followUpUrl'] = $bppOrderUrl;
+
+        // send email to bpp user that confirm ready to pickup
+        if (isset($bppUser->email) && isset($bppUser->name)) {
             Queue::push('Orbit\\Queue\\Order\\ReadyToPickupMailQueue', [
-                'recipientEmail'      => $order->email,
-                'recipientName'       => $order->name,
+                'recipientEmail'      => $bppUser->email,
+                'recipientName'       => $bppUser->name,
                 'transaction'         => $transaction,
                 'customer'            => $customer,
                 'transactionDateTime' => $transactionDateTime,
-                'emailSubject'        => trans('email-order.ready-to-pickup-order.subject', [], '', 'en'),
+                'emailSubject'        => trans('email-order.pickup-order.subject', [], '', 'en'),
                 'supportedLangs'      => $supportedLangs,
                 'cs'                  => $cs,
                 'pickUpCode'          => $pickUpCode,
                 'store'               => $store,
-                'type'                => 'user',
+                'type'                => 'admin',
             ]);
+        }
 
-            // send email to store admin
-            if (isset($bppUser->email) && isset($bppUser->name)) {
-                Queue::push('Orbit\\Queue\\Order\\ReadyToPickupMailQueue', [
-                    'recipientEmail'      => $bppUser->email,
-                    'recipientName'       => $bppUser->name,
-                    'transaction'         => $transaction,
-                    'customer'            => $customer,
-                    'transactionDateTime' => $transactionDateTime,
-                    'emailSubject'        => trans('email-order.ready-to-pickup-order.subject', [], '', 'en'),
-                    'supportedLangs'      => $supportedLangs,
-                    'cs'                  => $cs,
-                    'pickUpCode'          => $pickUpCode,
-                    'store'               => $store,
-                    'type'                => 'admin',
-                ]);
+        // send email to bpp user where the pickup happened
+        if ($bppUserPickup) {
+            if ($bppUserPickup->bpp_user_id !== $bppUser->bpp_user_id) {
+                if (isset($bppUserPickup->email) && isset($bppUserPickup->name)) {
+                    Queue::push('Orbit\\Queue\\Order\\ReadyToPickupMailQueue', [
+                        'recipientEmail'      => $bppUserPickup->email,
+                        'recipientName'       => $bppUserPickup->name,
+                        'transaction'         => $transaction,
+                        'customer'            => $customer,
+                        'transactionDateTime' => $transactionDateTime,
+                        'emailSubject'        => trans('email-order.pickup-order.subject', [], '', 'en'),
+                        'supportedLangs'      => $supportedLangs,
+                        'cs'                  => $cs,
+                        'pickUpCode'          => $pickUpCode,
+                        'store'               => $store,
+                        'type'                => 'admin',
+                    ]);
+                }
             }
         }
+    }
 
     }
 

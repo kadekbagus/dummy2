@@ -44,15 +44,19 @@ return [
         ],
     ],
 
-    'ready-to-pickup-order' => [
+    'pickup-order' => [
         'subject' => 'Product Ready To Pickup!',
         'title' => 'Ready To Pickup',
         'greeting' => 'Hello :recipientName,',
         'body' => [
-            'line-1' => 'Your orders are ready for pick up! Go to your selected pick up store location and show this pick up code to store cashier.',
+            'line-user' => 'Your orders are ready for pickup! Go to your selected pickup store location and show this pickup code to store cashier.',
             'line-admin' => 'You have ready for pickup order! Please find the details below and take necessary action.',
             'help' => 'Please contact our customer service at <a style="color:#f43d3c;text-decoration:none;" href="tel::csPhone">:csPhone</a> or email at <a style="color:#f43d3c;text-decoration:none;" href="mailto::csEmail">:csEmail</a> if you find any difficulties.',
             'thank_you' => '',
         ],
+        'btn_follow_up' => [
+            'user' => 'Go to My Purchase',
+            'admin' => 'Process Order'
+        ]
     ],
 ];
