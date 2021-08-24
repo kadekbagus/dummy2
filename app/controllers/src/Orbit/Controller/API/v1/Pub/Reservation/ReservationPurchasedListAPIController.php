@@ -172,7 +172,7 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
         foreach($reservations as $reservation) {
             $reservationItem = new \stdClass();
             $reservationItem->brand_product_reservation_id = $reservation->brand_product_reservation_id;
-            $reservationItem->store_name = $reservation->store->name . ' @ ' . $reservation->store->mall->name;
+            $reservationItem->store_name = $reservation->store->name . ' at ' . $reservation->store->mall->name;
             $reservationItem->status = $reservation->status;
             $reservationItem->created_at = $reservation->created_at->format('Y-m-d H:i:s');
             $reservationItem->expired_at = ! empty($reservation->expired_at)
