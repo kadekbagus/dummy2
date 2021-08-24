@@ -15,6 +15,8 @@ class OrderPurchasedDetailAPIController extends PubControllerAPI
 
     protected $imagePrefix = 'brand_product_main_photo_';
 
+    protected $imageVariants = ['desktop_thumb'];
+
     /**
      * GET - get detail of order transaction detail
      *
@@ -32,41 +34,17 @@ class OrderPurchasedDetailAPIController extends PubControllerAPI
             $this->response->data = new OrderPurchasedResource(
                 PaymentTransaction::with([
                         'details.order.details.order_variant_details',
+                        'details.order.store' => function($query) {
+                            $this->imagePrefix = 'retailer_logo_';
+                            $this->imageVariants = ['orig'];
+                            $query->with(['mall'] + $this->buildMediaQuery());
+                        },
                         'details.order.details.brand_product_variant.brand_product' => function($query) {
+                            $this->imagePrefix = 'brand_product_main_photo_';
+                            $this->imageVariants = ['desktop_thumb'];
                             $query->with($this->buildMediaQuery());
                         },
                         'midtrans',
-                        'discount_code' => function($discountCodeQuery) {
-                            $discountCodeQuery->select(
-                                'payment_transaction_id',
-                                'discount_code_id',
-                                'discount_id',
-                                'discount_code as used_discount_code'
-                            )->with([
-                                'discount' => function($discountDetailQuery) {
-                                    $discountDetailQuery->select(
-                                        'discount_id',
-                                        'discount_code as parent_discount_code',
-                                        'discount_title',
-                                        'value_in_percent as percent_discount'
-                                    );
-                            }]);
-                        },
-                        'discount' => function($discountQuery) {
-                            $discountQuery->select(
-                                'payment_transaction_id',
-                                'object_id',
-                                'price as discount_amount'
-                            )->with([
-                                'discount' => function($discountQuery) {
-                                    $discountQuery->select(
-                                        'discount_id',
-                                        'discount_code as parent_discount_code',
-                                        'discount_title',
-                                        'value_in_percent as percent_discount'
-                                    );
-                            }]);
-                        },
                     ])
                     ->where('payment_transaction_id', $request->payment_transaction_id)
                     ->orWhere('external_payment_transaction_id', $request->payment_transaction_id)

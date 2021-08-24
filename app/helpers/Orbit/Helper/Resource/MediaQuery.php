@@ -51,6 +51,10 @@ trait MediaQuery
             $prefix = $this->imagePrefix;
         }
 
+        if (isset($this->imageVariants) && ! empty($this->imageVariants)) {
+            $imageVariants = $this->imageVariants;
+        }
+
         // If 'image_variant' is empty, then try getting from 'device'.
         if (empty($imageVariants)) {
 

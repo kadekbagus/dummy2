@@ -166,11 +166,11 @@ class OrderUpdateStatusAPIController extends ControllerAPI
             $status = OrbitInput::post('status');
             $order = App::make('orbit.order.exists');
 
-            if ($status === Order::STATUS_READY_FOR_PICKUP || $status === Order::STATUS_DECLINED) {
-                if ($order->status !== Order::STATUS_PAID) {
-                    return FALSE;
-                }
-            }
+            // if ($status === Order::STATUS_READY_FOR_PICKUP || $status === Order::STATUS_DECLINED) {
+            //     if ($order->status !== Order::STATUS_PAID) {
+            //         return FALSE;
+            //     }
+            // }
 
             if ($status === Order::STATUS_DONE) {
                 if ($order->status !== Order::STATUS_READY_FOR_PICKUP) {

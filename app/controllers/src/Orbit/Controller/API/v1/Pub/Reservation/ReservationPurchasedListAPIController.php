@@ -98,6 +98,7 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
             $reservation = $reservation->orderBy(DB::raw("{$prefix}brand_product_reservations.created_at"), 'desc');
 
             $_reservation = clone $reservation;
+            $_reservation->groupBy('brand_product_reservations.brand_product_reservation_id');
 
             $take = PaginationNumber::parseTakeFromGet('coupon');
             $reservation->take($take);
@@ -105,7 +106,7 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $reservation->skip($skip);
 
-            $listReservation = $reservation->get();
+            $listReservation = $this->transformReservationList($reservation);
             $count = RecordCounter::create($_reservation)->count();
 
             if ($count === 0) {
@@ -165,6 +166,37 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    private function transformReservationList($reservations)
+    {
+        $reservations = $reservations->get();
+        $listReservation = [];
+
+        foreach($reservations as $reservation) {
+            $reservationId = $reservation->brand_product_reservation_id;
+            if (! isset($listReservation[$reservationId])) {
+                $listReservation[$reservationId] = [
+                    'brand_product_reservation_id' => $reservationId,
+                    'store_name' => $reservation->store_name,
+                    'created_at' => $reservation->created_at->format('Y-m-d H:i:s'),
+                    'expired_at' => ! empty($reservation->expired_at)
+                        ? $reservation->expired_at->format('Y-m-d H:i:s')
+                        : null,
+                    'status' => $reservation->status,
+                    'items' => [],
+                ];
+            }
+
+            $listReservation[$reservationId]['items'][] = [
+                'brand_product_id' => $reservation->brand_product_id,
+                'product_name' => $reservation->product_name,
+                'image' => $reservation->image,
+                'selling_price' => $reservation->selling_price,
+            ];
+        }
+
+        return array_values($listReservation);
     }
 
 }

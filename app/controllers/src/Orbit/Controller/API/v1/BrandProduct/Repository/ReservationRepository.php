@@ -100,7 +100,7 @@ class ReservationRepository implements ReservationInterface
 
         DB::commit();
 
-        // Event::fire('orbit.reservation.made_multiple', [$reservations]);
+        Event::fire('orbit.reservation.made_multiple', [$reservations]);
 
         return array_values($reservations);
     }
