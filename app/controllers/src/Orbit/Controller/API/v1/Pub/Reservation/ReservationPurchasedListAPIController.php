@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace Orbit\Controller\API\v1\Pub\Reservation;
 
@@ -34,7 +34,7 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
                 $message = 'You have to login to continue';
                 OrbitShopAPI::throwInvalidArgument($message);
             }
-            
+
             $language = OrbitInput::get('language', 'id');
 
             $validator = Validator::make(
@@ -63,14 +63,14 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
                 $image = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
             }
 
-            $reservation = BrandProductReservation::select('brand_product_reservations.brand_product_reservation_id', 
+            $reservation = BrandProductReservation::select('brand_product_reservations.brand_product_reservation_id',
                                                            'brand_product_reservation_details.product_name',
                                                            'brand_product_reservation_details.selling_price',
-                                                           'brand_product_reservations.created_at', 
+                                                           'brand_product_reservations.created_at',
                                                            'brand_product_reservations.expired_at',
                                                            'brand_product_reservations.status',
                                                            'brand_product_variants.brand_product_id',
-                                                    DB::raw("{$image} as image"),         
+                                                    DB::raw("{$image} as image"),
                                                     DB::raw("CONCAT(m1.name,' ', m2.name) as store_name"))
                                                     ->join(DB::raw("{$prefix}merchants as m1"), DB::raw('m1.merchant_id'), '=', 'brand_product_reservations.merchant_id')
                                                     ->join(DB::raw("{$prefix}merchants as m2"), DB::raw('m2.merchant_id'), '=', DB::raw('m1.parent_id'))
@@ -109,12 +109,11 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
             $listReservation = $this->transformReservationList($reservation);
             $count = RecordCounter::create($_reservation)->count();
 
+            $this->response->data = new stdClass();
             if ($count === 0) {
-                $data->records = NULL;
+                $this->response->data->records = NULL;
                 $this->response->message = "There is no reservation that matched your search criteria";
             }
-
-            $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
             $this->response->data->returned_records = count($listReservation);
             $this->response->data->records = $listReservation;
