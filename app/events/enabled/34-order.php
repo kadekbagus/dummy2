@@ -85,7 +85,7 @@ Event::listen('orbit.order.ready-for-pickup', function($orderId, $bppUserId)
 
             $format = 'd F Y, H:i';
             $transactionDateTime = isset($order->timezone_name) ? 
-                                   $order->created_at->timezone($this->timezone_name)->format($format) : 
+                                   $order->created_at->timezone($order->timezone_name)->format($format) : 
                                    $order->created_at->format($format);
             
             $localTimeZone = Order::getLocalTimezoneName($order->timezone_name);

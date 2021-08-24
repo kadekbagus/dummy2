@@ -16,12 +16,10 @@ trait HasReservationTrait
         return BrandProductReservation::onWriteConnection()
             ->with([
                 'users',
-                'brand_product_variant.brand_product.creator',
-                'store.store.mall',
-                'variants',
+                'store.mall',
+                'details.variant_details',
             ])
-            ->where('brand_product_reservation_id', $reservationId)
-            ->first();
+            ->findOrFail($reservationId);
     }
 
     protected function getReservationData()
@@ -30,16 +28,10 @@ trait HasReservationTrait
             'store'         => $this->getStore(),
             'reservationTime' => $this->formatDate($this->reservation->created_at),
             'expirationTime' => $this->formatDate($this->reservation->expired_at),
-            'quantity'      => $this->reservation->quantity,
             'totalPayment' => $this->getTotalPayment(),
             'status'        => $this->reservation->status,
             'reason' => $this->reservation->cancel_reason,
-            'product' => [
-                'name' => $this->reservation->product_name,
-                'variant' => $this->getVariant(),
-                'sku' => $this->reservation->sku,
-                'barcode' => $this->reservation->product_code ?: '-',
-            ],
+            'products' => $this->getReservationProducts(),
         ];
 
         return $data;
@@ -54,7 +46,7 @@ trait HasReservationTrait
 
     protected function getStore()
     {
-        $store = $this->reservation->store->store;
+        $store = $this->reservation->store;
         return [
             'storeId' => $store->merchant_id,
             'storeName' => $store->name,
@@ -64,15 +56,28 @@ trait HasReservationTrait
 
     protected function getTotalPayment()
     {
-        $total = $this->reservation->quantity
-            * $this->reservation->selling_price;
-
-        return 'Rp ' . number_format($total, 2, '.', ',');
+        return 'Rp ' . number_format($this->reservation->total_amount, 2, '.', ',');
     }
 
-    protected function getVariant()
+    protected function getReservationProducts()
     {
-        return strtoupper($this->reservation->variants->implode('value', ', '));
+        $products = [];
+
+        foreach($this->reservation->details as $detail) {
+            $products[] = [
+                'name' => $detail->product_name,
+                'variant' => $detail->variant_details->implode('value', ', '),
+                'sku' => $detail->sku,
+                'barcode' => $detail->product_code,
+                'quantity' => $detail->quantity,
+                'price' => $detail->selling_price,
+                'total_price' => 'Rp ' . number_format(
+                    $detail->quantity * $detail->selling_price, 2, '.', ','
+                ),
+            ];
+        }
+
+        return $products;
     }
 
     protected function getSeeReservationUrl()
@@ -88,7 +93,7 @@ trait HasReservationTrait
         $recipients = [];
 
         $store = $this->getStore();
-        $brandId = $this->reservation->brand_product_variant->brand_product->brand_id;
+        $brandId = $this->reservation->brand_id;
         $allAdmin = BppUser::with(['stores'])
             ->where('status', 'active')
             ->where('base_merchant_id', $brandId)
