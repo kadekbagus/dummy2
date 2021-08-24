@@ -63,36 +63,33 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
                 $image = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
             }
 
-            $reservation = BrandProductReservation::select('brand_product_reservations.brand_product_reservation_id',
-                                                           'brand_product_reservation_details.product_name',
-                                                           'brand_product_reservation_details.selling_price',
-                                                           'brand_product_reservations.created_at',
-                                                           'brand_product_reservations.expired_at',
-                                                           'brand_product_reservations.status',
-                                                           'brand_product_variants.brand_product_id',
-                                                    DB::raw("{$image} as image"),
-                                                    DB::raw("CONCAT(m1.name,' ', m2.name) as store_name"))
-                                                    ->join(DB::raw("{$prefix}merchants as m1"), DB::raw('m1.merchant_id'), '=', 'brand_product_reservations.merchant_id')
-                                                    ->join(DB::raw("{$prefix}merchants as m2"), DB::raw('m2.merchant_id'), '=', DB::raw('m1.parent_id'))
-                                                    ->join(
-                                                        'brand_product_reservation_details',
-                                                        'brand_product_reservations.brand_product_reservation_id',
-                                                        '=',
-                                                        'brand_product_reservation_details.brand_product_reservation_id'
-                                                    )
-                                                    ->leftjoin(
-                                                        'brand_product_variants',
-                                                        'brand_product_reservation_details.brand_product_variant_id',
-                                                        '=',
-                                                        'brand_product_variants.brand_product_variant_id'
-                                                    )
-                                                    ->leftjoin('media', function ($join) {
-                                                        $join->on('media.object_id', '=', 'brand_product_variants.brand_product_id')
-                                                            ->where('media.media_name_id', '=', 'brand_product_main_photo')
-                                                            ->where('media.media_name_long', '=', 'brand_product_main_photo_orig')
-                                                            ->where('media.object_name', '=', 'brand_product');
-                                                    })
-                                                    ->where('brand_product_reservations.user_id', '=', $user->user_id);
+            $reservation = BrandProductReservation::with([
+                    'users' => function($q) {
+                        $q->select('users.user_id', 'user_firstname', 'user_lastname');
+                    },
+                    'store.mall',
+                    'details' => function($q) {
+                        $q->with([
+                            'product_variant' => function($q1) {
+                                $q1->with([
+                                    'brand_product' => function($q3) {
+                                        $q3->select('brand_product_id');
+                                        $q3->with([
+                                            'brand_product_main_photo' => function($q4) {
+                                                $q4->select('media_id', 'object_id', 'path', 'cdn_url');
+                                            }
+                                        ]);
+                                    }
+                                ]);
+                            },
+                            'variant_details' => function($q12) {
+                                $q12->select('brand_product_reservation_detail_id', 'brand_product_reservation_variant_detail_id', 'value')
+                                    ->where('option_type', 'variant_option');
+                            }
+                        ]);
+                    }
+                ])
+                ->where('brand_product_reservations.user_id', '=', $user->user_id);
 
 
             $reservation = $reservation->orderBy(DB::raw("{$prefix}brand_product_reservations.created_at"), 'desc');
@@ -173,29 +170,49 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
         $listReservation = [];
 
         foreach($reservations as $reservation) {
-            $reservationId = $reservation->brand_product_reservation_id;
-            if (! isset($listReservation[$reservationId])) {
-                $listReservation[$reservationId] = [
-                    'brand_product_reservation_id' => $reservationId,
-                    'store_name' => $reservation->store_name,
-                    'created_at' => $reservation->created_at->format('Y-m-d H:i:s'),
-                    'expired_at' => ! empty($reservation->expired_at)
+            $reservationItem = new \stdClass();
+            $reservationItem->brand_product_reservation_id = $reservation->brand_product_reservation_id;
+            $reservationItem->store_name = $reservation->store->name . ' @ ' . $reservation->store->mall->name;
+            $reservationItem->status = $reservation->status;
+            $reservationItem->created_at = $reservation->created_at->format('Y-m-d H:i:s');
+            $reservationItem->expired_at = ! empty($reservation->expired_at)
                         ? $reservation->expired_at->format('Y-m-d H:i:s')
-                        : null,
-                    'status' => $reservation->status,
-                    'items' => [],
-                ];
+                        : null;
+            $reservationItem->items = [];
+
+            foreach ($reservation->details as $detail) {
+                $dtl = new stdclass();
+
+                $dtl->product_name = $detail->product_name;
+                $dtl->quantity = $detail->quantity;
+                $dtl->selling_price = $detail->selling_price;
+                $dtl->original_price = $detail->original_price;
+                $imgPath = '';
+                $cdnUrl = '';
+                if (is_object($detail->product_variant)) {
+                    if (is_object($detail->product_variant->brand_product)) {
+                        if (! empty($detail->product_variant->brand_product->brand_product_main_photo)) {
+                            if (is_object($detail->product_variant->brand_product->brand_product_main_photo[0])) {
+                                $imgPath = $detail->product_variant->brand_product->brand_product_main_photo[0]->path;
+                                $cdnUrl = $detail->product_variant->brand_product->brand_product_main_photo[0]->cdn_url;
+                            }
+                        }
+                    }
+                }
+
+                $dtl->img_path = $imgPath;
+                $dtl->cdn_url = $cdnUrl;
+
+                $variants = [];
+                foreach ($detail->variant_details as $variantDetail) {
+                    $variants[] = strtoupper($variantDetail->value);
+                }
+                $dtl->variants = implode(', ', $variants);
+                $reservationItem->items[] = $dtl;
             }
-
-            $listReservation[$reservationId]['items'][] = [
-                'brand_product_id' => $reservation->brand_product_id,
-                'product_name' => $reservation->product_name,
-                'image' => $reservation->image,
-                'selling_price' => $reservation->selling_price,
-            ];
+            $listReservation[] = $reservationItem;
         }
-
-        return array_values($listReservation);
+        return $listReservation;
     }
 
 }
