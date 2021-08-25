@@ -183,6 +183,7 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
             foreach ($reservation->details as $detail) {
                 $dtl = new stdclass();
 
+                $dtl->brand_product_id = null;
                 $dtl->product_name = $detail->product_name;
                 $dtl->quantity = $detail->quantity;
                 $dtl->selling_price = $detail->selling_price;
@@ -191,6 +192,7 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
                 $cdnUrl = '';
                 if (is_object($detail->product_variant)) {
                     if (is_object($detail->product_variant->brand_product)) {
+                        $dtl->brand_product_id = $detail->product_variant->brand_product->brand_product_id;
                         if (! empty($detail->product_variant->brand_product->brand_product_main_photo)) {
                             if (is_object($detail->product_variant->brand_product->brand_product_main_photo[0])) {
                                 $imgPath = $detail->product_variant->brand_product->brand_product_main_photo[0]->path;
