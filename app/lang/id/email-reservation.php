@@ -9,6 +9,8 @@ return [
         'store_location_detail' => ':storeName di :mallName',
         'reserve_date' => 'Tanggal Reservasi',
         'expiration_date' => 'Tanggal Kadaluarsa',
+        'cancelled_date' => 'Tanggal Dibatalkan',
+        'declined_date' => 'Tanggal Ditolak',
         'quantity' => 'Jml',
         'total_payment' => 'Total Pembayaran',
         'status' => 'Status',

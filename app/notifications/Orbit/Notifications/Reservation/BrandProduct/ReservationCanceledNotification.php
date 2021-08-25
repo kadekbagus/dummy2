@@ -29,4 +29,12 @@ class ReservationCanceledNotification extends ReservationNotification
     {
         return trans('email-reservation.canceled.subject');
     }
+
+    protected function getReservationData()
+    {
+        return array_merge(parent::getReservationData(), [
+            'showExpirationTime' => false,
+            'showCancelledTime' => true,
+        ]);
+    }
 }
