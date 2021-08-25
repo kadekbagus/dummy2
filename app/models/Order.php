@@ -253,4 +253,9 @@ class Order extends Eloquent
                    : '';
    }
 
+   public static function formatCurrency($amount, $currency)
+   {
+       return $currency . ' ' . number_format($amount, 0, ',', '.');
+   }
+
 }

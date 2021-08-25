@@ -34,4 +34,12 @@ class ReservationDeclinedNotification extends ReservationNotification
     {
         return ['id', 'en'];
     }
+
+    protected function getReservationData()
+    {
+        return array_merge(parent::getReservationData(), [
+            'showExpirationTime' => false,
+            'showDeclinedTime' => true,
+        ]);
+    }
 }
