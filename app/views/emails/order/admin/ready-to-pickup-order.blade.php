@@ -4,7 +4,7 @@
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>{{ trans('email-order.ready-to-pickup-order.subject') }}</title>
+  <title>{{ trans('email-order.pickup-order.subject') }}</title>
 
   @include('emails.components.styles')
 
@@ -32,7 +32,7 @@
                   <table width="640" cellpadding="0" cellspacing="0" border="0" class="container mobile-full-width">
                     <tr>
                       <td align="center" valign="middle" height="184" class="greeting-title-container" style="border-radius: 5px 5px 0 0;">
-                          <h1 class="greeting-title">{{ trans('email-order.ready-to-pickup-order.title', [], '', $lang) }}</h1>
+                          <h1 class="greeting-title">{{ trans('email-order.pickup-order.title', [], '', $lang) }}</h1>
                       </td>
                     </tr>
                   </table>
@@ -41,17 +41,21 @@
                     <tr>
                       <td width="300" class="mobile" align="left" valign="top">
                         <h3 class="greeting-username">
-                          {{ trans('email-order.ready-to-pickup-order.greeting', ['recipientName' => $recipientName], '', $lang) }}</h3>
+                          {{ trans('email-order.pickup-order.greeting', ['recipientName' => $recipientName], '', $lang) }}</h3>
                         <p class="greeting-text">
                         @if ($type === 'user')
-                          {{ trans('email-order.ready-to-pickup-order.body.line-1', [], '', $lang) }}
+                          {{ trans('email-order.pickup-order.body.line-user', [], '', $lang) }}
                         @else
-                          {{ trans('email-order.ready-to-pickup-order.body.line-admin', [], '', $lang) }}
+                          {{ trans('email-order.pickup-order.body.line-admin', [], '', $lang) }}
                         @endif
                         </p>
+
+                        @if ($type === 'user')
                         <div align="center">
-                          <h2>{{ $pickUpCode }}</h2>
+                          <h1 style="color: #FF0000;">{{ $pickUpCode }}</h1>
                         </div>
+                        @endif
+
                       </td>
                     </tr>
                     <tr>
@@ -181,7 +185,11 @@
                     <tr>
                       <td width="600" class="mobile reservation-actions" align="center" valign="middle">
                         <a href="{{{ $transaction['followUpUrl'] }}}" class="btn btn-primary mx-4">
-                          {{{ trans('email-order.labels.btn_follow_up', [], '', $lang) }}}
+                        @if ($type === 'user')
+                          {{{ trans('email-order.pickup-order.user', [], '', $lang) }}}
+                        @else
+                          {{{ trans('email-order.pickup-order.admin', [], '', $lang) }}}
+                        @endif
                         </a>
                       </td>
                     </tr>
