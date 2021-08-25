@@ -258,10 +258,9 @@ class ReservationDetailAPIController extends ControllerAPI
         }
 
         if ($userType === 'store') {
-            $brandProductReservation = BrandProductReservation::leftJoin('brand_product_reservation_details', 'brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
-                ->where('brand_product_reservations.brand_product_reservation_id', $brandProductReservationId)
+            $brandProductReservation = BrandProductReservation::where('brand_product_reservation_id', $brandProductReservationId)
                 ->where('brand_id', $brandId)
-                ->where('brand_product_reservation_details.value', $merchantId)
+                ->where('merchant_id', $merchantId)
                 ->first();
 
             if (is_object($brandProductReservation)) {
