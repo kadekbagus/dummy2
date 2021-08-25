@@ -70,7 +70,7 @@ Event::listen('orbit.order.ready-for-pickup', function($orderId, $bppUserId)
         }
 
         // generate data for email
-        $supportedLangs = ['en'];
+        $supportedLangs = ['en','id'];
 
         $store = isset($order->store->location) ? $order->store->location : null;
 
@@ -98,7 +98,9 @@ Event::listen('orbit.order.ready-for-pickup', function($orderId, $bppUserId)
         $transactionDateTime =  $transactionDateTime.' '.$localTimeZone;
 
         $bppUrl = Config::get('orbit.product_order.follow_up_url', 'https://bpp.gotomalls.com/#!/orders/%s');
-        $bppOrderUrl = sprintf($bppUrl, $order->order_id);                       
+        $bppOrderUrl = sprintf($bppUrl, $order->order_id);         
+        
+        $emailSubject = trans('email-order.pickup-order.subject', [], '', 'en');
                         
         // send email to the user
         Queue::push('Orbit\\Queue\\Order\\ReadyToPickupMailQueue', [
@@ -107,7 +109,7 @@ Event::listen('orbit.order.ready-for-pickup', function($orderId, $bppUserId)
             'transaction'         => $transaction,
             'customer'            => $customer,
             'transactionDateTime' => $transactionDateTime,
-            'emailSubject'        => trans('email-order.pickup-order.subject', [], '', 'en'),
+            'emailSubject'        => $emailSubject,
             'supportedLangs'      => $supportedLangs,
             'cs'                  => $cs,
             'pickUpCode'          => $pickUpCode,
@@ -125,7 +127,7 @@ Event::listen('orbit.order.ready-for-pickup', function($orderId, $bppUserId)
                 'transaction'         => $transaction,
                 'customer'            => $customer,
                 'transactionDateTime' => $transactionDateTime,
-                'emailSubject'        => trans('email-order.pickup-order.subject', [], '', 'en'),
+                'emailSubject'        => $emailSubject,
                 'supportedLangs'      => $supportedLangs,
                 'cs'                  => $cs,
                 'pickUpCode'          => $pickUpCode,
@@ -136,6 +138,7 @@ Event::listen('orbit.order.ready-for-pickup', function($orderId, $bppUserId)
 
         // send email to bpp user where the pickup happened
         if ($bppUserPickup) {
+            // make sure not sending to the same user twice
             if ($bppUserPickup->bpp_user_id !== $bppUser->bpp_user_id) {
                 if (isset($bppUserPickup->email) && isset($bppUserPickup->name)) {
                     Queue::push('Orbit\\Queue\\Order\\ReadyToPickupMailQueue', [
@@ -144,7 +147,7 @@ Event::listen('orbit.order.ready-for-pickup', function($orderId, $bppUserId)
                         'transaction'         => $transaction,
                         'customer'            => $customer,
                         'transactionDateTime' => $transactionDateTime,
-                        'emailSubject'        => trans('email-order.pickup-order.subject', [], '', 'en'),
+                        'emailSubject'        => $emailSubject,
                         'supportedLangs'      => $supportedLangs,
                         'cs'                  => $cs,
                         'pickUpCode'          => $pickUpCode,
