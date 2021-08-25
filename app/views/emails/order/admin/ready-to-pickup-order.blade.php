@@ -114,7 +114,7 @@
                               </td>
                               <td class="mobile reservation-table-item-value">
                                 <span class="p-8 block">
-                                  {{ trans('email-order.label.store_location_detail', ['storeName' => $storeName, 'mallName' => $mallName], '', $lang) }}
+                                  {{ trans('email-order.labels.store_location_detail', ['storeName' => $storeName, 'mallName' => $mallName], '', $lang) }}
                                 </span>
                               </td>
                             </tr>
