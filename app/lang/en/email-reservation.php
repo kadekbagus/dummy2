@@ -9,6 +9,8 @@ return [
         'store_location_detail' => ':storeName at :mallName',
         'reserve_date' => 'Reservation Date',
         'expiration_date' => 'Expiration Date',
+        'cancelled_date' => 'Cancelled Date',
+        'declined_date' => 'Declined Date',
         'quantity' => 'Qty',
         'total_payment' => 'Total Payment',
         'status' => 'Status',
