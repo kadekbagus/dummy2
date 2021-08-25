@@ -38,14 +38,38 @@
                                 <span class="p-8 block">{{ $reservationTime }}</span>
                               </td>
                             </tr>
-                            <tr>
-                              <td class="mobile bold reservation-table-item-label">
-                                <span class="p-8 block">{{ trans('email-reservation.labels.expiration_date', [], '', $lang) }}</span>
-                              </td>
-                              <td class="mobile reservation-table-item-value">
-                                <span class="p-8 block">{{ $expirationTime }}</span>
-                              </td>
-                            </tr>
+                            @if ($showExpirationTime)
+                              <tr>
+                                <td class="mobile bold reservation-table-item-label">
+                                  <span class="p-8 block">{{ trans('email-reservation.labels.expiration_date', [], '', $lang) }}</span>
+                                </td>
+                                <td class="mobile reservation-table-item-value">
+                                  <span class="p-8 block">{{ $expirationTime }}</span>
+                                </td>
+                              </tr>
+                            @endif
+
+                            @if ($showCancelledTime)
+                              <tr>
+                                <td class="mobile bold reservation-table-item-label">
+                                  <span class="p-8 block">{{ trans('email-reservation.labels.cancelled_date', [], '', $lang) }}</span>
+                                </td>
+                                <td class="mobile reservation-table-item-value">
+                                  <span class="p-8 block">{{ $cancelledTime }}</span>
+                                </td>
+                              </tr>
+                            @endif
+
+                            @if ($showDeclinedTime)
+                              <tr>
+                                <td class="mobile bold reservation-table-item-label">
+                                  <span class="p-8 block">{{ trans('email-reservation.labels.declined_date', [], '', $lang) }}</span>
+                                </td>
+                                <td class="mobile reservation-table-item-value">
+                                  <span class="p-8 block">{{ $declinedTime }}</span>
+                                </td>
+                              </tr>
+                            @endif
 
                             <tr>
                               <td class="mobile bold reservation-table-item-label">

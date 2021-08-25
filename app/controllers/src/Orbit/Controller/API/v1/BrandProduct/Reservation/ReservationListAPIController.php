@@ -126,8 +126,12 @@ class ReservationListAPIController extends ControllerAPI
             {
                 switch (strtolower($status)) {
                     case 'expired':
-                        $reservations->where('brand_product_reservations.status', 'accepted')
-                            ->where('expired_at', '<', DB::raw("NOW()"));
+                        $reservations->where(function ($q) {
+                            $q->where(function ($q2) {
+                                $q2->where('brand_product_reservations.status', 'accepted')
+                                    ->where('expired_at', '<', DB::raw("NOW()"));
+                            })->orWhere('brand_product_reservations.status', 'expired');
+                        });
                         break;
 
                     case 'accepted':

@@ -35,6 +35,7 @@ class ReservationMadeNotification extends ReservationNotification
     {
         return array_merge(parent::getReservationData(), [
             'seeReservationUrl' => $this->getSeeReservationUrl(),
+            'showExpirationTime' => false,
         ]);
     }
 }

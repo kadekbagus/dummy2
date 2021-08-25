@@ -48,6 +48,7 @@ class OrderPurchasedResource extends Resource
                         'order_id' => $order->order_id,
                         'order_status' => $order->status,
                         'verification_code' => $order->pick_up_code,
+                        'decline_reason' => $order->cancel_reason,
                         'store_name' => $order->store->name,
                         'mall_name' => $order->store->mall->name,
                         'floor' => $order->store->floor,
