@@ -114,7 +114,7 @@
                               </td>
                               <td class="mobile reservation-table-item-value">
                                 <span class="p-8 block">
-                                  {{ $store }}
+                                  {{ trans('email-order.label.store_location_detail', ['storeName' => $storeName, 'mallName' => $mallName], '', $lang) }}
                                 </span>
                               </td>
                             </tr>
@@ -186,9 +186,9 @@
                       <td width="600" class="mobile reservation-actions" align="center" valign="middle">
                         <a href="{{{ $transaction['followUpUrl'] }}}" class="btn btn-primary mx-4">
                         @if ($type === 'user')
-                          {{{ trans('email-order.pickup-order.user', [], '', $lang) }}}
+                          {{{ trans('email-order.pickup-order.btn_follow_up.user', [], '', $lang) }}}
                         @else
-                          {{{ trans('email-order.pickup-order.admin', [], '', $lang) }}}
+                          {{{ trans('email-order.pickup-order.btn_follow_up.admin', [], '', $lang) }}}
                         @endif
                         </a>
                       </td>
