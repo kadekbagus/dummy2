@@ -67,7 +67,11 @@ class BrandProductReservationResource extends Resource
     {
         $store = $this->resource->store;
         return [
+            'store_id' => $store->merchant_id,
             'store_name' => $store->name,
+            'floor' => $store->floor,
+            'unit' => $store->unit,
+            'mall_id' => $store->mall->merchant_id,
             'mall_name' => $store->mall->name,
         ];
     }
@@ -83,6 +87,7 @@ class BrandProductReservationResource extends Resource
 
         foreach($this->resource->details as $detail) {
             $items[] = [
+                'product_id' => $detail->product_variant->brand_product_id,
                 'variant_id' => $detail->brand_product_variant_id,
                 'product_name' => $detail->product_name,
                 'barcode' => $detail->product_code,
