@@ -38,7 +38,8 @@
                                 <span class="p-8 block">{{ $reservationTime }}</span>
                               </td>
                             </tr>
-                            @if ($showExpirationTime)
+
+                            @if (in_array($status, ['accepted', 'expired']))
                               <tr>
                                 <td class="mobile bold reservation-table-item-label">
                                   <span class="p-8 block">{{ trans('email-reservation.labels.expiration_date', [], '', $lang) }}</span>
@@ -49,7 +50,7 @@
                               </tr>
                             @endif
 
-                            @if ($showCancelledTime)
+                            @if ($status === 'cancelled')
                               <tr>
                                 <td class="mobile bold reservation-table-item-label">
                                   <span class="p-8 block">{{ trans('email-reservation.labels.cancelled_date', [], '', $lang) }}</span>
@@ -60,7 +61,7 @@
                               </tr>
                             @endif
 
-                            @if ($showDeclinedTime)
+                            @if ($status === 'declined')
                               <tr>
                                 <td class="mobile bold reservation-table-item-label">
                                   <span class="p-8 block">{{ trans('email-reservation.labels.declined_date', [], '', $lang) }}</span>
