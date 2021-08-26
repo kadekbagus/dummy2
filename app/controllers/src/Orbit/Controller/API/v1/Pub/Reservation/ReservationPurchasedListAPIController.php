@@ -173,6 +173,8 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
             $reservationItem = new \stdClass();
             $reservationItem->brand_product_reservation_id = $reservation->brand_product_reservation_id;
             $reservationItem->store_name = $reservation->store->name . ' at ' . $reservation->store->mall->name;
+            $reservationItem->store_id = $reservation->store->merchant_id;
+            $reservationItem->mall_id = $reservation->store->mall->merchant_id;
             $reservationItem->status = $reservation->status;
             $reservationItem->created_at = $reservation->created_at->format('Y-m-d H:i:s');
             $reservationItem->expired_at = ! empty($reservation->expired_at)
@@ -183,6 +185,7 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
             foreach ($reservation->details as $detail) {
                 $dtl = new stdclass();
 
+                $dtl->brand_product_id = null;
                 $dtl->product_name = $detail->product_name;
                 $dtl->quantity = $detail->quantity;
                 $dtl->selling_price = $detail->selling_price;
@@ -191,6 +194,7 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
                 $cdnUrl = '';
                 if (is_object($detail->product_variant)) {
                     if (is_object($detail->product_variant->brand_product)) {
+                        $dtl->brand_product_id = $detail->product_variant->brand_product->brand_product_id;
                         if (! empty($detail->product_variant->brand_product->brand_product_main_photo)) {
                             if (is_object($detail->product_variant->brand_product->brand_product_main_photo[0])) {
                                 $imgPath = $detail->product_variant->brand_product->brand_product_main_photo[0]->path;
