@@ -75,6 +75,7 @@ class ReservationDetailAPIController extends ControllerAPI
                     {$prefix}brand_product_reservations.brand_product_reservation_id,
                     {$prefix}brand_product_reservation_details.selling_price,
                     {$prefix}brand_product_reservations.created_at,
+                    {$prefix}brand_product_reservations.updated_at,
                     {$prefix}brand_product_reservations.merchant_id,
                     {$prefix}brand_product_reservations.expired_at,
                     {$prefix}brand_product_reservation_details.quantity,
@@ -135,7 +136,8 @@ class ReservationDetailAPIController extends ControllerAPI
                 $returnedItem->brand_product_reservation_id = $reservations->brand_product_reservation_id;
                 $returnedItem->user_name = $reservations->users->user_firstname . ' ' . $reservations->users->user_lastname;
                 $returnedItem->created_at = (string) $reservations->created_at;
-                $returnedItem->expired_at = $reservations->expired_at;
+                $returnedItem->updated_at = (string) $reservations->updated_at;
+                $returnedItem->expired_at = (string) $reservations->expired_at;
                 $returnedItem->status = $reservations->status;
                 $returnedItem->cancel_reason = $reservations->cancel_reason;
                 $returnedItem->total_amount = $reservations->total_amount;
@@ -256,10 +258,9 @@ class ReservationDetailAPIController extends ControllerAPI
         }
 
         if ($userType === 'store') {
-            $brandProductReservation = BrandProductReservation::leftJoin('brand_product_reservation_details', 'brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
-                ->where('brand_product_reservations.brand_product_reservation_id', $brandProductReservationId)
+            $brandProductReservation = BrandProductReservation::where('brand_product_reservation_id', $brandProductReservationId)
                 ->where('brand_id', $brandId)
-                ->where('brand_product_reservation_details.value', $merchantId)
+                ->where('merchant_id', $merchantId)
                 ->first();
 
             if (is_object($brandProductReservation)) {
