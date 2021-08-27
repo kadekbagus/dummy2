@@ -137,13 +137,17 @@ class Order extends Eloquent
 
     public static function cancel($orderId)
     {
-        $order = Order::where('order_id', $orderId)->update([
-                'status' => self::STATUS_CANCELLED,
-            ]);
+        if (is_string($orderId)) {
+            $orderId = explode(',', $orderId);
+        }
+
+        $orders = Order::whereIn('order_id', $orderId)->update([
+            'status' => self::STATUS_CANCELLED,
+        ]);
 
         // Event::fire('orbit.cart.order-cancelled', [$order]);
 
-        return $order;
+        return $orders;
     }
 
     public static function markAsPaid($orders)

@@ -8,6 +8,7 @@ use Exception;
 use Event;
 use Mall;
 use Activity;
+use Order;
 use Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct\APIHelper;
 
 use PaymentTransaction;
@@ -177,6 +178,18 @@ class CheckTransactionStatusQueue
                 }
 
                 $payment->save();
+
+                // If it is product/order purchase and was expired, then
+                // set the order as cancelled.
+                if ($payment->expired() && $payment->forOrder()) {
+
+                    Order::cancel(
+                        $payment->details->filter(function($detail) {
+                            return $detail->object_type === 'order';
+                        })->lists('object_id')
+                    );
+
+                }
 
                 DB::connection()->commit();
 
