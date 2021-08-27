@@ -94,7 +94,9 @@ class OrderListAPIController extends ControllerAPI
                                                       'order_details.brand_product_variant_id',
                                                       'order_details.original_price',
                                                       'order_details.selling_price',
-                                                      'order_details.quantity', 
+                                                      'order_details.sku',
+                                                      'order_details.product_code',
+                                                      'order_details.quantity',
                                                       DB::raw("{$prefix}order_details.selling_price*{$prefix}order_details.quantity as total_payment"));
                                         $q->with(['brand_product_variant' => function($q) use ($prefix) {
                                             $q->addSelect('brand_product_id','brand_product_variant_id');
