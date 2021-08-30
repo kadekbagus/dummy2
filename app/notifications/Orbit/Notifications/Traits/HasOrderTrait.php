@@ -5,6 +5,7 @@ namespace Orbit\Notifications\Traits;
 use BppUser;
 use Carbon\Carbon;
 use BrandProductReservation;
+use Discount;
 use Illuminate\Support\Facades\Config;
 use PaymentTransaction;
 
@@ -26,6 +27,7 @@ trait HasOrderTrait
         return PaymentTransaction::onWriteConnection()->with([
                 'details.order.details.order_variant_details',
                 'details.order.details.brand_product_variant.brand_product',
+                'details.order.store.mall',
                 'midtrans',
                 'user',
                 'discount',
@@ -40,53 +42,68 @@ trait HasOrderTrait
     {
         $transaction = [
             'id'        => $this->payment->payment_transaction_id,
-            'date'      => $this->payment->getTransactionDate(),
-            'customer'  => $this->getCustomerData(),
             'itemName'  => null,
             'otherProduct' => -1,
-            'items'     => [],
+            'orders'     => [],
             'discounts' => [],
             'total'     => $this->payment->getGrandTotal(),
         ];
 
-        foreach($this->payment->details as $item) {
-            $detailItem = [
-                'name'      => $item->object_name,
-                'shortName' => $item->object_name,
-                'variant'   => '',
-                'quantity'  => $item->quantity,
-                'price'     => $item->getPrice(),
-                'total'     => $item->getTotal(),
-            ];
+        foreach($this->payment->details as $detail) {
 
-            if ($item->order) {
-                foreach($item->order->details as $orderDetail) {
+            if ($detail->order) {
+                foreach($detail->order->details as $orderDetail) {
+                    $orderId = $detail->order->order_id;
+                    $store = $detail->order->store;
                     $product = $orderDetail->brand_product_variant;
+
+                    if (! isset($transaction['orders'][$orderId])) {
+                        $transaction['orders'][$orderId] = [
+                            'id' => $orderId,
+                            'items' => [],
+                            'store' => [
+                                'storeId' => $detail->order->merchant_id,
+                                'storeName' => $store->name,
+                                'mallId' => $store->mall->merchant_id,
+                                'mallName' => $store->mall->name,
+                                'floor' => $store->floor,
+                                'unit' => $store->unit,
+                            ],
+                        ];
+                    }
+
                     $detailItem = [
-                        'storeId'   => $item->order->merchant_id,
                         'name'      => $product->brand_product->product_name,
                         'shortName' => $product->brand_product->product_name,
                         'variant'   => $this->getVariant($orderDetail),
                         'quantity'  => $orderDetail->quantity,
-                        'price'     => $this->formatCurrency($orderDetail->selling_price, $item->currency),
-                        'total'     => $this->formatCurrency($orderDetail->selling_price * $orderDetail->quantity, $item->currency),
+                        'price'     => $this->formatCurrency($orderDetail->selling_price, $detail->currency),
+                        'total'     => $this->formatCurrency($orderDetail->selling_price * $orderDetail->quantity, $detail->currency),
                     ];
 
                     if (empty($transaction['itemName'])) {
                         $transaction['itemName'] = $detailItem['name'];
                     }
 
-                    $transaction['items'][] = $detailItem;
+                    $transaction['orders'][$orderId]['items'][] = $detailItem;
                     $transaction['otherProduct']++;
                 }
             }
-            else if ($item->price < 0 || $item->object_type === 'discount') {
-                $discount = Discount::select('value_in_percent')->find($item->object_id);
+            else if ($detail->price < 0 || $detail->object_type === 'discount') {
+                $discount = Discount::select('value_in_percent')->find($detail->object_id);
                 $discount = ! empty($discount) ? $discount->value_in_percent . '%' : '';
-                $detailItem['name'] = $discount;
-                $detailItem['quantity'] = '';
+                $detailItem = [
+                    'name'      => $discount,
+                    'shortName' => $discount,
+                    'price'     => $detail->getPrice(),
+                    'total'     => $detail->getTotal(),
+                ];
                 $transaction['discounts'][] = $detailItem;
             }
+        }
+
+        if (isset($transaction['orders'])) {
+            $transaction['orders'] = array_values($transaction['orders']);
         }
 
         return $transaction;
