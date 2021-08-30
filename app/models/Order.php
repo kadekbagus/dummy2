@@ -185,13 +185,13 @@ class Order extends Eloquent
         return $order;
     }
 
-    public static function done($orderId)
+    public static function done($orderId, $bppUserId)
     {
         $order = Order::where('order_id', $orderId)->update([
             'status' => self::STATUS_DONE,
         ]);
 
-        // Event::fire('orbit.cart.order-done', [$order]);
+        Event::fire('orbit.order.complete', [$orderId, $bppUserId]);
 
         return $order;
     }
