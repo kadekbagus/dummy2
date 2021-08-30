@@ -85,7 +85,7 @@ class OrderDetailAPIController extends ControllerAPI
                             ->with([
                                 'store.mall',
                                 'order_details' => function($q) use ($prefix) {
-                                        $q->addSelect('order_detail_id','order_id','brand_product_variant_id','sku','product_code','quantity','selling_price');
+                                        $q->addSelect('order_detail_id','order_id','brand_product_variant_id','sku','product_code','quantity', 'original_price', 'selling_price');
                                         $q->with(['brand_product_variant' => function($q) use ($prefix) {
                                             $q->addSelect('brand_product_id','brand_product_variant_id');
                                             $q->with(['brand_product' => function($q) use ($prefix) {

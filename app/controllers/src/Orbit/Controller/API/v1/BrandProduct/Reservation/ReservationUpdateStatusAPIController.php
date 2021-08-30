@@ -123,7 +123,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                     $max_reservation_time = $max_reservation_time <= $detail->product_variant->brand_product->max_reservation_time ? $detail->product_variant->brand_product->max_reservation_time : $max_reservation_time;
                 }
 
-                $reservation->expired_at = Carbon::now()->addMinutes($max_reservation_time * 60);
+                $reservation->expired_at = Carbon::now()->addMinutes($max_reservation_time);
             }
 
             if ($status === BrandProductReservation::STATUS_DONE) {

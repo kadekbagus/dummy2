@@ -90,7 +90,7 @@ class OrderUpdateStatusAPIController extends ControllerAPI
 
             // done/confirm order
             if ($status === Order::STATUS_DONE) {
-                Order::done($orderId);
+                Order::done($orderId, $userId);
             }
 
             // Commit the changes
