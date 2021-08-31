@@ -97,19 +97,11 @@ class OrderListAPIController extends ControllerAPI
                                                       'order_details.sku',
                                                       'order_details.product_code',
                                                       'order_details.quantity',
+                                                      'order_details.product_name',
+                                                      'order_details.image_url',
+                                                      'order_details.image_cdn',
                                                       DB::raw("{$prefix}order_details.selling_price*{$prefix}order_details.quantity as total_payment"));
-                                        $q->with(['brand_product_variant' => function($q) use ($prefix) {
-                                            $q->addSelect('brand_product_id','brand_product_variant_id');
-                                            $q->with(['brand_product' => function($q) use ($prefix) {
-                                                $q->addSelect('brand_product_id','product_name', DB::raw("{$prefix}media.path as product_picture"));
-                                                $q->leftjoin('media', function ($q) {
-                                                    $q->on('media.object_id', '=', 'brand_products.brand_product_id');
-                                                    $q->where('media.object_name', '=', 'brand_product');
-                                                    $q->where('media.media_name_id', '=', 'brand_product_main_photo');
-                                                    $q->where('media.media_name_long', '=', 'brand_product_main_photo_orig');
-                                                });
-                                            }]);
-                                        }, 'order_variant_details' => function($q){
+                                        $q->with(['order_variant_details' => function($q){
                                             $q->addSelect('order_detail_id', 'variant_name', 'value');
                                         }]);
                                     }
@@ -186,9 +178,6 @@ class OrderListAPIController extends ControllerAPI
 
             foreach ($listOfItems as $key => $value) {
                 foreach ($value->order_details as $key2 => $value2) {
-                    $value->order_details[$key2]->product_name = $value2->brand_product_variant->brand_product->product_name;
-                    $value->order_details[$key2]->product_image = $value2->brand_product_variant->brand_product->product_picture;
-                    unset($value2->brand_product_variant);
                     $var = null;
                     foreach ($value->order_details[$key2]->order_variant_details as $key3 => $value3) {
                         $var[] = $value3->value;
