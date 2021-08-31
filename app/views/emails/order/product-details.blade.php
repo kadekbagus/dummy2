@@ -56,10 +56,10 @@
                                       </em>
                                     </span>
                                   </td>
-                                  <td class="mobile reservation-table-item-value">
+                                  <td class="reservation-table-item-value">
                                     <span class="p-8 block text-center">{{ $item['quantity'] }}</span>
                                   </td>
-                                  <td class="mobile reservation-table-item-value">
+                                  <td class="reservation-table-item-value">
                                     <span class="p-8 block text-center">{{ $item['total'] }}</span>
                                   </td>
                                 </tr>
