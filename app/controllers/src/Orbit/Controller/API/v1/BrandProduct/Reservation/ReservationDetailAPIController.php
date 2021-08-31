@@ -103,18 +103,6 @@ class ReservationDetailAPIController extends ControllerAPI
                     'store.mall',
                     'details' => function($q) {
                         $q->with([
-                            'product_variant' => function($q1) {
-                                $q1->with([
-                                    'brand_product' => function($q3) {
-                                        $q3->select('brand_product_id');
-                                        $q3->with([
-                                            'brand_product_main_photo' => function($q4) {
-                                                $q4->select('media_id', 'object_id', 'path', 'cdn_url');
-                                            }
-                                        ]);
-                                    }
-                                ]);
-                            },
                             'variant_details' => function($q12) {
                                 $q12->select('brand_product_reservation_detail_id', 'brand_product_reservation_variant_detail_id', 'value')
                                     ->where('option_type', 'variant_option');
@@ -165,8 +153,6 @@ class ReservationDetailAPIController extends ControllerAPI
                     $dtl->quantity = $detail->quantity;
                     $dtl->selling_price = $detail->selling_price;
                     $dtl->original_price = $detail->original_price;
-                    $imgPath = '';
-                    $cdnUrl = '';
                     $sku = '';
                     $barcode = '';
                     if (! empty($detail->sku)) {
@@ -175,19 +161,7 @@ class ReservationDetailAPIController extends ControllerAPI
                     if (! empty($detail->product_code)) {
                         $barcode = $detail->product_code;
                     }
-                    if (is_object($detail->product_variant)) {
-                        if (is_object($detail->product_variant->brand_product)) {
-                            if (! empty($detail->product_variant->brand_product->brand_product_main_photo)) {
-                                if (is_object($detail->product_variant->brand_product->brand_product_main_photo[0])) {
-                                    $imgPath = $detail->product_variant->brand_product->brand_product_main_photo[0]->path;
-                                    $cdnUrl = $detail->product_variant->brand_product->brand_product_main_photo[0]->cdn_url;
-                                }
-                            }
-                        }
-                    }
 
-                    $dtl->img_path = $imgPath;
-                    $dtl->cdn_url = $cdnUrl;
                     $dtl->sku = $sku;
                     $dtl->barcode = $barcode;
 

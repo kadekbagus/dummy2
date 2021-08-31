@@ -50,6 +50,11 @@ class ReceiptNotification extends BaseReceiptNotification
         ];
     }
 
+    protected function getSupportedLanguages()
+    {
+        return ['id', 'en'];
+    }
+
     private function prepareMailData($data)
     {
         $this->payment = $this->getPayment($data['transactionId']);
@@ -64,6 +69,7 @@ class ReceiptNotification extends BaseReceiptNotification
             'myWalletUrl'       => $this->getMyPurchasesUrl('/orders'),
             'transactionDateTime' => $this->getTransactionDateTime(),
             'emailSubject'      => $this->getEmailSubject(),
+            'supportedLangs'    => $this->getSupportedLanguages(),
         ];
     }
 
