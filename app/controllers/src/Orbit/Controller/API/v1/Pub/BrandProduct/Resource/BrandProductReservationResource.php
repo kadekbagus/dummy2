@@ -87,7 +87,9 @@ class BrandProductReservationResource extends Resource
 
         foreach($this->resource->details as $detail) {
             $items[] = [
-                'product_id' => $detail->product_variant->brand_product_id,
+                'product_id' => $detail->product_variant
+                    ? $detail->product_variant->brand_product_id
+                    : null,
                 'variant_id' => $detail->brand_product_variant_id,
                 'product_name' => $detail->product_name,
                 'barcode' => $detail->product_code,
