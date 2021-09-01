@@ -94,6 +94,7 @@ class Order extends Eloquent
                 'product_code' => $variant->product_code,
                 'quantity' => $cartItem->quantity,
                 'brand_product_variant_id' => $variant->brand_product_variant_id,
+                'brand_product_id' => $variant->brand_product->brand_product_id,
                 'original_price' => $variant->original_price,
                 'selling_price' => $variant->selling_price,
                 'product_name' => $variant->brand_product->product_name,
