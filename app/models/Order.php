@@ -49,7 +49,7 @@ class Order extends Eloquent
     public static function createFromRequest($request)
     {
         $cartItems = CartItem::with([
-                'brand_product_variant.brand_product',
+                'brand_product_variant.brand_product.brand_product_main_photo',
                 'brand_product_variant.variant_options' => function($query) {
                         $query->where('option_type', 'variant_option')
                             ->with(['option.variant']);
@@ -80,6 +80,15 @@ class Order extends Eloquent
 
             $orderData[$cartItem->merchant_id]['cart_item_ids'][] = $cartItem->cart_item_id;
 
+            $imgPath = null;
+            $cdnUrl = null;
+            if (! empty($variant->brand_product->brand_product_main_photo)) {
+                if (is_object($variant->brand_product->brand_product_main_photo[0])) {
+                    $imgPath = $variant->brand_product->brand_product_main_photo[0]->path;
+                    $cdnUrl = $variant->brand_product->brand_product_main_photo[0]->cdn_url;
+                }
+            }
+
             $orderDetails[$cartItem->merchant_id][$variant->brand_product_variant_id] = new OrderDetail([
                 'sku' => $variant->sku,
                 'product_code' => $variant->product_code,
@@ -87,6 +96,9 @@ class Order extends Eloquent
                 'brand_product_variant_id' => $variant->brand_product_variant_id,
                 'original_price' => $variant->original_price,
                 'selling_price' => $variant->selling_price,
+                'product_name' => $variant->brand_product->product_name,
+                'image_url' => $imgPath,
+                'image_cdn' => $cdnUrl,
             ]);
 
             foreach($variant->variant_options as $variantOption) {

@@ -61,7 +61,7 @@ class ReservationRepository implements ReservationInterface
         DB::beginTransaction();
 
         $cartItems = CartItem::with([
-                'brand_product_variant.brand_product',
+                'brand_product_variant.brand_product.brand_product_main_photo',
                 'brand_product_variant.variant_options' => function($query) {
                     $query->where('option_type', 'variant_option')
                         ->with(['option.variant']);
@@ -132,6 +132,15 @@ class ReservationRepository implements ReservationInterface
             $product = $cartItem->brand_product_variant->brand_product;
             $variantId = $variant->brand_product_variant_id;
 
+            $imgPath = null;
+            $cdnUrl = null;
+            if (! empty($product->brand_product_main_photo)) {
+                if (is_object($product->brand_product_main_photo[0])) {
+                    $imgPath = $product->brand_product_main_photo[0]->path;
+                    $cdnUrl = $product->brand_product_main_photo[0]->cdn_url;
+                }
+            }
+
             $details[] = new BrandProductReservationDetail([
                     'product_name' => $product->product_name,
                     'product_code' => $variant->product_code,
@@ -140,6 +149,8 @@ class ReservationRepository implements ReservationInterface
                     'original_price' => $variant->original_price,
                     'selling_price' => $variant->selling_price,
                     'quantity' => $cartItem->quantity,
+                    'image_url' => $imgPath,
+                    'image_cdn' => $cdnUrl,
                 ]);
 
             foreach($variant->variant_options as $variantOption) {
