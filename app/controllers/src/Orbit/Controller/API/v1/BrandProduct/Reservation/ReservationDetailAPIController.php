@@ -153,6 +153,8 @@ class ReservationDetailAPIController extends ControllerAPI
                     $dtl->quantity = $detail->quantity;
                     $dtl->selling_price = $detail->selling_price;
                     $dtl->original_price = $detail->original_price;
+                    $dtl->image_url = $detail->image_url;
+                    $dtl->image_cdn = $detail->image_cdn;
                     $sku = '';
                     $barcode = '';
                     if (! empty($detail->sku)) {
