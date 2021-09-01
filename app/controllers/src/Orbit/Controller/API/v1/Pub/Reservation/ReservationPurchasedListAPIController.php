@@ -70,18 +70,6 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
                     'store.mall',
                     'details' => function($q) {
                         $q->with([
-                            'product_variant' => function($q1) {
-                                $q1->with([
-                                    'brand_product' => function($q3) {
-                                        $q3->select('brand_product_id');
-                                        $q3->with([
-                                            'brand_product_main_photo' => function($q4) {
-                                                $q4->select('media_id', 'object_id', 'path', 'cdn_url');
-                                            }
-                                        ]);
-                                    }
-                                ]);
-                            },
                             'variant_details' => function($q12) {
                                 $q12->select('brand_product_reservation_detail_id', 'brand_product_reservation_variant_detail_id', 'value')
                                     ->where('option_type', 'variant_option');
@@ -185,27 +173,13 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
             foreach ($reservation->details as $detail) {
                 $dtl = new stdclass();
 
-                $dtl->brand_product_id = null;
                 $dtl->product_name = $detail->product_name;
                 $dtl->quantity = $detail->quantity;
                 $dtl->selling_price = $detail->selling_price;
                 $dtl->original_price = $detail->original_price;
-                $imgPath = '';
-                $cdnUrl = '';
-                if (is_object($detail->product_variant)) {
-                    if (is_object($detail->product_variant->brand_product)) {
-                        $dtl->brand_product_id = $detail->product_variant->brand_product->brand_product_id;
-                        if (! empty($detail->product_variant->brand_product->brand_product_main_photo)) {
-                            if (is_object($detail->product_variant->brand_product->brand_product_main_photo[0])) {
-                                $imgPath = $detail->product_variant->brand_product->brand_product_main_photo[0]->path;
-                                $cdnUrl = $detail->product_variant->brand_product->brand_product_main_photo[0]->cdn_url;
-                            }
-                        }
-                    }
-                }
-
-                $dtl->img_path = $imgPath;
-                $dtl->cdn_url = $cdnUrl;
+                $dtl->brand_product_id = $detail->brand_product_id;
+                $dtl->img_path = $detail->image_url;
+                $dtl->cdn_url = $detail->image_cdn;
 
                 $variants = [];
                 foreach ($detail->variant_details as $variantDetail) {
