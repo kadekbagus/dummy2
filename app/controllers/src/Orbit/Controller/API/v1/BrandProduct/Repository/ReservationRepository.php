@@ -145,6 +145,7 @@ class ReservationRepository implements ReservationInterface
                     'product_name' => $product->product_name,
                     'product_code' => $variant->product_code,
                     'brand_product_variant_id' => $variantId,
+                    'brand_product_id' => $product->brand_product_id,
                     'sku' => $variant->sku,
                     'original_price' => $variant->original_price,
                     'selling_price' => $variant->selling_price,
