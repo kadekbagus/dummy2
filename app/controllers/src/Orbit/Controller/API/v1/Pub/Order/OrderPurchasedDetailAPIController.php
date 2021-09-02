@@ -39,11 +39,6 @@ class OrderPurchasedDetailAPIController extends PubControllerAPI
                             $this->imageVariants = ['orig'];
                             $query->with(['mall'] + $this->buildMediaQuery());
                         },
-                        'details.order.details.brand_product_variant.brand_product' => function($query) {
-                            $this->imagePrefix = 'brand_product_main_photo_';
-                            $this->imageVariants = ['desktop_thumb'];
-                            $query->with($this->buildMediaQuery());
-                        },
                         'midtrans',
                     ])
                     ->where('payment_transaction_id', $request->payment_transaction_id)
