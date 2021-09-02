@@ -165,6 +165,9 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
             $reservationItem->mall_id = $reservation->store->mall->merchant_id;
             $reservationItem->status = $reservation->status;
             $reservationItem->created_at = $reservation->created_at->format('Y-m-d H:i:s');
+            $reservationItem->updated_at = $reservation->updated_at->format('Y-m-d H:i:s');
+            $reservationItem->cancelled_at = $reservation->updated_at->format('Y-m-d H:i:s');
+            $reservationItem->declined_at = $reservation->updated_at->format('Y-m-d H:i:s');
             $reservationItem->expired_at = ! empty($reservation->expired_at)
                         ? $reservation->expired_at->format('Y-m-d H:i:s')
                         : null;
