@@ -66,8 +66,8 @@ class ReservationPurchasedDetailAPIController extends PubControllerAPI
                 $image = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
             }
 
-            $reservation = BrandProductReservation::select('brand_product_reservations.brand_product_reservation_id', 
-                                                            'brand_product_reservations.created_at', 
+            $reservation = BrandProductReservation::select('brand_product_reservations.brand_product_reservation_id',
+                                                            'brand_product_reservations.created_at',
                                                             'brand_product_reservations.expired_at',
                                                             'brand_product_variants.brand_product_id',
                                                             'brand_product_reservations.user_id',
@@ -76,8 +76,9 @@ class ReservationPurchasedDetailAPIController extends PubControllerAPI
                                                             'brand_product_reservation_details.quantity',
                                                             'brand_product_reservation_details.sku',
                                                             'brand_product_reservation_details.product_code',
+                                                            'brand_product_reservation_details.image_url',
+                                                            'brand_product_reservation_details.image_cdn as image',
                                                             'brand_product_reservations.status',
-                                                    DB::raw("{$image} as image"),         
                                                     DB::raw("CONCAT(m1.name,' ', m2.name, ', ', m2.city) as store_name"))
                                                     ->with([
                                                         'users' => function($q) {
@@ -105,18 +106,6 @@ class ReservationPurchasedDetailAPIController extends PubControllerAPI
                                                         '=',
                                                         'brand_product_reservation_details.brand_product_reservation_id'
                                                     )
-                                                    ->leftjoin(
-                                                        'brand_product_variants',
-                                                        'brand_product_reservation_details.brand_product_variant_id',
-                                                        '=',
-                                                        'brand_product_variants.brand_product_variant_id'
-                                                    )
-                                                    ->leftjoin('media', function ($join) {
-                                                        $join->on('media.object_id', '=', 'brand_product_variants.brand_product_id')
-                                                            ->where('media.media_name_id', '=', 'brand_product_main_photo')
-                                                            ->where('media.media_name_long', '=', 'brand_product_main_photo_orig')
-                                                            ->where('media.object_name', '=', 'brand_product');
-                                                    })
                                                     ->where('brand_product_reservations.user_id', '=', $user->user_id)
                                                     ->where('brand_product_reservations.brand_product_reservation_id', $brandProductReservationId)
                                                     ->first();

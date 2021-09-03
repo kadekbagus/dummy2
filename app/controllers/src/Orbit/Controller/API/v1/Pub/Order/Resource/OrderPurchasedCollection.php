@@ -61,10 +61,7 @@ class OrderPurchasedCollection extends ResourceCollection
     private function transformBrandProductOrderItem($item)
     {
         foreach($item->details as $detail) {
-            $product = $detail->brand_product_variant->brand_product;
-            $imageUrl = $product->media->count() > 0
-                ? $product->media->first()->image_url
-                : null;
+            $imageUrl = $detail->image_cdn;
 
             $this->data['records'][$item->order_id]['items'][] = [
                 // 'store_id' => $item->store_id,
@@ -75,9 +72,9 @@ class OrderPurchasedCollection extends ResourceCollection
                 'selling_price' => $detail->selling_price,
                 'brand_id' => $item->brand_id,
                 'product_type' => 'brand_product',
-                'product_id' => $product->brand_product_id,
-                'product_name' => $product->product_name,
-                'product_status' => $product->status,
+                'product_id' => $detail->brand_product_id,
+                'product_name' => $detail->product_name,
+                'product_status' => 'active',
                 'variant' => $detail->order_variant_details->implode('value', ', '),
                 'image_url' => $imageUrl,
             ];
