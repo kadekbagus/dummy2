@@ -32,15 +32,7 @@ class OrderPurchasedListAPIController extends PubControllerAPI
             $purchases = Order::with([
                     'details' => function($query) {
                         $query->with([
-                            'order_variant_details',
-                            'brand_product_variant' => function($query) {
-                                $query->with([
-                                    'brand_product' => function($query) {
-                                        $this->imagePrefix = 'brand_product_main_photo_';
-                                        $query->with($this->buildMediaQuery());
-                                    },
-                                ]);
-                            },
+                            'order_variant_details'
                         ]);
                     },
                     'store' => function($query) {

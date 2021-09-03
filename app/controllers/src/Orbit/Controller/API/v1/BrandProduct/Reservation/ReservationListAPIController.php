@@ -195,6 +195,8 @@ class ReservationListAPIController extends ControllerAPI
                     $dtl->quantity = $detail->quantity;
                     $dtl->selling_price = $detail->selling_price;
                     $dtl->original_price = $detail->original_price;
+                    $dtl->image_url = $detail->image_url;
+                    $dtl->image_cdn = $detail->image_cdn;
 
                     $variants = [];
                     foreach ($detail->variant_details as $variantDetail) {

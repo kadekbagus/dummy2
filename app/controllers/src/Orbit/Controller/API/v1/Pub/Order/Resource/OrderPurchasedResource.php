@@ -63,16 +63,13 @@ class OrderPurchasedResource extends Resource
                 }
 
                 $items[$storeId]['items'][] = [
-                    'product_id' => $orderDetail->brand_product_variant->brand_product_id,
-                    'name' => $orderDetail->brand_product_variant->brand_product->product_name,
+                    'product_id' => $orderDetail->brand_product_id,
+                    'name' => $orderDetail->product_name,
                     'variant' => $orderDetail->order_variant_details->implode('value', ', '),
                     'quantity' => $orderDetail->quantity,
                     'original_price' => $orderDetail->original_price,
                     'selling_price' => $orderDetail->selling_price,
-                    'image_url' => $this->transformImages(
-                        $orderDetail->brand_product_variant->brand_product,
-                        'brand_product_main_photo_'
-                    )
+                    'image_url' => $orderDetail->image_cdn
                 ];
             }
         }
