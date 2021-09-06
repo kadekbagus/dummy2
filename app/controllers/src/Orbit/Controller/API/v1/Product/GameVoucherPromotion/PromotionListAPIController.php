@@ -19,7 +19,7 @@ use GameVoucherPromotion;
  */
 class PromotionListAPIController extends ControllerAPI
 {
-    protected $viewRole = ['product manager'];
+    protected $validRoles = ['product manager'];
 
     public function getList ()
     {
@@ -32,7 +32,7 @@ class PromotionListAPIController extends ControllerAPI
             $user = $this->api->user;
 
             $role = $user->role;
-            $validRoles = $this->viewRole;
+            $validRoles = $this->validRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -75,18 +75,12 @@ class PromotionListAPIController extends ControllerAPI
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
-
-            // Rollback the changes
-            $this->rollBack();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
-
-            // Rollback the changes
-            $this->rollBack();
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -99,17 +93,11 @@ class PromotionListAPIController extends ControllerAPI
             }
             $this->response->data = null;
             $httpCode = 500;
-
-            // Rollback the changes
-            $this->rollBack();
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = $e->getLine();
-
-            // Rollback the changes
-            $this->rollBack();
         }
 
         return $this->render($httpCode);
