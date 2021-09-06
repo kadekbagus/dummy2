@@ -13,6 +13,9 @@ use Illuminate\Database\QueryException;
 use GameVoucherPromotion;
 use GameVoucherPromotionDetail;
 use ProviderProduct;
+use Validator;
+use Input;
+use SplFileObject;
 
 /**
  * Create a new Game Voucher Promotion.
@@ -23,7 +26,7 @@ class PromotionNewAPIController extends ControllerAPI
 {
     protected $validRoles = ['product manager'];
 
-    public function getList ()
+    public function postNew ()
     {
         $user = NULL;
         try {
@@ -95,6 +98,7 @@ class PromotionNewAPIController extends ControllerAPI
             foreach ($file as $row) {
                 list ($pinNumber, $serialNumber) = $row;
                 $detail = new GameVoucherPromotionDetail();
+                $detail->game_voucher_promotion_id = $item->game_voucher_promotion_id;
                 $detail->pin_number = $pinNumber;
                 $detail->serial_number = $serialNumber;
                 $detail->save();
