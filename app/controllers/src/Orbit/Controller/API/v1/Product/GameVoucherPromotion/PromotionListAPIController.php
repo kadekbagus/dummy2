@@ -1,6 +1,6 @@
 <?php
 
-namespace Orbit\Controller\API\v1\Product\GameVoucher;
+namespace Orbit\Controller\API\v1\Product\GameVoucherPromotion;
 
 use Exception;
 use OrbitShop\API\v1\ControllerAPI;
@@ -92,7 +92,7 @@ class PromotionListAPIController extends ControllerAPI
             $this->response->status = 'error';
 
             // Only shows full query error when we are in debug mode
-            if (Config::get('app.debug')) {
+            if (\Config::get('app.debug')) {
                 $this->response->message = $e->getMessage();
             } else {
                 $this->response->message = Lang::get('validation.orbit.queryerror');
