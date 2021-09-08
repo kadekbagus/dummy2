@@ -66,7 +66,7 @@ return [
         'greeting' => 'Hello :recipientName,',
         'body' => [
             'line-user' => 'Pesanan anda sudah selesai! Terima kasih atas pembelian anda.',
-            'line-admin' => 'Pesanan ini sudah selesai! Berikut ini adalah detil pesanan, mohon untuk ditindak lanjuti.',
+            'line-admin' => 'Pesanan ini sudah selesai! Berikut ini adalah detil pesanan.',
             'help' => 'Please contact our customer service at <a style="color:#f43d3c;text-decoration:none;" href="tel::csPhone">:csPhone</a> or email at <a style="color:#f43d3c;text-decoration:none;" href="mailto::csEmail">:csEmail</a> if you find any difficulties.',
             'thank_you' => '',
         ],
