@@ -6,6 +6,7 @@ use BrandProductReservation;
 use CartItem;
 use Illuminate\Support\Facades\App;
 use Order;
+use PaymentTransaction;
 
 /**
  * Order Validator.
@@ -16,7 +17,7 @@ class OrderValidator
 {
     public function exists($attrs, $value, $params)
     {
-        $order = Order::with(['details'])
+        $order = Order::onWriteConnection()->with(['details', 'payment_detail.payment'])
             ->where('order_id', $value)
             ->first();
 
@@ -76,5 +77,39 @@ class OrderValidator
         $usedQuantity += Order::getPurchasedQuantity($variant->brand_product_variant_id);
 
         return $variant->quantity - $usedQuantity >= $requestedQuantity;
+    }
+
+    public function canCancel($attr, $value, $params)
+    {
+        // If not cancellation request, then skip this rule.
+        // Otherwise, if a cancellation request, continue with more checking.
+        if ($value !== 'cancel') {
+            return true;
+        }
+
+        // So here we assume request is to cancel, continue with more checking.
+        $purchase = App::make('purchase');
+
+        // If not a brand product Order purchase, then skip this rule.
+        if (! $purchase->forOrder()) {
+            return true;
+        }
+
+        // Make sure to allow cancellation only if payment was paid.
+        if ($purchase->status !== PaymentTransaction::STATUS_SUCCESS) {
+            return false;
+        }
+
+        // At last, check if cancellation allowed on current Order status.
+        $detail = $purchase->details->filter(function($detail) {
+            return $detail->object_type === 'order';
+        })->first();
+
+        $order = Order::findOrFail($detail->object_id);
+
+        return in_array($order->status, [
+            Order::STATUS_PAID,
+            Order::STATUS_READY_FOR_PICKUP,
+        ]);
     }
 }

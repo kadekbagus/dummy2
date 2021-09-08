@@ -1,4 +1,7 @@
 <?php
+
+use Illuminate\Support\Collection;
+
 /**
  * Event listener for Order related events
  */
@@ -335,4 +338,24 @@ Event::listen('orbit.order.complete', function($orderId, $bppUserId)
 
     }
 
+});
+
+Event::listen('orbit.order.cancelled', function($orders) {
+    if ($orders instanceof Collection) {
+        $orderId = $orders->first()->order_id;
+    }
+    else if (is_array($orders)) {
+        $orderId = $orders[0];
+    }
+
+    $payment = Order::select('payment_transaction_details.payment_transaction_id')
+        ->join('payment_transaction_details', 'orders.order_id', '=', 'payment_transaction_details.object_id')
+        ->findOrFail($orderId);
+
+    // Refund the payment.
+    Queue::later(
+        3,
+        'Orbit\Queue\Order\RefundOrderQueue',
+        ['paymentId' => $payment->payment_transaction_id]
+    );
 });
