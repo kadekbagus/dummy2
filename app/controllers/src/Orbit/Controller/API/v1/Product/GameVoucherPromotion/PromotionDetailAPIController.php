@@ -13,11 +13,11 @@ use Illuminate\Database\QueryException;
 use GameVoucherPromotion;
 
 /**
- * Get list of Game Voucher Promotion.
+ * Get detail of Game Voucher Promotion.
  *
  * @author ahmad <ahmad@gotomalls.com>
  */
-class PromotionListAPIController extends ControllerAPI
+class PromotionDetailAPIController extends ControllerAPI
 {
     protected $validRoles = ['product manager'];
 
@@ -38,35 +38,12 @@ class PromotionListAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            $sortByMapping = array(
-                'game_voucher_promotion_id' => 'game_voucher_promotion_id',
-                'start_date' => 'start_date',
-                'end_date' => 'end_date'
-            );
+            $records = GameVoucherPromotion::with(['details'])
+                ->where('game_voucher_promotion_id', OrbitInput::get('game_voucher_promotion_id'))
+                ->where('status', '<>', 'deleted')
+                ->firstOrFail();
 
-            $sortBy = $sortByMapping[OrbitInput::get('sortby', 'game_voucher_promotion_id')];
-            $sortMode = OrbitInput::get('sortmode', 'desc');
-
-            $records = GameVoucherPromotion::where('status', '<>', 'deleted');
-
-            $records->orderBy($sortBy, $sortMode);
-
-            $skip = OrbitInput::get('skip', 0);
-            $take = OrbitInput::get('take', 25) >= 25 ? 25 : OrbitInput::get('take', 25);
-
-            $total = clone $records;
-            $total = $total->count();
-            $records = $records
-                ->skip($skip)
-                ->take($take)
-                ->get();
-
-            $responseData = new \stdclass();
-            $responseData->records = $records;
-            $responseData->total_records = $total;
-            $responseData->returned_records = $records->count();
-
-            $this->response->data = $responseData;
+            $this->response->data = $records;
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
