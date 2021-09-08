@@ -7,6 +7,6 @@ class GameVoucherPromotion extends Eloquent
     protected $table = 'game_voucher_promotions';
 
     public function details () {
-        return $this->hasMany(GameVoucherPromotion::class, 'game_voucher_promotion_id', 'game_voucher_promotion_id');
+        return $this->hasMany(GameVoucherPromotionDetail::class, 'game_voucher_promotion_id', 'game_voucher_promotion_id');
     }
 }
