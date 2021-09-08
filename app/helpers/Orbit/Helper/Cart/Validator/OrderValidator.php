@@ -87,6 +87,11 @@ class OrderValidator
             return true;
         }
 
+        // If purchase not found, then return false
+        if (! App::bound('purchase')) {
+            return false;
+        }
+
         // So here we assume request is to cancel, continue with more checking.
         $purchase = App::make('purchase');
 
