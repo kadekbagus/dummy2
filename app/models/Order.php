@@ -137,15 +137,30 @@ class Order extends Eloquent
         return $this->belongsTo(Tenant::class, 'merchant_id', 'merchant_id');
     }
 
-    public static function requestCancel($orderId)
+    public static function requestCancel($orders)
     {
-        $order = Order::where('order_id', $orderId)->update([
-                'status' => self::STATUS_CANCELLING,
+        if (is_string($orders)) {
+            $orders = explode(',', $orders);
+        }
+
+        if (empty($orders)) {
+            throw new Exception("Missing Order IDs when requesting cancellation!");
+        }
+
+        $order = Order::whereIn('order_id', $orders)->firstOrFail();
+
+        if ($order->status === Order::STATUS_PAID) {
+            return self::cancel($orders);
+        }
+        else if ($order->status === Order::STATUS_READY_FOR_PICKUP) {
+            Order::whereIn('order_id', $orders)->update([
+                'status' => Order::STATUS_CANCELLING,
             ]);
 
-        // Event::fire('orbit.cart.order-cancelling', [$order]);
+            \Log::info("Request made.");
+        }
 
-        return $order;
+        return $orders;
     }
 
     public static function cancel($orderId)
@@ -154,11 +169,18 @@ class Order extends Eloquent
             $orderId = explode(',', $orderId);
         }
 
-        $orders = Order::whereIn('order_id', $orderId)->update([
-            'status' => self::STATUS_CANCELLED,
-        ]);
+        if (empty($orderId)) {
+            throw new Exception("Missing OrderID when cancelling order!");
+        }
 
-        // Event::fire('orbit.cart.order-cancelled', [$order]);
+        $orders = Order::whereIn('order_id', $orderId)->get();
+
+        foreach($orders as $order) {
+            $order->status = Order::STATUS_CANCELLED;
+            $order->save();
+        }
+
+        Event::fire('orbit.order.cancelled', [$orders]);
 
         return $orders;
     }

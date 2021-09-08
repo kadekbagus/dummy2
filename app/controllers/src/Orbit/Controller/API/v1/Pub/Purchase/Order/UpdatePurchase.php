@@ -98,10 +98,18 @@ class UpdatePurchase
                 $tmpOldStatus = PaymentTransaction::STATUS_SUCCESS;
             }
 
+            $tmpNewStatus = $status;
+
+            // If we have cancel request after success (paid), then update
+            if ($oldStatus === PaymentTransaction::STATUS_SUCCESS
+                && $status === PaymentTransaction::STATUS_CANCEL
+            ) {
+                $shouldUpdate = true;
+            }
+
             // If old status was marked as final and doesnt match with the new one, then
             // ask Midtrans for the correct one.
-            $tmpNewStatus = $status;
-            if (in_array($oldStatus, $finalStatus) && $tmpOldStatus !== $status) {
+            else if (in_array($oldStatus, $finalStatus) && $tmpOldStatus !== $status) {
                 $this->log("Payment {$payment_transaction_id} was marked as FINAL, but there is new request to change status to {$tmpNewStatus}");
 
                 // If it is a refund request, then try to record it..
@@ -188,6 +196,11 @@ class UpdatePurchase
                     $this->purchase->status = PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT;
                 }
 
+                $orderIds = $this->purchase->details->filter(function($detail) {
+                        return $detail->object_type === 'order';
+                    })->lists('object_id');
+
+                // If payment pending, then set Orders status to waiting payment.
                 if ($status === PaymentTransaction::STATUS_PENDING) {
                     $cart = App::make(CartInterface::class);
                     foreach($this->purchase->details as $detail) {
@@ -199,13 +212,25 @@ class UpdatePurchase
                     }
                 }
 
-                if ($status === PaymentTransaction::STATUS_EXPIRED) {
-                    foreach($this->purchase->details as $detail) {
-                        if ($detail->order) {
-                            $detail->order->status = Order::STATUS_CANCELLED;
-                            $detail->order->save();
-                        }
-                    }
+                // Cancel Orders if payment expired/failed, denied, etc.
+                if (in_array($status, [
+                        PaymentTransaction::STATUS_EXPIRED,
+                        PaymentTransaction::STATUS_FAILED,
+                        PaymentTransaction::STATUS_ABORTED,
+                        PaymentTransaction::STATUS_FAILED,
+                        PaymentTransaction::STATUS_DENIED,
+                        PaymentTransaction::STATUS_CANCELED,
+                    ])
+                ) {
+                    Order::cancel($orderIds);
+                }
+
+                // Request Orders cancellation.
+                if ($status === PaymentTransaction::STATUS_CANCEL
+                    && $oldStatus === PaymentTransaction::STATUS_SUCCESS
+                ) {
+                    $this->purchase->status = $oldStatus;
+                    Order::requestCancel($orderIds);
                 }
 
                 // If new status is 'aborted', then keep it as 'starting' after cleaning up

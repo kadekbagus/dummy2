@@ -36,6 +36,7 @@ class PaymentTransaction extends Eloquent
     const STATUS_CANCELED           = 'canceled';
     const STATUS_ABORTED            = 'abort';
     const STATUS_REFUND             = 'refund';
+    const STATUS_CANCEL             = 'cancel'; // for requesting Order's cancellation.
 
     /**
      * It means we are in the process of getting coupon/voucher from Sepulsa.
@@ -253,6 +254,12 @@ class PaymentTransaction extends Eloquent
         return $this->status === self::STATUS_DENIED;
     }
 
+    public function refunded()
+    {
+        return $this->status === self::STATUS_SUCCESS_REFUND
+            || $this->status === self::STATUS_REFUND;
+    }
+
     /**
      * Determine if the payment is for Sepulsa Deals.
      *
@@ -342,7 +349,7 @@ class PaymentTransaction extends Eloquent
     public function forOrder()
     {
         foreach($this->details as $detail) {
-            if (isset($detail->order) && ! empty($detail->order)) {
+            if ($detail->object_type === 'order') {
                 return true;
             }
         }
