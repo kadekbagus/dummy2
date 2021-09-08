@@ -25,9 +25,16 @@ class DigitalProductUpdatePurchaseRequest extends ValidateRequest
     public function rules()
     {
         return [
-            'payment_transaction_id'   => 'required|purchase_exists',
-            'status'                   => 'required|in:pending,success,canceled,failed,expired,denied,suspicious,abort,refund,partial_refund',
-            'payment_method'           => 'sometimes|required|in:midtrans,midtrans-qris,midtrans-shopeepay,stripe,dana',
+            'payment_transaction_id' => 'required|purchase_exists',
+            'status' => 'required|in:' . implode(',', [
+                    'pending', 'success', 'cancel', 'canceled',
+                    'failed', 'expired', 'denied', 'suspicious', 'abort',
+                    'refund', 'partial_refund',
+                ]) . '|orbit.order.can_cancel',
+            'payment_method' => 'sometimes|required|in:' . implode(',', [
+                    'midtrans', 'midtrans-qris', 'midtrans-shopeepay',
+                    'stripe', 'dana',
+                ]),
         ];
     }
 
@@ -46,5 +53,10 @@ class DigitalProductUpdatePurchaseRequest extends ValidateRequest
     protected function registerCustomValidations()
     {
         Validator::extend('purchase_exists', 'Orbit\Controller\API\v1\Pub\Purchase\Validator\PurchaseValidator@exists');
+
+        Validator::extend(
+            'orbit.order.can_cancel',
+            'Orbit\Helper\Cart\Validator\OrderValidator@canCancel'
+        );
     }
 }
