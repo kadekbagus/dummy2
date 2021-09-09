@@ -135,6 +135,7 @@ class CouponListNewAPIController extends PubControllerAPI
             $myCCFilter = OrbitInput::get('my_cc_filter', false);
             $withAdvert = (bool) OrbitInput::get('with_advert', true);
             $gender = OrbitInput::get('gender', 'all');
+            $promotionType = OrbitInput::get('promotion_type', '');
             $ratingLow = OrbitInput::get('rating_low', 0);
             $ratingHigh = OrbitInput::get('rating_high', 5);
             $ratingLow = empty($ratingLow) ? 0 : $ratingLow;
@@ -176,7 +177,8 @@ class CouponListNewAPIController extends PubControllerAPI
                 'no_total_record' => $no_total_records,
                 'take' => $take, 'skip' => $skip,
                 'country' => $countryFilter, 'cities' => $cityFilters,
-                'my_cc_filter' => $myCCFilter
+                'my_cc_filter' => $myCCFilter,
+                'promotion_type' => $promotionType
             ];
 
             // Run the validation
@@ -346,6 +348,9 @@ class CouponListNewAPIController extends PubControllerAPI
             if (! empty($keyword)) {
                 $sortBy = 'relevance';
             }
+
+            // filter promotion_type
+            $this->searcher->filterPromotionType($promotionType);
 
             // Next sorting based on Visitor's selection.
             switch ($sortBy) {

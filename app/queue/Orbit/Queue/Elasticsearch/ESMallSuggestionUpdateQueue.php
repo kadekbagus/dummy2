@@ -124,7 +124,7 @@ class ESMallSuggestionUpdateQueue
 
             // generate input
             $strings = $mall->name;
-            $strings = preg_replace('/[^A-Za-z0-9 ] /', '', $strings);
+            $strings = preg_replace('/[^a-zA-Z0-9 ] ?/', '', $strings);
             $strings = str_replace(['"', "'"], '', $strings);
 
             $words = explode(" ", $strings);

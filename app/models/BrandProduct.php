@@ -118,4 +118,43 @@ class BrandProduct extends Eloquent
 
         return false;
     }
+
+    public function reservation_details()
+    {
+        return $this->hasMany(BrandProductReservationDetail::class);
+    }
+
+    public function order_details()
+    {
+        return $this->hasMany(OrderDetail::class);
+    }
+
+    public function reservation_details_count()
+    {
+        $dbPrefix = \DB::getTablePrefix();
+        $query = $this->reservation_details();
+
+        return $query->selectRaw($dbPrefix . $query->getForeignKey() . ', sum(quantity) as total_reservation')
+            ->join('brand_product_reservations', 'brand_product_reservations.brand_product_reservation_id', '=', 'brand_product_reservation_details.brand_product_reservation_id')
+            ->whereIn('brand_product_reservations.status', [
+                BrandProductReservation::STATUS_ACCEPTED,
+                BrandProductReservation::STATUS_DONE
+            ])
+            ->groupBy($query->getForeignKey());
+    }
+
+    public function order_details_count()
+    {
+        $dbPrefix = \DB::getTablePrefix();
+        $query = $this->order_details();
+
+        return $query->selectRaw($dbPrefix . $query->getForeignKey() . ', sum(quantity) as total_order')
+            ->join('orders', 'orders.order_id', '=', 'order_details.order_id')
+            ->whereIn('orders.status', [
+                Order::STATUS_PAID,
+                Order::STATUS_READY_FOR_PICKUP,
+                Order::STATUS_DONE
+            ])
+            ->groupBy($query->getForeignKey());
+    }
 }

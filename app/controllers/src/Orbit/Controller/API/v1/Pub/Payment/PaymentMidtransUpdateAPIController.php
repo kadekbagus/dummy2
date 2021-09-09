@@ -61,7 +61,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 Request::all(),
                 array(
                     'payment_transaction_id'   => 'required|orbit.exist.payment_transaction_id',
-                    'status'                   => 'required|in:pending,success,canceled,failed,expired,denied,suspicious,abort,refund,partial_refund',
+                    'status'                   => 'required|in:pending,success,cancel,canceled,failed,expired,denied,suspicious,abort,refund,partial_refund',
                     'payment_method'           => 'sometimes|required|in:midtrans,midtrans-qris,midtrans-shopeepay,stripe,dana',
                 ),
                 array(

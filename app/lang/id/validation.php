@@ -527,6 +527,15 @@ return array(
         ),
         'unique' => array(
             'verification_number' => 'The verification number already used by other',
+            'review_object_location' => 'Hanya dapat review objek yang sama satu kali.',
+            'review_object_location_mall' => 'Hanya dapat melakukan review mall :mall sekali.',
+            'review_object_location_store' => 'Hanya dapat review toko/gerai :store di :mall sekali.',
+            'review_object_location_campaign' => 'Hanya dapat review objek :campaign di :store (:mall) sekali.'
+        ),
+        'same_user' => 'User tidak sesuai.',
+        'rating' => array(
+            'unique' => 'Hanya dapat review objek yang sama satu kali.',
+            'location' => 'Atribut location_id harus diisi.',
         ),
         'rating' => array(
             'unique' => "Anda sudah melakukan review untuk lokasi/item ini.",
@@ -560,6 +569,7 @@ return array(
             'exists' => 'Order tidak ditemukan.',
             'can_order' => 'Satu atau beberapa item tidak tersedia. Mohon refresh laman dan ulang checkout.',
             'match_user' => 'Order tidak sesuai dengan profil Anda, silakan gunakan akun lain.',
+            'can_cancel' => "Tidak dapat membatalkan pesanan. Pastikan status Pesanan belum Dibatalkan/Selesai.",
         ),
 
         'purchase' => array(

@@ -152,6 +152,7 @@ return array(
             'base_store'             => 'The mall unit on this floor already use',
             'payment_name'           => 'Payment name already exist',
             'provider_product'       => 'Provider Product does not exists.',
+            'rating'                 => 'Rating does not exists.',
         ),
         'access' => array(
             'forbidden'              => 'You do not have permission to :action',
@@ -530,6 +531,15 @@ return array(
         ),
         'unique' => array(
             'verification_number' => 'The verification number already used by other',
+            'review_object_location' => 'Cannot review same object more than once.',
+            'review_object_location_mall' => 'Cannot review same mall :mall more than once.',
+            'review_object_location_store' => 'Cannot review same store :store at :mall more than once.',
+            'review_object_location_campaign' => 'Cannot review same object :campaign at :store (:mall) more than once.',
+        ),
+        'same_user' => 'User does not match.',
+        'rating' => array(
+            'unique' => 'Cannot review same object more than once.',
+            'location' => 'Location is required for a review.',
         ),
 
         'brand_product' => array(
@@ -568,6 +578,7 @@ return array(
             'exists' => 'The Order doesn\'t exists.',
             'can_order' => 'One or more item(s) are not available. Please refresh the page and try again.',
             'match_user' => 'Order doesn\'t match your credential. Try using another GTM account.',
+            'can_cancel' => "Can't cancel given Order/transaction. Please make sure Order is not done or cancelled.",
         ),
 
         'purchase' => array(
