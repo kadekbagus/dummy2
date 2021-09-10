@@ -161,6 +161,7 @@ class GetPulsaQueue
                             'ti' => $payment->payment_transaction_id,
                             'tr' => $payment->amount,
                             'cu' => $payment->currency,
+                            'cd4' => $payment->payment_method,
                         ])
                         ->request();
 
@@ -190,6 +191,7 @@ class GetPulsaQueue
                         ->save();
 
                 if (! empty($discount)) {
+                    $discountCode = $discount->discount_code;
                     // Mark promo code as issued.
                     $promoCodeReservation = App::make(ReservationInterface::class);
                     $promoData = (object) [
@@ -216,6 +218,7 @@ class GetPulsaQueue
                 $this->log("Purchase response: " . serialize($pulsaPurchase));
 
                 if (! empty($discount)) {
+                    $discountCode = $discount->discount_code;
                     // Mark promo code as issued.
                     $discountCode = $discount->discount_code;
                     $promoCodeReservation = App::make(ReservationInterface::class);
@@ -254,6 +257,7 @@ class GetPulsaQueue
                             'ti' => $payment->payment_transaction_id,
                             'tr' => $payment->amount,
                             'cu' => $payment->currency,
+                            'cd4' => $payment->payment_method,
                         ])
                         ->request();
 

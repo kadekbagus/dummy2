@@ -1,4 +1,6 @@
-<?php namespace Orbit\Controller\API\v1\Pub\Feedback\Request;
+<?php
+
+namespace Orbit\Controller\API\v1\Pub\Feedback\Request;
 
 use Cache;
 use Carbon\Carbon;
@@ -57,7 +59,7 @@ class CreateRequest extends ValidateRequest
      * @override
      * @return void
      */
-    public function validate(array $data = [], array $rules = [], array $messages = [])
+    public function validate($data = [], $rules = [], $messages = [])
     {
         $data['user'] = ! empty($this->user) ? $this->user->user_id : null;
 

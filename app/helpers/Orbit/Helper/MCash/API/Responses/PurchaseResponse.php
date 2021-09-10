@@ -150,6 +150,16 @@ class PurchaseResponse
     }
 
     /**
+     * Get purchase response status.
+     *
+     * @return [type] [description]
+     */
+    public function getCode()
+    {
+        return ! empty($this->data) ? $this->data->status : $this->code;
+    }
+
+    /**
      * Get message
      * @return [type] [description]
      */

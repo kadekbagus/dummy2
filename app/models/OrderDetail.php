@@ -10,7 +10,7 @@ class OrderDetail extends Eloquent
     protected $primaryKey = 'order_detail_id';
 
     protected $table = 'order_details';
-    
+
     protected $guarded = [];
 
     public function brand_product_variant()

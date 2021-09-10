@@ -168,6 +168,7 @@ class GetUPointVoucherProductQueue
                             'ti' => $payment->payment_transaction_id,
                             'tr' => $payment->amount,
                             'cu' => $payment->currency,
+                            'cd4' => $payment->payment_method,
                         ])
                         ->request();
 

@@ -328,6 +328,7 @@ class GetMCashElectricityQueue
                 'ti' => $payment->payment_transaction_id,
                 'tr' => $payment->amount,
                 'cu' => $payment->currency,
+                'cd4' => $payment->payment_method,
             ])
             ->request();
 
@@ -374,6 +375,7 @@ class GetMCashElectricityQueue
                     'ti' => $payment->payment_transaction_id,
                     'tr' => $payment->amount,
                     'cu' => $payment->currency,
+                    'cd4' => $payment->payment_method,
                 ])
                 ->request();
 
@@ -444,13 +446,13 @@ class GetMCashElectricityQueue
         $serialNumber = $purchase->getSerialNumber();
 
         if (! empty($serialNumber)) {
-            $serialNumber = explode('*', $serialNumber);
+            $serialNumber = explode('/', $serialNumber);
             $info = [
-                'token' => $serialNumber[0],
-                'customer' => $serialNumber[1],
-                'tarif' => $serialNumber[2],
-                'daya' => $serialNumber[3],
-                'kwh' => $serialNumber[4],
+                'token' => isset($serialNumber[0]) ? $serialNumber[0] : '',
+                'customer' => isset($serialNumber[1]) ? $serialNumber[1] : '',
+                'tarif' => isset($serialNumber[2]) ? $serialNumber[2] : '',
+                'daya' => isset($serialNumber[3]) ? $serialNumber[3] : '',
+                'kwh' => isset($serialNumber[4]) ? $serialNumber[4] : '',
             ];
         }
 

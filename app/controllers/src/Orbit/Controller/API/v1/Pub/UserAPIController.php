@@ -123,6 +123,10 @@ class UserAPIController extends PubControllerAPI
                 $updateUserDetail->birthdate = $birthdate;
             });
 
+			OrbitInput::post('birthdate', function($birthdate) use ($updateUserDetail) {
+                $updateUserDetail->birthdate = $birthdate;
+            });
+
             $updateUserDetail->save();
             $extendedUserDetail->save();
 
