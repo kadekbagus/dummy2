@@ -214,7 +214,7 @@ class Order extends Eloquent
                 'pick_up_code' => self::createPickUpCode(),
                 'status' => self::STATUS_READY_FOR_PICKUP,
             ]);
-            
+
         Event::fire('orbit.order.ready-for-pickup', [$orderId, $bppUserId]);
 
         return $order;
@@ -231,7 +231,7 @@ class Order extends Eloquent
         return $order;
     }
 
-    public function order_details() 
+    public function order_details()
     {
         return $this->hasMany('OrderDetail', 'order_id', 'order_id');
     }
@@ -246,14 +246,46 @@ class Order extends Eloquent
         return ObjectID::make();
     }
 
+    public static function cancelled($orderId)
+    {
+        $order = Order::with(['payment_detail'])
+            ->where('order_id', $orderId)
+            ->firstOrFail();
+
+        if ($order->status === self::STATUS_CANCELLING) {
+            $order->status = self::STATUS_CANCELLED;
+            $order->save();
+
+            Queue::later(
+                3,
+                'Orbit\Queue\Order\RefundOrderQueue',
+                ['paymentId' => $order->payment_detail->payment_transaction_id]
+            );
+        } else {
+            throw new Exception("Cannot update order status.", 1);
+        }
+
+        // Event::fire('orbit.cart.order-declined', [$order]);
+
+        return $order;
+    }
+
     public static function declined($orderId, $reason, $userId)
     {
-        $order = Order::where('order_id', $orderId)->update([
+        // @todo: need to check the previous status
+        $order = Order::with(['payment_detail'])
+            ->where('order_id', $orderId)
+            ->update([
                 'status' => self::STATUS_DECLINED,
                 'cancel_reason' => $reason,
                 'declined_by' => $userId,
             ]);
 
+        Queue::later(
+            3,
+            'Orbit\Queue\Order\RefundOrderQueue',
+            ['paymentId' => $order->payment_detail->payment_transaction_id]
+        );
         // Event::fire('orbit.cart.order-declined', [$order]);
 
         return $order;
@@ -275,7 +307,7 @@ class Order extends Eloquent
             ->sum('quantity');
     }
 
-    
+
    public static function getLocalTimezoneName($timezone = 'UTC')
    {
         $timezoneMapping = [

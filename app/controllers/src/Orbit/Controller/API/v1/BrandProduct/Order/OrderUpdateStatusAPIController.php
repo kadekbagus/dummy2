@@ -21,6 +21,7 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Orbit\Database\ObjectID;
+use Orbit\Helper\Midtrans\API\Refund;
 
 class OrderUpdateStatusAPIController extends ControllerAPI
 {
@@ -56,6 +57,7 @@ class OrderUpdateStatusAPIController extends ControllerAPI
                     'status'        => 'required|in:'. join(',', [
                                                                     Order::STATUS_READY_FOR_PICKUP,
                                                                     Order::STATUS_DECLINED,
+                                                                    Order::STATUS_CANCELLED,
                                                                     Order::STATUS_DONE,
                                         ]),
                 ),
@@ -65,6 +67,7 @@ class OrderUpdateStatusAPIController extends ControllerAPI
                     'order_id.required'  => 'Order ID is required',
                     'status.in' => 'available status are: '.Order::STATUS_READY_FOR_PICKUP.','
                                                            .Order::STATUS_DECLINED.','
+                                                           .Order::STATUS_CANCELLED.','
                                                            .Order::STATUS_DONE
                 )
             );
@@ -86,6 +89,11 @@ class OrderUpdateStatusAPIController extends ControllerAPI
             // declined order
             if ($status === Order::STATUS_DECLINED) {
                 Order::declined($orderId, $cancelReason, $userId);
+            }
+
+            // confirm cancel order
+            if ($status === Order::STATUS_CANCELLED) {
+                Order::cancelled($orderId);
             }
 
             // done/confirm order
