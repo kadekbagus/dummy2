@@ -214,7 +214,7 @@ class Order extends Eloquent
                 'pick_up_code' => self::createPickUpCode(),
                 'status' => self::STATUS_READY_FOR_PICKUP,
             ]);
-            
+
         Event::fire('orbit.order.ready-for-pickup', [$orderId, $bppUserId]);
 
         return $order;
@@ -231,7 +231,7 @@ class Order extends Eloquent
         return $order;
     }
 
-    public function order_details() 
+    public function order_details()
     {
         return $this->hasMany('OrderDetail', 'order_id', 'order_id');
     }
@@ -244,6 +244,21 @@ class Order extends Eloquent
     public static function createPickUpCode()
     {
         return ObjectID::make();
+    }
+
+    public static function cancelled($orderId)
+    {
+        $order = Order::where('order_id', $orderId)->firstOrFail();
+
+        if ($order->status === self::STATUS_CANCELLING) {
+            $order->status = self::STATUS_CANCELLED;
+        } else {
+            throw new Exception("Cannot update order status.", 1);
+        }
+
+        // Event::fire('orbit.cart.order-declined', [$order]);
+
+        return $order;
     }
 
     public static function declined($orderId, $reason, $userId)

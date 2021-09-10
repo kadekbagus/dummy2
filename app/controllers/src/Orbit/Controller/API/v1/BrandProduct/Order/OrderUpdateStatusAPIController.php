@@ -56,6 +56,7 @@ class OrderUpdateStatusAPIController extends ControllerAPI
                     'status'        => 'required|in:'. join(',', [
                                                                     Order::STATUS_READY_FOR_PICKUP,
                                                                     Order::STATUS_DECLINED,
+                                                                    Order::STATUS_CANCELLING,
                                                                     Order::STATUS_DONE,
                                         ]),
                 ),
@@ -65,6 +66,7 @@ class OrderUpdateStatusAPIController extends ControllerAPI
                     'order_id.required'  => 'Order ID is required',
                     'status.in' => 'available status are: '.Order::STATUS_READY_FOR_PICKUP.','
                                                            .Order::STATUS_DECLINED.','
+                                                           .Order::STATUS_CANCELLING.','
                                                            .Order::STATUS_DONE
                 )
             );
@@ -86,6 +88,11 @@ class OrderUpdateStatusAPIController extends ControllerAPI
             // declined order
             if ($status === Order::STATUS_DECLINED) {
                 Order::declined($orderId, $cancelReason, $userId);
+            }
+
+            // confirm cancel order
+            if ($status === Order::STATUS_CANCELLED) {
+                Order::cancelled($orderId);
             }
 
             // done/confirm order
