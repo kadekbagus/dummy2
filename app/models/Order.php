@@ -252,6 +252,7 @@ class Order extends Eloquent
 
         if ($order->status === self::STATUS_CANCELLING) {
             $order->status = self::STATUS_CANCELLED;
+            $order->save();
         } else {
             throw new Exception("Cannot update order status.", 1);
         }
