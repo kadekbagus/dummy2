@@ -11,6 +11,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use GameVoucherPromotion;
+use Validator;
 
 /**
  * Get list of Game Voucher Promotion.
@@ -36,6 +37,27 @@ class PromotionListAPIController extends ControllerAPI
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
+            }
+
+            $validation_data = [
+                'sortby' => OrbitInput::get('sortby'),
+                'sortmode' => OrbitInput::get('sortmode'),
+            ];
+
+            $validation_error = [
+                'sortby' => 'in:game_voucher_promotion_id,start_date,end_date',
+                'sortmode' => 'in:asc,desc',
+            ];
+
+            $validator = Validator::make(
+                $validation_data,
+                $validation_error
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
             $sortByMapping = array(
