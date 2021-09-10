@@ -248,11 +248,19 @@ class Order extends Eloquent
 
     public static function cancelled($orderId)
     {
-        $order = Order::where('order_id', $orderId)->firstOrFail();
+        $order = Order::with(['payment_detail'])
+            ->where('order_id', $orderId)
+            ->firstOrFail();
 
         if ($order->status === self::STATUS_CANCELLING) {
             $order->status = self::STATUS_CANCELLED;
             $order->save();
+
+            Queue::later(
+                3,
+                'Orbit\Queue\Order\RefundOrderQueue',
+                ['paymentId' => $order->payment_detail->payment_transaction_id]
+            );
         } else {
             throw new Exception("Cannot update order status.", 1);
         }
@@ -264,12 +272,20 @@ class Order extends Eloquent
 
     public static function declined($orderId, $reason, $userId)
     {
-        $order = Order::where('order_id', $orderId)->update([
+        // @todo: need to check the previous status
+        $order = Order::with(['payment_detail'])
+            ->where('order_id', $orderId)
+            ->update([
                 'status' => self::STATUS_DECLINED,
                 'cancel_reason' => $reason,
                 'declined_by' => $userId,
             ]);
 
+        Queue::later(
+            3,
+            'Orbit\Queue\Order\RefundOrderQueue',
+            ['paymentId' => $order->payment_detail->payment_transaction_id]
+        );
         // Event::fire('orbit.cart.order-declined', [$order]);
 
         return $order;
@@ -291,7 +307,7 @@ class Order extends Eloquent
             ->sum('quantity');
     }
 
-    
+
    public static function getLocalTimezoneName($timezone = 'UTC')
    {
         $timezoneMapping = [
