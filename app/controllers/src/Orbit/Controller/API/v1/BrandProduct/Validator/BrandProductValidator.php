@@ -138,24 +138,14 @@ class BrandProductValidator
     /**
      * This method assumes brand product variant is available inside container.
      */
-    public function quantityAvailableForCart($attrs, $value, $params)
+    public function quantityAvailableForCart($attr, $requestedQty, $params)
     {
         $variant = $this->getVariant();
 
-        if ($variant->quantity === 0) {
-            return true;
-        }
-
-        // Count reserved items as used quantity.
-        $usedQuantity = BrandProductReservation::getReservedQuantity($variant->brand_product_variant_id);
-
-        // Add purchased items' count as used quantity.
-        $usedQuantity += Order::getPurchasedQuantity($variant->brand_product_variant_id);
-
         // Add in-cart items' count as used quantity.
-        $usedQuantity += CartItem::getCartItemQuantity($variant->brand_product_variant_id);
+        $usedQuantity = CartItem::getCartItemQuantity($variant->brand_product_variant_id);
 
-        return $variant->quantity - $usedQuantity >= $value;
+        return $variant->quantity - $usedQuantity >= $requestedQty;
     }
 
     public function canReserve($attrs, $cartItemIds, $params)
