@@ -11,7 +11,7 @@ use Exception;
 use Validator;
 use Carbon\Carbon;
 use DominoPOS\OrbitACL\ACL;
-
+use BrandProductVariant;
 use BrandProductReservation;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\ControllerAPI;
@@ -103,6 +103,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             if ($status === BrandProductReservation::STATUS_DECLINED) {
                 $reservation->declined_by = $userId;
                 $reservation->cancel_reason = $cancelReason;
+                $reservation->load(['details.product_variant']);
             }
 
             if ($status === BrandProductReservation::STATUS_ACCEPTED) {
@@ -121,6 +122,13 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
 
                     // take the longest max reservation time from each products
                     $max_reservation_time = $max_reservation_time <= $detail->product_variant->brand_product->max_reservation_time ? $detail->product_variant->brand_product->max_reservation_time : $max_reservation_time;
+
+                    // update stock
+                    $updateStock = BrandProductVariant::where('brand_product_variant_id', '=', $detail->brand_product_variant_id)->first();
+					if ($updateStock) {
+						$updateStock->quantity = $detail->product_variant->quantity - $detail->quantity;
+						$updateStock->save();
+					}
                 }
 
                 $reservation->expired_at = Carbon::now()->addMinutes($max_reservation_time);
@@ -128,6 +136,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
 
             if ($status === BrandProductReservation::STATUS_DONE) {
                 $reservation->status = 'done';
+                $reservation->load(['details.product_variant']);
             }
 
             $reservation->save();
@@ -192,7 +201,9 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             $brandId = $parameters[0];
             $prefix = DB::getTablePrefix();
 
-            $reservation = BrandProductReservation::where('brand_product_reservation_id', $value)->where('brand_id', '=', $brandId)->first();
+            $reservation = BrandProductReservation::where('brand_product_reservation_id', $value)
+                                                    ->where('brand_id', '=', $brandId)
+                                                    ->first();
 
             if (empty($reservation)) {
                 return FALSE;
