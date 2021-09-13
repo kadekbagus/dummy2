@@ -156,8 +156,6 @@ class Order extends Eloquent
             Order::whereIn('order_id', $orders)->update([
                 'status' => Order::STATUS_CANCELLING,
             ]);
-
-            \Log::info("Request made.");
         }
 
         return $orders;
@@ -187,21 +185,36 @@ class Order extends Eloquent
 
     public static function markAsPaid($orders)
     {
-        if ($orders instanceof Collection) {
-            $orders->update(['status' => self::STATUS_PAID]);
-
-            return $orders;
-        }
-
-        if (! is_array($orders)) {
-            $orders = [$orders];
+        if (is_string($orders)) {
+            $orders = explode(',', $orders);
         }
 
         $now = Carbon::now('UTC')->format('Y-m-d H:i:s');
-        $orders = Order::with(['user'])->whereIn('order_id', $orders)->update([
-            'status' => self::STATUS_PAID,
-            'paid_at' => $now,
-        ]);
+        $orders = Order::with(['details.brand_product_variant'])
+            ->whereIn('order_id', $orders)
+            ->get();
+
+        foreach($orders as $order) {
+            $order->status = self::STATUS_PAID;
+            $order->paid_at = $now;
+            $order->save();
+
+            $order->details->each(function($detail) {
+                if ($detail->brand_product_variant) {
+                    $detail->brand_product_variant->decrement(
+                        'quantity', $detail->quantity
+                    );
+
+                    $productQty = $detail->brand_product_variant->quantity;
+                    if ($productQty < 0) {
+                        $detail->brand_product_variant->quantity = 0;
+                        $detail->brand_product_variant->save();
+
+                        throw new \Exception("Cannot decrease product quantity! Quantity can't be lower than 0! (Qty: {$productQty})");
+                    }
+                }
+            });
+        }
 
         // Event::fire('orbit.cart.order-paid', [$order]);
 
