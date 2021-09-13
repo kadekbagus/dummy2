@@ -341,6 +341,8 @@ Event::listen('orbit.order.complete', function($orderId, $bppUserId)
 });
 
 Event::listen('orbit.order.cancelled', function($orders) {
+    $orderId = $orders;
+
     if ($orders instanceof Collection) {
         $orderId = $orders->first()->order_id;
     }
@@ -353,9 +355,12 @@ Event::listen('orbit.order.cancelled', function($orders) {
         ->findOrFail($orderId);
 
     // Refund the payment.
-    Queue::later(
-        3,
-        'Orbit\Queue\Order\RefundOrderQueue',
-        ['paymentId' => $payment->payment_transaction_id]
-    );
+    // Might check the status here before throwing to queue.
+    // if ($payment->status === PaymentTransaction::STATUS_SUCCESS) {
+        Queue::later(
+            3,
+            'Orbit\Queue\Order\RefundOrderQueue',
+            ['paymentId' => $payment->payment_transaction_id]
+        );
+    // }
 });

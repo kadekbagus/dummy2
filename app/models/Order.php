@@ -171,11 +171,21 @@ class Order extends Eloquent
             throw new Exception("Missing OrderID when cancelling order!");
         }
 
-        $orders = Order::whereIn('order_id', $orderId)->get();
+        $orders = Order::with(['details.brand_product_variant'])
+            ->whereIn('order_id', $orderId)
+            ->get();
 
         foreach($orders as $order) {
             $order->status = Order::STATUS_CANCELLED;
             $order->save();
+
+            $order->details->each(function($detail) {
+                if ($detail->brand_product_variant) {
+                    $detail->brand_product_variant->increment(
+                        'quantity', $detail->quantity
+                    );
+                }
+            });
         }
 
         Event::fire('orbit.order.cancelled', [$orders]);
