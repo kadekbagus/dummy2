@@ -10,4 +10,9 @@ class GameVoucherPromotionDetail extends Eloquent
     {
         return $this->belongsTo(PaymentTransaction::class, 'payment_transaction_id', 'payment_transaction_id');
     }
+
+    public function game_voucher()
+    {
+        return $this->belongsTo(GameVoucherPromotion::class, 'game_voucher_promotion_id', 'game_voucher_promotion_id');
+    }
 }

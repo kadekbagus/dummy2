@@ -11,6 +11,7 @@ use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInte
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedProductActivity;
 use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
 use Orbit\Helper\AutoIssueCoupon\AutoIssueCoupon;
+use Orbit\Helper\AutoIssueCoupon\AutoIssueGamePromotion;
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
 use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotification;
@@ -148,6 +149,9 @@ class GetDigitalProductQueue
 
                 // Auto issue free coupon if trx meet certain criteria.
                 AutoIssueCoupon::issue($payment, $digitalProduct->product_type);
+
+                // Auto issue free game voucher promotion if eligible.
+                AutoIssueGamePromotion::issue($payment, $providerProduct);
 
                 // Notify Customer.
                 $payment->user->notify(new ReceiptNotification(
