@@ -39,15 +39,15 @@ class AutoIssueGamePromotion
         $issuedVouchers = [];
 
         DB::transaction(function() use ($payment, $providerProduct, &$issuedVouchers) {
-            $now = Carbon::now()->format('Y-m-d H:i:s');
+            $trxDateTime = $payment->created_at->format('Y-m-d H:i:s');
 
             $vouchers = GameVoucherPromotion::with(['available_voucher'])
                 ->has('available_voucher')
                 ->has('active_provider_product')
                 ->where('provider_product_id', $providerProduct->provider_product_id)
                 ->where('status', 'active')
-                ->where('end_date', '>=', $now)
-                ->where('start_date', '<=', $now)
+                ->where('end_date', '>=', $trxDateTime)
+                ->where('start_date', '<=', $trxDateTime)
                 ->get();
 
             foreach($vouchers as $voucher) {
