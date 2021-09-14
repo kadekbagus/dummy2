@@ -22,7 +22,7 @@ class FreeGameVoucherPromotionNotification extends ReceiptNotification
     public function getEmailTemplates()
     {
         return [
-            // 'html' => 'emails.digital-product.free-game-voucher.free-game-voucher',
+            'html' => 'emails.digital-product.free-game-voucher.free-game-voucher',
             'text' => 'emails.digital-product.free-game-voucher.free-game-voucher-text',
         ];
     }
