@@ -10,8 +10,8 @@ use Illuminate\Support\Facades\Log;
 use Orbit\Notifications\DigitalProduct\FreeGameVoucherPromotionNotification;
 
 /**
- * Helper which handle free/auto-issued coupon if given transaction meet
- * certain criteria.
+ * Helper which handle free/auto-issued free game voucher
+ * if given transaction meet certain criteria.
  *
  * @author Budi <budi@gotomalls.com>
  */
@@ -26,8 +26,7 @@ class AutoIssueGamePromotion
      */
     public static function issue($payment, $providerProduct = null)
     {
-        // Resolve product type from payment if product type empty/not supplied
-        // in the arg.
+        // Resolve provider product type from payment if needed.
         $providerProduct = ! empty($providerProduct)
             ? $providerProduct
             : $payment->getProviderProduct();
@@ -56,22 +55,21 @@ class AutoIssueGamePromotion
 
                 // (new AutoIssueGameVoucherActivity($payment, $coupon))->record();
 
-                $issuedVouchers[] = $voucher->game_voucher_promotion_id;
+                $issuedVouchers[] = $voucher->available_voucher
+                    ->game_voucher_promotion_detail_id;
 
                 Log::info(sprintf(
-                    'AutoIssueGamePromotion: voucher %s issued for trx %s',
+                    'AutoIssueGamePromotion: voucher %s (%s) issued for trx %s',
                     $voucher->game_voucher_promotion_id,
+                    $voucher->campaign_name,
                     $payment->payment_transaction_id
                 ));
             }
         });
 
-        // Trigger event to update coupon ES if necessary.
+        // Notify customer with free voucher pin/SN information.
         if (! empty($issuedVouchers)) {
-            // Notify customer with free voucher pin/SN information.
-            $payment->user->notify(
-                new FreeGameVoucherPromotionNotification($payment)
-            );
+            (new FreeGameVoucherPromotionNotification($payment))->send();
         }
     }
 }
