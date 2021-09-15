@@ -30,7 +30,7 @@ class CartItemValidator
         return false;
     }
 
-    public function quantityAvailableForCartUpdate($attrs, $value, $params)
+    public function quantityAvailableForCartUpdate($attr, $requestedQty, $params)
     {
         if (! App::bound('cartItem')) {
             return false;
@@ -39,39 +39,9 @@ class CartItemValidator
         $variant = App::make('cartItem')->brand_product_variant;
 
         if (! empty($variant)) {
-            return $this->validateBrandProductQuantity($variant, $value);
+            return $variant->quantity >= $requestedQty;
         }
 
         return false;
-    }
-
-    private function validateBrandProductQuantity($variant, $requestedQuantity)
-    {
-        // Count reserved items as used quantity.
-        $usedQuantity = BrandProductReservation::select('quantity')
-            ->join(
-                'brand_product_reservation_details',
-                'brand_product_reservations.brand_product_reservation_id',
-                '=',
-                'brand_product_reservation_details.brand_product_reservation_id'
-            )
-            ->where('brand_product_variant_id', $variant->brand_product_variant_id)
-            ->whereIn('status', [
-                BrandProductReservation::STATUS_PENDING,
-                BrandProductReservation::STATUS_ACCEPTED,
-                BrandProductReservation::STATUS_DONE,
-            ])
-            ->sum('quantity');
-
-        // Add purchased items' count as used quantity.
-        $usedQuantity += Order::select('quantity')
-            ->join('order_details',
-                'orders.order_id', '=', 'order_details.order_id'
-            )
-            ->where('brand_product_variant_id', $variant->brand_product_variant_id)
-            ->whereIn('orders.status', [Order::STATUS_PAID])
-            ->sum('quantity');
-
-        return $variant->quantity - $usedQuantity >= $requestedQuantity;
     }
 }

@@ -104,7 +104,10 @@ class OrderUpdateStatusAPIController extends ControllerAPI
             // Commit the changes
             $this->commit();
 
-            $order = Order::where('order_id', $orderId)->where('brand_id', '=', $brandId)->first();
+            $order = Order::with(['order_details.brand_product_variant'])
+                            ->where('order_id', $orderId)
+                            ->where('brand_id', '=', $brandId)
+                            ->first();
 
             $this->response->data = $order;
         } catch (ACLForbiddenException $e) {
@@ -157,7 +160,7 @@ class OrderUpdateStatusAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
 
             $order = Order::where('order_id', $value)->where('brand_id', '=', $brandId)->first();
-
+            
             if (empty($order)) {
                 return FALSE;
             }

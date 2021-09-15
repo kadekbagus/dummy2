@@ -235,10 +235,6 @@ class BrandProductResource extends Resource
 
     private function getMaxQuantity($bpVariant)
     {
-        $maxQuantity = $bpVariant->quantity
-            - $bpVariant->reservation_details->sum('quantity')
-            - $bpVariant->order_details->sum('quantity');
-
-        return $maxQuantity < 0 ? 0 : $maxQuantity;
+        return $bpVariant->quantity < 0 ? 0 : $bpVariant->quantity;
     }
 }
