@@ -70,13 +70,7 @@ class OrderValidator
 
     private function validateBrandProductQuantity($variant, $requestedQuantity)
     {
-        // Count reserved items as used quantity.
-        $usedQuantity = BrandProductReservation::getReservedQuantity($variant->brand_product_variant_id);
-
-        // Add purchased items' count as used quantity.
-        $usedQuantity += Order::getPurchasedQuantity($variant->brand_product_variant_id);
-
-        return $variant->quantity - $usedQuantity >= $requestedQuantity;
+        return $variant->quantity >= $requestedQuantity;
     }
 
     public function canCancel($attr, $value, $params)
