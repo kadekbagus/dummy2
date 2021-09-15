@@ -50,13 +50,10 @@ Free Game Voucher from Gotomalls.com!
                     </p>
                   </td>
                 </tr>
-                <tr>
-                  <td height="20" align="center">&nbsp;</td>
-                </tr>
 
                 <tr>
                   <td width="600" class="mobile center" valign="middle">
-                    <table width="100%">
+                    <table width="100%" class="greeting-text">
                       <tbody>
                         <tr style="border-top: 1px solid #ddd;">
                           <td class="mobile w-35 bold reservation-table-item-label">
@@ -113,7 +110,6 @@ Free Game Voucher from Gotomalls.com!
                     <table width="100%">
                       <tr>
                         <td colspan="2" class="greeting-text" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:10px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
-                            <br>
                             <p class="help-text">
                                 {{ trans('email-purchase-rewards.free_game_voucher.line_3', [], '', $lang) }}
                                 <br>
