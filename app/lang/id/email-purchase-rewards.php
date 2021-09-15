@@ -8,7 +8,7 @@ return [
     ],
 
     'free_game_voucher' => [
-        'subject' => 'Voucher Gim Gratis Untuk Anda!',
+        'subject' => 'Voucher Game Gratis Untuk Anda!',
         'title' => 'Congratulations!',
         'greeting' => 'Hi, :customerName',
         'congrats' => 'Selamat!',
