@@ -114,7 +114,7 @@ Free Game Voucher from Gotomalls.com!
                                 {{ trans('email-purchase-rewards.free_game_voucher.line_3', [], '', $lang) }}
                                 <br>
                                 {{ trans('email-purchase-rewards.free_game_voucher.line_4', [], '', $lang) }}
-                                &nbsp;<strong>{{ $voucher['startDate'] }} - {{ $voucher['endDate']] }}</strong>
+                                &nbsp;<strong>{{ $voucher['startDate'] }} - {{ $voucher['endDate'] }}</strong>
                                 <br>
                                 <br>
                                 {{{ trans('email-purchase-rewards.free_game_voucher.thank_you', [], '', $lang) }}}
