@@ -20,6 +20,7 @@ use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedProductActivit
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
 use Orbit\Helper\AutoIssueCoupon\AutoIssueCoupon;
 use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotification;
+use Orbit\Helper\AutoIssueCoupon\AutoIssueGamePromotion;
 
 /**
  * A job to get/issue PLN Token from MCash after payment completed.
@@ -129,6 +130,8 @@ class GetMCashElectricityQueue
 
                 // Auto issue free coupon if trx meet certain criteria.
                 AutoIssueCoupon::issue($payment, 'pln');
+
+                AutoIssueGamePromotion::issue($payment, $providerProduct);
 
                 $this->recordSuccessGMP($payment, $digitalProduct, $providerProduct, $detail);
             }

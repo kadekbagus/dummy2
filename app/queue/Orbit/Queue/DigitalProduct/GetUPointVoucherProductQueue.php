@@ -18,6 +18,7 @@ use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedProductActivit
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
 use Orbit\Helper\AutoIssueCoupon\AutoIssueCoupon;
 use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotification;
+use Orbit\Helper\AutoIssueCoupon\AutoIssueGamePromotion;
 
 /**
  * A job to get/issue Game Voucher after payment completed.
@@ -135,6 +136,8 @@ class GetUPointVoucherProductQueue
                 $this->log("Issued for payment {$paymentId}..");
 
                 AutoIssueCoupon::issue($payment, 'game_voucher');
+
+                AutoIssueGamePromotion::issue($payment, $providerProduct);
 
                 // Notify Customer.
                 $payment->user->notify(new ReceiptNotification(
