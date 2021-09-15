@@ -46,7 +46,7 @@ Free Game Voucher from Gotomalls.com!
                     <table width="100%" class="greeting-text text-left">
                       <tbody>
                         <tr>
-                          <td class="mobile w-25 bold reservation-table-item-label border-none">
+                          <td style="width: 30%;" class="mobile bold reservation-table-item-label border-none">
                             <span class="p-8 block">
                                 {{ trans('email-purchase-rewards.free_game_voucher.labels.transaction_id', [], '', $lang) }}
                             </span>

@@ -21,7 +21,7 @@ return [
             'serial_number' => 'Serial Number',
         ],
         'line_3' => 'Top up on Gotomalls to earn more rewards like this!',
-        'line_4' => 'Enjoy the promotion from :startDate - :endDate',
+        'line_4' => 'Enjoy the promotion from ',
         'thank_you' => 'Thank you for always using Gotomalls.com!',
 
         'help' => 'Please contact our customer service at <a style="color:#f43d3c;text-decoration:none;" href="tel::csPhone">:csPhone</a> or email at <a style="color:#f43d3c;text-decoration:none;" href="mailto::csEmail">:csEmail</a> if you find any difficulties.',

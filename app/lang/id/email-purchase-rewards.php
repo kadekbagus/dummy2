@@ -21,7 +21,7 @@ return [
             'serial_number' => 'Serial Number',
         ],
         'line_3' => 'Top Up lagi Game Voucher kamu di Gotomalls.',
-        'line_4' => 'Dan nikmati promo ini di periode :startDate - :endDate',
+        'line_4' => 'Dan nikmati promo ini di periode ',
         'thank_you' => 'Terima kasih dan Semoga tetap setia menggunakan Gotomalls.com!',
 
         'help' => 'Jika menemui kendala terkait pembelian, silakan hubungi layanan bantuan kami di nomor <a style="color:#f43d3c;text-decoration:none;" href="tel::csPhone">:csPhone</a> atau surel di <a style="color:#f43d3c;text-decoration:none;" href="mailto::csEmail">:csEmail</a>.',
