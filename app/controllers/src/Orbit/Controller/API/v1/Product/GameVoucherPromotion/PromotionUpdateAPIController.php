@@ -57,8 +57,8 @@ class PromotionUpdateAPIController extends ControllerAPI
             $validation_error = [
                 'game_voucher_promotion_id' => 'required',
                 'campaign_name' => 'required',
-                'start_date' => 'required',
-                'end_date' => 'required',
+                'start_date' => 'required|date|date_format:Y-m-d',
+                'end_date' => 'required|date|date_format:Y-m-d',
                 'status' => 'required|in:active,inactive',
                 'provider_product_id' => 'required|orbit.provider_product_id'
             ];
@@ -86,8 +86,8 @@ class PromotionUpdateAPIController extends ControllerAPI
                 ->firstOrFail();
 
             $item->campaign_name = OrbitInput::post('campaign_name');
-            $item->start_date = OrbitInput::post('start_date');
-            $item->end_date = OrbitInput::post('end_date');
+            $item->start_date = OrbitInput::post('start_date') . ' 00:00:00';
+            $item->end_date = OrbitInput::post('end_date') . ' 23:59:59';
             $item->status = OrbitInput::post('status');
             $item->provider_product_id = OrbitInput::post('provider_product_id');
             $item->save();
