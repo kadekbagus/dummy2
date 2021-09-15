@@ -43,7 +43,7 @@ Free Game Voucher from Gotomalls.com!
 
                 <tr>
                   <td width="600" class="mobile center" valign="middle">
-                    <table width="100%" class="greeting-text">
+                    <table width="100%" class="greeting-text text-left">
                       <tbody>
                         <tr>
                           <td class="mobile w-25 bold reservation-table-item-label border-none">
