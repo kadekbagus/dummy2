@@ -103,7 +103,6 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             if ($status === BrandProductReservation::STATUS_DECLINED) {
                 $reservation->declined_by = $userId;
                 $reservation->cancel_reason = $cancelReason;
-                $reservation->load(['details.product_variant']);
             }
 
             if ($status === BrandProductReservation::STATUS_ACCEPTED) {
@@ -136,7 +135,6 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
 
             if ($status === BrandProductReservation::STATUS_DONE) {
                 $reservation->status = 'done';
-                $reservation->load(['details.product_variant']);
             }
 
             $reservation->save();
@@ -150,6 +148,11 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             else if ($status === BrandProductReservation::STATUS_DECLINED) {
                 Event::fire('orbit.reservation.declined', [$reservation]);
             }
+
+            $reservation = BrandProductReservation::with(['details.product_variant'])  
+                                                    ->where('brand_product_reservation_id', $brandProductReservationId)
+                                                    ->where('brand_id', '=', $brandId)
+                                                    ->first();
 
             $this->response->data = $reservation;
         } catch (ACLForbiddenException $e) {
