@@ -14,5 +14,5 @@ Route::post('/app/v1/game-voucher-promotion/new', ['as' => 'game-voucher-promoti
 // Route for game-voucher-promotion update
 Route::post('/app/v1/game-voucher-promotion/update', ['as' => 'game-voucher-promotion-update', 'uses' => 'IntermediateProductAuthController@GameVoucherPromotion\PromotionUpdate_postUpdate']);
 
-// Route for game-voucher-promotion update status
-Route::post('/app/v1/game-voucher-promotion/update-status', ['as' => 'game-voucher-promotion-update-status', 'uses' => 'IntermediateProductAuthController@GameVoucherPromotion\PromotionUpdateStatus_postUpdateStatus']);
+// // Route for game-voucher-promotion update status
+// Route::post('/app/v1/game-voucher-promotion/update-status', ['as' => 'game-voucher-promotion-update-status', 'uses' => 'IntermediateProductAuthController@GameVoucherPromotion\PromotionUpdateStatus_postUpdateStatus']);
