@@ -25,22 +25,12 @@ Free Game Voucher from Gotomalls.com!
               </table>
 
               <table width="600" cellpadding="0" cellspacing="0" border="0" class="container">
-
-                <tr>
-                  <td width="600" align="right" valign="top" class="transaction-date">
-                    <strong>{{{ $transactionDateTime }}}</strong>
-                  </td>
-                </tr>
-                <tr>
-                    <td height="20" align="center">&nbsp;</td>
-                </tr>
-
                 <tr>
                   <td width="600" class="mobile" align="left" valign="top">
                     <h3 class="greeting-username">
                       {{ trans('email-purchase-rewards.free_game_voucher.greeting', ['customerName' => $customerName], '', $lang) }}
                     </h3>
-                    <p class="greeting-text">
+                    <p class="greeting-text" style="line-height: 1.75em;">
                       {{ trans('email-purchase-rewards.free_game_voucher.line_1', ['providerProductName' => $productName], '', $lang) }}
 
                       <br>
@@ -50,54 +40,61 @@ Free Game Voucher from Gotomalls.com!
                     </p>
                   </td>
                 </tr>
-                <tr>
-                  <td height="20" align="center">&nbsp;</td>
-                </tr>
 
                 <tr>
                   <td width="600" class="mobile center" valign="middle">
-                    <table width="100%">
+                    <table width="100%" class="greeting-text">
                       <tbody>
-                        <tr style="border-top: 1px solid #ddd;">
-                          <td class="mobile w-35 bold reservation-table-item-label">
+                        <tr>
+                          <td class="mobile w-25 bold reservation-table-item-label border-none">
                             <span class="p-8 block">
                                 {{ trans('email-purchase-rewards.free_game_voucher.labels.transaction_id', [], '', $lang) }}
                             </span>
                           </td>
-                          <td class="mobile reservation-table-item-value">
-                            <span class="p-8 block">{{ $transactionId }}</span>
+                          <td class="mobile reservation-table-item-value border-none">
+                            <span class="p-8 block">
+                              <span class="mobileOff">: &nbsp;&nbsp;</span>
+                              {{ $transactionId }}
+                            </span>
                           </td>
                         </tr>
                         <tr>
-                          <td class="mobile bold reservation-table-item-label">
+                          <td class="mobile bold reservation-table-item-label border-none">
                             <span class="p-8 block">
                                 {{ trans('email-purchase-rewards.free_game_voucher.labels.transaction_datetime', [], '', $lang) }}
                             </span>
                           </td>
-                          <td class="mobile reservation-table-item-value">
-                            <span class="p-8 block">{{ $transactionDateTime }}</span>
+                          <td class="mobile reservation-table-item-value border-none">
+                            <span class="p-8 block">
+                              <span class="mobileOff">: &nbsp;&nbsp;</span>
+                              {{ $transactionDateTime }}
+                            </span>
                           </td>
                         </tr>
                         <tr>
-                          <td class="mobile bold reservation-table-item-label">
+                          <td class="mobile bold reservation-table-item-label border-none">
                             <span class="p-8 block">
                                 {{ trans('email-purchase-rewards.free_game_voucher.labels.pin', [], '', $lang) }}
                             </span>
                           </td>
-                          <td class="mobile reservation-table-item-value">
+                          <td class="mobile reservation-table-item-value border-none">
                             <span class="p-8 block">
+                                <span class="mobileOff">: &nbsp;&nbsp;</span>
                                 {{ $voucher['pin'] }}
                             </span>
                           </td>
                         </tr>
                         <tr>
-                          <td class="mobile bold reservation-table-item-label">
+                          <td class="mobile bold reservation-table-item-label border-none">
                             <span class="p-8 block">
                                 {{ trans('email-purchase-rewards.free_game_voucher.labels.serial_number', [], '', $lang) }}
                             </span>
                           </td>
-                          <td class="mobile reservation-table-item-value">
-                            <span class="p-8 block">{{ $voucher['serialNumber'] }}</span>
+                          <td class="mobile reservation-table-item-value border-none">
+                            <span class="p-8 block">
+                              <span class="mobileOff">: &nbsp;&nbsp;</span>
+                              {{ $voucher['serialNumber'] }}
+                            </span>
                           </td>
                         </tr>
 
@@ -113,12 +110,11 @@ Free Game Voucher from Gotomalls.com!
                     <table width="100%">
                       <tr>
                         <td colspan="2" class="greeting-text" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:10px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
-                            <br>
-                            <p class="help-text">
+                            <p class="help-text" style="line-height: 1.75em;">
                                 {{ trans('email-purchase-rewards.free_game_voucher.line_3', [], '', $lang) }}
                                 <br>
-                                {{ trans('email-purchase-rewards.free_game_voucher.line_4', ['startDate' => $voucher['startDate'], 'endDate' => $voucher['endDate']], '', $lang) }}
-
+                                {{ trans('email-purchase-rewards.free_game_voucher.line_4', [], '', $lang) }}
+                                &nbsp;<strong>{{ $voucher['startDate'] }} - {{ $voucher['endDate']] }}</strong>
                                 <br>
                                 <br>
                                 {{{ trans('email-purchase-rewards.free_game_voucher.thank_you', [], '', $lang) }}}

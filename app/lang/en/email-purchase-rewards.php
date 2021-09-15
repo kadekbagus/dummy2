@@ -9,8 +9,8 @@ return [
 
     'free_game_voucher' => [
         'subject' => 'Free Game Voucher for You!',
-        'title' => 'Free Game Voucher',
-        'greeting' => 'Hi :customerName,',
+        'title' => 'Congratulations!',
+        'greeting' => 'Hi, :customerName',
         'congrats' => 'Congratulations!',
         'line_1' => 'You got a free Game Voucher by purchasing :providerProductName on Gotomalls.com!',
         'line_2' => 'Find your free Game Voucher details below:',
