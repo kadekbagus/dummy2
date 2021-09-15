@@ -9,8 +9,8 @@ return [
 
     'free_game_voucher' => [
         'subject' => 'Voucher Gim Gratis Untuk Anda!',
-        'title' => 'Voucher Gim Gratis',
-        'greeting' => 'Hai :customerName',
+        'title' => 'Congratulations!',
+        'greeting' => 'Hi, :customerName',
         'congrats' => 'Selamat!',
         'line_1' => 'Kamu berhak mendapatkan free game voucher atas pembelian :providerProductName di Gotomalls.com.',
         'line_2' => 'Berikut ini adalah detail free vouchernya:',
