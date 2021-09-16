@@ -298,11 +298,12 @@ class Order extends Eloquent
         // @todo: need to check the previous status
         $order = Order::with(['payment_detail'])
             ->where('order_id', $orderId)
-            ->update([
-                'status' => self::STATUS_DECLINED,
-                'cancel_reason' => $reason,
-                'declined_by' => $userId,
-            ]);
+            ->firstOrFail();
+
+        $order->status = self::STATUS_DECLINED;
+        $order->cancel_reason = $reason;
+        $order->declined_by = $userId;
+        $order->save();
 
         Queue::later(
             3,
