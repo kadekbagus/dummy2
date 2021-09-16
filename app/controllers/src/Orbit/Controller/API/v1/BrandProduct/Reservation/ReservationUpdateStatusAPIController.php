@@ -103,7 +103,19 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             if ($status === BrandProductReservation::STATUS_DECLINED) {
                 $reservation->declined_by = $userId;
                 $reservation->cancel_reason = $cancelReason;
-                $reservation->load(['details.product_variant']);
+
+                // update stock if previous status is accepted
+                if ($reservation->status === BrandProductReservation::STATUS_ACCEPTED) {
+                    $reservation->load(['details']);
+                    foreach ($reservation->details as $detail) {
+                        $detail->load(['product_variant']);
+                        $updateStock = BrandProductVariant::where('brand_product_variant_id', '=', $detail->brand_product_variant_id)->first();
+                        if ($updateStock) {
+                            $updateStock->quantity = $detail->product_variant->quantity + $detail->quantity;
+                            $updateStock->save();
+                        }
+                    }
+                }
             }
 
             if ($status === BrandProductReservation::STATUS_ACCEPTED) {
@@ -136,7 +148,6 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
 
             if ($status === BrandProductReservation::STATUS_DONE) {
                 $reservation->status = 'done';
-                $reservation->load(['details.product_variant']);
             }
 
             $reservation->save();
@@ -150,6 +161,11 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             else if ($status === BrandProductReservation::STATUS_DECLINED) {
                 Event::fire('orbit.reservation.declined', [$reservation]);
             }
+
+            $reservation = BrandProductReservation::with(['details.product_variant'])  
+                                                    ->where('brand_product_reservation_id', $brandProductReservationId)
+                                                    ->where('brand_id', '=', $brandId)
+                                                    ->first();
 
             $this->response->data = $reservation;
         } catch (ACLForbiddenException $e) {
