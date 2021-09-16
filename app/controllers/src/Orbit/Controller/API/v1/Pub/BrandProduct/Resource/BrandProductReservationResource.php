@@ -19,6 +19,8 @@ class BrandProductReservationResource extends Resource
 
     public function toArray()
     {
+        $this->loadUrlConfigAndPrefix();
+
         return [
             'id' => $this->brand_product_reservation_id,
             'user_email' => $this->resource->users->user_email,
@@ -36,33 +38,13 @@ class BrandProductReservationResource extends Resource
 
     protected function transformImages($item, $imagePrefix = '')
     {
-        if ($item->product_variant) {
-            return parent::transformImages($item->product_variant->brand_product, $imagePrefix);
-        }
-        else if ($item->image && $item->image->media) {
-            $this->setupImageUrlQuery();
-            $this->imagePrefix = 'brand_product_main_photo_';
-            $imageVariants = $this->resolveImageVariants();
-
-            $media = Media::select(
-                'media_id',
-                'object_id',
-                'media_name_long',
-                'path',
-                DB::raw($this->imageQuery)
-            );
-
-            if (! empty($imageVariants)) {
-                $media->whereIn('media_name_long', $imageVariants);
-            }
-
-            $media = $media->where('object_id', $item->image->media->object_id)
-                ->get();
-
-            return parent::transformImages($media, $imagePrefix);
+        if ($this->mediaUsingCdn) {
+            return $item->image_cdn
+                ? $item->image_cdn
+                : $this->mediaUrlPrefix . $item->image_url;
         }
 
-        return null;
+        return $this->mediaUrlPrefix . $item->image_url;
     }
 
     private function getStore()
@@ -89,9 +71,7 @@ class BrandProductReservationResource extends Resource
 
         foreach($this->resource->details as $detail) {
             $items[] = [
-                'product_id' => $detail->product_variant
-                    ? $detail->product_variant->brand_product_id
-                    : null,
+                'product_id' => $detail->brand_product_id,
                 'variant_id' => $detail->brand_product_variant_id,
                 'product_name' => $detail->product_name,
                 'barcode' => $detail->product_code,
