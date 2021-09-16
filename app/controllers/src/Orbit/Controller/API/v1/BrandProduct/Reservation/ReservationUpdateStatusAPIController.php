@@ -103,6 +103,19 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             if ($status === BrandProductReservation::STATUS_DECLINED) {
                 $reservation->declined_by = $userId;
                 $reservation->cancel_reason = $cancelReason;
+
+                // update stock if previous status is accepted
+                if ($reservation->status === BrandProductReservation::STATUS_ACCEPTED) {
+                    $reservation->load(['details']);
+                    foreach ($reservation->details as $detail) {
+                        $detail->load(['product_variant']);
+                        $updateStock = BrandProductVariant::where('brand_product_variant_id', '=', $detail->brand_product_variant_id)->first();
+                        if ($updateStock) {
+                            $updateStock->quantity = $detail->product_variant->quantity + $detail->quantity;
+                            $updateStock->save();
+                        }
+                    }
+                }
             }
 
             if ($status === BrandProductReservation::STATUS_ACCEPTED) {

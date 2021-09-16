@@ -2,6 +2,7 @@
 
 namespace Orbit\Controller\API\v1\BrandProduct\Repository;
 
+use BrandProductVariant;
 use BrandProductReservation;
 use BrandProductReservationDetail;
 use BrandProductReservationVariantDetail;
@@ -193,6 +194,19 @@ class ReservationRepository implements ReservationInterface
         DB::transaction(function() use (&$reservation) {
             $reservation->status = BrandProductReservation::STATUS_CANCELED;
             $reservation->save();
+
+            // update stock if previous status is accepted
+            if ($reservation->status === BrandProductReservation::STATUS_ACCEPTED) {
+                $reservation->load(['details']);
+                foreach ($reservation->details as $detail) {
+                    $detail->load(['product_variant']);
+                    $updateStock = BrandProductVariant::where('brand_product_variant_id', '=', $detail->brand_product_variant_id)->first();
+                    if ($updateStock) {
+                        $updateStock->quantity = $detail->product_variant->quantity + $detail->quantity;
+                        $updateStock->save();
+                    }
+                }
+            }
 
             Event::fire('orbit.reservation.canceled', [$reservation]);
         });
