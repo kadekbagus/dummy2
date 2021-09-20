@@ -43,10 +43,10 @@ Free Game Voucher from Gotomalls.com!
 
                 <tr>
                   <td width="600" class="mobile center" valign="middle">
-                    <table width="100%" class="greeting-text">
+                    <table width="100%" class="greeting-text text-left">
                       <tbody>
                         <tr>
-                          <td class="mobile w-25 bold reservation-table-item-label border-none">
+                          <td style="width: 30%;" class="mobile bold reservation-table-item-label border-none">
                             <span class="p-8 block">
                                 {{ trans('email-purchase-rewards.free_game_voucher.labels.transaction_id', [], '', $lang) }}
                             </span>
@@ -114,7 +114,7 @@ Free Game Voucher from Gotomalls.com!
                                 {{ trans('email-purchase-rewards.free_game_voucher.line_3', [], '', $lang) }}
                                 <br>
                                 {{ trans('email-purchase-rewards.free_game_voucher.line_4', [], '', $lang) }}
-                                &nbsp;<strong>{{ $voucher['startDate'] }} - {{ $voucher['endDate']] }}</strong>
+                                &nbsp;<strong>{{ $voucher['startDate'] }} - {{ $voucher['endDate'] }}</strong>
                                 <br>
                                 <br>
                                 {{{ trans('email-purchase-rewards.free_game_voucher.thank_you', [], '', $lang) }}}
