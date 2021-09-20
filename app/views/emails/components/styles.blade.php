@@ -137,6 +137,10 @@
       color: gray;
     }
 
+    .w-25 {
+      width:  25%;
+    }
+
     .w-35 {
       width: 35%;
     }
@@ -504,6 +508,10 @@
       height: 5px;
       display: block;
       clear: left;
+    }
+
+    .border-none {
+      border: 0 !important;
     }
 
     /* MEDIA QUERIES */
