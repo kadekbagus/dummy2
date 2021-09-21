@@ -16,8 +16,6 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
  */
 Event::listen('orbit.rating.postnewmedia', function($controller, $rating)
 {
-
-
     $images = Input::file(null);
     if (! $images) {
         return;
@@ -37,9 +35,7 @@ Event::listen('orbit.rating.postnewmedia', function($controller, $rating)
     unset($_POST['media_name_id']);
     unset($_POST['object_id']);
 
-
-    if ($response->code !== 0)
-    {
+    if ($response->code !== 0) {
         throw new \Exception($response->message, $response->code);
     }
 
@@ -85,7 +81,7 @@ Event::listen('orbit.rating.postdeletemedia', function($controller, $media)
  * @param RatingNewAPIController $controller - The instance of the RatingNewAPIController or its subclass
  * @param Advert $rating - Instance of object rating
  */
-Event::listen('orbit.rating.postrating.after.commit', function($controller, $rating)
+Event::listen('orbit.rating.postrating.after.commit', function($controller, $rating, $user)
 {
     // update elasticsearch
     $objectType = $rating['object_type'];

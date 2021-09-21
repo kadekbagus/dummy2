@@ -43,6 +43,7 @@ class AutoIssueCoupon
 
         $updatedCoupons = [];
         DB::transaction(function() use ($productType, $payment, &$updatedCoupons) {
+            $now = Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
             $coupons = Coupon::with(['issued_coupon' => function($query) {
                     $query->where('status', IssuedCoupon::STATUS_AVAILABLE);
                 }])
@@ -53,10 +54,14 @@ class AutoIssueCoupon
                 ->where(function($query) use ($productType, $payment) {
                     // might use case when to cast null min_purchase to 0 ?
                     $query->whereNull("min_purchase_{$productType}")
-                        ->orWhere("min_purchase_{$productType}", "<=", $payment->amount);
+                        ->orWhere("min_purchase_{$productType}", "<=",
+                            $payment->amount
+                        );
                 })
                 ->where('status', 'active')
-                ->where('end_date', '>=', Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s'))
+                ->where('is_visible', 'Y')
+                ->where('end_date', '>=', $now)
+                ->where('begin_date', '<=', $now)
                 ->orderBy("min_purchase_{$productType}", 'desc')
                 ->get();
 
@@ -103,7 +108,29 @@ class AutoIssueCoupon
         $hasUniqueCoupon = IssuedCoupon::join('promotions',
                 'issued_coupons.promotion_id', '=', 'promotions.promotion_id'
             )
-            ->where('user_id', $payment->user_id)
+            ->where(function($query) use ($payment) {
+                // If user gave it to other user,
+                // assume limit reached, no more coupon should be issued.
+                $query->where('original_user_id', $payment->user_id)
+
+                    // If user get it manually/issued automatically for them,
+                    // then no more coupon should be issued.
+                    ->orWhere(function($query) use ($payment) {
+                        $query->where('user_id', $payment->user_id)
+                            ->whereNull('original_user_id');
+                    })
+
+                    // If user get it by transfer from other user, and still not redeemed
+                    // yet, then no more coupon should be issued.
+                    ->orWhere(function($query) use ($payment) {
+                        $query->where('user_id', $payment->user_id)
+                            ->whereNotNull('original_user_id')
+                            ->where(
+                                'issued_coupons.status',
+                                IssuedCoupon::STATUS_ISSUED
+                            );
+                    });
+            })
             ->where('issued_coupons.promotion_id', $coupon->promotion_id)
             ->where('promotions.is_unique_redeem', 'Y')
             ->first();
@@ -115,12 +142,10 @@ class AutoIssueCoupon
 
         // Check if user already has the same coupon.
         $hasCoupon = IssuedCoupon::where('user_id', $payment->user_id)
-            ->where(function($query) {
-                $query->whereIn('issued_coupons.status', [
-                    IssuedCoupon::STATUS_ISSUED,
-                    IssuedCoupon::STATUS_RESERVED
-                ]);
-            })
+            ->whereIn('issued_coupons.status', [
+                IssuedCoupon::STATUS_ISSUED,
+                IssuedCoupon::STATUS_RESERVED
+            ])
             ->where('promotion_id', $coupon->promotion_id)
             ->first();
 
@@ -130,7 +155,9 @@ class AutoIssueCoupon
         }
 
         // Skip issued/redeemed check if both are unlimited.
-        if ($coupon->maximum_redeem === 0 && $coupon->maximum_issued_coupon === 0) {
+        if ($coupon->maximum_redeem === 0
+            && $coupon->maximum_issued_coupon === 0
+        ) {
             return true;
         }
 
@@ -139,7 +166,7 @@ class AutoIssueCoupon
         $usedCount = Coupon::select(DB::raw("
                 (select count({$prefix}issued_coupons.issued_coupon_id)
                     from {$prefix}issued_coupons
-                    where {$prefix}issued_coupons.status in ('issued', 'reserved')
+                    where {$prefix}issued_coupons.status in ('issued', 'reserved', 'redeemed')
                         and promotion_id = '{$coupon->promotion_id}'
                 ) as issued,
                 (select count({$prefix}issued_coupons.issued_coupon_id)

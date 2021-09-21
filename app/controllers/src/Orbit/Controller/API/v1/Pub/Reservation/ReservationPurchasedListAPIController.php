@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace Orbit\Controller\API\v1\Pub\Reservation;
 
@@ -34,7 +34,7 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
                 $message = 'You have to login to continue';
                 OrbitShopAPI::throwInvalidArgument($message);
             }
-            
+
             $language = OrbitInput::get('language', 'id');
 
             $validator = Validator::make(
@@ -63,34 +63,27 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
                 $image = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
             }
 
-            $reservation = BrandProductReservation::select('brand_product_reservations.brand_product_reservation_id', 
-                                                           'brand_product_reservations.product_name', 
-                                                           'brand_product_reservations.selling_price', 
-                                                           'brand_product_reservations.created_at', 
-                                                           'brand_product_reservations.expired_at',
-                                                           'brand_product_reservations.status',
-                                                           'brand_product_variants.brand_product_id',
-                                                    DB::raw("{$image} as image"),         
-                                                    DB::raw("CONCAT(m1.name,' ', m2.name) as store_name"))
-                                                    ->join('brand_product_reservation_details', function ($join) {
-                                                            $join->on('brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
-                                                                ->where('brand_product_reservation_details.option_type', '=', 'merchant');
-                                                    })
-                                                    ->join(DB::raw("{$prefix}merchants as m1"), DB::raw('m1.merchant_id'), '=', 'brand_product_reservation_details.value')
-                                                    ->join(DB::raw("{$prefix}merchants as m2"), DB::raw('m2.merchant_id'), '=', DB::raw('m1.parent_id'))
-                                                    ->leftjoin('brand_product_variants', 'brand_product_variants.brand_product_variant_id', '=', 'brand_product_reservations.brand_product_variant_id')
-                                                    ->leftjoin('media', function ($join) {
-                                                        $join->on('media.object_id', '=', 'brand_product_variants.brand_product_id')
-                                                            ->where('media.media_name_id', '=', 'brand_product_main_photo')
-                                                            ->where('media.media_name_long', '=', 'brand_product_main_photo_orig')
-                                                            ->where('media.object_name', '=', 'brand_product');
-                                                    })
-                                                    ->where('brand_product_reservations.user_id', '=', $user->user_id);
+            $reservation = BrandProductReservation::with([
+                    'users' => function($q) {
+                        $q->select('users.user_id', 'user_firstname', 'user_lastname');
+                    },
+                    'store.mall',
+                    'details' => function($q) {
+                        $q->with([
+                            'variant_details' => function($q12) {
+                                $q12->select('brand_product_reservation_detail_id', 'brand_product_reservation_variant_detail_id', 'value')
+                                    ->where('option_type', 'variant_option');
+                            }
+                        ]);
+                    }
+                ])
+                ->where('brand_product_reservations.user_id', '=', $user->user_id);
 
 
             $reservation = $reservation->orderBy(DB::raw("{$prefix}brand_product_reservations.created_at"), 'desc');
 
             $_reservation = clone $reservation;
+            $_reservation->groupBy('brand_product_reservations.brand_product_reservation_id');
 
             $take = PaginationNumber::parseTakeFromGet('coupon');
             $reservation->take($take);
@@ -98,15 +91,14 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $reservation->skip($skip);
 
-            $listReservation = $reservation->get();
+            $listReservation = $this->transformReservationList($reservation);
             $count = RecordCounter::create($_reservation)->count();
 
+            $this->response->data = new stdClass();
             if ($count === 0) {
-                $data->records = NULL;
+                $this->response->data->records = NULL;
                 $this->response->message = "There is no reservation that matched your search criteria";
             }
-
-            $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
             $this->response->data->returned_records = count($listReservation);
             $this->response->data->records = $listReservation;
@@ -158,6 +150,50 @@ class ReservationPurchasedListAPIController extends PubControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    private function transformReservationList($reservations)
+    {
+        $reservations = $reservations->get();
+        $listReservation = [];
+
+        foreach($reservations as $reservation) {
+            $reservationItem = new \stdClass();
+            $reservationItem->brand_product_reservation_id = $reservation->brand_product_reservation_id;
+            $reservationItem->store_name = $reservation->store->name . ' at ' . $reservation->store->mall->name;
+            $reservationItem->store_id = $reservation->store->merchant_id;
+            $reservationItem->mall_id = $reservation->store->mall->merchant_id;
+            $reservationItem->status = $reservation->status;
+            $reservationItem->created_at = $reservation->created_at->format('Y-m-d H:i:s');
+            $reservationItem->updated_at = $reservation->updated_at->format('Y-m-d H:i:s');
+            $reservationItem->cancelled_at = $reservation->updated_at->format('Y-m-d H:i:s');
+            $reservationItem->declined_at = $reservation->updated_at->format('Y-m-d H:i:s');
+            $reservationItem->expired_at = ! empty($reservation->expired_at)
+                        ? $reservation->expired_at->format('Y-m-d H:i:s')
+                        : null;
+            $reservationItem->items = [];
+
+            foreach ($reservation->details as $detail) {
+                $dtl = new stdclass();
+
+                $dtl->product_name = $detail->product_name;
+                $dtl->quantity = $detail->quantity;
+                $dtl->selling_price = $detail->selling_price;
+                $dtl->original_price = $detail->original_price;
+                $dtl->brand_product_id = $detail->brand_product_id;
+                $dtl->img_path = $detail->image_url;
+                $dtl->cdn_url = $detail->image_cdn;
+
+                $variants = [];
+                foreach ($detail->variant_details as $variantDetail) {
+                    $variants[] = strtoupper($variantDetail->value);
+                }
+                $dtl->variants = implode(', ', $variants);
+                $reservationItem->items[] = $dtl;
+            }
+            $listReservation[] = $reservationItem;
+        }
+        return $listReservation;
     }
 
 }

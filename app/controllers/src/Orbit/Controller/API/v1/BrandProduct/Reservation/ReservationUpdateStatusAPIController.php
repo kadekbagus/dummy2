@@ -11,7 +11,7 @@ use Exception;
 use Validator;
 use Carbon\Carbon;
 use DominoPOS\OrbitACL\ACL;
-
+use BrandProductVariant;
 use BrandProductReservation;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\ControllerAPI;
@@ -103,22 +103,51 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             if ($status === BrandProductReservation::STATUS_DECLINED) {
                 $reservation->declined_by = $userId;
                 $reservation->cancel_reason = $cancelReason;
+
+                // update stock if previous status is accepted
+                if ($reservation->status === BrandProductReservation::STATUS_ACCEPTED) {
+                    $reservation->load(['details']);
+                    foreach ($reservation->details as $detail) {
+                        $detail->load(['product_variant']);
+                        $updateStock = BrandProductVariant::where('brand_product_variant_id', '=', $detail->brand_product_variant_id)->first();
+                        if ($updateStock) {
+                            $updateStock->quantity = $detail->product_variant->quantity + $detail->quantity;
+                            $updateStock->save();
+                        }
+                    }
+                }
             }
 
             if ($status === BrandProductReservation::STATUS_ACCEPTED) {
-                $reservation->load(['brand_product_variant.brand_product']);
-                if (empty($reservation->brand_product_variant)) {
-                    OrbitShopAPI::throwInvalidArgument('Change status failed! Unable to find linked product variant for this reservation. Variant might be changed or deleted.');
+                $reservation->load(['details']);
+                $max_reservation_time = 0;
+                foreach ($reservation->details as $detail) {
+                    $detail->load(['product_variant.brand_product']);
+
+                    if (!is_object($detail->product_variant)) {
+                        OrbitShopAPI::throwInvalidArgument('Change status failed! Unable to find linked product variant for one or more of the product in this reservation. Variant might be changed or deleted.');
+                    }
+
+                    if (!is_object($detail->product_variant->brand_product)) {
+                        OrbitShopAPI::throwInvalidArgument('Change status failed! Unable to find linked brand product for one or more of the product in this reservation. It might be changed or deleted.');
+                    }
+
+                    // take the longest max reservation time from each products
+                    $max_reservation_time = $max_reservation_time <= $detail->product_variant->brand_product->max_reservation_time ? $detail->product_variant->brand_product->max_reservation_time : $max_reservation_time;
+
+                    // update stock
+                    $updateStock = BrandProductVariant::where('brand_product_variant_id', '=', $detail->brand_product_variant_id)->first();
+					if ($updateStock) {
+						$updateStock->quantity = $detail->product_variant->quantity - $detail->quantity;
+						$updateStock->save();
+					}
                 }
 
-                if (empty($reservation->brand_product_variant->brand_product)) {
-                    OrbitShopAPI::throwInvalidArgument('Change status failed! Unable to find linked brand product for this reservation. It might be changed or deleted.');
-                }
+                $reservation->expired_at = Carbon::now()->addMinutes($max_reservation_time);
+            }
 
-                $reservation->expired_at = Carbon::now()->addMinutes(
-                    $reservation->brand_product_variant->brand_product
-                        ->max_reservation_time
-                );
+            if ($status === BrandProductReservation::STATUS_DONE) {
+                $reservation->status = 'done';
             }
 
             $reservation->save();
@@ -133,11 +162,10 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                 Event::fire('orbit.reservation.declined', [$reservation]);
             }
 
-            // frontend should reload reservation detail endpoint
-            // this is not right
-            if ($reservation->status === BrandProductReservation::STATUS_DONE) {
-                $reservation->status = 'sold';
-            }
+            $reservation = BrandProductReservation::with(['details.product_variant'])  
+                                                    ->where('brand_product_reservation_id', $brandProductReservationId)
+                                                    ->where('brand_id', '=', $brandId)
+                                                    ->first();
 
             $this->response->data = $reservation;
         } catch (ACLForbiddenException $e) {
@@ -189,7 +217,9 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             $brandId = $parameters[0];
             $prefix = DB::getTablePrefix();
 
-            $reservation = BrandProductReservation::where('brand_product_reservation_id', $value)->where('brand_id', '=', $brandId)->first();
+            $reservation = BrandProductReservation::where('brand_product_reservation_id', $value)
+                                                    ->where('brand_id', '=', $brandId)
+                                                    ->first();
 
             if (empty($reservation)) {
                 return FALSE;

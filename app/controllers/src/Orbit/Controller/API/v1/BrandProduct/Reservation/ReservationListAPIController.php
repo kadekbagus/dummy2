@@ -54,13 +54,14 @@ class ReservationListAPIController extends ControllerAPI
 
             $reservations = BrandProductReservation::select(DB::raw("
                     {$prefix}brand_product_reservations.brand_product_reservation_id,
-                    {$prefix}brand_product_reservations.selling_price,
+                    {$prefix}brand_product_reservation_details.selling_price,
                     {$prefix}brand_product_reservations.created_at,
                     {$prefix}brand_product_reservations.expired_at,
-                    {$prefix}brand_product_reservations.quantity,
+                    {$prefix}brand_product_reservations.total_amount,
+                    {$prefix}brand_product_reservation_details.quantity,
                     {$prefix}brand_product_reservations.user_id,
-                    {$prefix}brand_product_reservations.product_name,
-                    {$prefix}brand_product_reservations.brand_product_variant_id,
+                    {$prefix}brand_product_reservation_details.product_name,
+                    {$prefix}brand_product_reservation_details.brand_product_variant_id,
                     CASE {$prefix}brand_product_reservations.status
                         WHEN 'accepted' THEN
                             CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
@@ -77,34 +78,23 @@ class ReservationListAPIController extends ControllerAPI
                         $q->select('users.user_id', 'user_firstname', 'user_lastname');
                     },
                     'store' => function($q) {
-                        $q->with('store.mall');
-                    },
-                    'brand_product_variant' => function($q) {
-                        $q->select('brand_product_variant_id', 'brand_product_id');
-                        $q->with([
-                            'brand_product' => function($q2) {
-                                $q2->select('brand_product_id');
-                                $q2->with([
-                                    'brand_product_main_photo' => function($q3) {
-                                        $q3->select('media_id', 'object_id', 'path', 'cdn_url');
-                                    }
-                                ]);
-                            }
-                        ]);
+                        $q->select('merchants.merchant_id', 'merchants.name');
                     },
                     'details' => function($q) {
-                        $q->select('brand_product_reservation_detail_id', 'brand_product_reservation_id', 'value')
-                            ->where('option_type', 'variant_option');
+                        $q->with([
+                            'variant_details' => function($q12) {
+                                $q12->select('brand_product_reservation_detail_id', 'brand_product_reservation_variant_detail_id', 'value')
+                                    ->where('option_type', 'variant_option');
+                            }
+                        ]);
                     }
                 ])
                 ->leftJoin('brand_product_reservation_details', 'brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
+                ->leftJoin('brand_product_reservation_variant_details', 'brand_product_reservation_variant_details.brand_product_reservation_detail_id', '=', 'brand_product_reservation_details.brand_product_reservation_detail_id')
                 ->where(DB::raw("{$prefix}brand_product_reservations.brand_id"), $brandId)
-                ->where('option_type', 'merchant')
                 ->groupBy(DB::raw("{$prefix}brand_product_reservations.brand_product_reservation_id"));
 
-            if (! empty($merchantId)) {
-                $reservations->where('brand_product_reservation_details.value', $merchantId);
-            }
+            isset($merchantId) ? $reservations->where('brand_product_reservations.merchant_id', '=', $merchantId) : null;
 
             OrbitInput::get('product_name_like', function($keyword) use ($reservations)
             {
@@ -115,12 +105,21 @@ class ReservationListAPIController extends ControllerAPI
                 });
             });
 
+            OrbitInput::get('reservation_id', function($reservationId) use ($reservations)
+            {
+                $reservations->where('brand_product_reservations.brand_product_reservation_id', $reservationId);
+            });
+
             OrbitInput::get('status', function($status) use ($reservations)
             {
                 switch (strtolower($status)) {
                     case 'expired':
-                        $reservations->where('brand_product_reservations.status', 'accepted')
-                            ->where('expired_at', '<', DB::raw("NOW()"));
+                        $reservations->where(function ($q) {
+                            $q->where(function ($q2) {
+                                $q2->where('brand_product_reservations.status', 'accepted')
+                                    ->where('expired_at', '<', DB::raw("NOW()"));
+                            })->orWhere('brand_product_reservations.status', 'expired');
+                        });
                         break;
 
                     case 'accepted':
@@ -183,31 +182,30 @@ class ReservationListAPIController extends ControllerAPI
                 $returnedItem = new stdclass();
                 $returnedItem->brand_product_reservation_id = $item->brand_product_reservation_id;
                 $returnedItem->user_name = $item->users->user_firstname . ' ' . $item->users->user_lastname;
-                $returnedItem->product_name = $item->product_name;
-                $returnedItem->selling_price = $item->selling_price;
                 $returnedItem->created_at = (string) $item->created_at;
                 $returnedItem->expired_at = $item->expired_at;
                 $returnedItem->status = $item->status_label;
-                $imgPath = '';
-                $cdnUrl = '';
-                if (is_object($item->brand_product_variant)) {
-                    if (is_object($item->brand_product_variant->brand_product)) {
-                        if (! empty($item->brand_product_variant->brand_product->brand_product_main_photo)) {
-                            if (is_object($item->brand_product_variant->brand_product->brand_product_main_photo[0])) {
-                                $imgPath = $item->brand_product_variant->brand_product->brand_product_main_photo[0]->path;
-                                $cdnUrl = $item->brand_product_variant->brand_product->brand_product_main_photo[0]->cdn_url;
-                            }
-                        }
+                $returnedItem->total_amount = $item->total_amount;
+                $returnedItem->details = [];
+
+                foreach ($item->details as $detail) {
+                    $dtl = new stdclass();
+
+                    $dtl->product_name = $detail->product_name;
+                    $dtl->quantity = $detail->quantity;
+                    $dtl->selling_price = $detail->selling_price;
+                    $dtl->original_price = $detail->original_price;
+                    $dtl->image_url = $detail->image_url;
+                    $dtl->image_cdn = $detail->image_cdn;
+
+                    $variants = [];
+                    foreach ($detail->variant_details as $variantDetail) {
+                        $variants[] = strtoupper($variantDetail->value);
                     }
+                    $dtl->variants = implode(', ', $variants);
+                    $returnedItem->details[] = $dtl;
                 }
 
-                $returnedItem->img_path = $imgPath;
-                $returnedItem->cdn_url = $cdnUrl;
-                $variants = [];
-                foreach ($item->details as $variantDetail) {
-                    $variants[] = strtoupper($variantDetail->value);
-                }
-                $returnedItem->variants = implode(', ', $variants);
                 $returnedData[] = $returnedItem;
             }
 
@@ -255,5 +253,4 @@ class ReservationListAPIController extends ControllerAPI
 
         return $this->render($httpCode);
     }
-
 }

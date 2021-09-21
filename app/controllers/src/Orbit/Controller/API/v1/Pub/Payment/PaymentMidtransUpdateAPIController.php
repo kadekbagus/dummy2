@@ -61,7 +61,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 Request::all(),
                 array(
                     'payment_transaction_id'   => 'required|orbit.exist.payment_transaction_id',
-                    'status'                   => 'required|in:pending,success,canceled,failed,expired,denied,suspicious,abort,refund,partial_refund',
+                    'status'                   => 'required|in:pending,success,cancel,canceled,failed,expired,denied,suspicious,abort,refund,partial_refund',
                     'payment_method'           => 'sometimes|required|in:midtrans,midtrans-qris,midtrans-shopeepay,stripe,dana',
                 ),
                 array(
@@ -83,13 +83,16 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             $shouldUpdate = false;
             $currentUtmUrl = $this->generateUtmUrl($payment_transaction_id);
 
-            $payment_update = PaymentTransaction::onWriteConnection()->with(['details.coupon', 'details.pulsa', 'details.digital_product', 'details.provider_product', 'midtrans', 'refunds', 'issued_coupons', 'user', 'discount_code'])->findOrFail($payment_transaction_id);
+            $payment_update = PaymentTransaction::onWriteConnection()->with(['details.coupon', 'details.pulsa', 'details.digital_product', 'details.provider_product', 'details.order', 'midtrans', 'refunds', 'issued_coupons', 'user', 'discount_code'])->findOrFail($payment_transaction_id);
 
             if ($payment_update->forPulsa()) {
                 $this->commit();
                 return (new PaymentPulsaUpdateAPIController())->postPaymentPulsaUpdate();
             }
-            else if ($payment_update->forDigitalProduct() || $payment_update->forWoodoos()) {
+            else if ($payment_update->forDigitalProduct()
+                    || $payment_update->forWoodoos()
+                    || $payment_update->forOrder()
+            ) {
                 $this->commit();
                 return (new PurchaseUpdateAPIController())->postUpdate();
             }

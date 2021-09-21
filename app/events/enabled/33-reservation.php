@@ -14,10 +14,23 @@ Event::listen(
     'orbit.reservation.made',
     function($reservation) {
         if ($reservation instanceof BrandProductReservation) {
-
             (new ReservationMadeNotification(
                 $reservation->brand_product_reservation_id
             ))->send();
+        }
+    }
+);
+
+Event::listen(
+    'orbit.reservation.made_multiple',
+    function($reservations = []) {
+        foreach($reservations as $reservation) {
+            // Event::fire('orbit.reservation.made', [$reservation]);
+            if ($reservation instanceof BrandProductReservation) {
+                (new ReservationMadeNotification(
+                    $reservation->brand_product_reservation_id
+                ))->send();
+            }
         }
     }
 );

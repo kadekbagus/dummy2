@@ -28,6 +28,12 @@ return [
             'body' => 'Terima kasih telah melakukan pembelian :itemName di Gotomalls.com. Pembayaran Anda telah diverifikasi oleh sistem kami. Berikut ini detail dari pembelian Anda.',
         ],
 
+        'greeting_products' => [
+            'customer_name' => 'Hi, :customerName',
+            'body_1' => 'Terima kasih telah melakukan pembelian :itemName di Gotomalls.com. Pembayaran Anda telah diverifikasi oleh sistem kami. Berikut ini detail dari pembelian Anda.',
+            'body_2' => 'Terima kasih telah melakukan pembelian :itemName dan :otherProduct produk lainnya di Gotomalls.com. Pembayaran Anda telah diverifikasi oleh sistem kami. Berikut ini detail dari pembelian Anda.',
+        ],
+
         'transaction_labels' => [
             'transaction_id' => 'No. Transaksi',
             'transaction_date' => 'Tanggal Transaksi',
@@ -71,6 +77,7 @@ return [
     'table_transaction' => [
         'header' => [
             'item' => 'Item',
+            'variant' => 'Variasi',
             'quantity' => 'Jumlah',
             'price'     => 'Harga',
             'subtotal'  => 'Subtotal',

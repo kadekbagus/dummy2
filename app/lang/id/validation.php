@@ -527,6 +527,15 @@ return array(
         ),
         'unique' => array(
             'verification_number' => 'The verification number already used by other',
+            'review_object_location' => 'Hanya dapat review objek yang sama satu kali.',
+            'review_object_location_mall' => 'Hanya dapat melakukan review mall :mall sekali.',
+            'review_object_location_store' => 'Hanya dapat review toko/gerai :store di :mall sekali.',
+            'review_object_location_campaign' => 'Hanya dapat review objek :campaign di :store (:mall) sekali.'
+        ),
+        'same_user' => 'User tidak sesuai.',
+        'rating' => array(
+            'unique' => 'Hanya dapat review objek yang sama satu kali.',
+            'location' => 'Atribut location_id harus diisi.',
         ),
         'rating' => array(
             'unique' => "Anda sudah melakukan review untuk lokasi/item ini.",
@@ -543,6 +552,29 @@ return array(
             'reservation_exists' => 'Reservasi tidak ditemukan.',
             'can_cancel_rsvp' => 'Reservasi tidak dapat dibatalkan.',
             'rsvp_match_user' => 'Anda tidak berhak melihat/memproses reservasi tersebut.',
+            'pikcup_location_valid' => 'Lokasi pengambilan item tidak sesuai.',
+            'can_reserve' => 'Tidak dapat melakukan reservasi untuk 1 atau lebih produk. Silakan ulang beberapa saat lagi atau hubungi layanan pelanggan Gotomalls.',
+        ),
+
+        'rsvp' => array(
+            'quantity_available' => 'Jumlah yg diminta tidak tersedia.',
+        ),
+
+        'cart_item' => array(
+            'exists' => 'Item keranjang tidak ditemukan.',
+            'quantity_available' => 'Jumlah yang diinginkan tidak tersedia.',
+        ),
+
+        'order' => array(
+            'exists' => 'Order tidak ditemukan.',
+            'can_order' => 'Satu atau beberapa item tidak tersedia. Mohon refresh laman dan ulang checkout.',
+            'match_user' => 'Order tidak sesuai dengan profil Anda, silakan gunakan akun lain.',
+            'can_cancel' => "Tidak dapat membatalkan pesanan. Pastikan status Pesanan belum Dibatalkan/Selesai.",
+        ),
+
+        'purchase' => array(
+            'exists' => 'Pembelian tidak ditemukan.',
+            'match_user' => 'Pembelian tidak cocok dengan profil Anda, silakan gunakan akun GTM yang lain.',
         ),
     ),
 

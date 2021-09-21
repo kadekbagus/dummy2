@@ -10,6 +10,7 @@ use DB;
 use Language;
 use Orbit\Controller\API\v1\BrandProduct\Repository\Handlers\HandleUpdate;
 use Orbit\Controller\API\v1\Pub\DigitalProduct\Helper\MediaQuery;
+use Order;
 use ProductLinkToObject;
 use Request;
 use Variant;
@@ -75,17 +76,27 @@ class BrandProductRepository
                 'brand',
                 'videos',
                 'brand_product_variants.variant_options',
-                'brand_product_variants.reservations' => function($query) {
-                    $query->select(
-                        'brand_product_variant_id',
-                        'brand_product_reservation_id',
-                        'quantity'
-                    )->whereIn('status', [
-                        BrandProductReservation::STATUS_PENDING,
-                        BrandProductReservation::STATUS_ACCEPTED,
-                        BrandProductReservation::STATUS_DONE,
-                    ]);
-                },
+                // 'brand_product_variants.reservation_details' => function($query) {
+                //     $query->with(['reservation'])
+                //         ->whereHas('reservation', function($query) {
+                //             $query->whereIn('status', [
+                //                 BrandProductReservation::STATUS_PENDING,
+                //                 BrandProductReservation::STATUS_ACCEPTED,
+                //                 BrandProductReservation::STATUS_DONE,
+                //             ]);
+                //         });
+                // },
+                // 'brand_product_variants.order_details' => function($query) {
+                //     $query->with(['order'])
+                //         ->whereHas('order', function($query) {
+                //             $query->whereIn('orders.status', [
+                //                 Order::STATUS_PAID,
+                //                 Order::STATUS_CANCELLING,
+                //                 Order::STATUS_DONE,
+                //                 Order::STATUS_READY_FOR_PICKUP,
+                //             ]);
+                //         });
+                // },
                 'brand_product_main_photo',
                 'brand_product_photos',
                 'marketplaces' => function ($q) use ($image) {

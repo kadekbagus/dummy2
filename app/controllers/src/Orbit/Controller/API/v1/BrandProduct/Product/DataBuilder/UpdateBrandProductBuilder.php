@@ -38,7 +38,7 @@ class UpdateBrandProductBuilder
 
         $this->request->has('max_reservation_time', function($mrt) use (&$data)
         {
-            $data['main']['max_reservation_time'] = $mrt;
+            $data['main']['max_reservation_time'] = $mrt * 60;
         });
 
         // Specifically use OrbitInput because we only check for the

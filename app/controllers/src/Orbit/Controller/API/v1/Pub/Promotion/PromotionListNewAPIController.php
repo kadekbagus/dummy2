@@ -1,8 +1,10 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Promotion;
 
 /**
+ * @author  Budi <budi@dominopos.com>
  * @author firmansyah <firmansyah@dominopos.com>
  * @desc Controller for promotion list and search in landing page
+ * @todo Look for better solution for exclusive partner list.
  */
 
 use OrbitShop\API\v1\PubControllerAPI;
@@ -142,6 +144,7 @@ class PromotionListNewAPIController extends PubControllerAPI
             $ratingHigh = OrbitInput::get('rating_high', 5);
             $ratingLow = empty($ratingLow) ? 0 : $ratingLow;
             $ratingHigh = empty($ratingHigh) ? 5 : $ratingHigh;
+            $exclusivePartner = OrbitInput::get('exclusive_partner', false);
 
              // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -203,6 +206,15 @@ class PromotionListNewAPIController extends PubControllerAPI
             $esTake = $take;
             if ($list_type === 'featured') {
                 $esTake = 50;
+            }
+
+            // If it's exclusive for a specific partner/bank, let's just take all.
+            // We will filter it later.
+            if ($exclusivePartner === 'Y') {
+                $originalSkip = $skip;
+                $originalTake = $take;
+                $skip = 0;
+                $take = 500;
             }
 
             $this->searcher->setPaginationParams(['from' => $skip, 'size' => $take]);
@@ -413,6 +425,16 @@ class PromotionListNewAPIController extends PubControllerAPI
                 $data['placement_type'] = null;
                 $data['placement_type_orig'] = null;
                 $campaignId = '';
+
+                // If exclusive, then check how many sponsor linked to the campaign.
+                // If more than 1, then assume that this campaign is not exclusive, 
+                // thus need to be excluded/skipped from the result list.
+                if ($exclusivePartner === 'Y') {
+                    if ($this->sponsorCount($record) > 1) {
+                        continue;
+                    }
+                }
+
                 foreach ($record['_source'] as $key => $value) {
                     if ($key === 'news_id') {
                         $campaignId = $value;
@@ -532,8 +554,19 @@ class PromotionListNewAPIController extends PubControllerAPI
             }
 
             $data = new \stdclass();
-            $data->returned_records = count($listOfRec);
-            $data->total_records = $records['total'];
+
+            // If exclusive, then we do real pagination here...
+            // Slice result based on original skip & take parameter...
+            if ($exclusivePartner === 'Y') {
+                $data->total_records = count($listOfRec);
+                $listOfRec = array_slice($listOfRec, $originalSkip, $originalTake);
+                $data->returned_records = count($listOfRec);
+            }
+            else {
+                $data->returned_records = count($listOfRec);
+                $data->total_records = $records['total'];
+            }
+            
             if (is_object($mall)) {
                 $data->mall_name = $mall->name;
                 $data->mall_city = $mall->city;
@@ -562,7 +595,6 @@ class PromotionListNewAPIController extends PubControllerAPI
                 }
 
                 $data->returned_records = count($output);
-                $data->total_records = $records['total'];
                 $data->records = $output;
             }
 
@@ -686,5 +718,31 @@ class PromotionListNewAPIController extends PubControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    /**
+     * Get sponsor count from this campaign.
+     * Sponsor count is the count of unique bank or ewallet for this campaign.
+     * 
+     * @param  [type] $campaign [description]
+     * @return [type]            [description]
+     */
+    private function sponsorCount($campaign = null)
+    {
+        $sponsorCount = 0;
+        if (isset($campaign['_source']['sponsor_provider'])) {
+            $bankId = null;
+            foreach($campaign['_source']['sponsor_provider'] as $sponsor) {
+                if ($sponsor['sponsor_type'] === 'ewallet') {
+                    $sponsorCount++;
+                }
+                else if ($sponsor['bank_id'] !== $bankId) {
+                    $sponsorCount++;
+                    $bankId = $sponsor['bank_id'];
+                }
+            }
+        }
+
+        return $sponsorCount;
     }
 }

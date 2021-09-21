@@ -52,7 +52,7 @@ class ProductListAPIController extends ControllerAPI
                 ),
                 array(
                     'status'      => 'in:inactive,active',
-                    'sortBy'      => 'in:product_name,min_price,total_quantity,total_reserved,status',
+                    'sortBy'      => 'in:product_name,min_price,total_quantity,status',
                     'sortMode'    => 'in:asc,desc',
                 )
             );
@@ -71,17 +71,17 @@ class ProductListAPIController extends ControllerAPI
                     min({$prefix}brand_product_variants.selling_price) as min_price,
                     max({$prefix}brand_product_variants.selling_price) as max_price,
                     sum({$prefix}brand_product_variants.quantity) as total_quantity,
-                    {$prefix}brand_products.status,
-                    count(brand_product_reservation_id) as total_reserved
+                    {$prefix}brand_products.status
                 "))
                 ->with([
-                    'brand_product_main_photo' => function($q) {
-                        $q->select('media_id', 'object_id', 'path', 'cdn_url')
+                    'reservation_details_count',
+                    'order_details_count',
+                    'brand_product_main_photo' => function($q2) {
+                        $q2->select('media_id', 'object_id', 'path', 'cdn_url')
                             ->where('media_name_long', 'brand_product_main_photo_orig');
                     }
                 ])
                 ->leftJoin('brand_product_variants', 'brand_products.brand_product_id', '=', 'brand_product_variants.brand_product_id')
-                ->leftJoin('brand_product_reservations', 'brand_product_variants.brand_product_variant_id', '=', 'brand_product_reservations.brand_product_variant_id')
                 ->where(DB::raw("{$prefix}brand_products.brand_id"), $brandId)
                 ->where('brand_products.status', '<>', 'deleted')
                 ->groupBy(DB::raw("{$prefix}brand_products.brand_product_id"));
@@ -133,7 +133,6 @@ class ProductListAPIController extends ControllerAPI
                     'product_name' => 'brand_products.product_name',
                     'min_price' => 'min_price',
                     'total_quantity' => 'total_quantity',
-                    'total_reserved' => 'total_reserved',
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
@@ -151,6 +150,23 @@ class ProductListAPIController extends ControllerAPI
 
             $totalItems = RecordCounter::create($_products)->count();
             $listOfItems = $products->get();
+
+            foreach ($listOfItems as $item) {
+                $item->total_reserved = 0;
+                if (!empty($item->reservation_details_count)) {
+                    if (isset($item->reservation_details_count[0]) && is_object($item->reservation_details_count[0])) {
+                        $item->total_reserved = $item->reservation_details_count[0]->total_reservation;
+                    }
+                }
+                unset($item->reservation_details_count);
+                $item->total_ordered = 0;
+                if (!empty($item->order_details_count)) {
+                    if (isset($item->order_details_count[0]) && is_object($item->order_details_count[0])) {
+                        $item->total_ordered = $item->order_details_count[0]->total_order;
+                    }
+                }
+                unset($item->order_details_count);
+            }
 
             $data = new stdclass();
             $data->total_records = $totalItems;
@@ -170,5 +186,4 @@ class ProductListAPIController extends ControllerAPI
 
         return $this->render();
     }
-
 }

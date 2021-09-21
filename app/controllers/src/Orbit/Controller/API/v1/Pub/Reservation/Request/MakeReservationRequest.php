@@ -23,8 +23,7 @@ class MakeReservationRequest extends ValidateRequest
         switch ($this->object_type) {
             case 'brand_product':
                 $rules += [
-                    'object_id' => 'required|orbit.brand_product_variant.exists|orbit.brand_product.exists',
-                    'quantity' => 'required|numeric|orbit.brand_product_variant.quantity_available',
+                    'object_id' => 'required|orbit.brand_product_variant.can_reserve',
                 ];
                 break;
 
@@ -42,18 +41,8 @@ class MakeReservationRequest extends ValidateRequest
     protected function registerCustomValidations()
     {
         Validator::extend(
-            'orbit.brand_product_variant.exists',
-            'Orbit\Controller\API\v1\BrandProduct\Validator\BrandProductValidator@variant_exists'
-        );
-
-        Validator::extend(
-            'orbit.brand_product.exists',
-            'Orbit\Controller\API\v1\BrandProduct\Validator\BrandProductValidator@product_exists'
-        );
-
-        Validator::extend(
-            'orbit.brand_product_variant.quantity_available',
-            'Orbit\Controller\API\v1\BrandProduct\Validator\BrandProductValidator@quantity_available'
+            'orbit.brand_product_variant.can_reserve',
+            'Orbit\Controller\API\v1\BrandProduct\Validator\BrandProductValidator@canReserve'
         );
     }
 }

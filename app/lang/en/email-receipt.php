@@ -29,6 +29,12 @@ return [
             'body' => 'Thank you for purchasing :itemName in Gotomalls.com. Your payment has been verified by our system. Below is the transaction summary of your purchase',
         ],
 
+        'greeting_products' => [
+            'customer_name' => 'Dear, :customerName',
+            'body_1' => 'Thank you for purchasing :itemName in Gotomalls.com. Your payment has been verified by our system. Below is the transaction summary of your purchase',
+            'body_2' => 'Thank you for purchasing :itemName and :otherProduct other product(s) in Gotomalls.com. Your payment has been verified by our system. Below is the transaction summary of your purchase',
+        ],
+
         'transaction_labels' => [
             'transaction_id' => 'Transaction ID',
             'transaction_date' => 'Transaction Date',
@@ -72,6 +78,7 @@ return [
     'table_transaction' => [
         'header' => [
             'item' => 'Item',
+            'variant' => 'Variation',
             'quantity' => 'Quantity',
             'price'     => 'Price',
             'subtotal'  => 'Subtotal',

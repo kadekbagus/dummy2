@@ -20,6 +20,8 @@ class PaymentTransaction extends Eloquent
 
     protected $table = 'payment_transactions';
 
+    protected $guarded = [];
+
     // use Presentable;
 
     // protected $presenter = 'Orbit\\Presenters\\Payment\\TransactionPresenter';
@@ -34,6 +36,7 @@ class PaymentTransaction extends Eloquent
     const STATUS_CANCELED           = 'canceled';
     const STATUS_ABORTED            = 'abort';
     const STATUS_REFUND             = 'refund';
+    const STATUS_CANCEL             = 'cancel'; // for requesting Order's cancellation.
 
     /**
      * It means we are in the process of getting coupon/voucher from Sepulsa.
@@ -251,6 +254,12 @@ class PaymentTransaction extends Eloquent
         return $this->status === self::STATUS_DENIED;
     }
 
+    public function refunded()
+    {
+        return $this->status === self::STATUS_SUCCESS_REFUND
+            || $this->status === self::STATUS_REFUND;
+    }
+
     /**
      * Determine if the payment is for Sepulsa Deals.
      *
@@ -331,6 +340,17 @@ class PaymentTransaction extends Eloquent
             if (! empty($detail->provider_product)) {
                 return $detail->provider_product->provider_name === 'mcash'
                     && $detail->provider_product->product_type === 'electricity';
+            }
+        }
+
+        return false;
+    }
+
+    public function forOrder()
+    {
+        foreach($this->details as $detail) {
+            if ($detail->object_type === 'order') {
+                return true;
             }
         }
 
@@ -604,22 +624,13 @@ class PaymentTransaction extends Eloquent
      */
     public function getProductType()
     {
-        $productType = null;
-        $availableProductType = [
-            'coupon',
-            'pulsa',
-            'data_plan',
-            'digital_product',
-        ];
-
         foreach($this->details as $detail) {
-            if (in_array($detail->object_type, $availableProductType)) {
-                $productType = $detail->object_type;
-                break;
+            if ($detail->object_type !== 'discount') {
+                return $detail->object_type;
             }
         }
 
-        return $productType;
+        return null;
     }
 
     public function getDigitalProduct()
