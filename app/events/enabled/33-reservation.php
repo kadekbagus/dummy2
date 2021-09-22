@@ -3,12 +3,13 @@
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
-use Orbit\Notifications\Reservation\BrandProduct\ReservationMadeNotification;
-use Orbit\Notifications\Reservation\BrandProduct\ReservationExpiredNotification;
 use Orbit\Notifications\Reservation\BrandProduct\ReservationAcceptedNotification;
 use Orbit\Notifications\Reservation\BrandProduct\ReservationCanceledNotification;
 use Orbit\Notifications\Reservation\BrandProduct\ReservationDeclinedNotification;
+use Orbit\Notifications\Reservation\BrandProduct\ReservationDoneNotification;
 use Orbit\Notifications\Reservation\BrandProduct\ReservationExpiredAdminNotification;
+use Orbit\Notifications\Reservation\BrandProduct\ReservationExpiredNotification;
+use Orbit\Notifications\Reservation\BrandProduct\ReservationMadeNotification;
 
 Event::listen(
     'orbit.reservation.made',
@@ -94,6 +95,17 @@ Event::listen(
                     'type' => 'brand_product',
                 ]
             );
+        }
+    }
+);
+
+Event::listen(
+    'orbit.reservation.done',
+    function($reservation) {
+        if ($reservation instanceof BrandProductReservation) {
+            (new ReservationDoneNotification(
+                $reservation->brand_product_reservation_id
+            ))->send();
         }
     }
 );

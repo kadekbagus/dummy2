@@ -21,12 +21,14 @@ return [
         'product_barcode' => 'Barcode',
         'product_price' => 'Harga',
         'btn_see_reservation' => 'Lihat Reservasi',
+        'btn_see_my_reservation' => 'Buka Riwayat Reservasi',
         'status_detail' => [
             'pending' => 'Pending',
             'cancelled' => 'Dibatalkan',
             'accepted' => 'Dipesan',
             'declined' => 'Ditolak',
             'expired' => 'Kadaluarsa',
+            'done' => 'Selesai',
         ],
         'reason' => 'Alasan Penolakan',
     ],
@@ -79,6 +81,16 @@ return [
         ],
         'body-admin' => [
             'line-1' => 'Reservasi berikut ini baru saja kadaluarsa.',
+        ],
+    ],
+
+    'done' => [
+        'subject' => 'Reservasi Selesai!',
+        'title' => 'Reservasi Selesai',
+        'greeting' => 'Halo :recipientName,',
+        'body' => [
+            'line-1' => 'Terima kasih telah menyelesaikan reservasi ini dengan melakukan pickup produk di :storeName :mallName. Berikut ini detil reservasi Anda.',
+            'line-2' => 'Sekali lagi terima kasih dan tetap setia menggunakan Gotomalls!',
         ],
     ],
 ];

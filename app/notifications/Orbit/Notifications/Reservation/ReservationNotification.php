@@ -3,7 +3,6 @@
 namespace Orbit\Notifications\Reservation;
 
 use Exception;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Config;
 use Orbit\Helper\Notifications\Notification;
@@ -20,6 +19,8 @@ abstract class ReservationNotification extends Notification implements
     EmailNotificationInterface
 {
     use HasContactTrait, HasReservationTrait;
+
+    protected $logID = 'ReservationNotification';
 
     protected $signature = 'reservation-notification';
 
@@ -90,6 +91,7 @@ abstract class ReservationNotification extends Notification implements
                         'cancelled' => 'red',
                         'expired' => 'gray',
                         'declined' => 'red',
+                        'done' => 'green',
                     ],
                 ],
                 $data,
@@ -115,9 +117,12 @@ abstract class ReservationNotification extends Notification implements
             }
 
         } catch (Exception $e) {
-            Log::debug('ReservationMade: Exception line: '
-                . $e->getLine() . ', Message: ' . $e->getMessage()
-            );
+            $this->log(sprintf(
+                'ReservationMade: Exception line: %s(%s) : %s',
+                $e->getFile(),
+                $e->getLine(),
+                $e->getMessage()
+            ));
         }
 
         $job->delete();
