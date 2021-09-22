@@ -192,11 +192,12 @@ class ReservationRepository implements ReservationInterface
     public function cancel($reservation)
     {
         DB::transaction(function() use (&$reservation) {
+            $previousStatus = $reservation->status;
             $reservation->status = BrandProductReservation::STATUS_CANCELED;
             $reservation->save();
 
             // update stock if previous status is accepted
-            if ($reservation->status === BrandProductReservation::STATUS_ACCEPTED) {
+            if ($previousStatus === BrandProductReservation::STATUS_ACCEPTED) {
                 $reservation->load(['details']);
                 foreach ($reservation->details as $detail) {
                     $detail->load(['product_variant']);
@@ -236,9 +237,23 @@ class ReservationRepository implements ReservationInterface
 
     public function expire($reservation)
     {
+        $previousStatus = $reservation->status;
         $reservation->status = BrandProductReservation::STATUS_EXPIRED;
         $reservation->save();
 
+        // update stock if previous status is accepted
+        if ($previousStatus === BrandProductReservation::STATUS_ACCEPTED) {
+            $reservation->load(['details']);
+            foreach ($reservation->details as $detail) {
+                $detail->load(['product_variant']);
+                $updateStock = BrandProductVariant::where('brand_product_variant_id', '=', $detail->brand_product_variant_id)->first();
+                if ($updateStock) {
+                    $updateStock->quantity = $detail->product_variant->quantity + $detail->quantity;
+                    $updateStock->save();
+                }
+            }
+        }
+        
         return $reservation;
     }
 
