@@ -98,6 +98,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $previousStatus = $reservation->status;
             $reservation->status = $status;
 
             if ($status === BrandProductReservation::STATUS_DECLINED) {
@@ -105,7 +106,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                 $reservation->cancel_reason = $cancelReason;
 
                 // update stock if previous status is accepted
-                if ($reservation->status === BrandProductReservation::STATUS_ACCEPTED) {
+                if ($previousStatus === BrandProductReservation::STATUS_ACCEPTED) {
                     $reservation->load(['details']);
                     foreach ($reservation->details as $detail) {
                         $detail->load(['product_variant']);
@@ -116,6 +117,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                         }
                     }
                 }
+                
             }
 
             if ($status === BrandProductReservation::STATUS_ACCEPTED) {
