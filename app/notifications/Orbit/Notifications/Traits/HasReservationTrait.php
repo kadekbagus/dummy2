@@ -34,6 +34,7 @@ trait HasReservationTrait
             'status'        => $this->reservation->status,
             'reason' => $this->reservation->cancel_reason,
             'products' => $this->getReservationProducts(),
+            'myReservationUrl' => $this->getMyReservationUrl('/products?country=Indonesia'),
         ];
 
         return $data;
@@ -80,6 +81,14 @@ trait HasReservationTrait
         }
 
         return $products;
+    }
+
+    protected function getMyReservationUrl($path)
+    {
+        return Config::get(
+            'orbit.transaction.my_purchases_url',
+            'https://www.gotomalls.com/my/purchases'
+        ) . $path;
     }
 
     protected function getSeeReservationUrl()

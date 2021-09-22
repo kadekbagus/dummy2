@@ -21,12 +21,14 @@ return [
         'product_barcode' => 'Barcode',
         'product_price' => 'Price',
         'btn_see_reservation' => 'See Reservation',
+        'btn_see_my_reservation' => 'See My Reservations',
         'status_detail' => [
             'pending' => 'Pending',
             'cancelled' => 'Cancelled',
             'accepted' => 'Reserved',
             'declined' => 'Declined',
             'expired' => 'Expired',
+            'done' => 'Completed',
         ],
         'reason' => 'Decline Reason',
     ],
@@ -80,6 +82,16 @@ return [
         ],
         'body-admin' => [
             'line-1' => 'We have an expired reservation below.',
+        ],
+    ],
+
+    'done' => [
+        'subject' => 'Reservation Completed!',
+        'title' => 'Reservation Completed',
+        'greeting' => 'Hello :recipientName,',
+        'body' => [
+            'line-1' => 'Thank you for completing the reservation by picking up your products at :storeName :mallName. Find your reservation details below.',
+            'line-2' => 'Thank you for always using Gotomalls!',
         ],
     ],
 ];

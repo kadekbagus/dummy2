@@ -161,6 +161,9 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             else if ($status === BrandProductReservation::STATUS_DECLINED) {
                 Event::fire('orbit.reservation.declined', [$reservation]);
             }
+            else if ($status === BrandProductReservation::STATUS_DONE) {
+                Event::fire('orbit.reservation.done', [$reservation]);
+            }
 
             $reservation = BrandProductReservation::with(['details.product_variant'])  
                                                     ->where('brand_product_reservation_id', $brandProductReservationId)
