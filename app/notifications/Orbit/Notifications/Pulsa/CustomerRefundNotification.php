@@ -29,7 +29,7 @@ class CustomerRefundNotification extends CustomerNotification implements EmailNo
      */
     protected $notificationDelay = 3;
 
-    private $reason = '';
+    protected $reason = '';
 
     protected $context = 'transaction';
 

@@ -66,4 +66,13 @@ return [
             'total'     => 'Total',
         ]
     ],
+
+    'order' => [
+        'subject' => 'Payment Refund',
+        'greeting' => 'Dear :customerName,',
+        'line_1' => 'Sorry we could not provide the coupon you purchased. We apologize for this inconvenience.',
+        'line_2' => 'Below are the details.',
+        // 'line_1' => 'Kami mengalami kendala teknis yang terjadi saat pembelian produk melalui Gotomalls hari ini.',
+        'line_3' => 'We just refunded the payment to your GOPAY/Shopeepay account. Please help confirming once you received it.',
+    ],
 ];

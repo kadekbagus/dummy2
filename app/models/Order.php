@@ -324,7 +324,10 @@ class Order extends Eloquent
         Queue::later(
             3,
             'Orbit\Queue\Order\RefundOrderQueue',
-            ['paymentId' => $order->payment_detail->payment_transaction_id]
+            [
+                'paymentId' => $order->payment_detail->payment_transaction_id,
+                'reason' => $reason,
+            ]
         );
         // Event::fire('orbit.cart.order-declined', [$order]);
 
