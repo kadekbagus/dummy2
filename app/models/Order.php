@@ -271,13 +271,21 @@ class Order extends Eloquent
 
     public static function cancelled($orderId)
     {
-        $order = Order::with(['payment_detail'])
+        $order = Order::with(['details.brand_product_variant', 'payment_detail'])
             ->where('order_id', $orderId)
             ->firstOrFail();
 
         if ($order->status === self::STATUS_CANCELLING) {
             $order->status = self::STATUS_CANCELLED;
             $order->save();
+
+            $order->details->each(function($detail) {
+                if ($detail->brand_product_variant) {
+                    $detail->brand_product_variant->increment(
+                        'quantity', $detail->quantity
+                    );
+                }
+            });
 
             Queue::later(
                 3,
@@ -296,7 +304,7 @@ class Order extends Eloquent
     public static function declined($orderId, $reason, $userId)
     {
         // @todo: need to check the previous status
-        $order = Order::with(['payment_detail'])
+        $order = Order::with(['details.brand_product_variant', 'payment_detail'])
             ->where('order_id', $orderId)
             ->firstOrFail();
 
@@ -305,10 +313,21 @@ class Order extends Eloquent
         $order->declined_by = $userId;
         $order->save();
 
+        $order->details->each(function($detail) {
+            if ($detail->brand_product_variant) {
+                $detail->brand_product_variant->increment(
+                    'quantity', $detail->quantity
+                );
+            }
+        });
+
         Queue::later(
             3,
             'Orbit\Queue\Order\RefundOrderQueue',
-            ['paymentId' => $order->payment_detail->payment_transaction_id]
+            [
+                'paymentId' => $order->payment_detail->payment_transaction_id,
+                'reason' => $reason,
+            ]
         );
         // Event::fire('orbit.cart.order-declined', [$order]);
 

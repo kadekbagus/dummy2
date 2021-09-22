@@ -1,22 +1,13 @@
 <?php namespace Orbit\Queue\Order;
 
-use App;
 use Config;
 use DB;
-use Event;
 use Exception;
 use Illuminate\Support\Facades\Queue;
 use Log;
 use Mall;
-use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
-use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedProductActivity;
-use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
-use Orbit\Helper\AutoIssueCoupon\AutoIssueCoupon;
-use Orbit\Helper\Cart\CartInterface;
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
 use Orbit\Helper\Midtrans\API\Refund;
-use Orbit\Notifications\Order\Admin\NewOrderNotification;
-use Orbit\Notifications\Order\ReceiptNotification;
 use Order;
 use PaymentTransaction;
 use User;
@@ -29,7 +20,7 @@ use User;
 class RefundOrderQueue
 {
     /**
-     * Delay before we trigger another MCash Purchase (in minutes).
+     * Delay before we trigger another refund request (in minutes).
      * @var integer
      */
     protected $retryDelay = 0.1;
@@ -51,6 +42,7 @@ class RefundOrderQueue
         // $mallId = isset($data['mall_id']) ? $data['mall_id'] : null;
         // $mall = Mall::where('merchant_id', $mallId)->first();
         $payment = null;
+        $refundReason = 'Order cancelled by Customer';
 
         if (! isset($data['retry'])) {
             $data['retry'] = 0;
@@ -58,6 +50,10 @@ class RefundOrderQueue
 
         if (! isset($data['refundKey'])) {
             $data['refundKey'] = $data['paymentId'];
+        }
+
+        if (isset($data['reason'])) {
+            $refundReason = $data['reason'];
         }
 
         try {
@@ -87,7 +83,7 @@ class RefundOrderQueue
 
             $refundParams = [
                 'refund_key' => $data['refundKey'],
-                'reason' => 'Order cancelled by Customer',
+                'reason' => $refundReason,
             ];
 
             $refund = Refund::create()->direct($data['paymentId'], $refundParams);
@@ -108,7 +104,8 @@ class RefundOrderQueue
             DB::connection()->rollBack();
 
             $this->log(sprintf(
-                "Get {$this->objectType} exception: %s:%s, %s",
+                "Get %s exception: %s:%s, %s",
+                $this->objectType,
                 $e->getFile(),
                 $e->getLine(),
                 $e->getMessage()
@@ -124,7 +121,11 @@ class RefundOrderQueue
     {
         if ($data['retry'] < $this->maxRetry) {
             $data['retry']++;
-            Queue::later($this->retryDelay * 60, 'Orbit\Queue\Order\RefundOrderQueue', $data);
+            Queue::later(
+                $this->retryDelay * 60,
+                'Orbit\Queue\Order\RefundOrderQueue',
+                $data
+            );
         }
     }
 

@@ -356,13 +356,13 @@ class UpdatePurchase
             }
 
             // Send refund notification to customer.
-            // if ($this->shouldNotifyRefund) {
-            //     $this->purchase->user->notify(
-            //         new CustomerRefundNotification(
-            //             $this->purchase, $this->refundReason
-            //         )
-            //     );
-            // }
+            if ($this->shouldNotifyRefund) {
+                $this->purchase->user->notify(
+                    new CustomerRefundNotification(
+                        $this->purchase, $this->refundReason
+                    )
+                );
+            }
 
             return $this->purchase;
 
