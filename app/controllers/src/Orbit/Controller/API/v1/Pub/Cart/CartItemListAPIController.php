@@ -29,21 +29,6 @@ class CartItemListAPIController extends PubControllerAPI
             $cartItems = CartItem::select(
                     'cart_items.*',
                     DB::raw("
-                        (
-                            select sum({$prefix}order_details.quantity) as purchased_quantity
-                            from {$prefix}orders
-                            join {$prefix}order_details on {$prefix}orders.order_id = {$prefix}order_details.order_id
-                            where {$prefix}orders.status in ('paid', 'cancelling', 'ready_for_pickup', 'done')
-                            and {$prefix}order_details.brand_product_variant_id = {$prefix}cart_items.brand_product_variant_id
-                        ) as purchased_quantity,
-                        (
-                            select sum({$prefix}brand_product_reservation_details.quantity) as reserved_quantity
-                            from {$prefix}brand_product_reservation_details
-                            left join {$prefix}brand_product_reservations
-                                on {$prefix}brand_product_reservations.brand_product_reservation_id = {$prefix}brand_product_reservation_details.brand_product_reservation_id
-                            where {$prefix}brand_product_reservations.status in ('pending', 'accepted', 'done')
-                            and {$prefix}brand_product_reservation_details.brand_product_variant_id = {$prefix}cart_items.brand_product_variant_id
-                        ) as reserved_quantity,
                         {$prefix}brand_product_variants.quantity as product_quantity,
                         {$prefix}brand_product_variants.original_price,
                         {$prefix}brand_product_variants.selling_price,
