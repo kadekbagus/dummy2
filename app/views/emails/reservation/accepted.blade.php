@@ -62,8 +62,21 @@
 
                       </td>
                     </tr>
+
                     <tr>
-                      <td height="30" align="center" class="separator">&nbsp;</td>
+                      <td height="50" align="center" class="separator">&nbsp;</td>
+                    </tr>
+
+                    <tr>
+                      <td class="text-center">
+                        <a href="{{{ $myReservationUrl }}}" class="btn btn-primary mx-4">
+                          {{{ trans('email-reservation.labels.btn_see_my_reservation', [], '', $lang) }}}
+                        </a>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td height="50" align="center" class="separator">&nbsp;</td>
                     </tr>
                   </table>
                 </td>
