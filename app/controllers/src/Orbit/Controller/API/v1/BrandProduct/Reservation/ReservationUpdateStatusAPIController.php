@@ -127,11 +127,11 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                     $detail->load(['product_variant.brand_product']);
 
                     if (!is_object($detail->product_variant)) {
-                        OrbitShopAPI::throwInvalidArgument('Change status failed! Unable to find linked product variant for one or more of the product in this reservation. Variant might be changed or deleted.');
+                        OrbitShopAPI::throwInvalidArgument('Change Status Failed, variant maybe changed or out of stock');
                     }
 
                     if (!is_object($detail->product_variant->brand_product)) {
-                        OrbitShopAPI::throwInvalidArgument('Change status failed! Unable to find linked brand product for one or more of the product in this reservation. It might be changed or deleted.');
+                        OrbitShopAPI::throwInvalidArgument('Change Status Failed, product maybe changed or deleted');
                     }
 
                     // take the longest max reservation time from each products
