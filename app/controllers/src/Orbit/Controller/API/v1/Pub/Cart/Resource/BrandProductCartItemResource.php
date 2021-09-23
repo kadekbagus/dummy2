@@ -33,6 +33,6 @@ trait BrandProductCartItemResource
 
     protected function getMaxQuantity($item)
     {
-        return $item->product_quantity;
+        return $item->product_quantity < 0 ? 0 : $item->product_quantity;
     }
 }
