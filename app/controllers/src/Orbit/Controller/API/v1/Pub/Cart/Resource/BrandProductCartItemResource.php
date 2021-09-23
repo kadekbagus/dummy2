@@ -33,12 +33,6 @@ trait BrandProductCartItemResource
 
     protected function getMaxQuantity($item)
     {
-        $remainingQuantity = $item->product_quantity
-            - (int) $item->reserved_quantity
-            - (int) $item->purchased_quantity;
-
-        $remainingQuantity = $remainingQuantity < 0 ? 0 : $remainingQuantity;
-
-        return $remainingQuantity;
+        return $item->product_quantity < 0 ? 0 : $item->product_quantity;
     }
 }
