@@ -89,24 +89,39 @@ class GetProductQueue
             });
 
             $orderIds = $orderPaymentDetails->lists('object_id');
-            Order::markAsPaid($orderIds);
 
-            // should store cart item ids in order details instead?
-            $cartItemIds = $orderPaymentDetails->implode('payload', ',');
-            App::make(CartInterface::class)->removeItem($cartItemIds);
+            if (Order::itemsAvailable($orderIds)) {
+                Order::markAsPaid($orderIds);
 
-            // Commit the changes ASAP.
-            DB::connection()->commit();
+                // should store cart item ids in order details instead?
+                $cartItemIds = $orderPaymentDetails->implode('payload', ',');
+                App::make(CartInterface::class)->removeItem($cartItemIds);
 
-            $this->log("Order for payment {$paymentId} ..");
+                // Commit the changes ASAP.
+                DB::connection()->commit();
 
-            // Send receipt to customer.
-            $payment->user->notify(new ReceiptNotification($payment), 5);
+                $this->log("Item issued for payment {$paymentId}");
 
-            // Notify admin/store user for new order.
-            (new NewOrderNotification($payment))->send();
+                // Send receipt to customer.
+                $payment->user->notify(new ReceiptNotification($payment), 5);
 
-            $payment->user->activity(new PurchaseSuccessActivity($payment, $this->objectType));
+                // Notify admin/store user for new order.
+                (new NewOrderNotification($payment))->send();
+
+                $payment->user->activity(new PurchaseSuccessActivity($payment, $this->objectType));
+            }
+            else {
+                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_PRODUCT_FAILED;
+                $payment->save();
+
+                foreach($orderIds as $orderId) {
+                    Order::declined($orderId, 'Out of Stock', 'system', false);
+                }
+
+                DB::connection()->commit();
+
+                $this->log("Some items not available, Order declined automatically.");
+            }
 
         } catch (Exception $e) {
 
