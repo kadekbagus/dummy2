@@ -11,6 +11,7 @@ return [
         'expiration_date' => 'Expiration Date',
         'cancelled_date' => 'Cancelled Date',
         'declined_date' => 'Declined Date',
+        'pickup_date' => 'Pick Up Date',
         'quantity' => 'Qty',
         'total_payment' => 'Total Payment',
         'status' => 'Status',

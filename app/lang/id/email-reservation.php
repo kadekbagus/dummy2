@@ -11,6 +11,7 @@ return [
         'expiration_date' => 'Tanggal Kadaluarsa',
         'cancelled_date' => 'Tanggal Dibatalkan',
         'declined_date' => 'Tanggal Ditolak',
+        'pickup_date' => 'Tanggal Pengambilan',
         'quantity' => 'Jml',
         'total_payment' => 'Total Pembayaran',
         'status' => 'Status',
