@@ -2,6 +2,7 @@
 
 namespace Orbit\Controller\API\v1\BrandProduct\Repository;
 
+use BrandProductVariant;
 use BrandProductReservation;
 use BrandProductReservationDetail;
 use BrandProductReservationVariantDetail;
@@ -191,8 +192,22 @@ class ReservationRepository implements ReservationInterface
     public function cancel($reservation)
     {
         DB::transaction(function() use (&$reservation) {
+            $cloneReservation = clone $reservation;
             $reservation->status = BrandProductReservation::STATUS_CANCELED;
             $reservation->save();
+            
+            // update stock if previous status is accepted
+            if ($cloneReservation->status === BrandProductReservation::STATUS_ACCEPTED) {
+                $cloneReservation->load(['details']);
+                foreach ($cloneReservation->details as $detail) {
+                    $detail->load(['product_variant']);
+                    $updateStock = BrandProductVariant::where('brand_product_variant_id', '=', $detail->brand_product_variant_id)->first();
+                    if ($updateStock) {
+                        $updateStock->quantity = $detail->product_variant->quantity + $detail->quantity;
+                        $updateStock->save();
+                    }
+                }
+            }
 
             Event::fire('orbit.reservation.canceled', [$reservation]);
         });
@@ -222,9 +237,23 @@ class ReservationRepository implements ReservationInterface
 
     public function expire($reservation)
     {
+        $cloneReservation = clone $reservation;
         $reservation->status = BrandProductReservation::STATUS_EXPIRED;
         $reservation->save();
 
+        // update stock if previous status is accepted
+        if ($cloneReservation->status === BrandProductReservation::STATUS_ACCEPTED) {
+            $cloneReservation->load(['details']);
+            foreach ($cloneReservation->details as $detail) {
+                $detail->load(['product_variant']);
+                $updateStock = BrandProductVariant::where('brand_product_variant_id', '=', $detail->brand_product_variant_id)->first();
+                if ($updateStock) {
+                    $updateStock->quantity = $detail->product_variant->quantity + $detail->quantity;
+                    $updateStock->save();
+                }
+            }
+        }
+        
         return $reservation;
     }
 

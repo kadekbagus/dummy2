@@ -30,10 +30,12 @@ trait HasReservationTrait
             'expirationTime' => $this->formatDate($this->reservation->expired_at),
             'cancelledTime' => $this->formatDate($this->reservation->updated_at),
             'declinedTime' => $this->formatDate($this->reservation->updated_at),
+            'pickupTime' => $this->formatDate($this->reservation->updated_at),
             'totalPayment' => $this->getTotalPayment(),
             'status'        => $this->reservation->status,
             'reason' => $this->reservation->cancel_reason,
             'products' => $this->getReservationProducts(),
+            'myReservationUrl' => $this->getMyReservationUrl('/products?country=Indonesia'),
         ];
 
         return $data;
@@ -43,7 +45,7 @@ trait HasReservationTrait
     {
         return Carbon::parse($date)
             ->timezone('Asia/Jakarta')
-            ->format('D, d F Y, H:i') . ' (WIB)';
+            ->format('d F Y, H:i') . ' (WIB)';
     }
 
     protected function getStore()
@@ -80,6 +82,14 @@ trait HasReservationTrait
         }
 
         return $products;
+    }
+
+    protected function getMyReservationUrl($path)
+    {
+        return Config::get(
+            'orbit.transaction.my_purchases_url',
+            'https://www.gotomalls.com/my/purchases'
+        ) . $path;
     }
 
     protected function getSeeReservationUrl()
