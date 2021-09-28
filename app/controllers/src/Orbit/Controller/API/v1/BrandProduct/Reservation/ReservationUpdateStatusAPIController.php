@@ -137,6 +137,11 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                     // take the longest max reservation time from each products
                     $max_reservation_time = $max_reservation_time <= $detail->product_variant->brand_product->max_reservation_time ? $detail->product_variant->brand_product->max_reservation_time : $max_reservation_time;
 
+                    // validate stock
+                    if ($detail->product_variant->quantity < $detail->quantity) {
+                        OrbitShopAPI::throwInvalidArgument('Change Status Failed, variant maybe changed or out of stock');
+                    }
+
                     // update stock
                     $updateStock = BrandProductVariant::where('brand_product_variant_id', '=', $detail->brand_product_variant_id)->first();
 					if ($updateStock) {
