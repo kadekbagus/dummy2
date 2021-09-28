@@ -72,6 +72,17 @@
                               </tr>
                             @endif
 
+                            @if ($status === 'done')
+                              <tr>
+                                <td class="mobile bold reservation-table-item-label">
+                                  <span class="p-8 block">{{ trans('email-reservation.labels.pickup_date', [], '', $lang) }}</span>
+                                </td>
+                                <td class="mobile reservation-table-item-value">
+                                  <span class="p-8 block">{{ $pickupTime }}</span>
+                                </td>
+                              </tr>
+                            @endif
+
                             <tr>
                               <td class="mobile bold reservation-table-item-label">
                                 <span class="p-8 block">{{ trans('email-reservation.labels.total_payment', [], '', $lang) }}</span>

@@ -30,6 +30,7 @@ trait HasReservationTrait
             'expirationTime' => $this->formatDate($this->reservation->expired_at),
             'cancelledTime' => $this->formatDate($this->reservation->updated_at),
             'declinedTime' => $this->formatDate($this->reservation->updated_at),
+            'pickupTime' => $this->formatDate($this->reservation->updated_at),
             'totalPayment' => $this->getTotalPayment(),
             'status'        => $this->reservation->status,
             'reason' => $this->reservation->cancel_reason,
@@ -44,7 +45,7 @@ trait HasReservationTrait
     {
         return Carbon::parse($date)
             ->timezone('Asia/Jakarta')
-            ->format('D, d F Y, H:i') . ' (WIB)';
+            ->format('d F Y, H:i') . ' (WIB)';
     }
 
     protected function getStore()
