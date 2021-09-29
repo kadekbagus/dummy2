@@ -1,26 +1,10 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html lang="en">
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>{{ trans('email-reservation.accepted.subject') }}</title>
+@extends('emails.layouts.default')
 
-  @include('emails.components.styles')
+@section('title')
+Reservation Done
+@stop
 
-</head>
-<body style="margin:0; padding:0; background-color:#F2F2F2;">
-
-  <span style="display: block; width: 640px !important; max-width: 640px; height: 1px" class="mobileOff"></span>
-
-  <center>
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#F2F2F2">
-      <tr>
-        <td align="center" valign="middle">
-          <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/uploads/emails/gtm-logo.png" class="logo" alt="Logo">
-        </td>
-      </tr>
-
+@section('content')
       @foreach($langs as $lang)
         <tr>
           <td align="center" valign="top">
@@ -32,22 +16,19 @@
                   <table width="640" cellpadding="0" cellspacing="0" border="0" class="container mobile-full-width">
                     <tr>
                       <td align="center" valign="middle" height="184" class="greeting-title-container" style="border-radius: 5px 5px 0 0;">
-                          <h1 class="greeting-title">{{ trans('email-reservation.accepted.title', [], '', $lang) }}</h1>
+                          <h1 class="greeting-title">{{ trans('email-reservation.done.title', [], '', $lang) }}</h1>
                       </td>
                     </tr>
                   </table>
 
                   <table width="600" cellpadding="0" cellspacing="0" border="0" class="container">
                     <tr>
-                      <td width="300" class="mobile" align="left" valign="top">
+                      <td class="mobile" align="left" valign="top">
                         <h3 class="greeting-username">
-                          {{ trans('email-reservation.accepted.greeting', ['recipientName' => $recipientName], '', $lang) }}
+                          {{ trans('email-reservation.done.greeting', ['recipientName' => $recipientName], '', $lang) }}
                         </h3>
-                        <p class="greeting-text">
-                          {{ trans('email-reservation.accepted.body.line-1', $store, '', $lang) }}
-                        </p>
-                        <p class="greeting-text">
-                          {{ trans('email-reservation.accepted.body.line-2', [], '', $lang) }}
+                        <p class="greeting-text" style="line-height: 1.75em;">
+                          {{ trans('email-reservation.done.body.line-1', $store, '', $lang) }}
                         </p>
                       </td>
                     </tr>
@@ -64,7 +45,14 @@
                     </tr>
 
                     <tr>
-                      <td height="50" align="center" class="separator">&nbsp;</td>
+                      <td>
+                        <p class="greeting-text">
+                          <br>
+                          {{ trans('email-reservation.done.body.line-2', [], '', $lang) }}
+                          <br>
+                          &nbsp;
+                        </p>
+                      </td>
                     </tr>
 
                     <tr>
@@ -88,13 +76,4 @@
           <td height="30" align="center" class="separator">&nbsp;</td>
         </tr>
       @endforeach
-
-      <tr>
-        <td align="center" valign="top">
-          @include('emails.components.new-basic-footer')
-        </td>
-      </tr>
-    </table>
-  </center>
-</body>
-</html>
+@stop

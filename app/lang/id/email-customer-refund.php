@@ -66,4 +66,13 @@ Kami telah mengembalikan pembayaran ke GOPAY/Shopeepay Kakak, mohon dibantu konf
             'total'     => 'Total',
         ]
     ],
+
+    'order' => [
+        'subject' => 'Pengembalian Dana',
+        'greeting' => 'Hai :customerName,',
+        'line_1' => 'Kami mohon maaf karena tidak dapat menyediakan Produk yang sudah Anda beli.',
+        'line_2' => 'Berikut ini detil transaksi Anda.',
+        // 'line_1' => 'Kami mengalami kendala teknis yang terjadi saat pembelian produk melalui Gotomalls hari ini.',
+        'line_3' => 'Kami mohon maaf atas ketidaknyamanannya. Kami telah mengembalikan pembayaran ke GOPAY Anda, mohon dibantu konfirmasi bila pengembalian dana telah diterima.',
+    ],
 ];

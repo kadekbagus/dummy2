@@ -192,13 +192,14 @@ class ReservationRepository implements ReservationInterface
     public function cancel($reservation)
     {
         DB::transaction(function() use (&$reservation) {
+            $cloneReservation = clone $reservation;
             $reservation->status = BrandProductReservation::STATUS_CANCELED;
             $reservation->save();
-
+            
             // update stock if previous status is accepted
-            if ($reservation->status === BrandProductReservation::STATUS_ACCEPTED) {
-                $reservation->load(['details']);
-                foreach ($reservation->details as $detail) {
+            if ($cloneReservation->status === BrandProductReservation::STATUS_ACCEPTED) {
+                $cloneReservation->load(['details']);
+                foreach ($cloneReservation->details as $detail) {
                     $detail->load(['product_variant']);
                     $updateStock = BrandProductVariant::where('brand_product_variant_id', '=', $detail->brand_product_variant_id)->first();
                     if ($updateStock) {
@@ -236,9 +237,23 @@ class ReservationRepository implements ReservationInterface
 
     public function expire($reservation)
     {
+        $cloneReservation = clone $reservation;
         $reservation->status = BrandProductReservation::STATUS_EXPIRED;
         $reservation->save();
 
+        // update stock if previous status is accepted
+        if ($cloneReservation->status === BrandProductReservation::STATUS_ACCEPTED) {
+            $cloneReservation->load(['details']);
+            foreach ($cloneReservation->details as $detail) {
+                $detail->load(['product_variant']);
+                $updateStock = BrandProductVariant::where('brand_product_variant_id', '=', $detail->brand_product_variant_id)->first();
+                if ($updateStock) {
+                    $updateStock->quantity = $detail->product_variant->quantity + $detail->quantity;
+                    $updateStock->save();
+                }
+            }
+        }
+        
         return $reservation;
     }
 

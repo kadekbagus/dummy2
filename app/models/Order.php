@@ -3,6 +3,8 @@
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Orbit\Controller\API\v1\Pub\Purchase\Order\Exceptions\OrderQuantityNotAvailableException;
 use Orbit\Database\ObjectID;
 
 /**
@@ -200,7 +202,8 @@ class Order extends Eloquent
         }
 
         $now = Carbon::now('UTC')->format('Y-m-d H:i:s');
-        $orders = Order::with(['details.brand_product_variant'])
+        $orders = Order::onWriteConnection()
+            ->with(['details.brand_product_variant'])
             ->whereIn('order_id', $orders)
             ->get();
 
@@ -211,16 +214,18 @@ class Order extends Eloquent
 
             $order->details->each(function($detail) {
                 if ($detail->brand_product_variant) {
-                    $detail->brand_product_variant->decrement(
-                        'quantity', $detail->quantity
-                    );
-
                     $productQty = $detail->brand_product_variant->quantity;
-                    if ($productQty < 0) {
+
+                    if ($productQty - $detail->quantity < 0) {
                         $detail->brand_product_variant->quantity = 0;
                         $detail->brand_product_variant->save();
 
-                        throw new \Exception("Cannot decrease product quantity! Quantity can't be lower than 0! (Qty: {$productQty})");
+                        Log::warning("Can't decrease product qty, can't be lower than 0! (Qty: {$productQty})");
+                    }
+                    else {
+                        $detail->brand_product_variant->decrement(
+                            'quantity', $detail->quantity
+                        );
                     }
                 }
             });
@@ -301,7 +306,7 @@ class Order extends Eloquent
         return $order;
     }
 
-    public static function declined($orderId, $reason, $userId)
+    public static function declined($orderId, $reason, $userId, $restoreQty = true)
     {
         // @todo: need to check the previous status
         $order = Order::with(['details.brand_product_variant', 'payment_detail'])
@@ -313,18 +318,23 @@ class Order extends Eloquent
         $order->declined_by = $userId;
         $order->save();
 
-        $order->details->each(function($detail) {
-            if ($detail->brand_product_variant) {
-                $detail->brand_product_variant->increment(
-                    'quantity', $detail->quantity
-                );
-            }
-        });
+        if ($restoreQty) {
+            $order->details->each(function($detail) {
+                if ($detail->brand_product_variant) {
+                    $detail->brand_product_variant->increment(
+                        'quantity', $detail->quantity
+                    );
+                }
+            });
+        }
 
         Queue::later(
             3,
             'Orbit\Queue\Order\RefundOrderQueue',
-            ['paymentId' => $order->payment_detail->payment_transaction_id]
+            [
+                'paymentId' => $order->payment_detail->payment_transaction_id,
+                'reason' => $reason,
+            ]
         );
         // Event::fire('orbit.cart.order-declined', [$order]);
 
@@ -348,8 +358,8 @@ class Order extends Eloquent
     }
 
 
-   public static function getLocalTimezoneName($timezone = 'UTC')
-   {
+    public static function getLocalTimezoneName($timezone = 'UTC')
+    {
         $timezoneMapping = [
             'asia/jakarta' => 'WIB',
             'asia/makassar' => 'WITA',
@@ -358,15 +368,67 @@ class Order extends Eloquent
             '' => 'UTC',
         ];
 
-       $timezone = strtolower($timezone);
-       return isset($timezoneMapping[$timezone])
+        $timezone = strtolower($timezone);
+        return isset($timezoneMapping[$timezone])
                    ? $timezoneMapping[$timezone]
                    : '';
-   }
+    }
 
-   public static function formatCurrency($amount, $currency)
-   {
-       return $currency . ' ' . number_format($amount, 0, ',', '.');
-   }
+    public static function formatCurrency($amount, $currency)
+    {
+        return $currency . ' ' . number_format($amount, 0, ',', '.');
+    }
 
+    /**
+     * Check whether ordered quantity is still available.
+     *
+     * @param  [type] $orderId [description]
+     * @return [type]          [description]
+     */
+    public static function itemsAvailable($orderId = [])
+    {
+        if (is_string($orderId)) {
+            $orderId = explode(',', $orderId);
+        }
+
+        $orders = Order::onWriteConnection()
+            ->with(['details.brand_product_variant'])
+            ->whereIn('order_id', $orderId)
+            ->get();
+
+        $availableItems = 0;
+        foreach($orders as $order) {
+            foreach($order->details as $orderDetail) {
+                if (empty($orderDetail->brand_product_variant)) {
+                    Log::warning(sprintf(
+                        "Variant %s not found for order %s !",
+                        $orderDetail->brand_product_variant_id,
+                        $order->order_id
+                    ));
+
+                    // If we reach here, just assume the product
+                    // not available anymore.
+                    return false;
+                }
+
+                if ($orderDetail->quantity > $orderDetail->brand_product_variant->quantity) {
+                    Log::warning(sprintf(
+                        "Qty for variant %s not available anymore. ReqQty(%s) > AvailQty(%s)",
+                        $orderDetail->brand_product_variant_id,
+                        $orderDetail->quantity,
+                        $orderDetail->brand_product_variant->quantity
+                    ));
+
+                    // If we reach here, that means requested qty not available
+                    // anymore.
+                    return false;
+                }
+
+                // If we reach here, that means requested qty still available.
+                $availableItems++;
+            }
+        }
+
+        return $availableItems > 0;
+    }
 }

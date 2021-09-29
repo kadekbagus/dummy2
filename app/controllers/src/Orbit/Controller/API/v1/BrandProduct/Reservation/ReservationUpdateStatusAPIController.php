@@ -98,6 +98,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $previousStatus = $reservation->status;
             $reservation->status = $status;
 
             if ($status === BrandProductReservation::STATUS_DECLINED) {
@@ -105,7 +106,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                 $reservation->cancel_reason = $cancelReason;
 
                 // update stock if previous status is accepted
-                if ($reservation->status === BrandProductReservation::STATUS_ACCEPTED) {
+                if ($previousStatus === BrandProductReservation::STATUS_ACCEPTED) {
                     $reservation->load(['details']);
                     foreach ($reservation->details as $detail) {
                         $detail->load(['product_variant']);
@@ -116,6 +117,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                         }
                     }
                 }
+                
             }
 
             if ($status === BrandProductReservation::STATUS_ACCEPTED) {
@@ -125,15 +127,20 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                     $detail->load(['product_variant.brand_product']);
 
                     if (!is_object($detail->product_variant)) {
-                        OrbitShopAPI::throwInvalidArgument('Change status failed! Unable to find linked product variant for one or more of the product in this reservation. Variant might be changed or deleted.');
+                        OrbitShopAPI::throwInvalidArgument('Change Status Failed, variant maybe changed or out of stock');
                     }
 
                     if (!is_object($detail->product_variant->brand_product)) {
-                        OrbitShopAPI::throwInvalidArgument('Change status failed! Unable to find linked brand product for one or more of the product in this reservation. It might be changed or deleted.');
+                        OrbitShopAPI::throwInvalidArgument('Change Status Failed, product maybe changed or deleted');
                     }
 
                     // take the longest max reservation time from each products
                     $max_reservation_time = $max_reservation_time <= $detail->product_variant->brand_product->max_reservation_time ? $detail->product_variant->brand_product->max_reservation_time : $max_reservation_time;
+
+                    // validate stock
+                    if ($detail->product_variant->quantity < $detail->quantity) {
+                        OrbitShopAPI::throwInvalidArgument('Change Status Failed, variant maybe changed or out of stock');
+                    }
 
                     // update stock
                     $updateStock = BrandProductVariant::where('brand_product_variant_id', '=', $detail->brand_product_variant_id)->first();
@@ -160,6 +167,9 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             }
             else if ($status === BrandProductReservation::STATUS_DECLINED) {
                 Event::fire('orbit.reservation.declined', [$reservation]);
+            }
+            else if ($status === BrandProductReservation::STATUS_DONE) {
+                Event::fire('orbit.reservation.done', [$reservation]);
             }
 
             $reservation = BrandProductReservation::with(['details.product_variant'])  
