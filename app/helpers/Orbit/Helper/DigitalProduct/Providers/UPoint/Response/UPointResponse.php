@@ -22,6 +22,14 @@ class UPointResponse extends BaseResponse
 
         parent::__construct($response);
 
+        if (is_string($response)) {
+            $response = json_decode($response);
+
+            if (! empty($response)) {
+                $this->response->setData($response);
+            }
+        }
+
         if (isset($this->response->data->error_info)) {
             $this->response->setMessage($this->response->data->error_info);
         }
