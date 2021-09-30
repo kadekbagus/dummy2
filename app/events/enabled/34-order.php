@@ -41,7 +41,7 @@ Event::listen('orbit.order.ready-for-pickup', function($orderId, $bppUserId)
                             },
                             'order_details' => function($q) use ($prefix) {
                                     $q->addSelect('order_detail_id','order_id','brand_product_variant_id','sku','quantity',
-                                                DB::raw("{$prefix}order_details.selling_price*{$prefix}order_details.quantity as total"));
+                                                DB::raw("{$prefix}order_details.selling_price*{$prefix}order_details.quantity as total"), 'product_name');
                                     $q->with(['brand_product_variant' => function($q) use ($prefix) {
                                         $q->addSelect('brand_product_id','brand_product_variant_id');
                                         $q->with(['brand_product' => function($q) use ($prefix) {
@@ -63,7 +63,7 @@ Event::listen('orbit.order.ready-for-pickup', function($orderId, $bppUserId)
         $bppUserPickup = BppUser::select('bpp_user_id','name','email')->where('merchant_id', $order->store->merchant_id)->first();
 
         foreach ($order->order_details as $key => $value) {
-            $order->order_details[$key]->name = $value->brand_product_variant->brand_product->product_name;
+            $order->order_details[$key]->name = $value->product_name;
             unset($value->brand_product_variant);
             $var = null;
             foreach ($order->order_details[$key]->order_variant_details as $key3 => $value3) {
@@ -210,7 +210,7 @@ Event::listen('orbit.order.complete', function($orderId, $bppUserId)
                             },
                             'order_details' => function($q) use ($prefix) {
                                     $q->addSelect('order_detail_id','order_id','brand_product_variant_id','sku','quantity',
-                                                DB::raw("{$prefix}order_details.selling_price*{$prefix}order_details.quantity as total"));
+                                                DB::raw("{$prefix}order_details.selling_price*{$prefix}order_details.quantity as total"), 'product_name');
                                     $q->with(['brand_product_variant' => function($q) use ($prefix) {
                                         $q->addSelect('brand_product_id','brand_product_variant_id');
                                         $q->with(['brand_product' => function($q) use ($prefix) {
@@ -232,7 +232,7 @@ Event::listen('orbit.order.complete', function($orderId, $bppUserId)
         $bppUserPickup = BppUser::select('bpp_user_id','name','email')->where('merchant_id', $order->store->merchant_id)->first();
 
         foreach ($order->order_details as $key => $value) {
-            $order->order_details[$key]->name = $value->brand_product_variant->brand_product->product_name;
+            $order->order_details[$key]->name = $value->product_name;
             unset($value->brand_product_variant);
             $var = null;
             foreach ($order->order_details[$key]->order_variant_details as $key3 => $value3) {
