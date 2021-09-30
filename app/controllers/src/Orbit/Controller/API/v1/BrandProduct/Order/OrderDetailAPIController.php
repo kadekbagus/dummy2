@@ -65,6 +65,7 @@ class OrderDetailAPIController extends ControllerAPI
                                     'orders.user_id',
                                     'orders.merchant_id',
                                     'orders.created_at as order_date',
+                                    'orders.updated_at',
                                     'orders.pick_up_code',
                                     'orders.cancel_reason',
                                     DB::raw("CONCAT({$prefix}users.user_firstname,' ',{$prefix}users.user_lastname) as username"),

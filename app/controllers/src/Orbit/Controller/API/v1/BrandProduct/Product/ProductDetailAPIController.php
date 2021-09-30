@@ -192,6 +192,7 @@ class ProductDetailAPIController extends ControllerAPI
 
             $selectedStores = [];
             foreach ($product->brand_product_variants as $key => $bpv) {
+                $bpv->merchant_id = null;
                 foreach ($bpv->variant_options as $key => $vo) {
                     if ($vo->option_type = 'merchant' && ! is_null($vo->store)) {
 
@@ -216,6 +217,7 @@ class ProductDetailAPIController extends ControllerAPI
                         }
                         if (! $storeExist) {
                             $selectedStores[] = $store;
+                            $bpv->merchant_id = $store->id;
                         }
                     }
                 }
