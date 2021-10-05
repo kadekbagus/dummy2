@@ -24,6 +24,7 @@ class PulsaListRepository {
             'pulsa_code'         => 'pulsa.pulsa_code',
             'value'              => 'pulsa.value',
             'price'              => 'pulsa.price',
+            'vendor_price'       => 'pulsa.vendor_price',
             'quantity'           => 'pulsa.quantity',
             'status'             => 'pulsa.status',
             'created_at'         => 'pulsa.created_at',
