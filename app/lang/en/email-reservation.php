@@ -5,6 +5,8 @@ return [
         'reservation_details' => 'Reservation Details',
         'transaction_id' => 'Reservation ID',
         'user_email' => 'User Email',
+        'user_id'   => 'User ID',
+        'user_name' => 'User Name',
         'store_location' => 'Store Location',
         'store_location_detail' => ':storeName at :mallName',
         'reserve_date' => 'Reservation Date',

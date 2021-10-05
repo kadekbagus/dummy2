@@ -8,6 +8,7 @@ return [
         'customer_name' => 'Customer Name',
         'customer_email' => 'Customer Email',
         'customer_phone' => 'Customer Phone',
+        'customer_id'    => 'Customer ID',
         'store_location' => 'Store Location',
         'store_location_detail' => ':storeName at :mallName',
         'order_date' => 'Order Date',

@@ -75,26 +75,18 @@
                             </tr>
                             <tr>
                               <td class="mobile bold reservation-table-item-label">
+                                <span class="p-8 block">{{ trans('email-order.labels.customer_id', [], '', $lang) }}</span>
+                              </td>
+                              <td class="mobile reservation-table-item-value">
+                                <span class="p-8 block">{{ $customer->id }}</span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td class="mobile bold reservation-table-item-label">
                                 <span class="p-8 block">{{ trans('email-order.labels.customer_name', [], '', $lang) }}</span>
                               </td>
                               <td class="mobile reservation-table-item-value">
                                 <span class="p-8 block">{{ $customer->name }}</span>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td class="mobile bold reservation-table-item-label">
-                                <span class="p-8 block">{{ trans('email-order.labels.customer_email', [], '', $lang) }}</span>
-                              </td>
-                              <td class="mobile reservation-table-item-value">
-                                <span class="p-8 block">{{ $customer->email }}</span>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td class="mobile bold reservation-table-item-label">
-                                <span class="p-8 block">{{ trans('email-order.labels.customer_phone', [], '', $lang) }}</span>
-                              </td>
-                              <td class="mobile reservation-table-item-value">
-                                <span class="p-8 block">{{ $customer->phone }}</span>
                               </td>
                             </tr>
                             <tr>

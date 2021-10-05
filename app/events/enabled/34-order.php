@@ -85,7 +85,8 @@ Event::listen('orbit.order.ready-for-pickup', function($orderId, $bppUserId)
 
         $customer = (object) ['email' => $order->email,
                                 'name'  => $order->name,
-                                'phone' => $order->phone
+                                'phone' => $order->phone,
+                                'id' => $order->user_id,
                             ];
                                 
         $transaction = ['orderId' => $order->order_id,
@@ -254,7 +255,8 @@ Event::listen('orbit.order.complete', function($orderId, $bppUserId)
 
         $customer = (object) ['email' => $order->email,
                                 'name'  => $order->name,
-                                'phone' => $order->phone
+                                'phone' => $order->phone,
+                                'id' => $order->user_id,
                             ];
                                 
         $transaction = ['orderId' => $order->order_id,
