@@ -30,7 +30,7 @@ class PulsaListRequest extends ValidateRequest
             'object_type' => 'sometimes|in:pulsa,data_plan',
             'skip' => 'sometimes|required|min:0',
             'take' => 'sometimes|required|min:1',
-            'sortby' => 'sometimes|in:pulsa_item_id,pulsa_code,pulsa_display_name,value,price,name,quantity,status,updated_at,created_at',
+            'sortby' => 'sometimes|in:pulsa_item_id,pulsa_code,pulsa_display_name,value,price,name,quantity,status,updated_at,created_at,vendor_price',
             'sortmode' => 'sometimes|in:asc,desc',
         ];
     }
