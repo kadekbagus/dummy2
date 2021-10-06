@@ -81,7 +81,7 @@ class ReceiptNotification extends CustomerNotification implements
      */
     protected function getEmailSubject()
     {
-        return trans('email-receipt.subject', [], '', 'id');
+        return trans('email-receipt.subject', [], '', 'en');
     }
 
     /**

@@ -5,7 +5,7 @@ return [
         'reservation_details' => 'Detil Reservasi',
         'transaction_id' => 'Kode Reservasi',
         'user_email' => 'Email User',
-        'user_id' => 'Kode User',
+        'user_id' => 'ID User',
         'user_name' => 'Nama User',
         'store_location' => 'Lokasi Toko',
         'store_location_detail' => ':storeName di :mallName',
