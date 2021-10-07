@@ -62,6 +62,7 @@ class ReservationListAPIController extends ControllerAPI
                     {$prefix}brand_product_reservations.user_id,
                     {$prefix}brand_product_reservation_details.product_name,
                     {$prefix}brand_product_reservation_details.brand_product_variant_id,
+                    CONCAT({$prefix}users.user_firstname,' ',{$prefix}users.user_lastname) as username,
                     CASE {$prefix}brand_product_reservations.status
                         WHEN 'accepted' THEN
                             CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
@@ -91,6 +92,7 @@ class ReservationListAPIController extends ControllerAPI
                 ])
                 ->leftJoin('brand_product_reservation_details', 'brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
                 ->leftJoin('brand_product_reservation_variant_details', 'brand_product_reservation_variant_details.brand_product_reservation_detail_id', '=', 'brand_product_reservation_details.brand_product_reservation_detail_id')
+                ->leftjoin('users', 'users.user_id', '=', 'brand_product_reservations.user_id')
                 ->where(DB::raw("{$prefix}brand_product_reservations.brand_id"), $brandId)
                 ->groupBy(DB::raw("{$prefix}brand_product_reservations.brand_product_reservation_id"));
 
@@ -136,6 +138,11 @@ class ReservationListAPIController extends ControllerAPI
                         $reservations->where('brand_product_reservations.status', $status);
                         break;
                 }
+            });
+
+            OrbitInput::get('username', function($username) use ($reservations)
+            {
+                $reservations->having('username',  'like', "%$username%");
             });
 
             // Clone the query builder which still does not include the take,
