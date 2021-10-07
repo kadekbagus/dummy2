@@ -83,6 +83,11 @@ trait HasPaymentTrait
         return $this->payment->phone;
     }
 
+    protected function getCustomerId()
+    {
+        return $this->payment->user_id;
+    }
+
     protected function getGameName()
     {
         return $this->payment->game_name;
@@ -99,6 +104,7 @@ trait HasPaymentTrait
             'email'     => $this->getCustomerEmail(),
             'name'      => $this->getCustomerName(),
             'phone'     => $this->getCustomerPhone(),
+            'id'        => $this->getCustomerId(),
         ];
     }
 

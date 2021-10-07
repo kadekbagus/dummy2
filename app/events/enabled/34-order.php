@@ -85,7 +85,8 @@ Event::listen('orbit.order.ready-for-pickup', function($orderId, $bppUserId)
 
         $customer = (object) ['email' => $order->email,
                                 'name'  => $order->name,
-                                'phone' => $order->phone
+                                'phone' => $order->phone,
+                                'id' => $order->user_id,
                             ];
                                 
         $transaction = ['orderId' => $order->order_id,
@@ -105,7 +106,7 @@ Event::listen('orbit.order.ready-for-pickup', function($orderId, $bppUserId)
         $bppUrl = Config::get('orbit.product_order.follow_up_url', 'https://bpp.gotomalls.com/#!/orders/%s');
         $bppOrderUrl = sprintf($bppUrl, $order->order_id);         
         
-        $emailSubject = trans('email-order.pickup-order.subject', [], '', $supportedLangs[0]);
+        $emailSubject = trans('email-order.pickup-order.subject', [], '', $supportedLangs[1]);
                         
         // send email to the user
         Queue::push('Orbit\\Queue\\Order\\ReadyToPickupMailQueue', [
@@ -254,7 +255,8 @@ Event::listen('orbit.order.complete', function($orderId, $bppUserId)
 
         $customer = (object) ['email' => $order->email,
                                 'name'  => $order->name,
-                                'phone' => $order->phone
+                                'phone' => $order->phone,
+                                'id' => $order->user_id,
                             ];
                                 
         $transaction = ['orderId' => $order->order_id,
@@ -274,7 +276,7 @@ Event::listen('orbit.order.complete', function($orderId, $bppUserId)
         $bppUrl = Config::get('orbit.product_order.follow_up_url', 'https://bpp.gotomalls.com/#!/orders/%s');
         $bppOrderUrl = sprintf($bppUrl, $order->order_id);         
         
-        $emailSubject = trans('email-order.complete-order.subject', [], '', $supportedLangs[0]);
+        $emailSubject = trans('email-order.complete-order.subject', [], '', $supportedLangs[1]);
                         
         // send email to the user
         Queue::push('Orbit\\Queue\\Order\\OrderCompleteMailQueue', [

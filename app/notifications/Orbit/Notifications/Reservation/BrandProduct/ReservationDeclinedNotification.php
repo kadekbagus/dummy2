@@ -27,7 +27,7 @@ class ReservationDeclinedNotification extends ReservationNotification
 
     public function getEmailSubject()
     {
-        return trans('email-reservation.declined.subject', [], '', 'id');
+        return trans('email-reservation.declined.subject', [], '', 'en');
     }
 
     protected function getSupportedLanguages()
