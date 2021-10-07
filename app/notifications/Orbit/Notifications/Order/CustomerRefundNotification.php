@@ -34,7 +34,7 @@ class CustomerRefundNotification extends BaseNotification
 
     public function getEmailSubject()
     {
-        return trans('email-customer-refund.order.subject', [], '', 'id');
+        return trans('email-customer-refund.order.subject', [], '', 'en');
     }
 
     public function getEmailData()

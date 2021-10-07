@@ -55,6 +55,7 @@ abstract class ReservationNotification extends Notification implements
         return [
             'customerEmail' => $this->reservation->users->user_email,
             'customerName'  => $this->reservation->users->getFullName(),
+            'customerId'    => $this->reservation->users->user_id,
         ];
     }
 

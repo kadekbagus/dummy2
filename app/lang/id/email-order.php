@@ -8,6 +8,7 @@ return [
         'customer_name' => 'Nama Pembeli',
         'customer_email' => 'Email Pembeli',
         'customer_phone' => 'Telepon Pembeli',
+        'customer_id' => 'ID Pembeli',
         'store_location' => 'Lokasi Toko',
         'store_location_detail' => ':storeName di :mallName',
         'order_date' => 'Tanggal Pesanan',
