@@ -24,6 +24,7 @@ use App;
 use Illuminate\Database\Eloquent\Model;
 use UserSponsor;
 use BrandProduct;
+use BaseMerchant;
 
 class GenericActivityAPIController extends PubControllerAPI
 {
@@ -171,11 +172,12 @@ class GenericActivityAPIController extends PubControllerAPI
                         ->first();
             }
 
-            // save product info
-            $productId = OrbitInput::post('product_id', null);
-            if (! empty($productId)) {
-                $product = BrandProduct::active()->findOrFail($productId);
-                $activity->setProduct($product);
+            // Handle in-store brand product activities
+            if (isset($genericActivityConfig['activity_list'][$activityNumber]['in_store_activity'])
+                && $object instanceof BrandProduct
+            ) {
+                $object->brand_name = BaseMerchant::findOrFail($object->brand_id)
+                    ->name;
             }
 
             // Get notes

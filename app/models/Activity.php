@@ -485,6 +485,14 @@ class Activity extends Eloquent
                 case 'DigitalProduct':
                 case 'BrandProduct':
                     $this->object_display_name = $object->product_name;
+
+                    if (isset($object->brand_name)) {
+                        $this->setProduct($object);
+                        $this->setObjectId($object->brand_id);
+                        $this->setObjectName('BaseMerchant');
+                        $this->setObjectDisplayName($object->brand_name);
+                    }
+
                     break;
 
                 default:
