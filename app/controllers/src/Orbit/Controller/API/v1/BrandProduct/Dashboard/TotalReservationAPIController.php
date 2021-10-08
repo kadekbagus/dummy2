@@ -13,7 +13,7 @@ use Validator;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Util\PaginationNumber;
 use stdclass;
-use Reservation;
+use BrandProductReservation;
 use Exception;
 use App;
 use Carbon\Carbon;
