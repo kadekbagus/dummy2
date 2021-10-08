@@ -8,3 +8,6 @@ Route::get('/app/v1/brand-product/dashboard/count-order', ['as' => 'bpp-dash-cou
 
 // Route for total reservation
 Route::get('/app/v1/brand-product/dashboard/count-reservation', ['as' => 'bpp-dash-count-reservation', 'uses' => 'IntermediateBrandProductAuthController@Dashboard\TotalReservation_get']);
+
+// Route for average order amount
+Route::get('/app/v1/brand-product/dashboard/average-order', ['as' => 'bpp-dash-avg-order', 'uses' => 'IntermediateBrandProductAuthController@Dashboard\AverageAmount_get']);

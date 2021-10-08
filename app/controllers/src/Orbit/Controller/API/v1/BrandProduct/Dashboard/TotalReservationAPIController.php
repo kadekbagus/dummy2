@@ -22,7 +22,7 @@ class TotalReservationAPIController extends ControllerAPI
 {
 
     /**.
-     * Get Month to date Count successful order
+     * Get Month to date Count successful reservation
      *
      * @author ahmad <ahmad@gotomalls.com>
      */
