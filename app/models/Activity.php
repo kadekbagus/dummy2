@@ -404,6 +404,7 @@ class Activity extends Eloquent
                 case 'TenantStoreAndService':
                 case 'CampaignLocation':
                 case 'Product':
+                case 'BaseMerchant':
                     $this->object_display_name = $object->name;
                     break;
 

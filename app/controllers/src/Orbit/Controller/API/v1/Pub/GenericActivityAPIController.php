@@ -23,6 +23,7 @@ use Mall;
 use App;
 use Illuminate\Database\Eloquent\Model;
 use UserSponsor;
+use BrandProduct;
 
 class GenericActivityAPIController extends PubControllerAPI
 {
@@ -168,6 +169,13 @@ class GenericActivityAPIController extends PubControllerAPI
                 $mall = Mall::excludeDeleted()
                         ->where('merchant_id', $mallId)
                         ->first();
+            }
+
+            // save product info
+            $productId = OrbitInput::post('product_id', null);
+            if (! empty($productId)) {
+                $product = BrandProduct::active()->findOrFail($productId);
+                $activity->setProduct($product);
             }
 
             // Get notes
