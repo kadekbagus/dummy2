@@ -163,7 +163,7 @@ class Order extends Eloquent
         return $orders;
     }
 
-    public static function cancel($orderId)
+    public static function cancel($orderId, $restoreQty = true)
     {
         if (is_string($orderId)) {
             $orderId = explode(',', $orderId);
@@ -181,13 +181,15 @@ class Order extends Eloquent
             $order->status = Order::STATUS_CANCELLED;
             $order->save();
 
-            $order->details->each(function($detail) {
-                if ($detail->brand_product_variant) {
-                    $detail->brand_product_variant->increment(
-                        'quantity', $detail->quantity
-                    );
-                }
-            });
+            if ($restoreQty) {
+                $order->details->each(function($detail) {
+                    if ($detail->brand_product_variant) {
+                        $detail->brand_product_variant->increment(
+                            'quantity', $detail->quantity
+                        );
+                    }
+                });
+            }
         }
 
         Event::fire('orbit.order.cancelled', [$orders]);

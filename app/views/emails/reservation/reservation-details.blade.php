@@ -16,10 +16,18 @@
                             </tr>
                             <tr>
                               <td class="mobile bold reservation-table-item-label">
-                                <span class="p-8 block">{{ trans('email-reservation.labels.user_email', [], '', $lang) }}</span>
+                                <span class="p-8 block">{{ trans('email-reservation.labels.user_id', [], '', $lang) }}</span>
                               </td>
                               <td class="mobile reservation-table-item-value">
-                                <span class="p-8 block">{{ $customerEmail }}</span>
+                                <span class="p-8 block">{{ $customerId }}</span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td class="mobile bold reservation-table-item-label">
+                                <span class="p-8 block">{{ trans('email-reservation.labels.user_name', [], '', $lang) }}</span>
+                              </td>
+                              <td class="mobile reservation-table-item-value">
+                                <span class="p-8 block">{{ $customerName }}</span>
                               </td>
                             </tr>
                             <tr>

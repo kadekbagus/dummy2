@@ -22,7 +22,7 @@ class ReservationDoneNotification extends ReservationNotification
 
     public function getEmailSubject()
     {
-        return trans('email-reservation.done.subject', [], '', 'id');
+        return trans('email-reservation.done.subject', [], '', 'en');
     }
 
     protected function getSupportedLanguages()

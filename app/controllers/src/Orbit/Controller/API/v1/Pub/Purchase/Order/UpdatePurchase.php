@@ -212,22 +212,30 @@ class UpdatePurchase
                     }
                 }
 
-                // Cancel Orders if payment expired/failed, denied, etc.
+                // Cancel Orders if payment failed, denied, etc.
                 if (in_array($status, [
-                        PaymentTransaction::STATUS_EXPIRED,
                         PaymentTransaction::STATUS_FAILED,
                         PaymentTransaction::STATUS_ABORTED,
                         PaymentTransaction::STATUS_FAILED,
                         PaymentTransaction::STATUS_DENIED,
-                        PaymentTransaction::STATUS_CANCELED,
                     ])
                 ) {
                     Order::cancel($orderIds);
                 }
 
+                if ($oldStatus === PaymentTransaction::STATUS_PENDING
+                    && in_array($status, [
+                        PaymentTransaction::STATUS_CANCELED,
+                        PaymentTransaction::STATUS_EXPIRED,
+                    ])
+                ) {
+                    // Cancel order, but don't restore the product qty.
+                    Order::cancel($orderIds, false);
+                }
+
                 // Request Orders cancellation.
-                if ($status === PaymentTransaction::STATUS_CANCEL
-                    && $oldStatus === PaymentTransaction::STATUS_SUCCESS
+                if ($oldStatus === PaymentTransaction::STATUS_SUCCESS
+                    && $status === PaymentTransaction::STATUS_CANCEL
                 ) {
                     $this->purchase->status = $oldStatus;
                     Order::requestCancel($orderIds);

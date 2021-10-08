@@ -186,7 +186,8 @@ class CheckTransactionStatusQueue
                     Order::cancel(
                         $payment->details->filter(function($detail) {
                             return $detail->object_type === 'order';
-                        })->lists('object_id')
+                        })->lists('object_id'),
+                        false // don't restore product qty
                     );
 
                 }
