@@ -43,7 +43,7 @@ class TotalReservationAPIController extends ControllerAPI
             $end = Carbon::now()->subHours(7);
 
             $done = BrandProductReservation::selectRaw(
-                    'count(order_id) as count_amount'
+                    'count(brand_product_reservation_id) as count_amount'
                 )
                 ->where('brand_id', $brandId)
                 ->where('status', BrandProductReservation::STATUS_DONE)
