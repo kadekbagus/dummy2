@@ -57,7 +57,7 @@ class TotalReservationAPIController extends ControllerAPI
             $done = $done->first();
 
             $accepted = BrandProductReservation::selectRaw(
-                    'count(order_id) as count_amount'
+                    'count(brand_product_reservation_id) as count_amount'
                 )
                 ->where('brand_id', $brandId)
                 ->where('status', BrandProductReservation::STATUS_ACCEPTED)
@@ -71,7 +71,7 @@ class TotalReservationAPIController extends ControllerAPI
             $accepted = $accepted->first();
 
             $pending = BrandProductReservation::selectRaw(
-                    'count(order_id) as count_amount'
+                    'count(brand_product_reservation_id) as count_amount'
                 )
                 ->where('brand_id', $brandId)
                 ->where('status', BrandProductReservation::STATUS_PENDING)
