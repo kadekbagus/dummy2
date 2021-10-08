@@ -17,14 +17,15 @@ use PaymentTransaction;
 use Order;
 use Exception;
 use App;
+use Carbon\Carbon;
 
 class TotalAmountAPIController extends ControllerAPI
 {
 
     /**
-     * PaymentTransaction list on brand product portal.
+     * Get Month to date Total successful order amount
      *
-     * @author ahmad <ahmad@dominopos.com>
+     * @author ahmad <ahmad@gotomalls.com>
      */
     public function get()
     {
@@ -36,8 +37,11 @@ class TotalAmountAPIController extends ControllerAPI
             $brandId = $user->base_merchant_id;
             $userType = $user->user_type;
 
-            $start = Carbon::now()->startOfMonth();
-            $end = Carbon::now();
+            // @todo: Cache the result based on the brand and/or merchant ids
+
+            // minus 7 hour GMT+7
+            $start = Carbon::now()->startOfMonth()->subHours(7);
+            $end = Carbon::now()->subHours(7);
 
             $orders = Order::selectRaw(
                     'sum(total_amount) as sum_amount'
