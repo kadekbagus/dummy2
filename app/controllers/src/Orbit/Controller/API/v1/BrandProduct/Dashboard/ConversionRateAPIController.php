@@ -14,17 +14,19 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Util\PaginationNumber;
 use stdclass;
 use Activity;
+use Order;
 use Exception;
 use App;
 use DB;
 use Media;
 use Carbon\Carbon;
 
-class TopFiveProductAPIController extends ControllerAPI
+class ConversionRateAPIController extends ControllerAPI
 {
 
     /**.
-     * Get top 5 viewed brand products
+     * Get conversion level from how many users that view product page to how many users
+     * that actually make successful order
      *
      * @author ahmad <ahmad@gotomalls.com>
      */
@@ -46,36 +48,35 @@ class TopFiveProductAPIController extends ControllerAPI
 
             // @todo: add filter to select all brands if user_type is GTM Admin
             $data = Activity::select(
-                    DB::raw('product_id, product_name, count(activity_id) as total_view')
+                    DB::raw('count(distinct user_id) as unique_user')
                 )
                 ->where('object_id', $brandId)
                 ->where('object_name', 'BaseMerchant')
                 ->where('activity_name', 'view_instore_bp_detail_page')
                 ->where('created_at', '>=', $start)
-                ->where('created_at', '<=', $end)
-                ->groupBy('product_id')
-                ->orderBy(DB::raw('total_view'), 'desc')
-                ->take(5)
-                ->skip(0);
+                ->where('created_at', '<=', $end);
 
-            $data = $data->get();
+            $data = $data->first();
+            $totalUniqueVisitor = $data->unique_user;
 
-            foreach ($data as $product) {
-                $product->cdn_url = null;
-                $product->image_url = null;
+            // @todo: add filter to select all brands if user_type is GTM Admin
+            $order = Order::selectRaw(
+                    'count(distinct user_id) as unique_user'
+                )
+                ->where('brand_id', $brandId)
+                ->where('status', Order::STATUS_PENDING)
+                ->where('created_at', '>=', $start)
+                ->where('created_at', '<=', $end);
 
-                $img = Media::where('media_name_id', 'brand_product_main_photo')
-                    ->where('object_name', 'brand_product')
-                    ->where('object_id', $product->product_id)
-                    ->first();
+            $order = $order->first();
+            $totalUniqueBuyer = $order->unique_user;
 
-                if (is_object($img)) {
-                    $product->cdn_url = $img->cdn_url;
-                    $product->image_url = $img->path;
-                }
+            $conversionRate = 0;
+            if (! empty($totalUniqueVisitor)) {
+                $conversionRate = ($totalUniqueBuyer / $totalUniqueVisitor) * 100;
             }
 
-            $this->response->data = $data;
+            $this->response->data = $conversionRate;
         } catch (Exception $e) {
             return $this->handleException($e);
         }

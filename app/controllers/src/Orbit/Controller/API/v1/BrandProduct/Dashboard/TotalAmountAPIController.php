@@ -43,6 +43,7 @@ class TotalAmountAPIController extends ControllerAPI
             $start = Carbon::now()->startOfMonth()->subHours(7);
             $end = Carbon::now()->subHours(7);
 
+            // @todo: add filter to select all brands if user_type is GTM Admin
             $orders = Order::selectRaw(
                     'sum(total_amount) as sum_amount'
                 )
