@@ -13,17 +13,16 @@ use Validator;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Util\PaginationNumber;
 use stdclass;
-use PaymentTransaction;
 use Order;
 use Exception;
 use App;
 use Carbon\Carbon;
 
-class TotalAmountAPIController extends ControllerAPI
+class AverageAmountAPIController extends ControllerAPI
 {
 
-    /**
-     * Get Month to date Total successful order amount
+    /**.
+     * Get Month to date Average amount per order
      *
      * @author ahmad <ahmad@gotomalls.com>
      */
@@ -43,21 +42,21 @@ class TotalAmountAPIController extends ControllerAPI
             $start = Carbon::now()->startOfMonth()->subHours(7);
             $end = Carbon::now()->subHours(7);
 
-            $orders = Order::selectRaw(
-                    'sum(total_amount) as sum_amount'
+            $data = Order::selectRaw(
+                    'avg(total_amount) as avg_amount'
                 )
                 ->where('brand_id', $brandId)
-                ->where('status', 'done')
+                ->where('status', Order::STATUS_DONE)
                 ->where('created_at', '>=', $start)
                 ->where('created_at', '<=', $end);
 
             if ($userType !== 'brand') {
-                $orders->whereIn('merchant_id', $merchantIds);
+                $data->whereIn('merchant_id', $merchantIds);
             }
 
-            $sum = $orders->first();
+            $data = $data->first();
 
-            $this->response->data = $sum->sum_amount;
+            $this->response->data = $data->avg_amount;
         } catch (Exception $e) {
             return $this->handleException($e);
         }

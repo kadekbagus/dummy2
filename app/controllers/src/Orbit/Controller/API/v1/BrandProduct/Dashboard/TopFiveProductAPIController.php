@@ -13,17 +13,16 @@ use Validator;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Util\PaginationNumber;
 use stdclass;
-use PaymentTransaction;
-use Order;
+use Activity;
 use Exception;
 use App;
 use Carbon\Carbon;
 
-class TotalAmountAPIController extends ControllerAPI
+class TopFiveProductAPIController extends ControllerAPI
 {
 
-    /**
-     * Get Month to date Total successful order amount
+    /**.
+     * Get top 5 viewed brand products
      *
      * @author ahmad <ahmad@gotomalls.com>
      */
@@ -43,21 +42,25 @@ class TotalAmountAPIController extends ControllerAPI
             $start = Carbon::now()->startOfMonth()->subHours(7);
             $end = Carbon::now()->subHours(7);
 
-            $orders = Order::selectRaw(
-                    'sum(total_amount) as sum_amount'
+            $data = Activity::selectRaw(
+                    'select
+                        product_id,
+                        product_name,
+                        count(activity_id) as total_view'
                 )
-                ->where('brand_id', $brandId)
-                ->where('status', 'done')
+                ->where('object_id', $brandId)
+                ->where('object_name', 'BaseMerchant')
+                ->where('activity_name', 'view_instore_bp_detail_page')
                 ->where('created_at', '>=', $start)
-                ->where('created_at', '<=', $end);
+                ->where('created_at', '<=', $end)
+                ->groupBy('product_id')
+                ->orderBy(DB::raw('total_view'), 'desc')
+                ->take(5)
+                ->skip(0);
 
-            if ($userType !== 'brand') {
-                $orders->whereIn('merchant_id', $merchantIds);
-            }
+            $data = $data->get();
 
-            $sum = $orders->first();
-
-            $this->response->data = $sum->sum_amount;
+            $this->response->data = $data;
         } catch (Exception $e) {
             return $this->handleException($e);
         }
