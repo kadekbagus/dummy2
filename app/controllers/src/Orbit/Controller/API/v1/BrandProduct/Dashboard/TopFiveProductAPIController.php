@@ -1,0 +1,71 @@
+<?php
+
+namespace Orbit\Controller\API\v1\BrandProduct\Dashboard;
+
+use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\OrbitShopAPI;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use OrbitShop\API\v1\Exception\InvalidArgsException;
+use DominoPOS\OrbitACL\ACL;
+use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
+use Illuminate\Database\QueryException;
+use Validator;
+use Helper\EloquentRecordCounter as RecordCounter;
+use Orbit\Helper\Util\PaginationNumber;
+use stdclass;
+use Activity;
+use Exception;
+use App;
+use Carbon\Carbon;
+
+class TopFiveProductAPIController extends ControllerAPI
+{
+
+    /**.
+     * Get top 5 viewed brand products
+     *
+     * @author ahmad <ahmad@gotomalls.com>
+     */
+    public function get()
+    {
+        try {
+            $httpCode = 200;
+
+            $user = App::make('currentUser');
+            $userId = $user->bpp_user_id;
+            $brandId = $user->base_merchant_id;
+            $userType = $user->user_type;
+
+            // @todo: Cache the result based on the brand and/or merchant ids
+
+            // minus 7 hour GMT+7
+            $start = Carbon::now()->startOfMonth()->subHours(7);
+            $end = Carbon::now()->subHours(7);
+
+            $data = Activity::selectRaw(
+                    'select
+                        product_id,
+                        product_name,
+                        count(activity_id) as total_view'
+                )
+                ->where('object_id', $brandId)
+                ->where('object_name', 'BaseMerchant')
+                ->where('activity_name', 'view_instore_bp_detail_page')
+                ->where('created_at', '>=', $start)
+                ->where('created_at', '<=', $end)
+                ->groupBy('product_id')
+                ->orderBy(DB::raw('total_view'), 'desc')
+                ->take(5)
+                ->skip(0);
+
+            $data = $data->get();
+
+            $this->response->data = $data;
+        } catch (Exception $e) {
+            return $this->handleException($e);
+        }
+
+        return $this->render();
+    }
+
+}
