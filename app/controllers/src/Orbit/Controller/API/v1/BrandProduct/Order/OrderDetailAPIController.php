@@ -107,7 +107,6 @@ class OrderDetailAPIController extends ControllerAPI
                             ->where('orders.brand_id', '=', $brandId)
                             ->where('orders.order_id', '=', $orderId);
 
-            isset($merchantId) ? $order->where('orders.merchant_id', '=', $merchantId) : null;
             $order = $order->first();
 
             if (! is_object($order)) {

@@ -75,8 +75,7 @@ class CreateUserBPPCommand extends Command {
             $status = trim($data['status']);
             $user_type = trim($data['user_type']);
             $base_merchant_id = trim($data['base_merchant_id']);
-            $merchant_id = isset($data['merchant_id']) ? trim($data['merchant_id']) : null;
-
+            $merchant_ids = isset($data['merchant_ids']) ? ($data['merchant_ids']) : null;
             $this->registerCustomValidation();
 
             $validator = Validator::make(
@@ -105,31 +104,41 @@ class CreateUserBPPCommand extends Command {
             // Insert user
             DB::beginTransaction();
 
-            $newuser = new BppUser();
-            $newuser->name = $name;
-            $newuser->email = $email;
-            $newuser->password = Hash::make($password);
-            $newuser->status = $status;
-            $newuser->user_type = $user_type;
-            $newuser->base_merchant_id = $base_merchant_id;
-            $newuser->merchant_id = $merchant_id;
-            $newuser->save();
+            $newUser = new BppUser();
+            $newUser->name = $name;
+            $newUser->email = $email;
+            $newUser->password = Hash::make($password);
+            $newUser->status = $status;
+            $newUser->user_type = $user_type;
+            $newUser->base_merchant_id = $base_merchant_id;
+            $newUser->save();
+
+            // link to merchant/store
+            if ($user_type === 'store') {
+                foreach($merchant_ids as $key => $value) {
+                    $newUserMerchant = new BppUserMerchant();
+                    $newUserMerchant->bpp_user_id = $newUser->bpp_user_id;
+                    $newUserMerchant->merchant_id = $value;
+                    $newUserMerchant->save();
+                }
+            }
 
             $apikey = new Apikey();
-            $apikey->api_key = Apikey::genApiKey($newuser);
-            $apikey->api_secret_key = Apikey::genSecretKey($newuser);
+            $apikey->api_key = Apikey::genApiKey($newUser);
+            $apikey->api_secret_key = Apikey::genSecretKey($newUser);
             $apikey->status = 'active';
-            $apikey->user_id = $newuser->bpp_user_id;
-            $apikey = $newuser->apikey()->save($apikey);
+            $apikey->user_id = $newUser->bpp_user_id;
+            $apikey = $newUser->apikey()->save($apikey);
 
-            $newuser->setRelation('apikey', $apikey);
-            $newuser->apikey = $apikey;
-            $newuser->setHidden(array('password'));
+            $newUser->setRelation('apikey', $apikey);
+            $newUser->apikey = $apikey;
+            $newUser->setHidden(array('password'));
             $data['role'] = 'BPP user';
 
             DB::commit();
 
             $this->info( sprintf('User with email %s successfully created as a %s.', $data['email'], $data['role']) );
+            ($user_type === 'store') ? $this->info( sprintf('And linked to %s stores', count($merchant_ids)) ) : null;
 
         } catch (Exception $e) {
             DB::rollback();
