@@ -111,6 +111,7 @@ class CreateUserBPPCommand extends Command {
             $newUser->status = $status;
             $newUser->user_type = $user_type;
             $newUser->base_merchant_id = $base_merchant_id;
+            $newUser->merchant_id = is_array($merchant_ids) ? $merchant_ids[0] : $merchant_ids;
             $newUser->save();
 
             // link to merchant/store
