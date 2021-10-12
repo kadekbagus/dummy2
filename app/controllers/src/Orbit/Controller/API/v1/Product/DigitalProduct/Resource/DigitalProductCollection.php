@@ -47,6 +47,7 @@ class DigitalProductCollection extends ResourceCollection
                 'price' => $item->selling_price,
                 'status' => $item->status,
                 'provider_product' => $item->provider_product,
+                'game_name' => $item->game_name
             ];
         }
 
