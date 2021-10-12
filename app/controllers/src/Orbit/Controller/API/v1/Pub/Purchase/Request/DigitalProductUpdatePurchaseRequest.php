@@ -30,7 +30,7 @@ class DigitalProductUpdatePurchaseRequest extends ValidateRequest
                     'pending', 'success', 'cancel', 'canceled',
                     'failed', 'expired', 'denied', 'suspicious', 'abort',
                     'refund', 'partial_refund',
-                ]) . '|orbit.order.can_cancel',
+                ]) . '|orbit.order.can_change_status',
             'payment_method' => 'sometimes|required|in:' . implode(',', [
                     'midtrans', 'midtrans-qris', 'midtrans-shopeepay',
                     'stripe', 'dana',
@@ -55,8 +55,8 @@ class DigitalProductUpdatePurchaseRequest extends ValidateRequest
         Validator::extend('purchase_exists', 'Orbit\Controller\API\v1\Pub\Purchase\Validator\PurchaseValidator@exists');
 
         Validator::extend(
-            'orbit.order.can_cancel',
-            'Orbit\Helper\Cart\Validator\OrderValidator@canCancel'
+            'orbit.order.can_change_status',
+            'Orbit\Helper\Cart\Validator\OrderValidator@canChangeStatus'
         );
     }
 }

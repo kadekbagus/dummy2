@@ -73,15 +73,16 @@ class OrderValidator
         return $variant->quantity >= $requestedQuantity;
     }
 
-    public function canCancel($attr, $value, $params)
+    /**
+     * Validate that current Order status can be changed.
+     *
+     * @param  [type] $attr   [description]
+     * @param  [type] $value  [description]
+     * @param  [type] $params [description]
+     * @return [type]         [description]
+     */
+    public function canChangeStatus($attr, $value, $params)
     {
-        // If not cancellation request, then skip this rule.
-        // Otherwise, if a cancellation request, continue with more checking.
-        if ($value !== 'cancel') {
-            return true;
-        }
-
-        // If purchase not found, then return false
         if (! App::bound('purchase')) {
             return false;
         }
@@ -94,21 +95,53 @@ class OrderValidator
             return true;
         }
 
+        $orderId = $purchase->details->filter(function($detail) {
+            return $detail->object_type === 'order';
+        })->first()->object_id;
+
+        $order = Order::findOrFail($orderId);
+
+        App::instance('currentOrder', $order);
+
+        if ($value === 'cancel') {
+            return $this->canChangeStatusToCancel($purchase, $order);
+        }
+        else if ($value === 'picked_up') {
+            return $this->canChangeStatusToPickedUp($purchase, $order);
+        }
+
+        return false;
+    }
+
+    /**
+     * Validate that current Order can be cancelled by Customer.
+     *
+     * @param  [type] $purchase [description]
+     * @return [type]           [description]
+     */
+    private function canChangeStatusToCancel($purchase, $order)
+    {
         // Make sure to allow cancellation only if payment was paid.
         if ($purchase->status !== PaymentTransaction::STATUS_SUCCESS) {
             return false;
         }
 
         // At last, check if cancellation allowed on current Order status.
-        $detail = $purchase->details->filter(function($detail) {
-            return $detail->object_type === 'order';
-        })->first();
-
-        $order = Order::findOrFail($detail->object_id);
-
         return in_array($order->status, [
             Order::STATUS_PAID,
             Order::STATUS_READY_FOR_PICKUP,
         ]);
+    }
+
+    /**
+     * Validate that current Order can be set to PICKED_UP by Customer.
+     *
+     * @param  [type] $purchase [description]
+     * @return [type]           [description]
+     */
+    private function canChangeStatusToPickedUp($purchase, $order)
+    {
+        // At last, check if order status can be changed to PICKED UP.
+        return $order->status === Order::STATUS_READY_FOR_PICKUP;
     }
 }

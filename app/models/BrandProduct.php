@@ -153,7 +153,8 @@ class BrandProduct extends Eloquent
             ->whereIn('orders.status', [
                 Order::STATUS_PAID,
                 Order::STATUS_READY_FOR_PICKUP,
-                Order::STATUS_DONE
+                Order::STATUS_DONE,
+                Order::STATUS_PICKED_UP,
             ])
             ->groupBy($query->getForeignKey());
     }
