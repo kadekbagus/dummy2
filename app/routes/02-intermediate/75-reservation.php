@@ -39,3 +39,8 @@ Route::get(
         'uses' => 'IntermediatePubAuthController@Reservation\ReservationPurchasedDetail_getReservationPurchasedDetail',
     ]
 );
+
+Route::post('/app/v1/pub/reservation/picked-up', [
+    'as' => 'pub-reservation-picked-up',
+    'uses' => 'IntermediatePubAuthController@Reservation\ReservationPickedUp_handle',
+]);
