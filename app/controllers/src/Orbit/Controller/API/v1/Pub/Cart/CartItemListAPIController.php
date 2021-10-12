@@ -40,6 +40,8 @@ class CartItemListAPIController extends PubControllerAPI
                         {$prefix}merchants.merchant_id as store_id,
                         {$prefix}merchants.name as store_name,
                         {$prefix}merchants.floor,
+                        {$prefix}merchants.enable_reservation,
+                        {$prefix}merchants.enable_checkout,
                         {$prefix}merchants.unit,
                         mall.merchant_id as mall_id,
                         mall.name as mall_name,
