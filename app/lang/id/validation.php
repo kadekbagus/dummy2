@@ -554,6 +554,7 @@ return array(
             'rsvp_match_user' => 'Anda tidak berhak melihat/memproses reservasi tersebut.',
             'pikcup_location_valid' => 'Lokasi pengambilan item tidak sesuai.',
             'can_reserve' => 'Tidak dapat melakukan reservasi untuk 1 atau lebih produk. Silakan ulang beberapa saat lagi atau hubungi layanan pelanggan Gotomalls.',
+            'can_change_status' => 'Tidak dapat mengubah status Reservasi. Mohon pastikan status sudah benar dan coba beberapa saat lagi.',
         ),
 
         'rsvp' => array(

@@ -269,4 +269,12 @@ class ReservationRepository implements ReservationInterface
     {
         return $reservation->status === BrandProductReservation::STATUS_ACCEPTED;
     }
+
+    public function pickedUp($reservation)
+    {
+        $reservation->status = BrandProductReservation::STATUS_PICKED_UP;
+        $reservation->save();
+
+        return $reservation;
+    }
 }

@@ -48,4 +48,6 @@ interface ReservationInterface
      * @return bool accepted or not.
      */
     public function accepted($reservation);
+
+    public function pickedUp($reservation);
 }

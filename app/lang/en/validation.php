@@ -558,11 +558,12 @@ return array(
             'exists' => 'Selected Variant doesn\'t exist or inactive.',
             'available' => 'Selected Variant not available.',
             'quantity_available' => 'Requested quantity not available.',
-            'reservation_exists' => 'Reservation doesn\'t exists.',
+            'rsvp_exists' => 'Reservation doesn\'t exists.',
             'can_cancel_rsvp' => 'Reservation cannot be canceled.',
             'rsvp_match_user' => 'You are not allowed to view/process requested reservation.',
             'pikcup_location_valid' => 'Invalid pickup location for selected item.',
             'can_reserve' => 'Unable to make reservation because one or more item(s) not available. Please try again later or contact Gotomalls support.',
+            'can_change_status' => "Can't change Reservation status. Please make sure the status is correct and try again in a few moments.",
         ),
 
         'rsvp' => array(
