@@ -22,6 +22,7 @@ use Exception;
 use App;
 use Request;
 use Order;
+use BppUserMerchant;
 
 class OrderListAPIController extends ControllerAPI
 {
@@ -39,7 +40,8 @@ class OrderListAPIController extends ControllerAPI
             $user = App::make('currentUser');
             $userId = $user->bpp_user_id;
             $brandId = $user->base_merchant_id;
-            $merchantId = $user->merchant_id;
+            $userType = $user->user_type;
+            $merchantIds = $this->getStoreIds($userId);
 
             $status = OrbitInput::get('status', null);
             $sortBy = OrbitInput::get('sortby', null);
@@ -69,6 +71,7 @@ class OrderListAPIController extends ControllerAPI
             $orders = Order::select('orders.order_id',
                                     'orders.status',
                                     'orders.user_id',
+                                    'orders.merchant_id',
                                     DB::raw("CONCAT({$prefix}users.user_firstname,' ',{$prefix}users.user_lastname) as username"),
                                     DB::raw("{$prefix}media.path as user_picture"),
                                     'payment_transactions.status as payment_status',
@@ -109,7 +112,7 @@ class OrderListAPIController extends ControllerAPI
                             ->where('orders.brand_id', '=', $brandId)
                             ->whereNotIn('orders.status', ['pending', 'waiting_payment', 'expired']);
 
-            isset($merchantId) ? $orders->where('orders.merchant_id', '=', $merchantId) : null;
+            ($userType == 'store' && count($merchantIds)>0) ? $orders->whereIn('orders.merchant_id', $merchantIds) : null;
 
             OrbitInput::get('payment_status', function($status) use ($orders)
             {
@@ -211,4 +214,15 @@ class OrderListAPIController extends ControllerAPI
         return $this->render();
     }
 
+    public function getStoreIds($bpp_user_id)
+    {
+        $storeIds = [];
+        $stores = BppUserMerchant::select('merchant_id')->where('bpp_user_id', '=', $bpp_user_id)->get();
+
+        foreach($stores as $key => $value) {
+            $storeIds[] = $value->merchant_id;
+        }
+
+        return $storeIds;
+    }
 }

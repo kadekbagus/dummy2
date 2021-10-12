@@ -12,5 +12,11 @@ Route::get('/app/v1/brand-product/dashboard/count-reservation', ['as' => 'bpp-da
 // Route for average order amount
 Route::get('/app/v1/brand-product/dashboard/average-order', ['as' => 'bpp-dash-avg-order', 'uses' => 'IntermediateBrandProductAuthController@Dashboard\AverageAmount_get']);
 
-// Route for average order amount
+// Route for top 5 viewed products
 Route::get('/app/v1/brand-product/dashboard/top-five-product', ['as' => 'bpp-dash-top-five-product', 'uses' => 'IntermediateBrandProductAuthController@Dashboard\TopFiveProduct_get']);
+
+// Route for total product page views
+Route::get('/app/v1/brand-product/dashboard/total-views', ['as' => 'bpp-dash-total-views', 'uses' => 'IntermediateBrandProductAuthController@Dashboard\TotalViewProduct_get']);
+
+// Route for conversion rate
+Route::get('/app/v1/brand-product/dashboard/conversion-rate', ['as' => 'bpp-dash-conversion-rate', 'uses' => 'IntermediateBrandProductAuthController@Dashboard\ConversionRate_get']);
