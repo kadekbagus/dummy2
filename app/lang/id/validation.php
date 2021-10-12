@@ -570,6 +570,7 @@ return array(
             'can_order' => 'Satu atau beberapa item tidak tersedia. Mohon refresh laman dan ulang checkout.',
             'match_user' => 'Order tidak sesuai dengan profil Anda, silakan gunakan akun lain.',
             'can_cancel' => "Tidak dapat membatalkan pesanan. Pastikan status Pesanan belum Dibatalkan/Selesai.",
+            'can_change_status' => "Tidak dapat mengubah status Pesanan. Pastikan status Pesanan benar dan coba beberapa saat lagi.",
         ),
 
         'purchase' => array(

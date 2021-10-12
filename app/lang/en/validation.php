@@ -579,6 +579,7 @@ return array(
             'can_order' => 'One or more item(s) are not available. Please refresh the page and try again.',
             'match_user' => 'Order doesn\'t match your credential. Try using another GTM account.',
             'can_cancel' => "Can't cancel given Order/transaction. Please make sure Order is not done or cancelled.",
+            'can_change_status' => "Can't change status of the Order. Please make sure status is correct and try again later.",
         ),
 
         'purchase' => array(

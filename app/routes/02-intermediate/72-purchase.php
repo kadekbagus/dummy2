@@ -29,3 +29,8 @@ Route::get('/app/v1/pub/order-purchased/list', [
     'as' => 'pub-order-purchased-list',
     'uses' => 'IntermediatePubAuthController@Order\OrderPurchasedList_handle'
 ]);
+
+Route::post('app/v1/pub/order-purchased/update-status', [
+    'as' => 'pub-order-purchased-update-status',
+    'uses' => 'IntermediatePubAuthController@Order\OrderStatusUpdate_handle',
+]);
