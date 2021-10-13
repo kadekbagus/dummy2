@@ -28,8 +28,8 @@ class CartItemCollection extends ResourceCollection
                     'mall_id' => $item->mall_id,
                     'mall_name' => $item->mall_name,
                     'image_url' => $item->store_image_url,
-                    'can_reserve' => $item->enable_reservation === 1,
-                    'can_buy' => $item->enable_checkout === 1,
+                    'can_reserve' => (int) $item->enable_reservation,
+                    'can_buy' => (int) $item->enable_checkout,
                 ];
             }
 
