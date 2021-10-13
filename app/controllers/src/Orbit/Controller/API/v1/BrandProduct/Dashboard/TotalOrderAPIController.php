@@ -42,6 +42,7 @@ class TotalOrderAPIController extends ControllerAPI
             $start = Carbon::now()->startOfMonth()->subHours(7);
             $end = Carbon::now()->subHours(7);
 
+            // @todo: add filter to select all brands if user_type is GTM Admin
             $done = Order::selectRaw(
                     'count(order_id) as count_amount'
                 )

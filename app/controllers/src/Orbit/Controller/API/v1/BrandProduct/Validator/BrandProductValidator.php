@@ -91,17 +91,39 @@ class BrandProductValidator
 
     public function reservationCanBeCanceled($attrs, $value, $params)
     {
+        return $this->reservationStatusCanBeChanged($attrs, $value, ['cancel']);
+    }
+
+    public function reservationStatusCanBeChanged($attrs, $value, $params)
+    {
         if (! App::bound('reservation')) {
             return false;
         }
 
         $reservation = App::make('reservation');
 
-        return App::make('currentUser')->user_id === $reservation->user_id
-            && in_array($reservation->status, [
+        if ($params[0] === 'cancel') {
+            return $this->reservationCanBeCancelled($reservation);
+        }
+        else if ($params[0] === 'picked_up') {
+            return $this->reservationCanBePickedUp($reservation);
+        }
+
+        return false;
+    }
+
+    private function reservationCanBeCancelled($reservation)
+    {
+        return in_array($reservation->status, [
                 BrandProductReservation::STATUS_PENDING,
                 BrandProductReservation::STATUS_ACCEPTED,
             ]);
+    }
+
+    private function reservationCanBePickedUp($reservation)
+    {
+        return $reservation->status
+            === BrandProductReservation::STATUS_ACCEPTED;
     }
 
     public function matchReservationUser($attrs, $value, $params)

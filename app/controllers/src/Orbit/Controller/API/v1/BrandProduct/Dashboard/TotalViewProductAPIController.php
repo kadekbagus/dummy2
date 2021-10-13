@@ -17,14 +17,13 @@ use Activity;
 use Exception;
 use App;
 use DB;
-use Media;
 use Carbon\Carbon;
 
-class TopFiveProductAPIController extends ControllerAPI
+class TotalViewProductAPIController extends ControllerAPI
 {
 
     /**.
-     * Get top 5 viewed brand products
+     * Get total product detail page view for brands
      *
      * @author ahmad <ahmad@gotomalls.com>
      */
@@ -46,36 +45,18 @@ class TopFiveProductAPIController extends ControllerAPI
 
             // @todo: add filter to select all brands if user_type is GTM Admin
             $data = Activity::select(
-                    DB::raw('product_id, product_name, count(activity_id) as total_view')
+                    DB::raw('count(activity_id) as total_view')
                 )
                 ->where('object_id', $brandId)
                 ->where('object_name', 'BaseMerchant')
                 ->where('activity_name', 'view_instore_bp_detail_page')
                 ->where('created_at', '>=', $start)
                 ->where('created_at', '<=', $end)
-                ->groupBy('product_id')
-                ->orderBy(DB::raw('total_view'), 'desc')
-                ->take(5)
-                ->skip(0);
+                ->groupBy('product_id');
 
-            $data = $data->get();
+            $data = $data->first();
 
-            foreach ($data as $product) {
-                $product->cdn_url = null;
-                $product->image_url = null;
-
-                $img = Media::where('media_name_id', 'brand_product_main_photo')
-                    ->where('object_name', 'brand_product')
-                    ->where('object_id', $product->product_id)
-                    ->first();
-
-                if (is_object($img)) {
-                    $product->cdn_url = $img->cdn_url;
-                    $product->image_url = $img->path;
-                }
-            }
-
-            $this->response->data = $data;
+            $this->response->data = $data->total_view;
         } catch (Exception $e) {
             return $this->handleException($e);
         }

@@ -24,6 +24,7 @@ class Order extends Eloquent
     const STATUS_READY_FOR_PICKUP = 'ready_for_pickup';
     const STATUS_DONE = 'done';
     const STATUS_DECLINED = 'declined';
+    const STATUS_PICKED_UP = 'picked_up';
 
     protected $primaryKey = 'order_id';
 

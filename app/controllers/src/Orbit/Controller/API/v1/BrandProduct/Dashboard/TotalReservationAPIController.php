@@ -42,6 +42,7 @@ class TotalReservationAPIController extends ControllerAPI
             $start = Carbon::now()->startOfMonth()->subHours(7);
             $end = Carbon::now()->subHours(7);
 
+            // @todo: add filter to select all brands if user_type is GTM Admin
             $done = BrandProductReservation::selectRaw(
                     'count(brand_product_reservation_id) as count_amount'
                 )
