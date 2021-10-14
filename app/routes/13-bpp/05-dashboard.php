@@ -23,3 +23,7 @@ Route::get('/app/v1/brand-product/dashboard/conversion-rate', ['as' => 'bpp-dash
 
 // Route for daily order amount chart
 Route::get('/app/v1/brand-product/dashboard/daily-amount', ['as' => 'bpp-dash-daily-amount', 'uses' => 'IntermediateBrandProductAuthController@Dashboard\OrderAmountSeries_get']);
+
+// Route for total visitor
+Route::get('/app/v1/brand-product/dashboard/total-visitor', ['as' => 'bpp-dash-total-visitor', 'uses' => 'IntermediateBrandProductAuthController@Dashboard\TotalVisitor_get']);
+
