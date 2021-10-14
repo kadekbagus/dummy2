@@ -113,6 +113,9 @@ class MerchantNewAPIController extends ControllerAPI
             $videoId5 = OrbitInput::post('video_id_5');
             $videoId6 = OrbitInput::post('video_id_6');
 
+            $reservationCommission = OrbitInput::post('reservation_commission');
+            $purchaseCommission = OrbitInput::post('purchase_commission');
+
             // Begin database transaction
             $this->beginTransaction();
 
@@ -197,6 +200,8 @@ class MerchantNewAPIController extends ControllerAPI
             $newBaseMerchant->video_id_6 = $videoId6;
             $newBaseMerchant->disable_ads = $disable_ads;
             $newBaseMerchant->disable_ymal = $disable_ymal;
+            $newBaseMerchant->reservation_commission = $reservationCommission;
+            $newBaseMerchant->purchase_commission = $purchaseCommission;
 
             if (! empty($translations) ) {
                 $dataTranslations = @json_decode($translations);
