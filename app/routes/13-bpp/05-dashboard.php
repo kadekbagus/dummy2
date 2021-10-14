@@ -20,3 +20,6 @@ Route::get('/app/v1/brand-product/dashboard/total-views', ['as' => 'bpp-dash-tot
 
 // Route for conversion rate
 Route::get('/app/v1/brand-product/dashboard/conversion-rate', ['as' => 'bpp-dash-conversion-rate', 'uses' => 'IntermediateBrandProductAuthController@Dashboard\ConversionRate_get']);
+
+// Route for daily order amount chart
+Route::get('/app/v1/brand-product/dashboard/daily-amount', ['as' => 'bpp-dash-daily-amount', 'uses' => 'IntermediateBrandProductAuthController@Dashboard\OrderAmountSeries_get']);

@@ -2956,7 +2956,7 @@ return array(
             'name' => 'click_instore_bp_list_page',
             'name_long' => 'Click In Store Brand Product List Page',
             'module_name' => 'Brand Product',
-            'type' => 'view',
+            'type' => 'click',
             'object_type' => null,
             'parameter_name' => null,
         ),
