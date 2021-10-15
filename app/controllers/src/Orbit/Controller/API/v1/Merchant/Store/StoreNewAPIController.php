@@ -119,6 +119,9 @@ class StoreNewAPIController extends ControllerAPI
             $translations = OrbitInput::post('translations');
             $banner = OrbitInput::files('banner', null);
 
+            $reservationCommission = OrbitInput::post('reservation_commission');
+            $purchaseCommission = OrbitInput::post('purchase_commission');
+
             $storeHelper = StoreHelper::create();
             $storeHelper->storeCustomValidator();
 
@@ -205,6 +208,8 @@ class StoreNewAPIController extends ControllerAPI
             $newstore->video_id_6 = $videoId6;
             $newstore->disable_ads = $disable_ads;
             $newstore->disable_ymal = $disable_ymal;
+            $newstore->reservation_commission = $reservationCommission;
+            $newstore->purchase_commission = $purchaseCommission;
 
             // Translations
             OrbitInput::post('translations', function($translations) use ($newstore) {

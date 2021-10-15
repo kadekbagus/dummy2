@@ -221,6 +221,14 @@ class MerchantUpdateAPIController extends ControllerAPI
                 $updatedBaseMerchant->disable_ymal = $disable_ymal;
             });
 
+            OrbitInput::post('reservation_commission', function($reservation_commission) use ($updatedBaseMerchant) {
+                $updatedBaseMerchant->reservation_commission = $reservation_commission;
+            });
+
+            OrbitInput::post('purchase_commission', function($purchase_commission) use ($updatedBaseMerchant) {
+                $updatedBaseMerchant->purchase_commission = $purchase_commission;
+            });
+
             // Translations
             $idLanguageEnglish = Language::select('language_id')->where('name', '=', 'en')->first();
 

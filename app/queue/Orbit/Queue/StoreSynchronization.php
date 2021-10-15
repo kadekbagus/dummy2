@@ -237,6 +237,8 @@ class StoreSynchronization
                     $tenant->video_id_6 = $baseStore->video_id_6;
                     $tenant->disable_ads = $baseStore->disable_ads;
                     $tenant->disable_ymal = $baseStore->disable_ymal;
+                    $tenant->reservation_commission = $baseStore->reservation_commission;
+                    $tenant->purchase_commission =  $baseStore->purchase_commission;
                     $tenant->save();
 
                     // handle inactive store

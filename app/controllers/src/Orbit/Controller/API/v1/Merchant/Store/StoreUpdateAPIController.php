@@ -262,6 +262,14 @@ class StoreUpdateAPIController extends ControllerAPI
                 $updatestore->disable_ymal = $disable_ymal;
             });
 
+            OrbitInput::post('reservation_commission', function($reservation_commission) use ($updatestore) {
+                $updatestore->reservation_commission = $reservation_commission;
+            });
+
+            OrbitInput::post('purchase_commission', function($purchase_commission) use ($updatestore) {
+                $updatestore->purchase_commission = $purchase_commission;
+            });
+
             // Translations
             $idLanguageEnglish = Language::select('language_id')->where('name', '=', 'en')->first();
 
