@@ -190,7 +190,9 @@ class OrderUpdateStatusAPIController extends ControllerAPI
             // }
 
             if ($status === Order::STATUS_DONE) {
-                if ($order->status !== Order::STATUS_READY_FOR_PICKUP) {
+                if ($order->status !== Order::STATUS_READY_FOR_PICKUP
+                    || $order->status !== Order::STATUS_PICKED_UP
+                ) {
                     return FALSE;
                 }
             }
