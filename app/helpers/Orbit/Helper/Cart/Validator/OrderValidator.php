@@ -110,7 +110,7 @@ class OrderValidator
             return $this->canChangeStatusToPickedUp($purchase, $order);
         }
 
-        return false;
+        return true;
     }
 
     /**
