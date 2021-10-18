@@ -59,6 +59,7 @@ class OrderUpdateStatusAPIController extends ControllerAPI
                                                                     Order::STATUS_DECLINED,
                                                                     Order::STATUS_CANCELLED,
                                                                     Order::STATUS_DONE,
+                                                                    Order::STATUS_NOT_DONE,
                                         ]),
                 ),
                 array(
@@ -68,7 +69,8 @@ class OrderUpdateStatusAPIController extends ControllerAPI
                     'status.in' => 'available status are: '.Order::STATUS_READY_FOR_PICKUP.','
                                                            .Order::STATUS_DECLINED.','
                                                            .Order::STATUS_CANCELLED.','
-                                                           .Order::STATUS_DONE
+                                                           .Order::STATUS_DONE.','
+                                                           .Order::STATUS_NOT_DONE,
                 )
             );
 
@@ -99,6 +101,10 @@ class OrderUpdateStatusAPIController extends ControllerAPI
             // done/confirm order
             if ($status === Order::STATUS_DONE) {
                 Order::done($orderId, $userId);
+            }
+
+            if ($status === Order::STATUS_NOT_DONE) {
+                Order::markAsNotDone($orderId);
             }
 
             // Commit the changes
