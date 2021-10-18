@@ -35,6 +35,12 @@ class AverageAmountAPIController extends ControllerAPI
             $userId = $user->bpp_user_id;
             $brandId = $user->base_merchant_id;
             $userType = $user->user_type;
+            $stores = $user->stores()->get();
+            $merchantIds = [];
+
+            foreach ($stores as $store) {
+                $merchantIds[] = $store->merchant_id;
+            }
 
             // @todo: Cache the result based on the brand and/or merchant ids
 
@@ -51,7 +57,7 @@ class AverageAmountAPIController extends ControllerAPI
                 ->where('created_at', '>=', $start)
                 ->where('created_at', '<=', $end);
 
-            if ($userType !== 'brand') {
+            if ($userType === 'store') {
                 $data->whereIn('merchant_id', $merchantIds);
             }
 
