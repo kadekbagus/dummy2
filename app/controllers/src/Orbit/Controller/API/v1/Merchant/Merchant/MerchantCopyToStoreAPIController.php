@@ -118,6 +118,8 @@ class MerchantCopyToStoreAPIController extends ControllerAPI
                     $store->video_id_6 = $baseMerchant->video_id_6;
                     $store->description = $baseMerchant->description;
                     $store->custom_title = $baseMerchant->custom_title;
+                    $store->reservation_commission = $baseMerchant->reservation_commission;
+                    $store->purchase_commission = $baseMerchant->purchase_commission;
                     $store->save();
 
                     // delete previous translation

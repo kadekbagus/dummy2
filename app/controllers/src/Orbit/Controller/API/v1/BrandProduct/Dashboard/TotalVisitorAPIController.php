@@ -19,7 +19,7 @@ use App;
 use DB;
 use Carbon\Carbon;
 
-class TotalViewProductAPIController extends ControllerAPI
+class TotalVisitorAPIController extends ControllerAPI
 {
 
     /**.
@@ -45,7 +45,7 @@ class TotalViewProductAPIController extends ControllerAPI
 
             // @todo: add filter to select all brands if user_type is GTM Admin
             $data = Activity::select(
-                    DB::raw('count(activity_id) as total_view')
+                    DB::raw('count(distinct user_id) as unique_user')
                 )
                 ->where('object_id', $brandId)
                 ->where('object_name', 'BaseMerchant')
@@ -55,7 +55,7 @@ class TotalViewProductAPIController extends ControllerAPI
 
             $data = $data->first();
 
-            $this->response->data = $data->total_view;
+            $this->response->data = $data->unique_user;
         } catch (Exception $e) {
             return $this->handleException($e);
         }
