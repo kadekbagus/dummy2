@@ -56,12 +56,20 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                             BrandProductReservation::STATUS_ACCEPTED,
                             BrandProductReservation::STATUS_DECLINED,
                             BrandProductReservation::STATUS_DONE,
+                            BrandProductReservation::STATUS_NOT_DONE,
+                            BrandProductReservation::STATUS_PICKED_UP,
                         ]),
                 ),
                 array(
                     'orbit.reservation.exists' => 'Reservation not found',
                     'reservation_id.required' => 'Reservation ID is required',
-                    'status.in' => 'available status are: '.BrandProductReservation::STATUS_ACCEPTED.','.BrandProductReservation::STATUS_DECLINED
+                    'status.in' => 'available status are: '. join(', ', [
+                        BrandProductReservation::STATUS_ACCEPTED,
+                        BrandProductReservation::STATUS_DECLINED,
+                        BrandProductReservation::STATUS_DONE,
+                        BrandProductReservation::STATUS_NOT_DONE,
+                        BrandProductReservation::STATUS_PICKED_UP,
+                    ]),
                 )
             );
 
