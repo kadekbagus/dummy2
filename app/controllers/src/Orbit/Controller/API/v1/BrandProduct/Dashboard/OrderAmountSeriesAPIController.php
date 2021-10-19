@@ -18,6 +18,7 @@ use Order;
 use Exception;
 use App;
 use Carbon\Carbon;
+use DB;
 
 class OrderAmountSeriesAPIController extends ControllerAPI
 {
@@ -51,7 +52,7 @@ class OrderAmountSeriesAPIController extends ControllerAPI
             // @todo: add filter to select all brands if user_type is GTM Admin
             $orders = DB::select(DB::raw("
                     SELECT
-                        sequences.ts AS series, COALESCE(sum(datas.total), 0) AS total_daily_amount
+                        sequences.ts AS label, COALESCE(sum(datas.total), 0) AS total_daily_amount
                     FROM
                         (SELECT
                             DATE_FORMAT(DATE_ADD({$quote($start)}, INTERVAL {$tablePrefix}sequence.sequence_number - 1 DAY), '%m/%d/%Y') AS ts

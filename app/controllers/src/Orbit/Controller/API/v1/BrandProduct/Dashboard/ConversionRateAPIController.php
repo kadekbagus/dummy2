@@ -39,6 +39,10 @@ class ConversionRateAPIController extends ControllerAPI
             $userId = $user->bpp_user_id;
             $brandId = $user->base_merchant_id;
             $userType = $user->user_type;
+            $merchantIds = [];
+            foreach ($stores as $store) {
+                $merchantIds[] = $store->merchant_id;
+            }
 
             // @todo: Cache the result based on the brand and/or merchant ids
 
@@ -67,6 +71,10 @@ class ConversionRateAPIController extends ControllerAPI
                 ->where('status', Order::STATUS_PENDING)
                 ->where('created_at', '>=', $start)
                 ->where('created_at', '<=', $end);
+
+            if ($userType === 'store') {
+                $order->whereIn('merchant_id', $merchantIds);
+            }
 
             $order = $order->first();
             $totalUniqueBuyer = $order->unique_user;
