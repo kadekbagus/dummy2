@@ -26,7 +26,7 @@ class SettingStoreUpdateAPIController extends ControllerAPI
 {
 
     /**
-     * Update setting commission
+     * Update setting store
      *
      * @author Kadek <kadek@dominopos.com>
      */
@@ -126,8 +126,8 @@ class SettingStoreUpdateAPIController extends ControllerAPI
 
             foreach($settings as $key => $value) {
                 if (!isset($value['merchant_id']) || 
-                    !isset($value['reservation_commission']) || 
-                    !isset($value['purchase_commission'])) {
+                    !isset($value['enable_reservation']) || 
+                    !isset($value['enable_checkout'])) {
                         return FALSE;
                 }
             }
@@ -144,14 +144,14 @@ class SettingStoreUpdateAPIController extends ControllerAPI
         foreach($settings as $key => $value) {
             $store = Tenant::where('merchant_id', '=', $value['merchant_id'])->first();
             if ($store) {
-                $store->reservation_commission = $value['reservation_commission'];
-                $store->purchase_commission = $value['purchase_commission'];
+                $store->enable_reservation = $value['enable_reservation'];
+                $store->enable_checkout = $value['enable_checkout'];
                 $store->save();
     
                 $data = new StdClass();
                 $data->merchant_id = $store->merchant_id;
-                $data->reservation_commission = $store->reservation_commission;
-                $data->purchase_commission = $store->purchase_commission;
+                $data->enable_reservation = $store->enable_reservation;
+                $data->enable_checkout = $store->enable_checkout;
                 $returnedData[] = $data;
             }
         }
