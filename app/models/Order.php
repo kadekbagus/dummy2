@@ -25,6 +25,7 @@ class Order extends Eloquent
     const STATUS_DONE = 'done';
     const STATUS_DECLINED = 'declined';
     const STATUS_PICKED_UP = 'picked_up';
+    const STATUS_NOT_DONE = 'not_done';
 
     protected $primaryKey = 'order_id';
 
@@ -342,6 +343,41 @@ class Order extends Eloquent
         // Event::fire('orbit.cart.order-declined', [$order]);
 
         return $order;
+    }
+
+    /**
+     * Mark order(s) as not done.
+     *
+     * @param  array   $orderId    [description]
+     * @param  boolean $restoreQty [description]
+     * @return [type]              [description]
+     */
+    public static function markAsNotDone($orderId = [], $restoreQty = true)
+    {
+        if (is_string($orderId)) {
+            $orderId = explode(',', $orderId);
+        }
+
+        $orders = Order::with(['details.brand_product_variant', 'payment_detail'])
+            ->whereIn('order_id', $orderId)
+            ->get();
+
+        foreach($orders as $order) {
+            $order->status = Order::STATUS_NOT_DONE;
+            $order->save();
+
+            if ($restoreQty) {
+                $order->details->each(function($detail) {
+                    if ($detail->brand_product_variant) {
+                        $detail->brand_product_variant->increment(
+                            'quantity', $detail->quantity
+                        );
+                    }
+                });
+            }
+        }
+
+        return $orders;
     }
 
     public static function getPurchasedQuantity($variantId)
