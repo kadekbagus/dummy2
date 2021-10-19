@@ -13,17 +13,17 @@ use Validator;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Util\PaginationNumber;
 use stdclass;
-use PaymentTransaction;
-use Order;
+use Activity;
 use Exception;
 use App;
+use DB;
 use Carbon\Carbon;
 
-class TotalAmountAPIController extends ControllerAPI
+class TotalVisitorAPIController extends ControllerAPI
 {
 
-    /**
-     * Get Month to date Total successful order amount
+    /**.
+     * Get total product detail page view for brands
      *
      * @author ahmad <ahmad@gotomalls.com>
      */
@@ -36,12 +36,6 @@ class TotalAmountAPIController extends ControllerAPI
             $userId = $user->bpp_user_id;
             $brandId = $user->base_merchant_id;
             $userType = $user->user_type;
-            $stores = $user->stores()->get();
-            $merchantIds = [];
-
-            foreach ($stores as $store) {
-                $merchantIds[] = $store->merchant_id;
-            }
 
             // @todo: Cache the result based on the brand and/or merchant ids
 
@@ -50,21 +44,18 @@ class TotalAmountAPIController extends ControllerAPI
             $end = Carbon::now()->subHours(7);
 
             // @todo: add filter to select all brands if user_type is GTM Admin
-            $orders = Order::selectRaw(
-                    'sum(total_amount) as sum_amount'
+            $data = Activity::select(
+                    DB::raw('count(distinct user_id) as unique_user')
                 )
-                ->where('brand_id', $brandId)
-                ->where('status', 'done')
+                ->where('object_id', $brandId)
+                ->where('object_name', 'BaseMerchant')
+                ->where('activity_name', 'view_instore_bp_detail_page')
                 ->where('created_at', '>=', $start)
                 ->where('created_at', '<=', $end);
 
-            if ($userType === 'store') {
-                $orders->whereIn('merchant_id', $merchantIds);
-            }
+            $data = $data->first();
 
-            $sum = $orders->first();
-
-            $this->response->data = $sum->sum_amount;
+            $this->response->data = $data->unique_user;
         } catch (Exception $e) {
             return $this->handleException($e);
         }

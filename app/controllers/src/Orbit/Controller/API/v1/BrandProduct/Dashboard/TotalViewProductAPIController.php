@@ -51,8 +51,7 @@ class TotalViewProductAPIController extends ControllerAPI
                 ->where('object_name', 'BaseMerchant')
                 ->where('activity_name', 'view_instore_bp_detail_page')
                 ->where('created_at', '>=', $start)
-                ->where('created_at', '<=', $end)
-                ->groupBy('product_id');
+                ->where('created_at', '<=', $end);
 
             $data = $data->first();
 
