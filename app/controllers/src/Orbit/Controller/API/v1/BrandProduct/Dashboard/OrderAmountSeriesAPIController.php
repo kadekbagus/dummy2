@@ -55,11 +55,11 @@ class OrderAmountSeriesAPIController extends ControllerAPI
                         sequences.ts AS label, COALESCE(sum(datas.total), 0) AS total_daily_amount
                     FROM
                         (SELECT
-                            DATE_FORMAT(DATE_ADD({$quote($start)}, INTERVAL {$tablePrefix}sequence.sequence_number - 1 DAY), '%m/%d/%Y') AS ts
+                            DATE_FORMAT(DATE_ADD({$quote($start)}, INTERVAL {$tablePrefix}sequence.sequence_number), '%m/%d/%Y') AS ts
                         FROM
                             {$tablePrefix}sequence
                         WHERE
-                            DATE_ADD({$quote($start)}, INTERVAL {$tablePrefix}sequence.sequence_number - 1 DAY) <= {$quote($end)}) sequences
+                            DATE_ADD({$quote($start)}, INTERVAL {$tablePrefix}sequence.sequence_number) <= {$quote($end)}) sequences
                     LEFT JOIN
                         (
                             select DATE_FORMAT(created_at, '%m/%d/%Y') as dtx, sum(total_amount) as total from {$tablePrefix}orders
