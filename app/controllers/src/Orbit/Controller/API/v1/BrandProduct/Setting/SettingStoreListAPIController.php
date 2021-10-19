@@ -84,6 +84,16 @@ class SettingStoreListAPIController extends ControllerAPI
                                     ->where('bpp_user_merchants.bpp_user_id', $userId);
             }
 
+            OrbitInput::get('merchant_id', function($merchant_id) use ($stores)
+            {
+                $stores->where('merchants.merchant_id', $merchant_id);
+            });
+
+            OrbitInput::get('store_name', function($store_name) use ($stores)
+            {
+                $stores->having('store_name',  'like', "%$store_name%");
+            });
+
             OrbitInput::get('status', function($status) use ($stores)
             {
                 $stores->where('merchants.status', $status);
