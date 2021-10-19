@@ -50,13 +50,13 @@ return [
         'title' => 'Produk Siap Diambil',
         'greeting' => 'Hello :recipientName,',
         'body' => [
-            'line-user' => 'Pesanan anda siap untuk diambil! Kunjungi lokasi pengambilan dan tunjukan kode berikut ke kasir toko.',
+            'line-user' => 'Pesanan anda siap untuk diambil! Kunjungi lokasi pengambilan dan tekan tombol "sudah diambil" saat berada di lokasi pengambilan.',
             'line-admin' => 'Ada pesanan siap untuk diambil! Berikut ini adalah detil pesanan, mohon untuk ditindak lanjuti.',
             'help' => 'Please contact our customer service at <a style="color:#f43d3c;text-decoration:none;" href="tel::csPhone">:csPhone</a> or email at <a style="color:#f43d3c;text-decoration:none;" href="mailto::csEmail">:csEmail</a> if you find any difficulties.',
             'thank_you' => '',
         ],
         'btn_follow_up' => [
-            'user' => 'Buka Riwayat Pembelian',
+            'user' => 'Buka Halaman Detail Transaksi',
             'admin' => 'Proses Pesanan'
         ]
     ],
