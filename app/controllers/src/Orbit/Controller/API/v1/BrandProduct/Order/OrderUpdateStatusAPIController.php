@@ -104,7 +104,7 @@ class OrderUpdateStatusAPIController extends ControllerAPI
             }
 
             if ($status === Order::STATUS_NOT_DONE) {
-                Order::markAsNotDone($orderId);
+                Order::markAsNotDone($orderId, false);
             }
 
             // Commit the changes
