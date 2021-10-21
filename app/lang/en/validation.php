@@ -564,6 +564,7 @@ return array(
             'pikcup_location_valid' => 'Invalid pickup location for selected item.',
             'can_reserve' => 'Unable to make reservation because one or more item(s) not available. Please try again later or contact Gotomalls support.',
             'can_change_status' => "Can't change Reservation status. Please make sure the status is correct and try again in a few moments.",
+            'reservation_enabled' => 'Reservation is disabled for the Store. Please try with another store/pickup location.',
         ),
 
         'rsvp' => array(

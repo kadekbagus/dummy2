@@ -555,6 +555,7 @@ return array(
             'pikcup_location_valid' => 'Lokasi pengambilan item tidak sesuai.',
             'can_reserve' => 'Tidak dapat melakukan reservasi untuk 1 atau lebih produk. Silakan ulang beberapa saat lagi atau hubungi layanan pelanggan Gotomalls.',
             'can_change_status' => 'Tidak dapat mengubah status Reservasi. Mohon pastikan status sudah benar dan coba beberapa saat lagi.',
+            'reservation_enabled' => 'Layanan Reservasi tidak aktif untuk Toko tersebut. Silakan coba lagi di Toko/Lokasi pengambilan yang lain.',
         ),
 
         'rsvp' => array(
