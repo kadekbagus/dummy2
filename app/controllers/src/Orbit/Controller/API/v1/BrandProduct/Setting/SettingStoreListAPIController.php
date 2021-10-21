@@ -111,9 +111,9 @@ class SettingStoreListAPIController extends ControllerAPI
             $stores->skip($skip);
 
             // Default sort by
-            $sortBy = 'merchants.updated_at';
+            $sortBy = DB::raw("m1.name");
             // Default sort mode
-            $sortMode = 'desc';
+            $sortMode = 'asc';
 
             OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
             {
