@@ -92,7 +92,7 @@ Event::listen('orbit.order.ready-for-pickup', function($orderId, $bppUserId)
         $transaction = ['orderId' => $order->order_id,
                         'total'   => Order::formatCurrency($order->total_payment, $order->currency),
                         'items'   => $order->order_details->toArray(),
-                        'followUpUrl' => Config::get('orbit.shop.gtm_url').'/my/purchases/orders',
+                        'followUpUrl' => Config::get('orbit.shop.gtm_url').'/my/purchases/orders/detail?type=order&id='.$order->order_id,
                         ];
 
         $format = 'd F Y, H:i';

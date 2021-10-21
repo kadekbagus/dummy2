@@ -22,6 +22,7 @@ class BrandProductReservation extends Eloquent
     const STATUS_DONE = 'done';
     const STATUS_EXPIRED = 'expired';
     const STATUS_PICKED_UP = 'picked_up';
+    const STATUS_NOT_DONE = 'not_done';
 
     public function users() {
         return $this->belongsTo('User', 'user_id', 'user_id');

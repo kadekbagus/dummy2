@@ -49,13 +49,6 @@
                           {{ trans('email-order.pickup-order.body.line-admin', [], '', $lang) }}
                         @endif
                         </p>
-
-                        @if ($type === 'user')
-                        <div align="center">
-                          <h1 style="color: #FF0000;">{{ $pickUpCode }}</h1>
-                        </div>
-                        @endif
-
                       </td>
                     </tr>
                     <tr>
