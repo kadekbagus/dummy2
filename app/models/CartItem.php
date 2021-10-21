@@ -26,7 +26,7 @@ class CartItem extends Eloquent
         return $this->belongsTo(BrandProductVariant::class);
     }
 
-    public function store()
+    public function stores()
     {
         return $this->belongsTo(Tenant::class);
     }

@@ -573,6 +573,7 @@ return array(
             'match_user' => 'Order tidak sesuai dengan profil Anda, silakan gunakan akun lain.',
             'can_cancel' => "Tidak dapat membatalkan pesanan. Pastikan status Pesanan belum Dibatalkan/Selesai.",
             'can_change_status' => "Tidak dapat mengubah status Pesanan. Pastikan status Pesanan benar dan coba beberapa saat lagi.",
+            'order_enabled' => 'Order/pembelian tidak aktif untuk Toko tersebut. Silakan coba lagi di Toko/lokasi pengambilan yang lain.',
         ),
 
         'purchase' => array(

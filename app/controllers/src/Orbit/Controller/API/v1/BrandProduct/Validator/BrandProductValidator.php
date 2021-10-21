@@ -203,14 +203,14 @@ class BrandProductValidator
             $cartItemIds = [$cartItemIds];
         }
 
-        $cartItem = CartItem::with(['store'])
+        $cartItem = CartItem::with(['stores'])
             ->whereIn('cart_item_id', $cartItemIds)
             ->where('user_id', App::make('currentUser')->user_id)
             ->active()
             ->first();
 
-        if ($cartItem->store) {
-            return (int) $cartItem->store->enable_reservation === 1;
+        if ($cartItem->stores) {
+            return (int) $cartItem->stores->enable_reservation === 1;
         }
 
         return false;
