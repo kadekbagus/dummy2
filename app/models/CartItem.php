@@ -28,7 +28,7 @@ class CartItem extends Eloquent
 
     public function stores()
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Tenant::class, 'merchant_id', 'merchant_id');
     }
 
     public function updateItem($cartItemId, $request)
