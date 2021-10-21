@@ -25,7 +25,8 @@ Event::listen('orbit.order.ready-for-pickup', function($orderId, $bppUserId)
                                 'payment_transactions.phone',
                                 'payment_transactions.created_at',
                                 'payment_transactions.timezone_name',
-                                'payment_transactions.currency'
+                                'payment_transactions.currency',
+                                'payment_transaction_details.payment_transaction_id'
                             )
                         ->join('payment_transaction_details', function ($q) {
                                 $q->on('payment_transaction_details.object_id','=','orders.order_id');
@@ -92,7 +93,7 @@ Event::listen('orbit.order.ready-for-pickup', function($orderId, $bppUserId)
         $transaction = ['orderId' => $order->order_id,
                         'total'   => Order::formatCurrency($order->total_payment, $order->currency),
                         'items'   => $order->order_details->toArray(),
-                        'followUpUrl' => Config::get('orbit.shop.gtm_url').'/my/purchases/orders/detail?type=order&id='.$order->order_id,
+                        'followUpUrl' => Config::get('orbit.shop.gtm_url').'/my/purchases/detail?type=order&orderId='.$order->payment_transaction_id,
                         ];
 
         $format = 'd F Y, H:i';
