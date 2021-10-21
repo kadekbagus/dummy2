@@ -66,7 +66,7 @@ class SettingStoreListAPIController extends ControllerAPI
 									 'merchants.status',
 									 'merchants.enable_reservation',
 									 'merchants.enable_checkout',
-									 DB::raw("CONCAT({$prefix}merchants.name,' ', m1.name) as store_name"))
+									 DB::raw("CONCAT({$prefix}merchants.name,' at ', m1.name) as store_name"))
 								->join('base_stores', 'base_stores.base_store_id', '=', 'merchants.merchant_id')
 								->join('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
 								->join(DB::raw("{$prefix}merchants as m1"), DB::raw('m1.merchant_id'), '=', 'merchants.parent_id')
@@ -78,7 +78,7 @@ class SettingStoreListAPIController extends ControllerAPI
 									     'merchants.status',
 									     'merchants.enable_reservation',
 									     'merchants.enable_checkout',
-									     DB::raw("CONCAT({$prefix}merchants.name,' ', m1.name) as store_name"))
+									     DB::raw("CONCAT({$prefix}merchants.name,' at ', m1.name) as store_name"))
                                     ->join('bpp_user_merchants', 'bpp_user_merchants.merchant_id', '=', 'merchants.merchant_id')
                                     ->join(DB::raw("{$prefix}merchants as m1"), DB::raw('m1.merchant_id'), '=', 'merchants.parent_id')
                                     ->where('bpp_user_merchants.bpp_user_id', $userId);
