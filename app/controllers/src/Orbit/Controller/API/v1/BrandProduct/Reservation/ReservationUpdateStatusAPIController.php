@@ -59,7 +59,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                             BrandProductReservation::STATUS_NOT_DONE,
                             BrandProductReservation::STATUS_PICKED_UP,
                         ])
-                        . 'orbit.reservation.can_change_status',
+                        . '|orbit.reservation.can_change_status',
                 ),
                 array(
                     'orbit.reservation.exists' => 'Reservation not found',
@@ -83,7 +83,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $reservation = App::make('orbit.reservation.exists');
+            $reservation = App::make('reservation');
 
             if ($reservation->status === BrandProductReservation::STATUS_DONE) {
                 $errorMessage = 'Reservation already done';
@@ -250,7 +250,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                 return FALSE;
             }
 
-            App::instance('orbit.reservation.exists', $reservation);
+            App::instance('reservation', $reservation);
 
             return TRUE;
         });
