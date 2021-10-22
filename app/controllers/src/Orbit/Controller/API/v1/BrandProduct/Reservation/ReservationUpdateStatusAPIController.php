@@ -111,7 +111,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
 
             if ($status === BrandProductReservation::STATUS_DECLINED) {
 
-                if ($previousStatus === BrandProductReservation::STATUS_CANCELLED) {
+                if ($previousStatus === BrandProductReservation::STATUS_CANCELED) {
                     $errorMessage = 'Can\'t decline because reservation already cancelled. Please refresh the page.';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
