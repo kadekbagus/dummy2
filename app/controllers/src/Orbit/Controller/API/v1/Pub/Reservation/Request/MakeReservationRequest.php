@@ -23,7 +23,11 @@ class MakeReservationRequest extends ValidateRequest
         switch ($this->object_type) {
             case 'brand_product':
                 $rules += [
-                    'object_id' => 'required|orbit.brand_product_variant.can_reserve',
+                    'object_id' => join('|', [
+                        'required',
+                        'orbit.brand_product_variant.can_reserve',
+                        'orbit.brand_product_variant.reservation_enabled',
+                    ]),
                 ];
                 break;
 
@@ -43,6 +47,11 @@ class MakeReservationRequest extends ValidateRequest
         Validator::extend(
             'orbit.brand_product_variant.can_reserve',
             'Orbit\Controller\API\v1\BrandProduct\Validator\BrandProductValidator@canReserve'
+        );
+
+        Validator::extend(
+            'orbit.brand_product_variant.reservation_enabled',
+            'Orbit\Controller\API\v1\BrandProduct\Validator\BrandProductValidator@reservationEnabled'
         );
     }
 }

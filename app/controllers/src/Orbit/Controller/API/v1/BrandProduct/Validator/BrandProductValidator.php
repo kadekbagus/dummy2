@@ -197,6 +197,25 @@ class BrandProductValidator
         return $available > 0 && $available === $cartItems->count();
     }
 
+    public function reservationEnabled($attr, $cartItemIds, $params)
+    {
+        if (is_string($cartItemIds)) {
+            $cartItemIds = [$cartItemIds];
+        }
+
+        $cartItem = CartItem::with(['stores'])
+            ->whereIn('cart_item_id', $cartItemIds)
+            ->where('user_id', App::make('currentUser')->user_id)
+            ->active()
+            ->first();
+
+        if ($cartItem->stores) {
+            return (int) $cartItem->stores->enable_reservation === 1;
+        }
+
+        return false;
+    }
+
     private function validateBrandProductQuantity($variant, $requestedQuantity)
     {
         return $variant->quantity >= $requestedQuantity;

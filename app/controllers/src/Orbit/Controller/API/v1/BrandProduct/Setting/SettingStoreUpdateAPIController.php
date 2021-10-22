@@ -47,11 +47,12 @@ class SettingStoreUpdateAPIController extends ControllerAPI
                     'setting_data'  => $settingData,
                 ),
                 array(
-                    'setting_data'  => 'required|orbit.validate.json',
+                    'setting_data'  => 'required|orbit.validate.json|orbit.enable_at_least_one',
                 ),
                 array(
                     'setting_data.required' => 'Setting required',
                     'orbit.validate.json'   => 'Invalid json format',
+                    'orbit.enable_at_least_one' => 'Can\'t disable both reservation and checkout at the same time, please check again.',
                 )
             );
 
@@ -133,6 +134,26 @@ class SettingStoreUpdateAPIController extends ControllerAPI
             }
 
             return TRUE;
+        });
+
+        Validator::extend('orbit.enable_at_least_one', function($attr, $value, $params) {
+            $settings = @json_decode($value, true);
+
+            if (json_last_error() != JSON_ERROR_NONE) {
+                return FALSE;
+            }
+
+            foreach($settings as $setting) {
+                if (isset($setting['enable_reservation'])
+                    && isset($setting['enable_checkout'])
+                    && $setting['enable_reservation'] === 0
+                    && $setting['enable_checkout'] === 0
+                ) {
+                    return false;
+                }
+            }
+
+            return true;
         });
     }
 
