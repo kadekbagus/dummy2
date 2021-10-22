@@ -58,7 +58,8 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                             BrandProductReservation::STATUS_DONE,
                             BrandProductReservation::STATUS_NOT_DONE,
                             BrandProductReservation::STATUS_PICKED_UP,
-                        ]),
+                        ])
+                        . 'orbit.reservation.can_change_status',
                 ),
                 array(
                     'orbit.reservation.exists' => 'Reservation not found',
@@ -253,5 +254,10 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
 
             return TRUE;
         });
+
+        Validator::extend(
+            'orbit.reservation.can_change_status',
+            'Orbit\Controller\API\v1\BrandProduct\Validator\BrandProductValidator@reservationStatusCanBeChanged'
+        );
     }
 }

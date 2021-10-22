@@ -589,6 +589,10 @@ return array(
             'exists' => 'Purchase does not exists.',
             'match_user' => 'Purchase does not match your credential. Try using another GTM account?',
         ),
+
+        'reservation' => array(
+            'can_change_status' => 'Unable to change Reservation status! Try refreshing the page or make sure the status is correct.',
+        ),
     ),
 
     /*

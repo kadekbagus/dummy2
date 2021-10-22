@@ -580,6 +580,10 @@ return array(
             'exists' => 'Pembelian tidak ditemukan.',
             'match_user' => 'Pembelian tidak cocok dengan profil Anda, silakan gunakan akun GTM yang lain.',
         ),
+
+        'reservation' => array(
+            'can_change_status' => 'Tidak dapat mengubah status Reservasi. Coba refresh halaman atau pastikan status yang dikirim sudah sesuai.',
+        ),
     ),
 
     /*
