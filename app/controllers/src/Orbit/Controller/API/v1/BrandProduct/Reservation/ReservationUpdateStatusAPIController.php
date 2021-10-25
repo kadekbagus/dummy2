@@ -58,7 +58,8 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                             BrandProductReservation::STATUS_DONE,
                             BrandProductReservation::STATUS_NOT_DONE,
                             BrandProductReservation::STATUS_PICKED_UP,
-                        ]),
+                        ])
+                        . '|orbit.reservation.can_change_status',
                 ),
                 array(
                     'orbit.reservation.exists' => 'Reservation not found',
@@ -82,7 +83,7 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $reservation = App::make('orbit.reservation.exists');
+            $reservation = App::make('reservation');
 
             if ($reservation->status === BrandProductReservation::STATUS_DONE) {
                 $errorMessage = 'Reservation already done';
@@ -110,6 +111,12 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
             $reservation->status = $status;
 
             if ($status === BrandProductReservation::STATUS_DECLINED) {
+
+                if ($previousStatus === BrandProductReservation::STATUS_CANCELED) {
+                    $errorMessage = 'Can\'t decline because reservation already cancelled. Please refresh the page.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
                 $reservation->declined_by = $userId;
                 $reservation->cancel_reason = $cancelReason;
 
@@ -243,9 +250,14 @@ class ReservationUpdateStatusAPIController extends ControllerAPI
                 return FALSE;
             }
 
-            App::instance('orbit.reservation.exists', $reservation);
+            App::instance('reservation', $reservation);
 
             return TRUE;
         });
+
+        Validator::extend(
+            'orbit.reservation.can_change_status',
+            'Orbit\Controller\API\v1\BrandProduct\Validator\BrandProductValidator@reservationStatusCanBeChanged'
+        );
     }
 }

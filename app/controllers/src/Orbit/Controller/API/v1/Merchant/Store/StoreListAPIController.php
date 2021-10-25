@@ -114,6 +114,8 @@ class StoreListAPIController extends ControllerAPI
                                 'base_stores.custom_title',
                                 'base_stores.disable_ads',
                                 'base_stores.disable_ymal',
+                                'base_stores.reservation_commission',
+                                'base_stores.purchase_commission',
                                 'base_merchants.mobile_default_language'
                                 )
                             ->with('baseStoreTranslation','supportedLanguage','mediaBanner')
