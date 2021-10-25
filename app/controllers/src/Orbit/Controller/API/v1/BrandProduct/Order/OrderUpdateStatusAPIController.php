@@ -53,14 +53,15 @@ class OrderUpdateStatusAPIController extends ControllerAPI
                     'status'        => $status,
                 ),
                 array(
-                    'order_id'      => 'required|orbit.order.exists:'.$brandId.'|orbit.order.status',
+                    'order_id'      => 'required|orbit.order.exists:'.$brandId,
                     'status'        => 'required|in:'. join(',', [
                                                                     Order::STATUS_READY_FOR_PICKUP,
                                                                     Order::STATUS_DECLINED,
                                                                     Order::STATUS_CANCELLED,
                                                                     Order::STATUS_DONE,
                                                                     Order::STATUS_NOT_DONE,
-                                        ]),
+                                        ])
+                                        . '|orbit.order.status',
                 ),
                 array(
                     'orbit.order.exists' => 'Order not found',
@@ -178,9 +179,7 @@ class OrderUpdateStatusAPIController extends ControllerAPI
 
 
         // Check the order status
-        Validator::extend('orbit.order.status', function ($attribute, $value, $parameters) {
-            $prefix = DB::getTablePrefix();
-            $status = OrbitInput::post('status');
+        Validator::extend('orbit.order.status', function ($attribute, $status, $parameters) {
             $order = App::make('orbit.order.exists');
 
             // if ($status === Order::STATUS_READY_FOR_PICKUP || $status === Order::STATUS_DECLINED) {
