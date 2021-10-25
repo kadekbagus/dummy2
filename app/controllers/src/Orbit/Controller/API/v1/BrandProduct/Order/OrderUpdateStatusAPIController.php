@@ -197,6 +197,16 @@ class OrderUpdateStatusAPIController extends ControllerAPI
             }
 
             if ($status === Order::STATUS_DECLINED
+                && (in_array($order->status, [
+                        Order::STATUS_CANCELLED,
+                        Order::STATUS_CANCELLING,
+                        Order::STATUS_PICKED_UP,
+                    ]))
+            ) {
+                return false;
+            }
+
+            if ($status === Order::STATUS_READY_FOR_PICKUP
                 && $order->status === Order::STATUS_CANCELLED
             ) {
                 return false;
