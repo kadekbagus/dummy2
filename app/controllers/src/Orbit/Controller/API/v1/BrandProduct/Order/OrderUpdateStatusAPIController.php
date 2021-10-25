@@ -64,7 +64,7 @@ class OrderUpdateStatusAPIController extends ControllerAPI
                 ),
                 array(
                     'orbit.order.exists' => 'Order not found',
-                    'orbit.order.status' => 'Cannot update this order',
+                    'orbit.order.status' => 'Cannot update this order. Please refresh the page and try again.',
                     'order_id.required'  => 'Order ID is required',
                     'status.in' => 'available status are: '.Order::STATUS_READY_FOR_PICKUP.','
                                                            .Order::STATUS_DECLINED.','
@@ -195,6 +195,12 @@ class OrderUpdateStatusAPIController extends ControllerAPI
                 ) {
                     return FALSE;
                 }
+            }
+
+            if ($status === Order::STATUS_DECLINED
+                && $order->status === Order::STATUS_CANCELLED
+            ) {
+                return false;
             }
 
             return TRUE;
