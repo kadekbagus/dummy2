@@ -77,9 +77,8 @@ class BPPUserListAPIController extends ControllerAPI
                 $BPPUsers->where('bpp_users.bpp_user_id', $userId);
             }
 
-            // filter by store_name
-            OrbitInput::get('store_name', function($name) use ($BPPUsers) {
-                $BPPUsers->having('store_name', 'like', "%$name%");
+            OrbitInput::get('email', function($email) use ($BPPUsers) {
+                $BPPUsers->where('bpp_users.email', 'like', "%{$email}%");
             });
 
             // Clone the query builder which still does not include the take,
