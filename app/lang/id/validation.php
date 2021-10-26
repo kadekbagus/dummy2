@@ -555,6 +555,7 @@ return array(
             'pikcup_location_valid' => 'Lokasi pengambilan item tidak sesuai.',
             'can_reserve' => 'Tidak dapat melakukan reservasi untuk 1 atau lebih produk. Silakan ulang beberapa saat lagi atau hubungi layanan pelanggan Gotomalls.',
             'can_change_status' => 'Tidak dapat mengubah status Reservasi. Mohon pastikan status sudah benar dan coba beberapa saat lagi.',
+            'reservation_enabled' => 'Layanan Reservasi tidak aktif untuk Toko tersebut. Silakan coba lagi di Toko/Lokasi pengambilan yang lain.',
         ),
 
         'rsvp' => array(
@@ -572,11 +573,16 @@ return array(
             'match_user' => 'Order tidak sesuai dengan profil Anda, silakan gunakan akun lain.',
             'can_cancel' => "Tidak dapat membatalkan pesanan. Pastikan status Pesanan belum Dibatalkan/Selesai.",
             'can_change_status' => "Tidak dapat mengubah status Pesanan. Pastikan status Pesanan benar dan coba beberapa saat lagi.",
+            'order_enabled' => 'Order/pembelian tidak aktif untuk Toko tersebut. Silakan coba lagi di Toko/lokasi pengambilan yang lain.',
         ),
 
         'purchase' => array(
             'exists' => 'Pembelian tidak ditemukan.',
             'match_user' => 'Pembelian tidak cocok dengan profil Anda, silakan gunakan akun GTM yang lain.',
+        ),
+
+        'reservation' => array(
+            'can_change_status' => 'Tidak dapat mengubah status Reservasi. Coba refresh halaman atau pastikan status yang dikirim sudah sesuai.',
         ),
     ),
 

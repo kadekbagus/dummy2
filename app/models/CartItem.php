@@ -26,6 +26,11 @@ class CartItem extends Eloquent
         return $this->belongsTo(BrandProductVariant::class);
     }
 
+    public function stores()
+    {
+        return $this->belongsTo(Tenant::class, 'merchant_id', 'merchant_id');
+    }
+
     public function updateItem($cartItemId, $request)
     {
         if ($request->quantity == 0) {
