@@ -53,7 +53,7 @@ class TotalOrderAPIController extends ControllerAPI
                     'count(order_id) as count_amount'
                 )
                 ->where('brand_id', $brandId)
-                ->where('status', Order::STATUS_PENDING)
+                ->where('status', Order::STATUS_DONE)
                 ->where('created_at', '>=', $start)
                 ->where('created_at', '<=', $end);
 
