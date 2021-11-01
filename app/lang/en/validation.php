@@ -564,6 +564,7 @@ return array(
             'pikcup_location_valid' => 'Invalid pickup location for selected item.',
             'can_reserve' => 'Unable to make reservation because one or more item(s) not available. Please try again later or contact Gotomalls support.',
             'can_change_status' => "Can't change Reservation status. Please make sure the status is correct and try again in a few moments.",
+            'reservation_enabled' => 'Reservation is disabled for the Store. Please try with another store/pickup location.',
         ),
 
         'rsvp' => array(
@@ -581,11 +582,16 @@ return array(
             'match_user' => 'Order doesn\'t match your credential. Try using another GTM account.',
             'can_cancel' => "Can't cancel given Order/transaction. Please make sure Order is not done or cancelled.",
             'can_change_status' => "Can't change status of the Order. Please make sure status is correct and try again later.",
+            'order_enabled' => 'Order/purchase is disabled for the Store. Please try again with another store/pickup location.',
         ),
 
         'purchase' => array(
             'exists' => 'Purchase does not exists.',
             'match_user' => 'Purchase does not match your credential. Try using another GTM account?',
+        ),
+
+        'reservation' => array(
+            'can_change_status' => 'Unable to change Reservation status! Try refreshing the page or make sure the status is correct.',
         ),
     ),
 

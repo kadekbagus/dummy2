@@ -68,6 +68,21 @@ class OrderValidator
         return $available > 0 && $available === $cartItems->count();
     }
 
+    public function orderEnabled($attr, $cartItemIds, $params)
+    {
+        $cartItem = CartItem::with(['stores'])
+            ->active()
+            ->whereIn('cart_item_id', $cartItemIds)
+            ->where('user_id', App::make('currentUser')->user_id)
+            ->first();
+
+        if ($cartItem->stores) {
+            return (int) $cartItem->stores->enable_checkout === 1;
+        }
+
+        return false;
+    }
+
     private function validateBrandProductQuantity($variant, $requestedQuantity)
     {
         return $variant->quantity >= $requestedQuantity;

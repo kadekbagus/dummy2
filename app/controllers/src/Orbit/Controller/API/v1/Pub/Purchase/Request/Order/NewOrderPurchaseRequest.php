@@ -19,7 +19,7 @@ class NewOrderPurchaseRequest extends ValidateRequest
     {
         return [
             'object_type' => 'required|in:order',
-            'object_id' => 'required|array|orbit.order.can_order',
+            'object_id' => 'required|array|orbit.order.can_order|orbit.order.order_enabled',
             // 'promo_code' => 'sometimes|required|alpha_dash|active_discount|available_discount',
             'currency' => 'required',
             'first_name' => 'required',
@@ -42,6 +42,11 @@ class NewOrderPurchaseRequest extends ValidateRequest
         Validator::extend(
             'orbit.order.can_order',
             'Orbit\Helper\Cart\Validator\OrderValidator@canOrder'
+        );
+
+        Validator::extend(
+            'orbit.order.order_enabled',
+            'Orbit\Helper\Cart\Validator\OrderValidator@orderEnabled'
         );
     }
 }
