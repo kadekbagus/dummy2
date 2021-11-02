@@ -31,10 +31,20 @@ class DigitalProductListAPIController extends ControllerAPI
 
             // Fetch the digital products
             $digitalProducts = $repo->findProducts();
+            $digitalProducts = $digitalProducts->with('games');
+
             $total = clone $digitalProducts;
             $total = $total->count();
             $digitalProducts = $digitalProducts->skip($request->skip)
                 ->take($request->take)->get();
+
+            foreach ($digitalProducts as $digitalProduct) {
+                $gameNames = [];
+                foreach ($digitalProduct->games as $game) {
+                    $gameNames[] = $game->game_name;
+                }
+                $digitalProduct->game_name = implode(', ', $gameNames);
+            }
 
             $this->response->data = new DigitalProductCollection(
                 $digitalProducts,

@@ -11,18 +11,22 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use GameVoucherPromotion;
+use GameVoucherPromotionDetail;
+use ProviderProduct;
 use Validator;
+use Input;
+use SplFileObject;
 
 /**
- * Get list of Game Voucher Promotion.
+ * Create a new Game Voucher Promotion.
  *
  * @author ahmad <ahmad@gotomalls.com>
  */
-class PromotionListAPIController extends ControllerAPI
+class PromotionUpdateAPIController extends ControllerAPI
 {
     protected $validRoles = ['product manager'];
 
-    public function getList ()
+    public function postUpdate ()
     {
         $user = NULL;
         try {
@@ -39,20 +43,38 @@ class PromotionListAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
+            $this->registerCustomValidation();
+
             $validation_data = [
-                'sortby' => OrbitInput::get('sortby'),
-                'sortmode' => OrbitInput::get('sortmode'),
+                'game_voucher_promotion_id' => OrbitInput::post('game_voucher_promotion_id'),
+                'campaign_name' => OrbitInput::post('campaign_name'),
+                'start_date' => OrbitInput::post('start_date'),
+                'end_date' => OrbitInput::post('end_date'),
+                'status' => OrbitInput::post('status'),
+                'provider_product_id' => OrbitInput::post('provider_product_id')
             ];
 
             $validation_error = [
-                'sortby' => 'in:game_voucher_promotion_id,start_date,end_date',
-                'sortmode' => 'in:asc,desc',
+                'game_voucher_promotion_id' => 'required',
+                'campaign_name' => 'required',
+                'start_date' => 'required|date|date_format:Y-m-d',
+                'end_date' => 'required|date|date_format:Y-m-d',
+                'status' => 'required|in:active,inactive',
+                'provider_product_id' => 'required|orbit.provider_product_id'
+            ];
+
+            $validation_error_message = [
+                'orbit.provider_product_id' => 'Provider product is not found'
             ];
 
             $validator = Validator::make(
                 $validation_data,
-                $validation_error
+                $validation_error,
+                $validation_error_message
             );
+
+            // Begin database transaction
+            $this->beginTransaction();
 
             // Run the validation
             if ($validator->fails()) {
@@ -60,35 +82,20 @@ class PromotionListAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $sortByMapping = array(
-                'game_voucher_promotion_id' => 'game_voucher_promotion_id',
-                'start_date' => 'start_date',
-                'end_date' => 'end_date'
-            );
+            $item = GameVoucherPromotion::where('game_voucher_promotion_id', OrbitInput::post('game_voucher_promotion_id'))
+                ->firstOrFail();
 
-            $sortBy = $sortByMapping[OrbitInput::get('sortby', 'game_voucher_promotion_id')];
-            $sortMode = OrbitInput::get('sortmode', 'desc');
+            $item->campaign_name = OrbitInput::post('campaign_name');
+            $item->start_date = OrbitInput::post('start_date') . ' 00:00:00';
+            $item->end_date = OrbitInput::post('end_date') . ' 23:59:59';
+            $item->status = OrbitInput::post('status');
+            $item->provider_product_id = OrbitInput::post('provider_product_id');
+            $item->save();
 
-            $records = GameVoucherPromotion::where('status', '<>', 'deleted');
+            // Commit the changes
+            $this->commit();
 
-            $records->orderBy($sortBy, $sortMode);
-
-            $skip = OrbitInput::get('skip', 0);
-            $take = OrbitInput::get('take', 25) >= 25 ? 25 : OrbitInput::get('take', 25);
-
-            $total = clone $records;
-            $total = $total->count();
-            $records = $records
-                ->skip($skip)
-                ->take($take)
-                ->get();
-
-            $responseData = new \stdclass();
-            $responseData->records = $records;
-            $responseData->total_records = $total;
-            $responseData->returned_records = $records->count();
-
-            $this->response->data = $responseData;
+            $this->response->data = $item;
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
@@ -96,12 +103,18 @@ class PromotionListAPIController extends ControllerAPI
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -114,13 +127,32 @@ class PromotionListAPIController extends ControllerAPI
             }
             $this->response->data = null;
             $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = $e->getLine();
+
+            // Rollback the changes
+            $this->rollBack();
         }
 
         return $this->render($httpCode);
+    }
+
+    protected function registerCustomValidation()
+    {
+        Validator::extend('orbit.provider_product_id', function ($attribute, $value, $parameters) {
+            $existing = ProviderProduct::where('provider_product_id', $value)->first();
+
+            if (is_object($existing)) {
+                return true;
+            }
+
+            return false;
+        });
     }
 }

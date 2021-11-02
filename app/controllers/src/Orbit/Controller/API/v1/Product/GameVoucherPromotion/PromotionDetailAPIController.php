@@ -11,6 +11,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use GameVoucherPromotion;
+use Validator;
 
 /**
  * Get detail of Game Voucher Promotion.
@@ -21,7 +22,7 @@ class PromotionDetailAPIController extends ControllerAPI
 {
     protected $validRoles = ['product manager'];
 
-    public function getList ()
+    public function getDetail ()
     {
         $user = NULL;
         try {
@@ -38,10 +39,42 @@ class PromotionDetailAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            $records = GameVoucherPromotion::with(['details'])
+            $validation_data = [
+                'game_voucher_promotion_id' => OrbitInput::get('game_voucher_promotion_id')
+            ];
+
+            $validation_error = [
+                'game_voucher_promotion_id' => 'required',
+            ];
+
+            $validator = Validator::make(
+                $validation_data,
+                $validation_error
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $records = GameVoucherPromotion::with(['details.transaction'])
                 ->where('game_voucher_promotion_id', OrbitInput::get('game_voucher_promotion_id'))
                 ->where('status', '<>', 'deleted')
                 ->firstOrFail();
+
+            foreach ($records->details as $detail) {
+                $detail->user_email = null;
+                $detail->user_name = null;
+                $detail->transaction_date = null;
+
+                if (is_object($detail->transaction)) {
+                    $detail->user_email = $detail->transaction->user_email;
+                    $detail->user_name = $detail->transaction->user_name;
+                    $detail->transaction_date = $detail->transaction->created_at;
+                }
+                unset($detail->transaction);
+            }
 
             $this->response->data = $records;
 

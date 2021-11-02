@@ -171,6 +171,11 @@ class PaymentTransaction extends Eloquent
         return $this->hasOne('PaymentMidtrans');
     }
 
+    public function free_game_vouchers()
+    {
+        return $this->hasMany(GameVoucherPromotionDetail::class);
+    }
+
     /**
      * Determine if the payment is fully completed or not.
      *

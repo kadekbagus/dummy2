@@ -56,8 +56,8 @@ class PromotionNewAPIController extends ControllerAPI
 
             $validation_error = [
                 'campaign_name' => 'required',
-                'start_date' => 'required',
-                'end_date' => 'required',
+                'start_date' => 'required|date|date_format:Y-m-d',
+                'end_date' => 'required|date|date_format:Y-m-d',
                 'status' => 'required|in:active,inactive',
                 'provider_product_id' => 'required|orbit.provider_product_id',
                 'file' => 'required',
@@ -84,18 +84,16 @@ class PromotionNewAPIController extends ControllerAPI
 
             $item = new GameVoucherPromotion();
             $item->campaign_name = OrbitInput::post('campaign_name');
-            $item->start_date = OrbitInput::post('start_date');
-            $item->end_date = OrbitInput::post('end_date');
+            $item->start_date = OrbitInput::post('start_date') . ' 00:00:00';
+            $item->end_date = OrbitInput::post('end_date') . ' 23:59:59';
             $item->status = OrbitInput::post('status');
             $item->provider_product_id = OrbitInput::post('provider_product_id');
             $item->save();
 
             // read csv file
             $csvInput = Input::file('file');
-            $file = new SplFileObject($csvInput);
-            $file->setFlags(SplFileObject::READ_CSV);
-            $file->setCsvControl(',', '"', '\\'); // this is the default anyway though
-            foreach ($file as $row) {
+            $values = $this->readCSV($csvInput[0]);
+            foreach ($values as $row) {
                 list ($pinNumber, $serialNumber) = $row;
                 $detail = new GameVoucherPromotionDetail();
                 $detail->game_voucher_promotion_id = $item->game_voucher_promotion_id;
@@ -166,5 +164,15 @@ class PromotionNewAPIController extends ControllerAPI
 
             return false;
         });
+    }
+
+    private function readCSV($csvFile)
+    {
+        $file_handle = fopen($csvFile, 'r');
+        while (!feof($file_handle) ) {
+            $line_of_text[] = fgetcsv($file_handle, 0);
+        }
+        fclose($file_handle);
+        return $line_of_text;
     }
 }

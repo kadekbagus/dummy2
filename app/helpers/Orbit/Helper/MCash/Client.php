@@ -67,7 +67,8 @@ class Client
         }
 
         $this->client = new Guzzle([
-                'base_uri' => $this->config['base_uri']
+                'base_uri' => $this->config['base_uri'],
+                'verify' => false
             ]);
     }
 

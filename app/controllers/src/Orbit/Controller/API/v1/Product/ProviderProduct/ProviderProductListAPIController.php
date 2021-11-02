@@ -123,7 +123,7 @@ class ProviderProductListAPIController extends ControllerAPI
             // skip, and order by
             $_product = clone $provider_product;
 
-            $take = PaginationNumber::parseTakeFromGet('merchant');
+            $take = PaginationNumber::parseTakeFromGet('provider_product');
             $provider_product->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();
