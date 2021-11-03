@@ -69,7 +69,7 @@ class ConversionRateAPIController extends ControllerAPI
                     'count(distinct user_id) as unique_user'
                 )
                 ->where('brand_id', $brandId)
-                ->where('status', Order::STATUS_PENDING)
+                ->where('status', Order::STATUS_DONE)
                 ->where('created_at', '>=', $start)
                 ->where('created_at', '<=', $end);
 
