@@ -53,7 +53,7 @@ class ConversionRateAPIController extends ControllerAPI
 
             // @todo: add filter to select all brands if user_type is GTM Admin
             $data = Activity::select(
-                    DB::raw('count(distinct user_id) as unique_user')
+                    DB::raw('count(user_id) as unique_user')
                 )
                 ->where('object_id', $brandId)
                 ->where('object_name', 'BaseMerchant')
@@ -66,7 +66,7 @@ class ConversionRateAPIController extends ControllerAPI
 
             // @todo: add filter to select all brands if user_type is GTM Admin
             $order = Order::selectRaw(
-                    'count(distinct user_id) as unique_user'
+                    'count(user_id) as unique_user'
                 )
                 ->where('brand_id', $brandId)
                 ->where('status', Order::STATUS_DONE)
@@ -83,9 +83,10 @@ class ConversionRateAPIController extends ControllerAPI
             $conversionRate = 0;
             if (! empty($totalUniqueVisitor)) {
                 $conversionRate = ($totalUniqueBuyer / $totalUniqueVisitor) * 100;
+                
             }
 
-            $this->response->data = $conversionRate;
+            $this->response->data = round($conversionRate, 2);
         } catch (Exception $e) {
             return $this->handleException($e);
         }
