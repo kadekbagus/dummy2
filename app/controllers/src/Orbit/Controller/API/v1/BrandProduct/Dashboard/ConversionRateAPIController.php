@@ -69,9 +69,7 @@ class ConversionRateAPIController extends ControllerAPI
                     'count(user_id) as unique_user'
                 )
                 ->where('brand_id', $brandId)
-                ->where('status', Order::STATUS_DONE)
-                ->where('created_at', '>=', $start)
-                ->where('created_at', '<=', $end);
+                ->where('status', Order::STATUS_DONE);
 
             if ($userType === 'store') {
                 $order->whereIn('merchant_id', $merchantIds);
