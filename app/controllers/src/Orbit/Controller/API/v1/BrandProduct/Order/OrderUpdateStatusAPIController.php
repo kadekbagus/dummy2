@@ -60,6 +60,7 @@ class OrderUpdateStatusAPIController extends ControllerAPI
                                                                     Order::STATUS_CANCELLED,
                                                                     Order::STATUS_DONE,
                                                                     Order::STATUS_NOT_DONE,
+                                                                    Order::STATUS_PICKED_UP,
                                         ])
                                         . '|orbit.order.status',
                 ),
@@ -71,7 +72,8 @@ class OrderUpdateStatusAPIController extends ControllerAPI
                                                            .Order::STATUS_DECLINED.','
                                                            .Order::STATUS_CANCELLED.','
                                                            .Order::STATUS_DONE.','
-                                                           .Order::STATUS_NOT_DONE,
+                                                           .Order::STATUS_NOT_DONE.','
+                                                           .Order::STATUS_PICKED_UP
                 )
             );
 
@@ -106,6 +108,10 @@ class OrderUpdateStatusAPIController extends ControllerAPI
 
             if ($status === Order::STATUS_NOT_DONE) {
                 Order::markAsNotDone($orderId, false);
+            }
+
+            if ($status === Order::STATUS_PICKED_UP) {
+                Order::pickedUp($orderId);
             }
 
             // Commit the changes

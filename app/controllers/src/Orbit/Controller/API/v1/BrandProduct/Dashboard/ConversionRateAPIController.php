@@ -20,6 +20,7 @@ use App;
 use DB;
 use Media;
 use Carbon\Carbon;
+use BrandProductReservation;
 
 class ConversionRateAPIController extends ControllerAPI
 {
@@ -76,11 +77,27 @@ class ConversionRateAPIController extends ControllerAPI
             }
 
             $order = $order->first();
-            $totalUniqueBuyer = $order->unique_user;
+            $totalSoldOrder = $order->unique_user;
+
+            // total sold reservations
+            $reservation = BrandProductReservation::selectRaw(
+                        'count(brand_product_reservation_id) as count_amount'
+                    )
+                    ->where('brand_id', $brandId)
+                    ->where('status', BrandProductReservation::STATUS_DONE);
+
+            if ($userType === 'store') {
+                $done->whereIn('merchant_id', $merchantIds);
+            }
+
+            $reservation = $reservation->first();
+            $totalSoldReservation = $reservation->count_amount;
+        
+            $totalSold = $totalSoldOrder + $totalSoldReservation;
 
             $conversionRate = 0;
             if (! empty($totalUniqueVisitor)) {
-                $conversionRate = ($totalUniqueBuyer / $totalUniqueVisitor) * 100;
+                $conversionRate = ($totalSold / $totalUniqueVisitor) * 100;
                 
             }
 
