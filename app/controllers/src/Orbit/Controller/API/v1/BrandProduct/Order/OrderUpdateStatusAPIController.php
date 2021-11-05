@@ -5,23 +5,23 @@ namespace Orbit\Controller\API\v1\BrandProduct\Order;
 use DB;
 use App;
 use Lang;
+use Order;
 use Config;
 use stdclass;
 use Exception;
 use Validator;
 use Carbon\Carbon;
 use DominoPOS\OrbitACL\ACL;
-
-use Order;
+use Orbit\Database\ObjectID;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\ControllerAPI;
+use Orbit\Helper\Midtrans\API\Refund;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Database\QueryException;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
-use Orbit\Database\ObjectID;
-use Orbit\Helper\Midtrans\API\Refund;
+
 
 class OrderUpdateStatusAPIController extends ControllerAPI
 {
@@ -182,15 +182,10 @@ class OrderUpdateStatusAPIController extends ControllerAPI
         Validator::extend('orbit.order.status', function ($attribute, $status, $parameters) {
             $order = App::make('orbit.order.exists');
 
-            // if ($status === Order::STATUS_READY_FOR_PICKUP || $status === Order::STATUS_DECLINED) {
-            //     if ($order->status !== Order::STATUS_PAID) {
-            //         return FALSE;
-            //     }
-            // }
-
             if ($status === Order::STATUS_DONE) {
                 if ($order->status !== Order::STATUS_READY_FOR_PICKUP
                     && $order->status !== Order::STATUS_PICKED_UP
+                    && $order->status !== Order::STATUS_NOT_DONE
                 ) {
                     return FALSE;
                 }
