@@ -45,7 +45,7 @@ class TotalReservationAPIController extends ControllerAPI
             // @todo: Cache the result based on the brand and/or merchant ids
 
             // @todo: add filter to select all brands if user_type is GTM Admin
-            $awaitingActionStatus = [BrandProductReservation::STATUS_PENDING, 
+            $awaitingActionStatus = [BrandProductReservation::STATUS_PENDING,
                                     BrandProductReservation::STATUS_ACCEPTED,
                                     BrandProductReservation::STATUS_PICKED_UP];
 
