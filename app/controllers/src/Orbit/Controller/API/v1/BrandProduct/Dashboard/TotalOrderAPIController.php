@@ -43,59 +43,25 @@ class TotalOrderAPIController extends ControllerAPI
             }
 
             // @todo: Cache the result based on the brand and/or merchant ids
-
-            // minus 7 hour GMT+7
-            $start = Carbon::now()->startOfMonth()->subHours(7);
-            $end = Carbon::now()->subHours(7);
-
+            
             // @todo: add filter to select all brands if user_type is GTM Admin
-            $done = Order::selectRaw(
-                    'count(order_id) as count_amount'
-                )
-                ->where('brand_id', $brandId)
-                ->where('status', Order::STATUS_DONE)
-                ->where('created_at', '>=', $start)
-                ->where('created_at', '<=', $end);
+            $awaitingActionStatus = [Order::STATUS_PENDING, 
+                                    Order::STATUS_READY_FOR_PICKUP,
+                                    Order::STATUS_PICKED_UP,
+                                    Order::STATUS_CANCELLING];
+
+            $awaitingActions = Order::selectRaw('count(order_id) as count_amount')
+                                    ->where('brand_id', $brandId)
+                                    ->whereIn('status', $awaitingActionStatus);
 
             if ($userType === 'store') {
-                $done->whereIn('merchant_id', $merchantIds);
+                $awaitingActions->whereIn('merchant_id', $merchantIds);
             }
 
-            $done = $done->first();
-
-            $ready = Order::selectRaw(
-                    'count(order_id) as count_amount'
-                )
-                ->where('brand_id', $brandId)
-                ->where('status', Order::STATUS_READY_FOR_PICKUP)
-                ->where('created_at', '>=', $start)
-                ->where('created_at', '<=', $end);
-
-            if ($userType === 'store') {
-                $ready->whereIn('merchant_id', $merchantIds);
-            }
-
-            $ready = $ready->first();
-
-            $pending = Order::selectRaw(
-                    'count(order_id) as count_amount'
-                )
-                ->where('brand_id', $brandId)
-                ->where('status', Order::STATUS_PENDING)
-                ->where('created_at', '>=', $start)
-                ->where('created_at', '<=', $end);
-
-            if ($userType === 'store') {
-                $pending->whereIn('merchant_id', $merchantIds);
-            }
-
-            $pending = $pending->first();
+            $awaitingActions = $awaitingActions->first();
 
             $data = new stdclass();
-            $data->pending = $pending->count_amount;
-            $data->ready = $ready->count_amount;
-            $data->done = $done->count_amount;
-
+            $data->order_awaiting_actions = $awaitingActions->count_amount;
 
             $this->response->data = $data;
         } catch (Exception $e) {
