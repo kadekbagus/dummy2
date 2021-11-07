@@ -43,9 +43,9 @@ class TotalOrderAPIController extends ControllerAPI
             }
 
             // @todo: Cache the result based on the brand and/or merchant ids
-            
+
             // @todo: add filter to select all brands if user_type is GTM Admin
-            $awaitingActionStatus = [Order::STATUS_PENDING, 
+            $awaitingActionStatus = [Order::STATUS_PAID,
                                     Order::STATUS_READY_FOR_PICKUP,
                                     Order::STATUS_PICKED_UP,
                                     Order::STATUS_CANCELLING];
