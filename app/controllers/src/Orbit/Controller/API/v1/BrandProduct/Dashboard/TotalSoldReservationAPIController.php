@@ -13,16 +13,16 @@ use Validator;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Util\PaginationNumber;
 use stdclass;
-use Order;
+use BrandProductReservation;
 use Exception;
 use App;
 use Carbon\Carbon;
 
-class TotalOrderAPIController extends ControllerAPI
+class TotalSoldReservationAPIController extends ControllerAPI
 {
 
-    /**
-     * Get Month to date Count successful order
+    /**.
+     * Get total sold reservation
      *
      * @author ahmad <ahmad@gotomalls.com>
      */
@@ -45,23 +45,20 @@ class TotalOrderAPIController extends ControllerAPI
             // @todo: Cache the result based on the brand and/or merchant ids
 
             // @todo: add filter to select all brands if user_type is GTM Admin
-            $awaitingActionStatus = [Order::STATUS_PAID,
-                                    Order::STATUS_READY_FOR_PICKUP,
-                                    Order::STATUS_PICKED_UP,
-                                    Order::STATUS_CANCELLING];
-
-            $awaitingActions = Order::selectRaw('count(order_id) as count_amount')
-                                    ->where('brand_id', $brandId)
-                                    ->whereIn('status', $awaitingActionStatus);
+            $done = BrandProductReservation::selectRaw(
+                    'count(brand_product_reservation_id) as count_amount'
+                )
+                ->where('brand_id', $brandId)
+                ->where('status', BrandProductReservation::STATUS_DONE);
 
             if ($userType === 'store') {
-                $awaitingActions->whereIn('merchant_id', $merchantIds);
+                $done->whereIn('merchant_id', $merchantIds);
             }
 
-            $awaitingActions = $awaitingActions->first();
+            $done = $done->first();
 
             $data = new stdclass();
-            $data->order_awaiting_actions = $awaitingActions->count_amount;
+            $data->total_sold_reservations = $done->count_amount;
 
             $this->response->data = $data;
         } catch (Exception $e) {

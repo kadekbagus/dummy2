@@ -44,58 +44,23 @@ class TotalReservationAPIController extends ControllerAPI
 
             // @todo: Cache the result based on the brand and/or merchant ids
 
-            // minus 7 hour GMT+7
-            $start = Carbon::now()->startOfMonth()->subHours(7);
-            $end = Carbon::now()->subHours(7);
-
             // @todo: add filter to select all brands if user_type is GTM Admin
-            $done = BrandProductReservation::selectRaw(
-                    'count(brand_product_reservation_id) as count_amount'
-                )
-                ->where('brand_id', $brandId)
-                ->where('status', BrandProductReservation::STATUS_DONE)
-                ->where('created_at', '>=', $start)
-                ->where('created_at', '<=', $end);
+            $awaitingActionStatus = [BrandProductReservation::STATUS_PENDING,
+                                    BrandProductReservation::STATUS_ACCEPTED,
+                                    BrandProductReservation::STATUS_PICKED_UP];
+
+            $awaitingActions = BrandProductReservation::selectRaw('count(brand_product_reservation_id) as count_amount')
+                                                    ->where('brand_id', $brandId)
+                                                    ->whereIn('status', $awaitingActionStatus);
 
             if ($userType === 'store') {
-                $done->whereIn('merchant_id', $merchantIds);
+                $awaitingActions->whereIn('merchant_id', $merchantIds);
             }
 
-            $done = $done->first();
-
-            $accepted = BrandProductReservation::selectRaw(
-                    'count(brand_product_reservation_id) as count_amount'
-                )
-                ->where('brand_id', $brandId)
-                ->where('status', BrandProductReservation::STATUS_ACCEPTED)
-                ->where('created_at', '>=', $start)
-                ->where('created_at', '<=', $end);
-
-            if ($userType === 'store') {
-                $accepted->whereIn('merchant_id', $merchantIds);
-            }
-
-            $accepted = $accepted->first();
-
-            $pending = BrandProductReservation::selectRaw(
-                    'count(brand_product_reservation_id) as count_amount'
-                )
-                ->where('brand_id', $brandId)
-                ->where('status', BrandProductReservation::STATUS_PENDING)
-                ->where('created_at', '>=', $start)
-                ->where('created_at', '<=', $end);
-
-            if ($userType === 'store') {
-                $pending->whereIn('merchant_id', $merchantIds);
-            }
-
-            $pending = $pending->first();
+            $awaitingActions = $awaitingActions->first();
 
             $data = new stdclass();
-            $data->pending = $pending->count_amount;
-            $data->accepted = $accepted->count_amount;
-            $data->done = $done->count_amount;
-
+            $data->reservation_awaiting_actions = $awaitingActions->count_amount;
 
             $this->response->data = $data;
         } catch (Exception $e) {

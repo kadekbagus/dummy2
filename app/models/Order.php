@@ -470,4 +470,13 @@ class Order extends Eloquent
 
         return $availableItems > 0;
     }
+
+    public static function pickedUp($orderId)
+    {
+        $order = Order::where('order_id', $orderId)->update([
+            'status' => self::STATUS_PICKED_UP,
+        ]);
+
+        return $order;
+    }
 }
