@@ -47,7 +47,8 @@ class TotalReservationAPIController extends ControllerAPI
             // @todo: add filter to select all brands if user_type is GTM Admin
             $awaitingActionStatus = [BrandProductReservation::STATUS_PENDING,
                                     BrandProductReservation::STATUS_ACCEPTED,
-                                    BrandProductReservation::STATUS_PICKED_UP];
+                                    BrandProductReservation::STATUS_PICKED_UP,
+                                    BrandProductReservation::STATUS_NOT_DONE];
 
             $awaitingActions = BrandProductReservation::selectRaw('count(brand_product_reservation_id) as count_amount')
                                                     ->where('brand_id', $brandId)
