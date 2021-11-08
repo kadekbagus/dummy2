@@ -83,13 +83,11 @@ class CreateUserBPPCommand extends Command {
                     'email'              => $email,
                     'name'               => $name,
                     'password'           => $password,
-                    'base_merchant_id'   => $base_merchant_id,
                 ),
                 array(
                     'email'              => 'required|orbit.exist.email',
                     'name'               => 'required',
                     'password'           => 'required|min:6',
-                    'base_merchant_id'   => 'required',
                 ),
                 array(
                     'orbit.exist.email'  => 'Email already exist',
