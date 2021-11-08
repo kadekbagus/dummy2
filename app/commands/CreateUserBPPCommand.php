@@ -110,7 +110,7 @@ class CreateUserBPPCommand extends Command {
             $newUser->password = Hash::make($password);
             $newUser->status = $status;
             $newUser->user_type = $user_type;
-            $newUser->base_merchant_id = $base_merchant_id;
+            $newUser->base_merchant_id = ($user_type === 'gtm_admin') ? NULL : $base_merchant_id;
             $newUser->merchant_id = is_array($merchant_ids) ? $merchant_ids[0] : $merchant_ids;
             $newUser->save();
 
