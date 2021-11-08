@@ -8,6 +8,7 @@ use Log;
 use Mall;
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
 use Orbit\Helper\Midtrans\API\Refund;
+use Orbit\Notifications\Order\CustomerRefundNotification;
 use Order;
 use PaymentTransaction;
 use User;
@@ -62,10 +63,7 @@ class RefundOrderQueue
             $this->log("Preparing refund for PaymentID: {$data['paymentId']}");
 
             $payment = PaymentTransaction::onWriteConnection()->with([
-                'details.order',
                 'user',
-                'midtrans',
-                'discount_code'
             ])->lockForUpdate()->findOrFail($data['paymentId']);
 
             if ($payment->pending() || $payment->denied() || $payment->failed()
@@ -82,20 +80,33 @@ class RefundOrderQueue
             }
 
             $refundParams = [
-                'refund_key' => $data['refundKey'],
                 'reason' => $refundReason,
             ];
 
             $refund = Refund::create()->direct($data['paymentId'], $refundParams);
 
             if ($refund->isSuccess()) {
+                // Set payment status and send refund notification email right away.
+                // This is useful when Midtrans Notifications is late/not sending at all.
+                $payment->status = PaymentTransaction::STATUS_SUCCESS_REFUND;
+                $payment->save();
+                DB::connection()->commit();
+
+                $payment->user->notify(
+                    new CustomerRefundNotification(
+                        $payment,
+                        $refundReason
+                    )
+                );
+
                 $this->log("PaymentID: {$data['paymentId']} refunded!");
+
+                $this->recordRefundData($payment);
             }
             else {
+                DB::connection()->commit();
                 $this->retry($data);
             }
-
-            DB::connection()->commit();
 
         } catch (Exception $e) {
 
@@ -138,5 +149,19 @@ class RefundOrderQueue
     private function log($message)
     {
         Log::info("{$this->objectType}: {$message}");
+    }
+
+    /**
+     * Record refund data in a separate queue/http request
+     * since it is not trivial for customer.
+     *
+     * @param  [type] $payment [description]
+     * @return [type]          [description]
+     */
+    private function recordRefundData($payment)
+    {
+        Queue::push('Orbit\Queue\Order\RecordRefundQueue', [
+            'paymentId' => $payment->payment_transaction_id,
+        ]);
     }
 }
