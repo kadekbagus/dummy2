@@ -50,16 +50,6 @@ class RecordRefundQueue
                 'refunds',
             ])->lockForUpdate()->findOrFail($data['paymentId']);
 
-            if (! $payment->refunded()) {
-                $this->log("PaymentID: {$data['paymentId']} is not refunded! Nothing to do.");
-
-                DB::connection()->commit();
-
-                $job->delete();
-
-                return;
-            }
-
             $transactionStatus = TransactionStatus::create()
                 ->getStatus($data['paymentId']);
 
