@@ -47,7 +47,6 @@ class TopFiveProductAPIController extends ControllerAPI
             $data = Activity::select(
                     DB::raw('product_id, product_name, count(activity_id) as total_view')
                 )
-                ->where('object_id', $brandId)
                 ->where('object_name', 'BaseMerchant')
                 ->where('activity_name', 'view_instore_bp_detail_page')
                 ->where('created_at', '>=', $start)
@@ -55,6 +54,8 @@ class TopFiveProductAPIController extends ControllerAPI
                 ->orderBy(DB::raw('total_view'), 'desc')
                 ->take(5)
                 ->skip(0);
+
+            ($userType === 'gtm_admin') ? null : $data->where('object_id', $brandId);
 
             $data = $data->get();
 

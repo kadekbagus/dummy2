@@ -48,8 +48,9 @@ class TotalSoldReservationAPIController extends ControllerAPI
             $done = BrandProductReservation::selectRaw(
                     'count(brand_product_reservation_id) as count_amount'
                 )
-                ->where('brand_id', $brandId)
                 ->where('status', BrandProductReservation::STATUS_DONE);
+            
+            ($userType === 'gtm_admin') ? null : $done->where('brand_id', $brandId);
 
             if ($userType === 'store') {
                 $done->whereIn('merchant_id', $merchantIds);

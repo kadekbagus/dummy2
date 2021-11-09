@@ -59,11 +59,16 @@ class OrderAmountSeriesAPIController extends ControllerAPI
             };
 
             $merchantsIdQuery = '';
+            $brandIdQuery = '';
 
             if ($userType === 'store') {
                 $merchantsIdQuery = "and merchant_id in ({$quote(implode("','", $merchantIds))})";
             }
 
+            if ($userType !== 'gtm_admin') {
+                $brandIdQuery = "and brand_id = {$quote($brandId)}";
+            }
+            
             // @todo: add filter to select all brands if user_type is GTM Admin
             $orders = DB::select(DB::raw("
                     SELECT
@@ -81,7 +86,7 @@ class OrderAmountSeriesAPIController extends ControllerAPI
                             where
                             status = 'done'
                             and created_at >= {$quote($start2)}
-                            and brand_id = {$quote($brandId)}
+                            {$brandIdQuery}
                             {$merchantsIdQuery}
                             group by dtx
                         ) as datas

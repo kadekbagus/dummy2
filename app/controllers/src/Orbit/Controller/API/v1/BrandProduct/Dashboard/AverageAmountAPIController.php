@@ -54,6 +54,8 @@ class AverageAmountAPIController extends ControllerAPI
                 ->where('brand_id', $brandId)
                 ->where('status', Order::STATUS_DONE)
                 ->where('created_at', '>=', $start);
+            
+            ($userType === 'gtm_admin') ? null : $data->where('brand_id', $brandId);
 
             if ($userType === 'store') {
                 $data->whereIn('merchant_id', $merchantIds);

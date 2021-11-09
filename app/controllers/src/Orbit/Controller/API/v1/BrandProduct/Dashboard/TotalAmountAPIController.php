@@ -55,6 +55,8 @@ class TotalAmountAPIController extends ControllerAPI
                 ->where('brand_id', $brandId)
                 ->where('status', 'done')
                 ->where('created_at', '>=', $start);
+            
+            ($userType === 'gtm_admin') ? null : $orders->where('brand_id', $brandId);
 
             if ($userType === 'store') {
                 $orders->whereIn('merchant_id', $merchantIds);
