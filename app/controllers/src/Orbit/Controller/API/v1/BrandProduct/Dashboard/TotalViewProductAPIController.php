@@ -47,11 +47,12 @@ class TotalViewProductAPIController extends ControllerAPI
             $data = Activity::select(
                     DB::raw('count(activity_id) as total_view')
                 )
-                ->where('object_id', $brandId)
                 ->where('object_name', 'BaseMerchant')
                 ->where('activity_name', 'view_instore_bp_detail_page')
                 ->where('created_at', '>=', $start)
                 ->where('created_at', '<=', $end);
+            
+            ($userType === 'gtm_admin') ? null : $data->where('object_id', $brandId);
 
             $data = $data->first();
 

@@ -52,10 +52,11 @@ class AverageAmountAPIController extends ControllerAPI
             $data = Order::selectRaw(
                     'avg(total_amount) as avg_amount'
                 )
-                ->where('brand_id', $brandId)
                 ->where('status', Order::STATUS_DONE)
                 ->where('created_at', '>=', $start)
                 ->where('created_at', '<=', $end);
+            
+            ($userType === 'gtm_admin') ? null : $data->where('brand_id', $brandId);
 
             if ($userType === 'store') {
                 $data->whereIn('merchant_id', $merchantIds);

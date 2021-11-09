@@ -56,11 +56,12 @@ class ConversionRateAPIController extends ControllerAPI
             $data = Activity::select(
                     DB::raw('count(user_id) as unique_user')
                 )
-                ->where('object_id', $brandId)
                 ->where('object_name', 'BaseMerchant')
                 ->where('activity_name', 'view_instore_bp_detail_page')
                 ->where('created_at', '>=', $start)
                 ->where('created_at', '<=', $end);
+
+            ($userType === 'gtm_admin') ? null : $data->where('object_id', $brandId);
 
             $data = $data->first();
             $totalUniqueVisitor = $data->unique_user;
@@ -69,8 +70,9 @@ class ConversionRateAPIController extends ControllerAPI
             $order = Order::selectRaw(
                     'count(user_id) as unique_user'
                 )
-                ->where('brand_id', $brandId)
                 ->where('status', Order::STATUS_DONE);
+            
+            ($userType === 'gtm_admin') ? null : $order->where('brand_id', $brandId);
 
             if ($userType === 'store') {
                 $order->whereIn('merchant_id', $merchantIds);
@@ -83,8 +85,9 @@ class ConversionRateAPIController extends ControllerAPI
             $reservation = BrandProductReservation::selectRaw(
                         'count(brand_product_reservation_id) as count_amount'
                     )
-                    ->where('brand_id', $brandId)
                     ->where('status', BrandProductReservation::STATUS_DONE);
+            
+            ($userType === 'gtm_admin') ? null : $reservation->where('brand_id', $brandId);      
 
             if ($userType === 'store') {
                 $reservation->whereIn('merchant_id', $merchantIds);

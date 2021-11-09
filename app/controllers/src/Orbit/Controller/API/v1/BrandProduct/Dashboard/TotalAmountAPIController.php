@@ -53,10 +53,11 @@ class TotalAmountAPIController extends ControllerAPI
             $orders = Order::selectRaw(
                     'sum(total_amount) as sum_amount'
                 )
-                ->where('brand_id', $brandId)
                 ->where('status', 'done')
                 ->where('created_at', '>=', $start)
                 ->where('created_at', '<=', $end);
+            
+            ($userType === 'gtm_admin') ? null : $orders->where('brand_id', $brandId);
 
             if ($userType === 'store') {
                 $orders->whereIn('merchant_id', $merchantIds);
