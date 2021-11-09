@@ -51,7 +51,6 @@ class AverageAmountAPIController extends ControllerAPI
             $data = Order::selectRaw(
                     'avg(total_amount) as avg_amount'
                 )
-                ->where('brand_id', $brandId)
                 ->where('status', Order::STATUS_DONE)
                 ->where('created_at', '>=', $start);
             
