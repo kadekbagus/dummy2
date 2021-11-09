@@ -47,7 +47,6 @@ class TotalAmountAPIController extends ControllerAPI
 
             // minus 7 hour GMT+7
             $start = Carbon::now()->startOfMonth()->subHours(7);
-            $end = Carbon::now()->subHours(7);
 
             // @todo: add filter to select all brands if user_type is GTM Admin
             $orders = Order::selectRaw(
@@ -55,8 +54,7 @@ class TotalAmountAPIController extends ControllerAPI
                 )
                 ->where('brand_id', $brandId)
                 ->where('status', 'done')
-                ->where('created_at', '>=', $start)
-                ->where('created_at', '<=', $end);
+                ->where('created_at', '>=', $start);
 
             if ($userType === 'store') {
                 $orders->whereIn('merchant_id', $merchantIds);
