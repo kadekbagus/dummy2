@@ -1,17 +1,15 @@
-<?php namespace Orbit\Queue\Order;
+<?php
+
+namespace Orbit\Queue\Order;
 
 use Config;
 use DB;
 use Exception;
 use Illuminate\Support\Facades\Queue;
 use Log;
-use Mall;
-use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
 use Orbit\Helper\Midtrans\API\Refund;
 use Orbit\Notifications\Order\CustomerRefundNotification;
-use Order;
 use PaymentTransaction;
-use User;
 
 /**
  * A job to process refund of given transaction id.
@@ -40,17 +38,11 @@ class RefundOrderQueue
     public function fire($job, $data)
     {
         $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
-        // $mallId = isset($data['mall_id']) ? $data['mall_id'] : null;
-        // $mall = Mall::where('merchant_id', $mallId)->first();
         $payment = null;
         $refundReason = 'Order cancelled by Customer';
 
         if (! isset($data['retry'])) {
             $data['retry'] = 0;
-        }
-
-        if (! isset($data['refundKey'])) {
-            $data['refundKey'] = $data['paymentId'];
         }
 
         if (isset($data['reason'])) {
@@ -86,27 +78,15 @@ class RefundOrderQueue
             $refund = Refund::create()->direct($data['paymentId'], $refundParams);
 
             if ($refund->isSuccess()) {
-                // Set payment status and send refund notification email right away.
-                // This is useful when Midtrans Notifications is late/not sending at all.
-                $payment->status = PaymentTransaction::STATUS_SUCCESS_REFUND;
-                $payment->save();
-                DB::connection()->commit();
-
-                $payment->user->notify(
-                    new CustomerRefundNotification(
-                        $payment,
-                        $refundReason
-                    )
-                );
-
                 $this->log("PaymentID: {$data['paymentId']} refunded!");
 
                 $this->recordRefundData($payment);
             }
             else {
-                DB::connection()->commit();
                 $this->retry($data);
             }
+
+            DB::connection()->commit();
 
         } catch (Exception $e) {
 
@@ -160,8 +140,10 @@ class RefundOrderQueue
      */
     private function recordRefundData($payment)
     {
-        Queue::push('Orbit\Queue\Order\RecordRefundQueue', [
-            'paymentId' => $payment->payment_transaction_id,
-        ]);
+        Queue::later(
+            10, // give some time, rely on Midtrans Notifications first
+            'Orbit\Queue\Order\RecordRefundQueue',
+            ['paymentId' => $payment->payment_transaction_id,]
+        );
     }
 }

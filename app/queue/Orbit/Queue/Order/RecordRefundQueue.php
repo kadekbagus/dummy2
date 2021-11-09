@@ -1,17 +1,14 @@
-<?php namespace Orbit\Queue\Order;
+<?php
 
-use Config;
+namespace Orbit\Queue\Order;
+
 use DB;
 use Exception;
 use Illuminate\Support\Facades\Queue;
 use Log;
-use Mall;
-use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
-use Orbit\Helper\Midtrans\API\Refund;
+use Orbit\Helper\Midtrans\API\TransactionStatus;
 use Orbit\Notifications\Order\CustomerRefundNotification;
-use Order;
 use PaymentTransaction;
-use User;
 
 /**
  * A job to record refund of given transaction id.
@@ -63,13 +60,36 @@ class RecordRefundQueue
                 return;
             }
 
-            $transactionStatus = TransactionStatus::create()->getStatus($data['paymentId']);
+            $transactionStatus = TransactionStatus::create()
+                ->getStatus($data['paymentId']);
 
             if ($transactionStatus->wasRefunded()) {
-                $payment->recordRefund($transactionStatus->getData());
-            }
+                $refundList = $payment->recordRefund(
+                    $transactionStatus->getData()
+                );
 
-            DB::connection()->commit();
+                if (count($refundList) > 0) {
+                    $payment->status = PaymentTransaction::STATUS_SUCCESS_REFUND;
+                    $payment->save();
+                    DB::connection()->commit();
+
+                    $this->log("PaymentID: {$data['paymentId']} status updated to success_refund!");
+
+                    $refundReason = isset($refundList[0]->reason)
+                        ? $refundList[0]->reason
+                        : 'Order Cancelled by Customer';
+
+                    $payment->user->notify(
+                        new CustomerRefundNotification(
+                            $payment,
+                            $refundReason
+                        )
+                    );
+                }
+            }
+            else {
+                DB::connection()->commit();
+            }
 
         } catch (Exception $e) {
 
