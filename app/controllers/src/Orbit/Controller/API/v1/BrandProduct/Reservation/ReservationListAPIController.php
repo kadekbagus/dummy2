@@ -19,6 +19,7 @@ use Config;
 use BrandProductReservation;
 use Exception;
 use App;
+use BppUserMerchant;
 
 class ReservationListAPIController extends ControllerAPI
 {
@@ -37,7 +38,7 @@ class ReservationListAPIController extends ControllerAPI
             $userId = $user->bpp_user_id;
             $userType = $user->user_type;
             $brandId = $user->base_merchant_id;
-            $merchantId = $user->merchant_id;
+            $merchantIds = $this->getStoreIds($userId);
 
             $status = OrbitInput::get('status', null);
 
@@ -96,7 +97,7 @@ class ReservationListAPIController extends ControllerAPI
                 ->where(DB::raw("{$prefix}brand_product_reservations.brand_id"), $brandId)
                 ->groupBy(DB::raw("{$prefix}brand_product_reservations.brand_product_reservation_id"));
 
-            isset($merchantId) ? $reservations->where('brand_product_reservations.merchant_id', '=', $merchantId) : null;
+            ($userType == 'store' && count($merchantIds)>0) ? $reservations->whereIn('brand_product_reservations.merchant_id', $merchantIds) : null;
 
             OrbitInput::get('product_name_like', function($keyword) use ($reservations)
             {
@@ -259,5 +260,17 @@ class ReservationListAPIController extends ControllerAPI
         }
 
         return $this->render($httpCode);
+    }
+
+    public function getStoreIds($bpp_user_id)
+    {
+        $storeIds = [];
+        $stores = BppUserMerchant::select('merchant_id')->where('bpp_user_id', '=', $bpp_user_id)->get();
+
+        foreach($stores as $key => $value) {
+            $storeIds[] = $value->merchant_id;
+        }
+
+        return $storeIds;
     }
 }

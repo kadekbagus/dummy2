@@ -87,7 +87,7 @@ class ConversionRateAPIController extends ControllerAPI
                     ->where('status', BrandProductReservation::STATUS_DONE);
 
             if ($userType === 'store') {
-                $done->whereIn('merchant_id', $merchantIds);
+                $reservation->whereIn('merchant_id', $merchantIds);
             }
 
             $reservation = $reservation->first();

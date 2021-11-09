@@ -48,7 +48,8 @@ class TotalOrderAPIController extends ControllerAPI
             $awaitingActionStatus = [Order::STATUS_PAID,
                                     Order::STATUS_READY_FOR_PICKUP,
                                     Order::STATUS_PICKED_UP,
-                                    Order::STATUS_CANCELLING];
+                                    Order::STATUS_CANCELLING,
+                                    Order::STATUS_NOT_DONE];
 
             $awaitingActions = Order::selectRaw('count(order_id) as count_amount')
                                     ->where('brand_id', $brandId)
