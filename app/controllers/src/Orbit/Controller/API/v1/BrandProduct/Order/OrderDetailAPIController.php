@@ -40,6 +40,7 @@ class OrderDetailAPIController extends ControllerAPI
             $userId = $user->bpp_user_id;
             $brandId = $user->base_merchant_id;
             $merchantId = $user->merchant_id;
+            $userType = $user->user_type;
             $orderId = OrbitInput::get('order_id', null);
 
             $validator = Validator::make(
@@ -104,8 +105,9 @@ class OrderDetailAPIController extends ControllerAPI
                                         }]);
                                     }
                                 ])
-                            ->where('orders.brand_id', '=', $brandId)
                             ->where('orders.order_id', '=', $orderId);
+            
+            ($userType === 'gtm_admin') ? null : $order->where('orders.brand_id', '=', $brandId);
 
             $order = $order->first();
 

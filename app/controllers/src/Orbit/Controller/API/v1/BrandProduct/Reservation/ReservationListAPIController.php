@@ -94,9 +94,9 @@ class ReservationListAPIController extends ControllerAPI
                 ->leftJoin('brand_product_reservation_details', 'brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
                 ->leftJoin('brand_product_reservation_variant_details', 'brand_product_reservation_variant_details.brand_product_reservation_detail_id', '=', 'brand_product_reservation_details.brand_product_reservation_detail_id')
                 ->leftjoin('users', 'users.user_id', '=', 'brand_product_reservations.user_id')
-                ->where(DB::raw("{$prefix}brand_product_reservations.brand_id"), $brandId)
                 ->groupBy(DB::raw("{$prefix}brand_product_reservations.brand_product_reservation_id"));
 
+            ($userType === 'gtm_admin') ? null : $reservations->where(DB::raw("{$prefix}brand_product_reservations.brand_id"), $brandId);        
             ($userType == 'store' && count($merchantIds)>0) ? $reservations->whereIn('brand_product_reservations.merchant_id', $merchantIds) : null;
 
             OrbitInput::get('product_name_like', function($keyword) use ($reservations)

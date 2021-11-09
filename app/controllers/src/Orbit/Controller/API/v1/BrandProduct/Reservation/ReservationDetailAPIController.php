@@ -112,9 +112,9 @@ class ReservationDetailAPIController extends ControllerAPI
                 ])
                 ->leftJoin('brand_product_reservation_details', 'brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
                 ->leftJoin('brand_product_reservation_variant_details', 'brand_product_reservation_variant_details.brand_product_reservation_detail_id', '=', 'brand_product_reservation_details.brand_product_reservation_detail_id')
-                ->where('brand_product_reservations.brand_product_reservation_id', $brandProductReservationId)
-                ->where(DB::raw("{$prefix}brand_product_reservations.brand_id"), $brandId);
-
+                ->where('brand_product_reservations.brand_product_reservation_id', $brandProductReservationId);
+                
+            ($userType === 'gtm_admin') ? null : $reservations->where(DB::raw("{$prefix}brand_product_reservations.brand_id"), $brandId);
             isset($merchantId) ? $reservations->where('brand_product_reservations.merchant_id', '=', $merchantId) : null;
 
             $reservations = $reservations->firstOrFail();
@@ -244,6 +244,10 @@ class ReservationDetailAPIController extends ControllerAPI
             }
 
             return false;
+        }
+
+        if ($userType === 'gtm_admin') {
+            return true;
         }
     }
 

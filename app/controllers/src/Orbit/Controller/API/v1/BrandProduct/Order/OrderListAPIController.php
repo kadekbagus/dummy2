@@ -109,9 +109,10 @@ class OrderListAPIController extends ControllerAPI
                                         }]);
                                     }
                                 ])
-                            ->where('orders.brand_id', '=', $brandId)
                             ->whereNotIn('orders.status', ['pending', 'waiting_payment', 'expired']);
 
+            ($userType === 'gtm_admin') ? null : $orders->where('orders.brand_id', '=', $brandId);
+                            
             ($userType == 'store' && count($merchantIds)>0) ? $orders->whereIn('orders.merchant_id', $merchantIds) : null;
 
             OrbitInput::get('payment_status', function($status) use ($orders)
