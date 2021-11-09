@@ -46,15 +46,14 @@ class AverageAmountAPIController extends ControllerAPI
 
             // minus 7 hour GMT+7
             $start = Carbon::now()->startOfMonth()->subHours(7);
-            $end = Carbon::now()->subHours(7);
 
             // @todo: add filter to select all brands if user_type is GTM Admin
             $data = Order::selectRaw(
                     'avg(total_amount) as avg_amount'
                 )
+                ->where('brand_id', $brandId)
                 ->where('status', Order::STATUS_DONE)
-                ->where('created_at', '>=', $start)
-                ->where('created_at', '<=', $end);
+                ->where('created_at', '>=', $start);
             
             ($userType === 'gtm_admin') ? null : $data->where('brand_id', $brandId);
 

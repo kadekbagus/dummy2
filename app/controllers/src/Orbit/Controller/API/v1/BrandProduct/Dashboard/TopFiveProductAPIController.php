@@ -42,7 +42,6 @@ class TopFiveProductAPIController extends ControllerAPI
 
             // minus 7 hour GMT+7
             $start = Carbon::now()->startOfMonth()->subHours(7);
-            $end = Carbon::now()->subHours(7);
 
             // @todo: add filter to select all brands if user_type is GTM Admin
             $data = Activity::select(
@@ -51,7 +50,6 @@ class TopFiveProductAPIController extends ControllerAPI
                 ->where('object_name', 'BaseMerchant')
                 ->where('activity_name', 'view_instore_bp_detail_page')
                 ->where('created_at', '>=', $start)
-                ->where('created_at', '<=', $end)
                 ->groupBy('product_id')
                 ->orderBy(DB::raw('total_view'), 'desc')
                 ->take(5)

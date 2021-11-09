@@ -50,7 +50,7 @@ class OrderAmountSeriesAPIController extends ControllerAPI
 
             // @todo: Cache the result based on the brand and/or merchant ids
             $start2 = Carbon::now()->startOfMonth()->subHours(7);
-            $end2 = Carbon::now()->subHours(7);
+            // $end2 = Carbon::now()->subHours(7);
 
             $tablePrefix = DB::getTablePrefix();
             $quote = function($arg)
@@ -85,7 +85,7 @@ class OrderAmountSeriesAPIController extends ControllerAPI
                             select DATE_FORMAT(CONVERT_TZ(created_at, '+00:00', '+07:00'), '%m/%d/%Y') as dtx, sum(total_amount) as total from {$tablePrefix}orders
                             where
                             status = 'done'
-                            and created_at between {$quote($start2)} and {$quote($end2)}
+                            and created_at >= {$quote($start2)}
                             {$brandIdQuery}
                             {$merchantsIdQuery}
                             group by dtx
