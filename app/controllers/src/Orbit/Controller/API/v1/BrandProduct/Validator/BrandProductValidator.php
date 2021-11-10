@@ -170,7 +170,10 @@ class BrandProductValidator
 
     private function reservationCanBeDone($reservation)
     {
-        return $reservation->status === BrandProductReservation::STATUS_NOT_DONE;
+        return in_array($reservation->status, [
+            BrandProductReservation::STATUS_PICKED_UP,
+            BrandProductReservation::STATUS_NOT_DONE,
+        ]);
     }
 
     public function matchReservationUser($attrs, $value, $params)
