@@ -51,8 +51,9 @@ class TotalReservationAPIController extends ControllerAPI
                                     BrandProductReservation::STATUS_NOT_DONE];
 
             $awaitingActions = BrandProductReservation::selectRaw('count(brand_product_reservation_id) as count_amount')
-                                                    ->where('brand_id', $brandId)
                                                     ->whereIn('status', $awaitingActionStatus);
+
+            ($userType === 'gtm_admin') ? null : $awaitingActions->where('brand_id', $brandId);
 
             if ($userType === 'store') {
                 $awaitingActions->whereIn('merchant_id', $merchantIds);

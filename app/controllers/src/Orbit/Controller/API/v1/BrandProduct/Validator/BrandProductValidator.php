@@ -122,6 +122,8 @@ class BrandProductValidator
                 $isValid = $this->reservationCanBeDeclined($reservation);
                 break;
             case BrandProductReservation::STATUS_DONE:
+                return $this->reservationCanBeDone($reservation);
+                break;
             case BrandProductReservation::STATUS_NOT_DONE:
                 $isValid = $this->reservationCanBeDoneOrNotDone($reservation);
                 break;
@@ -142,8 +144,10 @@ class BrandProductValidator
 
     private function reservationCanBePickedUp($reservation)
     {
-        return $reservation->status
-            === BrandProductReservation::STATUS_ACCEPTED;
+        return in_array($reservation->status, [
+                BrandProductReservation::STATUS_ACCEPTED,
+                BrandProductReservation::STATUS_NOT_DONE,
+            ]);
     }
 
     private function reservationCanBeAccepted($reservation)
@@ -162,6 +166,11 @@ class BrandProductValidator
     private function reservationCanBeDoneOrNotDone($reservation)
     {
         return $reservation->status === BrandProductReservation::STATUS_PICKED_UP;
+    }
+
+    private function reservationCanBeDone($reservation)
+    {
+        return $reservation->status === BrandProductReservation::STATUS_NOT_DONE;
     }
 
     public function matchReservationUser($attrs, $value, $params)

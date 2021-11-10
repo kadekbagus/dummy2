@@ -78,7 +78,8 @@ class OrderListAPIController extends ControllerAPI
                                     'payment_transactions.created_at as order_date',
                                     'payment_transactions.timezone_name',
                                     'orders.total_amount',
-                                    'orders.pick_up_code')
+                                    'orders.pick_up_code',
+                                    DB::raw("CONCAT({$prefix}merchants.name,' ', m1.name) as brand_name"))
                             ->join('payment_transaction_details', function ($q) {
                                     $q->on('payment_transaction_details.object_id','=','orders.order_id');
                                     $q->where('payment_transaction_details.object_type', '=', 'order');
@@ -91,6 +92,8 @@ class OrderListAPIController extends ControllerAPI
                                     $q->where('media.media_name_id', '=', 'user_profile_picture');
                                     $q->where('media.media_name_long', '=', 'user_profile_picture_orig');
                             })
+                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'orders.merchant_id')
+                            ->leftJoin(DB::raw("{$prefix}merchants as m1"), DB::raw('m1.merchant_id'), '=', 'merchants.parent_id')
                             ->with(['order_details' => function($q) use ($prefix) {
                                         $q->addSelect('order_details.order_id',
                                                       'order_details.order_detail_id',
@@ -109,9 +112,10 @@ class OrderListAPIController extends ControllerAPI
                                         }]);
                                     }
                                 ])
-                            ->where('orders.brand_id', '=', $brandId)
                             ->whereNotIn('orders.status', ['pending', 'waiting_payment', 'expired']);
 
+            ($userType === 'gtm_admin') ? null : $orders->where('orders.brand_id', '=', $brandId);
+                            
             ($userType == 'store' && count($merchantIds)>0) ? $orders->whereIn('orders.merchant_id', $merchantIds) : null;
 
             OrbitInput::get('payment_status', function($status) use ($orders)
@@ -139,6 +143,11 @@ class OrderListAPIController extends ControllerAPI
             OrbitInput::get('username', function($username) use ($orders)
             {
                 $orders->having('username',  'like', "%$username%");
+            });
+
+            OrbitInput::get('brand_name', function($brand_name) use ($orders)
+            {
+                $orders->having('brand_name',  'like', "%$brand_name%");
             });
 
             // Clone the query builder which still does not include the take,

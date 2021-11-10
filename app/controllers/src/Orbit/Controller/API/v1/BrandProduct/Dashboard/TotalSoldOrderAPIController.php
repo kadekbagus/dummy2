@@ -48,8 +48,9 @@ class TotalSoldOrderAPIController extends ControllerAPI
             $done = Order::selectRaw(
                     'count(order_id) as count_amount'
                 )
-                ->where('brand_id', $brandId)
                 ->where('status', Order::STATUS_DONE);
+            
+            ($userType === 'gtm_admin') ? null : $done->where('brand_id', $brandId);
 
             if ($userType === 'store') {
                 $done->whereIn('merchant_id', $merchantIds);
