@@ -122,7 +122,7 @@ class BrandProductValidator
                 $isValid = $this->reservationCanBeDeclined($reservation);
                 break;
             case BrandProductReservation::STATUS_DONE:
-                return $this->reservationCanBeDone($reservation);
+                $isValid = $this->reservationCanBeDone($reservation);
                 break;
             case BrandProductReservation::STATUS_NOT_DONE:
                 $isValid = $this->reservationCanBeDoneOrNotDone($reservation);
