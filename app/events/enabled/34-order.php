@@ -367,3 +367,13 @@ Event::listen('orbit.order.cancelled', function($orders) {
         );
     // }
 });
+
+Event::listen('orbit.order.cancelling', function($orders) {
+    $autoCancelDelay = Config::get('orbit.product_order.auto_cancel_delay', 24);
+
+    Queue::later(
+        $autoCancelDelay * 3600,
+        'Orbit\Queue\Order\AutoCancelOrderQueue',
+        ['orderId' => $orders[0]]
+    );
+});
