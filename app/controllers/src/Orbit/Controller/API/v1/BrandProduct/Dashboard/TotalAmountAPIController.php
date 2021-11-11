@@ -52,7 +52,6 @@ class TotalAmountAPIController extends ControllerAPI
             $orders = Order::selectRaw(
                     'sum(total_amount) as sum_amount'
                 )
-                ->where('brand_id', $brandId)
                 ->where('status', 'done')
                 ->where('created_at', '>=', $start);
             

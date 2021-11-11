@@ -106,30 +106,32 @@ class BrandProductValidator
             $params[0] = $value;
         }
 
+        $isValid = false;
+
         switch ($params[0]) {
             case 'cancel':
-                return $this->reservationCanBeCancelled($reservation);
+                $isValid = $this->reservationCanBeCancelled($reservation);
                 break;
             case BrandProductReservation::STATUS_PICKED_UP:
-                return $this->reservationCanBePickedUp($reservation);
+                $isValid = $this->reservationCanBePickedUp($reservation);
                 break;
             case BrandProductReservation::STATUS_ACCEPTED:
-                return $this->reservationCanBeAccepted($reservation);
+                $isValid = $this->reservationCanBeAccepted($reservation);
                 break;
             case BrandProductReservation::STATUS_DECLINED:
-                return $this->reservationCanBeDeclined($reservation);
+                $isValid = $this->reservationCanBeDeclined($reservation);
                 break;
             case BrandProductReservation::STATUS_DONE:
-                return $this->reservationCanBeDone($reservation);
+                $isValid = $this->reservationCanBeDone($reservation);
                 break;
             case BrandProductReservation::STATUS_NOT_DONE:
-                return $this->reservationCanBeDoneOrNotDone($reservation);
+                $isValid = $this->reservationCanBeDoneOrNotDone($reservation);
                 break;
             default:
                 break;
         }
 
-        return false;
+        return $isValid;
     }
 
     private function reservationCanBeCancelled($reservation)
@@ -168,7 +170,10 @@ class BrandProductValidator
 
     private function reservationCanBeDone($reservation)
     {
-        return $reservation->status === BrandProductReservation::STATUS_NOT_DONE;
+        return in_array($reservation->status, [
+            BrandProductReservation::STATUS_PICKED_UP,
+            BrandProductReservation::STATUS_NOT_DONE,
+        ]);
     }
 
     public function matchReservationUser($attrs, $value, $params)

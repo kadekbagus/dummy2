@@ -46,7 +46,6 @@ class TotalVisitorAPIController extends ControllerAPI
             $data = Activity::select(
                     DB::raw('count(distinct user_id) as unique_user')
                 )
-                ->where('object_id', $brandId)
                 ->where('object_name', 'BaseMerchant')
                 ->where('activity_name', 'view_instore_bp_detail_page')
                 ->where('created_at', '>=', $start);
