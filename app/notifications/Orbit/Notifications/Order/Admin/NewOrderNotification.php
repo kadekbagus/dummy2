@@ -65,7 +65,7 @@ class NewOrderNotification extends AdminNotification
      */
     public function getEmailSubject()
     {
-        return trans('email-order.new-order.subject', [], '', 'en');
+        return trans('email-order.new-order.subject', [], '', 'id');
     }
 
     public function getEmailData()
@@ -80,7 +80,7 @@ class NewOrderNotification extends AdminNotification
      */
     protected function getSupportedLanguages()
     {
-        return ['en'];
+        return ['id','en'];
     }
 
     /**

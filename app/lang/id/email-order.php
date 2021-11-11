@@ -34,11 +34,11 @@ return [
     ],
 
     'new-order' => [
-        'subject' => 'New Product Order!',
-        'title' => 'New Order',
-        'greeting' => 'Hello :recipientName,',
+        'subject' => 'Pesanan Produk Baru!',
+        'title' => 'Pesanan Baru',
+        'greeting' => 'Halo :recipientName,',
         'body' => [
-            'line-1' => 'You have new product order! Please find the details below and take necessary action.',
+            'line-1' => 'Anda mempunyai pesanan produk baru! Berikut ini detail pesanan nya.',
 
             'help' => 'Please contact our customer service at <a style="color:#f43d3c;text-decoration:none;" href="tel::csPhone">:csPhone</a> or email at <a style="color:#f43d3c;text-decoration:none;" href="mailto::csEmail">:csEmail</a> if you find any difficulties.',
             'thank_you' => '',

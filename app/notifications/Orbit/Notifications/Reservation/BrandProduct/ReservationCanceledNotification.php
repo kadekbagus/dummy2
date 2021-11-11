@@ -27,6 +27,6 @@ class ReservationCanceledNotification extends ReservationNotification
 
     public function getEmailSubject()
     {
-        return trans('email-reservation.canceled.subject');
+        return trans('email-reservation.canceled.subject', [], '', 'id');
     }
 }
