@@ -76,4 +76,8 @@ return [
             'admin' => 'Proses Pesanan'
         ]
     ],
+
+    'receipt-order' => [
+        'subject' => 'Kuitansi dari Gotomalls.com',
+    ],
 ];

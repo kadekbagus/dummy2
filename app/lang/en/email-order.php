@@ -76,4 +76,8 @@ return [
             'admin' => 'Process Order'
         ]
     ],
+
+    'receipt-order' => [
+        'subject' => 'Your Receipt from Gotomalls.com',
+    ],
 ];

@@ -55,6 +55,11 @@ class ReceiptNotification extends BaseReceiptNotification
         return ['id', 'en'];
     }
 
+    public function getEmailSubject()
+    {
+        return trans('email-order.receipt-order.subject', [], '', 'id');
+    }
+
     private function prepareMailData($data)
     {
         $this->payment = $this->getPayment($data['transactionId']);
