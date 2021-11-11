@@ -10,6 +10,7 @@ use Log;
 use Orbit\Helper\Midtrans\API\Refund;
 use Orbit\Notifications\Order\CustomerRefundNotification;
 use PaymentTransaction;
+use Order;
 
 /**
  * A job to auto-cancel order if admin didn't process within the time limit.
