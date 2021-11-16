@@ -19,6 +19,7 @@ use Config;
 use BrandProductReservation;
 use Exception;
 use App;
+use BppUserMerchant;
 
 class ReservationListAPIController extends ControllerAPI
 {
@@ -37,7 +38,7 @@ class ReservationListAPIController extends ControllerAPI
             $userId = $user->bpp_user_id;
             $userType = $user->user_type;
             $brandId = $user->base_merchant_id;
-            $merchantId = $user->merchant_id;
+            $merchantIds = $this->getStoreIds($userId);
 
             $status = OrbitInput::get('status', null);
 
@@ -63,6 +64,7 @@ class ReservationListAPIController extends ControllerAPI
                     {$prefix}brand_product_reservation_details.product_name,
                     {$prefix}brand_product_reservation_details.brand_product_variant_id,
                     CONCAT({$prefix}users.user_firstname,' ',{$prefix}users.user_lastname) as username,
+                    CONCAT({$prefix}merchants.name,' ', m1.name) as brand_name,
                     CASE {$prefix}brand_product_reservations.status
                         WHEN 'accepted' THEN
                             CASE WHEN {$prefix}brand_product_reservations.expired_at < NOW()
@@ -93,10 +95,12 @@ class ReservationListAPIController extends ControllerAPI
                 ->leftJoin('brand_product_reservation_details', 'brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
                 ->leftJoin('brand_product_reservation_variant_details', 'brand_product_reservation_variant_details.brand_product_reservation_detail_id', '=', 'brand_product_reservation_details.brand_product_reservation_detail_id')
                 ->leftjoin('users', 'users.user_id', '=', 'brand_product_reservations.user_id')
-                ->where(DB::raw("{$prefix}brand_product_reservations.brand_id"), $brandId)
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'brand_product_reservations.merchant_id')
+                ->leftJoin(DB::raw("{$prefix}merchants as m1"), DB::raw('m1.merchant_id'), '=', 'merchants.parent_id')
                 ->groupBy(DB::raw("{$prefix}brand_product_reservations.brand_product_reservation_id"));
 
-            isset($merchantId) ? $reservations->where('brand_product_reservations.merchant_id', '=', $merchantId) : null;
+            ($userType === 'gtm_admin') ? null : $reservations->where(DB::raw("{$prefix}brand_product_reservations.brand_id"), $brandId);        
+            ($userType == 'store' && count($merchantIds)>0) ? $reservations->whereIn('brand_product_reservations.merchant_id', $merchantIds) : null;
 
             OrbitInput::get('product_name_like', function($keyword) use ($reservations)
             {
@@ -143,6 +147,11 @@ class ReservationListAPIController extends ControllerAPI
             OrbitInput::get('username', function($username) use ($reservations)
             {
                 $reservations->having('username',  'like', "%$username%");
+            });
+
+            OrbitInput::get('brand_name', function($brand_name) use ($reservations)
+            {
+                $reservations->having('brand_name',  'like', "%$brand_name%");
             });
 
             // Clone the query builder which still does not include the take,
@@ -193,6 +202,7 @@ class ReservationListAPIController extends ControllerAPI
                 $returnedItem->expired_at = $item->expired_at;
                 $returnedItem->status = $item->status_label;
                 $returnedItem->total_amount = $item->total_amount;
+                $returnedItem->brand_name = $item->brand_name;
                 $returnedItem->details = [];
 
                 foreach ($item->details as $detail) {
@@ -259,5 +269,17 @@ class ReservationListAPIController extends ControllerAPI
         }
 
         return $this->render($httpCode);
+    }
+
+    public function getStoreIds($bpp_user_id)
+    {
+        $storeIds = [];
+        $stores = BppUserMerchant::select('merchant_id')->where('bpp_user_id', '=', $bpp_user_id)->get();
+
+        foreach($stores as $key => $value) {
+            $storeIds[] = $value->merchant_id;
+        }
+
+        return $storeIds;
     }
 }

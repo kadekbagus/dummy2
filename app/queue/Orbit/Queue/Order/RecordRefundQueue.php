@@ -2,21 +2,20 @@
 
 namespace Orbit\Queue\Order;
 
-use Config;
 use DB;
 use Exception;
 use Illuminate\Support\Facades\Queue;
 use Log;
-use Orbit\Helper\Midtrans\API\Refund;
+use Orbit\Helper\Midtrans\API\TransactionStatus;
 use Orbit\Notifications\Order\CustomerRefundNotification;
 use PaymentTransaction;
 
 /**
- * A job to process refund of given transaction id.
+ * A job to record refund of given transaction id.
  *
  * @author Budi <budi@dominopos.com>
  */
-class RefundOrderQueue
+class RecordRefundQueue
 {
     /**
      * Delay before we trigger another refund request (in minutes).
@@ -37,56 +36,50 @@ class RefundOrderQueue
      */
     public function fire($job, $data)
     {
-        $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
-        $payment = null;
-        $refundReason = 'Order cancelled by Customer';
-
         if (! isset($data['retry'])) {
             $data['retry'] = 0;
-        }
-
-        if (isset($data['reason'])) {
-            $refundReason = $data['reason'];
         }
 
         try {
             DB::connection()->beginTransaction();
 
-            $this->log("Preparing refund for PaymentID: {$data['paymentId']}");
+            $this->log("Starting refund record for PaymentID: {$data['paymentId']}");
 
             $payment = PaymentTransaction::onWriteConnection()->with([
                 'user',
+                'refunds',
             ])->lockForUpdate()->findOrFail($data['paymentId']);
 
-            if ($payment->pending() || $payment->denied() || $payment->failed()
-                || $payment->expired() || $payment->canceled()
-                || $payment->refunded()
-            ) {
-                $this->log("PaymentID: {$data['paymentId']} is pending or failed/cancelled/refunded! Nothing to do.");
+            $transactionStatus = TransactionStatus::create()
+                ->getStatus($data['paymentId']);
 
-                DB::connection()->commit();
+            if ($transactionStatus->wasRefunded()) {
+                $refundList = $payment->recordRefund(
+                    $transactionStatus->getData()
+                );
 
-                $job->delete();
+                if (count($refundList) > 0) {
+                    $payment->status = PaymentTransaction::STATUS_SUCCESS_REFUND;
+                    $payment->save();
+                    DB::connection()->commit();
 
-                return;
-            }
+                    $this->log("PaymentID: {$data['paymentId']} status updated to success_refund!");
 
-            $refundParams = [
-                'reason' => $refundReason,
-            ];
+                    $refundReason = isset($refundList[0]->reason)
+                        ? $refundList[0]->reason
+                        : 'Order Cancelled by Customer';
 
-            $refund = Refund::create()->direct($data['paymentId'], $refundParams);
-
-            if ($refund->isSuccess()) {
-                $this->log("PaymentID: {$data['paymentId']} refunded!");
-
-                $this->recordRefundData($payment);
+                    $payment->user->notify(
+                        new CustomerRefundNotification(
+                            $payment,
+                            $refundReason
+                        )
+                    );
+                }
             }
             else {
-                $this->retry($data);
+                DB::connection()->commit();
             }
-
-            DB::connection()->commit();
 
         } catch (Exception $e) {
 
@@ -114,7 +107,7 @@ class RefundOrderQueue
             $data['retry']++;
             Queue::later(
                 $this->retryDelay * 60,
-                'Orbit\Queue\Order\RefundOrderQueue',
+                'Orbit\Queue\Order\RecordRefundQueue',
                 $data
             );
         }
@@ -129,21 +122,5 @@ class RefundOrderQueue
     private function log($message)
     {
         Log::info("{$this->objectType}: {$message}");
-    }
-
-    /**
-     * Record refund data in a separate queue/http request
-     * since it is not trivial for customer.
-     *
-     * @param  [type] $payment [description]
-     * @return [type]          [description]
-     */
-    private function recordRefundData($payment)
-    {
-        Queue::later(
-            10, // give some time, rely on Midtrans Notifications first
-            'Orbit\Queue\Order\RecordRefundQueue',
-            ['paymentId' => $payment->payment_transaction_id,]
-        );
     }
 }

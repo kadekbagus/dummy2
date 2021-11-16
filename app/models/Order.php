@@ -160,9 +160,9 @@ class Order extends Eloquent
             Order::whereIn('order_id', $orders)->update([
                 'status' => Order::STATUS_CANCELLING,
             ]);
-        }
 
-        return $orders;
+            Event::fire('orbit.order.cancelling', [$orders]);
+        }
     }
 
     public static function cancel($orderId, $restoreQty = true)
@@ -469,5 +469,14 @@ class Order extends Eloquent
         }
 
         return $availableItems > 0;
+    }
+
+    public static function pickedUp($orderId)
+    {
+        $order = Order::where('order_id', $orderId)->update([
+            'status' => self::STATUS_PICKED_UP,
+        ]);
+
+        return $order;
     }
 }

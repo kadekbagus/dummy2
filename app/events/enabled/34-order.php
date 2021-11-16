@@ -107,7 +107,7 @@ Event::listen('orbit.order.ready-for-pickup', function($orderId, $bppUserId)
         $bppUrl = Config::get('orbit.product_order.follow_up_url', 'https://bpp.gotomalls.com/#!/orders/%s');
         $bppOrderUrl = sprintf($bppUrl, $order->order_id);         
         
-        $emailSubject = trans('email-order.pickup-order.subject', [], '', $supportedLangs[1]);
+        $emailSubject = trans('email-order.pickup-order.subject', [], '', $supportedLangs[0]);
                         
         // send email to the user
         Queue::push('Orbit\\Queue\\Order\\ReadyToPickupMailQueue', [
@@ -277,7 +277,7 @@ Event::listen('orbit.order.complete', function($orderId, $bppUserId)
         $bppUrl = Config::get('orbit.product_order.follow_up_url', 'https://bpp.gotomalls.com/#!/orders/%s');
         $bppOrderUrl = sprintf($bppUrl, $order->order_id);         
         
-        $emailSubject = trans('email-order.complete-order.subject', [], '', $supportedLangs[1]);
+        $emailSubject = trans('email-order.complete-order.subject', [], '', $supportedLangs[0]);
                         
         // send email to the user
         Queue::push('Orbit\\Queue\\Order\\OrderCompleteMailQueue', [
@@ -366,4 +366,14 @@ Event::listen('orbit.order.cancelled', function($orders) {
             ['paymentId' => $payment->payment_transaction_id]
         );
     // }
+});
+
+Event::listen('orbit.order.cancelling', function($orders) {
+    $autoCancelDelay = Config::get('orbit.product_order.auto_cancel_delay', 24);
+
+    Queue::later(
+        $autoCancelDelay * 3600,
+        'Orbit\Queue\Order\AutoCancelOrderQueue',
+        ['orderId' => $orders[0]]
+    );
 });

@@ -20,6 +20,7 @@ use App;
 use DB;
 use Media;
 use Carbon\Carbon;
+use BrandProductReservation;
 
 class ConversionRateAPIController extends ControllerAPI
 {
@@ -49,43 +50,59 @@ class ConversionRateAPIController extends ControllerAPI
 
             // minus 7 hour GMT+7
             $start = Carbon::now()->startOfMonth()->subHours(7);
-            $end = Carbon::now()->subHours(7);
 
             // @todo: add filter to select all brands if user_type is GTM Admin
             $data = Activity::select(
-                    DB::raw('count(distinct user_id) as unique_user')
+                    DB::raw('count(user_id) as unique_user')
                 )
-                ->where('object_id', $brandId)
                 ->where('object_name', 'BaseMerchant')
                 ->where('activity_name', 'view_instore_bp_detail_page')
-                ->where('created_at', '>=', $start)
-                ->where('created_at', '<=', $end);
+                ->where('created_at', '>=', $start);
+
+            ($userType === 'gtm_admin') ? null : $data->where('object_id', $brandId);
 
             $data = $data->first();
             $totalUniqueVisitor = $data->unique_user;
 
             // @todo: add filter to select all brands if user_type is GTM Admin
             $order = Order::selectRaw(
-                    'count(distinct user_id) as unique_user'
+                    'count(user_id) as unique_user'
                 )
-                ->where('brand_id', $brandId)
-                ->where('status', Order::STATUS_DONE)
-                ->where('created_at', '>=', $start)
-                ->where('created_at', '<=', $end);
+                ->where('status', Order::STATUS_DONE);
+            
+            ($userType === 'gtm_admin') ? null : $order->where('brand_id', $brandId);
 
             if ($userType === 'store') {
                 $order->whereIn('merchant_id', $merchantIds);
             }
 
             $order = $order->first();
-            $totalUniqueBuyer = $order->unique_user;
+            $totalSoldOrder = $order->unique_user;
+
+            // total sold reservations
+            $reservation = BrandProductReservation::selectRaw(
+                        'count(brand_product_reservation_id) as count_amount'
+                    )
+                    ->where('status', BrandProductReservation::STATUS_DONE);
+            
+            ($userType === 'gtm_admin') ? null : $reservation->where('brand_id', $brandId);      
+
+            if ($userType === 'store') {
+                $reservation->whereIn('merchant_id', $merchantIds);
+            }
+
+            $reservation = $reservation->first();
+            $totalSoldReservation = $reservation->count_amount;
+        
+            $totalSold = $totalSoldOrder + $totalSoldReservation;
 
             $conversionRate = 0;
             if (! empty($totalUniqueVisitor)) {
-                $conversionRate = ($totalUniqueBuyer / $totalUniqueVisitor) * 100;
+                $conversionRate = ($totalSold / $totalUniqueVisitor) * 100;
+                
             }
 
-            $this->response->data = $conversionRate;
+            $this->response->data = round($conversionRate, 2);
         } catch (Exception $e) {
             return $this->handleException($e);
         }

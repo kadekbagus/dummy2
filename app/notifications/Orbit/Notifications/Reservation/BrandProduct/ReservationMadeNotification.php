@@ -28,7 +28,7 @@ class ReservationMadeNotification extends ReservationNotification
 
     public function getEmailSubject()
     {
-        return trans('email-reservation.made.subject');
+        return trans('email-reservation.made.subject', [], '', 'id');
     }
 
     protected function getReservationData()

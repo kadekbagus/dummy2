@@ -27,3 +27,9 @@ Route::get('/app/v1/brand-product/dashboard/daily-amount', ['as' => 'bpp-dash-da
 // Route for total visitor
 Route::get('/app/v1/brand-product/dashboard/total-visitor', ['as' => 'bpp-dash-total-visitor', 'uses' => 'IntermediateBrandProductAuthController@Dashboard\TotalVisitor_get']);
 
+// Route for total sold order
+Route::get('/app/v1/brand-product/dashboard/total-sold-order', ['as' => 'bpp-dash-total-sold-order', 'uses' => 'IntermediateBrandProductAuthController@Dashboard\TotalSoldOrder_get']);
+
+// Route for total sold reservation
+Route::get('/app/v1/brand-product/dashboard/total-sold-reservation', ['as' => 'bpp-dash-total-sold-reservation', 'uses' => 'IntermediateBrandProductAuthController@Dashboard\TotalSoldReservation_get']);
+

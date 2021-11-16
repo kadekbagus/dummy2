@@ -22,7 +22,7 @@ class ReservationExpiredNotification extends ReservationNotification
 
     public function getEmailSubject()
     {
-        return trans('email-reservation.expired.subject', [], '', 'en');
+        return trans('email-reservation.expired.subject', [], '', 'id');
     }
 
     protected function getSupportedLanguages()

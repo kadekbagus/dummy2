@@ -6574,5 +6574,6 @@ return array(
 
     'product_order' => [
         'follow_up_url' => 'https://bpp.gotomalls.com/#!/orders/%s',
+        'auto_cancel_delay' => 24, // delay before we trigger auto-cancel order (in hour)
     ],
 );

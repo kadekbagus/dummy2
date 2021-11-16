@@ -13,17 +13,16 @@ use Validator;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Util\PaginationNumber;
 use stdclass;
-use PaymentTransaction;
 use Order;
 use Exception;
 use App;
 use Carbon\Carbon;
 
-class TotalAmountAPIController extends ControllerAPI
+class TotalSoldOrderAPIController extends ControllerAPI
 {
 
     /**
-     * Get Month to date Total successful order amount
+     * Get total sold order
      *
      * @author ahmad <ahmad@gotomalls.com>
      */
@@ -45,25 +44,24 @@ class TotalAmountAPIController extends ControllerAPI
 
             // @todo: Cache the result based on the brand and/or merchant ids
 
-            // minus 7 hour GMT+7
-            $start = Carbon::now()->startOfMonth()->subHours(7);
-
             // @todo: add filter to select all brands if user_type is GTM Admin
-            $orders = Order::selectRaw(
-                    'sum(total_amount) as sum_amount'
+            $done = Order::selectRaw(
+                    'count(order_id) as count_amount'
                 )
-                ->where('status', 'done')
-                ->where('created_at', '>=', $start);
+                ->where('status', Order::STATUS_DONE);
             
-            ($userType === 'gtm_admin') ? null : $orders->where('brand_id', $brandId);
+            ($userType === 'gtm_admin') ? null : $done->where('brand_id', $brandId);
 
             if ($userType === 'store') {
-                $orders->whereIn('merchant_id', $merchantIds);
+                $done->whereIn('merchant_id', $merchantIds);
             }
 
-            $sum = $orders->first();
+            $done = $done->first();
 
-            $this->response->data = $sum->sum_amount;
+            $data = new stdclass();
+            $data->total_sold_orders = $done->count_amount;
+
+            $this->response->data = $data;
         } catch (Exception $e) {
             return $this->handleException($e);
         }
