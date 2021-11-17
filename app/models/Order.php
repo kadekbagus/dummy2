@@ -160,9 +160,9 @@ class Order extends Eloquent
             Order::whereIn('order_id', $orders)->update([
                 'status' => Order::STATUS_CANCELLING,
             ]);
-        }
 
-        return $orders;
+            Event::fire('orbit.order.cancelling', [$orders]);
+        }
     }
 
     public static function cancel($orderId, $restoreQty = true)

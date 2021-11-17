@@ -213,6 +213,15 @@ class OrderUpdateStatusAPIController extends ControllerAPI
                 return false;
             }
 
+            if ($status === Order::STATUS_NOT_DONE
+                && ! in_array($order->status, [
+                    Order::STATUS_CANCELLING,
+                    Order::STATUS_PICKED_UP,
+                ])
+            ) {
+                return false;
+            }
+
             return TRUE;
         });
     }
