@@ -113,7 +113,7 @@ class ReservationDetailAPIController extends ControllerAPI
                 ->leftJoin('brand_product_reservation_details', 'brand_product_reservation_details.brand_product_reservation_id', '=', 'brand_product_reservations.brand_product_reservation_id')
                 ->leftJoin('brand_product_reservation_variant_details', 'brand_product_reservation_variant_details.brand_product_reservation_detail_id', '=', 'brand_product_reservation_details.brand_product_reservation_detail_id')
                 ->where('brand_product_reservations.brand_product_reservation_id', $brandProductReservationId);
-                
+
             ($userType === 'gtm_admin') ? null : $reservations->where(DB::raw("{$prefix}brand_product_reservations.brand_id"), $brandId);
             isset($merchantId) ? $reservations->where('brand_product_reservations.merchant_id', '=', $merchantId) : null;
 
@@ -122,6 +122,7 @@ class ReservationDetailAPIController extends ControllerAPI
             $returnedItem = new stdclass();
             if (is_object($reservations)) {
                 $returnedItem->brand_product_reservation_id = $reservations->brand_product_reservation_id;
+                $returnedItem->user_id = $reservations->users->user_id;
                 $returnedItem->user_name = $reservations->users->user_firstname . ' ' . $reservations->users->user_lastname;
                 $returnedItem->created_at = (string) $reservations->created_at;
                 $returnedItem->updated_at = (string) $reservations->updated_at;
