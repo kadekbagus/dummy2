@@ -40,6 +40,15 @@ class SettingToggleAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
+            $validType = ['pulsa',
+                          'game_voucher',
+                          'electricity',
+                          'electricity_bill',
+                          'pdam_bill',
+                          'bpjs_bill',
+                          'internet_provider_bill',
+                          'gtm_mdr_value'];
+
             $type = OrbitInput::post('type');
 
             $validator = Validator::make(
@@ -47,10 +56,10 @@ class SettingToggleAPIController extends ControllerAPI
                     'type' => $type,
                 ),
                 array(
-                    'type' => 'required|in:pulsa,game_voucher,electricity',
+                    'type' => 'required|in:'.implode(",", $validType),
                 ),
                 array(
-                    'type.in' => 'The argument you specified is not valid, the valid values are: pulsa, game_voucher, and electricity',
+                    'type.in' => 'The argument you specified is not valid, the valid values are: '.implode(",", $validType),
                 )
             );
 
@@ -64,6 +73,11 @@ class SettingToggleAPIController extends ControllerAPI
                 'pulsa' => 'enable_pulsa_page',
                 'game_voucher' => 'enable_game_voucher_page',
                 'electricity' => 'enable_electricity_page',
+                'electricity_bill' => 'enable_electricity_bill_page',
+                'pdam_bill' => 'enable_bpjs_bill_page',
+                'bpjs_bill' => 'enable_internet_provider_bill_page',
+                'internet_provider_bill' => 'enable_internet_provider_bill_page',
+                'gtm_mdr_value' => 'gtm_mdr_value',
             ];
 
             $setting = Setting::where('setting_name', $data[$type])->first();
