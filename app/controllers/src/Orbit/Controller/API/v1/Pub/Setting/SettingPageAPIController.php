@@ -35,7 +35,20 @@ class SettingPageAPIController extends PubControllerAPI
                     'type' => $type,
                 ),
                 array(
-                    'type' => 'required|in:pulsa,game_voucher,electricity',
+                    'type' => join('|', [
+                        'required',
+                        'in:' . join(',', [
+                            'pulsa',
+                            'game_voucher',
+                            'electricity',
+                            'electricity_bills',
+                            'pdam_bills',
+                            'pbb_tax',
+                            'bpjs',
+                            'internet_providers',
+                            'all',
+                        ])
+                    ]),
                 ),
                 array(
                     'type.in' => 'The argument you specified is not valid, the valid values are: pulsa, game_voucher,electricity',
@@ -52,9 +65,30 @@ class SettingPageAPIController extends PubControllerAPI
                 'pulsa' => 'enable_pulsa_page',
                 'game_voucher' => 'enable_game_voucher_page',
                 'electricity' => 'enable_electricity_page',
+                'electricity_bills' => 'enable_electricity_bill_page',
+                'pdam_bills' => 'enable_pdam_bill_page',
+                'pbb_tax' => 'enable_pbb_tax_page',
+                'bpjs' => 'enable_bpjs_bill_page',
+                'internet_providers' => 'enable_internet_provider_bill_page',
+                'all' => [
+                    'enable_pulsa_page',
+                    'enable_game_voucher_page',
+                    'enable_electricity_page',
+                    'enable_electricity_bill_page',
+                    'enable_pdam_bill_page',
+                    'enable_pbb_tax_page',
+                    'enable_bpjs_bill_page',
+                    'enable_internet_provider_bill_page',
+                ],
             ];
 
-            $setting = Setting::select('setting_name', 'setting_value')->where('setting_name', $data[$type])->first();
+            $setting = Setting::select('setting_name', 'setting_value');
+            if ($type === 'all') {
+                $setting = $setting->whereIn('setting_name', $data[$type])->get();
+            }
+            else {
+                $setting = $setting->where('setting_name', $data[$type])->first();
+            }
 
             if (!is_object($setting)) {
                 $data->records = NULL;
