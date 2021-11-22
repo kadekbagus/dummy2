@@ -23,6 +23,14 @@ class CreateRequest extends ValidateRequest
 
     protected $productCode = '';
 
+    protected $validProductType = ['game_voucher',
+                                   'electricity',
+                                   'electricity_bill',
+                                   'pdam_bill',
+                                   'pbb_tax',
+                                   'bpjs_bill',
+                                   'internet_provider_bill'];
+
     /**
      * Get validation rules.
      *
@@ -31,7 +39,7 @@ class CreateRequest extends ValidateRequest
     public function rules()
     {
         return [
-            'type' => 'required|in:game_voucher,electricity',
+            'type' => 'required|in:'.implode(",", $this->validProductType),
             'name' => 'required',
             'code' => 'required|unique_code',
             'provider_id' => 'required|provider_product_exists',
