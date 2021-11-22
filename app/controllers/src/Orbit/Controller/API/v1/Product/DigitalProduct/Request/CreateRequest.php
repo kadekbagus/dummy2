@@ -44,7 +44,7 @@ class CreateRequest extends ValidateRequest
             'code' => 'required|unique_code',
             'provider_id' => 'required|provider_product_exists',
             'games' => 'required_if:type,game_voucher|array',
-            'price' => 'required|numeric',
+            'price' => 'numeric',
             'status' => 'required|in:active,inactive',
             'displayed' => 'required|in:yes,no',
             'promo' => 'required|in:yes,no',

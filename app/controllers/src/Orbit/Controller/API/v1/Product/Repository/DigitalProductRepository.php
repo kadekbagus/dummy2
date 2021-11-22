@@ -215,6 +215,9 @@ class DigitalProductRepository
             $this->digitalProduct->selected_provider_product_id = $providerId;
         });
 
+        // Set selling_price 0 if not send
+        $this->digitalProduct->selling_price = (isset($request->price)) ? $request->price : 0;
+
         $request->has('price', function($price) {
             $this->digitalProduct->selling_price = $price;
         });

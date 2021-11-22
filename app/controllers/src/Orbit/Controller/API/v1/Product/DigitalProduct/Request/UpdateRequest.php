@@ -29,7 +29,7 @@ class UpdateRequest extends CreateRequest
             'code' => 'sometimes|required|unique_code_if_changed',
             'provider_id' => 'sometimes|required|orbit.exists.provider_product',
             'games' => 'sometimes|required_if:type,game_voucher|array',
-            'price' => 'sometimes|required|numeric',
+            'price' => 'sometimes|numeric',
             'status' => 'sometimes|required|in:active,inactive',
             'displayed' => 'sometimes|required|in:yes,no',
             'promo' => 'sometimes|required|in:yes,no',
