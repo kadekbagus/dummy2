@@ -65,6 +65,8 @@ class ProviderProductNewAPIController extends ControllerAPI
             $commission_type = OrbitInput::post('commission_type');
             $commission_value = OrbitInput::post('commission_value', 0);
             $extra_field_metadata = OrbitInput::post('extra_field_metadata');
+            $provider_fee = OrbitInput::post('provider_fee');
+            $profit_percentage = OrbitInput::post('profit_percentage');
 
             $validProductType = ['game_voucher',
                                 'electricity',
@@ -126,6 +128,8 @@ class ProviderProductNewAPIController extends ControllerAPI
             $newProviderProduct->commission_value = ($commission_value === '') ? 0 : $commission_value;
             $newProviderProduct->status = $status;
             $newProviderProduct->extra_field_metadata = $extra_field_metadata;
+            $newProviderProduct->provider_fee = $provider_fee;
+            $newProviderProduct->profit_percentage = $profit_percentage;
 
             Event::fire('orbit.newproviderproduct.postnewproviderproduct.before.save', array($this, $newProviderProduct));
 
