@@ -51,6 +51,7 @@ class SettingToggleAPIController extends ControllerAPI
                           'gtm_mdr_value'];
 
             $type = OrbitInput::post('type');
+            $settingValue = OrbitInput::post('setting_value');
 
             $validator = Validator::make(
                 array(
@@ -90,6 +91,10 @@ class SettingToggleAPIController extends ControllerAPI
             }
 
             $setting->setting_value = ($setting->setting_value === '1') ? 0 : 1;
+            // Set value for gtm_mdr_value
+            if ($type === 'gtm_mdr_value') {
+                $setting->setting_value = $settingValue;
+            }
             $setting->modified_by = $user->user_id;
             $setting->save();
 

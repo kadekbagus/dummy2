@@ -132,6 +132,14 @@ class ProviderProductUpdateAPIController extends ControllerAPI
                 $updatedProviderProduct->extra_field_metadata = $extra_field_metadata;
             });
 
+            OrbitInput::post('provider_fee', function($provider_fee) use ($updatedProviderProduct) {
+                $updatedProviderProduct->provider_fee = $provider_fee;
+            });
+
+            OrbitInput::post('profit_percentage', function($profit_percentage) use ($updatedProviderProduct) {
+                $updatedProviderProduct->profit_percentage = $profit_percentage;
+            });
+
             Event::fire('orbit.updateproviderproduct.postupdateproviderproduct.before.save', array($this, $updatedProviderProduct));
 
             $updatedProviderProduct->touch();
