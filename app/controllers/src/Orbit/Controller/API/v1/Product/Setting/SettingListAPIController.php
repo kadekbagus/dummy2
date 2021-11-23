@@ -40,6 +40,16 @@ class SettingListAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
+            $validType = ['pulsa',
+                          'game_voucher',
+                          'electricity',
+                          'electricity_bill',
+                          'pdam_bill',
+                          'pbb_tax',
+                          'bpjs_bill',
+                          'internet_provider_bill',
+                          'gtm_mdr_value'];
+
             $type = OrbitInput::get('type');
 
             $validator = Validator::make(
@@ -47,10 +57,10 @@ class SettingListAPIController extends ControllerAPI
                     'type' => $type,
                 ),
                 array(
-                    'type' => 'in:pulsa,game_voucher,electricity',
+                    'type' => 'in:'.implode(",", $validType),
                 ),
                 array(
-                    'type.in' => 'The argument you specified is not valid, the valid values are: pulsa, game_voucher, and electricity.',
+                    'type.in' => 'The argument you specified is not valid, the valid values are: '.implode(",", $validType),
                 )
             );
 
@@ -64,6 +74,12 @@ class SettingListAPIController extends ControllerAPI
                 'pulsa' => 'enable_pulsa_page',
                 'game_voucher' => 'enable_game_voucher_page',
                 'electricity' => 'enable_electricity_page',
+                'electricity_bill' => 'enable_electricity_bill_page',
+                'pdam_bill' => 'enable_pdam_bill_page',
+                'pbb_tax' => 'enable_pbb_tax_page',
+                'bpjs_bill' => 'enable_bpjs_bill_page',
+                'internet_provider_bill' => 'enable_internet_provider_bill_page',
+                'gtm_mdr_value' => 'gtm_mdr_value',
             ];
 
             $setting = Setting::select('setting_name', 'setting_value')->whereIn('setting_name', $data);

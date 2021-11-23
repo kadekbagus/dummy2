@@ -61,10 +61,20 @@ class ProviderProductNewAPIController extends ControllerAPI
             $status = OrbitInput::post('status', 'inactive');
             $description = OrbitInput::post('description');
             $faq = OrbitInput::post('faq');
-            $price = OrbitInput::post('price');
+            $price = OrbitInput::post('price', 0);
             $commission_type = OrbitInput::post('commission_type');
-            $commission_value = OrbitInput::post('commission_value');
+            $commission_value = OrbitInput::post('commission_value', 0);
             $extra_field_metadata = OrbitInput::post('extra_field_metadata');
+            $provider_fee = OrbitInput::post('provider_fee');
+            $profit_percentage = OrbitInput::post('profit_percentage');
+
+            $validProductType = ['game_voucher',
+                                'electricity',
+                                'electricity_bill',
+                                'pdam_bill',
+                                'pbb_tax',
+                                'bpjs_bill',
+                                'internet_provider_bill'];
 
             // Begin database transaction
             $this->beginTransaction();
@@ -76,19 +86,15 @@ class ProviderProductNewAPIController extends ControllerAPI
                     'provider_name'         => $provider_name,
                     'code'                  => $code,
                     'status'                => $status,
-                    'price'                 => $price,
                     'commission_type'       => $commission_type,
-                    'commission_value'      => $commission_value,
                 ),
                 array(
                     'provider_product_name' => 'required',
-                    'product_type'          => 'required|in:game_voucher,electricity',
+                    'product_type'          => 'required|in:'.implode(",", $validProductType),
                     'provider_name'         => 'required',
                     'code'                  => 'required|orbit.exist.code',
                     'status'                => 'in:active,inactive',
-                    'price'                 => 'required',
                     'commission_type'       => 'required',
-                    'commission_value'      => 'required',
                 ),
                 array(
                     'provider_product_name.required'    => 'Product Name field is required',
@@ -115,13 +121,15 @@ class ProviderProductNewAPIController extends ControllerAPI
             $newProviderProduct->product_type = $product_type;
             $newProviderProduct->provider_product_name = $provider_product_name;
             $newProviderProduct->code = $code;
-            $newProviderProduct->price = $price;
+            $newProviderProduct->price = ($price === '') ? 0 : $price;
             $newProviderProduct->description = $description;
             $newProviderProduct->faq = $faq;
             $newProviderProduct->commission_type = $commission_type;
-            $newProviderProduct->commission_value = $commission_value;
+            $newProviderProduct->commission_value = ($commission_value === '') ? 0 : $commission_value;
             $newProviderProduct->status = $status;
             $newProviderProduct->extra_field_metadata = $extra_field_metadata;
+            $newProviderProduct->provider_fee = $provider_fee;
+            $newProviderProduct->profit_percentage = $profit_percentage;
 
             Event::fire('orbit.newproviderproduct.postnewproviderproduct.before.save', array($this, $newProviderProduct));
 
