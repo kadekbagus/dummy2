@@ -663,4 +663,18 @@ class PaymentTransaction extends Eloquent
 
         return $providerProduct;
     }
+
+    public function getBillProductId()
+    {
+        $productType = null;
+
+        foreach($this->details as $detail) {
+            if (! empty($detail->provider_product)) {
+                $productType = $detail->provider_product->code;
+                break;
+            }
+        }
+
+        return $productType;
+    }
 }

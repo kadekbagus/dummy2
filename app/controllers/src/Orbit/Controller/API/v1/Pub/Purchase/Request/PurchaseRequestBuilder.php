@@ -27,6 +27,15 @@ class PurchaseRequestBuilder
                 return new NewOrderPurchaseRequest();
                 break;
 
+            case 'bill':
+            case 'bill_pln':
+            case 'bill_pdam':
+            case 'bill_pbb':
+            case 'bill_isp':
+            case 'bill_other':
+                return new NewBillPurchaseRequest($productType);
+                break;
+
             // other type goes here...
 
             default:

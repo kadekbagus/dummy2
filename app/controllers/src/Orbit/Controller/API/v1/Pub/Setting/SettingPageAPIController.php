@@ -37,17 +37,7 @@ class SettingPageAPIController extends PubControllerAPI
                 array(
                     'type' => join('|', [
                         'required',
-                        'in:' . join(',', [
-                            'pulsa',
-                            'game_voucher',
-                            'electricity',
-                            'electricity_bills',
-                            'pdam_bills',
-                            'pbb_tax',
-                            'bpjs',
-                            'internet_providers',
-                            'all',
-                        ])
+                        'in:' . join(',', BillRepository::getBillTypeIds())
                     ]),
                 ),
                 array(

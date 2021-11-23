@@ -41,6 +41,10 @@ class BaseCreatePurchase
 
     protected $mallTimeZone = null;
 
+    protected $beforeCommitHooksFn = null;
+
+    protected $afterCommitHooksFn = null;
+
     protected function init($request)
     {
         $this->request = $request;
@@ -222,9 +226,29 @@ class BaseCreatePurchase
         }
     }
 
-    protected function beforeCommitHooks()
+    protected function runBeforeCommitHooks()
+    {
+        if (! is_callable($this->beforeCommitHooksFn)) {
+            $this->beforeCommitHooksFn($this->purchase, $this->request);
+        }
+        else {
+            $this->beforeCommitHooks();
+        }
+    }
+
+    public function beforeCommitHooks()
     {
         //
+    }
+
+    protected function runAfterCommitHooks()
+    {
+        if (! is_callable($this->afterCommitHooksFn)) {
+            $this->afterCommitHooksFn();
+        }
+        else {
+            $this->afterCommitHooks();
+        }
     }
 
     protected function afterCommitHooks()
@@ -261,6 +285,16 @@ class BaseCreatePurchase
         ));
     }
 
+    public function setBeforeCommitHooks($hook)
+    {
+        $this->beforeCommitHooksFn = $hook;
+    }
+
+    public function setAfterCommitHooks($hook)
+    {
+        $this->afterCommitHooksFn = $hook;
+    }
+
     public function create($request)
     {
         DB::beginTransaction();
@@ -275,11 +309,11 @@ class BaseCreatePurchase
 
         $this->applyPromoCode();
 
-        $this->beforeCommitHooks();
+        $this->runBeforeCommitHooks();
 
         DB::commit();
 
-        $this->afterCommitHooks();
+        $this->runAfterCommitHooks();
 
         return $this->purchase;
     }

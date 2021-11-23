@@ -37,6 +37,10 @@ class PurchaseUpdateAPIController extends PubControllerAPI
                         ->update($request);
                     break;
 
+                case 'bill':
+                    $this->response->data = (new UpdateBillPurchase)
+                        ->update($request);
+
                 default:
                     throw new Exception('Unknown product type.');
                     break;
