@@ -408,7 +408,13 @@ class IntermediateBaseController extends Controller
     protected function getTargetAPIController($method)
     {
         // Remove the 'Intermediate' string
-        list($controller, $method) = explode('_', $method);
+        $targets = explode('_', $method);
+        $controller = $targets[0];
+        $method = 'handle';
+
+        if (isset($targets[1])) {
+            $method = $targets[1];
+        }
 
         // Append the controller with 'APIController', e.g:
         // 'Merchant' would be 'MerchantAPIController'
@@ -484,8 +490,12 @@ class IntermediateBaseController extends Controller
      *
      * @return Illuminate\Http\Response
      */
-    protected function handleRequest($class, $method, $user)
+    protected function handleRequest($class, $method = null, $user)
     {
+        if (empty($method)) {
+            $method = 'handle';
+        }
+
         // Resolve the dependencies...
         $dependencies = $this->resolveDependencies($class, $method);
 
