@@ -21,7 +21,7 @@ class DigitalProductCollection extends ResourceCollection
         'game_voucher' => 'Game Voucher',
         'electricity' => 'Electricity',
         'electricity_bill' => 'Electricity Bill',
-        'pdam_bill' => 'PDAM bill',
+        'pdam_bill' => 'PDAM Bill',
         'pbb_tax' => 'PBB Tax',
         'bpjs_bill' => 'BPJS Bill',
         'internet_provider_bill' => 'Internet Provider Bill'
