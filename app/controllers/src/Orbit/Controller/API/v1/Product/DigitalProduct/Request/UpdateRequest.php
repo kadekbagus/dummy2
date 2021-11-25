@@ -22,9 +22,17 @@ class UpdateRequest extends CreateRequest
      */
     public function rules()
     {
+        $validProductType = ['game_voucher',
+                                'electricity',
+                                'electricity_bill',
+                                'pdam_bill',
+                                'pbb_tax',
+                                'bpjs_bill',
+                                'internet_provider_bill'];
+
         return [
             'id' => 'required|product_exists|provider_product_exists',
-            'type' => 'sometimes|required|in:game_voucher,electricity',
+            'type' => 'sometimes|required|in:'.implode(",", $validProductType),
             'name' => 'sometimes|required',
             'code' => 'sometimes|required|unique_code_if_changed',
             'provider_id' => 'sometimes|required|orbit.exists.provider_product',
