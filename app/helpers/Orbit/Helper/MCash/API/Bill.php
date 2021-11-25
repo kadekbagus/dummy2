@@ -1,9 +1,10 @@
 <?php namespace Orbit\Helper\MCash\API;
 
 use Config;
+use Illuminate\Support\Facades\Log;
 use Orbit\Helper\Exception\OrbitCustomException;
-use Orbit\Helper\MCash\API\Responses\InquiryResponse;
 use Orbit\Helper\MCash\API\BillInterface;
+use Orbit\Helper\MCash\API\Responses\InquiryResponse;
 use Orbit\Helper\MCash\Client as MCashClient;
 use Orbit\Helper\MCash\ConfigSelector;
 
@@ -51,6 +52,8 @@ abstract class Bill implements BillInterface
      */
     protected $response;
 
+    protected $billType = null;
+
     const ELECTRICITY_BILL = 'electricity_bill';
     const PDAM_BILL = 'pdam_bill';
     const PBB_TAX_BILL = 'pbb_tax';
@@ -61,7 +64,10 @@ abstract class Bill implements BillInterface
     {
         $this->config = Config::get('orbit.partners_api.mcash', []);
         $this->config = array_merge($this->config, $config);
-        $this->config['mock_bill_response'] = Config::get('orbit.partners_api.mock_bill_response', false);
+        $this->config['mock_bill_response'] = Config::get(
+            'orbit.partners_api.mock_bill_response.' . $this->billType,
+            false
+        );
         $this->client = MCashClient::create($this->config);
 
         $this->initMockResponse();
@@ -78,25 +84,15 @@ abstract class Bill implements BillInterface
             return;
         }
 
-        switch ($this->config['mock_bill_response']) {
-            case 'success_inquiry':
-               $this->mockInquirySuccessResponse();
-               break;
+        if (! $this->config['mock_bill_response']) {
+            return;
+        }
 
-            case 'failed_inquiry':
-                $this->mockInquiryFailedResponse();
-                break;
+        $mockSetting = $this->config['mock_bill_response'];
 
-            case 'success_pay':
-                $this->mockPaySuccessResponse();
-                break;
-
-            case 'failed_pay':
-                $this->mockPayFailedResponse();
-                break;
-
-            default:
-                break;
+        foreach($mockSetting as $command => $setting) {
+            $mockMethod = 'mock' . ucfirst($command) . ucfirst($setting) . 'Response';
+            $this->{$mockMethod}();
         }
     }
 
@@ -120,6 +116,11 @@ abstract class Bill implements BillInterface
             self::BPJS_BILL => 'enable_bpjs_bill_page',
             self::ISP_BILL => 'enable_internet_provider_bill_page',
         ];
+    }
+
+    protected function log($message, $type = 'info')
+    {
+        Log::{$type}(strtoupper($this->billType) . ': ' . $message);
     }
 
     abstract public function inquiry($params = []);

@@ -598,6 +598,10 @@ return array(
             'bill_enabled' => 'The requested bill service unavailable. Please try again later or contact customer service.',
             'can_purchase' => 'Unable to make payment, please try again in a moment or contact customer service.',
         ),
+
+        'digital_product' => array(
+            'exists' => "Product doesn't exists.",
+        ),
     ),
 
     /*

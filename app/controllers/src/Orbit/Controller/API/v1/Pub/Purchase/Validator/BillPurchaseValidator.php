@@ -5,10 +5,12 @@ namespace Orbit\Controller\API\v1\Pub\Purchase\Validator;
 use App;
 use Carbon\Carbon;
 use DigitalProduct;
-use ProviderProduct;
-use PaymentTransaction;
-use OrbitShop\API\v1\Helper\Input;
 use Illuminate\Support\Facades\Config;
+use OrbitShop\API\v1\Helper\Input;
+use Orbit\Helper\MCash\API\Bill;
+use PaymentTransaction;
+use ProviderProduct;
+use Setting;
 
 /**
  * Validator related to purchase.
@@ -17,42 +19,56 @@ use Illuminate\Support\Facades\Config;
  */
 class BillPurchaseValidator
 {
-    public function purchaseEnabled()
+    public function purchaseEnabled($attr, $value, $params)
     {
+        if (! App::bound('digitalProduct')) {
+            return false;
+        }
 
+        $digitalProduct = App::make('digitalProduct');
+
+        $billSettingNames = Bill::getBillSettingName();
+        $settingName = $billSettingNames[$digitalProduct->product_type];
+
+        $setting = Setting::select('setting_value')
+            ->where('setting_name', $settingName)
+            ->active()
+            ->first();
+
+        if (empty($setting)) {
+            return false;
+        }
+
+        return (int) $setting->setting_value === 1;
     }
 
-    public function limitPending($attribute, $value, $parameters)
+    public function limitPending($attribute, $billId, $parameters)
     {
-        $digitalProduct = app('digitalProduct');
-        $customerNumber = $value;
+        if (App::bound('providerProduct')) {
+            $providerProduct = App::make('providerProduct');
+        }
+        else {
+            $providerProduct = ProviderProduct::where(
+                'provider_product_id',
+                $digitalProduct->selected_provider_product_id
+            )->first();
 
-        if (empty($digitalProduct)) {
-            return false;
+            if (empty($providerProduct)) {
+                return false;
+            }
         }
 
-        $providerProduct = ProviderProduct::where(
-            'provider_product_id',
-            $digitalProduct->selected_provider_product_id
-        )->first();
-
-        if (empty($providerProduct)) {
-            return false;
-        }
-
-        $pendingPurchase = PaymentTransaction::select('payment_transactions.payment_transaction_id')
+        return PaymentTransaction::select('payment_transactions.payment_transaction_id')
                             ->join('payment_transaction_details', 'payment_transactions.payment_transaction_id', '=', 'payment_transaction_details.payment_transaction_id')
-                            ->join('digital_products', 'payment_transaction_details.object_id', '=', 'digital_products.digital_product_id')
-                            ->join('provider_products', 'digital_products.selected_provider_product_id', '=', 'provider_products.provider_product_id')
+                            // ->join('digital_products', 'payment_transaction_details.object_id', '=', 'digital_products.digital_product_id')
+                            ->join('provider_products', 'payment_transaction_details.provider_product_id', '=', 'provider_products.provider_product_id')
                             ->whereIn('payment_transaction_details.object_type', ['pulsa', 'data_plan', 'digital_product'])
                             ->where('provider_products.code', $providerProduct->code)
-                            ->where('payment_transactions.extra_data', $customerNumber)
+                            ->where('payment_transactions.extra_data', $billId)
                             ->whereIn('payment_transactions.status', [
                                 PaymentTransaction::STATUS_PENDING,
                             ])
-                            ->count();
-
-        return $pendingPurchase === 0;
+                            ->count() === 0;
     }
 
     public function limitPurchase($attribuets, $value, $params, $data)

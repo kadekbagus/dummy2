@@ -2,11 +2,12 @@
 
 namespace Orbit\Controller\API\v1\Pub\Purchase;
 
+use Exception;
+use Illuminate\Support\Facades\App;
 use OrbitShop\API\v1\PubControllerAPI;
-use Orbit\Controller\API\v1\Pub\Bill\Repository\BillRepository;
 use Orbit\Controller\API\v1\Pub\Purchase\Bill\CreatePurchase;
 use Orbit\Controller\API\v1\Pub\Purchase\Request\Bill\BillInquiryRequest;
-use Orbit\Controller\API\v1\Pub\Purchase\Request\Bill\CreateBillPurchaseRequest;
+use Orbit\Helper\MCash\API\BillInterface;
 
 /**
  * Handle request to fetch bill detail information (inquiry)
@@ -16,11 +17,8 @@ use Orbit\Controller\API\v1\Pub\Purchase\Request\Bill\CreateBillPurchaseRequest;
  */
 class PurchaseBillInquiryAPIController extends PubControllerAPI
 {
-    function handle(
-        // CreateBillPurchaseRequest $purchaseRequest,
-        BillInquiryRequest $request,
-        BillRepository $bill
-    ) {
+    public function handle(BillInquiryRequest $request, BillInterface $bill)
+    {
         try {
             // Create a new purchase before sending inquiry request,
             // because we need our internal trxID to be sent as param
@@ -28,18 +26,52 @@ class PurchaseBillInquiryAPIController extends PubControllerAPI
             //
             // @todo make sure to pass the proper validation rules
             //       for digital product/whatever the type is.
-            $purchase = (new CreatePurchase())->create($request);
+            $purchase = (new CreatePurchase())
+                ->onBeforeCommit(function($purchase, $request) use ($bill) {
 
-            // Request inquiry
-            $inquiry = $bill->inquiry([
-                'product' => $purchase->getBillProductId(),
-                'customer' => $request->bill_id,
-                'partnerTrxId' => $purchase->payment_transaction_id,
-            ]);
+                    $providerProduct = App::make('providerProduct');
 
-            // Update/adjust total amount and other things based on the
-            // inquiry response.
-            $purchase->updateBillAmount($inquiry);
+                    // So, after creating the purchase, we do inquiry request
+                    // to the mcash and once we get the billing information,
+                    // we update our purchase information (price, etc2).
+
+                    // @todo consider moving inquiry process to
+                    //       beforeCommitHooks inside createPurchase helper
+                    //       instead of setting callback here (looks ugly).
+                    $inquiry = $bill->inquiry([
+                        'product' => $providerProduct->code,
+                        'customer' => $request->bill_id,
+                        'partnerTrxId' => $purchase->payment_transaction_id,
+                    ]);
+
+                    if (! $inquiry->isSuccess()) {
+                        throw new Exception('inquiry failed! '
+                            . $inquiry->getMessage()
+                        );
+                    }
+
+                    // Calculate convenience fee...
+                    $billInfo = $inquiry->getBillInformation();
+                    list($mdr, $profitPercentage, $convenienceFee) = $purchase
+                        ->calculateConvenienceFee($purchase, $billInfo);
+
+                    // ...and adjust purchase amount and parameters accordingly
+                    // (mdr, profit, fee etc).
+                    $purchase->adjustPurchaseAmount(
+                        $purchase,
+                        $inquiry,
+                        $mdr,
+                        $profitPercentage,
+                        $convenienceFee
+                    );
+
+                    // Add inquiry/billing information into the response,
+                    // so that frontend can create token with the right purchase
+                    // amount.
+                    $billInfo->convenience_fee = $convenienceFee;
+                    $purchase->bill = $billInfo;
+                })
+                ->create($request);
 
             $this->response->data = $purchase;
 

@@ -16,7 +16,7 @@ trait Inquiry
         return new InquiryResponse($response);
     }
 
-    public function inquiry($params)
+    public function inquiry($params = [])
     {
         try {
             if (empty($params['product'])) {
@@ -26,16 +26,16 @@ trait Inquiry
                 throw new \Exception("Customer phone number is required", 1);
             }
 
-            if (! empty($this->mockData)) {
-                return $this->inquiryResponse($this->mockData);
-            }
-
             $requestParams = [
                 'command' => $this->inquiryCommand,
                 'product' => $params['product'],
                 'customer' => $params['customer'],
                 'partner_trxid' => $params['partnerTrxId'],
             ];
+
+            if (! empty($this->mockData)) {
+                return $this->inquiryResponse($this->mockData);
+            }
 
             $response = $this->client
                 ->setJsonBody($requestParams)
@@ -57,7 +57,7 @@ trait Inquiry
 
     protected function mockInquirySuccessResponse()
     {
-        return [
+        return $this->mockResponse([
             "status" => 0,
             "message" => "Inquiry success. PLN-551000490568 SUGITO BA. Amount: Rp.73819, admin: Rp.1000, total: Rp.74819",
             "created_at" => "0001-01-01T00:00:00Z",
@@ -78,9 +78,7 @@ trait Inquiry
                 ],
             ],
             "balance" => 36077242,
-        ];
-
-        return $this->mockResponse($data);
+        ]);
     }
 
     protected function mockInquiryFailedResponse()

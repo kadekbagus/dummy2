@@ -37,14 +37,14 @@ class BillResponse
      */
     protected $maxRetry = 10;
 
-    function __construct($object = null)
+    function __construct($response = null)
     {
-        if (is_object($object)) {
-            $this->data = $object;
-            $this->message = $object->message;
+        if (is_object($response)) {
+            $this->data = $response;
+            $this->message = $response->message;
         }
         else {
-            $this->message = $object;
+            $this->message = $response;
         }
 
         $this->parseResponse();
@@ -245,7 +245,7 @@ class BillResponse
         $displayErrorInAdminEmail = ! empty($this->data) && isset($this->data->status)
                 && in_array((int) $this->data->status, $this->displayableErrorStatus);
 
-        $failureMessage = "Pulsa purchase is FAILED, unknown status from MCASH.";
+        $failureMessage = "Bill inquiry/payment FAILED, unknown error from MCASH.";
         if ($displayErrorInAdminEmail) {
             $failureMessage = sprintf(
                 "ERR [%s] : %s",

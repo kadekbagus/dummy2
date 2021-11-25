@@ -45,6 +45,8 @@ class BaseCreatePurchase
 
     protected $afterCommitHooksFn = null;
 
+    protected $withTransaction = true;
+
     protected function init($request)
     {
         $this->request = $request;
@@ -153,12 +155,15 @@ class BaseCreatePurchase
         return [
             'payment_transaction_id' => $this->purchase->payment_transaction_id,
             'currency' => $this->request->currency,
-            'price' => $this->item->total_amount,
+            'price' => $this->getItemPrice(),
             'quantity' => 1,
-            'vendor_price' => $this->item->total_amount,
+            'vendor_price' => $this->getVendorPrice(),
             'object_id' => $this->request->object_id,
             'object_type' => $this->request->object_type,
             'object_name' => $this->request->object_name,
+            'provider_product_id' => isset($this->item->provider_product_id)
+                ? $this->item->provider_product_id
+                : null,
         ];
     }
 
@@ -228,23 +233,29 @@ class BaseCreatePurchase
 
     protected function runBeforeCommitHooks()
     {
-        if (! is_callable($this->beforeCommitHooksFn)) {
-            $this->beforeCommitHooksFn($this->purchase, $this->request);
+        if (is_callable($this->beforeCommitHooksFn)) {
+            call_user_func_array(
+                $this->beforeCommitHooksFn,
+                [$this->purchase, $this->request]
+            );
         }
         else {
             $this->beforeCommitHooks();
         }
     }
 
-    public function beforeCommitHooks()
+    protected function beforeCommitHooks()
     {
         //
     }
 
     protected function runAfterCommitHooks()
     {
-        if (! is_callable($this->afterCommitHooksFn)) {
-            $this->afterCommitHooksFn();
+        if (is_callable($this->afterCommitHooksFn)) {
+            call_user_func_arary(
+                $this->afterCommitHooksFn,
+                [$this->purchase, $this->request]
+            );
         }
         else {
             $this->afterCommitHooks();
@@ -257,6 +268,16 @@ class BaseCreatePurchase
     }
 
     protected function getTotalAmount()
+    {
+        return $this->item->total_amount;
+    }
+
+    protected function getItemPrice()
+    {
+        return $this->item->total_amount;
+    }
+
+    protected function getVendorPrice()
     {
         return $this->item->total_amount;
     }
@@ -285,19 +306,25 @@ class BaseCreatePurchase
         ));
     }
 
-    public function setBeforeCommitHooks($hook)
+    public function onBeforeCommit($hook)
     {
         $this->beforeCommitHooksFn = $hook;
+
+        return $this;
     }
 
-    public function setAfterCommitHooks($hook)
+    public function onAfterCommit($hook)
     {
         $this->afterCommitHooksFn = $hook;
+
+        return $this;
     }
 
     public function create($request)
     {
-        DB::beginTransaction();
+        if ($this->withTransaction) {
+            DB::beginTransaction();
+        }
 
         $this->init($request);
 
@@ -311,7 +338,9 @@ class BaseCreatePurchase
 
         $this->runBeforeCommitHooks();
 
-        DB::commit();
+        if ($this->withTransaction) {
+            DB::commit();
+        }
 
         $this->runAfterCommitHooks();
 

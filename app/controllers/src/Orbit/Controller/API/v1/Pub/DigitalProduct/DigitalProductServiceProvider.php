@@ -2,12 +2,18 @@
 
 namespace Orbit\Controller\API\v1\Pub\DigitalProduct;
 
+use DigitalProduct;
 use Exception;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Request;
 use Illuminate\Support\ServiceProvider;
 use Orbit\Controller\API\v1\Product\Repository\DigitalProductRepository;
 use Orbit\Controller\API\v1\Product\Repository\GameRepository;
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderBuilder;
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
+use Orbit\Helper\MCash\API\Bill;
+use Orbit\Helper\MCash\API\BillInterface;
+use Orbit\Helper\MCash\API\ElectricityBill\ElectricityBill;
 
 /**
  * Service provider for digital product feature.
@@ -66,5 +72,77 @@ class DigitalProductServiceProvider extends ServiceProvider
             // Get the right provider based on the providerId
             return (new PurchaseProviderBuilder($providerId))->build();
         });
+
+        /**
+         * Get the actual Bill service for given bill type.
+         * @var [type]
+         */
+        $this->app->singleton(BillInterface::class, function($app, $args = []) {
+            $billType = $this->resolveBillType($args);
+
+            switch ($billType) {
+                case Bill::ELECTRICITY_BILL:
+                    return new ElectricityBill($args);
+                    break;
+
+                // case 'pdam_bill':
+                //     return new WaterBill($args);
+                //     break;
+
+                // case 'pbb_tax':
+                //     return new PBBTaxBill($args);
+                //     break;
+
+                // case 'bpjs':
+                //     return new BPJSBill($args);
+                //     break;
+
+                // case 'internet_providers':
+                //     return new ISPBill($args);
+                //     break;
+
+                default:
+                    throw new Exception('cannot resolve bill type!');
+                    break;
+            }
+        });
+    }
+
+    /**
+     * Resolve bill type automatically from args, request input,
+     * or other source.
+     *
+     * @param  array  $args [description]
+     * @return [type]       [description]
+     */
+    private function resolveBillType($args = [])
+    {
+        $billType = null;
+
+        if (isset($args['billType'])) {
+            $billType = $args['billType'];
+        }
+        else if (Request::has('bill_type')) {
+            $billType = Request::input('bill_type');
+        }
+        else if (empty($billType) && App::bound('digitalProduct')) {
+            $billType = App::make('digitalProduct')->product_type;
+        }
+        else if (empty($billType) && App::bound('providerProduct')) {
+            $billType = App::make('providerProduct')->product_type;
+        }
+        else if (empty($billType) && App::bound('purchase')) {
+            $digitalProductId = App::make('purchase')->details->filter(
+                    function($detail) {
+                        return $detail->object_type === 'digital_product';
+                    }
+                )
+                ->first()->object_id;
+
+            $billType = DigitalProduct::findOrFail($digitalProductId)
+                ->product_type;
+        }
+
+        return $billType;
     }
 }

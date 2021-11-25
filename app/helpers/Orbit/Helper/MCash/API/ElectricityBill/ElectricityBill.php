@@ -13,18 +13,14 @@ use Orbit\Helper\MCash\API\ElectricityBill\Pay;
  */
 class ElectricityBill extends Bill
 {
+    protected $billType = ElectricityBill::ELECTRICITY_BILL;
+
     // Compose feature available for this bill type.
     use Inquiry, Pay;
 
-    protected function mockResponse($data = [])
+    public function mockResponse($data = [])
     {
-        $this->mockData = (object) array_merge([
-                'status' => 0,
-                'message' => 'TRX SUCCESS',
-                'data' => (object) [
-                    'serial_number' => '12313131',
-                ]
-            ], $data);
+        $this->mockData = (object) $data;
 
         return $this;
     }

@@ -19,21 +19,38 @@ class InquiryResponse extends BillResponse
 
         $this->billInformation = (object) [
             'inquiry_id' => $this->data->inquiry_id,
-            'billing_id' => $this->data->data->billing_id,
+            'bill_id' => $this->data->data->billing_id,
             'customer_name' => $this->data->data->customer_name,
             'period' => $this->data->data->period,
             'amount' => $this->data->amount,
             'admin_fee' => $this->data->data->admin_fee,
             'total' => $this->data->total,
-            'receipt' => $this->data->data->receipt,
-            'customer_info' => $this->parseReceiptInfo(
+            'receipt' => $this->parseReceiptInfo(
                 $this->data->data->receipt->info
             ),
         ];
     }
 
-    protected function parseReceiptInfo($info)
+    protected function parseReceiptInfo($receiptInfo)
     {
-        return (object) explode('|', $info);
+        // Manually explode and loop since we might find empty value after
+        // exploding with '|'.
+        $receipts = [];
+        $receiptItems = explode('|', $receiptInfo);
+
+        foreach($receiptItems as $receiptItem) {
+
+            if (empty($receiptItem)) {
+                continue;
+            }
+
+            $item = explode(':', $receiptItem);
+
+            if (count($item) >= 2) {
+                $receipts[] = [$item[0] => join('', array_slice($item, 0 - (count($item)-1)))];
+            }
+        }
+
+        return $receipts;
     }
 }
