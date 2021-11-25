@@ -1,6 +1,7 @@
 <?php
 
 use Orbit\Helper\AutoIssueCoupon\HasRewards;
+use Orbit\Helper\MCash\API\Bill;
 
 // use Orbit\Helper\Presenters\Presentable;
 
@@ -683,6 +684,11 @@ class PaymentTransaction extends Eloquent
         return $this->details->filter(function($detail) {
             return $detail->object_type !== 'discount';
         })->first()->provider_product->product_type;
+    }
+
+    public function forBill()
+    {
+        return in_array($this->getBillProductType(), Bill::getBillTypeIds());
     }
 
     public function getMdr()

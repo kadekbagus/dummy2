@@ -16,7 +16,7 @@ trait Pay
         return new PayResponse($response);
     }
 
-    public function pay($params)
+    public function pay($params = [])
     {
         try {
             if (empty($params['product'])) {
@@ -31,7 +31,7 @@ trait Pay
             }
 
             $requestParams = [
-                'command' => $this->inquiryCommand,
+                'command' => $this->payCommand,
                 'product' => $params['product'],
                 'customer' => $params['customer'],
                 'partner_trxid' => $params['partnerTrxId'],
