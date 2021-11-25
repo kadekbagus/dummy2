@@ -161,8 +161,8 @@ class BaseCreatePurchase
             'object_id' => $this->request->object_id,
             'object_type' => $this->request->object_type,
             'object_name' => $this->request->object_name,
-            'provider_product_id' => isset($this->item->provider_product_id)
-                ? $this->item->provider_product_id
+            'provider_product_id' => isset($this->item->selected_provider_product_id)
+                ? $this->item->selected_provider_product_id
                 : null,
         ];
     }
