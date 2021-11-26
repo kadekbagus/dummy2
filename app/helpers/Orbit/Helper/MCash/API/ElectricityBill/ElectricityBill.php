@@ -13,7 +13,7 @@ use Orbit\Helper\MCash\API\ElectricityBill\Pay;
  */
 class ElectricityBill extends Bill
 {
-    protected $billType = ElectricityBill::ELECTRICITY_BILL;
+    protected $billType = Bill::ELECTRICITY_BILL;
 
     // Compose feature available for this bill type.
     use Inquiry, Pay;
