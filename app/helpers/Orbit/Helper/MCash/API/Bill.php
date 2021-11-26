@@ -57,8 +57,8 @@ abstract class Bill implements BillInterface
     const ELECTRICITY_BILL = 'electricity_bill';
     const PDAM_BILL = 'pdam_bill';
     const PBB_TAX_BILL = 'pbb_tax';
-    const BPJS_BILL = 'bpjs';
-    const ISP_BILL = 'internet_providers';
+    const BPJS_BILL = 'bpjs_bill';
+    const ISP_BILL = 'internet_provider_bill';
 
     public function __construct($config=[])
     {
