@@ -33,6 +33,7 @@ trait Inquiry
                 'partner_trxid' => $params['partnerTrxId'],
             ];
 
+            $this->initMockResponse('inquiry');
             if (! empty($this->mockData)) {
                 return $this->inquiryResponse($this->mockData);
             }

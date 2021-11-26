@@ -69,8 +69,6 @@ abstract class Bill implements BillInterface
             false
         );
         $this->client = MCashClient::create($this->config);
-
-        $this->initMockResponse();
     }
 
     public static function create($config=[])
@@ -78,7 +76,7 @@ abstract class Bill implements BillInterface
         return new static($config);
     }
 
-    protected function initMockResponse()
+    protected function initMockResponse($command = '')
     {
         if ($this->config['is_production']) {
             return;
@@ -88,12 +86,10 @@ abstract class Bill implements BillInterface
             return;
         }
 
-        $mockSetting = $this->config['mock_bill_response'];
+        $setting = $this->config['mock_bill_response'][$command];
+        $mockMethod = 'mock' . ucfirst($command) . ucfirst($setting) . 'Response';
 
-        foreach($mockSetting as $command => $setting) {
-            $mockMethod = 'mock' . ucfirst($command) . ucfirst($setting) . 'Response';
-            $this->{$mockMethod}();
-        }
+        $this->{$mockMethod}();
     }
 
     public static function getBillTypeIds()

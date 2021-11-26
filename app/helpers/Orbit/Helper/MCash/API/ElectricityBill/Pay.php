@@ -26,16 +26,17 @@ trait Pay
                 throw new \Exception("Customer phone number is required", 1);
             }
 
-            if (! empty($this->mockData)) {
-                return $this->payResponse($this->mockData);
-            }
-
             $requestParams = [
                 'command' => $this->payCommand,
                 'product' => $params['product'],
                 'customer' => $params['customer'],
                 'partner_trxid' => $params['partnerTrxId'],
             ];
+
+            $this->initMockResponse('pay');
+            if (! empty($this->mockData)) {
+                return $this->payResponse($this->mockData);
+            }
 
             $response = $this->client
                 ->setJsonBody($requestParams)
@@ -57,9 +58,9 @@ trait Pay
 
     protected function mockPaySuccessResponse()
     {
-        return [
+        return $this->mockResponse([
             "status" => 0,
-            "message" => "Inquiry success. PLN-551000490568 SUGITO BA. Amount: Rp.73819, admin: Rp.1000, total: Rp.74819",
+            "message" => "Payment success. PLN-551000490568 SUGITO BA. Amount: Rp.73819, admin: Rp.1000, total: Rp.74819",
             "created_at" => "0001-01-01T00:00:00Z",
             "inquiry_id" => 20210027,
             "amount" => 73819,
@@ -78,9 +79,7 @@ trait Pay
                 ],
             ],
             "balance" => 36077242,
-        ];
-
-        return $this->mockResponse($data);
+        ]);
     }
 
     protected function mockPayFailedResponse()
