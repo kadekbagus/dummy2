@@ -1,6 +1,7 @@
 <?php
 
 use Orbit\Helper\AutoIssueCoupon\HasRewards;
+use Orbit\Helper\MCash\API\Bill;
 
 // use Orbit\Helper\Presenters\Presentable;
 
@@ -664,17 +665,110 @@ class PaymentTransaction extends Eloquent
         return $providerProduct;
     }
 
-    public function getBillProductId()
+    public function getBillProductCode()
     {
-        $productType = null;
+        $productId = null;
 
         foreach($this->details as $detail) {
             if (! empty($detail->provider_product)) {
-                $productType = $detail->provider_product->code;
+                $productId = $detail->provider_product->code;
                 break;
             }
         }
 
-        return $productType;
+        return $productId;
+    }
+
+    public function getBillProductType()
+    {
+        return $this->details->filter(function($detail) {
+            return $detail->object_type !== 'discount';
+        })->first()->provider_product->product_type;
+    }
+
+    public function forBill()
+    {
+        return in_array($this->getBillProductType(), Bill::getBillTypeIds());
+    }
+
+    public function getMdr()
+    {
+        $mdr = 0;
+
+        foreach($this->details as $detail) {
+            if ($detail->object_type === 'digital_product') {
+                $mdr = $detail->mdr_percentage;
+                break;
+            }
+        }
+
+        return $mdr;
+    }
+
+    /**
+     * Get the convenience fee.
+     *
+     * @param  [type] $purchase [description]
+     * @param  [type] $billInfo [description]
+     * @return [type]           [description]
+     */
+    public function calculateConvenienceFee($purchase, $billInfo)
+    {
+        if (App::bound('providerProduct')) {
+            $providerProduct = App::make('providerProduct');
+        }
+        else {
+            $purchase->details->load('provider_product');
+            $providerProduct = $purchase->getProviderProduct();
+        }
+
+        $mdr = $purchase->getMdr();
+        $profitPercentage = $providerProduct->profit_percentage;
+
+        $fee = $mdr + $profitPercentage;
+
+        $convenienceFee = ceil($billInfo->total / ((100 - $fee) / 100) - $billInfo->amount);
+
+        return [$mdr, $profitPercentage, $convenienceFee];
+    }
+
+    /**
+     * Adjust purchase amount and snapshot bill variables used for
+     * convenience fee calculation.
+     *
+     * @param  [type] $purchase         [description]
+     * @param  [type] $billInfo         [description]
+     * @param  [type] $mdr              [description]
+     * @param  [type] $profitPercentage [description]
+     * @param  [type] $convenienceFee   [description]
+     * @return [type]                   [description]
+     */
+    public function adjustPurchaseAmount(
+        $purchase,
+        $inquiry,
+        $mdr,
+        $profitPercentage,
+        $convenienceFee
+    ) {
+        $billInfo = $inquiry->getBillInformation();
+        $totalAmount = $billInfo->amount + $convenienceFee;
+
+        $purchase->amount = $totalAmount;
+        $purchase->notes = serialize([
+            'inquiry' => $inquiry->getData(),
+        ]);
+        $purchase->save();
+
+        $purchaseDetail = $this->details->filter(function($detail) {
+            return $detail->object_type === 'digital_product';
+        })->first();
+
+        $purchaseDetail->price = $totalAmount;
+        $purchaseDetail->vendor_price = $billInfo->amount;
+        $purchaseDetail->payload = $convenienceFee;
+        $purchaseDetail->provider_fee = $billInfo->admin_fee;
+        $purchaseDetail->profit_percentage = $profitPercentage;
+        $purchaseDetail->mdr_percentage = $mdr;
+        $purchaseDetail->save();
     }
 }

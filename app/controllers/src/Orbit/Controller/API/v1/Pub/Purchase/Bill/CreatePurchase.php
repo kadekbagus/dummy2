@@ -3,9 +3,7 @@
 namespace Orbit\Controller\API\v1\Pub\Purchase\Bill;
 
 use Orbit\Controller\API\v1\Pub\Purchase\BaseCreatePurchase;
-use Order;
-use PaymentTransactionDetail;
-use Request;
+use Setting;
 
 /**
  * Brand Product Order Purchase
@@ -14,15 +12,49 @@ use Request;
  */
 class CreatePurchase extends BaseCreatePurchase
 {
-    protected $objectType = 'digital_product';
-
-    protected function applyPromoCode()
+    /**
+     * @override
+     * @return [type] [description]
+     */
+    protected function buildPurchaseDetailData()
     {
-        // do nothing now.
+        $mdr = Setting::select('setting_value')
+            ->where('setting_name', 'gtm_mdr_value')
+            ->active()
+            ->first();
+
+        return array_merge(parent::buildPurchaseDetailData(), [
+            'object_name' => $this->item->product_name,
+            'mdr_percentage' => empty($mdr) ? 0 : $mdr->setting_value,
+        ]);
     }
 
-    protected function beforeCommitHooks()
+    /**
+     * @override
+     * @return [type] [description]
+     */
+    protected function getTotalAmount()
     {
+        return 0; // update later after getting billing information
+    }
 
+    protected function getItemPrice()
+    {
+        return 0;
+    }
+
+    protected function getVendorPrice()
+    {
+        return 0;
+    }
+
+    /**
+     * @override
+     * @param  [type] $request [description]
+     * @return [type]          [description]
+     */
+    protected function getExtraData($request)
+    {
+        return $request->bill_id;
     }
 }

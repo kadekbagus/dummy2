@@ -35,7 +35,7 @@ Route::post('app/v1/pub/order-purchased/update-status', [
     'uses' => 'IntermediatePubAuthController@Order\OrderStatusUpdate_handle',
 ]);
 
-Route::post('app/v1/pub/purchase/inquiry', [
+Route::post('app/v1/pub/purchase/bill-inquiry', [
     'as' => 'pub-bill-purchase-inquiry',
-    'uses' => 'IntermediatePubAuthController@Purchase\BillInquiry',
+    'uses' => 'IntermediatePubAuthController@Purchase\PurchaseBillInquiry',
 ]);

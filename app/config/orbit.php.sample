@@ -6395,6 +6395,15 @@ return array(
         // Always set to false for production.
         // Valid value: false, 'success', 'failed'
         'mock_response' => false,
+
+        // Mock bill response, set to false on production.
+        // 'mock_bill_response' => false,
+        'mock_bill_response' => [
+            'electricity_bill' => [
+                'inquiry' => 'success',
+                'pay' => 'success',
+            ],
+        ],
     ],
 
     // Config related to transaction.

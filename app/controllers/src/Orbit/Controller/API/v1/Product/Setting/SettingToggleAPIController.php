@@ -93,7 +93,7 @@ class SettingToggleAPIController extends ControllerAPI
             $setting->setting_value = ($setting->setting_value === '1') ? 0 : 1;
             // Set value for gtm_mdr_value
             if ($type === 'gtm_mdr_value') {
-                $setting->setting_value = $settingValue;
+                $setting->setting_value = !empty($settingValue) && $settingValue > 0 ? $settingValue : 0;
             }
             $setting->modified_by = $user->user_id;
             $setting->save();

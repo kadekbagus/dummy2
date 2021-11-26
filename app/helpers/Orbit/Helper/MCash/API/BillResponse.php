@@ -1,11 +1,13 @@
 <?php
 
-namespace Orbit\Helper\MCash\API\Responses;
+namespace Orbit\Helper\MCash\API;
 
 /**
- * Pay command response...
+ * Base bill response.
+ *
+ * @author Budi <budi@gotomalls.com>
  */
-class PayResponse
+class BillResponse
 {
     protected $code = 500;
 
@@ -35,44 +37,24 @@ class PayResponse
      */
     protected $maxRetry = 10;
 
-    function __construct($object = null)
+    function __construct($response = null)
     {
-        if (is_object($object)) {
-            $this->data = $object;
-            $this->message = $object->message;
+        if (is_object($response)) {
+            $this->data = $response;
+            $this->message = $response->message;
         }
         else {
-            $this->message = $object;
+            $this->message = $response;
         }
 
         $this->parseResponse();
     }
 
-    private function parseResponse()
-    {
-        if (! $this->hasBillingInformation()) {
-            return;
-        }
-
-        $this->billInformation = (object) [
-            'inquiry_id' => $this->data->inquiry_id,
-            'billing_id' => $this->data->data->billing_id,
-            'customer_name' => $this->data->data->customer_name,
-            'period' => $this->data->data->period,
-            'amount' => $this->data->data->amount,
-            'admin_fee' => $this->data->data->admin_fee,
-            'receipt' => $this->data->data->receipt,
-            'customer_info' => $this->parseReceiptInfo(
-                $this->data->data->receipt->info
-            ),
-        ];
-    }
-
-    private function parseReceiptInfo($info)
-    {
-        return (object) explode('|', $info);
-    }
-
+    /**
+     * Get bill information.
+     *
+     * @return [type] [description]
+     */
     public function getBillInformation()
     {
         return $this->billInformation;
@@ -139,16 +121,6 @@ class PayResponse
     }
 
     /**
-     * Determine if the requested pulsa is out of stock or not.
-     *
-     * @return boolean [description]
-     */
-    public function isOutOfStock()
-    {
-        return ! empty($this->data) && $this->data->status === 618;
-    }
-
-    /**
      * Determine if mcash purchase is Pending.
      * Since Mcash don't explain clearly about flag/indicator of pending transaction,
      * the only thing we can do is by guessing their API response.
@@ -162,11 +134,6 @@ class PayResponse
     public function isPending()
     {
         return ! empty($this->data) && $this->data->status === 0 && isset($this->data->pending);
-    }
-
-    public function isNotAvailable()
-    {
-        return ! empty($this->data) && $this->data->status === 413;
     }
 
     /**
@@ -278,7 +245,7 @@ class PayResponse
         $displayErrorInAdminEmail = ! empty($this->data) && isset($this->data->status)
                 && in_array((int) $this->data->status, $this->displayableErrorStatus);
 
-        $failureMessage = "Pulsa purchase is FAILED, unknown status from MCASH.";
+        $failureMessage = "Bill inquiry/payment FAILED, unknown error from MCASH.";
         if ($displayErrorInAdminEmail) {
             $failureMessage = sprintf(
                 "ERR [%s] : %s",
