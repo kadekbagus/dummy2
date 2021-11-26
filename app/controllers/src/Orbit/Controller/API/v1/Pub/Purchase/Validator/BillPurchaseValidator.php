@@ -44,6 +44,12 @@ class BillPurchaseValidator
 
     public function limitPending($attribute, $billId, $parameters)
     {
+        if (! App::bound('digitalProduct')) {
+            return false;
+        }
+
+        $digitalProduct = App::make('digitalProduct');
+
         if (App::bound('providerProduct')) {
             $providerProduct = App::make('providerProduct');
         }

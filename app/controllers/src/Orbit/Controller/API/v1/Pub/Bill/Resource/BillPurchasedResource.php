@@ -24,7 +24,7 @@ class BillPurchasedResource extends Resource
             'user_id' => $this->user_id,
             'currency' => $this->currency,
             'amount' => (int) $this->amount,
-            'amount_before_fee' => (int) $this->amount - $this->convenienceFee,
+            'amount_before_fee' => (int) $this->amount - $convenienceFee,
             'convenience_fee' => (int) $convenienceFee,
             'payment_status' => $this->status,
             'transaction_time' => $this->created_at->timezone('Asia/Jakarta')

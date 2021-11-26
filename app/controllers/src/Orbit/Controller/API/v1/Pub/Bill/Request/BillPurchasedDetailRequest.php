@@ -2,6 +2,7 @@
 
 namespace Orbit\Controller\API\v1\Pub\Bill\Request;
 
+use Illuminate\Support\Facades\Validator;
 use Orbit\Helper\Request\ValidateRequest;
 
 /**
