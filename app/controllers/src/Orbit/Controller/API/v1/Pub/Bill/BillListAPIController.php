@@ -28,8 +28,10 @@ class BillListAPIController extends PubControllerAPI
                     if ($type !== 'all') {
                         return $query->where('product_type', $type);
                     }
-
                     return $query;
+                })
+                ->whenHas('keyword', function($query, $keyword) {
+                    return $query->where('product_name', 'like', "%{$keyword}%");
                 })
                 ->get();
 
