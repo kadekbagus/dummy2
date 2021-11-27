@@ -49,7 +49,10 @@ class PayResponse extends BillResponse
             $item = explode(':', $info);
 
             return count($item) >= 2
-                ? [$item[0] => join('', array_slice($item, 0 - (count($item)-1)))]
+                ? [
+                    'label' => $item[0],
+                    'value' => join('', array_slice($item, 0 - (count($item)-1)))
+                ]
                 : join(':', $item);
 
         }, explode('|', $receiptInfo));

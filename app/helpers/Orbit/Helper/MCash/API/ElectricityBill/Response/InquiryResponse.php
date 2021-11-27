@@ -47,7 +47,10 @@ class InquiryResponse extends BillResponse
             $item = explode(':', $receiptItem);
 
             if (count($item) >= 2) {
-                $receipts[] = [$item[0] => join('', array_slice($item, 0 - (count($item)-1)))];
+                $receipts[] = [
+                    'label' => $item[0],
+                    'value' => join('', array_slice($item, 0 - (count($item)-1)))
+                ];
             }
         }
 
