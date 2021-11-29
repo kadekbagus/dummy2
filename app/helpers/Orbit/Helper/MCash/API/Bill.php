@@ -86,8 +86,13 @@ abstract class Bill implements BillInterface
             return;
         }
 
-        $setting = $this->config['mock_bill_response'][$command];
-        $mockMethod = 'mock' . ucfirst($command) . ucfirst($setting) . 'Response';
+        $mock = $this->config['mock_bill_response'][$command];
+
+        if (! $mock) {
+            return;
+        }
+
+        $mockMethod = 'mock' . ucfirst($command) . ucfirst($mock) . 'Response';
 
         $this->{$mockMethod}();
     }
@@ -127,5 +132,10 @@ abstract class Bill implements BillInterface
 
     abstract protected function payResponse($responseData);
 
-    abstract public function mockResponse($data = []);
+    public function mockResponse($data = [])
+    {
+        $this->mockData = (object) $data;
+
+        return $this;
+    }
 }
