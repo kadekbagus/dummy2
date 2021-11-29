@@ -17,11 +17,4 @@ class ElectricityBill extends Bill
 
     // Compose feature available for this bill type.
     use Inquiry, Pay;
-
-    public function mockResponse($data = [])
-    {
-        $this->mockData = (object) $data;
-
-        return $this;
-    }
 }

@@ -11,9 +11,13 @@ use Orbit\Controller\API\v1\Product\Repository\DigitalProductRepository;
 use Orbit\Controller\API\v1\Product\Repository\GameRepository;
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderBuilder;
 use Orbit\Helper\DigitalProduct\Providers\PurchaseProviderInterface;
+use Orbit\Helper\MCash\API\BPJSBill\BPJSBill;
 use Orbit\Helper\MCash\API\Bill;
 use Orbit\Helper\MCash\API\BillInterface;
 use Orbit\Helper\MCash\API\ElectricityBill\ElectricityBill;
+use Orbit\Helper\MCash\API\InternetProviderBill\InternetProviderBill;
+use Orbit\Helper\MCash\API\PBBTaxBill\PBBTaxBill;
+use Orbit\Helper\MCash\API\WaterBill\WaterBill;
 
 /**
  * Service provider for digital product feature.
@@ -85,21 +89,21 @@ class DigitalProductServiceProvider extends ServiceProvider
                     return new ElectricityBill($args);
                     break;
 
-                // case 'pdam_bill':
-                //     return new WaterBill($args);
-                //     break;
+                case Bill::PDAM_BILL:
+                    return new WaterBill($args);
+                    break;
 
-                // case 'pbb_tax':
-                //     return new PBBTaxBill($args);
-                //     break;
+                case Bill::PBB_TAX_BILL:
+                    return new PBBTaxBill($args);
+                    break;
 
-                // case 'bpjs':
-                //     return new BPJSBill($args);
-                //     break;
+                case Bill::BPJS_BILL:
+                    return new BPJSBill($args);
+                    break;
 
-                // case 'internet_providers':
-                //     return new ISPBill($args);
-                //     break;
+                case Bill::ISP_BILL:
+                    return new InternetProviderBill($args);
+                    break;
 
                 default:
                     throw new Exception('cannot resolve bill type!');
@@ -117,21 +121,23 @@ class DigitalProductServiceProvider extends ServiceProvider
      */
     private function resolveBillType($args = [])
     {
-        $billType = null;
-
         if (isset($args['billType'])) {
-            $billType = $args['billType'];
+            return $args['billType'];
         }
-        else if (Request::has('bill_type')) {
-            $billType = Request::input('bill_type');
+
+        if (Request::has('bill_type')) {
+            return Request::input('bill_type');
         }
-        else if (empty($billType) && App::bound('digitalProduct')) {
-            $billType = App::make('digitalProduct')->product_type;
+
+        if (App::bound('digitalProduct')) {
+            return App::make('digitalProduct')->product_type;
         }
-        else if (empty($billType) && App::bound('providerProduct')) {
-            $billType = App::make('providerProduct')->product_type;
+
+        if (App::bound('providerProduct')) {
+            return App::make('providerProduct')->product_type;
         }
-        else if (empty($billType) && App::bound('purchase')) {
+
+        if (App::bound('purchase')) {
             $digitalProductId = App::make('purchase')->details->filter(
                     function($detail) {
                         return $detail->object_type === 'digital_product';
@@ -143,6 +149,6 @@ class DigitalProductServiceProvider extends ServiceProvider
                 ->product_type;
         }
 
-        return $billType;
+        return null;
     }
 }
