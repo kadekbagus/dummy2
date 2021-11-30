@@ -39,7 +39,7 @@ class BillInquiryRequest extends ValidateRequest
             // 'last_name' => 'sometimes|required',
             // 'email' => 'required|email',
             // 'phone' => 'sometimes|required',
-            'payment_method' => 'required|in:midtrans,midtrans-qris,midtrans-shopeepay,dana,stripe',
+            // 'payment_method' => 'required|in:midtrans,midtrans-qris,midtrans-shopeepay,dana,stripe',
         ];
     }
 
