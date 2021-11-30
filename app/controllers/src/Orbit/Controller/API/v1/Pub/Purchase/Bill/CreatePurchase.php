@@ -12,10 +12,14 @@ use Setting;
  */
 class CreatePurchase extends BaseCreatePurchase
 {
-    /**
-     * @override
-     * @return [type] [description]
-     */
+    protected function buildPurchaseData()
+    {
+        return array_merge(parent::buildPurchaseData(), [
+            'user_email' => $this->user->user_email,
+            'user_name' => $this->user->getFullName(),
+        ]);
+    }
+
     protected function buildPurchaseDetailData()
     {
         $mdr = Setting::select('setting_value')
@@ -29,10 +33,6 @@ class CreatePurchase extends BaseCreatePurchase
         ]);
     }
 
-    /**
-     * @override
-     * @return [type] [description]
-     */
     protected function getTotalAmount()
     {
         return 0; // update later after getting billing information
@@ -48,11 +48,6 @@ class CreatePurchase extends BaseCreatePurchase
         return 0;
     }
 
-    /**
-     * @override
-     * @param  [type] $request [description]
-     * @return [type]          [description]
-     */
     protected function getExtraData($request)
     {
         return $request->bill_id;

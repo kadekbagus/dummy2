@@ -20,7 +20,8 @@ class BillListAPIController extends PubControllerAPI
                     'digital_product_id',
                     'product_name',
                     'product_type',
-                    'status'
+                    'status',
+                    'description'
                 )
                 ->latest()
                 ->active()
