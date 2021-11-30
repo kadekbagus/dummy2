@@ -34,7 +34,7 @@ class BillInquiryRequest extends ValidateRequest
             ]),
             // 'post_data' => 'sometimes|required',
             // 'promo_code' => 'sometimes|required|alpha_dash|active_discount|available_discount',
-            'currency' => 'required',
+            // 'currency' => 'required',
             // 'first_name' => 'required',
             // 'last_name' => 'sometimes|required',
             // 'email' => 'required|email',

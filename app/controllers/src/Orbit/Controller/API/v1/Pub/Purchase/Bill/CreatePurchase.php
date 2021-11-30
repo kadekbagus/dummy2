@@ -17,6 +17,9 @@ class CreatePurchase extends BaseCreatePurchase
         return array_merge(parent::buildPurchaseData(), [
             'user_email' => $this->user->user_email,
             'user_name' => $this->user->getFullName(),
+            'currency' => $this->request->currency
+                ? $this->request->currency
+                : 'IDR',
         ]);
     }
 
