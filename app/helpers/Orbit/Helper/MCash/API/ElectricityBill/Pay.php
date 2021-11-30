@@ -31,6 +31,7 @@ trait Pay
                 'product' => $params['product'],
                 'customer' => $params['customer'],
                 'partner_trxid' => $params['partnerTrxId'],
+                'amount' => $params['amount'],
             ];
 
             $this->initMockResponse('pay');
