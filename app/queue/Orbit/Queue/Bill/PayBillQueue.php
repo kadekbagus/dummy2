@@ -109,16 +109,15 @@ class PayBillQueue
             $discount = $payment->discount_code;
             $digitalProductName = $digitalProduct->product_name;
 
-            $payData = [
-                'product' => $productCode,
-                'customer' => $payment->extra_data,
-                'partnerTrxId' => $paymentId,
-                'amount' => $detail->vendor_price + $detail->provider_fee,
-            ];
+            $paymentParams = $this->buildPaymentParams(
+                $payment,
+                $productCode,
+                $detail
+            );
 
             $billPayment = App::make(BillInterface::class, [
                 'billType' => $this->billType
-            ])->pay($payData);
+            ])->pay($paymentParams);
 
             if ($billPayment->isSuccess()) {
 
@@ -158,12 +157,12 @@ class PayBillQueue
 
                 // $this->markPromoCodeAsIssued($payment, $discount, $digitalProduct);
 
-                $this->log("Bill payment Data: " . serialize($payData));
+                $this->log("Bill payment Data: " . serialize($paymentParams));
                 $this->log("Bill payment Response: " . serialize($billPayment->getData()));
             }
             else {
                 $this->log("Bill payment failed for payment {$paymentId}.");
-                $this->log("Bill payment Data: " . serialize($payData));
+                $this->log("Bill payment Data: " . serialize($paymentParams));
                 $this->log("Bill payment Response: " . serialize($billPayment->getData()));
                 throw new Exception($billPayment->getFailureMessage());
             }
@@ -217,6 +216,16 @@ class PayBillQueue
         }
 
         $job->delete();
+    }
+
+    protected function buildPaymentParams($payment, $productCode, $detail)
+    {
+        return [
+            'product' => $productCode,
+            'customer' => $payment->extra_data,
+            'partnerTrxId' => $payment->payment_transaction_id,
+            'amount' => (int) $detail->vendor_price + (int) $detail->provider_fee,
+        ];
     }
 
     protected function recordSuccessGMP(

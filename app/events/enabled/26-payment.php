@@ -115,8 +115,21 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
                         $queue = 'Orbit\\Queue\\Bill\\PayElectricityBillQueue';
                         break;
 
-                    // case Bill::PDAM_BILL:
-                    //     break;
+                    case Bill::PDAM_BILL:
+                        $queue = 'Orbit\\Queue\\Bill\\PayWaterBillQueue';
+                        break;
+
+                    case Bill::PBB_TAX_BILL:
+                        $queue = 'Orbit\\Queue\\Bill\\PayPbbTaxBillQueue';
+                        break;
+
+                    case Bill::BPJS_BILL:
+                        $queue = 'Orbit\\Queue\\Bill\\PayBpjsBillQueue';
+                        break;
+
+                    case Bill::ISP_BILL:
+                        $queue = 'Orbit\\Queue\\Bill\\PayInternetProviderBillQueue';
+                        break;
 
                     default:
                         break;

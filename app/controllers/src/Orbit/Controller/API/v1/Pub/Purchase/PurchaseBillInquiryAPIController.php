@@ -23,14 +23,8 @@ class PurchaseBillInquiryAPIController extends PubControllerAPI
             // Create a new purchase before sending inquiry request,
             // because we need our internal trxID to be sent as param
             // (partner_trxid).
-            //
-            // @todo make sure to pass the proper validation rules
-            //       for digital product/whatever the type is.
             $purchase = (new CreatePurchase())
                 ->onBeforeCommit(function($purchase, $request) use ($bill) {
-
-                    $providerProduct = App::make('providerProduct');
-
                     // So, after creating the purchase, we do inquiry request
                     // to the mcash and once we get the billing information,
                     // we update our purchase information (price, etc2).
@@ -38,6 +32,9 @@ class PurchaseBillInquiryAPIController extends PubControllerAPI
                     // @todo consider moving inquiry process to
                     //       beforeCommitHooks inside createPurchase helper
                     //       instead of setting callback here (looks ugly).
+
+                    $providerProduct = App::make('providerProduct');
+
                     $inquiry = $bill->inquiry([
                         'product' => $providerProduct->code,
                         'customer' => $request->bill_id,
@@ -72,6 +69,8 @@ class PurchaseBillInquiryAPIController extends PubControllerAPI
                     $purchase->bill = $billInfo;
                 })
                 ->create($request);
+
+            unset($purchase->notes);
 
             $this->response->data = $purchase;
 

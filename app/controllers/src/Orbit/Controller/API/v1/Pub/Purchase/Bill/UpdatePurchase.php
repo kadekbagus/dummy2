@@ -31,7 +31,7 @@ use Orbit\Notifications\DigitalProduct\Woodoos\PendingPaymentNotification as Woo
 use Orbit\Notifications\DigitalProduct\Woodoos\CanceledPaymentNotification as WoodoosCanceledPaymentNotification;
 use Orbit\Notifications\DigitalProduct\Electricity\AbortedPaymentNotification as ElectricityAbortedPaymentNotification;
 use Orbit\Notifications\DigitalProduct\Electricity\ExpiredPaymentNotification as ElectricityExpiredPaymentNotification;
-use Orbit\Notifications\DigitalProduct\Electricity\PendingPaymentNotification as ElectricityPendingPaymentNotification;
+use Orbit\Notifications\DigitalProduct\ElectricityBill\PendingPaymentNotification as ElectricityBillPendingPaymentNotification;
 use Orbit\Notifications\DigitalProduct\Electricity\CanceledPaymentNotification as ElectricityCanceledPaymentNotification;
 
 /**
@@ -268,15 +268,7 @@ class UpdatePurchase
                     $paymentUser = new User;
                     $paymentUser->email = $this->purchase->user_email;
 
-                    // if ($this->purchase->forWoodoos()) {
-                    //     $paymentUser->notify(new WoodoosPendingPaymentNotification($this->purchase), 30);
-                    // }
-                    // else if ($this->purchase->forMCashElectricity()) {
-                    //     $paymentUser->notify(new ElectricityPendingPaymentNotification($this->purchase), 30);
-                    // }
-                    // else {
-                    //     $paymentUser->notify(new PendingPaymentNotification($this->purchase), 30);
-                    // }
+                    $paymentUser->notify(new ElectricityPendingPaymentNotification($this->purchase), 30);
 
                     // Record activity of pending purchase...
                     $this->purchase->user->activity(new PurchasePendingActivity($this->purchase, $objectName));

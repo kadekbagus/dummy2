@@ -1,8 +1,8 @@
 <?php
 
-namespace Orbit\Helper\MCash\API\ElectricityBill;
+namespace Orbit\Helper\MCash\API\WaterBill;
 
-use Orbit\Helper\MCash\API\ElectricityBill\Response\PayResponse;
+use Orbit\Helper\MCash\API\WaterBill\Response\PayResponse;
 
 /**
  * Pay implementation for electricity bill.
@@ -60,26 +60,39 @@ trait Pay
     protected function mockPaySuccessResponse()
     {
         return $this->mockResponse([
-            "status" => 0,
-            "message" => "Payment success. PLN-551000490568 SUGITO BA. Amount: Rp.73819, admin: Rp.1000, total: Rp.74819",
-            "created_at" => "0001-01-01T00:00:00Z",
-            "inquiry_id" => 20210027,
-            "amount" => 73819,
-            "total" => 74819,
-            "pending" => 0,
-            "data" => (object) [
-                "customer_name" => "SUGITO BA",
-                "admin_fee" => 1000,
-                "amount" => 73819,
-                "period" => 1,
-                "billing_id" => "551000490568",
-                "receipt" => (object) [
-                    "header" => "",
-                    "footer" => "<br>",
-                    "info" => "IDPEL: 551000490568|NAMA: SUGITO BA|JML BLN TAG: 01|BL/TH: Nov21|JML TAG PLN: 76.319|"
-                ],
-            ],
-            "balance" => 36077242,
+          "status" => 0,
+          "message" => "Payment success. PDAM013-031120022796 SLAMET RAHMAT HARSANTO,ST. Amount: Rp.39200, admin: Rp.1600, total: Rp.40800",
+          "created_at" => "0001-01-01T00:00:00Z",
+          "inquiry_id" => 20248409,
+          "partner_trxid" => "test123",
+          "amount" => 39200,
+          "total" => 40800,
+          "pending" => 0,
+          "data" => (object) [
+            "customer_number" => "031120022796",
+            "customer_name" => "SLAMET RAHMAT HARSANTO,ST",
+            "admin_fee" => 1600,
+            "amount" => 39200,
+            "period" => 1,
+            "period_name" => "NOV21",
+            "meter_start" => 25,
+            "meter_end" => 20,
+            "usage" => 5,
+            "penalty" => 0,
+            "receipt" => (object) [
+              "header" => "TAGIHAN PDAM DENPASAR",
+              "footer" => null,
+              "fields" => (object) [
+                "amount" => "Tot.Tagihan",
+                "customer_name" => "Nama",
+                "penalty" => "Denda",
+                "period_name" => "Rek Bulan",
+                "usage" => "Pemakaian"
+              ],
+              "info" => "No.Sambungan: 031120022796|Nama        : SLAMET RAHMAT HARSANTO,ST|Rek Bulan   : NOV21|Pemakaian   : 20-25=5|Denda       :Rp.           0|Tot Tagihan :Rp.      39.200|"
+            ]
+          ],
+          "balance" => 34153493,
         ]);
     }
 
