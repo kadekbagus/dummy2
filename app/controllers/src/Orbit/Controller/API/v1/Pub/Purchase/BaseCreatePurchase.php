@@ -154,7 +154,9 @@ class BaseCreatePurchase
     {
         return [
             'payment_transaction_id' => $this->purchase->payment_transaction_id,
-            'currency' => $this->request->currency,
+            'currency' => $this->request->currency
+                ? $this->request->currency
+                : 'IDR',
             'price' => $this->getItemPrice(),
             'quantity' => 1,
             'vendor_price' => $this->getVendorPrice(),

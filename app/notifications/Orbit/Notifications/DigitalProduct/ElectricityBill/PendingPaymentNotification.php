@@ -35,4 +35,12 @@ class PendingPaymentNotification extends BillNotification
     {
         return $this->payment->status === PaymentTransaction::STATUS_PENDING;
     }
+
+    protected function prepareEmailData($data = [])
+    {
+        return array_merge(parent::prepareEmailData($data), [
+            'cancelUrl' => $this->getCancelUrl() . '&type=electricity-bill',
+            'myWalletUrl' => $this->getMyPurchasesUrl('/bills'),
+        ]);
+    }
 }

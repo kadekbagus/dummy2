@@ -2,6 +2,7 @@
 
 namespace Orbit\Notifications\DigitalProduct;
 
+use Config;
 use Exception;
 use Mail;
 use Orbit\Helper\Notifications\Contracts\EmailNotificationInterface;
@@ -14,7 +15,7 @@ use Orbit\Notifications\Traits\HasBillTrait;
  *
  * @author Budi <budi@gotomalls.com>
  */
-class BillNotification extends PaymentNotification implements
+abstract class BillNotification extends PaymentNotification implements
     EmailNotificationInterface
 {
     use HasBillTrait;
@@ -26,17 +27,13 @@ class BillNotification extends PaymentNotification implements
         $this->payment = $payment;
     }
 
-    public function getEmailTemplates()
-    {
-        return [
-            'html' => '',
-            'text' => '',
-        ];
-    }
+    abstract public function getEmailTemplates();
 
-    public function getEmailSubject()
+    abstract public function getEmailSubject();
+
+    public function getRecipientEmail()
     {
-        return trans('email-bill.subject', [], '', 'id');
+        return $this->payment->user_email;
     }
 
     public function getEmailData()
@@ -44,6 +41,13 @@ class BillNotification extends PaymentNotification implements
         return [
             'transaction_id' => $this->payment->payment_transaction_id,
         ];
+    }
+
+    protected function getProductName()
+    {
+        return $this->payment->details->filter(function($detail) {
+            return $detail->object_type === 'digital_product';
+        })->first()->object_name;
     }
 
     protected function prepareEmailData($data = [])
@@ -61,6 +65,8 @@ class BillNotification extends PaymentNotification implements
             'transactionDateTime' => $this->getTransactionDateTime(),
             'emailSubject'      => $this->getEmailSubject(),
             'supportedLangs'    => $this->getSupportedLanguages(),
+            'productName'       => $this->getProductName(),
+            'paymentMethod'     => $this->getPaymentMethod(),
         ];
     }
 
@@ -75,13 +81,20 @@ class BillNotification extends PaymentNotification implements
             $emailData = $this->prepareEmailData($data);
 
             if ($this->shouldSendEmail()) {
-                Mail::send($this->getEmailTemplates(), $emailData, function($mail) use ($emailData) {
-                    $emailConfig = Config::get('orbit.registration.mobile.sender');
+                $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                    $mail->subject($emailData['emailSubject']);
-                    $mail->from($emailConfig['email'], $emailConfig['name']);
-                    $mail->to($emailData['recipientEmail']);
-                });
+                Mail::send(
+                    $this->getEmailTemplates(),
+                    $emailData,
+                    function($mail) use ($emailData, $emailConfig) {
+                        $mail->subject($emailData['emailSubject']);
+                        $mail->from($emailConfig['email'], $emailConfig['name']);
+                        $mail->to($emailData['recipientEmail']);
+                    }
+                );
+            }
+            else {
+                $this->log('Not sending any notification due to shouldSendEmail is false.');
             }
 
         } catch (Exception $e) {

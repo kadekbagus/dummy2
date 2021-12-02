@@ -2,13 +2,14 @@
 
 namespace Orbit\Notifications\Traits;
 
-use Orbit\Helper\MCash\API\ElectricityBill\Response\InquiryResponse as ElectricityInquiryResponse;
-use Orbit\Helper\MCash\API\WaterBill\Response\InquiryResponse as WaterBillInquiryResponse;
-use Orbit\Helper\MCash\API\PBBTaxBill\Response\InquiryResponse as PBBTaxBillInquiryResponse;
 use Orbit\Helper\MCash\API\BPJSBill\Response\InquiryResponse as BPJSBillInquiryResponse;
+use Orbit\Helper\MCash\API\Bill;
+use Orbit\Helper\MCash\API\ElectricityBill\Response\InquiryResponse as ElectricityInquiryResponse;
 use Orbit\Helper\MCash\API\InternetProviderBill\Response\InquiryResponse as ISPBillInquiryResponse;
+use Orbit\Helper\MCash\API\PBBTaxBill\Response\InquiryResponse as PBBTaxBillInquiryResponse;
+use Orbit\Helper\MCash\API\WaterBill\Response\InquiryResponse as WaterBillInquiryResponse;
+use Orbit\Notifications\Traits\CommonHelper;
 use Orbit\Notifications\Traits\HasContactTrait;
-use Orbit\Notifications\Traits\HasCustomerTrait;
 use Orbit\Notifications\Traits\HasPaymentTrait;
 use PaymentTransaction;
 
@@ -20,7 +21,7 @@ use PaymentTransaction;
 trait HasBillTrait
 {
     // Compose available functions for bill related email notifications
-    use CommonHelper, HasPaymentTrait, HasCustomerTrait, HasContactTrait;
+    use CommonHelper, HasPaymentTrait, HasContactTrait;
 
     /**
      * Get the payment object instance based on given transaction id.

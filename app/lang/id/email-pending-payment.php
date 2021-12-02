@@ -38,7 +38,7 @@ return [
             'email' => 'Email: ',
             'phone' => 'No. Telp Pelanggan: ',
             'total_amount' => 'Total: ',
-            'product' => 'Produk',
+            'product' => 'Produk: ',
         ],
 
         'payment-info-line-1' => 'Untuk menyelesaikan transaksi ini, mohon untuk melakukan transfer ke rekening berikut sebelum <br><span style="color:#f43d3c;"><strong>:paymentExpiration</strong></span>',
