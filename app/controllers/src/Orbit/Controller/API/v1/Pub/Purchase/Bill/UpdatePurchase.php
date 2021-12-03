@@ -268,7 +268,7 @@ class UpdatePurchase
                     $paymentUser = new User;
                     $paymentUser->email = $this->purchase->user_email;
 
-                    $paymentUser->notify(new ElectricityPendingPaymentNotification($this->purchase), 30);
+                    // $paymentUser->notify(new ElectricityPendingPaymentNotification($this->purchase), 30);
 
                     // Record activity of pending purchase...
                     $this->purchase->user->activity(new PurchasePendingActivity($this->purchase, $objectName));
@@ -342,11 +342,11 @@ class UpdatePurchase
 
             // Send refund notification to customer.
             if ($this->shouldNotifyRefund) {
-                $this->purchase->user->notify(
-                    new CustomerRefundNotification(
-                        $this->purchase, $this->refundReason
-                    )
-                );
+                // $this->purchase->user->notify(
+                //     new CustomerRefundNotification(
+                //         $this->purchase, $this->refundReason
+                //     )
+                // );
             }
 
             return $this->purchase;
