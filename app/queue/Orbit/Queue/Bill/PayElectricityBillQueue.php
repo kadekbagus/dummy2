@@ -8,6 +8,7 @@ use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
 use Orbit\Helper\MCash\API\Bill;
 use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotification;
 use Orbit\Notifications\DigitalProduct\DigitalProductNotAvailableNotification;
+use Orbit\Notifications\DigitalProduct\ElectricityBill\ReceiptNotification;
 use Orbit\Queue\Bill\PayBillQueue;
 use User;
 

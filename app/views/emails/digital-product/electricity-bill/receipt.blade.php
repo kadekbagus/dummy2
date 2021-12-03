@@ -26,33 +26,22 @@
                       {{ trans('email-receipt.body.greeting_products.customer_name', ['customerName' => $customerName], '', $lang) }}
                     </h3>
                     <p class="greeting-text">
-                      @if (count($transaction['otherProduct']) >= 1)
-                        {{ trans('email-receipt.body.greeting_products.body_2', [
-                              'itemName' => $transaction['itemName'] ?: '',
-                              'otherProduct' => $transaction['otherProduct'] ?: '',
-                            ],
-                            '',
-                            $lang
-                           )
-                        }}
-                      @elseif (count($transaction['otherProduct']) <= 0)
-                        {{ trans('email-receipt.body.greeting_products.body_1', [
-                              'itemName' => $transaction['itemName'] ?: '',
-                            ], '', $lang
-                           )
-                        }}
-                      @endif
+                      {{ trans('email-receipt.body.greeting_products.body_1', [
+                            'itemName' => $transaction['items'][0]['name'] ?: '',
+                          ], '', $lang
+                         )
+                      }}
                     </p>
                   </td>
                 </tr>
                 <tr>
                   <td width="600" class="mobile greeting-text" valign="middle">
 
-                    @include('emails.order.order-details')
+                    {{-- @include('emails.order.order-details') --}}
 
                     <br>
 
-                    @include('emails.order.product-details')
+                    {{-- @include('emails.order.product-details') --}}
 
                   </td>
                 </tr>

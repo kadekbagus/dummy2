@@ -23,7 +23,7 @@ class ReceiptNotification extends BillNotification
 
     public function getEmailSubject()
     {
-        return trans('email-receipt.electricity-bill.subject', [], '', 'id');
+        return trans('email-receipt.subject', [], '', 'id');
     }
 
     protected function prepareEmailData($data = [])

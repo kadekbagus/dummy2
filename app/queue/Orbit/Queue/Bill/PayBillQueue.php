@@ -29,7 +29,7 @@ class PayBillQueue
      */
     protected $retryDelay = 3;
 
-    private $objectType = 'digital_product';
+    protected $objectType = 'digital_product';
 
     protected $billType = null;
 

@@ -1,22 +1,11 @@
 @foreach($supportedLangs as $lang)
   {{ trans('email-receipt.body.greeting_products.customer_name', ['customerName' => $customerName], '', $lang) }}
 
-  @if (count($transaction['otherProduct']) >= 1)
-    {{ trans('email-receipt.body.greeting_products.body_2', [
-          'itemName' => $transaction['itemName'] ?: '',
-          'otherProduct' => $transaction['otherProduct'] ?: '',
-        ],
-        '',
-        $lang
-       )
-    }}
-  @elseif (count($transaction['otherProduct']) <= 0)
-    {{ trans('email-receipt.body.greeting_products.body_1', [
-          'itemName' => $transaction['itemName'] ?: '',
-        ], '', $lang
-       )
-    }}
-  @endif
+  {{ trans('email-receipt.body.greeting_products.body_1', [
+        'itemName' => $transaction['items'][0]['name'] ?: '',
+      ], '', $lang
+     )
+  }}
 
   [Bill information goes here...]
 
