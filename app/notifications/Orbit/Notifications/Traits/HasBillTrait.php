@@ -42,12 +42,12 @@ trait HasBillTrait
 
     /**
      * Get bill information.
-     * At the moment, we parse inquiry response. Might be overriden if need to
+     * At the moment, we parse payment response. Might be overriden if need to
      * parse from payment response.
      *
      * @return [type] [description]
      */
-    protected function getBillInformation($source = 'inquiry')
+    protected function getBillInformation($source = 'payment')
     {
         $notes = unserialize($this->payment->notes);
 

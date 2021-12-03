@@ -3,7 +3,11 @@
 namespace Orbit\Queue\Bill;
 
 use Config;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedProductActivity;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
 use Orbit\Helper\MCash\API\Bill;
+use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotification;
+use Orbit\Notifications\DigitalProduct\DigitalProductNotAvailableNotification;
 use Orbit\Queue\Bill\PayBillQueue;
 use User;
 
@@ -18,12 +22,9 @@ class PayElectricityBillQueue extends PayBillQueue
 
     protected $GMPId = 'Electricity Bill';
 
-    protected function notifyReceipt($payment, $billPayment)
+    protected function notifyReceipt($payment)
     {
-        $payment->user->notify(new ReceiptNotification(
-            $payment,
-            $billPayment->getBillInformation()
-        ));
+        $payment->user->notify(new ReceiptNotification($payment));
     }
 
     protected function notifyFailed($payment, $e)

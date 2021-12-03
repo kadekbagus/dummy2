@@ -20,7 +20,7 @@ abstract class BillNotification extends PaymentNotification implements
 {
     use HasBillTrait;
 
-    protected $signature = 'bill-purchases-notification';
+    protected $signature = 'bill-purchase-notification';
 
     public function __construct($payment = null)
     {

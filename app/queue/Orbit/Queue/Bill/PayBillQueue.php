@@ -143,17 +143,17 @@ class PayBillQueue
                 // AutoIssueGamePromotion::issue($payment, $providerProduct);
 
                 // Notify Customer.
-                // $this->notifyReceipt($payment, $billPayment);
+                $this->notifyReceipt($payment);
 
-                // $this->recordSuccessGMP(
-                //     $digitalProductName,
-                //     $payment,
-                //     $detail,
-                //     $digitalProduct,
-                //     $productCode
-                // );
+                $this->recordSuccessGMP(
+                    $digitalProductName,
+                    $payment,
+                    $detail,
+                    $digitalProduct,
+                    $productCode
+                );
 
-                // $this->recordSuccessActivity($payment);
+                $this->recordSuccessActivity($payment);
 
                 // $this->markPromoCodeAsIssued($payment, $discount, $digitalProduct);
 
