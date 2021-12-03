@@ -68,9 +68,10 @@ class PurchaseBillInquiryAPIController extends PubControllerAPI
                     $billInfo->convenience_fee = $convenienceFee;
                     $purchase->bill = $billInfo;
                 })
+                ->onAfterCommit(function($purchase, $request) {
+                    unset($purchase->notes);
+                })
                 ->create($request);
-
-            unset($purchase->notes);
 
             $this->response->data = $purchase;
 
