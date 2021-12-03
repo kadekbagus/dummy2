@@ -1,11 +1,11 @@
 <?php
 
-namespace Orbit\Helper\MCash\API\WaterBill;
+namespace Orbit\Helper\MCash\API\PBBTaxBill;
 
-use Orbit\Helper\MCash\API\WaterBill\Response\PayResponse;
+use Orbit\Helper\MCash\API\PBBTaxBill\Response\PayResponse;
 
 /**
- * Pay implementation for electricity bill.
+ * Pay implementation for pbb tax.
  *
  * @author Budi <budi@gotomalls.com>
  */
