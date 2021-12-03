@@ -26,15 +26,23 @@ class DigitalProductUpdatePurchaseRequest extends ValidateRequest
     {
         return [
             'payment_transaction_id' => 'required|purchase_exists',
-            'status' => 'required|in:' . implode(',', [
+            'status' => join('|', [
+                'required',
+                'in:' . join(',', [
                     'pending', 'success', 'cancel', 'canceled',
                     'failed', 'expired', 'denied', 'suspicious', 'abort',
                     'refund', 'partial_refund',
-                ]) . '|orbit.order.can_change_status',
-            'payment_method' => 'sometimes|required|in:' . implode(',', [
+                ]),
+                'orbit.order.can_change_status',
+            ]),
+            'payment_method' => join('|', [
+                'sometimes',
+                'required',
+                'in:' . join(',', [
                     'midtrans', 'midtrans-qris', 'midtrans-shopeepay',
                     'stripe', 'dana',
                 ]),
+            ]),
         ];
     }
 

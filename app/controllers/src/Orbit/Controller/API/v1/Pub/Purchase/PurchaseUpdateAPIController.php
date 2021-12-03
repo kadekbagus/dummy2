@@ -3,9 +3,11 @@
 use App;
 use Exception;
 use OrbitShop\API\v1\PubControllerAPI;
+use Orbit\Controller\API\v1\Pub\Purchase\Bill\UpdatePurchase as BillUpdatePurchase;
 use Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct\UpdatePurchase as DigitalProductUpdatePurchase;
 use Orbit\Controller\API\v1\Pub\Purchase\Order\UpdatePurchase as UpdateOrderPurchase;
 use Orbit\Controller\API\v1\Pub\Purchase\Request\DigitalProductUpdatePurchaseRequest as UpdatePurchaseRequest;
+use Orbit\Helper\MCash\API\Bill;
 
 /**
  * Handle purchase update request.
@@ -25,11 +27,14 @@ class PurchaseUpdateAPIController extends PubControllerAPI
             // $this->enableQueryLog();
 
             $request = new UpdatePurchaseRequest();
+            $purchase = App::make('purchase');
 
-            switch (App::make('purchase')->getProductType()) {
+            switch ($purchase->getProductType()) {
                 case 'digital_product':
-                    $this->response->data = (new DigitalProductUpdatePurchase)
-                        ->update($request);
+                    $this->response->data = $this->handleDigitalProductUpdate(
+                        $purchase,
+                        $request
+                    );
                     break;
 
                 case 'order':
@@ -47,5 +52,30 @@ class PurchaseUpdateAPIController extends PubControllerAPI
         }
 
         return $this->render();
+    }
+
+    private function handleDigitalProductUpdate($purchase, $request)
+    {
+        $purchase->load('details.provider_product');
+
+        if ($purchase->forBill()) {
+            switch($purchase->getBillProductType()) {
+                // Use same update handler at the moment
+                case Bill::ELECTRICITY_BILL:
+                case Bill::PDAM_BILL:
+                case Bill::PBB_TAX_BILL:
+                case Bill::BPJS_BILL:
+                case Bill::ISP_BILL:
+                    return (new BillUpdatePurchase())->update($request);
+                    break;
+
+                default:
+                    throw new Exception('unknown bill product type!');
+                    break;
+            }
+        }
+        else {
+            return (new DigitalProductUpdatePurchase)->update($request);
+        }
     }
 }

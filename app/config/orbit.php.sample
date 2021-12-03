@@ -6395,6 +6395,38 @@ return array(
         // Always set to false for production.
         // Valid value: false, 'success', 'failed'
         'mock_response' => false,
+
+        // Mock bill response, set to false on production.
+        // 'mock_bill_response' => false,
+        'mock_bill_response' => [
+            // Array key should match the hardcoded bill's type,
+            // e.g. 'electricity_bill', 'pdam_bill' and so on...
+            //
+            // For each api/endpoint, possible values are:
+            // 'success' => to mock api response as success,
+            // 'failed' => to mock api resposne as failed,
+            // false => to disable mock response on for the api
+            'electricity_bill' => [
+                'inquiry' => 'success',
+                'pay' => 'success',
+            ],
+            'pdam_bill' => [
+                'inquiry' => 'success',
+                'pay' => 'success',
+            ],
+            'pbb_tax' => [
+                'inquiry' => 'success',
+                'pay' => 'success',
+            ],
+            'bpjs_bill' => [
+                'inquiry' => 'success',
+                'pay' => 'success',
+            ],
+            'internet_provider_bill' => [
+                'inquiry' => 'success',
+                'pay' => 'success',
+            ],
+        ],
     ],
 
     // Config related to transaction.

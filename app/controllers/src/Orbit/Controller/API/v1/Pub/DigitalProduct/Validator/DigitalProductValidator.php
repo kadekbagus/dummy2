@@ -101,6 +101,12 @@ class DigitalProductValidator
         return ! empty($providerProduct);
     }
 
+    public function existsWithProviderProduct($attr, $value, $params)
+    {
+        return $this->exists($attr, $value, $params)
+            && $this->providerProductExists($attr, $value, $params);
+    }
+
     /**
      * Determine if given provider product id exists in database.
      *

@@ -584,6 +584,15 @@ return array(
         'reservation' => array(
             'can_change_status' => 'Tidak dapat mengubah status Reservasi. Coba refresh halaman atau pastikan status yang dikirim sudah sesuai.',
         ),
+
+        'bill' => array(
+            'bill_enabled' => 'The requested bill service unavailable. Please try again later or contact customer service.',
+            'can_purchase' => 'Unable to make payment, please try again in a moment or contact customer service.',
+        ),
+
+        'digital_product' => array(
+            'exists' => "Produk tidak ditemukan.",
+        ),
     ),
 
     /*

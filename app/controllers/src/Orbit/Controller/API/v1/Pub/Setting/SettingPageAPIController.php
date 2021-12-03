@@ -3,13 +3,14 @@
  * API for getting page setting
  * @author kadek <kadek@dominopos.com>
  */
-use OrbitShop\API\v1\PubControllerAPI;
-use OrbitShop\API\v1\OrbitShopAPI;
-use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Helper\EloquentRecordCounter as RecordCounter;
-use stdclass;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use OrbitShop\API\v1\OrbitShopAPI;
+use OrbitShop\API\v1\PubControllerAPI;
+use Orbit\Helper\MCash\API\Bill;
 use Setting;
 use Validator;
+use stdclass;
 
 class SettingPageAPIController extends PubControllerAPI
 {
@@ -29,29 +30,25 @@ class SettingPageAPIController extends PubControllerAPI
         try {
             $user = $this->getUser();
             $type = OrbitInput::get('type');
+            $billType = array_merge(
+                [
+                    'all',
+                    'pulsa',
+                    'game_voucher',
+                    'electricity',
+                ],
+                Bill::getBillTypeIds()
+            );
 
             $validator = Validator::make(
                 array(
                     'type' => $type,
                 ),
                 array(
-                    'type' => join('|', [
-                        'required',
-                        'in:' . join(',', [
-                            'pulsa',
-                            'game_voucher',
-                            'electricity',
-                            'electricity_bills',
-                            'pdam_bills',
-                            'pbb_tax',
-                            'bpjs',
-                            'internet_providers',
-                            'all',
-                        ])
-                    ]),
+                    'type' => 'required|in:' . join(',', $billType),
                 ),
                 array(
-                    'type.in' => 'The argument you specified is not valid, the valid values are: pulsa, game_voucher,electricity',
+                    'type.in' => 'The argument you specified is not valid, the valid values are: ' . join(',', $billType),
                 )
             );
 
@@ -61,30 +58,15 @@ class SettingPageAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $data = [
+            $data = array_merge([
                 'pulsa' => 'enable_pulsa_page',
                 'game_voucher' => 'enable_game_voucher_page',
                 'electricity' => 'enable_electricity_page',
-                'electricity_bills' => 'enable_electricity_bill_page',
-                'pdam_bills' => 'enable_pdam_bill_page',
-                'pbb_tax' => 'enable_pbb_tax_page',
-                'bpjs' => 'enable_bpjs_bill_page',
-                'internet_providers' => 'enable_internet_provider_bill_page',
-                'all' => [
-                    'enable_pulsa_page',
-                    'enable_game_voucher_page',
-                    'enable_electricity_page',
-                    'enable_electricity_bill_page',
-                    'enable_pdam_bill_page',
-                    'enable_pbb_tax_page',
-                    'enable_bpjs_bill_page',
-                    'enable_internet_provider_bill_page',
-                ],
-            ];
+            ], Bill::getBillSettingName());
 
             $setting = Setting::select('setting_name', 'setting_value');
             if ($type === 'all') {
-                $setting = $setting->whereIn('setting_name', $data[$type])->get();
+                $setting = $setting->whereIn('setting_name', $data)->get();
             }
             else {
                 $setting = $setting->where('setting_name', $data[$type])->first();

@@ -1,8 +1,9 @@
 <?php
 
+use Orbit\Helper\MCash\API\Bill;
 use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
-use Orbit\Notifications\Coupon\Sepulsa\CouponNotAvailableNotification as SepulsaCouponNotAvailableNotification;
 use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
+use Orbit\Notifications\Coupon\Sepulsa\CouponNotAvailableNotification as SepulsaCouponNotAvailableNotification;
 use Orbit\Notifications\Payment\CanceledPaymentNotification;
 
 /**
@@ -107,6 +108,32 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
             }
             else if ($payment->forMCashElectricity()) {
                 $queue = 'Orbit\\Queue\\DigitalProduct\\GetMCashElectricityQueue';
+            }
+            else {
+                switch($payment->getBillProductType()) {
+                    case Bill::ELECTRICITY_BILL:
+                        $queue = 'Orbit\\Queue\\Bill\\PayElectricityBillQueue';
+                        break;
+
+                    case Bill::PDAM_BILL:
+                        $queue = 'Orbit\\Queue\\Bill\\PayWaterBillQueue';
+                        break;
+
+                    case Bill::PBB_TAX_BILL:
+                        $queue = 'Orbit\\Queue\\Bill\\PayPbbTaxBillQueue';
+                        break;
+
+                    case Bill::BPJS_BILL:
+                        $queue = 'Orbit\\Queue\\Bill\\PayBpjsBillQueue';
+                        break;
+
+                    case Bill::ISP_BILL:
+                        $queue = 'Orbit\\Queue\\Bill\\PayInternetProviderBillQueue';
+                        break;
+
+                    default:
+                        break;
+                }
             }
 
             Queue::connection('sync')->push($queue, $queueData);
