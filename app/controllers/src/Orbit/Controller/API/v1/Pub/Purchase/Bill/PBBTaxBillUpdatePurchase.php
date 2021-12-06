@@ -4,7 +4,7 @@ namespace Orbit\Controller\API\v1\Pub\Purchase\Bill;
 
 use Orbit\Controller\API\v1\Pub\Purchase\BaseUpdatePurchase;
 use Orbit\Notifications\DigitalProduct\PBBTaxBill\AbortedPaymentNotification;
-use Orbit\Notifications\DigitalProduct\PBBTaxBill\CanceledPaymentNotification;
+use Orbit\Notifications\DigitalProduct\PBBTaxBill\CancelledPaymentNotification;
 use Orbit\Notifications\DigitalProduct\PBBTaxBill\CustomerRefundNotification;
 use Orbit\Notifications\DigitalProduct\PBBTaxBill\ExpiredPaymentNotification;
 use Orbit\Notifications\DigitalProduct\PBBTaxBill\PendingPaymentNotification;
@@ -34,7 +34,7 @@ class PBBTaxBillUpdatePurchase extends BaseUpdatePurchase
     protected function notifyCancelledPurchase()
     {
         $this->purchase->user->notify(
-            new CanceledPaymentNotification($this->purchase)
+            new CancelledPaymentNotification($this->purchase)
         );
     }
 
