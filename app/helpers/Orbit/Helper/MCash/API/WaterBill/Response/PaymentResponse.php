@@ -9,7 +9,7 @@ use Orbit\Helper\MCash\API\BillResponse;
  *
  * @author Budi <budi@gotomalls.com>
  */
-class PayResponse extends BillResponse
+class PaymentResponse extends BillResponse
 {
     public function hasBillingInformation()
     {
