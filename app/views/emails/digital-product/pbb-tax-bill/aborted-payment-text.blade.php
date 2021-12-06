@@ -5,7 +5,7 @@
 @foreach($supportedLangs as $lang)
   <?php $productType = trans("email-payment.product_type.{$originalProductType}", [], '', $lang); ?>
 
-  {{ trans('email-aborted-payment.body.greeting_digital_product.customer_name', ['customerName' => $customerName], '', $lang) }}</h3>
+  {{ trans('email-aborted-payment.body.greeting_digital_product.customer_name', ['customerName' => $customerName], '', $lang) }}
   {{ trans('email-aborted-payment.body.greeting_digital_product.body', [], '', $lang) }}
 
   {{{ trans('email-aborted-payment.body.transaction_labels.product_name', [], '', $lang) }}} {{ $transaction['items'][0]['name'] }}
