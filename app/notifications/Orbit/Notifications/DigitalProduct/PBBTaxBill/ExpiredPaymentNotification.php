@@ -15,8 +15,9 @@ class ExpiredPaymentNotification extends BaseNotification
 
     public function getEmailTemplates()
     {
-        return array_merge(parent::getEmailTemplates(), [
+        return [
+            'html' => 'emails.digital-product.pbb-tax-bill.expired-payment',
             'text' => 'emails.digital-product.pbb-tax-bill.expired-payment-text',
-        ]);
+        ];
     }
 }
