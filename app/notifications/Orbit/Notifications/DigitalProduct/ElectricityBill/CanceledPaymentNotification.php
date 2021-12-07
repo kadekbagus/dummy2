@@ -12,4 +12,12 @@ use Orbit\Notifications\DigitalProduct\CanceledPaymentNotification as BaseNotifi
 class CanceledPaymentNotification extends BaseNotification
 {
     protected $signature = 'electricity-bill-cancelled-transaction';
+
+    public function getEmailTemplates()
+    {
+        return [
+            'html' => 'emails.digital-product.electricity-bill.cancelled-payment',
+            'text' => 'emails.digital-product.electricity-bill.cancelled-payment-text',
+        ];
+    }
 }

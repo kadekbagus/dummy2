@@ -12,4 +12,12 @@ use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotific
 class NotAvailableNotification extends BaseNotification
 {
     protected $signature = 'electricity-bill-not-available-product';
+
+    public function getEmailTemplates()
+    {
+        return [
+            'html' => 'emails.digital-product.electricity-bill.product-not-available',
+            'text' => 'emails.digital-product.electricity-bill.product-not-available-text',
+        ];
+    }
 }

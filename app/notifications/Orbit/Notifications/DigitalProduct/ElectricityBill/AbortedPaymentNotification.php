@@ -12,4 +12,12 @@ use Orbit\Notifications\DigitalProduct\AbortedPaymentNotification as BaseNotific
 class AbortedPaymentNotification extends BaseNotification
 {
     protected $signature = 'electricity-bill-aborted-transaction';
+
+    public function getEmailTemplates()
+    {
+        return [
+            'html' => 'emails.digital-product.electricity-bill.aborted-payment',
+            'text' => 'emails.digital-product.electricity-bill.aborted-payment-text',
+        ];
+    }
 }
