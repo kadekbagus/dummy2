@@ -18,7 +18,7 @@
 {{{ $myWalletUrl }}}
 
 
-{{ trans('email-receipt.body.help', ['csPhone' => $cs['phone'], 'csEmail' => $cs['email']], '', $lang) }}
+{{ trans('email-receipt.body.help_text', ['csPhone' => $cs['phone'], 'csEmail' => $cs['email']], '', $lang) }}
 
 {{{ trans('email-receipt.body.thank_you', [], '', $lang) }}}
 

@@ -37,11 +37,11 @@
                 <tr>
                   <td width="600" class="mobile greeting-text" valign="middle">
 
-                    {{-- @include('emails.order.order-details') --}}
+                    @include('emails.digital-product.bill-customer')
 
                     <br>
 
-                    {{-- @include('emails.order.product-details') --}}
+                    @include('emails.digital-product.pbb-tax-bill.bill-information')
 
                   </td>
                 </tr>
