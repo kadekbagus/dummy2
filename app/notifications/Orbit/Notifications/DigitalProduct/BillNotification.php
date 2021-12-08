@@ -50,17 +50,36 @@ abstract class BillNotification extends PaymentNotification implements
         })->first()->object_name;
     }
 
+    protected function getTransactionAndBill()
+    {
+        $transactionData = $this->getTransactionData();
+        $billInfo = $this->getBillInformation();
+
+        $transactionData['convenience_fee'] = $this->getConvenienceFee();
+        $transactionData['formatted_convenience_fee'] =
+            $this->formatCurrency($transactionData['convenience_fee'], '');
+        $transactionData['total'] = $this->formatCurrency($this->payment->amount, '');
+
+        if (empty($billInfo)) {
+            return $transactionData;
+        }
+
+        $billInfo->formatted_amount = $this->formatCurrency($billInfo->amount, '');
+        return [$transactionData, $billInfo];
+    }
+
     protected function prepareEmailData($data = [])
     {
         $this->payment = $this->getPayment($data['transaction_id']);
+        list($transactionData, $bill) = $this->getTransactionAndBill();
 
         return [
             'recipientEmail'    => $this->getRecipientEmail(),
             'customerEmail'     => $this->getCustomerEmail(),
             'customerName'      => $this->getCustomerName(),
             'customerPhone'     => $this->getCustomerPhone(),
-            'transaction'       => $this->getTransactionData(),
-            'billInfo'          => $this->getBillInformation(),
+            'transaction'       => $transactionData,
+            'bill'              => $bill,
             'cs'                => $this->getContactData(),
             'transactionDateTime' => $this->getTransactionDateTime(),
             'emailSubject'      => $this->getEmailSubject(),

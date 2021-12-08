@@ -2,48 +2,42 @@
 
 return [
     'labels' => [
-        'transaction_details' => 'Detail Transaksi',
-        'transaction_id' => 'ID Transaksi',
-        'transaction_date' => 'Tanggal Transaksi',
+        'transaction_details' => 'Transaction Details',
+        'transaction_id' => 'Transaction ID',
+        'transaction_date' => 'Transaction Date',
 
         // generics
-        'billing_details' => 'Detail Tagihan',
-        'billing_id' => 'ID Pelanggan',
-        'billing_name' => 'Nama',
-        'billing_amount' => 'Jumlah Tagihan',
-        'convenience_fee' => 'Biaya Layanan',
-        'total_amount' => 'Total Bayar',
+        'billing_details' => 'Billing Details',
+        'billing_id' => 'Customer ID',
+        'billing_name' => 'Name',
+        'billing_amount' => 'Bill Amount',
+        'convenience_fee' => 'Convenience Fee',
+        'total_amount' => 'Total Payment',
 
         'water_bill' => [
-            'periode' => 'Rek Bulan',
-            'meter_start' => 'Meter Awal',
-            'meter_end' => 'Meter Akhir',
-            'usage' => 'Pemakaian',
-            'penalty' => 'Denda',
+            'periode' => 'Month/Year',
+            'meter_start' => 'Start Meter',
+            'meter_end' => 'End Meter',
+            'usage' => 'Usage',
+            'penalty' => 'Penalty',
         ],
 
         'pbb_tax' => [
-            'periode' => 'Rek Bulan',
-            'meter_start' => 'Meter Awal',
-            'meter_end' => 'Meter Akhir',
-            'usage' => 'Pemakaian',
-            'penalty' => 'Denda',
+            'periode' => 'Month/Year',
+            'meter_start' => 'Start Meter',
+            'meter_end' => 'End Meter',
+            'usage' => 'Usage',
+            'penalty' => 'Penalty',
         ],
 
         'bpjs_bill' => [
-            'periode' => 'Rek Bulan',
-            'meter_start' => 'Meter Awal',
-            'meter_end' => 'Meter Akhir',
-            'usage' => 'Pemakaian',
-            'penalty' => 'Denda',
+            'periode' => 'Month/Year',
+            'usage' => 'Usage',
+            'penalty' => 'Penalty',
         ],
     ],
 
-    'receipt' => [
-        'subject' => 'Kuitansi Pembelian Dari Gotomalls.com',
-    ],
-
-    'new-order' => [
+    'new' => [
         'subject' => 'New Product Order!',
         'title' => 'New Order',
         'greeting' => 'Hello :recipientName,',
@@ -55,7 +49,7 @@ return [
         ],
     ],
 
-    'pickup-order' => [
+    'pickup' => [
         'subject' => 'Product Ready To Pickup!',
         'title' => 'Ready To Pickup',
         'greeting' => 'Hello :recipientName,',
@@ -71,7 +65,7 @@ return [
         ]
     ],
 
-    'complete-order' => [
+    'complete' => [
         'subject' => 'Order Completed!',
         'title' => 'Order Completed',
         'greeting' => 'Hello :recipientName,',
@@ -85,5 +79,9 @@ return [
             'user' => 'Go to My Purchase',
             'admin' => 'Process Order'
         ]
+    ],
+
+    'receipt' => [
+        'subject' => 'Your Receipt from Gotomalls.com',
     ],
 ];

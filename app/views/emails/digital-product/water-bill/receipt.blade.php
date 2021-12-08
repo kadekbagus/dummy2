@@ -1,5 +1,9 @@
 @extends('emails.layouts.default')
 
+@section('title')
+Receipt from Gotomalls.com
+@stop
+
 @section('content')
   @foreach($supportedLangs as $lang)
     <tr>
@@ -37,11 +41,11 @@
                 <tr>
                   <td width="600" class="mobile greeting-text" valign="middle">
 
-                    {{-- @include('emails.order.order-details') --}}
+                    @include('emails.digital-product.bill-customer')
 
                     <br>
 
-                    {{-- @include('emails.order.product-details') --}}
+                    @include('emails.digital-product.water-bill.bill-information')
 
                   </td>
                 </tr>

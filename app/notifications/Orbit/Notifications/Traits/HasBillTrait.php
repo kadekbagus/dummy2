@@ -35,6 +35,13 @@ trait HasBillTrait
             ])->findOrFail($paymentId);
     }
 
+    protected function getConvenienceFee()
+    {
+        return $this->payment->details->filter(function($detail) {
+            return $detail->object_type === 'digital_product';
+        })->first()->payload;
+    }
+
     /**
      * Get bill information.
      * At the moment, we parse payment response. Might be overriden if need to
@@ -53,7 +60,8 @@ trait HasBillTrait
         $billInfo = $notes[$source];
 
         $source = ucfirst($source);
-        $response = "Orbit\Helper\MCash\API\%s\Response\{$source}Response";
+        $response = 'Orbit\Helper\MCash\API\%s\Response\\'
+            . $source . 'Response';
 
         switch ($this->payment->getBillProductType()) {
             case Bill::ELECTRICITY_BILL:

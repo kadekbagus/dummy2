@@ -6,6 +6,6 @@ trait CommonHelper
 {
     protected function formatCurrency($amount, $currency)
     {
-        return $currency . ' ' . number_format($amount, 0, ',', '.');
+        return trim($currency . ' ' . number_format($amount, 0, ',', '.'));
     }
 }
