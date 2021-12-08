@@ -9,7 +9,7 @@
 
 @include('emails.digital-product.bill-customer-text')
 
-@include('emails.digital-product.water-bill.bill-information-text')
+@include('emails.digital-product.pbb-tax-bill.bill-information-text')
 
 {{ trans('email-receipt.body.view_my_purchases', [], '', $lang) }}
 
