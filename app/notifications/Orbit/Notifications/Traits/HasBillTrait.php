@@ -2,12 +2,7 @@
 
 namespace Orbit\Notifications\Traits;
 
-use Orbit\Helper\MCash\API\BPJSBill\Response\InquiryResponse as BPJSBillInquiryResponse;
 use Orbit\Helper\MCash\API\Bill;
-use Orbit\Helper\MCash\API\ElectricityBill\Response\InquiryResponse as ElectricityInquiryResponse;
-use Orbit\Helper\MCash\API\InternetProviderBill\Response\InquiryResponse as ISPBillInquiryResponse;
-use Orbit\Helper\MCash\API\PBBTaxBill\Response\InquiryResponse as PBBTaxBillInquiryResponse;
-use Orbit\Helper\MCash\API\WaterBill\Response\InquiryResponse as WaterBillInquiryResponse;
 use Orbit\Notifications\Traits\CommonHelper;
 use Orbit\Notifications\Traits\HasContactTrait;
 use Orbit\Notifications\Traits\HasPaymentTrait;
@@ -40,6 +35,13 @@ trait HasBillTrait
             ])->findOrFail($paymentId);
     }
 
+    protected function getConvenienceFee()
+    {
+        return $this->payment->details->filter(function($detail) {
+            return $detail->object_type === 'digital_product';
+        })->first()->payload;
+    }
+
     /**
      * Get bill information.
      * At the moment, we parse payment response. Might be overriden if need to
@@ -57,25 +59,29 @@ trait HasBillTrait
 
         $billInfo = $notes[$source];
 
+        $source = ucfirst($source);
+        $response = 'Orbit\Helper\MCash\API\%s\Response\\'
+            . $source . 'Response';
+
         switch ($this->payment->getBillProductType()) {
             case Bill::ELECTRICITY_BILL:
-                $billInfo = new ElectricityInquiryResponse($billInfo);
+                $response = sprintf($response, 'ElectricityBill');
                 break;
 
             case Bill::PDAM_BILL:
-                $billInfo = new WaterBillInquiryResponse($billInfo);
+                $response = sprintf($response, 'WaterBill');
                 break;
 
             case Bill::PBB_TAX_BILL:
-                $billInfo = new PBBTaxBillInquiryResponse($billInfo);
+                $response = sprintf($response, 'PBBTaxBill');
                 break;
 
             case Bill::BPJS_BILL:
-                $billInfo = new BPJSBillInquiryResponse($billInfo);
+                $response = sprintf($response, 'BPJSBill');
                 break;
 
             case Bill::ISP_BILL:
-                $billInfo = new ISPBillInquiryResponse($billInfo);
+                $response = sprintf($response, 'InternetProviderBill');
                 break;
 
             default:
@@ -83,6 +89,6 @@ trait HasBillTrait
                 break;
         }
 
-        return $billInfo->getBillInformation();
+        return (new $response($billInfo))->getBillInformation();
     }
 }

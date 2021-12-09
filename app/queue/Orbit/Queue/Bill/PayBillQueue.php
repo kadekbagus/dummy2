@@ -10,18 +10,23 @@ use Exception;
 use Log;
 use Mall;
 use Orbit\Controller\API\v1\Pub\PromoCode\Repositories\Contracts\ReservationInterface;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseFailedProductActivity;
+use Orbit\Controller\API\v1\Pub\Purchase\Activities\PurchaseSuccessActivity;
 use Orbit\Helper\AutoIssueCoupon\AutoIssueCoupon;
 use Orbit\Helper\AutoIssueCoupon\AutoIssueGamePromotion;
 use Orbit\Helper\GoogleMeasurementProtocol\Client as GMP;
 use Orbit\Helper\MCash\API\BillInterface;
+use Orbit\Notifications\DigitalProduct\CustomerDigitalProductNotAvailableNotification;
+use Orbit\Notifications\DigitalProduct\DigitalProductNotAvailableNotification;
 use PaymentTransaction;
+use User;
 
 /**
  * A base job class to pay bill after payment completed.
  *
  * @author Budi <budi@dominopos.com>
  */
-class PayBillQueue
+abstract class PayBillQueue
 {
     /**
      * Delay before we trigger another MCash Purchase (in minutes).
@@ -29,7 +34,7 @@ class PayBillQueue
      */
     protected $retryDelay = 3;
 
-    private $objectType = 'digital_product';
+    protected $objectType = 'digital_product';
 
     protected $billType = null;
 
@@ -218,6 +223,8 @@ class PayBillQueue
         $job->delete();
     }
 
+    abstract protected function notifyReceipt($payment);
+
     protected function buildPaymentParams($payment, $productCode, $detail)
     {
         return [
@@ -226,6 +233,35 @@ class PayBillQueue
             'partnerTrxId' => $payment->payment_transaction_id,
             'amount' => (int) $detail->vendor_price + (int) $detail->provider_fee,
         ];
+    }
+
+    protected function notifyFailed($payment, $e)
+    {
+        $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
+
+        // Notify admin for this failure.
+        foreach($adminEmails as $email) {
+            $admin              = new User;
+            $admin->email       = $email;
+            $admin->notify(new DigitalProductNotAvailableNotification($payment, $e->getMessage()));
+        }
+
+        // Notify customer that coupon is not available.
+        $payment->user->notify(new CustomerDigitalProductNotAvailableNotification($payment));
+    }
+
+    protected function recordSuccessActivity($payment)
+    {
+        $payment->user->activity(new PurchaseSuccessActivity($payment, $this->objectType));
+    }
+
+    protected function recordFailedActivity($payment, $notes)
+    {
+        $payment->user->activity(new PurchaseFailedProductActivity(
+            $payment,
+            $this->objectType,
+            $notes
+        ));
     }
 
     protected function recordSuccessGMP(

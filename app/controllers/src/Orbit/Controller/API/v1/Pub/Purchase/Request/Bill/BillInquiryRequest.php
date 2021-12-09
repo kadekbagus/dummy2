@@ -12,6 +12,8 @@ use Orbit\Helper\Request\ValidateRequest;
  */
 class BillInquiryRequest extends ValidateRequest
 {
+    protected $roles = ['consumer'];
+
     public function rules()
     {
         return [

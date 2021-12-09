@@ -2,7 +2,7 @@
 
 namespace Orbit\Helper\MCash\API\ElectricityBill;
 
-use Orbit\Helper\MCash\API\ElectricityBill\Response\PayResponse;
+use Orbit\Helper\MCash\API\ElectricityBill\Response\PaymentResponse;
 
 /**
  * Pay implementation for electricity bill.
@@ -11,9 +11,9 @@ use Orbit\Helper\MCash\API\ElectricityBill\Response\PayResponse;
  */
 trait Pay
 {
-    protected function payResponse($response)
+    protected function paymentResponse($response)
     {
-        return new PayResponse($response);
+        return new PaymentResponse($response);
     }
 
     public function pay($params = [])
@@ -36,7 +36,7 @@ trait Pay
 
             $this->initMockResponse('pay');
             if (! empty($this->mockData)) {
-                return $this->payResponse($this->mockData);
+                return $this->paymentResponse($this->mockData);
             }
 
             $response = $this->client
@@ -54,7 +54,7 @@ trait Pay
             $response = $e->getMessage();
         }
 
-        return $this->payResponse($response);
+        return $this->paymentResponse($response);
     }
 
     protected function mockPaySuccessResponse()

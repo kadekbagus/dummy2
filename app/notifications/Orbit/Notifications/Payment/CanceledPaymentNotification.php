@@ -18,7 +18,8 @@ use Orbit\Notifications\Traits\HasContactTrait;
  *
  * @author Budi <budi@dominopos.com>
  */
-class CanceledPaymentNotification extends CustomerNotification implements EmailNotificationInterface
+class CanceledPaymentNotification extends CustomerNotification implements
+    EmailNotificationInterface
 {
     use HasPaymentTrait, HasContactTrait;
 
@@ -80,6 +81,7 @@ class CanceledPaymentNotification extends CustomerNotification implements EmailN
             'buyUrl'            => $this->getBuyUrl(),
             'emailSubject'      => $this->getEmailSubject(),
             'template'          => $this->getEmailTemplates(),
+            'supportedLangs'    => $this->getSupportedLanguages(),
         ];
     }
 

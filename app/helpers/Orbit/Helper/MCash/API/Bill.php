@@ -2,9 +2,7 @@
 
 use Config;
 use Illuminate\Support\Facades\Log;
-use Orbit\Helper\Exception\OrbitCustomException;
 use Orbit\Helper\MCash\API\BillInterface;
-use Orbit\Helper\MCash\API\Responses\InquiryResponse;
 use Orbit\Helper\MCash\Client as MCashClient;
 use Orbit\Helper\MCash\ConfigSelector;
 
@@ -130,7 +128,7 @@ abstract class Bill implements BillInterface
 
     abstract public function pay($params = []);
 
-    abstract protected function payResponse($responseData);
+    abstract protected function paymentResponse($responseData);
 
     public function mockResponse($data = [])
     {

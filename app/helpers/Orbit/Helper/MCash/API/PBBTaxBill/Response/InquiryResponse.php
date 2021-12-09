@@ -1,6 +1,6 @@
 <?php
 
-namespace Orbit\Helper\MCash\API\WaterBill\Response;
+namespace Orbit\Helper\MCash\API\PBBTaxBill\Response;
 
 use Orbit\Helper\MCash\API\BillResponse;
 
