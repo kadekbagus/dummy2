@@ -23,14 +23,13 @@ class ReceiptNotification extends BillNotification
 
     public function getEmailSubject()
     {
-        return trans('email-receipt.subject', [], '', 'id');
+        return trans('email-bill.receipt.subject', [], '', 'id');
     }
 
     protected function prepareEmailData($data = [])
     {
         return array_merge(parent::prepareEmailData($data), [
-            'myWalletUrl' => $this->getMyPurchasesUrl('/bills'),
-            'bill' => $this->getBillInformation(),
+            'myWalletUrl' => $this->getMyPurchasesUrl('/bpjs-bill'),
         ]);
     }
 }
