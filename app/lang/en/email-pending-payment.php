@@ -38,7 +38,7 @@ return [
             'email' => 'Email: ',
             'phone' => 'Phone: ',
             'total_amount' => 'Total Amount: ',
-            'product' => 'Product',
+            'product' => 'Product: ',
         ],
 
         'payment-info-line-1' => 'Please perform the payment transfer to the following bank account before <br><span style="color:#f43d3c;"><strong>:paymentExpiration</strong></span> to complete your transaction.',

@@ -1,6 +1,6 @@
 <?php
 
-namespace Orbit\Helper\MCash\API\WaterBill\Response;
+namespace Orbit\Helper\MCash\API\ElectricityBill\Response;
 
 use Orbit\Helper\MCash\API\BillResponse;
 
@@ -9,15 +9,8 @@ use Orbit\Helper\MCash\API\BillResponse;
  *
  * @author Budi <budi@gotomalls.com>
  */
-class PayResponse extends BillResponse
+class PaymentResponse extends BillResponse
 {
-    public function hasBillingInformation()
-    {
-        return $this->isSuccess()
-            && isset($this->data->data)
-            && isset($this->data->data->customer_name);
-    }
-
     protected function parseResponse()
     {
         if (! $this->hasBillingInformation()) {
@@ -26,7 +19,7 @@ class PayResponse extends BillResponse
 
         $this->billInformation = (object) [
             'inquiry_id' => $this->data->inquiry_id,
-            'billing_id' => $this->data->data->customer_number,
+            'billing_id' => $this->data->data->billing_id,
             'customer_name' => $this->data->data->customer_name,
             'period' => $this->data->data->period,
             'amount' => $this->data->data->amount,

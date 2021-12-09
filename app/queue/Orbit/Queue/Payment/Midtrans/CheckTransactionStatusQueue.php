@@ -1,25 +1,24 @@
 <?php namespace Orbit\Queue\Payment\Midtrans;
 
-use DB;
-use Log;
-use Queue;
-use Config;
-use Exception;
-use Event;
-use Mall;
 use Activity;
-use Order;
+use Config;
+use DB;
+use Event;
+use Exception;
+use Log;
+use Mall;
 use Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct\APIHelper;
-
-use PaymentTransaction;
-
+use Orbit\Helper\MCash\API\Bill;
 use Orbit\Helper\Midtrans\API\TransactionStatus;
-
-use Orbit\Notifications\Payment\ExpiredPaymentNotification;
-use Orbit\Notifications\Pulsa\ExpiredPaymentNotification as PulsaExpiredPaymentNotification;
+use Orbit\Notifications\DigitalProduct\ElectricityBill\ExpiredPaymentNotification as ElectricityBillExpiredPaymentNotification;
+use Orbit\Notifications\DigitalProduct\Electricity\ExpiredPaymentNotification as ElectricityExpiredPaymentNotification;
 use Orbit\Notifications\DigitalProduct\ExpiredPaymentNotification as DigitalProductExpiredPaymentNotification;
 use Orbit\Notifications\DigitalProduct\Woodoos\ExpiredPaymentNotification as WoodoosExpiredPaymentNotification;
-use Orbit\Notifications\DigitalProduct\Electricity\ExpiredPaymentNotification as ElectricityExpiredPaymentNotification;
+use Orbit\Notifications\Payment\ExpiredPaymentNotification;
+use Orbit\Notifications\Pulsa\ExpiredPaymentNotification as PulsaExpiredPaymentNotification;
+use Order;
+use PaymentTransaction;
+use Queue;
 
 /**
  * Get transaction status from Midtrans and update our internal payment status if necessary.
@@ -222,6 +221,9 @@ class CheckTransactionStatusQueue
                         else if ($payment->forMCashElectricity()) {
                             $payment->user->notify(new ElectricityExpiredPaymentNotification($payment));
                         }
+                        else if ($payment->forBill()) {
+                            $this->handleBillNotification($payment);
+                        }
                         else {
                             $payment->user->notify(new DigitalProductExpiredPaymentNotification($payment));
                         }
@@ -293,5 +295,19 @@ class CheckTransactionStatusQueue
         );
 
         Log::info('Midtrans::CheckTransactionStatusQueue: Check #' . ($data['check'] + 1) . ' is scheduled to run after ' . $delay . ' seconds.');
+    }
+
+    private function handleBillNotification($payment)
+    {
+        switch ($payment->getBillProductType()) {
+            case Bill::ELECTRICITY_BILL:
+                $payment->user->notify(
+                    new ElectricityBillExpiredPaymentNotification($payment)
+                );
+                break;
+
+            default:
+                break;
+        }
     }
 }

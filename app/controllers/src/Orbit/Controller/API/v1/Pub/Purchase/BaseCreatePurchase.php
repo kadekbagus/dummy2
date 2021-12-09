@@ -254,7 +254,7 @@ class BaseCreatePurchase
     protected function runAfterCommitHooks()
     {
         if (is_callable($this->afterCommitHooksFn)) {
-            call_user_func_arary(
+            call_user_func_array(
                 $this->afterCommitHooksFn,
                 [$this->purchase, $this->request]
             );

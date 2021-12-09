@@ -26,8 +26,8 @@ class PurchaseBillInquiryAPIController extends PubControllerAPI
             $purchase = (new CreatePurchase())
                 ->onBeforeCommit(function($purchase, $request) use ($bill) {
                     // So, after creating the purchase, we do inquiry request
-                    // to the mcash and once we get the billing information,
-                    // we update our purchase information (price, etc2).
+                    // to mcash and once we get the billing information,
+                    // we update our purchase information (amount, price, etc2).
 
                     // @todo consider moving inquiry process to
                     //       beforeCommitHooks inside createPurchase helper
@@ -68,14 +68,15 @@ class PurchaseBillInquiryAPIController extends PubControllerAPI
                     $billInfo->convenience_fee = $convenienceFee;
                     $purchase->bill = $billInfo;
                 })
+                ->onAfterCommit(function($purchase, $request) {
+                    unset($purchase->notes);
+                })
                 ->create($request);
-
-            unset($purchase->notes);
 
             $this->response->data = $purchase;
 
         } catch (Exception $e) {
-            return $this->handleException($e);
+            return $this->handleException($e, false);
         }
 
         return $this->render();
