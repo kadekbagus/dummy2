@@ -1,8 +1,8 @@
 <?php
 
-namespace Orbit\Helper\MCash\API\WaterBill;
+namespace Orbit\Helper\MCash\API\InternetProviderBill;
 
-use Orbit\Helper\MCash\API\WaterBill\Response\PayResponse;
+use Orbit\Helper\MCash\API\InternetProviderBill\Response\PayResponse;
 
 /**
  * Pay implementation for electricity bill.
