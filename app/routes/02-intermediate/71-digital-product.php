@@ -41,3 +41,53 @@ Route::get('/app/v1/pub/electricity-purchased/list', ['as' => 'pub-electricity-p
  * Electricity purchased detail api
  */
 Route::get('/app/v1/pub/electricity-purchased/detail', ['as' => 'pub-electricity-purchased-detail', 'uses' => 'IntermediatePubAuthController@DigitalProduct\ElectricityPurchasedDetail_getElectricityPurchasedDetail']);
+
+/**
+ * Electricity Bill purchased list api
+ */
+Route::get('/app/v1/pub/electricity-bill-purchased/list', ['as' => 'pub-electricity-bill-purchased-list', 'uses' => 'IntermediatePubAuthController@DigitalProduct\ElectricityBillPurchasedList_getElectricityBillPurchasedList']);
+
+/**
+ * Electricity Bill purchased detail api
+ */
+Route::get('/app/v1/pub/electricity-bill-purchased/detail', ['as' => 'pub-electricity-bill-purchased-detail', 'uses' => 'IntermediatePubAuthController@DigitalProduct\ElectricityBillPurchasedDetail_getElectricityBillPurchasedDetail']);
+
+/**
+ * PDAM Bill purchased list api
+ */
+Route::get('/app/v1/pub/pdam-bill-purchased/list', ['as' => 'pub-pdam-bill-purchased-list', 'uses' => 'IntermediatePubAuthController@DigitalProduct\PDAMBillPurchasedList_getPDAMBillPurchasedList']);
+
+/**
+ * PDAM Bill purchased detail api
+ */
+Route::get('/app/v1/pub/pdam-bill-purchased/detail', ['as' => 'pub-pdam-bill-purchased-detail', 'uses' => 'IntermediatePubAuthController@DigitalProduct\PDAMBillPurchasedDetail_getPDAMBillPurchasedDetail']);
+
+/**
+ * PBB Tax purchased list api
+ */
+Route::get('/app/v1/pub/pbb-tax-purchased/list', ['as' => 'pub-pbb-tax-purchased-list', 'uses' => 'IntermediatePubAuthController@DigitalProduct\PBBTaxPurchasedList_getPBBTaxPurchasedList']);
+
+/**
+ * PBB Tax purchased detail api
+ */
+Route::get('/app/v1/pub/pbb-tax-purchased/detail', ['as' => 'pub-pbb-tax-purchased-detail', 'uses' => 'IntermediatePubAuthController@DigitalProduct\PBBTaxPurchasedDetail_getPBBTaxPurchasedDetail']);
+
+/**
+ * BPJS Bill purchased list api
+ */
+Route::get('/app/v1/pub/bpjs-bill-purchased/list', ['as' => 'pub-bpjs-bill-purchased-list', 'uses' => 'IntermediatePubAuthController@DigitalProduct\BpjsBillPurchasedList_getBpjsBillPurchasedList']);
+
+/**
+ * BPJS Bill purchased detail api
+ */
+Route::get('/app/v1/pub/bpjs-bill-purchased/detail', ['as' => 'pub-bpjs-bill-purchased-detail', 'uses' => 'IntermediatePubAuthController@DigitalProduct\BpjsBillPurchasedDetail_getBpjsBillPurchasedDetail']);
+
+/**
+ * Internet Provider Bill purchased list api
+ */
+Route::get('/app/v1/pub/internet-provider-bill-purchased/list', ['as' => 'pub-internet-provider-bill-purchased-list', 'uses' => 'IntermediatePubAuthController@DigitalProduct\InternetProviderBillPurchasedList_getInternetProviderBillPurchasedList']);
+
+/**
+ * Internet Provider Bill purchased detail api
+ */
+Route::get('/app/v1/pub/internet-provider-bill-purchased/detail', ['as' => 'pub-internet-provider-bill-purchased-detail', 'uses' => 'IntermediatePubAuthController@DigitalProduct\InternetProviderBillPurchasedDetail_getInternetProviderBillPurchasedDetail']);
