@@ -3,7 +3,12 @@
 use App;
 use Exception;
 use OrbitShop\API\v1\PubControllerAPI;
+use Orbit\Controller\API\v1\Pub\Purchase\Bill\BpjsBillUpdatePurchase;
+use Orbit\Controller\API\v1\Pub\Purchase\Bill\ElectricityBillUpdatePurchase;
+use Orbit\Controller\API\v1\Pub\Purchase\Bill\InternetProviderBillUpdatePurchase;
+use Orbit\Controller\API\v1\Pub\Purchase\Bill\PBBTaxBillUpdatePurchase;
 use Orbit\Controller\API\v1\Pub\Purchase\Bill\UpdatePurchase as BillUpdatePurchase;
+use Orbit\Controller\API\v1\Pub\Purchase\Bill\WaterBillUpdatePurchase;
 use Orbit\Controller\API\v1\Pub\Purchase\DigitalProduct\UpdatePurchase as DigitalProductUpdatePurchase;
 use Orbit\Controller\API\v1\Pub\Purchase\Order\UpdatePurchase as UpdateOrderPurchase;
 use Orbit\Controller\API\v1\Pub\Purchase\Request\DigitalProductUpdatePurchaseRequest as UpdatePurchaseRequest;
@@ -58,24 +63,30 @@ class PurchaseUpdateAPIController extends PubControllerAPI
     {
         $purchase->load('details.provider_product');
 
-        if ($purchase->forBill()) {
-            switch($purchase->getBillProductType()) {
-                // Use same update handler at the moment
-                case Bill::ELECTRICITY_BILL:
-                case Bill::PDAM_BILL:
-                case Bill::PBB_TAX_BILL:
-                case Bill::BPJS_BILL:
-                case Bill::ISP_BILL:
-                    return (new BillUpdatePurchase())->update($request);
-                    break;
+        switch($purchase->getBillProductType()) {
+            case Bill::ELECTRICITY_BILL:
+                return (new ElectricityBillUpdatePurchase())->update($request);
+                break;
 
-                default:
-                    throw new Exception('unknown bill product type!');
-                    break;
-            }
-        }
-        else {
-            return (new DigitalProductUpdatePurchase)->update($request);
+            case Bill::PDAM_BILL:
+                return (new WaterBillUpdatePurchase())->update($request);
+                break;
+
+            case Bill::PBB_TAX_BILL:
+                return (new PBBTaxBillUpdatePurchase())->update($request);
+                break;
+
+            case Bill::BPJS_BILL:
+                return (new BpjsBillUpdatePurchase())->update($request);
+                break;
+
+            case Bill::ISP_BILL:
+                return (new InternetProviderBillUpdatePurchase())->update($request);
+                break;
+
+            default:
+                return (new DigitalProductUpdatePurchase)->update($request);
+                break;
         }
     }
 }

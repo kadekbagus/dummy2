@@ -2,6 +2,7 @@
 
 namespace Orbit\Notifications\DigitalProduct;
 
+use Config;
 use Exception;
 use Mail;
 use Orbit\Helper\Notifications\Contracts\EmailNotificationInterface;
@@ -14,29 +15,25 @@ use Orbit\Notifications\Traits\HasBillTrait;
  *
  * @author Budi <budi@gotomalls.com>
  */
-class BillNotification extends PaymentNotification implements
+abstract class BillNotification extends PaymentNotification implements
     EmailNotificationInterface
 {
     use HasBillTrait;
 
-    protected $signature = 'bill-purchases-notification';
+    protected $signature = 'bill-purchase-notification';
 
     public function __construct($payment = null)
     {
         $this->payment = $payment;
     }
 
-    public function getEmailTemplates()
-    {
-        return [
-            'html' => '',
-            'text' => '',
-        ];
-    }
+    abstract public function getEmailTemplates();
 
-    public function getEmailSubject()
+    abstract public function getEmailSubject();
+
+    public function getRecipientEmail()
     {
-        return trans('email-bill.subject', [], '', 'id');
+        return $this->payment->user_email;
     }
 
     public function getEmailData()
@@ -46,21 +43,49 @@ class BillNotification extends PaymentNotification implements
         ];
     }
 
+    protected function getProductName()
+    {
+        return $this->payment->details->filter(function($detail) {
+            return $detail->object_type === 'digital_product';
+        })->first()->object_name;
+    }
+
+    protected function getTransactionAndBill()
+    {
+        $transactionData = $this->getTransactionData();
+        $billInfo = $this->getBillInformation();
+
+        $transactionData['convenience_fee'] = $this->getConvenienceFee();
+        $transactionData['formatted_convenience_fee'] =
+            $this->formatCurrency($transactionData['convenience_fee'], '');
+        $transactionData['total'] = $this->formatCurrency($this->payment->amount, '');
+
+        if (empty($billInfo)) {
+            return $transactionData;
+        }
+
+        $billInfo->formatted_amount = $this->formatCurrency($billInfo->amount, '');
+        return [$transactionData, $billInfo];
+    }
+
     protected function prepareEmailData($data = [])
     {
         $this->payment = $this->getPayment($data['transaction_id']);
+        list($transactionData, $bill) = $this->getTransactionAndBill();
 
         return [
             'recipientEmail'    => $this->getRecipientEmail(),
             'customerEmail'     => $this->getCustomerEmail(),
             'customerName'      => $this->getCustomerName(),
             'customerPhone'     => $this->getCustomerPhone(),
-            'transaction'       => $this->getTransactionData(),
-            'billInfo'          => $this->getBillInformation(),
+            'transaction'       => $transactionData,
+            'bill'              => $bill,
             'cs'                => $this->getContactData(),
             'transactionDateTime' => $this->getTransactionDateTime(),
             'emailSubject'      => $this->getEmailSubject(),
             'supportedLangs'    => $this->getSupportedLanguages(),
+            'productName'       => $this->getProductName(),
+            'paymentMethod'     => $this->getPaymentMethod(),
         ];
     }
 
@@ -75,13 +100,20 @@ class BillNotification extends PaymentNotification implements
             $emailData = $this->prepareEmailData($data);
 
             if ($this->shouldSendEmail()) {
-                Mail::send($this->getEmailTemplates(), $emailData, function($mail) use ($emailData) {
-                    $emailConfig = Config::get('orbit.registration.mobile.sender');
+                $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                    $mail->subject($emailData['emailSubject']);
-                    $mail->from($emailConfig['email'], $emailConfig['name']);
-                    $mail->to($emailData['recipientEmail']);
-                });
+                Mail::send(
+                    $this->getEmailTemplates(),
+                    $emailData,
+                    function($mail) use ($emailData, $emailConfig) {
+                        $mail->subject($emailData['emailSubject']);
+                        $mail->from($emailConfig['email'], $emailConfig['name']);
+                        $mail->to($emailData['recipientEmail']);
+                    }
+                );
+            }
+            else {
+                $this->log('Not sending any notification due to shouldSendEmail is false.');
             }
 
         } catch (Exception $e) {

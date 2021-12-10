@@ -63,6 +63,7 @@ return [
         ],
 
         'help' => 'Please contact our customer service at <a style="color:#f43d3c;text-decoration:none;" href="tel::csPhone">:csPhone</a> or email at <a style="color:#f43d3c;text-decoration:none;" href="mailto::csEmail">:csEmail</a> if you find any difficulties.',
+        'help_text' => 'Please contact our customer service at :csPhone or email at :csEmail if you find any difficulties.',
         'thank_you' => 'Thank you and have a nice day.',
     ],
 

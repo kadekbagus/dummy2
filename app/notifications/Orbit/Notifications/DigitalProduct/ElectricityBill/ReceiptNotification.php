@@ -2,14 +2,14 @@
 
 namespace Orbit\Notifications\DigitalProduct\ElectricityBill;
 
-use Orbit\Notifications\DigitalProduct\BillReceiptNotification;
+use Orbit\Notifications\DigitalProduct\BillNotification;
 
 /**
  * electricity bill receipt notification.
  *
  * @author Budi <budi@gotomalls.com>
  */
-class ReceiptNotification extends BillReceiptNotification
+class ReceiptNotification extends BillNotification
 {
     protected $signature = 'electricity-bill-receipt-notification';
 
@@ -23,6 +23,14 @@ class ReceiptNotification extends BillReceiptNotification
 
     public function getEmailSubject()
     {
-        return trans('email-receipt.electricity-bill.subject', [], '', 'id');
+        return trans('email-receipt.subject', [], '', 'id');
+    }
+
+    protected function prepareEmailData($data = [])
+    {
+        return array_merge(parent::prepareEmailData($data), [
+            'myWalletUrl' => $this->getMyPurchasesUrl('/bills'),
+            'bill' => $this->getBillInformation(),
+        ]);
     }
 }

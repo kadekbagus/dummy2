@@ -21,6 +21,8 @@ trait HasPaymentTrait
     protected $paymentMethodMapper = [
         'gopay' => 'GOJEK',
         'dana' => 'Dana',
+        'shopeepay' => 'Shopee',
+        'qris' => 'QRIS',
     ];
 
     protected $productType = 'default';

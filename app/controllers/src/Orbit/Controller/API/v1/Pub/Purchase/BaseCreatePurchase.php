@@ -154,7 +154,9 @@ class BaseCreatePurchase
     {
         return [
             'payment_transaction_id' => $this->purchase->payment_transaction_id,
-            'currency' => $this->request->currency,
+            'currency' => $this->request->currency
+                ? $this->request->currency
+                : 'IDR',
             'price' => $this->getItemPrice(),
             'quantity' => 1,
             'vendor_price' => $this->getVendorPrice(),
@@ -252,7 +254,7 @@ class BaseCreatePurchase
     protected function runAfterCommitHooks()
     {
         if (is_callable($this->afterCommitHooksFn)) {
-            call_user_func_arary(
+            call_user_func_array(
                 $this->afterCommitHooksFn,
                 [$this->purchase, $this->request]
             );

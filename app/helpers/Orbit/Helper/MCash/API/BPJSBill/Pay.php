@@ -1,8 +1,8 @@
 <?php
 
-namespace Orbit\Helper\MCash\API\WaterBill;
+namespace Orbit\Helper\MCash\API\BPJSBill;
 
-use Orbit\Helper\MCash\API\WaterBill\Response\PayResponse;
+use Orbit\Helper\MCash\API\BPJSBill\Response\PaymentResponse;
 
 /**
  * Pay implementation for electricity bill.
@@ -11,9 +11,9 @@ use Orbit\Helper\MCash\API\WaterBill\Response\PayResponse;
  */
 trait Pay
 {
-    protected function payResponse($response)
+    protected function paymentResponse($response)
     {
-        return new PayResponse($response);
+        return new PaymentResponse($response);
     }
 
     public function pay($params = [])
@@ -31,11 +31,12 @@ trait Pay
                 'product' => $params['product'],
                 'customer' => $params['customer'],
                 'partner_trxid' => $params['partnerTrxId'],
+                'amount' => '',
             ];
 
             $this->initMockResponse('pay');
             if (! empty($this->mockData)) {
-                return $this->payResponse($this->mockData);
+                return $this->paymentResponse($this->mockData);
             }
 
             $response = $this->client
@@ -53,7 +54,7 @@ trait Pay
             $response = $e->getMessage();
         }
 
-        return $this->payResponse($response);
+        return $this->paymentResponse($response);
     }
 
     protected function mockPaySuccessResponse()

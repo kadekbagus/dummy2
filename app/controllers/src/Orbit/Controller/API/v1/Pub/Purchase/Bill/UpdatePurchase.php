@@ -268,7 +268,7 @@ class UpdatePurchase
                     $paymentUser = new User;
                     $paymentUser->email = $this->purchase->user_email;
 
-                    // $paymentUser->notify(new ElectricityPendingPaymentNotification($this->purchase), 30);
+                    // $paymentUser->notify(new ElectricityBillPendingPaymentNotification($this->purchase), 30);
 
                     // Record activity of pending purchase...
                     $this->purchase->user->activity(new PurchasePendingActivity($this->purchase, $objectName));

@@ -62,6 +62,7 @@ return [
         ],
 
         'help' => 'Jika menemui kendala terkait pembelian, silakan hubungi layanan bantuan kami di nomor <a style="color:#f43d3c;text-decoration:none;" href="tel::csPhone">:csPhone</a> atau surel di <a style="color:#f43d3c;text-decoration:none;" href="mailto::csEmail">:csEmail</a>.',
+        'help_text' => 'Jika menemui kendala terkait pembelian, silakan hubungi layanan bantuan kami di nomor :csPhone atau surel :csEmail.',
         'thank_you' => 'Terima kasih dan kami tunggu pembelian berikutnya!',
     ],
 
